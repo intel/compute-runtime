@@ -58,14 +58,15 @@ bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
     }
 
     uint64_t containerOffset = 0;
-    if (!PlatformMonitoringTech::getTelemOffsetForContainer(pLinuxSysmanImp->getSysmanProductHelper(), telemDir, "PPIN", containerOffset)) {
+    if (PlatformMonitoringTech::getTelemOffsetForContainer(pLinuxSysmanImp->getSysmanProductHelper(), telemDir, "PPIN", containerOffset) != ZE_RESULT_SUCCESS) {
         return false;
     }
 
     offset += containerOffset;
 
     uint64_t value;
-    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), offset, &value);
+    int errorNum = 0;
+    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), offset, &value, errorNum);
     if (bytesRead == sizeof(uint64_t)) {
         std::ostringstream telemDataString;
         telemDataString << std::hex << std::showbase << value;
@@ -85,7 +86,7 @@ bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PRO
     }
 
     uint64_t containerOffset = 0;
-    if (!PlatformMonitoringTech::getTelemOffsetForContainer(pLinuxSysmanImp->getSysmanProductHelper(), telemDir, "BoardNumber", containerOffset)) {
+    if (PlatformMonitoringTech::getTelemOffsetForContainer(pLinuxSysmanImp->getSysmanProductHelper(), telemDir, "BoardNumber", containerOffset) != ZE_RESULT_SUCCESS) {
         return false;
     }
 
@@ -93,7 +94,8 @@ bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PRO
 
     constexpr uint32_t boardNumberSize = 32;
     std::array<uint8_t, boardNumberSize> value;
-    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), boardNumberSize, offset, value.data());
+    int errorNum = 0;
+    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), boardNumberSize, offset, value.data(), errorNum);
     if (bytesRead == boardNumberSize) {
         // Board Number from PMT is available as multiple uint32_t integers, We need to swap (i.e convert each uint32_t
         // to big endian) elements of each uint32_t to get proper board number string.

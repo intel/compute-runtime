@@ -192,6 +192,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         constexpr uint64_t telemOffset = 0;
         std::string_view validOobmsmGuid = "";
@@ -218,7 +219,12 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
         } else if (fd == 7) { // telem2 - OOBMSM telem data file
             switch (offset) {
             case 140:
-                ret = (readFailCount == 1) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 1) {
+                    errno = ENOENT;
+                    ret = -1;
+                } else {
+                    ret = sizeof(uint32_t);
+                }
                 break;
             default:
                 break;
@@ -226,14 +232,29 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
         } else if (fd == 8) { // telem3 - PUNIT telem data file
             switch (offset) {
             case 4:
-                ret = (readFailCount == 3) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 3) {
+                    errno = ENOENT;
+                    ret = -1;
+                } else {
+                    ret = sizeof(uint32_t);
+                }
                 break;
             case 52:
-                ret = (readFailCount == 1) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 1) {
+                    errno = ENOENT;
+                    ret = -1;
+                } else {
+                    ret = sizeof(uint32_t);
+                }
                 break;
             case 1016:
             case 1024:
-                ret = (readFailCount == 2) ? -1 : static_cast<ssize_t>(xtalReturnCount);
+                if (readFailCount == 2) {
+                    errno = ENOENT;
+                    ret = -1;
+                } else {
+                    ret = static_cast<ssize_t>(xtalReturnCount);
+                }
                 break;
             default:
                 break;
@@ -1245,6 +1266,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         constexpr uint64_t telemOffset = 0;
         constexpr std::string_view validPunitGuid = "0x1e2fa030";
@@ -1259,10 +1281,20 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         } else if (fd == 8) {
             switch (offset) {
             case instantPowerOffset:
-                ret = (readFailCount == 1) ? -1 : sizeof(uint64_t);
+                if (readFailCount == 1) {
+                    errno = ENOENT;
+                    ret = -1;
+                } else {
+                    ret = sizeof(uint64_t);
+                }
                 break;
             case averagePowerOffset:
-                ret = (readFailCount == 2) ? -1 : sizeof(uint64_t);
+                if (readFailCount == 2) {
+                    errno = ENOENT;
+                    ret = -1;
+                } else {
+                    ret = sizeof(uint64_t);
+                }
                 break;
             default:
                 break;

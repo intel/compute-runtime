@@ -221,6 +221,7 @@ static std::vector<zes_mem_handle_t> getMemoryHandles(zes_device_handle_t device
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAndReadGuidFailsThenErrorIsReturned, IsPVC) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         if (fd == 5) {
@@ -233,7 +234,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subDeviceId = 0;
     zes_mem_bandwidth_t bandwidth = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId));
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAndVfid0IsActiveThenVerifyBandWidthIsValid, IsPVC) {
@@ -432,6 +433,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenBothVfid0AndVfid1NotActiveAndGuidN
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0ReadFailsAndGuidNotSetWhenCallingGetBandwidthThenFailureIsReturned, IsPVC) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         std::ostringstream oStream;
@@ -462,6 +464,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0ReadFailsAndGuidNotSetWhenCal
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0ActiveAndVfid1ReadFailsAndGuidNotSetWhenCallingGetBandwidthThenFailureIsReturned, IsPVC) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         std::ostringstream oStream;
@@ -498,6 +501,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenHbm0ReadFailsAndGuidNotSetWhenCall
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         std::ostringstream oStream;
@@ -542,6 +546,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenHbm0WriteFailsAndGuidNotSetWhenCal
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         std::ostringstream oStream;
@@ -586,6 +591,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0ReadLFailsWhenCallingGetBandw
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         std::ostringstream oStream;
@@ -598,6 +604,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0ReadLFailsWhenCallingGetBandw
             if (offset == vF0Vfid) {
                 val = 1;
             } else if (offset == vF0HbmReadL) {
+                errno = ENOENT;
                 return -1;
             }
             memcpy(buf, &val, count);
@@ -624,6 +631,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0ReadHFailsWhenCallingGetBandw
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         std::ostringstream oStream;
@@ -636,6 +644,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0ReadHFailsWhenCallingGetBandw
             if (offset == vF0Vfid) {
                 val = 1;
             } else if (offset == vF0HbmReadH) {
+                errno = ENOENT;
                 return -1;
             }
             memcpy(buf, &val, count);
@@ -662,6 +671,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0WriteLFailsWhenCallingGetBand
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         std::ostringstream oStream;
@@ -674,6 +684,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0WriteLFailsWhenCallingGetBand
             if (offset == vF0Vfid) {
                 val = 1;
             } else if (offset == vF0HbmWriteL) {
+                errno = ENOENT;
                 return -1;
             }
             memcpy(buf, &val, count);
@@ -700,6 +711,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0WriteHFailsWhenCallingGetBand
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         std::ostringstream oStream;
@@ -712,6 +724,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenVfid0WriteHFailsWhenCallingGetBand
             if (offset == vF0Vfid) {
                 val = 1;
             } else if (offset == vF0HbmWriteH) {
+                errno = ENOENT;
                 return -1;
             }
             memcpy(buf, &val, count);
@@ -763,6 +776,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenInvalidGuidWhenCallingGetBandwidth
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAndReadGuidFailsThenErrorIsReturned, IsDG2) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         if (fd == 5) {
@@ -775,7 +789,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subDeviceId = 0;
     zes_mem_bandwidth_t bandwidth = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId));
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenInvalidGuidWhenCallingGetBandwidthThenFailureIsReturned, IsDG2) {
@@ -1072,21 +1086,22 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceAndIdiR
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodeSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSingleTelemetryNodeSuccess);
+    VariableBackup<int> mockErrno(&errno);
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         std::ostringstream oStream;
-        uint32_t val = 0;
         if (fd == 4) {
             oStream << "0";
         } else if (fd == 5) {
             oStream << "0x4f9502";
         } else if (fd == 6) {
-            memcpy(buf, &val, sizeof(val));
-            return sizeof(val);
+            errno = ENOENT;
+            return -1;
         } else if (fd == 7) {
             oStream << mockMaxBwDg2;
         } else {
-            oStream << "-1";
+            errno = ENOENT;
+            return -1;
         }
         std::string value = oStream.str();
         memcpy(buf, value.data(), count);

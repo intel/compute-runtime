@@ -33,12 +33,13 @@ bool ProductHelperHw<gfxProduct>::getUuid(DriverModel *driverModel, const uint32
     std::string telemDir = iterator->second;
 
     std::array<char, PmtUtil::guidStringSize> guidString;
-    if (!PmtUtil::readGuid(telemDir, guidString)) {
+    int errorNum = 0;
+    if (!PmtUtil::readGuid(telemDir, guidString, errorNum)) {
         return false;
     }
 
     uint64_t offset = std::numeric_limits<uint64_t>::max();
-    if (!PmtUtil::readOffset(telemDir, offset)) {
+    if (!PmtUtil::readOffset(telemDir, offset, errorNum)) {
         return false;
     }
 
@@ -52,7 +53,8 @@ bool uuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guid
     auto pos = guidUuidOffsetMap.find(guidString.data());
     if (pos != guidUuidOffsetMap.end()) {
         uuid.fill(0);
-        ssize_t bytesRead = PmtUtil::readTelem(telemDir.data(), pos->second.second, pos->second.first + offset, uuid.data());
+        int errorNum = 0;
+        ssize_t bytesRead = PmtUtil::readTelem(telemDir.data(), pos->second.second, pos->second.first + offset, uuid.data(), errorNum);
         if (bytesRead == pos->second.second) {
             uuid[15] = deviceIndex;
             return true;

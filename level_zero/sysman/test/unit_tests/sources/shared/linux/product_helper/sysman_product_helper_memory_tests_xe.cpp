@@ -236,6 +236,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     static int readFailCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telem2Offset = 0;
         uint32_t mockMsuBitMask = 0x3;
@@ -247,21 +248,39 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
         } else if (fd == 6) {
             switch (offset) {
             case 376:
-                return (readFailCount == 2) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 2) {
+                    errno = ENOENT;
+                    return -1;
+                }
+                return sizeof(uint32_t);
             case 380:
-                return (readFailCount == 3) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 3) {
+                    errno = ENOENT;
+                    return -1;
+                }
+                return sizeof(uint32_t);
             case 392:
-                return (readFailCount == 4) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 4) {
+                    errno = ENOENT;
+                    return -1;
+                }
+                return sizeof(uint32_t);
             case 396:
-                return (readFailCount == 5) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 5) {
+                    errno = ENOENT;
+                    return -1;
+                }
+                return sizeof(uint32_t);
             case 3688:
                 memcpy(buf, &mockMsuBitMask, count);
                 if (readFailCount == 1) {
+                    errno = ENOENT;
                     return -1;
                 }
                 break;
             }
         } else if (fd == 8) {
+            errno = ENOENT;
             return -1;
         }
         return count;
@@ -279,6 +298,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
 HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAndReadValueFailsForPunitPathKeyThenFailureIsReturned, IsBMG) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telem1Offset = 0;
         uint64_t telem2Offset = 0;
@@ -296,6 +316,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
         } else if (fd == 8) {
             memcpy(buf, validPunitGuid.data(), count);
         } else if (fd == 9) {
+            errno = ENOENT;
             return -1;
         }
         return count;
@@ -458,12 +479,13 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     uint32_t numChannels = 0;
 
     ze_result_t result = pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndReadValueFailsThenErrorIsReturned, IsBMG) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telem2Offset = 0;
         std::string validOobmsmGuid = "0x5e2f8210";
@@ -475,6 +497,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
         } else if (fd == 6 || fd == 9) {
             switch (offset) {
             case mockOffsetMsuBitmask:
+                errno = ENOENT;
                 count = -1;
                 break;
             }

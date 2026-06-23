@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -189,7 +189,7 @@ TEST_F(ZesPmtFixture, GivenKeyDoesNotExistinKeyOffsetMapWhenCallingReadValueForU
     uint64_t mockOffset = 0;
     std::map<std::string, uint64_t> keyOffsetMap = {{"PACKAGE_ENERGY", 1032}, {"SOC_TEMPERATURES", 56}};
     std::string mockKey = "ABCDE";
-    EXPECT_FALSE(PlatformMonitoringTech::readValue(keyOffsetMap, mockTelemDir, mockKey, mockOffset, value));
+    EXPECT_NE(PlatformMonitoringTech::readValue(keyOffsetMap, mockTelemDir, mockKey, mockOffset, value), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(ZesPmtFixture, GivenKeyDoesNotExistinKeyOffsetMapWhenCallingReadValueForUnsignedLongThenFalseValueIsReturned) {
@@ -198,7 +198,7 @@ TEST_F(ZesPmtFixture, GivenKeyDoesNotExistinKeyOffsetMapWhenCallingReadValueForU
     uint64_t mockOffset = 0;
     std::map<std::string, uint64_t> keyOffsetMap = {{"PACKAGE_ENERGY", 1032}, {"SOC_TEMPERATURES", 56}};
     std::string mockKey = "ABCDE";
-    EXPECT_FALSE(PlatformMonitoringTech::readValue(keyOffsetMap, mockTelemDir, mockKey, mockOffset, value));
+    EXPECT_NE(PlatformMonitoringTech::readValue(keyOffsetMap, mockTelemDir, mockKey, mockOffset, value), ZE_RESULT_SUCCESS);
 }
 
 } // namespace ult

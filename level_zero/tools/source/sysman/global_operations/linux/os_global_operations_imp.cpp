@@ -67,13 +67,15 @@ bool LinuxGlobalOperationsImp::getTelemOffsetAndTelemDir(uint64_t &telemOffset, 
     telemDir = iterator->second;
 
     std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-    if (!NEO::PmtUtil::readGuid(telemDir, guidString)) {
+    int errorNum = 0;
+    if (!NEO::PmtUtil::readGuid(telemDir, guidString, errorNum)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GUID from %s \n", __FUNCTION__, telemDir.c_str());
         return false;
     }
 
     uint64_t offset = ULONG_MAX;
-    if (!NEO::PmtUtil::readOffset(telemDir, offset)) {
+    errorNum = 0;
+    if (!NEO::PmtUtil::readOffset(telemDir, offset, errorNum)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read offset from %s\n", __FUNCTION__, telemDir.c_str());
         return false;
     }
@@ -99,7 +101,8 @@ bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
     }
 
     uint64_t value;
-    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), offset, &value);
+    int errorNum = 0;
+    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), offset, &value, errorNum);
     if (bytesRead == sizeof(uint64_t)) {
         std::ostringstream telemDataString;
         telemDataString << std::hex << std::showbase << value;
@@ -123,7 +126,8 @@ bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PRO
         return false;
     }
     std::array<uint8_t, boardNumberSize> value;
-    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), boardNumberSize, offset, value.data());
+    int errorNum = 0;
+    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), boardNumberSize, offset, value.data(), errorNum);
     if (bytesRead == boardNumberSize) {
         // Board Number from PMT is available as multiple uint32_t integers, We need to swap (i.e convert each uint32_t
         // to big endian) elements of each uint32_t to get proper board number string.

@@ -179,7 +179,8 @@ TEST(PmtUtilTest, givenDataPtrIsNullWhenPmtUtilReadTelemIsCalledThenVerifyZeroIs
         return 16;
     });
 
-    EXPECT_TRUE(0 == PmtUtil::readTelem("dummy", 16, 0, nullptr));
+    int errorNum = 0;
+    EXPECT_TRUE(0 == PmtUtil::readTelem("dummy", 16, 0, nullptr, errorNum));
 }
 
 namespace NEO {

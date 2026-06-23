@@ -46,107 +46,115 @@ bool PlatformMonitoringTech::getTelemOffsetAndTelemDir(LinuxSysmanImp *pLinuxSys
     auto iterator = telemPciPath.begin();
     telemDir = iterator->second;
 
-    if (!NEO::PmtUtil::readOffset(telemDir, telemOffset)) {
+    int errorNum = 0;
+    if (!NEO::PmtUtil::readOffset(telemDir, telemOffset, errorNum)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read offset from %s\n", __FUNCTION__, telemDir.c_str());
         return false;
     }
     return true;
 }
 
-bool PlatformMonitoringTech::getTelemOffsetForContainer(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset) {
+ze_result_t PlatformMonitoringTech::getTelemOffsetForContainer(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset) {
     std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-    if (!NEO::PmtUtil::readGuid(telemDir, guidString)) {
+    int errorNum = 0;
+    if (!NEO::PmtUtil::readGuid(telemDir, guidString, errorNum)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GUID from %s \n", __FUNCTION__, telemDir.c_str());
-        return false;
+        return LinuxSysmanImp::getResult(errorNum);
     }
 
     std::map<std::string, uint64_t> keyOffsetMap;
     if (!PlatformMonitoringTech::getKeyOffsetMap(pSysmanProductHelper, guidString.data(), keyOffsetMap)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get KeyOffsetMap for Guid : %s\n", __FUNCTION__, guidString.data());
-        return false;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     auto keyOffset = keyOffsetMap.find(key.c_str());
     if (keyOffset == keyOffsetMap.end()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find keyOffset in keyOffsetMap \n", __FUNCTION__);
-        return false;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     telemOffset = keyOffset->second;
-    return true;
+    return ZE_RESULT_SUCCESS;
 }
 
-bool PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint32_t &value) {
+ze_result_t PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint32_t &value) {
 
     auto containerOffset = keyOffsetMap.find(key);
     if (containerOffset == keyOffsetMap.end()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find keyOffset in keyOffsetMap \n", __FUNCTION__);
-        return false;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     uint64_t offset = telemOffset + containerOffset->second;
-    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint32_t), offset, &value);
+    int errorNum = 0;
+    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint32_t), offset, &value, errorNum);
     if (bytesRead != sizeof(uint32_t)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for %s key \n", __FUNCTION__, key.c_str());
-        return false;
+        return LinuxSysmanImp::getResult(errorNum);
     }
-    return true;
+    return ZE_RESULT_SUCCESS;
 }
 
-bool PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint64_t &value) {
+ze_result_t PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint64_t &value) {
 
     auto containerOffset = keyOffsetMap.find(key);
     if (containerOffset == keyOffsetMap.end()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find keyOffset in keyOffsetMap \n", __FUNCTION__);
-        return false;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     uint64_t offset = telemOffset + containerOffset->second;
-    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), offset, &value);
+    int errorNum = 0;
+    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), offset, &value, errorNum);
     if (bytesRead != sizeof(uint64_t)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for %s key \n", __FUNCTION__, key.c_str());
-        return false;
+        return LinuxSysmanImp::getResult(errorNum);
     }
-    return true;
+    return ZE_RESULT_SUCCESS;
 }
 
-bool PlatformMonitoringTech::getTelemDataForTileAggregator(const std::map<uint32_t, std::string> telemNodesInPciPath, uint32_t subdeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset) {
+ze_result_t PlatformMonitoringTech::getTelemDataForTileAggregator(const std::map<uint32_t, std::string> telemNodesInPciPath, uint32_t subdeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset) {
 
     uint32_t rootDeviceTelemIndex = telemNodesInPciPath.begin()->first;
     const std::string telemNode = "telem" + std::to_string(rootDeviceTelemIndex + subdeviceId + 1);
     telemDir = baseTelemSysfs + "/" + telemNode;
-    if (!NEO::PmtUtil::readOffset(telemDir, telemOffset)) {
+    int errorNum = 0;
+    if (!NEO::PmtUtil::readOffset(telemDir, telemOffset, errorNum)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read offset from %s\n", __FUNCTION__, telemDir.c_str());
-        return false;
+        return LinuxSysmanImp::getResult(errorNum);
     }
 
     std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-    if (!NEO::PmtUtil::readGuid(telemDir, guidString)) {
+    errorNum = 0;
+    if (!NEO::PmtUtil::readGuid(telemDir, guidString, errorNum)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GUID from %s \n", __FUNCTION__, telemDir.c_str());
-        return false;
+        return LinuxSysmanImp::getResult(errorNum);
     }
 
     guid = guidString.data();
-    return true;
+    return ZE_RESULT_SUCCESS;
 }
 
-bool PlatformMonitoringTech::getTelemData(const std::map<uint32_t, std::string> telemNodesInPciPath, std::string &telemDir, std::string &guid, uint64_t &telemOffset) {
+ze_result_t PlatformMonitoringTech::getTelemData(const std::map<uint32_t, std::string> telemNodesInPciPath, std::string &telemDir, std::string &guid, uint64_t &telemOffset) {
     auto iterator = telemNodesInPciPath.begin();
     telemDir = iterator->second;
-    if (!NEO::PmtUtil::readOffset(telemDir, telemOffset)) {
+    int errorNum = 0;
+    if (!NEO::PmtUtil::readOffset(telemDir, telemOffset, errorNum)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read offset from %s\n", __FUNCTION__, telemDir.c_str());
-        return false;
+        return LinuxSysmanImp::getResult(errorNum);
     }
 
     std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-    if (!NEO::PmtUtil::readGuid(telemDir, guidString)) {
+    errorNum = 0;
+    if (!NEO::PmtUtil::readGuid(telemDir, guidString, errorNum)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GUID from %s \n", __FUNCTION__, telemDir.c_str());
-        return false;
+        return LinuxSysmanImp::getResult(errorNum);
     }
 
     guid = guidString.data();
 
-    return true;
+    return ZE_RESULT_SUCCESS;
 }
 
 bool PlatformMonitoringTech::isTelemetrySupportAvailable(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
@@ -154,7 +162,8 @@ bool PlatformMonitoringTech::isTelemetrySupportAvailable(LinuxSysmanImp *pLinuxS
     std::string telemDir = "";
     std::string guid = "";
     uint64_t offset = 0;
-    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, offset)) {
+    ze_result_t result = pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, offset);
+    if (result != ZE_RESULT_SUCCESS) {
         return false;
     }
 
@@ -196,7 +205,8 @@ ze_result_t PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(const std::m
         std::string telemNodeDir = it.second;
 
         std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+        int errorNum = 0;
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString, errorNum)) {
             continue;
         }
 

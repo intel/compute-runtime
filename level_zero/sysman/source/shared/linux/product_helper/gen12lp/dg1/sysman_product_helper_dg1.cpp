@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,8 +39,9 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     std::string guid = "";
     uint64_t telemOffset = 0;
 
-    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     std::map<std::string, uint64_t> keyOffsetMap;
@@ -77,27 +78,30 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
 
     uint32_t computeTemperature = 0;
     key = "COMPUTE_TEMPERATURES";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, computeTemperature)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for COMPUTE_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, computeTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for COMPUTE_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
     // Check max temperature among IA, GT and LLC sensors across COMPUTE_TEMPERATURES
     maxComputeTemperature = getMaxTemperature(computeTemperature, numComputeTemperatureEntries);
 
     uint32_t coreTemperature = 0;
     key = "CORE_TEMPERATURES";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, coreTemperature)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for CORE_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, coreTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for CORE_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
     // Check max temperature among CORE0, CORE1, CORE2, CORE3 sensors across CORE_TEMPERATURES
     maxCoreTemperature = getMaxTemperature(coreTemperature, numCoreTemperatureEntries);
 
     uint64_t socTemperature = 0;
     key = "SOC_TEMPERATURES";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
     // Check max temperature among possible sensors like PCH or GT_TEMP, DRAM, SA, PSF, DE, PCIE, TYPEC across SOC_TEMPERATURES
     uint32_t maxSocTemperature = getMaxTemperature(socTemperature, numSocTemperatureEntries);
@@ -114,8 +118,9 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     std::string guid = "";
     uint64_t telemOffset = 0;
 
-    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     std::map<std::string, uint64_t> keyOffsetMap;
@@ -128,9 +133,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     double gpuMaxTemperature = 0;
     uint32_t computeTemperature = 0;
     std::string key("COMPUTE_TEMPERATURES");
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, computeTemperature)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for COMPUTE_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, computeTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for COMPUTE_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
 
     computeTemperature = (computeTemperature >> 8) & 0xff;

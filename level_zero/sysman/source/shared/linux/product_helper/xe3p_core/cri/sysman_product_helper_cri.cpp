@@ -175,7 +175,8 @@ static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::string &rootPath,
         std::string telemNodeDir = it.second;
 
         std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+        int errorNum = 0;
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString, errorNum)) {
             continue;
         }
 
@@ -221,11 +222,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getEccState(LinuxSysmanImp *pLinu
     }
 
     uint32_t eccState = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, eccStateKey->second, key, 0, eccState)) {
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, eccStateKey->second, key, 0, eccState);
+    if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Error@ %s(): Failed to read ECC_STATE from PMT, returning error:0x%x \n",
-                     __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+                     __FUNCTION__, result);
+        return result;
     }
 
     pState->currentState = (eccState & 0x1u) ? ZES_DEVICE_ECC_STATE_ENABLED : ZES_DEVICE_ECC_STATE_DISABLED;
@@ -409,9 +411,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
 
     uint32_t energyCounter = 0;
     std::string key = powerDomainToKeyMapIter->second;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
 
     // Energy Counter calculation
@@ -428,16 +431,18 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     // Timestamp calculation
     uint32_t timestampValue = 0;
     key = "XTAL_COUNT";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestampValue)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestampValue);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
 
     uint32_t frequency = 0;
     key = "XTAL_CLK_FREQUENCY";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, frequency)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock frequency from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, frequency);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock frequency from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
 
     double timestamp = timestampValue / indexToXtalClockFrequencyMap[frequency & 0x2];
@@ -458,16 +463,18 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
 
     uint64_t instantaneousPowerValue = 0;
     std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
 
     uint64_t averagePowerValue = 0;
     key = "AVERAGE_POWER_CONTAINER"; // 64-bit container with Average power values at different bit offsets
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, averagePowerValue)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Average Power from Telemetry, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, averagePowerValue);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Average Power from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
 
     // Power Values read from PMT are in U13.3 format (13 integer bits + 3 fractional bits = 16 bits) and in Watts
@@ -540,28 +547,33 @@ int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
 
 static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemNodeDir) {
     uint64_t rxCounter = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_RECEIVE_BYTES", 0, rxCounter)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_RECEIVE_BYTES", 0, rxCounter);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     uint64_t txCounter = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_TRANSMIT_BYTES", 0, txCounter)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_TRANSMIT_BYTES", 0, txCounter);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     uint64_t rxPacketCounter = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_RECEIVE_PACKETS", 0, rxPacketCounter)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_RECEIVE_PACKETS", 0, rxPacketCounter);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     uint64_t txPacketCounter = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_TRANSMIT_PACKETS", 0, txPacketCounter)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "PCIE_TRANSMIT_PACKETS", 0, txPacketCounter);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     uint64_t timeStamp = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "LPDDR_TELEM_CAPTURE_TIMESTAMP", 0, timeStamp)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "LPDDR_TELEM_CAPTURE_TIMESTAMP", 0, timeStamp);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     pStats->speed.gen = -1;
@@ -590,7 +602,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
         std::string telemNodeDir = it.second;
 
         std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+        int errorNum = 0;
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString, errorNum)) {
             continue;
         }
 
@@ -757,9 +770,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorMaxTemperature
         std::string key = "VR_TEMPERATURE_" + std::to_string(i);
 
         uint32_t vrTemperature = 0;
-        if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vrTemperature)) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vrTemperature);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+            return result;
         }
 
         double convertedTemperature = 0.0;
@@ -792,9 +806,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSy
     std::string key = "GPU_BOARD_TEMPERATURE";
 
     uint32_t gpuBoardTemperature = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, gpuBoardTemperature)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GPU board temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, gpuBoardTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GPU board temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        return result;
     }
 
     double maxGpuBoardTemperature = 0.0;
@@ -842,9 +857,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp
     uint32_t memoryActualFreq = 0;
     uint64_t telemOffset = 0;
     std::string key("VRAM_FREQUENCY");
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryActualFreq)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryActualFreq);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        return result;
     }
     *pActual = static_cast<double>(memoryActualFreq & 0xFFFF);
 
@@ -866,9 +882,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp 
     uint32_t memoryVoltage = 0;
     uint64_t telemOffset = 0;
     std::string key("VCCDDRQX_VID");
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryVoltage)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryVoltage);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        return result;
     }
 
     // VCCDDRQX VID is 9 bits U1.8 format representation
@@ -900,9 +917,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     uint32_t gpuMaxTemperature = 0;
     uint64_t telemOffset = 0;
     std::string key("SOC_TOPDIE_TEMPERATURE");
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, gpuMaxTemperature)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, gpuMaxTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        return result;
     }
     *pTemperature = static_cast<double>(gpuMaxTemperature);
 
@@ -925,17 +943,19 @@ static ze_result_t getMemoryBandwidthCounterValues(const std::map<std::string, u
 
             std::string readKey = "MEMSS" + std::to_string(i) + "_PERF_CTR_" + mbSuffix + "_CFI_NUM_READ_REQ";
             uint64_t readCounterValue = 0;
-            if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[readKey], readKey, telemOffset, readCounterValue)) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, readKey.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[readKey], readKey, telemOffset, readCounterValue);
+            if (result != ZE_RESULT_SUCCESS) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, readKey.c_str(), result);
+                return result;
             }
             msuReadCounter += readCounterValue;
 
             std::string writeKey = "MEMSS" + std::to_string(i) + "_PERF_CTR_" + mbSuffix + "_CFI_NUM_WRITE_REQ";
             uint64_t writeCounterValue = 0;
-            if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[writeKey], writeKey, telemOffset, writeCounterValue)) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, writeKey.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[writeKey], writeKey, telemOffset, writeCounterValue);
+            if (result != ZE_RESULT_SUCCESS) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, writeKey.c_str(), result);
+                return result;
             }
             msuWriteCounter += writeCounterValue;
         }
@@ -955,9 +975,10 @@ static ze_result_t getMemoryMaxBandwidth(const std::map<std::string, uint64_t> &
     uint64_t telemOffset = 0;
     uint32_t maxBandwidth = 0;
     std::string key = "VRAM_BANDWIDTH";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, maxBandwidth)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, maxBandwidth);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        return result;
     }
 
     maxBandwidth = maxBandwidth >> 16;
@@ -982,9 +1003,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
     uint64_t telemOffset = 0;
     uint32_t memoryMaxTemperature = 0;
     std::string key("VRAM_TEMPERATURE");
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryMaxTemperature)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryMaxTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        return result;
     }
     memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
     *pTemperature = static_cast<double>(memoryMaxTemperature);

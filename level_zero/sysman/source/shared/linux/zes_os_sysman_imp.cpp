@@ -476,14 +476,14 @@ uint32_t LinuxSysmanImp::getMemoryType() {
     return memType;
 }
 
-bool LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &offset) {
+ze_result_t LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &offset) {
 
     if (mapOfSubDeviceIdToTelemData.find(subDeviceId) != mapOfSubDeviceIdToTelemData.end()) {
         auto pTelemData = mapOfSubDeviceIdToTelemData[subDeviceId].get();
         telemDir = pTelemData->telemDir;
         guid = pTelemData->guid;
         offset = pTelemData->offset;
-        return true;
+        return ZE_RESULT_SUCCESS;
     }
 
     if (telemNodesInPciPath.empty()) {
@@ -493,16 +493,19 @@ bool LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &telemDir, s
     uint32_t deviceCount = getSubDeviceCount() + 1;
     if (telemNodesInPciPath.size() < deviceCount) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Number of telemetry nodes:%d is less than device count: %d \n", __FUNCTION__, telemNodesInPciPath.size(), deviceCount);
-        return false;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
+    ze_result_t result;
     if (telemNodesInPciPath.size() == 1) {
-        if (!PlatformMonitoringTech::getTelemData(telemNodesInPciPath, telemDir, guid, offset)) {
-            return false;
+        result = PlatformMonitoringTech::getTelemData(telemNodesInPciPath, telemDir, guid, offset);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
         }
     } else {
-        if (!PlatformMonitoringTech::getTelemDataForTileAggregator(telemNodesInPciPath, subDeviceId, telemDir, guid, offset)) {
-            return false;
+        result = PlatformMonitoringTech::getTelemDataForTileAggregator(telemNodesInPciPath, subDeviceId, telemDir, guid, offset);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
         }
     }
 
@@ -511,7 +514,7 @@ bool LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &telemDir, s
     pTelemData->offset = offset;
     pTelemData->guid = guid;
     mapOfSubDeviceIdToTelemData[subDeviceId] = std::move(pTelemData);
-    return true;
+    return ZE_RESULT_SUCCESS;
 }
 
 void LinuxSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {

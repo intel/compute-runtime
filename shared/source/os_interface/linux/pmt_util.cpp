@@ -50,7 +50,7 @@ void PmtUtil::getTelemNodesInPciPath(std::string_view rootPciPath, std::map<uint
     }
 }
 
-bool PmtUtil::readGuid(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString) {
+bool PmtUtil::readGuid(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString, int &errorNum) {
     std::ostringstream guidFilename;
     guidFilename << telemDir << "/guid";
     auto fd = FileDescriptor(guidFilename.str().c_str(), O_RDONLY);
@@ -60,13 +60,14 @@ bool PmtUtil::readGuid(std::string_view telemDir, std::array<char, PmtUtil::guid
         bytesRead = SysCalls::pread(fd, guidString.data(), guidString.size() - 1, 0);
     }
     if (bytesRead <= 0) {
+        errorNum = errno;
         return false;
     }
     std::replace(guidString.begin(), guidString.end(), '\n', '\0');
     return true;
 }
 
-bool PmtUtil::readOffset(std::string_view telemDir, uint64_t &offset) {
+bool PmtUtil::readOffset(std::string_view telemDir, uint64_t &offset, int &errorNum) {
 
     std::ostringstream offsetFilename;
     offsetFilename << telemDir << "/offset";
@@ -78,6 +79,7 @@ bool PmtUtil::readOffset(std::string_view telemDir, uint64_t &offset) {
         bytesRead = SysCalls::pread(fd, offsetString.data(), offsetString.size() - 1, 0);
     }
     if (bytesRead <= 0) {
+        errorNum = errno;
         return false;
     }
 
@@ -90,7 +92,7 @@ bool PmtUtil::readOffset(std::string_view telemDir, uint64_t &offset) {
     return true;
 }
 
-ssize_t PmtUtil::readTelem(std::string_view telemDir, const std::size_t count, const uint64_t offset, void *data) {
+ssize_t PmtUtil::readTelem(std::string_view telemDir, const std::size_t count, const uint64_t offset, void *data, int &errorNum) {
 
     if (data == nullptr) {
         return 0;
@@ -103,6 +105,7 @@ ssize_t PmtUtil::readTelem(std::string_view telemDir, const std::size_t count, c
     if (fd > 0) {
         bytesRead = SysCalls::pread(fd, data, count, static_cast<off_t>(offset));
     }
+    errorNum = errno;
     return bytesRead;
 }
 

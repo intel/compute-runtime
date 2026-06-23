@@ -200,9 +200,11 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
 HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndTelemFileIsNotAvailableThenCallFails, IsBMG) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadSuccess);
+    VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
         std::string strPathName(pathname);
         if (strPathName == telem3TelemFile) {
+            errno = ENOENT;
             return -1;
         }
         return (telem3FileAndFdMap.find(strPathName) != telem3FileAndFdMap.end()) ? telem3FileAndFdMap.at(strPathName) : -1;
@@ -217,9 +219,11 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     mockValidGuid = "0x5e2fa230"; // Guid present in guidToKeyOffsetMap for CRI
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadSuccess);
+    VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
         std::string strPathName(pathname);
         if (strPathName == telem3TelemFile) {
+            errno = ENOENT;
             return -1;
         }
         return (telem3FileAndFdMap.find(strPathName) != telem3FileAndFdMap.end()) ? telem3FileAndFdMap.at(strPathName) : -1;
@@ -234,6 +238,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     static int readFailCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         if (fd == telem3FileAndFdMap.at(telem3GuidFile)) {
             memcpy(buf, mockValidGuid.data(), count);
@@ -242,28 +247,68 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
         } else if (fd == telem3FileAndFdMap.at(telem3TelemFile)) {
             switch (offset) {
             case mockRxCounterLsbOffset:
-                count = (readFailCount == 1) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 1) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint32_t);
+                }
                 break;
             case mockRxCounterMsbOffset:
-                count = (readFailCount == 2) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 2) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint32_t);
+                }
                 break;
             case mockTxCounterLsbOffset:
-                count = (readFailCount == 3) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 3) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint32_t);
+                }
                 break;
             case mockTxCounterMsbOffset:
-                count = (readFailCount == 4) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 4) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint32_t);
+                }
                 break;
             case mockRxPacketCounterLsbOffset:
-                count = (readFailCount == 5) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 5) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint32_t);
+                }
                 break;
             case mockRxPacketCounterMsbOffset:
-                count = (readFailCount == 6) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 6) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint32_t);
+                }
                 break;
             case mockTxPacketCounterLsbOffset:
-                count = (readFailCount == 7) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 7) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint32_t);
+                }
                 break;
             case mockTxPacketCounterMsbOffset:
-                count = (readFailCount == 8) ? -1 : sizeof(uint32_t);
+                if (readFailCount == 8) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint32_t);
+                }
                 break;
             }
         }
@@ -334,6 +379,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     mockValidGuid = "0x5e2fa230"; // Guid present in guidToKeyOffsetMap for CRI
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         if (fd == telem3FileAndFdMap.at(telem3GuidFile)) {
             memcpy(buf, mockValidGuid.data(), count);
@@ -342,19 +388,44 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
         } else if (fd == telem3FileAndFdMap.at(telem3TelemFile)) {
             switch (offset) {
             case mockRxCounterOffset:
-                count = (readFailCount == 1) ? -1 : sizeof(uint64_t);
+                if (readFailCount == 1) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint64_t);
+                }
                 break;
             case mockTxCounterOffset:
-                count = (readFailCount == 2) ? -1 : sizeof(uint64_t);
+                if (readFailCount == 2) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint64_t);
+                }
                 break;
             case mockRxPacketCounterOffset:
-                count = (readFailCount == 3) ? -1 : sizeof(uint64_t);
+                if (readFailCount == 3) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint64_t);
+                }
                 break;
             case mockTxPacketCounterOffset:
-                count = (readFailCount == 4) ? -1 : sizeof(uint64_t);
+                if (readFailCount == 4) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint64_t);
+                }
                 break;
             case mockTimestampOffset:
-                count = (readFailCount == 5) ? -1 : sizeof(uint64_t);
+                if (readFailCount == 5) {
+                    errno = ENOENT;
+                    count = -1;
+                } else {
+                    count = sizeof(uint64_t);
+                }
                 break;
             }
         }

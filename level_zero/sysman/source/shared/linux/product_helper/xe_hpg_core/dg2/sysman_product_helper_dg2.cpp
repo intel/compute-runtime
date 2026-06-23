@@ -145,9 +145,10 @@ ze_result_t readMcChannelCounters(std::map<std::string, uint64_t> keyOffsetMap, 
         for (uint32_t mcChannelIndex = 0; mcChannelIndex < numMcChannels; mcChannelIndex++) {
             uint64_t val = 0;
             std::string readCounterKey = nameOfCounters[counterIndex] + "[" + std::to_string(mcChannelIndex) + "]";
-            if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, readCounterKey, telemOffset, val)) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
-                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, readCounterKey, telemOffset, val);
+            if (result != ZE_RESULT_SUCCESS) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
+                return result;
             }
             counterValues[counterIndex] += val;
         }
@@ -173,8 +174,9 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     std::string guid = "";
     uint64_t telemOffset = 0;
 
-    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    result = pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     std::map<std::string, uint64_t> keyOffsetMap;
@@ -209,8 +211,9 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     std::string guid = "";
     uint64_t telemOffset = 0;
 
-    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     std::map<std::string, uint64_t> keyOffsetMap;
@@ -221,8 +224,9 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     const std::string key("PACKAGE_ENERGY");
     uint64_t energyCounter = 0;
     constexpr uint64_t fixedPointToJoule = 1048576;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, energyCounter)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, energyCounter);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     // PMT will return energy counter in Q20 format(fixed point representation) where first 20 bits(from LSB) represent decimal part
