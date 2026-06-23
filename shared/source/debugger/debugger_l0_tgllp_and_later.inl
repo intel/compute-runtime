@@ -75,10 +75,14 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
 
     for (const auto &pair : fieldOffsetAndValue) {
 
-        // Store SBA field offset to R0
-        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(cmdStream, RegisterOffsets::csGprR0, static_cast<uint32_t>(pair.first), true, false);
-        // Add GPR0 to GPR15, store result in GPR1
-        NEO::EncodeMath<GfxFamily>::addition(cmdStream, AluRegisters::gpr0, static_cast<AluRegisters>(DebuggerAluRegisters::gpr15), AluRegisters::gpr1);
+        // Use GPR13/GPR14 as scratch (GPR15 is already reserved for the SBA buffer base).
+        // GPR0/GPR1 must be avoided here: the Direct Submission relaxed-ordering scheduler's
+        // indirect MI_BATCH_BUFFER_START consumes GPR0 and keeps GPR0-GPR11 live across task
+        // dispatch, so clobbering them here corrupts the scheduler's jump target.
+        // Store SBA field offset to GPR13
+        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(cmdStream, RegisterOffsets::csGprR13, static_cast<uint32_t>(pair.first), true, false);
+        // Add GPR13 to GPR15, store result in GPR14
+        NEO::EncodeMath<GfxFamily>::addition(cmdStream, AluRegisters::gpr13, static_cast<AluRegisters>(DebuggerAluRegisters::gpr15), AluRegisters::gpr14);
 
         // Cmds to store dest address - from GPR
         auto miStoreRegMemLow = cmdStream.getSpaceForCmd<MI_STORE_REGISTER_MEM>();
@@ -103,8 +107,8 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
         const auto gmmHelper = device->getGmmHelper();
         const auto gpuVaOfDataDWORD1 = gmmHelper->decanonize(gpuVaOfData + 4);
 
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemLow, RegisterOffsets::csGprR1, gpuVaOfAddress, false, false);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemHigh, RegisterOffsets::csGprR1 + 4, gpuVaOfAddress + 4, false, false);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemLow, RegisterOffsets::csGprR14, gpuVaOfAddress, false, false);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemHigh, RegisterOffsets::csGprR14 + 4, gpuVaOfAddress + 4, false, false);
 
         MI_STORE_DATA_IMM setSbaBufferAddress = GfxFamily::cmdInitStoreDataImm;
         gpuVaOfData = gmmHelper->decanonize(gpuVaOfData);

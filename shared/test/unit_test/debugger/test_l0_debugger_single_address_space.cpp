@@ -154,7 +154,7 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenNonZeroSbaAddressesWhenProgra
         ASSERT_NE(cmdList.end(), itor);
 
         auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-        EXPECT_EQ(RegisterOffsets::csGprR0, lri->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR13, lri->getRegisterOffset());
 
         itor = find<MI_MATH *>(itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
@@ -263,7 +263,7 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenPro
     ASSERT_NE(cmdList.end(), itor);
 
     auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(RegisterOffsets::csGprR0, lri->getRegisterOffset());
+    EXPECT_EQ(RegisterOffsets::csGprR13, lri->getRegisterOffset());
 
     itor = find<MI_MATH *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
@@ -310,6 +310,65 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenPro
     auto miArb = genCmdCast<MI_ARB_CHECK *>(*itor);
 
     EXPECT_FALSE(miArb->getPreParserDisable());
+
+    pDevice->getMemoryManager()->freeGraphicsMemory(streamAllocation);
+}
+
+HWTEST2_P(L0DebuggerBBlevelParameterizedTest, givenSingleAddressSpaceSbaTrackingWhenProgrammingCommandsThenScratchGprsAvoidGpr0AndGpr1, PlatformsSupportingSbaTracking) {
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    debugger->initialize();
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    AllocationProperties commandBufferProperties = {pDevice->getRootDeviceIndex(),
+                                                    true,
+                                                    MemoryConstants::pageSize,
+                                                    AllocationType::commandBuffer,
+                                                    false,
+                                                    pDevice->getDeviceBitfield()};
+    auto streamAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+    ASSERT_NE(nullptr, streamAllocation);
+
+    NEO::LinearStream cmdStream;
+    cmdStream.replaceGraphicsAllocation(streamAllocation);
+    cmdStream.replaceBuffer(streamAllocation->getUnderlyingBuffer(), streamAllocation->getUnderlyingBufferSize());
+
+    NEO::Debugger::SbaAddresses sbaAddresses = {};
+    sbaAddresses.generalStateBaseAddress = 0x60000;
+    sbaAddresses.surfaceStateBaseAddress = 0x1234567000;
+    sbaAddresses.instructionBaseAddress = 0xfff80000;
+    sbaAddresses.indirectObjectBaseAddress = 0x8100000;
+    sbaAddresses.dynamicStateBaseAddress = 0xffff0000aaaa0000;
+    sbaAddresses.bindlessSurfaceStateBaseAddress = 0x1234567000;
+
+    debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses, GetParam());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
+
+    // The Direct Submission relaxed-ordering scheduler keeps GPR0-GPR11 live across task dispatch
+    // and reads its indirect MI_BATCH_BUFFER_START target from GPR0, so the debugger must not use
+    // GPR0/GPR1 as scratch. Verify GPR13/GPR14 are used instead and GPR0/GPR1 are never referenced.
+    auto lriList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_FALSE(lriList.empty());
+    for (auto &it : lriList) {
+        auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        EXPECT_EQ(RegisterOffsets::csGprR13, lri->getRegisterOffset());
+        EXPECT_NE(RegisterOffsets::csGprR0, lri->getRegisterOffset());
+        EXPECT_NE(RegisterOffsets::csGprR1, lri->getRegisterOffset());
+    }
+
+    auto srmList = findAll<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_FALSE(srmList.empty());
+    for (auto &it : srmList) {
+        auto srm = genCmdCast<MI_STORE_REGISTER_MEM *>(*it);
+        const auto registerAddress = srm->getRegisterAddress();
+        EXPECT_TRUE(registerAddress == RegisterOffsets::csGprR14 || registerAddress == RegisterOffsets::csGprR14 + 4);
+        EXPECT_NE(RegisterOffsets::csGprR0, registerAddress);
+        EXPECT_NE(RegisterOffsets::csGprR0 + 4, registerAddress);
+        EXPECT_NE(RegisterOffsets::csGprR1, registerAddress);
+        EXPECT_NE(RegisterOffsets::csGprR1 + 4, registerAddress);
+    }
 
     pDevice->getMemoryManager()->freeGraphicsMemory(streamAllocation);
 }
