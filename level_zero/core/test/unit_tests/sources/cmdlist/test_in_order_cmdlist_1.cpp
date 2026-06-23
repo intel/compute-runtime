@@ -1088,7 +1088,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenResolveDependenciesViaPip
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenSubmittingThenProgramBarrierInBetweenDispatches) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenSubmittingThenProgramPipeControlOrSemaphoreInBetweenDispatches) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);
 
@@ -1112,13 +1112,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfil
         ptrOffset(cmdStream->getCpuBase(), offset),
         cmdStream->getUsed() - offset));
 
-    auto itor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itor);
+    if (immCmdList->dcFlushSupport || !immCmdList->isHeaplessModeEnabled()) {
+        auto itor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+    } else {
+        auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+    }
 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderCmdListWhenSubmittingThenProgramBarrierInBetweenDispatches) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderCmdListWhenSubmittingThenProgramPipeControlOrSemaphoreInBetweenDispatches) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);
 
@@ -1142,8 +1147,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderCmdListWhenSubmitt
         ptrOffset(cmdStream->getCpuBase(), offset),
         cmdStream->getUsed() - offset));
 
-    auto itor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itor);
+    if (immCmdList->dcFlushSupport) {
+        auto itor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+    } else {
+        auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+    }
 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
