@@ -20,6 +20,13 @@
 #include <cstdint>
 
 namespace NEO {
+
+// bit fields are not addressable
+template <typename T>
+concept HasAddressableMaxBVHLevels = requires {
+    &T::maxBVHLevels;
+};
+
 class RayTracingHelper : public NonCopyableAndNonMovableClass {
   public:
     static constexpr uint32_t bvhStackSize = 96;
@@ -30,6 +37,9 @@ class RayTracingHelper : public NonCopyableAndNonMovableClass {
 
     static constexpr uint32_t maxSizeOfRtStacksPerDss = 4096;
     static constexpr uint32_t fixedSizeOfRtStacksPerDss = 2048;
+
+    static constexpr bool maxBVHLevelsIsBitfield =
+        !HasAddressableMaxBVHLevels<RTDispatchGlobals>;
 
     static size_t getDispatchGlobalSize() {
         return static_cast<size_t>(alignUp(sizeof(RTDispatchGlobals), MemoryConstants::cacheLineSize));

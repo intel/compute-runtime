@@ -3490,3 +3490,49 @@ TEST_F(DeviceTest, givenUsedMemoryExceedsTotalMemoryWhenQueryingUsableMemorySize
 
     pDevice->getExecutionEnvironment()->memoryManager.reset(originalMemoryManager);
 }
+
+using DeviceTestRayTracing = Test<DeviceFixture>;
+
+HWTEST2_F(DeviceTestRayTracing, WhenAllocateRTDispatchGlobalsIsCalledThenStackSizePerDssIsSetCorrectly, IsXe3pLpg) {
+
+    pDevice->initializeRayTracing(8);
+    pDevice->allocateRTDispatchGlobals(8);
+    EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
+    RTDispatchGlobals dispatchGlobals = *reinterpret_cast<RTDispatchGlobals *>(pDevice->getRTDispatchGlobals(3)->rtDispatchGlobalsArray->getUnderlyingBuffer());
+
+    auto expectedNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(*pDevice), 2048u);
+    auto expectedSyncNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(*pDevice), 4096u);
+
+    const auto &releaseHelper = getReleaseHelper();
+    EXPECT_FALSE(releaseHelper.isNumRtStacksPerDssFixedValue());
+
+    EXPECT_EQ(expectedNumDSSRTStacks, dispatchGlobals.numDSSRTStacks);
+    EXPECT_EQ(expectedSyncNumDSSRTStacks, dispatchGlobals.syncNumDSSRTStacks);
+
+    if constexpr (RayTracingHelper::maxBVHLevelsIsBitfield) {
+        EXPECT_EQ(0u, dispatchGlobals.maxBVHLevels);
+    } else {
+        EXPECT_EQ(8u, dispatchGlobals.maxBVHLevels);
+    }
+}
+
+HWTEST2_F(DeviceTestRayTracing, giveSetMaxBVHLevelsWhenAllocateRTDispatchGlobalsIsCalledThenStackSizePerDssIsSetCorrectly, IsXe3pLpg) {
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.SetMaxBVHLevels.set(7);
+
+    pDevice->initializeRayTracing(7);
+    pDevice->allocateRTDispatchGlobals(7);
+    EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
+    RTDispatchGlobals dispatchGlobals = *reinterpret_cast<RTDispatchGlobals *>(pDevice->getRTDispatchGlobals(3)->rtDispatchGlobalsArray->getUnderlyingBuffer());
+
+    auto expectedNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(*pDevice), 2048u);
+    auto expectedSyncNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(*pDevice), 4096u);
+
+    const auto &releaseHelper = getReleaseHelper();
+    EXPECT_FALSE(releaseHelper.isNumRtStacksPerDssFixedValue());
+
+    EXPECT_EQ(expectedNumDSSRTStacks, dispatchGlobals.numDSSRTStacks);
+    EXPECT_EQ(expectedSyncNumDSSRTStacks, dispatchGlobals.syncNumDSSRTStacks);
+    EXPECT_EQ(7u, dispatchGlobals.maxBVHLevels);
+}

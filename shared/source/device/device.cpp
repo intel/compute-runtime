@@ -1246,6 +1246,13 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         return;
     }
 
+    auto maxBvhLevelsToProgram = maxBvhLevels;
+    if constexpr (RayTracingHelper::maxBVHLevelsIsBitfield) {
+        if (maxBvhLevels == 8) {
+            maxBvhLevelsToProgram = 0;
+        }
+    }
+
     for (unsigned int tile = 0; tile < tileCount; tile++) {
         DeviceBitfield deviceBitfield =
             (tileCount == 1)
@@ -1271,7 +1278,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
             .callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr),
             .stackSizePerRay = releaseHelper.getStackSizePerRay(),
             .numDSSRTStacks = rtStacksPerDss,
-            .maxBVHLevels = maxBvhLevels,
+            .maxBVHLevels = maxBvhLevelsToProgram,
             .flags = RayTracingHelper::depthTestLessEqualFlag,
         };
 
