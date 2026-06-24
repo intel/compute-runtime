@@ -21,7 +21,6 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
-#include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/platform/platform.h"
 
@@ -34,7 +33,6 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
     name.reserve(100);
     auto osInterface = getRootDeviceEnvironment().osInterface.get();
     driverInfo.reset(DriverInfo::create(&device.getHardwareInfo(), osInterface));
-    initGTPinHelper();
     initializeCaps();
     initializeMaxPoolCount();
 
@@ -184,10 +182,6 @@ DeviceBitfield ClDevice::getDeviceBitfield() const {
     return device.getDeviceBitfield();
 }
 
-void ClDevice::initGTPinHelper() {
-    gtpinGfxCoreHelper = GTPinGfxCoreHelper::create(this->getRootDeviceEnvironment().getHardwareInfo()->platform.eRenderCoreFamily);
-}
-
 cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
     return CL_QUEUE_CAPABILITY_CREATE_SINGLE_QUEUE_EVENTS_INTEL |
            CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL |
@@ -270,10 +264,6 @@ const ProductHelper &ClDevice::getProductHelper() const {
 
 const CompilerProductHelper &ClDevice::getCompilerProductHelper() const {
     return device.getCompilerProductHelper();
-}
-
-const GTPinGfxCoreHelper &ClDevice::getGTPinGfxCoreHelper() const {
-    return *gtpinGfxCoreHelper;
 }
 
 cl_version ClDevice::getExtensionVersion(std::string name) {

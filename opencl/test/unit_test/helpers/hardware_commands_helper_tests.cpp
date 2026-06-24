@@ -878,33 +878,6 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     delete pKernel;
 }
 
-HWTEST2_F(HardwareCommandsTest, givenNoBTEntriesInKernelDescriptorAndGTPinInitializedWhenSettingBTPointerThenBTPointerIsSet, IsHeapfulRequired) {
-    isGTPinInitialized = true;
-
-    auto pKernelInfo = std::make_unique<MockKernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    ASSERT_EQ(0u, pKernelInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries);
-
-    MockContext context;
-    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
-
-    auto pKernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
-
-    constexpr auto mockSshSize{256u};
-    constexpr auto mockBTOffset{32u};
-    auto mockSsh = std::make_unique<char[]>(mockSshSize);
-    ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-    pKernel->resizeSurfaceStateHeap(mockSsh.get(), mockSshSize, 1u, mockBTOffset);
-    mockSsh.release();
-
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::surfaceState, 8192);
-
-    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
-    EXPECT_NE(0u, dstBindingTablePointer);
-    isGTPinInitialized = false;
-}
-
 HWTEST2_F(HardwareCommandsTest, GivenKernelWithInvalidSamplerStateArrayWhenSendIndirectStateIsCalledThenInterfaceDescriptorIsNotPopulated, IsGen12LP) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;

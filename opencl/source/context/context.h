@@ -15,7 +15,6 @@
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/context/driver_diagnostics.h"
-#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
 #include "opencl/source/mem_obj/map_operations_handler.h"
@@ -132,7 +131,6 @@ class Context : public BaseObject<_cl_context> {
         } else {
             pContext->getBufferPoolAllocator(BufferPoolType::SmallBuffersPool).initAggregatedSmallBuffers(pContext);
         }
-        gtpinNotifyContextCreate(pContext);
         return pContext;
     }
 

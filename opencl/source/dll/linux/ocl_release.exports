@@ -10,6 +10,5 @@
       clGetExtensionFunctionAddress;
       clIcdGetPlatformIDsKHR;
       clGetPlatformInfo;
-      GTPin_Init;
   local: *;
 };

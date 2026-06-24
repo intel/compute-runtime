@@ -27,7 +27,6 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/execution_environment/cl_execution_environment.h"
-#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/surface_formats.h"
@@ -52,7 +51,6 @@ Context::Context(
 }
 
 Context::~Context() {
-    gtpinNotifyContextDestroy(static_cast<cl_context>(this));
 
     if (multiRootDeviceTimestampPacketAllocator.get() != nullptr) {
         multiRootDeviceTimestampPacketAllocator.reset();

@@ -343,7 +343,6 @@ bool Program::isIsaPoolingEnabled(Device &neoDevice) {
 
     return neoDevice.getProductHelper().is2MBLocalMemAlignmentEnabled() &&
            nullptr == neoDevice.getL0Debugger() &&
-           false == gtpinIsGTPinInitialized() &&
            false == neoDevice.getMemoryManager()->isKernelBinaryReuseEnabled();
 }
 

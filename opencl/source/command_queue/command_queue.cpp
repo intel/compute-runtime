@@ -47,7 +47,6 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/helpers/queue_helpers.h"
@@ -182,7 +181,6 @@ CommandQueue::~CommandQueue() {
     if (context && !isSpecialCommandQueue) {
         context->decRefInternal();
     }
-    gtpinRemoveCommandQueue(this);
 }
 
 void tryAssignSecondaryEngine(Device &device, EngineControl *&engineControl, EngineTypeUsage engineTypeUsage) {
@@ -520,10 +518,6 @@ WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, s
 
         DEBUG_BREAK_IF(getHwTag() < gpgpuTaskCountToWait);
 
-        if (gtpinIsGTPinInitialized()) {
-            gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
-        }
-
         for (const CopyEngineState &copyEngine : copyEnginesToWait) {
             auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
 
@@ -532,8 +526,6 @@ WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, s
                 return WaitStatus::gpuHang;
             }
         }
-    } else if (gtpinIsGTPinInitialized()) {
-        gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
     }
 
     for (const CopyEngineState &copyEngine : copyEnginesToWait) {

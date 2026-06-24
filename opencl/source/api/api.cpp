@@ -1840,7 +1840,6 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
-    gtpinNotifyKernelCreate(kernel);
     TRACING_EXIT(ClCreateKernel, &kernel);
     return kernel;
 }
@@ -1890,7 +1889,6 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                     TRACING_EXIT(ClCreateKernelsInProgram, &retVal);
                     return retVal;
                 }
-                gtpinNotifyKernelCreate(kernels[i]);
             }
         }
 
@@ -3637,11 +3635,6 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;
-    }
-
-    TakeOwnershipWrapper<MultiDeviceKernel> kernelOwnership(*pMultiDeviceKernel, gtpinIsGTPinInitialized());
-    if (gtpinIsGTPinInitialized()) {
-        gtpinNotifyKernelSubmit(kernel, pCommandQueue);
     }
 
     retVal = pCommandQueue->enqueueKernel(
@@ -5967,9 +5960,6 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
-    if (clonedMultiDeviceKernel != nullptr) {
-        gtpinNotifyKernelCreate(clonedMultiDeviceKernel);
-    }
 
     TRACING_EXIT(ClCloneKernel, &clonedMultiDeviceKernel);
     return clonedMultiDeviceKernel;
@@ -6335,11 +6325,6 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
 
     if (pKernel->usesSyncBuffer()) {
         device.getDevice().allocateSyncBufferHandler();
-    }
-
-    TakeOwnershipWrapper<MultiDeviceKernel> kernelOwnership(*pMultiDeviceKernel, gtpinIsGTPinInitialized());
-    if (gtpinIsGTPinInitialized()) {
-        gtpinNotifyKernelSubmit(kernel, pCommandQueue);
     }
 
     retVal = pCommandQueue->enqueueKernel(

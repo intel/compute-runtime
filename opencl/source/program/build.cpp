@@ -19,7 +19,6 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/program/program.h"
 
 namespace NEO {
@@ -105,7 +104,6 @@ cl_int Program::build(
 
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
             inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-            inputArgs.gtPinInput = gtpinGetIgcInit();
             inputArgs.specializedValues = this->specConstantsValues;
             DBG_LOG(LogApiCalls,
                     "Build Options", inputArgs.apiOptions.begin(),
@@ -144,7 +142,7 @@ cl_int Program::build(
 
         retVal = processGenBinaries(deviceVector, phaseReached);
 
-        auto skipLastExplicitArg = isGTPinInitialized;
+        auto skipLastExplicitArg = false;
         auto containsBufferStatefulAccess = AddressingModeHelper::containsBufferStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray, skipLastExplicitArg);
         auto isUserKernel = !isBuiltIn;
 
@@ -161,9 +159,6 @@ cl_int Program::build(
             break;
         }
 
-        if (gtpinIsGTPinInitialized()) {
-            debugNotify(deviceVector, phaseReached);
-        }
         notifyModuleCreate();
         if (!clDevices[0]->getDevice().getDefaultEngine().commandStreamReceiver->isHardwareMode()) [[unlikely]] {
             dumpKernelInfoToAubComments();
