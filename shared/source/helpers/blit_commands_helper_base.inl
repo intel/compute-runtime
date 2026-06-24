@@ -284,7 +284,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
                 tmpCmd.setDestinationBaseAddress(dstAddr);
                 tmpCmd.setSourceBaseAddress(srcAddr);
                 if (hasAdditionalBlitProperties && (firstCommand || lastCommand)) {
-                    applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
+                    applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand, firstCommand);
                     firstCommand = false;
                 }
 
@@ -344,9 +344,10 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRe
         if (debugManager.flags.PrintImageBlitBlockCopyCmdDetails.get()) {
             printImageBlitBlockCopyCommand(tmpCmd, i);
         }
-        bool lastCommand = (i == (blitProperties.copySize.z - 1));
-        if (hasAdditionalBlitProperties && (i == 0 || lastCommand)) {
-            applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
+        const bool firstCommand = (i == 0);
+        const bool lastCommand = (i == (blitProperties.copySize.z - 1));
+        if (hasAdditionalBlitProperties && (firstCommand || lastCommand)) {
+            applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand, firstCommand);
         }
         auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_BLOCK_COPY_BLT>();
         *cmd = tmpCmd;
@@ -481,7 +482,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferR
                 appendBlitCommandsForBuffer(blitProperties, tmpCmd, rootDeviceEnvironment);
 
                 if (hasAdditionalBlitProperties && (firstCommand || lastCommand)) {
-                    applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
+                    applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand, firstCommand);
                     firstCommand = false;
                 }
                 auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
