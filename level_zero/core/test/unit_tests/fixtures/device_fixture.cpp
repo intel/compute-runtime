@@ -10,6 +10,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -324,6 +325,15 @@ void GetMemHandlePtrTestFixture::setUp() {
 void GetMemHandlePtrTestFixture::tearDown() {
     driverHandle->setMemoryManager(prevMemoryManager);
     delete currMemoryManager;
+}
+
+uint8_t GetMemHandlePtrTestFixture::callIsOpaqueHandleSupported(std::unique_ptr<NEO::DriverModel> driverModel, IpcHandleType &handleType) {
+    auto &executionEnvironment = driverHandle->getMemoryManager()->peekExecutionEnvironment();
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(driverModel));
+
+    handleType = IpcHandleType::maxHandle;
+    return context->isOpaqueHandleSupported(&handleType);
 }
 
 PageFaultDeviceFixture::PageFaultDeviceFixture() = default;

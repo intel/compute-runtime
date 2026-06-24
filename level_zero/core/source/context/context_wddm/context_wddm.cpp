@@ -11,8 +11,7 @@
 namespace L0 {
 
 uint8_t Context::isOpaqueHandleSupported(IpcHandleType *handleType) {
-    *handleType = IpcHandleType::ntHandle;
-    return OpaqueHandlingType::nthandle;
+    return isWddmOpaqueHandleSupported(handleType);
 }
 
 bool Context::isIPCHandleSharingSupported() {

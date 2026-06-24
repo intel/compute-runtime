@@ -54,14 +54,6 @@ bool ProductHelperHw<gfxProduct>::isNonCoherentTimestampsModeEnabled() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isPidFdOrSocketForIpcSupported() const {
-    if (debugManager.flags.EnablePidFdOrSocketsForIpc.get() != -1) {
-        return debugManager.flags.EnablePidFdOrSocketsForIpc.get();
-    }
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
     timeoutUs = 1'000;
     maxTimeoutUs = 1'000;
