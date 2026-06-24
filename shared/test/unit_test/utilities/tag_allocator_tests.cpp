@@ -66,6 +66,11 @@ struct TimeStamps {
         return end;
     }
 
+    void getGlobalTimestampValues(uint32_t packetIndex, uint64_t &globalStart, uint64_t &globalEnd) const {
+        globalStart = start;
+        globalEnd = end;
+    }
+
     void const *getContextEndAddress(uint32_t packetIndex) const { return &end; }
 
     uint64_t start;
@@ -580,6 +585,9 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(perfCounterNode.getGlobalEndRef());
         EXPECT_ANY_THROW(perfCounterNode.getSinglePacketSize());
         EXPECT_ANY_THROW(perfCounterNode.assignDataToAllTimestamps(0, nullptr));
+        uint64_t globalStart = 0u;
+        uint64_t globalEnd = 0u;
+        EXPECT_ANY_THROW(perfCounterNode.getGlobalTimestampValues(0, globalStart, globalEnd));
     }
 
     {
@@ -643,6 +651,9 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_NO_THROW(timestampPacketsNode.getContextStartValue(0));
         EXPECT_NO_THROW(timestampPacketsNode.getGlobalEndValue(0));
         EXPECT_NO_THROW(timestampPacketsNode.getGlobalStartValue(0));
+        uint64_t globalStart = 0u;
+        uint64_t globalEnd = 0u;
+        EXPECT_NO_THROW(timestampPacketsNode.getGlobalTimestampValues(0, globalStart, globalEnd));
     }
 }
 
@@ -690,4 +701,46 @@ TEST_F(TagAllocatorTest, givenTimestampTagNodeWithoutAllocatorWhenAssigningPacke
     EXPECT_EQ(2u, node.getGlobalStartValue(0u));
     EXPECT_EQ(3u, node.getContextEndValue(0u));
     EXPECT_EQ(4u, node.getGlobalEndValue(0u));
+
+    uint64_t globalStart = 0u;
+    uint64_t globalEnd = 0u;
+    node.getGlobalTimestampValues(0u, globalStart, globalEnd);
+    EXPECT_EQ(node.getGlobalStartValue(0u), globalStart);
+    EXPECT_EQ(node.getGlobalEndValue(0u), globalEnd);
+}
+
+TEST_F(TagAllocatorTest, givenTimestampTagNodeWhenGettingGlobalTimestampValuesThenSingleCopyMatchesPerValueGetters) {
+    using TimestampType64 = TimestampPackets<uint64_t, TimestampPacketConstants::preferredPacketCount>;
+    TagNode<TimestampType64> node = {};
+    TimestampType64 data = {};
+    node.tagForCpuAccess = &data;
+
+    const std::array<uint64_t, 8> sourcePackets = {1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u};
+    node.setPacketsUsed(2u);
+    node.assignDataToAllTimestamps(0u, sourcePackets.data());
+    node.assignDataToAllTimestamps(1u, sourcePackets.data() + 4u);
+
+    for (uint32_t i = 0u; i < node.getPacketsUsed(); i++) {
+        uint64_t globalStart = 0u;
+        uint64_t globalEnd = 0u;
+        node.getGlobalTimestampValues(i, globalStart, globalEnd);
+        EXPECT_EQ(node.getGlobalStartValue(i), globalStart);
+        EXPECT_EQ(node.getGlobalEndValue(i), globalEnd);
+    }
+}
+
+TEST_F(TagAllocatorTest, givenHwTimeStampsTagNodeWhenGettingGlobalTimestampValuesThenStartAndEndAreReturned) {
+    TagNode<HwTimeStamps> node = {};
+    HwTimeStamps data = {};
+    data.globalStartTS = 123u;
+    data.globalEndTS = 456u;
+    node.tagForCpuAccess = &data;
+
+    uint64_t globalStart = 0u;
+    uint64_t globalEnd = 0u;
+    node.getGlobalTimestampValues(0u, globalStart, globalEnd);
+    EXPECT_EQ(data.globalStartTS, globalStart);
+    EXPECT_EQ(data.globalEndTS, globalEnd);
+    EXPECT_EQ(node.getGlobalStartValue(0u), globalStart);
+    EXPECT_EQ(node.getGlobalEndValue(0u), globalEnd);
 }

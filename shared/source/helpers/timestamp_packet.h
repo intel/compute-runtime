@@ -11,6 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aux_translation.h"
+#include "shared/source/helpers/cpu_copy_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipe_control_args.h"
@@ -62,6 +63,13 @@ class TimestampPackets : public TagTypeBase {
     uint64_t getGlobalStartValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].globalStart); }
     uint64_t getContextEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].contextEnd); }
     uint64_t getGlobalEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].globalEnd); }
+
+    void getGlobalTimestampValues(uint32_t packetIndex, uint64_t &globalStart, uint64_t &globalEnd) const {
+        alignas(64) Packet local;
+        streamCopy(&local, &packets[packetIndex], sizeof(Packet));
+        globalStart = static_cast<uint64_t>(local.globalStart);
+        globalEnd = static_cast<uint64_t>(local.globalEnd);
+    }
 
     void const *getContextEndAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextEnd); }
     void const *getContextStartAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextStart); }

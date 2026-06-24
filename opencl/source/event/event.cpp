@@ -383,8 +383,11 @@ void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContai
             continue;
         }
         for (auto i = 0u; i < timestamp->getPacketsUsed(); ++i) {
-            globalStartTS = std::min(globalStartTS, timestamp->getGlobalStartValue(i));
-            globalEndTS = std::max(globalEndTS, timestamp->getGlobalEndValue(i));
+            uint64_t packetGlobalStartTS = 0u;
+            uint64_t packetGlobalEndTS = 0u;
+            timestamp->getGlobalTimestampValues(i, packetGlobalStartTS, packetGlobalEndTS);
+            globalStartTS = std::min(globalStartTS, packetGlobalStartTS);
+            globalEndTS = std::max(globalEndTS, packetGlobalEndTS);
         }
     }
 }
