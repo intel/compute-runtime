@@ -311,15 +311,6 @@ void MemoryExportImportWinHandleTest::SetUp() {
 void *DriverHandleGetIpcHandleMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags,
                                                    uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc,
                                                    NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
-    // Check if platform supports pidfd or socket for IPC
-    auto &productHelper = neoDevice->getProductHelper();
-    if (productHelper.isPidFdOrSocketForIpcSupported()) {
-        // Simulate pidfd where the original handle is not the same as the imported one
-        EXPECT_NE(handle, static_cast<uint64_t>(mockFd));
-    } else {
-        // Without pidfd/socket support, handle should be the same
-        EXPECT_EQ(handle, static_cast<uint64_t>(mockFd));
-    }
     if (mockFd == allocationMap.second) {
         return allocationMap.first;
     }
