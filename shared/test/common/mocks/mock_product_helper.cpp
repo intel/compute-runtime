@@ -477,11 +477,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isNonCoherentTimestampsModeEnabled() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isPidFdOrSocketForIpcSupported() const {
-    return false;
-}
-
-template <>
 void ProductHelperHw<IGFX_UNKNOWN>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
 }
 
