@@ -57,6 +57,7 @@ struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
     using BaseClass = KernelHw<gfxCoreFamily>;
     using BaseClass::BaseClass;
     using ::L0::KernelImp::createPrintfBuffer;
+    using ::L0::KernelImp::getCrossThreadDataSpan;
     using ::L0::KernelImp::module;
     using ::L0::KernelImp::patchBindlessSurfaceState;
     using ::L0::KernelImp::privateState;
@@ -3544,6 +3545,102 @@ HWTEST_F(SetKernelArg, givenSlmPointersSetInReverseOrderWhenSettingKernelArgThen
     auto slmArgSizes = mockKernel.getSlmArgSizes();
     EXPECT_EQ(64u, slmArgSizes[0]);
     EXPECT_EQ(32u, slmArgSizes[1]);
+}
+
+HWTEST_F(SetKernelArg, givenCompilerResolvedSlmAllocationModeWhenSettingLocalArgsThenOffsetsInSlmAreNotShiftedByInlineSlmSize) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
+    mockKernel.setModule(module.get());
+    mockKernel.initialize(&desc);
+
+    constexpr NEO::CrossThreadDataOffset arg0SlmOffset = 0x20;
+    constexpr NEO::CrossThreadDataOffset arg1SlmOffset = 0x40;
+    constexpr uint32_t slmInlineSize = 256u;
+
+    auto &descriptor = mockKernel.getDescriptor();
+    descriptor.kernelAttributes.slmInlineSize = slmInlineSize;
+    descriptor.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::compilerResolved;
+
+    for (auto &arg : descriptor.payloadMappings.explicitArgs) {
+        arg.getTraits().addressQualifier = static_cast<uint8_t>(NEO::KernelArgMetadata::AddrGlobal);
+    }
+    auto setupLocalArg = [&descriptor](uint32_t argIndex, NEO::CrossThreadDataOffset slmOffset, uint8_t alignment) {
+        auto &arg = descriptor.payloadMappings.explicitArgs[argIndex];
+        arg.getTraits().addressQualifier = static_cast<uint8_t>(NEO::KernelArgMetadata::AddrLocal);
+        auto &ptrArg = arg.template as<NEO::ArgDescPointer>();
+        ptrArg.slmOffset = slmOffset;
+        ptrArg.requiredSlmAlignment = alignment;
+        ptrArg.bufferSize = NEO::undefined<NEO::CrossThreadDataOffset>;
+    };
+    setupLocalArg(0, arg0SlmOffset, 4u);
+    setupLocalArg(1, arg1SlmOffset, 8u);
+
+    auto &crossThreadData = mockKernel.privateState.crossThreadData;
+    *reinterpret_cast<uint32_t *>(&crossThreadData[arg0SlmOffset]) = 0u;
+    descriptor.patchOffsetInSlmIfRequired(mockKernel.getCrossThreadDataSpan());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, 64, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(1, 32, nullptr));
+
+    auto readSlmOffset = [&crossThreadData](NEO::CrossThreadDataOffset offset) {
+        return *reinterpret_cast<uint32_t *>(&crossThreadData[offset]);
+    };
+
+    EXPECT_EQ(0u, readSlmOffset(arg0SlmOffset));
+    EXPECT_EQ(64u, readSlmOffset(arg1SlmOffset)); // arg0 size
+
+    auto slmArgOffsetValues = mockKernel.getSlmArgOffsetValues();
+    EXPECT_EQ(0u, slmArgOffsetValues[0]);
+    EXPECT_EQ(64u, slmArgOffsetValues[1]);
+}
+
+HWTEST_F(SetKernelArg, givenRuntimeAdjustedSlmAllocationModeWhenSettingLocalArgsThenCrossThreadDataHoldsOffsetsShiftedByInlineSlmSize) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
+    mockKernel.setModule(module.get());
+    mockKernel.initialize(&desc);
+
+    constexpr NEO::CrossThreadDataOffset arg0SlmOffset = 0x20;
+    constexpr NEO::CrossThreadDataOffset arg1SlmOffset = 0x40;
+    constexpr uint32_t slmInlineSize = 256u;
+
+    auto &descriptor = mockKernel.getDescriptor();
+    descriptor.kernelAttributes.slmInlineSize = slmInlineSize;
+    descriptor.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+
+    for (auto &arg : descriptor.payloadMappings.explicitArgs) {
+        arg.getTraits().addressQualifier = static_cast<uint8_t>(NEO::KernelArgMetadata::AddrGlobal);
+    }
+    auto setupLocalArg = [&descriptor](uint32_t argIndex, NEO::CrossThreadDataOffset slmOffset, uint8_t alignment) {
+        auto &arg = descriptor.payloadMappings.explicitArgs[argIndex];
+        arg.getTraits().addressQualifier = static_cast<uint8_t>(NEO::KernelArgMetadata::AddrLocal);
+        auto &ptrArg = arg.template as<NEO::ArgDescPointer>();
+        ptrArg.slmOffset = slmOffset;
+        ptrArg.requiredSlmAlignment = alignment;
+        ptrArg.bufferSize = NEO::undefined<NEO::CrossThreadDataOffset>;
+    };
+    setupLocalArg(0, arg0SlmOffset, 4u);
+    setupLocalArg(1, arg1SlmOffset, 8u);
+
+    auto &crossThreadData = mockKernel.privateState.crossThreadData;
+    *reinterpret_cast<uint32_t *>(&crossThreadData[arg0SlmOffset]) = 0u;
+    descriptor.patchOffsetInSlmIfRequired(mockKernel.getCrossThreadDataSpan());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, 64, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(1, 32, nullptr));
+
+    auto readSlmOffset = [&crossThreadData](NEO::CrossThreadDataOffset offset) {
+        return *reinterpret_cast<uint32_t *>(&crossThreadData[offset]);
+    };
+    // every offset is shifted by slmInlineSize
+    EXPECT_EQ(256u, readSlmOffset(arg0SlmOffset)); // slmInlineSize
+    EXPECT_EQ(320u, readSlmOffset(arg1SlmOffset)); // 256 + 64(arg0 size)
+
+    auto slmArgOffsetValues = mockKernel.getSlmArgOffsetValues();
+    EXPECT_EQ(256u, slmArgOffsetValues[0]);
+    EXPECT_EQ(320u, slmArgOffsetValues[1]);
 }
 
 HWTEST2_F(SetKernelArg, givenImageAndBindfulKernelWhenSetArgImageThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {

@@ -180,6 +180,8 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
                                                          *neoDevice, device->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
     }
 
+    kernelDescriptor->patchOffsetInSlmIfRequired(crossThreadDataArrayRef);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -636,7 +638,8 @@ uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineG
     auto &helper = neoDevice.getGfxCoreHelper();
     auto &descriptor = getImmutableData()->getDescriptor();
 
-    auto usedSlmSize = helper.alignSlmSizePerThreadGroup(privateState.slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize,
+    auto slmTotalSizePerThreadGroup = descriptor.getTotalSlmSizePerThreadGroup(privateState.slmArgsTotalSize);
+    auto usedSlmSize = helper.alignSlmSizePerThreadGroup(slmTotalSizePerThreadGroup,
                                                          neoDevice.getRootDeviceEnvironment().getReleaseHelper());
     const uint32_t workDim = 3;
     const size_t localWorkSize[] = {this->privateState.groupSize[0], this->privateState.groupSize[1], this->privateState.groupSize[2]};
@@ -853,9 +856,9 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         privateState.slmArgSizes[argIndex] = static_cast<uint32_t>(argSize);
         privateState.kernelArgInfos[argIndex] = KernelArgInfo{nullptr, 0, 0, false};
         UNRECOVERABLE_IF(NEO::isUndefinedOffset(currArg.as<NEO::ArgDescPointer>().slmOffset));
-        auto slmOffset = *reinterpret_cast<uint32_t *>(&getCrossThreadDataSpan()[currArg.as<NEO::ArgDescPointer>().slmOffset]);
-        privateState.slmArgOffsetValues[argIndex] = slmOffset;
-        slmOffset += static_cast<uint32_t>(argSize);
+        auto offsetInSlm = *reinterpret_cast<uint32_t *>(&getCrossThreadDataSpan()[currArg.as<NEO::ArgDescPointer>().slmOffset]);
+        privateState.slmArgOffsetValues[argIndex] = offsetInSlm;
+        offsetInSlm += static_cast<uint32_t>(argSize);
         ++argIndex;
         while (argIndex < getImmutableData()->getDescriptor().payloadMappings.explicitArgs.size()) {
             if (allArgs[argIndex].getTraits().getAddressQualifier() != NEO::KernelArgMetadata::AddrLocal) {
@@ -864,14 +867,14 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
             }
             const auto &nextArg = allArgs[argIndex].as<NEO::ArgDescPointer>();
             UNRECOVERABLE_IF(0 == nextArg.requiredSlmAlignment);
-            slmOffset = alignUp<uint32_t>(slmOffset, nextArg.requiredSlmAlignment);
-            NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(), nextArg.slmOffset, slmOffset);
-            privateState.slmArgOffsetValues[argIndex] = slmOffset;
+            offsetInSlm = alignUp<uint32_t>(offsetInSlm, nextArg.requiredSlmAlignment);
+            NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(), nextArg.slmOffset, offsetInSlm);
+            privateState.slmArgOffsetValues[argIndex] = offsetInSlm;
 
-            slmOffset += static_cast<uint32_t>(privateState.slmArgSizes[argIndex]);
+            offsetInSlm += static_cast<uint32_t>(privateState.slmArgSizes[argIndex]);
             ++argIndex;
         }
-        privateState.slmArgsTotalSize = static_cast<uint32_t>(alignUp(slmOffset, MemoryConstants::kiloByte));
+        privateState.slmArgsTotalSize = static_cast<uint32_t>(alignUp(offsetInSlm, MemoryConstants::kiloByte));
         return ZE_RESULT_SUCCESS;
     }
 
@@ -1529,7 +1532,7 @@ bool KernelImp::hasIndirectAllocationsAllowed() const {
 }
 
 uint32_t KernelImp::getSlmTotalSizePerThreadGroup() const {
-    return privateState.slmArgsTotalSize + getImmutableData()->getDescriptor().kernelAttributes.slmInlineSize;
+    return getImmutableData()->getDescriptor().getTotalSlmSizePerThreadGroup(privateState.slmArgsTotalSize);
 }
 
 ze_result_t KernelImp::setCacheConfig(ze_cache_config_flags_t flags) {

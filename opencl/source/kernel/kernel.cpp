@@ -381,6 +381,8 @@ cl_int Kernel::initialize() {
 
     program->callPopulateZebinExtendedArgsMetadataOnce(rootDeviceIndex);
 
+    kernelDescriptor.patchOffsetInSlmIfRequired(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(crossThreadData), crossThreadDataSize));
+
     return CL_SUCCESS;
 }
 
@@ -1518,8 +1520,8 @@ cl_int Kernel::setArgLocal(uint32_t argIndexIn,
     slmSizes[argIndex] = static_cast<uint32_t>(argSize);
 
     UNRECOVERABLE_IF(isUndefinedOffset(currArg.as<NEO::ArgDescPointer>().slmOffset));
-    auto slmOffset = *ptrOffset(crossThreadData, currArg.as<ArgDescPointer>().slmOffset);
-    slmOffset += static_cast<uint32_t>(argSize);
+    auto offsetInSlm = *ptrOffset(crossThreadData, currArg.as<ArgDescPointer>().slmOffset);
+    offsetInSlm += static_cast<uint32_t>(argSize);
 
     ++argIndex;
     while (argIndex < slmSizes.size()) {
@@ -1531,16 +1533,17 @@ cl_int Kernel::setArgLocal(uint32_t argIndexIn,
         const auto &nextArg = args[argIndex].as<ArgDescPointer>();
         UNRECOVERABLE_IF(0 == nextArg.requiredSlmAlignment);
 
-        slmOffset = alignUp<uint32_t>(slmOffset, nextArg.requiredSlmAlignment);
+        offsetInSlm = alignUp<uint32_t>(offsetInSlm, nextArg.requiredSlmAlignment);
 
         auto patchLocation = ptrOffset(crossThreadData, nextArg.slmOffset);
-        *patchLocation = slmOffset;
+        *patchLocation = offsetInSlm;
 
-        slmOffset += static_cast<uint32_t>(slmSizes[argIndex]);
+        offsetInSlm += static_cast<uint32_t>(slmSizes[argIndex]);
         ++argIndex;
     }
 
-    slmTotalSizePerThreadGroup = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize + alignUp(slmOffset, MemoryConstants::kiloByte);
+    offsetInSlm = alignUp(offsetInSlm, MemoryConstants::kiloByte);
+    slmTotalSizePerThreadGroup = kernelInfo.kernelDescriptor.getTotalSlmSizePerThreadGroup(offsetInSlm);
 
     return CL_SUCCESS;
 }

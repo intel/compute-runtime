@@ -6,9 +6,12 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -107,4 +110,68 @@ TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSl
 
         EXPECT_EQ(4 * MemoryConstants::kiloByte, pKernel[rootDeviceIndex]->slmTotalSizePerThreadGroup);
     }
+}
+
+class KernelSlmAllocationModeTest : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        program = std::make_unique<MockProgram>(toClDeviceVector(*device));
+
+        pKernelInfo = std::make_unique<MockKernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+        pKernelInfo->setCrossThreadDataSize(crossThreadDataSize);
+
+        pKernelInfo->addArgLocal(0, arg0SlmOffset, arg0Alignment);
+        pKernelInfo->addArgLocal(1, arg1SlmOffset, arg1Alignment);
+        pKernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize = slmInlineSize;
+    }
+
+    std::unique_ptr<MockKernel> createKernel(KernelDescriptor::SlmAllocationMode slmAllocationMode) {
+        pKernelInfo->kernelDescriptor.kernelAttributes.slmAllocationMode = slmAllocationMode;
+        auto kernel = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *device);
+        EXPECT_EQ(CL_SUCCESS, kernel->initialize());
+        return kernel;
+    }
+
+    static uint32_t readSlmOffset(MockKernel &kernel, CrossThreadDataOffset offset) {
+        return *reinterpret_cast<uint32_t *>(ptrOffset(kernel.getCrossThreadData(), offset));
+    }
+
+    static constexpr CrossThreadDataOffset arg0SlmOffset = 0x20;
+    static constexpr CrossThreadDataOffset arg1SlmOffset = 0x40;
+    static constexpr uint8_t arg0Alignment = 4u;
+    static constexpr uint8_t arg1Alignment = 8u;
+    static constexpr uint32_t slmInlineSize = 256u;
+    static constexpr uint16_t crossThreadDataSize = 0x100;
+    static constexpr size_t arg0Size = 64u;
+    static constexpr size_t arg1Size = 32u;
+
+    std::unique_ptr<MockClDevice> device;
+    std::unique_ptr<MockProgram> program;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
+};
+
+TEST_F(KernelSlmAllocationModeTest, givenCompilerResolvedSlmAllocationModeWhenSettingLocalArgsThenOffsetsInSlmStartAtZero) {
+    auto kernel = createKernel(KernelDescriptor::SlmAllocationMode::compilerResolved);
+
+    EXPECT_EQ(CL_SUCCESS, kernel->setArg(0, arg0Size, nullptr));
+    EXPECT_EQ(CL_SUCCESS, kernel->setArg(1, arg1Size, nullptr));
+
+    EXPECT_EQ(0u, readSlmOffset(*kernel, arg0SlmOffset));
+    EXPECT_EQ(static_cast<uint32_t>(arg0Size), readSlmOffset(*kernel, arg1SlmOffset));
+}
+
+TEST_F(KernelSlmAllocationModeTest, givenRuntimeAdjustedSlmAllocationModeWhenSettingLocalArgsThenOffsetsInSlmAreShiftedByInlineSlmSize) {
+    auto kernel = createKernel(KernelDescriptor::SlmAllocationMode::runtimeAdjusted);
+
+    // explicit SLM args are patched during kernel initialization
+    EXPECT_EQ(slmInlineSize, readSlmOffset(*kernel, arg0SlmOffset));
+    EXPECT_EQ(slmInlineSize, readSlmOffset(*kernel, arg1SlmOffset));
+
+    EXPECT_EQ(CL_SUCCESS, kernel->setArg(0, arg0Size, nullptr));
+    EXPECT_EQ(CL_SUCCESS, kernel->setArg(1, arg1Size, nullptr));
+
+    EXPECT_EQ(slmInlineSize, readSlmOffset(*kernel, arg0SlmOffset));
+    EXPECT_EQ(slmInlineSize + static_cast<uint32_t>(arg0Size), readSlmOffset(*kernel, arg1SlmOffset));
 }

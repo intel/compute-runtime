@@ -16,6 +16,7 @@
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_arg_metadata.h"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <memory>
@@ -63,6 +64,33 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         return kernelAttributes.crossThreadDataSize - std::min(kernelAttributes.crossThreadDataSize, kernelAttributes.inlineDataPayloadSize);
     }
 
+    void patchOffsetInSlmIfRequired(ArrayRef<uint8_t> crossThreadData) const {
+        if (kernelAttributes.slmAllocationMode != KernelDescriptor::SlmAllocationMode::runtimeAdjusted) {
+            return;
+        }
+
+        for (auto &arg : payloadMappings.explicitArgs) {
+            if (arg.getTraits().getAddressQualifier() == KernelArgMetadata::AddrLocal) {
+                const auto &ptrArg = arg.as<ArgDescPointer>();
+                DEBUG_BREAK_IF((0 != ptrArg.requiredSlmAlignment) &&
+                               (0 != (kernelAttributes.slmInlineSize % ptrArg.requiredSlmAlignment)));
+                patchNonPointer<uint32_t>(crossThreadData, ptrArg.slmOffset, kernelAttributes.slmInlineSize);
+            }
+        }
+    }
+
+    uint32_t getTotalSlmSizePerThreadGroup(uint32_t totalSlmSizePerThreadGroup) const {
+        if (kernelAttributes.slmAllocationMode == KernelDescriptor::SlmAllocationMode::compilerResolved) {
+            return totalSlmSizePerThreadGroup + kernelAttributes.slmInlineSize;
+        }
+        return totalSlmSizePerThreadGroup;
+    }
+
+    enum class SlmAllocationMode : int8_t {
+        compilerResolved = 0, // Compiler resolves the offsets during codegen
+        runtimeAdjusted = 1   // Runtime adjusts the offsets (by slm_size) before kernel launch
+    };
+
     struct KernelAttributes {
         uint32_t slmInlineSize = 0U;
         uint32_t perThreadScratchSize[2] = {0U, 0U};
@@ -82,6 +110,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         uint16_t numArgsStateful = 0U;
         uint16_t numBindlessImages = 0U;
         uint8_t barrierCount = 0u;
+        SlmAllocationMode slmAllocationMode = SlmAllocationMode::compilerResolved;
         bool hasNonKernelArgLoad = false;
         bool hasNonKernelArgStore = false;
         bool hasNonKernelArgAtomic = false;
@@ -269,6 +298,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     std::once_flag initBindlessArgsMapOnce;
 };
 
-static_assert(NEO::NonCopyableAndNonMovable<KernelDescriptor>);
+static_assert(NonCopyableAndNonMovable<KernelDescriptor>);
 
 } // namespace NEO

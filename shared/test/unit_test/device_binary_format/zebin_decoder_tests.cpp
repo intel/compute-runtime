@@ -2169,6 +2169,7 @@ kernels:
     EXPECT_EQ(Defaults::offsetToSkipSetFfidGp, execEnv.offsetToSkipSetFfidGp);
     EXPECT_EQ(Defaults::requiredSubGroupSize, execEnv.requiredSubGroupSize);
     EXPECT_EQ(Defaults::slmSize, execEnv.slmSize);
+    EXPECT_EQ(Defaults::slmAllocMode, execEnv.slmAllocMode);
     EXPECT_EQ(Defaults::subgroupIndependentForwardProgress, execEnv.subgroupIndependentForwardProgress);
     EXPECT_EQ(Defaults::requiredWorkGroupSize[0], execEnv.requiredWorkGroupSize[0]);
     EXPECT_EQ(Defaults::requiredWorkGroupSize[1], execEnv.requiredWorkGroupSize[1]);
@@ -2283,6 +2284,48 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : wrong size of collection required_work_group_size in context of : some_kernel. Got : 2 expected : 3\n", errors.c_str());
+}
+
+TEST(ReadZeInfoExecutionEnvironment, GivenSlmAllocModeThenSetProperValue) {
+    using SlmAllocMode = NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::SlmAllocModeT;
+    auto verifySlmAllocMode = [](ConstStringRef yaml, SlmAllocMode expectedMode) {
+        std::string parserErrors;
+        std::string parserWarnings;
+        NEO::Yaml::YamlParser parser;
+        bool success = parser.parse(yaml, parserErrors, parserWarnings);
+        ASSERT_TRUE(success);
+        auto &execEnvNode = *parser.findNodeWithKeyDfs("execution_env");
+        std::string errors;
+        std::string warnings;
+        NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv{};
+
+        auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::success, err);
+        EXPECT_TRUE(errors.empty()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_EQ(expectedMode, execEnv.slmAllocMode);
+    };
+
+    NEO::ConstStringRef yamlMode0 = R"===(---
+kernels:
+  - name:            some_kernel
+    execution_env:
+        simd_size : 32
+        slm_alloc_mode : 0
+...
+)===";
+
+    NEO::ConstStringRef yamlMode1 = R"===(---
+kernels:
+  - name:            some_kernel
+    execution_env:
+        simd_size : 32
+        slm_alloc_mode : 1
+...
+)===";
+
+    verifySlmAllocMode(yamlMode0, NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::Constants::compilerResolved);
+    verifySlmAllocMode(yamlMode1, NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::Constants::runtimeAdjusted);
 }
 
 TEST(ReadZeInfoAttributes, GivenValidYamlEntriesThenSetProperMembers) {
@@ -5010,6 +5053,38 @@ kernels:
     EXPECT_EQ(1U, kernelDescriptor.kernelAttributes.workgroupWalkOrder[1]);
     EXPECT_EQ(2U, kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenSlmAllocModeCompilerResolvedThenKernelDescriptorHasCompilerResolvedMode) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size : 32
+        slm_alloc_mode : 0
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    EXPECT_EQ(KernelDescriptor::SlmAllocationMode::compilerResolved, kernelDescriptor->kernelAttributes.slmAllocationMode);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenSlmAllocModeRuntimeAdjustedThenKernelDescriptorHasRuntimeAdjustedMode) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size : 32
+        slm_alloc_mode : 1
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    EXPECT_EQ(KernelDescriptor::SlmAllocationMode::runtimeAdjusted, kernelDescriptor->kernelAttributes.slmAllocationMode);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, givenPipeKernelArgumentWhenPopulatingKernelDescriptorThenProperTypeQualifierIsSet) {

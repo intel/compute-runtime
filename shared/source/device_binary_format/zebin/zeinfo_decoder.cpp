@@ -699,6 +699,8 @@ DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.simdSize, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::slmSize == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.slmSize, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::slmAllocMode == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.slmAllocMode, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::subgroupIndependentForwardProgress == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.subgroupIndependentForwardProgress, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::workGroupWalkOrderDimensions == key) {
@@ -774,6 +776,7 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.requiredWorkgroupSize[2] = static_cast<uint16_t>(execEnv.requiredWorkGroupSize[2]);
     dst.kernelAttributes.simdSize = execEnv.simdSize;
     dst.kernelAttributes.slmInlineSize = execEnv.slmSize;
+    dst.kernelAttributes.slmAllocationMode = static_cast<KernelDescriptor::SlmAllocationMode>(execEnv.slmAllocMode);
     dst.kernelAttributes.workgroupWalkOrder[0] = static_cast<uint8_t>(execEnv.workgroupWalkOrderDimensions[0]);
     dst.kernelAttributes.workgroupWalkOrder[1] = static_cast<uint8_t>(execEnv.workgroupWalkOrderDimensions[1]);
     dst.kernelAttributes.workgroupWalkOrder[2] = static_cast<uint8_t>(execEnv.workgroupWalkOrderDimensions[2]);
@@ -785,6 +788,17 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     }
     if (execEnv.partitionDim != Types::Kernel::ExecutionEnv::Defaults::partitionDim) {
         dst.kernelAttributes.partitionDim = EncodeParamsApiMappings::partitionDim[execEnv.partitionDim];
+    }
+
+    switch (execEnv.slmAllocMode) {
+    case Types::Kernel::ExecutionEnv::Constants::compilerResolved:
+        dst.kernelAttributes.slmAllocationMode = KernelDescriptor::SlmAllocationMode::compilerResolved;
+        break;
+    case Types::Kernel::ExecutionEnv::Constants::runtimeAdjusted:
+        dst.kernelAttributes.slmAllocationMode = KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+        break;
+    default:
+        UNRECOVERABLE_IF(true);
     }
 
     if (isScratchMemoryUsageDefinedInExecutionEnvironment(srcZeInfoVersion)) {

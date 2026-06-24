@@ -15,6 +15,7 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
         EXPECT_EQ(0U, element);
     }
     EXPECT_EQ(0U, desc.kernelAttributes.slmInlineSize);
+    EXPECT_EQ(NEO::KernelDescriptor::SlmAllocationMode::compilerResolved, desc.kernelAttributes.slmAllocationMode);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[0]);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[1]);
     EXPECT_EQ(0U, desc.kernelAttributes.perHwThreadPrivateMemorySize);
@@ -330,4 +331,71 @@ TEST(KernelDescriptor, GivenDescriptorWhenGettingPerThreadDataOffsetThenItReturn
     desc.kernelAttributes.crossThreadDataSize = 128u;
     desc.kernelAttributes.inlineDataPayloadSize = 64u;
     EXPECT_EQ(64u, desc.getPerThreadDataOffset());
+}
+
+TEST(KernelDescriptor, GivenCompilerResolvedSlmAllocationModeWhenGettingTotalSlmSizePerThreadGroupThenInlineSlmSizeIsAdded) {
+    NEO::KernelDescriptor desc{};
+    desc.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::compilerResolved;
+    desc.kernelAttributes.slmInlineSize = 1024u;
+
+    EXPECT_EQ(1024u, desc.getTotalSlmSizePerThreadGroup(0u));
+    EXPECT_EQ(1024u + 2048u, desc.getTotalSlmSizePerThreadGroup(2048u));
+}
+
+TEST(KernelDescriptor, GivenRuntimeAdjustedSlmAllocationModeWhenGettingTotalSlmSizePerThreadGroupThenInlineSlmSizeIsNotAdded) {
+    NEO::KernelDescriptor desc{};
+    desc.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+    desc.kernelAttributes.slmInlineSize = 1024u;
+
+    EXPECT_EQ(0u, desc.getTotalSlmSizePerThreadGroup(0u));
+    EXPECT_EQ(2048u, desc.getTotalSlmSizePerThreadGroup(2048u));
+}
+
+TEST(KernelDescriptor, GivenCompilerResolvedSlmAllocationModeWhenPatchingOffsetInSlmThenCrossThreadDataIsNotModified) {
+    NEO::KernelDescriptor desc{};
+    desc.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::compilerResolved;
+    desc.kernelAttributes.slmInlineSize = 256u;
+
+    auto localArg = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    localArg.getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+
+    auto offsetInCrossThreadData = 8u;
+    localArg.as<NEO::ArgDescPointer>().slmOffset = offsetInCrossThreadData;
+    localArg.as<NEO::ArgDescPointer>().requiredSlmAlignment = 16u;
+    desc.payloadMappings.explicitArgs.push_back(localArg);
+
+    std::vector<uint8_t> crossThreadData(64u, 0u);
+    desc.patchOffsetInSlmIfRequired(crossThreadData);
+
+    EXPECT_EQ(0u, *reinterpret_cast<uint32_t *>(&crossThreadData[offsetInCrossThreadData]));
+}
+
+TEST(KernelDescriptor, GivenRuntimeAdjustedSlmAllocationModeWhenPatchingOffsetInSlmThenSlmLocalArgsOffsetsArePatchedWithInlineSlmSize) {
+    NEO::KernelDescriptor desc{};
+    desc.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+    constexpr uint32_t slmInlineSize = 256u;
+    desc.kernelAttributes.slmInlineSize = slmInlineSize;
+
+    auto globalArg = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    globalArg.getTraits().addressQualifier = NEO::KernelArgMetadata::AddrGlobal;
+    globalArg.as<NEO::ArgDescPointer>().slmOffset = NEO::undefined<NEO::CrossThreadDataOffset>;
+    desc.payloadMappings.explicitArgs.push_back(globalArg);
+
+    auto firstLocalArg = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    firstLocalArg.getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+    firstLocalArg.as<NEO::ArgDescPointer>().slmOffset = 8u;
+    firstLocalArg.as<NEO::ArgDescPointer>().requiredSlmAlignment = 16u;
+    desc.payloadMappings.explicitArgs.push_back(firstLocalArg);
+
+    auto secondLocalArg = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    secondLocalArg.getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+    secondLocalArg.as<NEO::ArgDescPointer>().slmOffset = 16u;
+    secondLocalArg.as<NEO::ArgDescPointer>().requiredSlmAlignment = 16u;
+    desc.payloadMappings.explicitArgs.push_back(secondLocalArg);
+
+    std::vector<uint8_t> crossThreadData(64u, 0u);
+    desc.patchOffsetInSlmIfRequired(crossThreadData);
+
+    EXPECT_EQ(slmInlineSize, *reinterpret_cast<uint32_t *>(&crossThreadData[8u]));
+    EXPECT_EQ(slmInlineSize, *reinterpret_cast<uint32_t *>(&crossThreadData[16u]));
 }

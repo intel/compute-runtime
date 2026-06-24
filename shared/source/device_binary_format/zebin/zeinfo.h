@@ -69,6 +69,7 @@ inline constexpr ConstStringRef requiredWorkGroupSize("required_work_group_size"
 inline constexpr ConstStringRef requireDisableEUFusion("require_disable_eufusion");
 inline constexpr ConstStringRef simdSize("simd_size");
 inline constexpr ConstStringRef slmSize("slm_size");
+inline constexpr ConstStringRef slmAllocMode("slm_alloc_mode");
 inline constexpr ConstStringRef subgroupIndependentForwardProgress("subgroup_independent_forward_progress");
 inline constexpr ConstStringRef workGroupWalkOrderDimensions("work_group_walk_order_dimensions");
 inline constexpr ConstStringRef threadSchedulingMode("thread_scheduling_mode");
@@ -355,6 +356,11 @@ enum ThreadSchedulingMode : uint8_t {
     ThreadSchedulingModeMax
 };
 
+namespace Constants {
+inline constexpr int32_t compilerResolved = 0;
+inline constexpr int32_t runtimeAdjusted = 1;
+} // namespace Constants
+
 using ActualKernelStartOffsetT = int32_t;
 using BarrierCountT = int32_t;
 using EuThreadCountT = int32_t;
@@ -380,6 +386,7 @@ using RequiredWorkGroupSizeT = int32_t[3];
 using RequireDisableEUFusionT = bool;
 using SimdSizeT = int32_t;
 using SlmSizeT = int32_t;
+using SlmAllocModeT = int32_t;
 using SubgroupIndependentForwardProgressT = bool;
 using WorkgroupWalkOrderDimensionsT = int32_t[3];
 using ThreadSchedulingModeT = ThreadSchedulingMode;
@@ -421,6 +428,7 @@ inline constexpr RequiredSubGroupSizeT requiredSubGroupSize = 0;
 inline constexpr RequiredWorkGroupSizeT requiredWorkGroupSize = {0, 0, 0};
 inline constexpr RequireDisableEUFusionT requireDisableEUFusion = false;
 inline constexpr SlmSizeT slmSize = 0;
+inline constexpr SlmAllocModeT slmAllocMode = 0;
 inline constexpr SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = false;
 inline constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0, 1, 2};
 inline constexpr ThreadSchedulingModeT threadSchedulingMode = ThreadSchedulingModeUnknown;
@@ -469,6 +477,7 @@ struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
     RequireDisableEUFusionT requireDisableEUFusion = Defaults::requireDisableEUFusion;
     SimdSizeT simdSize = -1;
     SlmSizeT slmSize = Defaults::slmSize;
+    SlmAllocModeT slmAllocMode = Defaults::slmAllocMode;
     SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = Defaults::subgroupIndependentForwardProgress;
     WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions{Defaults::workgroupWalkOrderDimensions[0], Defaults::workgroupWalkOrderDimensions[1], Defaults::workgroupWalkOrderDimensions[2]};
     ThreadSchedulingModeT threadSchedulingMode = Defaults::threadSchedulingMode;
