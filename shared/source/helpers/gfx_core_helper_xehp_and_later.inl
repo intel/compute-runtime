@@ -165,10 +165,4 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelDescrip
     return (kernelAttributes.privateScratchMemorySize > 0) ? kernelAttributes.privateScratchMemorySize : kernelAttributes.perHwThreadPrivateMemorySize;
 }
 
-template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::isL1FlushRequiredForBarrier(uint32_t l1CachePolicy) {
-    auto wbCachePolicy = GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
-    return (l1CachePolicy == wbCachePolicy);
-}
-
 } // namespace NEO

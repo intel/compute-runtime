@@ -510,8 +510,7 @@ HWTEST_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledWhenEnqueueKe
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
-    auto isL1FlushRequired = MemorySynchronizationCommands<FamilyType>::isL1FlushRequiredForBarrier(device->getProductHelper().getL1CachePolicy(false));
-    hwParser.verifyL1FlushOnStallingBarrier<FamilyType>(!isL1FlushRequired, isL1FlushRequired);
+    hwParser.verifyL1FlushOnStallingBarrier<FamilyType>(false, true);
 }
 
 HWTEST_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledWhenEnqueueKernelsWithoutEventOnDifferentQueuesThenSubmitTimestampPacket) {

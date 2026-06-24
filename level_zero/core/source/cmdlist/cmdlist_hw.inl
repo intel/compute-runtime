@@ -3481,9 +3481,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                 } else {
                     args.csStallOnly = true;
                     if (this->isPostSyncSkippedOnLatestInOrderOperation) {
-                        auto l1CachePolicy = l1CachePolicyData.getL1CacheValue(this->device->getL0Debugger() != nullptr);
-                        args.isL1FlushRequired = NEO::MemorySynchronizationCommands<GfxFamily>::isL1FlushRequiredForBarrier(l1CachePolicy);
-                        args.isL1InvalidateRequired = !args.isL1FlushRequired;
+                        args.isL1FlushRequired = true;
                     }
                 }
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

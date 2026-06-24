@@ -1484,8 +1484,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenWalkerPostSyncSkipEna
     NEO::HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdStream, 0);
 
-    auto isL1FlushRequired = MemorySynchronizationCommands<FamilyType>::isL1FlushRequiredForBarrier(device->getProductHelper().getL1CachePolicy(false));
-    hwParser.verifyL1FlushOnStallingBarrier<FamilyType>(!isL1FlushRequired, isL1FlushRequired);
+    hwParser.verifyL1FlushOnStallingBarrier<FamilyType>(false, true);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenWalkerPostSyncSkipEnabledWhenAppendKernelsWithEventsThenDontFlushL1Cache) {

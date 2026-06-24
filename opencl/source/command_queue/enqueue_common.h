@@ -248,9 +248,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         PipeControlArgs args;
         args.csStallOnly = true;
         if (previousEnqueueSkippedPostSync) {
-            auto l1CachePolicy = device->getProductHelper().getL1CachePolicy(this->device->getDebugger() != nullptr);
-            args.isL1FlushRequired = NEO::MemorySynchronizationCommands<GfxFamily>::isL1FlushRequiredForBarrier(l1CachePolicy);
-            args.isL1InvalidateRequired = !args.isL1FlushRequired;
+            args.isL1FlushRequired = true;
         }
         args.hdcPipelineFlush = false;
         args.unTypedDataPortCacheFlush = false;

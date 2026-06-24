@@ -556,7 +556,6 @@ struct MemorySynchronizationCommands {
 
     static bool isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static bool isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
-    static bool isL1FlushRequiredForBarrier(uint32_t l1CachePolicy);
     static void setPipeControlExtraProperties(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args);
     static void setPipeControlRequiredFields(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args);
 

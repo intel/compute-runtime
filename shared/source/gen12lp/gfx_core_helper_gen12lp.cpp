@@ -309,11 +309,6 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     }
 }
 
-template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::isL1FlushRequiredForBarrier(uint32_t l1CachePolicy) {
-    return false;
-}
-
 template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
