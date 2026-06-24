@@ -13,6 +13,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
@@ -47,9 +48,12 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
     ret.format = NEO::DeviceBinaryFormat::zebin;
     ret.targetDevice = requestedTargetDevice;
 
+    ConstStringRef zeInfoString;
     for (size_t sectionId = 0U; sectionId < elf.sectionHeaders.size(); sectionId++) {
         auto &elfSH = elf.sectionHeaders[sectionId];
-        if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_SPIRV) {
+        if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_ZEINFO) {
+            zeInfoString = ConstStringRef(reinterpret_cast<const char *>(elfSH.data.begin()), elfSH.data.size());
+        } else if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_SPIRV) {
             ret.intermediateRepresentationCodeType = IGC::CodeType::spirV;
             ret.intermediateRepresentation = elfSH.data;
         } else if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_PISA) {
@@ -66,6 +70,8 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
             ret.specConstantsValues = elfSH.data;
         }
     }
+
+    ret.l1CachePolicy = Zebin::ZeInfo::decodeZeInfoL1CachePolicyValue(zeInfoString);
 
     bool validForTarget = true;
     if (elf.elfFileHeader->machine == Elf::ElfMachine::EM_INTELGT) {

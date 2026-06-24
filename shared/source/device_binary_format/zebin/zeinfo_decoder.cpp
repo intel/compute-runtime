@@ -1869,4 +1869,20 @@ DecodeError decodeZeInfoL1CachePolicy(ProgramInfo &dst, Yaml::YamlParser &parser
     return DecodeError::success;
 }
 
+Types::L1CachePolicy::L1CachePolicy decodeZeInfoL1CachePolicyValue(ConstStringRef zeInfo) {
+    auto l1CachePolicy = Types::L1CachePolicy::Defaults::l1CachePolicy;
+    std::string errReason, warning;
+    Yaml::YamlParser yamlParser;
+    if (false == yamlParser.parse(zeInfo, errReason, warning) || yamlParser.empty()) {
+        return l1CachePolicy;
+    }
+    for (const auto &globalScopeNd : yamlParser.createChildrenRange(*yamlParser.getRoot())) {
+        if (Tags::l1CachePolicy == yamlParser.readKey(globalScopeNd)) {
+            readZeInfoEnumChecked(yamlParser, globalScopeNd, l1CachePolicy, Tags::l1CachePolicy, errReason);
+            break;
+        }
+    }
+    return l1CachePolicy;
+}
+
 } // namespace NEO::Zebin::ZeInfo

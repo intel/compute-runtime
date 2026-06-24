@@ -3558,6 +3558,175 @@ HWTEST_F(ModuleTranslationUnitTest, GivenBinaryWithoutZeInfoVersionWhenCreatingM
     EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-example-untouched-option-second=2") != std::string::npos);
 }
 
+HWTEST_F(ModuleTranslationUnitTest, GivenZeInfoL1CachePolicyMismatchingDriverDefaultAndIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiled) {
+    VariableBackup ultConfigBackup(&ultHwConfig);
+    ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
+
+    DebugManagerStateRestore dgbRestorer;
+    NEO::debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2); // driver default L1_CACHE_CONTROL_WB
+
+    // zeinfo declares "uc" which mismatches the WB driver default.
+    auto zeInfo = std::string{"---\nversion : \'"} + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) +
+                  "\'\nl1_cache_policy : uc\n" + ZebinTestData::ValidEmptyProgram<>::defaultZeInfo;
+    ZebinTestData::ValidEmptyProgram zebin(zeInfo);
+
+    AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::TGL;
+    zebin.appendSection(Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT,
+                        ZebinTestData::createIntelGTNoteSection(versionToString(NEO::Zebin::ZeInfo::Types::Version(1, 69)), productConfig));
+
+    const uint8_t spirvData[30] = {0xd};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, spirvData);
+
+    const auto &src = zebin.storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    Module module(device, nullptr, ModuleType::user);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    ze_result_t result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    if (device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().isL1PolicyMissmatchCheckNeeded()) {
+        EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
+    } else {
+        EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
+    }
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenZeInfoL1CachePolicyMatchingDriverDefaultWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
+    VariableBackup ultConfigBackup(&ultHwConfig);
+    ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
+
+    DebugManagerStateRestore dgbRestorer;
+    NEO::debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2); // driver default L1_CACHE_CONTROL_WB
+
+    // zeinfo declares "wb" which matches the driver default - no rebuild expected.
+    auto zeInfo = std::string{"---\nversion : \'"} + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) +
+                  "\'\nl1_cache_policy : wb\n" + ZebinTestData::ValidEmptyProgram<>::defaultZeInfo;
+    ZebinTestData::ValidEmptyProgram zebin(zeInfo);
+
+    AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::TGL;
+    zebin.appendSection(Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT,
+                        ZebinTestData::createIntelGTNoteSection(versionToString(NEO::Zebin::ZeInfo::Types::Version(1, 69)), productConfig));
+
+    const uint8_t spirvData[30] = {0xd};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, spirvData);
+
+    const auto &src = zebin.storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    Module module(device, nullptr, ModuleType::user);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    ze_result_t result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    EXPECT_FALSE(tu->wasBuildFromIntermediateCalled);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenZeInfoL1CachePolicyMismatchingDriverDefaultWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleCreationFails) {
+    VariableBackup ultConfigBackup(&ultHwConfig);
+    ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
+
+    DebugManagerStateRestore dgbRestorer;
+    NEO::debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2); // driver default L1_CACHE_CONTROL_WB
+
+    auto zeInfo = std::string{"---\nversion : \'"} + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) +
+                  "\'\nl1_cache_policy : uc\n" + ZebinTestData::ValidEmptyProgram<>::defaultZeInfo;
+    ZebinTestData::ValidEmptyProgram zebin(zeInfo);
+
+    AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::TGL;
+    zebin.appendSection(Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT,
+                        ZebinTestData::createIntelGTNoteSection(versionToString(NEO::Zebin::ZeInfo::Types::Version(1, 69)), productConfig));
+
+    const auto &src = zebin.storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    Module module(device, nullptr, ModuleType::user);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    ze_result_t result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    EXPECT_EQ(0u, tu->irBinarySize);
+    EXPECT_FALSE(tu->wasBuildFromIntermediateCalled);
+    if (device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().isL1PolicyMissmatchCheckNeeded()) {
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, result);
+    } else {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenZeInfoL1CachePolicyMismatchingDriverDefaultWithIntermediateCodeWhenCreatingModuleFromNativeBinaryThenBuildOptionsAreReplacedWithDriverPolicy) {
+    VariableBackup ultConfigBackup(&ultHwConfig);
+    ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
+
+    DebugManagerStateRestore dgbRestorer;
+    NEO::debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2); // driver default L1_CACHE_CONTROL_WB
+
+    const auto &compilerProductHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();
+    bool isDebuggerActive = device->getNEODevice()->getDebugger() != nullptr;
+    auto driverCachePolicy = compilerProductHelper.getCachingPolicyOptions(isDebuggerActive);
+    if (!driverCachePolicy) {
+        GTEST_SKIP();
+    }
+
+    struct MockProductHelperL1Check : MockProductHelper {
+        bool isL1PolicyMissmatchCheckNeeded() const override { return true; }
+    };
+
+    auto mockProductHelper = new MockProductHelperL1Check;
+    neoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+
+    // zeinfo declares "uc" which mismatches the WB driver default.
+    auto zeInfo = std::string{"---\nversion : \'"} + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) +
+                  "\'\nl1_cache_policy : uc\n" + ZebinTestData::ValidEmptyProgram<>::defaultZeInfo;
+    ZebinTestData::ValidEmptyProgram zebin(zeInfo);
+
+    AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::TGL;
+    zebin.appendSection(Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT,
+                        ZebinTestData::createIntelGTNoteSection(versionToString(NEO::Zebin::ZeInfo::Types::Version(1, 69)), productConfig));
+
+    NEO::ConstStringRef origBuildOptions = "-cl-store-cache-default=1 -cl-other-option";
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::buildOptions,
+                        {reinterpret_cast<const uint8_t *>(origBuildOptions.data()), origBuildOptions.size()});
+
+    const uint8_t spirvData[30] = {0xd};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, spirvData);
+
+    const auto &src = zebin.storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    Module module(device, nullptr, ModuleType::user);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    ze_result_t result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    EXPECT_TRUE(tu->wasBuildFromIntermediateCalled);
+    EXPECT_NE(tu->options.find(driverCachePolicy), std::string::npos);
+    EXPECT_EQ(tu->options.find("-cl-store-cache-default=1"), std::string::npos);
+}
+
 HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCodeBuildCorrectCachePolicyWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
     VariableBackup ultConfigBackup(&ultHwConfig);
     ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;

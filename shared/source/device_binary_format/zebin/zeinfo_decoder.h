@@ -144,6 +144,8 @@ DecodeError decodeZeInfoRequiredLibs(ProgramInfo &dst, Yaml::YamlParser &parser,
 
 DecodeError decodeZeInfoL1CachePolicy(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning);
 
+Types::L1CachePolicy::L1CachePolicy decodeZeInfoL1CachePolicyValue(ConstStringRef zeInfo);
+
 inline bool isAtLeastZeInfoVersion(const Types::Version &srcVersion, const Types::Version &expectedVersion) {
     return srcVersion.minor >= expectedVersion.minor;
 }

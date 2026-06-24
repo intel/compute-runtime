@@ -48,6 +48,17 @@ bool isOclVersionBelow12(const std::string &compileOptions) {
     return majorVersion == 1 && minorVersion < 2;
 }
 
+bool replaceL1CachePolicyInBuildOptions(std::string &buildOptions, const char *currentCachePolicy) {
+    if (currentCachePolicy) {
+        auto currentCachePolicyIter = buildOptions.find(currentCachePolicy);
+        if (currentCachePolicyIter == std::string::npos) {
+            CachePolicyOptionHelper::replaceCachePolicy(buildOptions, currentCachePolicy);
+            return true;
+        }
+    }
+    return false;
+}
+
 bool checkAndReplaceL1CachePolicy(std::string &buildOptions, NEO::Zebin::ZeInfo::Types::Version version, const char *currentCachePolicy) {
     if (!requiresL1PolicyMissmatchCheck()) {
         return false;
@@ -63,14 +74,45 @@ bool checkAndReplaceL1CachePolicy(std::string &buildOptions, NEO::Zebin::ZeInfo:
         return false;
     }
 
-    if (currentCachePolicy) {
-        auto currentCachePolicyIter = buildOptions.find(currentCachePolicy);
-        if (currentCachePolicyIter == std::string::npos) {
-            CachePolicyOptionHelper::replaceCachePolicy(buildOptions, currentCachePolicy);
-            return true;
-        }
+    return replaceL1CachePolicyInBuildOptions(buildOptions, currentCachePolicy);
+}
+
+bool checkL1CachePolicyMismatch(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy binaryPolicy, uint32_t driverDefaultL1CacheControl) {
+    using L1CachePolicy = NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy;
+    if (!requiresL1PolicyMissmatchCheck()) {
+        return false;
     }
-    return false;
+
+    // The zeinfo l1_cache_policy is optional; when the binary does not declare one there is
+    // nothing to compare here - fall back to the build-options based check.
+    if (binaryPolicy == L1CachePolicy::L1CachePolicyUnknown) {
+        return false;
+    }
+
+    // Map the zebin policy enum onto encoding (WBP=0, UC=1, WB=2, WT=3, WS=4)
+    // so it can be compared with the driver default returned by ProductHelper::getL1CachePolicy().
+    uint32_t binaryL1CacheControl = 0;
+    switch (binaryPolicy) {
+    case L1CachePolicy::L1CachePolicyWriteBypass:
+        binaryL1CacheControl = 0; // L1_CACHE_CONTROL_WBP
+        break;
+    case L1CachePolicy::L1CachePolicyUncached:
+        binaryL1CacheControl = 1; // L1_CACHE_CONTROL_UC
+        break;
+    case L1CachePolicy::L1CachePolicyWriteBack:
+        binaryL1CacheControl = 2; // L1_CACHE_CONTROL_WB
+        break;
+    case L1CachePolicy::L1CachePolicyWriteThrough:
+        binaryL1CacheControl = 3; // L1_CACHE_CONTROL_WT
+        break;
+    case L1CachePolicy::L1CachePolicyWriteStreaming:
+        binaryL1CacheControl = 4; // L1_CACHE_CONTROL_WS
+        break;
+    default:
+        return false;
+    }
+
+    return binaryL1CacheControl != driverDefaultL1CacheControl;
 }
 
 void appendAdditionalExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions) {

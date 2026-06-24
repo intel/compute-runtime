@@ -6,8 +6,53 @@
  */
 
 #include "shared/source/helpers/compiler_options_parser.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
 using namespace NEO;
+
+using L1CachePolicy = NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy;
+
+TEST(CompilerOptionsParserL1CachePolicy, GivenMissmatchCheckDisabledThenCheckL1CachePolicyMismatchReturnsFalse) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = false;
+    // L1_CACHE_CONTROL_WB (2) vs driver default WBP (0) would mismatch, but the check is disabled.
+    EXPECT_FALSE(checkL1CachePolicyMismatch(L1CachePolicy::L1CachePolicyWriteBack, 0u));
+}
+
+TEST(CompilerOptionsParserL1CachePolicy, GivenUnknownBinaryPolicyThenCheckL1CachePolicyMismatchReturnsFalse) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
+    EXPECT_FALSE(checkL1CachePolicyMismatch(L1CachePolicy::L1CachePolicyUnknown, 0u));
+    EXPECT_FALSE(checkL1CachePolicyMismatch(L1CachePolicy::L1CachePolicyUnknown, 2u));
+}
+
+TEST(CompilerOptionsParserL1CachePolicy, GivenKnownBinaryPolicyThenCheckL1CachePolicyMismatchComparesAgainstDriverDefault) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
+
+    // Mapping mirrors STATE_BASE_ADDRESS::L1_CACHE_CONTROL: WBP=0, UC=1, WB=2, WT=3, WS=4.
+    const std::pair<L1CachePolicy, uint32_t> policyToL1CacheControl[] = {
+        {L1CachePolicy::L1CachePolicyWriteBypass, 0u},
+        {L1CachePolicy::L1CachePolicyUncached, 1u},
+        {L1CachePolicy::L1CachePolicyWriteBack, 2u},
+        {L1CachePolicy::L1CachePolicyWriteThrough, 3u},
+        {L1CachePolicy::L1CachePolicyWriteStreaming, 4u}};
+
+    for (const auto &[policy, l1CacheControl] : policyToL1CacheControl) {
+        // Matches the driver default -> no mismatch.
+        EXPECT_FALSE(checkL1CachePolicyMismatch(policy, l1CacheControl));
+        // Differs from the driver default -> mismatch.
+        EXPECT_TRUE(checkL1CachePolicyMismatch(policy, l1CacheControl + 1u));
+    }
+}
+
+TEST(CompilerOptionsParserL1CachePolicy, GivenUnmappedBinaryPolicyThenCheckL1CachePolicyMismatchReturnsFalse) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
+    // A non-Unknown value that maps to no L1_CACHE_CONTROL entry must not trigger a rebuild.
+    EXPECT_FALSE(checkL1CachePolicyMismatch(L1CachePolicy::L1CachePolicyMax, 0u));
+}
 
 TEST(CompilerOptionsParser, GivenClStdOptionWithVariousVersionsWhenRequiresOpenClCFeaturesThenCorrectResult) {
     EXPECT_FALSE(requiresOpenClCFeatures("-cl-std=CL1.2"));
@@ -71,4 +116,33 @@ TEST(CompilerOptionsParser, GivenAppendAdditionalExtensionsWithNoMatchThenNoChan
     std::string internalOptions = "";
     appendAdditionalExtensions(extensions, compileOptions, internalOptions);
     EXPECT_EQ(extensions, "ext1 ");
+}
+
+TEST(CompilerOptionsParser, GivenCurrentPolicyAlreadyPresentWhenReplaceL1CachePolicyThenReturnFalse) {
+    std::string buildOptions = "-cl-store-cache-default=2 -other-option";
+    bool replaced = replaceL1CachePolicyInBuildOptions(buildOptions, "-cl-store-cache-default=2");
+    EXPECT_FALSE(replaced);
+    EXPECT_EQ(buildOptions, "-cl-store-cache-default=2 -other-option");
+}
+
+TEST(CompilerOptionsParser, GivenCurrentPolicyNotPresentWhenReplaceL1CachePolicyAndPrefixFoundThenReplace) {
+    std::string buildOptions = "-cl-store-cache-default=1 -other-option";
+    bool replaced = replaceL1CachePolicyInBuildOptions(buildOptions, "-cl-store-cache-default=2");
+    EXPECT_TRUE(replaced);
+    EXPECT_NE(buildOptions.find("-cl-store-cache-default=2"), std::string::npos);
+    EXPECT_EQ(buildOptions.find("-cl-store-cache-default=1"), std::string::npos);
+}
+
+TEST(CompilerOptionsParser, GivenCurrentPolicyNullptrWhenReplaceL1CachePolicyThenReturnFalse) {
+    std::string buildOptions = "-cl-store-cache-default=1 -other-option";
+    bool replaced = replaceL1CachePolicyInBuildOptions(buildOptions, nullptr);
+    EXPECT_FALSE(replaced);
+    EXPECT_EQ(buildOptions, "-cl-store-cache-default=1 -other-option");
+}
+
+TEST(CompilerOptionsParser, GivenPrefixNotFoundWhenReplaceL1CachePolicyThenReturnTrue) {
+    std::string buildOptions = "-other-option";
+    bool replaced = replaceL1CachePolicyInBuildOptions(buildOptions, "-cl-store-cache-default=2");
+    EXPECT_TRUE(replaced);
+    EXPECT_EQ(buildOptions, "-other-option");
 }

@@ -4911,6 +4911,35 @@ l1_cache_policy : invalid_policy
     EXPECT_EQ(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown, programInfo.l1CachePolicy);
 }
 
+TEST(DecodeZeInfoL1CachePolicyValueTest, givenZeInfoStringWhenExtractingL1CachePolicyValueThenCorrectEnumReturned) {
+    using L1CachePolicy = NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy;
+    const std::pair<ConstStringRef, L1CachePolicy> testCases[] = {
+        {"wbp", L1CachePolicy::L1CachePolicyWriteBypass},
+        {"uc", L1CachePolicy::L1CachePolicyUncached},
+        {"wb", L1CachePolicy::L1CachePolicyWriteBack},
+        {"wt", L1CachePolicy::L1CachePolicyWriteThrough},
+        {"ws", L1CachePolicy::L1CachePolicyWriteStreaming}};
+
+    for (const auto &[policyStr, expectedPolicy] : testCases) {
+        auto zeInfo = std::string{"---\nversion : \'"} + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + "\'\nl1_cache_policy : " + policyStr.str() + "\n";
+        EXPECT_EQ(expectedPolicy, NEO::Zebin::ZeInfo::decodeZeInfoL1CachePolicyValue(zeInfo));
+    }
+}
+
+TEST(DecodeZeInfoL1CachePolicyValueTest, givenZeInfoWithoutOrInvalidL1CachePolicyThenUnknownReturned) {
+    using namespace NEO::Zebin::ZeInfo::Types::L1CachePolicy;
+    auto noPolicy = std::string{"---\nversion : \'"} + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + "\'\n";
+    EXPECT_EQ(L1CachePolicyUnknown, NEO::Zebin::ZeInfo::decodeZeInfoL1CachePolicyValue(noPolicy));
+
+    auto invalidPolicy = noPolicy + "l1_cache_policy : invalid_policy\n";
+    EXPECT_EQ(L1CachePolicyUnknown, NEO::Zebin::ZeInfo::decodeZeInfoL1CachePolicyValue(invalidPolicy));
+
+    EXPECT_EQ(L1CachePolicyUnknown, NEO::Zebin::ZeInfo::decodeZeInfoL1CachePolicyValue(ConstStringRef{}));
+
+    // Malformed zeinfo that fails YAML parsing -> Unknown.
+    EXPECT_EQ(L1CachePolicyUnknown, NEO::Zebin::ZeInfo::decodeZeInfoL1CachePolicyValue("@5\n"));
+}
+
 TEST(DecodeZebinTest, givenTextSectionThenTreatItAsExternalFunctions) {
     std::string errors, warnings;
     ZebinTestData::ValidEmptyProgram zebin;

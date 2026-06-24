@@ -471,6 +471,39 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithSpirvAndBuildOptionsThenUnpack
     EXPECT_EQ(spirvPtr, unpackResult.intermediateRepresentation.begin());
 }
 
+TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithL1CachePolicyInZeInfoThenUnpackSurfacesItOnSingleDeviceBinary) {
+    auto zeInfo = std::string{"---\nversion : \'"} + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + "\'\nl1_cache_policy : wb\n";
+    ZebinTestData::ValidEmptyProgram zebin(zeInfo);
+
+    zebin.elfHeader->type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+    zebin.elfHeader->machine = IGFX_BMG;
+    NEO::TargetDevice targetDevice = {};
+    targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
+    targetDevice.maxPointerSizeInBytes = 8;
+
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
+    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyWriteBack, unpackResult.l1CachePolicy);
+}
+
+TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithoutL1CachePolicyInZeInfoThenUnpackSurfacesUnknownPolicy) {
+    ZebinTestData::ValidEmptyProgram zebin;
+
+    zebin.elfHeader->type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+    zebin.elfHeader->machine = IGFX_BMG;
+    NEO::TargetDevice targetDevice = {};
+    targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
+    targetDevice.maxPointerSizeInBytes = 8;
+
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
+    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown, unpackResult.l1CachePolicy);
+}
+
 TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithPisaAndBuildOptionsThenUnpackThemProperly) {
     ZebinTestData::ValidEmptyProgram zebin;
     const uint8_t pisaData[30] = {0xd};

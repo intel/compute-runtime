@@ -469,8 +469,24 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
 
         bool rebuild = NEO::debugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
         rebuild |= !device->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv();
-        rebuild |= device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().isL1PolicyMissmatchCheckNeeded() &&
-                   NEO::checkAndReplaceL1CachePolicy(this->options, singleDeviceBinary.generatorFeatureVersions.version, device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(device->getNEODevice()->getDebugger()));
+
+        auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+        auto &productHelper = rootDeviceEnvironment.getProductHelper();
+        if (productHelper.isL1PolicyMissmatchCheckNeeded()) {
+            const bool debuggerActive = device->getNEODevice()->getDebugger() != nullptr;
+            if (singleDeviceBinary.l1CachePolicy != NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown) {
+                // The module declares an l1_cache_policy in zeinfo, build-options based check is skipped
+                rebuild |= NEO::checkL1CachePolicyMismatch(singleDeviceBinary.l1CachePolicy, productHelper.getL1CachePolicy(debuggerActive));
+                if (rebuild) {
+                    NEO::replaceL1CachePolicyInBuildOptions(
+                        this->options,
+                        rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(debuggerActive));
+                }
+            } else {
+                rebuild |= NEO::checkAndReplaceL1CachePolicy(this->options, singleDeviceBinary.generatorFeatureVersions.version,
+                                                             rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(debuggerActive));
+            }
+        }
 
         if (rebuild && irBinarySize == 0) {
             driverHandle->clearErrorDescription();

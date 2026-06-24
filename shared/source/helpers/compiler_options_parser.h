@@ -20,7 +20,9 @@ bool requiresOpenClCFeatures(const std::string &compileOptions);
 bool requiresAdditionalExtensions(const std::string &compileOptions);
 
 bool requiresL1PolicyMissmatchCheck();
+bool replaceL1CachePolicyInBuildOptions(std::string &buildOptions, const char *currentCachePolicy);
 bool checkAndReplaceL1CachePolicy(std::string &buildOptions, NEO::Zebin::ZeInfo::Types::Version version, const char *currentCachePolicy);
+bool checkL1CachePolicyMismatch(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy binaryPolicy, uint32_t driverDefaultL1CacheControl);
 
 void appendAdditionalExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions);
 void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::string &options, std::string &internalOptions);
