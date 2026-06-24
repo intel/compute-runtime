@@ -129,4 +129,9 @@ uint32_t ProductHelperHw<gfxProduct>::getPreferredWorkgroupCountPerSubslice() co
     return 4;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
+    return true;
+}
+
 } // namespace NEO

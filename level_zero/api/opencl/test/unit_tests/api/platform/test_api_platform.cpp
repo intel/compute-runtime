@@ -5,7 +5,9 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/platform/platform.h"
@@ -64,6 +66,53 @@ TEST(GetExtensionFunctionAddressTests, givenKnownExtensionNameThenReturnsNonNull
 TEST(GetExtensionFunctionAddressTests, givenUnknownExtensionNameThenReturnsNull) {
     auto ptr = clGetExtensionFunctionAddress("clNonExistentExtension");
     EXPECT_EQ(nullptr, ptr);
+}
+
+struct GetPlatformIDsWithDeviceTests : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        platforms.push_back(std::unique_ptr<Platform>(platform));
+        platformsImplBackup = std::make_unique<VariableBackup<decltype(platformsImpl)>>(&platformsImpl, &platforms);
+    }
+    void TearDown() override {
+        platformsImplBackup.reset();
+        platforms.back().release();
+        platforms.clear();
+        Test<OclFixture>::TearDown();
+    }
+    std::vector<std::unique_ptr<Platform>> platforms;
+    std::unique_ptr<VariableBackup<decltype(platformsImpl)>> platformsImplBackup;
+    DebugManagerStateRestore restorer;
+};
+
+HWTEST2_F(GetPlatformIDsWithDeviceTests, givenDefaultFlagAndCriProductWhenGetPlatformIDsThenReturnsPlatforms, IsCRI) {
+    cl_uint numPlatforms = 0;
+    auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, numPlatforms);
+}
+
+HWTEST2_F(GetPlatformIDsWithDeviceTests, givenDefaultFlagAndNonCriProductWhenGetPlatformIDsThenReturnsNoPlatforms, IsNotCRI) {
+    cl_uint numPlatforms = 1u;
+    auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, numPlatforms);
+}
+
+HWTEST2_F(GetPlatformIDsWithDeviceTests, givenFlag1AndNonCriProductWhenGetPlatformIDsThenReturnsPlatforms, IsNotCRI) {
+    debugManager.flags.EnableLEO.set(1);
+    cl_uint numPlatforms = 0;
+    auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, numPlatforms);
+}
+
+HWTEST2_F(GetPlatformIDsWithDeviceTests, givenFlag0AndCriProductWhenGetPlatformIDsThenReturnsNoPlatforms, IsCRI) {
+    debugManager.flags.EnableLEO.set(0);
+    cl_uint numPlatforms = 1u;
+    auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, numPlatforms);
 }
 
 } // namespace ult

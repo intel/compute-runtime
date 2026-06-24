@@ -1391,6 +1391,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsMemSetExtendedPayload
     EXPECT_FALSE(productHelper->isMemSetExtendedPayloadSupported());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned, IsNotCRI) {
     EXPECT_FALSE(productHelper->isLEOSupported());
 }
