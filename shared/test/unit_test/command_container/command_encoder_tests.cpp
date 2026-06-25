@@ -505,6 +505,37 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenInitializeAllocations
     EXPECT_EQ(1u * expectedChunkWriteMultiplier, csr.writeMemoryParams.chunkWriteCallCount);
 }
 
+HWTEST_F(CommandEncoderTests, givenLastWaitedCounterValueSetWhenInitializeAllocationsFromHostThenLastWaitedCounterValueIsCleared) {
+    class ExposedInOrderExecInfo : public InOrderExecInfo {
+      public:
+        using InOrderExecInfo::InOrderExecInfo;
+        using InOrderExecInfo::lastWaitedCounterValue;
+    };
+
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    ExposedInOrderExecInfo inOrderExecInfo(deviceNode, nullptr, mockDevice, 2, false);
+
+    const uint64_t initialValue = inOrderExecInfo.getInitialCounterValue();
+
+    inOrderExecInfo.setLastWaitedCounterValue(initialValue + 10, 0);
+    inOrderExecInfo.setLastWaitedCounterValue(initialValue + 20, 1);
+
+    EXPECT_TRUE(inOrderExecInfo.isCounterAlreadyDone(initialValue + 10, 0));
+    EXPECT_TRUE(inOrderExecInfo.isCounterAlreadyDone(initialValue + 20, 1));
+
+    inOrderExecInfo.initializeAllocationsFromHost(false);
+
+    EXPECT_EQ(initialValue, inOrderExecInfo.lastWaitedCounterValue[0].load());
+    EXPECT_EQ(initialValue, inOrderExecInfo.lastWaitedCounterValue[1].load());
+
+    EXPECT_FALSE(inOrderExecInfo.isCounterAlreadyDone(initialValue + 10, 0));
+    EXPECT_FALSE(inOrderExecInfo.isCounterAlreadyDone(initialValue + 20, 1));
+}
+
 HWTEST_F(CommandEncoderTests, givenNullSimulationUploadCsrWhenSetThenUseDefaultCsrForSimulationParams) {
     class ExposedInOrderExecInfo : public InOrderExecInfo {
       public:

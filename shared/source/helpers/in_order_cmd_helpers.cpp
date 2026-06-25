@@ -114,6 +114,13 @@ void InOrderExecInfo::initializeAllocationsFromHost() {
     initializeAllocationsFromHost(true);
 }
 
+void InOrderExecInfo::resetLastWaitedCounterValue() {
+    const uint64_t initialValue = getInitialCounterValue();
+    for (auto &cachedValue : lastWaitedCounterValue) {
+        cachedValue.store(initialValue);
+    }
+}
+
 void InOrderExecInfo::initializeAllocationsFromHost(bool shouldUploadToSimulation) {
     const uint64_t initialValue = getInitialCounterValue();
 
@@ -132,6 +139,8 @@ void InOrderExecInfo::initializeAllocationsFromHost(bool shouldUploadToSimulatio
         initializeNodeFromHost(*hostCounterNode, numHostPartitionsToWait);
     }
 
+    resetLastWaitedCounterValue();
+
     simulationUploadDirty = true;
 
     if (shouldUploadToSimulation) {
@@ -148,7 +157,7 @@ void InOrderExecInfo::reset() {
 
 void InOrderExecInfo::resetCounterValue() {
     counterValue = getInitialCounterValue();
-    lastWaitedCounterValue[allocationOffset != 0].store(getInitialCounterValue());
+    resetLastWaitedCounterValue();
 
     if (getInterruptFence() != nullptr) {
         interruptFence->get()->setFenceValue(getCounterValue());

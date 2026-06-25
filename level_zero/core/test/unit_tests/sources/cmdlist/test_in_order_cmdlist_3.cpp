@@ -1245,6 +1245,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(0u, storeDataHostInOrderNoop->getDataDword1());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            InOrderRegularCmdListTests,
+            givenPatchPreambleWhenExecutingInOrderCommandListThenResetLastWaitedCounterValue) {
+    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(false, false, false);
+    mockCmdQHw->setPatchingPreamble(true);
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->close();
+
+    auto &inOrderExecInfo = *regularCmdList->inOrderExecInfo;
+    const uint64_t staleValue = inOrderExecInfo.getInitialCounterValue() + 10;
+    inOrderExecInfo.setLastWaitedCounterValue(staleValue, 0);
+    EXPECT_TRUE(inOrderExecInfo.isCounterAlreadyDone(staleValue, 0));
+
+    auto commandListHandle = regularCmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_FALSE(inOrderExecInfo.isCounterAlreadyDone(staleValue, 0));
+    EXPECT_TRUE(inOrderExecInfo.isCounterAlreadyDone(inOrderExecInfo.getInitialCounterValue(), 0));
+}
+
 HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenExporterSignalsThenImporterRefreshesAllocations) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 

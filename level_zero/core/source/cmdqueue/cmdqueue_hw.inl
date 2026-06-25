@@ -2081,6 +2081,7 @@ void CommandQueueHw<gfxCoreFamily>::prepareInOrderCommandList(CommandList *comma
     inOrderExecInfo.setSimulationUploadCsr(this->csr);
 
     if (ctx.patchPreambleEnabled) {
+        inOrderExecInfo.resetLastWaitedCounterValue();
         inOrderExecInfo.uploadAllocationsToSimulation();
         ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecDeviceRequiredSize();
         ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecHostRequiredSize();

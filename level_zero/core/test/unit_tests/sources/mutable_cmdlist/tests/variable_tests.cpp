@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -16,6 +17,12 @@
 
 namespace L0 {
 namespace ult {
+
+namespace {
+struct HeapfullProfilingEventAccessor : public ::L0::Event {
+    using ::L0::Event::heapfullCbEventWithProfiling;
+};
+} // namespace
 
 using VariableTest = Test<VariableFixture>;
 using VariableInOrderTest = Test<VariableInOrderFixture>;
@@ -1661,6 +1668,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(this->cmdListInOrderAllocationOffset, newEvent->getInOrderAllocationOffset());
     EXPECT_EQ(this->cmdListInOrderCounterValue, newEvent->getInOrderExecBaseSignalValue());
     EXPECT_TRUE(newEvent->hasInOrderTimestampNode());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderTest,
+            givenCbSignalTimestampEventWhenMutatingSignalEventThenHeapfullProfilingFlagMatchesPlatform) {
+    auto event = this->createTestEvent(true, false, true, false);
+    ASSERT_NE(nullptr, event);
+
+    this->attachCbEvent(event);
+
+    createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
+    auto ret = this->variable->setAsSignalEvent(event, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_TRUE(this->variable->desc.eventValue.hasStandaloneProfilingNode);
+
+    auto newEvent = this->createTestEvent(true, false, true, false);
+    ASSERT_NE(nullptr, newEvent);
+    EXPECT_FALSE(static_cast<HeapfullProfilingEventAccessor *>(newEvent)->heapfullCbEventWithProfiling);
+
+    ret = this->variable->setValue(0, 0, newEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
+
+    const bool expectedHeapfull = !device->getGfxCoreHelper().duplicatedInOrderCounterStorageEnabled();
+    EXPECT_EQ(expectedHeapfull, static_cast<HeapfullProfilingEventAccessor *>(newEvent)->heapfullCbEventWithProfiling);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

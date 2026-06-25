@@ -602,6 +602,11 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
 
     if (this->desc.eventValue.counterBasedEvent && !this->desc.eventValue.inOrderIncrementEvent) {
         this->cmdList->switchCounterBasedEvents(this->desc.eventValue.inOrderExecBaseSignalValue, this->desc.eventValue.inOrderAllocationOffset, newEvent);
+
+        if (this->desc.eventValue.hasStandaloneProfilingNode &&
+            !device->getGfxCoreHelper().duplicatedInOrderCounterStorageEnabled()) {
+            newEvent->setHeapfullCbEventWithProfiling(true);
+        }
     }
 
     uint64_t postSyncAddress = 0;

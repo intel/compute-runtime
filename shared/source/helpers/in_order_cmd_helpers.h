@@ -122,6 +122,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     SyncFence *getInterruptFence() { return interruptFence ? interruptFence->get() : nullptr; }
 
     uint64_t getInitialCounterValue() const;
+    void resetLastWaitedCounterValue();
 
   protected:
     using CounterAndOffsetPairT = std::pair<uint64_t, uint32_t>;
