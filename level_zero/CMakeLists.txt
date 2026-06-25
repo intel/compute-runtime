@@ -512,6 +512,9 @@ if(BUILD_WITH_L0)
             CONFIGURATIONS Debug
     )
   endif()
+
+  add_subdirectory_unique(cmake)
+
   if(NOT NEO_SKIP_L0_UNIT_TESTS)
     add_subdirectory_unique(core/test/common)
     add_subdirectory_unique(core/test/unit_tests)

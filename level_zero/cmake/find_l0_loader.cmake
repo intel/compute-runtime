@@ -4,7 +4,10 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(NOT "${EXTERNAL_L0_LOADER_PATH}" STREQUAL "")
+if("${L0_BLACK_BOX_TEST_USE_DRIVER}" STREQUAL "1")
+  message(STATUS "Using driver as a loader to link black box tests")
+  set(L0_LOADER_LIBRARY "${TARGET_NAME_L0}")
+elseif(NOT "${EXTERNAL_L0_LOADER_PATH}" STREQUAL "")
   if(NOT EXISTS "${EXTERNAL_L0_LOADER_PATH}")
     message(FATAL_ERROR "EXTERNAL_L0_LOADER_PATH does not exist: ${EXTERNAL_L0_LOADER_PATH}")
   endif()
