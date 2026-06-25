@@ -103,6 +103,23 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersPoolWhenCreatedAndMovedThenCtorsWor
     EXPECT_EQ(pool2.chunkAllocator->getLeftSize(), DummyBuffersPool::defaultParams.aggregatedSmallBuffersPoolSize);
 }
 
+TEST_F(AbstractSmallBuffersTest, givenBuffersPoolWithChunksQueuedForFreeWhenMovedThenQueuedChunksArePreserved) {
+    auto pool1 = DummyBuffersPool{this->memoryManager.get()};
+    pool1.mainStorage.reset(new DummyBuffer(testVal));
+    auto poolStorage = pool1.mainStorage.get();
+
+    constexpr size_t chunkOffset = DummyBuffersPool::defaultParams.chunkAlignment;
+    constexpr size_t chunkSize = DummyBuffersPool::defaultParams.chunkAlignment * 4;
+    pool1.tryFreeFromPoolBuffer(poolStorage, chunkOffset, chunkSize);
+    ASSERT_EQ(pool1.chunksToFree.size(), 1u);
+
+    auto pool2 = std::move(pool1);
+    ASSERT_EQ(pool2.chunksToFree.size(), 1u);
+    auto [movedOffset, movedSize] = pool2.chunksToFree[0];
+    EXPECT_EQ(movedOffset, chunkOffset);
+    EXPECT_EQ(movedSize, chunkSize);
+}
+
 TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenPoolWithoutMainStorageAddedThenItIsIgnored) {
     auto pool = DummyBuffersPool{this->memoryManager.get()};
     pool.mainStorage.reset(nullptr);

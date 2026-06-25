@@ -20,6 +20,7 @@
 #include "opencl/source/mem_obj/map_operations_handler.h"
 
 #include <map>
+#include <type_traits>
 
 enum class InternalMemoryType : uint32_t;
 
@@ -70,6 +71,9 @@ class Context : public BaseObject<_cl_context> {
         const StackVec<NEO::GraphicsAllocation *, 1> &getAllocationsVector();
     };
     static_assert(NEO::NonCopyable<AbstractBuffersPool<BufferPool, Buffer, MemObj>>);
+
+    static_assert(std::is_nothrow_move_constructible_v<BufferPool>, "Pools live in std::vector and have a deleted copy ctor, so vector reallocation"
+                                                                    "requires a noexcept move ctor - otherwise it fails to compile.");
 
     class BufferPoolAllocator : public AbstractBuffersAllocator<BufferPool, Buffer, MemObj> {
         using BaseType = AbstractBuffersAllocator<BufferPool, Buffer, MemObj>;
@@ -122,7 +126,6 @@ class Context : public BaseObject<_cl_context> {
                      const ClDeviceVector &devices,
                      void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
                      void *data, cl_int &errcodeRet) {
-
         auto pContext = new T(funcNotify, data);
 
         if (!pContext->createImpl(properties, devices, funcNotify, data, errcodeRet)) {
@@ -162,7 +165,9 @@ class Context : public BaseObject<_cl_context> {
         return svmAllocsManager;
     }
 
-    auto &getMapOperationsStorage() { return mapOperationsStorage; }
+    auto &getMapOperationsStorage() {
+        return mapOperationsStorage;
+    }
 
     cl_int tryGetExistingHostPtrAllocation(const void *ptr,
                                            size_t size,
@@ -221,12 +226,18 @@ class Context : public BaseObject<_cl_context> {
         return driverDiagnostics != nullptr;
     }
 
-    bool getInteropUserSyncEnabled() { return interopUserSync; }
-    void setInteropUserSyncEnabled(bool enabled) { interopUserSync = enabled; }
+    bool getInteropUserSyncEnabled() {
+        return interopUserSync;
+    }
+    void setInteropUserSyncEnabled(bool enabled) {
+        interopUserSync = enabled;
+    }
     bool areMultiStorageAllocationsPreferred();
     bool isSingleDeviceContext();
 
-    ContextType peekContextType() const { return contextType; }
+    ContextType peekContextType() const {
+        return contextType;
+    }
 
     bool isDeviceAssociated(const ClDevice &clDevice) const;
     ClDevice *getSubDeviceByIndex(uint32_t subDeviceIndex) const;
@@ -243,7 +254,9 @@ class Context : public BaseObject<_cl_context> {
     const ClDeviceVector &getDevices() const {
         return devices;
     }
-    const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const { return deviceBitfields; };
+    const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const {
+        return deviceBitfields;
+    };
 
     static Platform *getPlatformFromProperties(const cl_context_properties *properties, cl_int &errcode);
     BufferPoolAllocator &getBufferPoolAllocator(BufferPoolType type) {

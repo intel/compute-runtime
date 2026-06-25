@@ -45,7 +45,7 @@ struct AbstractBuffersPool : public NonCopyableClass {
 
     AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback);
     AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback, const SmallBuffersParams &params);
-    AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool) noexcept;
+    AbstractBuffersPool(AbstractBuffersPool &&bufferPool) noexcept = default;
     AbstractBuffersPool &operator=(AbstractBuffersPool &&other) noexcept = delete;
     virtual ~AbstractBuffersPool() = default;
 
@@ -90,6 +90,25 @@ class AbstractBuffersAllocator {
 
   protected:
     inline bool isSizeWithinThreshold(size_t size) const { return params.smallBufferThreshold >= size; }
+
+    // Shared "try / drain-and-retry / grow-and-retry" allocation skeleton.
+    // tryAllocate() attempts allocation from the existing pools and returns a
+    // pointer (nullptr on failure). growPools() decides whether/how to add a new
+    // pool. Returns the first successful allocation, or the result of the final
+    // attempt after growth.
+    template <typename TryAllocateFn, typename GrowPoolsFn>
+    auto allocateFromPoolsWithGrowth(TryAllocateFn &&tryAllocate, GrowPoolsFn &&growPools) -> decltype(tryAllocate()) {
+        if (auto allocation = tryAllocate()) {
+            return allocation;
+        }
+        this->drain();
+        if (auto allocation = tryAllocate()) {
+            return allocation;
+        }
+        growPools();
+        return tryAllocate();
+    }
+
     void tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size, std::vector<BuffersPoolType> &bufferPoolsVec);
     void drain();
     void drain(std::vector<BuffersPoolType> &bufferPoolsVec);

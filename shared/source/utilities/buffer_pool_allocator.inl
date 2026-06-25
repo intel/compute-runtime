@@ -26,14 +26,6 @@ AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(Me
 }
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
-AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool) noexcept
-    : memoryManager{bufferPool.memoryManager},
-      mainStorage{std::move(bufferPool.mainStorage)},
-      chunkAllocator{std::move(bufferPool.chunkAllocator)},
-      onChunkFreeCallback{std::move(bufferPool.onChunkFreeCallback)},
-      params{bufferPool.params} {}
-
-template <typename PoolT, typename BufferType, typename BufferParentType>
 void AbstractBuffersPool<PoolT, BufferType, BufferParentType>::tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size) {
     if (this->isPoolBuffer(possiblePoolBuffer)) {
         this->chunksToFree.emplace_back(offset, size);

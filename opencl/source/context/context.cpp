@@ -635,24 +635,14 @@ Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryPropert
     }
 
     auto lock = std::unique_lock<std::mutex>(mutex);
-    auto bufferFromPool = this->allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
-    if (bufferFromPool != nullptr) {
-        return bufferFromPool;
-    }
-
-    this->drain();
-
-    bufferFromPool = this->allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
-    if (bufferFromPool != nullptr) {
-        return bufferFromPool;
-    }
-
-    auto &device = context->getDevice(0)->getDevice();
-    if (device.requestPoolCreate(this->poolType, 1u)) {
-        this->addNewBufferPool(BufferPool{this->context, this->params, this->poolType == BufferPoolType::SmallBuffersPool});
-        return this->allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
-    }
-    return nullptr;
+    return this->allocateFromPoolsWithGrowth(
+        [&] { return this->allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet); },
+        [&] {
+            auto &device = context->getDevice(0)->getDevice();
+            if (device.requestPoolCreate(this->poolType, 1u)) {
+                this->addNewBufferPool(BufferPool{this->context, this->params, this->poolType == BufferPoolType::SmallBuffersPool});
+            }
+        });
 }
 
 Buffer *Context::BufferPoolAllocator::allocateFromPools(const MemoryProperties &memoryProperties,

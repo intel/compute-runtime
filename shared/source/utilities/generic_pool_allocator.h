@@ -8,7 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/task_count_helper.h"
-#include "shared/source/utilities/buffer_pool_allocator.h"
+#include "shared/source/utilities/device_buffers_pool.h"
 #include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/source/utilities/stackvec.h"
@@ -41,8 +41,8 @@ struct DeferredChunk {
 };
 
 template <PoolTraits Traits>
-class GenericPool : public AbstractBuffersPool<GenericPool<Traits>, GraphicsAllocation> {
-    using BaseType = AbstractBuffersPool<GenericPool<Traits>, GraphicsAllocation>;
+class GenericPool : public DeviceBuffersPool<GenericPool<Traits>> {
+    using BaseType = DeviceBuffersPool<GenericPool<Traits>>;
 
   public:
     GenericPool(Device *device, size_t poolSize);
@@ -50,18 +50,12 @@ class GenericPool : public AbstractBuffersPool<GenericPool<Traits>, GraphicsAllo
     GenericPool(const GenericPool &) = delete;
     GenericPool &operator=(const GenericPool &) = delete;
 
-    GenericPool(GenericPool &&pool) noexcept;
+    GenericPool(GenericPool &&pool) noexcept = default;
     GenericPool &operator=(GenericPool &&) = delete;
 
-    ~GenericPool() override;
+    ~GenericPool() override = default;
 
     [[nodiscard]] SharedPoolAllocation *allocate(size_t size);
-    const StackVec<GraphicsAllocation *, 1> &getAllocationsVector() const;
-
-  private:
-    Device *device = nullptr;
-    StackVec<GraphicsAllocation *, 1> poolAllocations;
-    std::unique_ptr<std::mutex> mtx;
 };
 
 template <PoolTraits Traits>
@@ -83,8 +77,8 @@ class GenericPoolAllocator : public AbstractBuffersAllocator<GenericPool<Traits>
 };
 
 template <PoolTraits Traits>
-class GenericViewPool : public AbstractBuffersPool<GenericViewPool<Traits>, GraphicsAllocation> {
-    using BaseType = AbstractBuffersPool<GenericViewPool<Traits>, GraphicsAllocation>;
+class GenericViewPool : public DeviceBuffersPool<GenericViewPool<Traits>> {
+    using BaseType = DeviceBuffersPool<GenericViewPool<Traits>>;
 
   public:
     GenericViewPool(Device *device, size_t poolSize);
@@ -92,18 +86,12 @@ class GenericViewPool : public AbstractBuffersPool<GenericViewPool<Traits>, Grap
     GenericViewPool(const GenericViewPool &) = delete;
     GenericViewPool &operator=(const GenericViewPool &) = delete;
 
-    GenericViewPool(GenericViewPool &&pool) noexcept;
+    GenericViewPool(GenericViewPool &&pool) noexcept = default;
     GenericViewPool &operator=(GenericViewPool &&) = delete;
 
-    ~GenericViewPool() override;
+    ~GenericViewPool() override = default;
 
     [[nodiscard]] GraphicsAllocation *allocate(size_t size);
-    const StackVec<GraphicsAllocation *, 1> &getAllocationsVector() const;
-
-  private:
-    Device *device = nullptr;
-    StackVec<GraphicsAllocation *, 1> poolAllocations;
-    std::unique_ptr<std::mutex> mtx;
 };
 
 template <PoolTraits Traits>

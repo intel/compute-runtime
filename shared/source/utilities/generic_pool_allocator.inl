@@ -14,7 +14,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
-#include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/device_buffers_pool.inl"
 #include "shared/source/utilities/generic_pool_allocator.h"
 #include "shared/source/utilities/heap_allocator.h"
 
@@ -22,34 +22,13 @@ namespace NEO {
 
 template <PoolTraits Traits>
 GenericPool<Traits>::GenericPool(Device *device, size_t poolSize)
-    : BaseType(device->getMemoryManager(), nullptr), device(device) {
+    : BaseType(device, nullptr) {
     DEBUG_BREAK_IF(device->getProductHelper().is2MBLocalMemAlignmentEnabled() &&
                    !isAligned(poolSize, MemoryConstants::pageSize2M));
 
     auto properties = Traits::createAllocationProperties(device, poolSize);
     auto graphicsAllocation = this->memoryManager->allocateGraphicsMemoryWithProperties(properties);
-
-    this->chunkAllocator.reset(new NEO::HeapAllocator(this->params.startingOffset,
-                                                      graphicsAllocation ? graphicsAllocation->getUnderlyingBufferSize() : 0u,
-                                                      MemoryConstants::pageSize,
-                                                      0u));
-    this->mainStorage.reset(graphicsAllocation);
-    this->mtx = std::make_unique<std::mutex>();
-    poolAllocations.push_back(graphicsAllocation);
-}
-
-template <PoolTraits Traits>
-GenericPool<Traits>::GenericPool(GenericPool &&pool) noexcept : BaseType(std::move(pool)) {
-    mtx.reset(pool.mtx.release());
-    this->poolAllocations = std::move(pool.poolAllocations);
-    this->device = pool.device;
-}
-
-template <PoolTraits Traits>
-GenericPool<Traits>::~GenericPool() {
-    if (this->mainStorage) {
-        device->getMemoryManager()->freeGraphicsMemory(this->mainStorage.release());
-    }
+    this->initStorage(graphicsAllocation);
 }
 
 template <PoolTraits Traits>
@@ -61,12 +40,7 @@ SharedPoolAllocation *GenericPool<Traits>::allocate(size_t size) {
     return new SharedPoolAllocation{this->mainStorage.get(),
                                     offset - this->params.startingOffset,
                                     size,
-                                    mtx.get()};
-}
-
-template <PoolTraits Traits>
-const StackVec<GraphicsAllocation *, 1> &GenericPool<Traits>::getAllocationsVector() const {
-    return poolAllocations;
+                                    this->mtx.get()};
 }
 
 template <PoolTraits Traits>
@@ -84,20 +58,9 @@ SharedPoolAllocation *GenericPoolAllocator<Traits>::allocate(size_t size) {
         this->addNewBufferPool(GenericPool<Traits>(device, alignToPoolSize(Traits::defaultPoolSize)));
     }
 
-    auto allocFromPool = allocateFromPools(size);
-    if (allocFromPool != nullptr) {
-        return allocFromPool;
-    }
-
-    this->drain();
-
-    allocFromPool = allocateFromPools(size);
-    if (allocFromPool != nullptr) {
-        return allocFromPool;
-    }
-
-    this->addNewBufferPool(GenericPool<Traits>(device, alignToPoolSize(Traits::defaultPoolSize)));
-    return allocateFromPools(size);
+    return this->allocateFromPoolsWithGrowth(
+        [&] { return allocateFromPools(size); },
+        [&] { this->addNewBufferPool(GenericPool<Traits>(device, alignToPoolSize(Traits::defaultPoolSize))); });
 }
 
 template <PoolTraits Traits>
@@ -126,34 +89,13 @@ size_t GenericPoolAllocator<Traits>::alignToPoolSize(size_t size) const {
 
 template <PoolTraits Traits>
 GenericViewPool<Traits>::GenericViewPool(Device *device, size_t poolSize)
-    : BaseType(device->getMemoryManager(), nullptr), device(device) {
+    : BaseType(device, nullptr) {
     DEBUG_BREAK_IF(device->getProductHelper().is2MBLocalMemAlignmentEnabled() &&
                    !isAligned(poolSize, MemoryConstants::pageSize2M));
 
     auto properties = Traits::createAllocationProperties(device, poolSize);
     auto graphicsAllocation = this->memoryManager->allocateGraphicsMemoryWithProperties(properties);
-
-    this->chunkAllocator.reset(new NEO::HeapAllocator(this->params.startingOffset,
-                                                      graphicsAllocation ? graphicsAllocation->getUnderlyingBufferSize() : 0u,
-                                                      MemoryConstants::pageSize,
-                                                      0u));
-    this->mainStorage.reset(graphicsAllocation);
-    this->mtx = std::make_unique<std::mutex>();
-    poolAllocations.push_back(graphicsAllocation);
-}
-
-template <PoolTraits Traits>
-GenericViewPool<Traits>::GenericViewPool(GenericViewPool &&pool) noexcept : BaseType(std::move(pool)) {
-    mtx.reset(pool.mtx.release());
-    this->poolAllocations = std::move(pool.poolAllocations);
-    this->device = pool.device;
-}
-
-template <PoolTraits Traits>
-GenericViewPool<Traits>::~GenericViewPool() {
-    if (this->mainStorage) {
-        device->getMemoryManager()->freeGraphicsMemory(this->mainStorage.release());
-    }
+    this->initStorage(graphicsAllocation);
 }
 
 template <PoolTraits Traits>
@@ -168,11 +110,6 @@ GraphicsAllocation *GenericViewPool<Traits>::allocate(size_t size) {
     }
 
     return this->mainStorage->createView(offset - this->params.startingOffset, size);
-}
-
-template <PoolTraits Traits>
-const StackVec<GraphicsAllocation *, 1> &GenericViewPool<Traits>::getAllocationsVector() const {
-    return poolAllocations;
 }
 
 template <PoolTraits Traits>
@@ -199,20 +136,9 @@ GraphicsAllocation *GenericViewPoolAllocator<Traits>::allocate(size_t size, cons
         this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(getDefaultPoolSize())));
     }
 
-    auto allocFromPool = allocateFromPools(size);
-    if (allocFromPool != nullptr) {
-        return allocFromPool;
-    }
-
-    this->drain();
-
-    allocFromPool = allocateFromPools(size);
-    if (allocFromPool != nullptr) {
-        return allocFromPool;
-    }
-
-    this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(getDefaultPoolSize())));
-    return allocateFromPools(size);
+    return this->allocateFromPoolsWithGrowth(
+        [&] { return allocateFromPools(size); },
+        [&] { this->addNewBufferPool(GenericViewPool<Traits>(device, alignToPoolSize(getDefaultPoolSize()))); });
 }
 
 template <PoolTraits Traits>

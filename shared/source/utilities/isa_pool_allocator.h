@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,11 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/utilities/buffer_pool_allocator.h"
+#include "shared/source/utilities/device_buffers_pool.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 
 #include <mutex>
+#include <type_traits>
 
 namespace NEO {
 class GraphicsAllocation;
@@ -21,24 +22,20 @@ class Device;
 using SharedIsaAllocation = SharedPoolAllocation;
 
 // Each shared GA is maintained by single ISAPool
-class ISAPool : public AbstractBuffersPool<ISAPool, GraphicsAllocation> {
-    using BaseType = AbstractBuffersPool<ISAPool, GraphicsAllocation>;
+class ISAPool : public DeviceBuffersPool<ISAPool> {
+    using BaseType = DeviceBuffersPool<ISAPool>;
 
   public:
-    ISAPool(ISAPool &&pool) noexcept;
+    ISAPool(ISAPool &&pool) noexcept = default;
     ISAPool &operator=(ISAPool &&other) = delete;
     ISAPool(Device *device, bool isBuiltin, size_t storageSize);
-    ~ISAPool() override;
+    ~ISAPool() override = default;
 
     SharedIsaAllocation *allocateISA(size_t requestedSize) const;
-    const StackVec<GraphicsAllocation *, 1> &getAllocationsVector();
     bool isBuiltinPool() const { return isBuiltin; }
 
   private:
-    Device *device;
     bool isBuiltin;
-    StackVec<GraphicsAllocation *, 1> stackVec;
-    std::unique_ptr<std::mutex> mtx;
 };
 
 class ISAPoolAllocator : public AbstractBuffersAllocator<ISAPool, GraphicsAllocation> {
@@ -64,5 +61,8 @@ class ISAPoolAllocator : public AbstractBuffersAllocator<ISAPool, GraphicsAlloca
 };
 
 static_assert(NEO::NonCopyable<ISAPool>);
+
+static_assert(std::is_nothrow_move_constructible_v<ISAPool>, "Pools live in std::vector and have a deleted copy ctor, so vector reallocation"
+                                                             "requires a noexcept move ctor - otherwise it fails to compile.");
 
 } // namespace NEO
