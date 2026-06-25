@@ -250,7 +250,7 @@ TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenLibraryReturnsPlatformsThenIsLEOEn
     OsLibrary::loadFunc = savedLoadFunc;
 }
 
-TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenLibraryReturnsNoPlatformsThenIsLEOEnabledReturnsFalseAndLibraryIsUnloaded) {
+TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenLibraryReturnsNoPlatformsThenIsLEOEnabledReturnsFalseAndLibraryIsKept) {
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
     mockLibrary->procMap["clGetPlatformIDs"] = reinterpret_cast<void *>(mockClGetPlatformIDsNoPlatforms);
 
@@ -260,7 +260,7 @@ TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenLibraryReturnsNoPlatformsThenIsLEO
 
     EXPECT_FALSE(isLEOEnabled());
     EXPECT_FALSE(l0ForwardingState->hasPlatforms);
-    EXPECT_EQ(nullptr, l0ForwardingState->library.get());
+    EXPECT_NE(nullptr, l0ForwardingState->library.get());
 
     OsLibrary::loadFunc = savedLoadFunc;
 }

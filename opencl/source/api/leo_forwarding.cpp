@@ -71,10 +71,6 @@ static void loadL0Library() {
             l0ForwardingState->clGetPlatformIDsFunc(0, nullptr, &numPlatforms);
             l0ForwardingState->hasPlatforms = (numPlatforms > 0u);
         }
-
-        if (!l0ForwardingState->hasPlatforms && debugManager.flags.EnableLEO.get() == -1 && debugManager.flags.SetCommandStreamReceiver.get() <= 0) {
-            l0ForwardingState->library.reset();
-        }
     }
 }
 
