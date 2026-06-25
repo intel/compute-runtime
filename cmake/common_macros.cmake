@@ -101,6 +101,10 @@ function(parse_revision_config config default_device out_device out_revision_id)
 endfunction()
 
 function(create_verify_headers_target folder)
+  if(NOT NEO_ENABLE_VERIFY_HEADERS_TARGETS)
+    return()
+  endif()
+
   cmake_parse_arguments(ARG "" ""
                         "INCLUDE_DIRS;EXCLUDE_PATTERNS"
                         ${ARGN}

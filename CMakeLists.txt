@@ -682,6 +682,8 @@ option(NEO_ULTS_ENABLE_OPTIMIZATIONS "Enable compiler optimizations in ULTs buil
 
 option(IGDRCL_GCOV "generate gcov report" OFF)
 
+option(NEO_ENABLE_VERIFY_HEADERS_TARGETS "Create verify_headers targets for shared/opencl/level_zero" OFF)
+
 option(NEO_SHOW_VERBOSE_ULT_RESULTS "Use the default/verbose test output" OFF)
 
 if(NOT NEO_SHOW_VERBOSE_ULT_RESULTS)
