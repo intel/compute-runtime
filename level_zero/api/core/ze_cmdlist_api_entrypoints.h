@@ -225,6 +225,55 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameters(
 
     return cmdList->appendLaunchKernelWithParameters(hKernel, pGroupCounts, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
+
+ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsWithParameters(
+    ze_command_list_handle_t hCommandListImmediate,
+    uint32_t numCommandLists,
+    ze_command_list_handle_t *phCommandLists,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    CommandListExecutionInternalOptions internalOptions = {};
+    return L0::CommandList::fromHandle(hCommandListImmediate)->appendCommandLists(numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents, internalOptions);
+}
+
+ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(hCommandList, dstptr, srcptr, size, pNext, numWaitEvents, phWaitEvents, hSignalEvent);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *ptr,
+    const void *pattern,
+    size_t patternSize,
+    size_t size,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(hCommandList, ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
 } // namespace L0
 
 extern "C" {
@@ -344,6 +393,24 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsImmediate(
         pIsImmediate);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsWithParameters(
+    ze_command_list_handle_t hCommandListImmediate,
+    uint32_t numCommandLists,
+    ze_command_list_handle_t *phCommandLists,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListImmediateAppendCommandListsWithParameters(
+        hCommandListImmediate,
+        numCommandLists,
+        phCommandLists,
+        pNext,
+        hSignalEvent,
+        numWaitEvents,
+        phWaitEvents);
+}
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsExp(
     ze_command_list_handle_t hCommandListImmediate,
     uint32_t numCommandLists,
@@ -394,6 +461,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments
     ze_event_handle_t *phWaitEvents) {
     return L0::zeCommandListAppendLaunchKernelWithArguments(hCommandList, hKernel, groupCounts, groupSizes, pArguments, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameters(
     ze_command_list_handle_t hCommandList,
     ze_kernel_handle_t hKernel,
@@ -405,5 +473,32 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameter
 
     return L0::zeCommandListAppendLaunchKernelWithParameters(
         hCommandList, hKernel, pGroupCounts, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListAppendMemoryCopyWithParameters(
+        hCommandList, dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *ptr,
+    const void *pattern,
+    size_t patternSize,
+    size_t size,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListAppendMemoryFillWithParameters(
+        hCommandList, ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 } // extern "C"

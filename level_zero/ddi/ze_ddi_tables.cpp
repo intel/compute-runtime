@@ -212,6 +212,9 @@ DriverDispatch::DriverDispatch() {
     this->coreCommandList.pfnAppendWaitExternalSemaphoreExt = L0::zeCommandListAppendWaitExternalSemaphoreExt;
     this->coreCommandList.pfnAppendLaunchKernelWithParameters = L0::zeCommandListAppendLaunchKernelWithParameters;
     this->coreCommandList.pfnAppendLaunchKernelWithArguments = L0::zeCommandListAppendLaunchKernelWithArguments;
+    this->coreCommandList.pfnAppendMemoryCopyWithParameters = L0::zeCommandListAppendMemoryCopyWithParameters;
+    this->coreCommandList.pfnAppendMemoryFillWithParameters = L0::zeCommandListAppendMemoryFillWithParameters;
+    this->coreCommandList.pfnImmediateAppendCommandListsWithParameters = L0::zeCommandListImmediateAppendCommandListsWithParameters;
     this->coreCommandListExp.pfnCreateCloneExp = L0::zeCommandListCreateCloneExp;
     this->coreCommandListExp.pfnImmediateAppendCommandListsExp = L0::zeCommandListImmediateAppendCommandListsExp;
     this->coreCommandListExp.pfnGetNextCommandIdExp = L0::zeCommandListGetNextCommandIdExp;

@@ -177,7 +177,7 @@ Any API call that relies on explicit counter memory/value (eg. `zexEventGetDevic
 Other API calls that don't specify counter explicitly, are managed by the Driver.  
 
 **Each regular command list execution updates state of the events that will be signaled in that command list to "not ready".**  
-**This rule applies to `zeCommandQueueExecuteCommandLists` and `zeCommandListImmediateAppendCommandListsExp` API calls.**  
+**This rule applies to `zeCommandQueueExecuteCommandLists` and `zeCommandListImmediateAppendCommandLists` API calls.**  
 **Internal command list counter is implicitly reset to 0 on every execution.**  
 **L0 doesn't allow to execute the same regular command list multiple times in parallel. It must be synchronized before next execution.**  
 **Any waiting operation on such Event, must ensure that it is waiting for the correct `zeCommandQueueExecuteCommandLists` call.**  

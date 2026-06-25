@@ -273,6 +273,9 @@ zeGetCommandListProcAddrTable(
     fillDdiEntry(pDdiTable->pfnAppendWaitExternalSemaphoreExt, L0::globalDriverDispatch.coreCommandList.pfnAppendWaitExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
     fillDdiEntry(pDdiTable->pfnAppendLaunchKernelWithParameters, L0::globalDriverDispatch.coreCommandList.pfnAppendLaunchKernelWithParameters, version, ZE_API_VERSION_1_14);
     fillDdiEntry(pDdiTable->pfnAppendLaunchKernelWithArguments, L0::globalDriverDispatch.coreCommandList.pfnAppendLaunchKernelWithArguments, version, ZE_API_VERSION_1_14);
+    fillDdiEntry(pDdiTable->pfnAppendMemoryCopyWithParameters, L0::globalDriverDispatch.coreCommandList.pfnAppendMemoryCopyWithParameters, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnAppendMemoryFillWithParameters, L0::globalDriverDispatch.coreCommandList.pfnAppendMemoryFillWithParameters, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnImmediateAppendCommandListsWithParameters, L0::globalDriverDispatch.coreCommandList.pfnImmediateAppendCommandListsWithParameters, version, ZE_API_VERSION_1_16);
     return result;
 }
 
