@@ -31,6 +31,7 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/pool_allocators.h"
+#include "shared/source/utilities/software_tags_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -7324,4 +7325,117 @@ HWTEST_F(CommandStreamReceiverTest, givenPoolAllocatorEnabledWhenRequestedSizeEx
     ASSERT_NE(nullptr, allocation);
     EXPECT_FALSE(allocation->isView());
     EXPECT_EQ(AllocationType::commandBuffer, allocation->getAllocationType());
+}
+
+struct CommandStreamReceiverImmediateSWTagsFixture : public CommandStreamReceiverFixture {
+    void setUp() {
+        debugManager.flags.EnableSWTags.set(true);
+        CommandStreamReceiverFixture::setUp();
+    }
+    DebugManagerStateRestore restorer;
+};
+using CommandStreamReceiverImmediateSWTagsTest = Test<CommandStreamReceiverImmediateSWTagsFixture>;
+
+HWTEST_F(CommandStreamReceiverImmediateSWTagsTest, givenEnableSWTagsWhenFlushImmediateTaskThenHeapAddressesAreProgrammedAndHeapsResident) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    auto tagsManager = pDevice->getRootDeviceEnvironment().tagsManager.get();
+    ASSERT_NE(nullptr, tagsManager);
+    auto bxmlHeap = tagsManager->getBXMLHeapAllocation();
+    auto tagHeap = tagsManager->getSWTagHeapAllocation();
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(bxmlHeap));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(tagHeap));
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto storeDataImmCmds = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+
+    bool bxmlHeapAddressProgrammed = false;
+    bool tagHeapAddressProgrammed = false;
+    for (auto &entry : storeDataImmCmds) {
+        auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(*entry);
+        if (storeDataImm->getAddress() == bxmlHeap->getGpuAddress()) {
+            bxmlHeapAddressProgrammed = true;
+        }
+        if (storeDataImm->getAddress() == tagHeap->getGpuAddress()) {
+            tagHeapAddressProgrammed = true;
+        }
+    }
+    EXPECT_TRUE(bxmlHeapAddressProgrammed);
+    EXPECT_TRUE(tagHeapAddressProgrammed);
+}
+
+HWTEST_F(CommandStreamReceiverImmediateSWTagsTest, givenEnableSWTagsWhenFlushImmediateTaskForCmdListOperationThenHeapAddressesAreNotProgrammedAndHeapsNotResident) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    auto tagsManager = pDevice->getRootDeviceEnvironment().tagsManager.get();
+    ASSERT_NE(nullptr, tagsManager);
+    auto bxmlHeap = tagsManager->getBXMLHeapAllocation();
+    auto tagHeap = tagsManager->getSWTagHeapAllocation();
+
+    immediateFlushTaskFlags.dispatchOperation = NEO::AppendOperations::cmdList;
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(bxmlHeap));
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(tagHeap));
+}
+
+HWTEST_F(CommandStreamReceiverImmediateSWTagsTest, givenEnableSWTagsWhenFlushBcsTaskThenHeapAddressesAreProgrammedAndHeapsResident) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    auto tagsManager = pDevice->getRootDeviceEnvironment().tagsManager.get();
+    ASSERT_NE(nullptr, tagsManager);
+    auto bxmlHeap = tagsManager->getBXMLHeapAllocation();
+    auto tagHeap = tagsManager->getSWTagHeapAllocation();
+
+    DispatchBcsFlags dispatchBcsFlags(false, false, false);
+    commandStreamReceiver.flushBcsTask(commandStream, commandStream.getUsed(), dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(bxmlHeap));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(tagHeap));
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto storeDataImmCmds = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+
+    bool bxmlHeapAddressProgrammed = false;
+    bool tagHeapAddressProgrammed = false;
+    for (auto &entry : storeDataImmCmds) {
+        auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(*entry);
+        if (storeDataImm->getAddress() == bxmlHeap->getGpuAddress()) {
+            bxmlHeapAddressProgrammed = true;
+        }
+        if (storeDataImm->getAddress() == tagHeap->getGpuAddress()) {
+            tagHeapAddressProgrammed = true;
+        }
+    }
+    EXPECT_TRUE(bxmlHeapAddressProgrammed);
+    EXPECT_TRUE(tagHeapAddressProgrammed);
+}
+
+HWTEST_F(CommandStreamReceiverImmediateSWTagsTest, givenEnableSWTagsWhenFlushBcsTaskForCmdListOperationThenHeapAddressesAreNotProgrammedAndHeapsNotResident) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    auto tagsManager = pDevice->getRootDeviceEnvironment().tagsManager.get();
+    ASSERT_NE(nullptr, tagsManager);
+    auto bxmlHeap = tagsManager->getBXMLHeapAllocation();
+    auto tagHeap = tagsManager->getSWTagHeapAllocation();
+
+    DispatchBcsFlags dispatchBcsFlags(false, false, false);
+    dispatchBcsFlags.dispatchOperation = NEO::AppendOperations::cmdList;
+    commandStreamReceiver.flushBcsTask(commandStream, commandStream.getUsed(), dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(bxmlHeap));
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(tagHeap));
 }

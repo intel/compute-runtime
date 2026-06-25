@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -134,4 +135,54 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, WhenFlushingImmediateTaskStateles
     csr.flushImmediateTaskHeapless(cmdStream, 0, csr.recordedImmediateDispatchFlags, *device);
 
     EXPECT_FALSE(csr.isEnginePrologueSent);
+}
+
+XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenEnableSWTagsWhenFlushImmediateTaskHeaplessThenHeapAddressesAreProgrammedAndHeapsResident) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSWTags.set(true);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+
+    auto tagsManager = device->getRootDeviceEnvironment().tagsManager.get();
+    ASSERT_NE(nullptr, tagsManager);
+    auto bxmlHeap = tagsManager->getBXMLHeapAllocation();
+    auto tagHeap = tagsManager->getSWTagHeapAllocation();
+
+    static constexpr uint64_t cmdBufferGpuAddress = 0x10000;
+    static constexpr size_t bufferSize = 1024;
+    uint32_t cmdBuffer[bufferSize / sizeof(uint32_t)];
+
+    NEO::LinearStream cmdStream;
+    cmdStream.replaceBuffer(cmdBuffer, bufferSize);
+    auto graphicsAllocation = std::make_unique<MockGraphicsAllocation>(cmdBuffer, cmdBufferGpuAddress, bufferSize);
+    cmdStream.replaceGraphicsAllocation(graphicsAllocation.get());
+
+    csr.flushImmediateTaskHeapless(cmdStream, 0, csr.recordedImmediateDispatchFlags, *device);
+
+    EXPECT_TRUE(csr.isMadeResident(bxmlHeap));
+    EXPECT_TRUE(csr.isMadeResident(tagHeap));
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
+    auto storeDataImmCmds = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+
+    bool bxmlHeapAddressProgrammed = false;
+    bool tagHeapAddressProgrammed = false;
+    for (auto &entry : storeDataImmCmds) {
+        auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(*entry);
+        if (storeDataImm->getAddress() == bxmlHeap->getGpuAddress()) {
+            bxmlHeapAddressProgrammed = true;
+        }
+        if (storeDataImm->getAddress() == tagHeap->getGpuAddress()) {
+            tagHeapAddressProgrammed = true;
+        }
+    }
+    EXPECT_TRUE(bxmlHeapAddressProgrammed);
+    EXPECT_TRUE(tagHeapAddressProgrammed);
 }

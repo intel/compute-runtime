@@ -46,6 +46,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/software_tags_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
 
@@ -245,6 +246,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
 
     if (dispatchBcsFlags.dispatchOperation != AppendOperations::cmdList) {
         programHardwareContext(commandStreamCSR);
+
+        dispatchImmediateFlushSWTagsCommands(commandStreamCSR);
     }
 
     if (debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
@@ -364,6 +367,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
         if (requiresInstructionCacheFlush) {
             flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForInstructionCacheFlush();
         }
+
+        if (debugManager.flags.EnableSWTags.get()) {
+            flushData.estimatedSize += SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
+        }
     }
 
     // this must be the last call after all estimate size operations
@@ -388,6 +395,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
         dispatchImmediateFlushStateComputeModeCommand(flushData, csrCommandStream);
         dispatchImmediateFlushStateBaseAddressCommand(flushData, csrCommandStream, device);
         dispatchImmediateFlushOneTimeContextInitCommand(flushData, csrCommandStream, device);
+
+        dispatchImmediateFlushSWTagsCommands(csrCommandStream);
     }
 
     dispatchImmediateFlushJumpToImmediateCommand(immediateCommandStream, immediateCommandStreamStart, flushData, csrCommandStream);
@@ -781,6 +790,10 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
         EncodeDummyBlitWaArgs waArgs{false, rootExecutionEnvironment};
 
         size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+    }
+
+    if (dispatchBcsFlags.dispatchOperation != AppendOperations::cmdList && debugManager.flags.EnableSWTags.get()) {
+        size += SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
     }
 
     return size;
@@ -2221,6 +2234,18 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
         this->programExceptions(csrStream, device);
 
         programStateSip(csrStream, device);
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushSWTagsCommands(LinearStream &csrStream) {
+    if (debugManager.flags.EnableSWTags.get()) {
+        SWTagsManager *tagsManager = peekRootDeviceEnvironment().tagsManager.get();
+        UNRECOVERABLE_IF(tagsManager == nullptr);
+        this->makeResident(*tagsManager->getBXMLHeapAllocation());
+        this->makeResident(*tagsManager->getSWTagHeapAllocation());
+        tagsManager->insertBXMLHeapAddress<GfxFamily>(csrStream);
+        tagsManager->insertSWTagHeapAddress<GfxFamily>(csrStream);
     }
 }
 

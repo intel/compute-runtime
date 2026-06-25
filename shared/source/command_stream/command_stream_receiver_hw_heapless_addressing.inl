@@ -18,6 +18,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
 
@@ -238,6 +239,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskHeapless(
         if (this->isPerQueuePrologueEnabled()) {
             flushData.estimatedSize += getCmdSizeForPrologue();
         }
+
+        if (debugManager.flags.EnableSWTags.get()) {
+            flushData.estimatedSize += SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
+        }
     }
 
     // this must be the last call after all estimate size operations
@@ -269,6 +274,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskHeapless(
             MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(csrCommandStream);
             this->requiresInstructionCacheFlush = false;
         }
+
+        dispatchImmediateFlushSWTagsCommands(csrCommandStream);
     }
 
     dispatchImmediateFlushJumpToImmediateCommand(immediateCommandStream, immediateCommandStreamStart, flushData, csrCommandStream);

@@ -319,6 +319,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     inline void handleImmediateFlushOneTimeContextInitState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData, Device &device);
     inline void dispatchImmediateFlushOneTimeContextInitCommand(ImmediateFlushData &flushData, LinearStream &csrStream, Device &device);
 
+    inline void dispatchImmediateFlushSWTagsCommands(LinearStream &csrStream);
+
     inline void handleImmediateFlushJumpToImmediate(ImmediateFlushData &flushData);
     inline void dispatchImmediateFlushJumpToImmediateCommand(LinearStream &immediateCommandStream,
                                                              size_t immediateCommandStreamStart,
