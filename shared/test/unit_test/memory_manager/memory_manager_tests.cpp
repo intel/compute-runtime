@@ -478,6 +478,34 @@ HWTEST_F(MemoryhManagerMultiContextResourceTests, givenTemporaryAllocationUsedBy
     EXPECT_TRUE(memoryManager->getTemporaryAllocationsList().peekIsEmpty());
 }
 
+HWTEST_F(MemoryhManagerMultiContextResourceTests, givenTemporaryAllocationUsedBySingleContextWhenCleanTemporaryAllocationsThenSingleOsContextUsageIsCheckedAndCompletedAllocationIsFreed) {
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), true, 2);
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+
+    auto defaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
+    auto defaultOsContext = device->getDefaultEngine().osContext;
+
+    constexpr TaskCountType taskCount = 10u;
+    *defaultCsr->getTagAddress() = taskCount;
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    graphicsAllocation->setHostPtrTaskCountAssignment(0);
+    graphicsAllocation->updateTaskCount(taskCount, defaultOsContext->getContextId());
+    EXPECT_FALSE(graphicsAllocation->isUsedByManyOsContexts());
+
+    defaultCsr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION, taskCount);
+    EXPECT_FALSE(memoryManager->getTemporaryAllocationsList().peekIsEmpty());
+
+    // allocation is still in use
+    memoryManager->deferAllocInUse = true;
+    memoryManager->cleanTemporaryAllocations(*defaultCsr, taskCount, false);
+    // allocation is freed because isUsedByManyOsContexts() is false
+    EXPECT_TRUE(memoryManager->getTemporaryAllocationsList().peekIsEmpty());
+}
+
 HWTEST_F(MemoryhManagerMultiContextResourceTests, givenTemporaryAllocationUsedByManyOsContextsStillUsedOnAnotherEngineWhenCleanTemporaryAllocationsThenAllocationIsKeptUntilCompleted) {
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), true, 2);
     auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
