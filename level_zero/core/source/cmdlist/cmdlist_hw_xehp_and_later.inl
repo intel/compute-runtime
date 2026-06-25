@@ -91,6 +91,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     setAdditionalKernelLaunchParams(launchParams, *kernel);
 
+    // When the kernel's module carries an L1 cache policy override (native binary whose zeinfo policy
+    // mismatched the driver default and could not be rebuilt), program SBA with the module's policy.
+    // Modules without an override fall back to the driver default so a module's policy does not leak
+    // onto kernels dispatched afterwards from modules that declare no policy.
+    if (auto l1CachePolicyOverride = static_cast<const ModuleImp &>(kernelImp->getParentModule()).getL1CachePolicyOverride(); l1CachePolicyOverride.has_value()) {
+        this->l1CachePolicyData.setCachingPolicy(l1CachePolicyOverride.value());
+    } else {
+        this->l1CachePolicyData.init(this->device->getProductHelper());
+    }
+
     auto kernelInfo = kernelImmutableData->getKernelInfo();
 
     NEO::IndirectHeap *ssh = nullptr;

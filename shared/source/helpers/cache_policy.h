@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,10 @@ struct L1CachePolicy {
     void init(const ProductHelper &helper);
     uint32_t getL1CacheValue(bool isDebuggerActive) {
         return isDebuggerActive ? defaultDebuggerActive : defaultDebuggerInactive;
+    }
+    void setCachingPolicy(uint32_t value) {
+        defaultDebuggerActive = value;
+        defaultDebuggerInactive = value;
     }
 
   protected:

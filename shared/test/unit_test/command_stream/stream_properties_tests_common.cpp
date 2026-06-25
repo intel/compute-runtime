@@ -1147,6 +1147,71 @@ TEST(StreamPropertiesTests, givenStatelessMocsStateBaseAddressPropertyWhenSettin
     EXPECT_EQ(1, sbaProperties.statelessMocs.value);
 }
 
+TEST(StreamPropertiesTests, givenL1CachePolicyStateBaseAddressPropertyWhenSettingPropertyThenDirtyOnlyWhenValueChanges) {
+    MockStateBaseAddressProperties sbaProperties{};
+    sbaProperties.propertiesSupportLoaded = true;
+
+    int32_t l1CachePolicy = -1;
+    sbaProperties.setPropertyL1CachePolicy(l1CachePolicy);
+    EXPECT_FALSE(sbaProperties.isDirty());
+    EXPECT_EQ(-1, sbaProperties.l1CachePolicy.value);
+
+    l1CachePolicy = 2;
+    sbaProperties.setPropertyL1CachePolicy(l1CachePolicy);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(2, sbaProperties.l1CachePolicy.value);
+
+    sbaProperties.setPropertyL1CachePolicy(l1CachePolicy);
+    EXPECT_FALSE(sbaProperties.isDirty());
+    EXPECT_EQ(2, sbaProperties.l1CachePolicy.value);
+
+    l1CachePolicy = 1;
+    sbaProperties.setPropertyL1CachePolicy(l1CachePolicy);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(1, sbaProperties.l1CachePolicy.value);
+
+    sbaProperties.setPropertyL1CachePolicy(l1CachePolicy);
+    EXPECT_FALSE(sbaProperties.isDirty());
+    EXPECT_EQ(1, sbaProperties.l1CachePolicy.value);
+
+    sbaProperties.clearIsDirty();
+    EXPECT_FALSE(sbaProperties.l1CachePolicy.isDirty);
+
+    sbaProperties.resetState();
+    EXPECT_FALSE(sbaProperties.isDirty());
+    EXPECT_EQ(StreamProperty::initValue, sbaProperties.l1CachePolicy.value);
+}
+
+TEST(StreamPropertiesTests, givenL1CachePolicyStateBaseAddressPropertyWhenCopyingAllPropertiesThenValueIsPropagatedAndDirtyOnlyWhenValueChanges) {
+    MockStateBaseAddressProperties sbaProperties{};
+    sbaProperties.propertiesSupportLoaded = true;
+
+    int32_t l1CachePolicy = 2;
+    sbaProperties.setPropertyL1CachePolicy(l1CachePolicy);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(2, sbaProperties.l1CachePolicy.value);
+
+    MockStateBaseAddressProperties sbaPropertiesCopy{};
+    sbaPropertiesCopy.propertiesSupportLoaded = true;
+
+    sbaPropertiesCopy.copyPropertiesAll(sbaProperties);
+    EXPECT_TRUE(sbaPropertiesCopy.isDirty());
+    EXPECT_TRUE(sbaPropertiesCopy.l1CachePolicy.isDirty);
+    EXPECT_EQ(2, sbaPropertiesCopy.l1CachePolicy.value);
+
+    sbaPropertiesCopy.copyPropertiesAll(sbaProperties);
+    EXPECT_FALSE(sbaPropertiesCopy.isDirty());
+    EXPECT_EQ(2, sbaPropertiesCopy.l1CachePolicy.value);
+
+    l1CachePolicy = 1;
+    sbaProperties.setPropertyL1CachePolicy(l1CachePolicy);
+
+    sbaPropertiesCopy.copyPropertiesAll(sbaProperties);
+    EXPECT_TRUE(sbaPropertiesCopy.isDirty());
+    EXPECT_TRUE(sbaPropertiesCopy.l1CachePolicy.isDirty);
+    EXPECT_EQ(1, sbaPropertiesCopy.l1CachePolicy.value);
+}
+
 TEST(StreamPropertiesTests, givenStatelessMocsStateBaseAddressPropertyWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {
     MockStateBaseAddressProperties sbaProperties{};
     sbaProperties.propertiesSupportLoaded = true;

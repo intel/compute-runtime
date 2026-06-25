@@ -77,42 +77,40 @@ bool checkAndReplaceL1CachePolicy(std::string &buildOptions, NEO::Zebin::ZeInfo:
     return replaceL1CachePolicyInBuildOptions(buildOptions, currentCachePolicy);
 }
 
-bool checkL1CachePolicyMismatch(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy binaryPolicy, uint32_t driverDefaultL1CacheControl) {
+std::optional<uint32_t> getL1CacheControlForZebinPolicy(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy binaryPolicy) {
     using L1CachePolicy = NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy;
+    // Map the zebin policy enum onto the HW STATE_BASE_ADDRESS::L1_CACHE_CONTROL encoding
+    // (WBP=0, UC=1, WB=2, WT=3, WS=4) so it can be compared with / used as the value returned
+    // by ProductHelper::getL1CachePolicy().
+    switch (binaryPolicy) {
+    case L1CachePolicy::L1CachePolicyWriteBypass:
+        return 0u; // L1_CACHE_CONTROL_WBP
+    case L1CachePolicy::L1CachePolicyUncached:
+        return 1u; // L1_CACHE_CONTROL_UC
+    case L1CachePolicy::L1CachePolicyWriteBack:
+        return 2u; // L1_CACHE_CONTROL_WB
+    case L1CachePolicy::L1CachePolicyWriteThrough:
+        return 3u; // L1_CACHE_CONTROL_WT
+    case L1CachePolicy::L1CachePolicyWriteStreaming:
+        return 4u; // L1_CACHE_CONTROL_WS
+    default:
+        return std::nullopt;
+    }
+}
+
+bool checkL1CachePolicyMismatch(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy binaryPolicy, uint32_t driverDefaultL1CacheControl) {
     if (!requiresL1PolicyMissmatchCheck()) {
         return false;
     }
 
-    // The zeinfo l1_cache_policy is optional; when the binary does not declare one there is
-    // nothing to compare here - fall back to the build-options based check.
-    if (binaryPolicy == L1CachePolicy::L1CachePolicyUnknown) {
+    // The zeinfo l1_cache_policy is optional; when the binary does not declare a mappable one there
+    // is nothing to compare here - fall back to the build-options based check.
+    auto binaryL1CacheControl = getL1CacheControlForZebinPolicy(binaryPolicy);
+    if (!binaryL1CacheControl.has_value()) {
         return false;
     }
 
-    // Map the zebin policy enum onto encoding (WBP=0, UC=1, WB=2, WT=3, WS=4)
-    // so it can be compared with the driver default returned by ProductHelper::getL1CachePolicy().
-    uint32_t binaryL1CacheControl = 0;
-    switch (binaryPolicy) {
-    case L1CachePolicy::L1CachePolicyWriteBypass:
-        binaryL1CacheControl = 0; // L1_CACHE_CONTROL_WBP
-        break;
-    case L1CachePolicy::L1CachePolicyUncached:
-        binaryL1CacheControl = 1; // L1_CACHE_CONTROL_UC
-        break;
-    case L1CachePolicy::L1CachePolicyWriteBack:
-        binaryL1CacheControl = 2; // L1_CACHE_CONTROL_WB
-        break;
-    case L1CachePolicy::L1CachePolicyWriteThrough:
-        binaryL1CacheControl = 3; // L1_CACHE_CONTROL_WT
-        break;
-    case L1CachePolicy::L1CachePolicyWriteStreaming:
-        binaryL1CacheControl = 4; // L1_CACHE_CONTROL_WS
-        break;
-    default:
-        return false;
-    }
-
-    return binaryL1CacheControl != driverDefaultL1CacheControl;
+    return binaryL1CacheControl.value() != driverDefaultL1CacheControl;
 }
 
 void appendAdditionalExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions) {

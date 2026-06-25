@@ -475,12 +475,15 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         if (productHelper.isL1PolicyMissmatchCheckNeeded()) {
             const bool debuggerActive = device->getNEODevice()->getDebugger() != nullptr;
             if (singleDeviceBinary.l1CachePolicy != NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown) {
-                // The module declares an l1_cache_policy in zeinfo, build-options based check is skipped
-                rebuild |= NEO::checkL1CachePolicyMismatch(singleDeviceBinary.l1CachePolicy, productHelper.getL1CachePolicy(debuggerActive));
-                if (rebuild) {
-                    NEO::replaceL1CachePolicyInBuildOptions(
-                        this->options,
-                        rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(debuggerActive));
+                if (NEO::checkL1CachePolicyMismatch(singleDeviceBinary.l1CachePolicy, productHelper.getL1CachePolicy(debuggerActive))) {
+                    if (irBinarySize != 0) {
+                        rebuild = true;
+                        NEO::replaceL1CachePolicyInBuildOptions(
+                            this->options,
+                            rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(debuggerActive));
+                    } else {
+                        this->l1CachePolicyOverride = NEO::getL1CacheControlForZebinPolicy(singleDeviceBinary.l1CachePolicy);
+                    }
                 }
             } else {
                 rebuild |= NEO::checkAndReplaceL1CachePolicy(this->options, singleDeviceBinary.generatorFeatureVersions.version,

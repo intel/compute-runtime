@@ -671,6 +671,9 @@ void CommandList::setStreamPropertiesDefaultSettings(NEO::StreamProperties &stre
 
     streamProperties.frontEndState.setPropertiesDisableOverdispatch(cmdListDefaultDisableOverdispatch, true);
     streamProperties.pipelineSelect.setPropertiesModeSelected(cmdListDefaultPipelineSelectModeSelected, true);
+
+    const bool isDebuggerActive = device->getNEODevice()->getDebugger() != nullptr;
+    streamProperties.stateBaseAddress.l1CachePolicy.value = static_cast<int32_t>(device->getProductHelper().getL1CachePolicy(isDebuggerActive));
 }
 
 void CommandList::enableInOrderExecution() {

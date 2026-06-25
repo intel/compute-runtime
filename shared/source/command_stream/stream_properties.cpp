@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -451,6 +451,7 @@ void StateBaseAddressProperties::resetState() {
     clearIsDirty();
 
     this->statelessMocs.value = StreamProperty::initValue;
+    this->l1CachePolicy.value = StreamProperty::initValue;
 
     this->bindingTablePoolBaseAddress.value = StreamProperty64::initValue;
     this->bindingTablePoolSize.value = StreamPropertySizeT::initValue;
@@ -503,6 +504,10 @@ void StateBaseAddressProperties::setPropertyStatelessMocs(int32_t statelessMocs)
     this->statelessMocs.isDirty = false;
     this->statelessMocs.set(statelessMocs);
 }
+void StateBaseAddressProperties::setPropertyL1CachePolicy(int32_t l1CachePolicy) {
+    this->l1CachePolicy.isDirty = false;
+    this->l1CachePolicy.set(l1CachePolicy);
+}
 
 void StateBaseAddressProperties::setPropertiesAll(int32_t statelessMocs,
                                                   int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
@@ -531,6 +536,7 @@ void StateBaseAddressProperties::copyPropertiesAll(const StateBaseAddressPropert
     clearIsDirty();
 
     this->statelessMocs.set(properties.statelessMocs.value);
+    this->l1CachePolicy.set(properties.l1CachePolicy.value);
 
     this->bindingTablePoolBaseAddress.set(properties.bindingTablePoolBaseAddress.value);
     this->bindingTablePoolSize.set(properties.bindingTablePoolSize.value);
@@ -584,6 +590,7 @@ void StateBaseAddressProperties::copyPropertiesDynamicState(const StateBaseAddre
 
 bool StateBaseAddressProperties::isDirty() const {
     return statelessMocs.isDirty ||
+           l1CachePolicy.isDirty ||
            bindingTablePoolBaseAddress.isDirty ||
            surfaceStateBaseAddress.isDirty ||
            dynamicStateBaseAddress.isDirty ||
@@ -592,6 +599,7 @@ bool StateBaseAddressProperties::isDirty() const {
 
 void StateBaseAddressProperties::clearIsDirty() {
     statelessMocs.isDirty = false;
+    l1CachePolicy.isDirty = false;
     bindingTablePoolBaseAddress.isDirty = false;
     surfaceStateBaseAddress.isDirty = false;
     dynamicStateBaseAddress.isDirty = false;

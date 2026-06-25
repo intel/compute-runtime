@@ -4284,10 +4284,17 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         finalStreamState.stateBaseAddress.setPropertiesIndirectState(currentIndirectObjectBaseAddress, currentIndirectObjectSize);
     }
 
-    if (this->stateBaseAddressTracking && finalStreamState.stateBaseAddress.isDirty()) {
-        commandContainer.setDirtyStateForAllHeaps(false);
-        programStateBaseAddress(commandContainer, true);
-        finalStreamState.stateBaseAddress.clearIsDirty();
+    const bool isDebuggerActive = device->getNEODevice()->getDebugger() != nullptr;
+    finalStreamState.stateBaseAddress.setPropertyL1CachePolicy(static_cast<int32_t>(l1CachePolicyData.getL1CacheValue(isDebuggerActive)));
+
+    if (this->stateBaseAddressTracking) {
+        if (finalStreamState.stateBaseAddress.isDirty()) {
+            commandContainer.setDirtyStateForAllHeaps(false);
+            programStateBaseAddress(commandContainer, true);
+            finalStreamState.stateBaseAddress.clearIsDirty();
+        }
+    } else if (!this->heaplessModeEnabled && finalStreamState.stateBaseAddress.l1CachePolicy.isDirty) {
+        commandContainer.setDirtyStateForAllHeaps(true);
     }
 }
 

@@ -51,3 +51,13 @@ HWTEST_F(ProductHelperTest, givenL1CachePolicyInitializedWhenGettingPolicySettin
     EXPECT_EQ(productHelper->getL1CachePolicy(true), policy.getL1CacheValue(true));
     EXPECT_EQ(productHelper->getL1CachePolicy(false), policy.getL1CacheValue(false));
 }
+
+HWTEST_F(ProductHelperTest, givenL1CachePolicyWhenSettingCachingPolicyThenBothDebuggerActiveAndInactiveValuesAreSet) {
+    L1CachePolicy policy(*productHelper);
+
+    constexpr uint32_t newCachingPolicy = 4;
+    policy.setCachingPolicy(newCachingPolicy);
+
+    EXPECT_EQ(newCachingPolicy, policy.getL1CacheValue(false));
+    EXPECT_EQ(newCachingPolicy, policy.getL1CacheValue(true));
+}

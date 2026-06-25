@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,6 +135,7 @@ struct StateBaseAddressProperties {
     StreamPropertySizeT dynamicStateSize{};
     StreamPropertySizeT indirectObjectSize{};
     StreamProperty statelessMocs{};
+    StreamProperty l1CachePolicy{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
@@ -150,6 +151,7 @@ struct StateBaseAddressProperties {
     void setPropertiesDynamicState(int64_t dynamicStateBaseAddress, size_t dynamicStateSize);
     void setPropertiesIndirectState(int64_t indirectObjectBaseAddress, size_t indirectObjectSize);
     void setPropertyStatelessMocs(int32_t statelessMocs);
+    void setPropertyL1CachePolicy(int32_t l1CachePolicy);
 
     void copyPropertiesAll(const StateBaseAddressProperties &properties);
     void copyPropertiesStatelessMocs(const StateBaseAddressProperties &properties);

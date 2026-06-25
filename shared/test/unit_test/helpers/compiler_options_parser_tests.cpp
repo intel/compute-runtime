@@ -54,6 +54,17 @@ TEST(CompilerOptionsParserL1CachePolicy, GivenUnmappedBinaryPolicyThenCheckL1Cac
     EXPECT_FALSE(checkL1CachePolicyMismatch(L1CachePolicy::L1CachePolicyMax, 0u));
 }
 
+TEST(CompilerOptionsParserL1CachePolicy, GivenZebinPolicyWhenGettingL1CacheControlThenCorrectEncodingReturned) {
+    EXPECT_EQ(0u, getL1CacheControlForZebinPolicy(L1CachePolicy::L1CachePolicyWriteBypass).value());
+    EXPECT_EQ(1u, getL1CacheControlForZebinPolicy(L1CachePolicy::L1CachePolicyUncached).value());
+    EXPECT_EQ(2u, getL1CacheControlForZebinPolicy(L1CachePolicy::L1CachePolicyWriteBack).value());
+    EXPECT_EQ(3u, getL1CacheControlForZebinPolicy(L1CachePolicy::L1CachePolicyWriteThrough).value());
+    EXPECT_EQ(4u, getL1CacheControlForZebinPolicy(L1CachePolicy::L1CachePolicyWriteStreaming).value());
+
+    EXPECT_FALSE(getL1CacheControlForZebinPolicy(L1CachePolicy::L1CachePolicyUnknown).has_value());
+    EXPECT_FALSE(getL1CacheControlForZebinPolicy(L1CachePolicy::L1CachePolicyMax).has_value());
+}
+
 TEST(CompilerOptionsParser, GivenClStdOptionWithVariousVersionsWhenRequiresOpenClCFeaturesThenCorrectResult) {
     EXPECT_FALSE(requiresOpenClCFeatures("-cl-std=CL1.2"));
     EXPECT_FALSE(requiresOpenClCFeatures("-cl-std=CL2.0"));

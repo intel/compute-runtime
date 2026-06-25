@@ -18,6 +18,7 @@
 #include "ocl_igc_interface/code_type.h"
 
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <set>
 #include <string>
@@ -132,6 +133,11 @@ struct ModuleTranslationUnit {
     NEO::specConstValuesMap specConstantsValues;
     bool isBuiltIn{false};
     bool isGeneratedByIgc{true};
+
+    // Set when a native binary declares an l1_cache_policy that mismatches the driver default and
+    // there is no IR to rebuild from. Holds the HW STATE_BASE_ADDRESS::L1_CACHE_CONTROL value to be
+    // programmed when encoding commands for kernels from this module.
+    std::optional<uint32_t> l1CachePolicyOverride;
 };
 
 struct ModuleImp : public Module {
@@ -206,6 +212,10 @@ struct ModuleImp : public Module {
 
     ModuleTranslationUnit *getTranslationUnit() {
         return this->translationUnit.get();
+    }
+
+    std::optional<uint32_t> getL1CachePolicyOverride() const {
+        return this->translationUnit->l1CachePolicyOverride;
     }
 
     std::vector<std::shared_ptr<Kernel>> &getPrintfKernelContainer() { return this->printfKernelContainer; }

@@ -3634,7 +3634,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenZeInfoL1CachePolicyMatchingDriverDefaul
     EXPECT_FALSE(tu->wasBuildFromIntermediateCalled);
 }
 
-HWTEST_F(ModuleTranslationUnitTest, GivenZeInfoL1CachePolicyMismatchingDriverDefaultWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleCreationFails) {
+HWTEST_F(ModuleTranslationUnitTest, GivenZeInfoL1CachePolicyMismatchingDriverDefaultWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModulePolicyOverrideIsSet) {
     VariableBackup ultConfigBackup(&ultHwConfig);
     ultHwConfig.recompileKernelsWhenL1PolicyMissmatch = true;
 
@@ -3661,13 +3661,16 @@ HWTEST_F(ModuleTranslationUnitTest, GivenZeInfoL1CachePolicyMismatchingDriverDef
     module.translationUnit.reset(tu);
 
     ze_result_t result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
     EXPECT_EQ(0u, tu->irBinarySize);
     EXPECT_FALSE(tu->wasBuildFromIntermediateCalled);
     if (device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().isL1PolicyMissmatchCheckNeeded()) {
-        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, result);
+        // "uc" maps to L1_CACHE_CONTROL_UC (1); no IR -> policy is kept as a module override.
+        ASSERT_TRUE(tu->l1CachePolicyOverride.has_value());
+        EXPECT_EQ(1u, tu->l1CachePolicyOverride.value());
     } else {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_FALSE(tu->l1CachePolicyOverride.has_value());
     }
 }
 

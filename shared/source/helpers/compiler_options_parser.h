@@ -9,6 +9,8 @@
 
 #include "shared/source/device_binary_format/zebin/zeinfo.h"
 
+#include <cstdint>
+#include <optional>
 #include <string>
 
 namespace NEO {
@@ -22,6 +24,7 @@ bool requiresAdditionalExtensions(const std::string &compileOptions);
 bool requiresL1PolicyMissmatchCheck();
 bool replaceL1CachePolicyInBuildOptions(std::string &buildOptions, const char *currentCachePolicy);
 bool checkAndReplaceL1CachePolicy(std::string &buildOptions, NEO::Zebin::ZeInfo::Types::Version version, const char *currentCachePolicy);
+std::optional<uint32_t> getL1CacheControlForZebinPolicy(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy binaryPolicy);
 bool checkL1CachePolicyMismatch(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy binaryPolicy, uint32_t driverDefaultL1CacheControl);
 
 void appendAdditionalExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions);

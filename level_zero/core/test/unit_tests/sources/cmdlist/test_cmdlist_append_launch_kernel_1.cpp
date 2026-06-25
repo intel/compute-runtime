@@ -116,6 +116,167 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAll
     ASSERT_FALSE(commandList->hasIndirectAllocationsAllowed());
 }
 
+using IsSbaRequiredAndAtLeastXe3Core = IsSbaRequiredAnd<IsAtLeastXe3Core>;
+HWTEST2_F(CommandListAppendLaunchKernel, GivenModuleWithL1CachePolicyOverrideWhenAppendingKernelThenStateBaseAddressIsProgrammedWithModulePolicy, IsSbaRequiredAndAtLeastXe3Core) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateBaseAddressTracking.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
+    createKernel();
+
+    constexpr uint32_t expectedL1CacheControl = STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB;
+    module->getTranslationUnit()->l1CachePolicyOverride = expectedL1CacheControl;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, commandContainer.getCommandStream()->getCpuBase(), commandContainer.getCommandStream()->getUsed()));
+
+    auto itorSba = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorSba);
+    auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itorSba);
+    EXPECT_EQ(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_CONTROL>(expectedL1CacheControl), cmdSba->getL1CacheControlCachePolicy());
+}
+
+using CommandListAppendLaunchKernelL1CachePolicy = Test<CommandListPrivateHeapsFixture>;
+HWTEST2_F(CommandListAppendLaunchKernelL1CachePolicy, GivenModuleL1CachePolicyOverrideWhenAppendingKernelsThenStateBaseAddressReprogrammedOnlyWhenPolicyChanges, IsSbaRequiredAndAtLeastXe3Core) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
+        GTEST_SKIP();
+    }
+
+    checkAndPrepareBindlessKernel();
+    EXPECT_TRUE(commandList->stateBaseAddressTracking);
+
+    auto &productHelper = device->getProductHelper();
+    const uint32_t driverDefaultPolicy = productHelper.getL1CachePolicy(false);
+    const uint32_t overridePolicy = (driverDefaultPolicy == static_cast<uint32_t>(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB))
+                                        ? static_cast<uint32_t>(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT)
+                                        : static_cast<uint32_t>(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    auto &cmdListStream = *commandContainer.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto getStateBaseAddressCount = [&]() {
+        GenCmdList cmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdListStream.getCpuBase(), cmdListStream.getUsed()));
+        return findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end()).size();
+    };
+
+    auto getLastProgrammedL1CachePolicy = [&]() {
+        GenCmdList cmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdListStream.getCpuBase(), cmdListStream.getUsed()));
+        auto stateBaseAddressCommands = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(0u, stateBaseAddressCommands.size());
+        auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*stateBaseAddressCommands.back());
+        return static_cast<uint32_t>(cmdSba->getL1CacheControlCachePolicy());
+    };
+
+    module->translationUnit->l1CachePolicyOverride = overridePolicy;
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto stateBaseAddressCountAfterOverride = getStateBaseAddressCount();
+    EXPECT_EQ(expectedSbaCmds, stateBaseAddressCountAfterOverride);
+    EXPECT_EQ(overridePolicy, getLastProgrammedL1CachePolicy());
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(stateBaseAddressCountAfterOverride, getStateBaseAddressCount());
+
+    module->translationUnit->l1CachePolicyOverride.reset();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto stateBaseAddressCountAfterDefault = getStateBaseAddressCount();
+    EXPECT_EQ(stateBaseAddressCountAfterOverride + expectedSbaCmds, stateBaseAddressCountAfterDefault);
+    EXPECT_EQ(driverDefaultPolicy, getLastProgrammedL1CachePolicy());
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(stateBaseAddressCountAfterDefault, getStateBaseAddressCount());
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, GivenNonTrackingCommandListWhenModuleL1CachePolicyOverrideChangesBetweenKernelsThenStateBaseAddressIsReprogrammedWithNewPolicy, IsSbaRequiredAndAtLeastXe3Core) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateBaseAddressTracking.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
+    createKernel();
+
+    auto &productHelper = device->getProductHelper();
+    const uint32_t driverDefaultPolicy = productHelper.getL1CachePolicy(false);
+    const uint32_t overridePolicy = (driverDefaultPolicy == static_cast<uint32_t>(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB))
+                                        ? static_cast<uint32_t>(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT)
+                                        : static_cast<uint32_t>(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_FALSE(commandList->getCmdListStateBaseAddressTracking());
+
+    auto &commandContainer = commandList->getCmdContainer();
+    auto &cmdListStream = *commandContainer.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto getStateBaseAddressCount = [&]() {
+        GenCmdList cmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdListStream.getCpuBase(), cmdListStream.getUsed()));
+        return findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end()).size();
+    };
+
+    auto getLastProgrammedL1CachePolicy = [&]() {
+        GenCmdList cmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdListStream.getCpuBase(), cmdListStream.getUsed()));
+        auto stateBaseAddressCommands = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(0u, stateBaseAddressCommands.size());
+        auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*stateBaseAddressCommands.back());
+        return static_cast<uint32_t>(cmdSba->getL1CacheControlCachePolicy());
+    };
+
+    module->getTranslationUnit()->l1CachePolicyOverride = overridePolicy;
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(overridePolicy, getLastProgrammedL1CachePolicy());
+    auto stateBaseAddressCountAfterOverride = getStateBaseAddressCount();
+
+    module->getTranslationUnit()->l1CachePolicyOverride.reset();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_LT(stateBaseAddressCountAfterOverride, getStateBaseAddressCount());
+    EXPECT_EQ(driverDefaultPolicy, getLastProgrammedL1CachePolicy());
+}
+
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithOldestFirstThreadArbitrationPolicySetUsingSchedulingHintExtensionThenCorrectInternalPolicyIsReturned) {
     createKernel();
     ze_scheduling_hint_exp_desc_t pHint{};
