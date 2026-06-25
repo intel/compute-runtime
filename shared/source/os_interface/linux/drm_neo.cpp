@@ -1691,8 +1691,8 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         vmBind.vmId = static_cast<uint32_t>(vmId);
         vmBind.flags = flags;
         vmBind.handle = bo->peekHandle();
-        vmBind.length = bo->peekSize();
-        vmBind.offset = 0;
+        vmBind.length = bo->getVirtualMappingSize() ? bo->getVirtualMappingSize() : bo->peekSize();
+        vmBind.offset = bo->getPhysicalMemoryOffset();
         vmBind.start = bo->peekAddress();
         vmBind.userptr = bo->getUserptr();
         vmBind.sharedSystemUsmEnabled = drm->isSharedSystemAllocEnabled();
@@ -1700,7 +1700,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 
         if (bo->getColourWithBind()) {
             vmBind.length = bo->getColourChunk();
-            vmBind.offset = bo->getColourChunk() * i;
+            vmBind.offset = bo->getColourChunk() * i + bo->getPhysicalMemoryOffset();
             vmBind.start = bindAddresses[i];
         }
 

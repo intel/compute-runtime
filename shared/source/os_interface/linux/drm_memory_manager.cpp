@@ -804,6 +804,7 @@ bool DrmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAlloca
     bool result = true;
 
     DrmAllocation *drmAllocation = reinterpret_cast<DrmAllocation *>(physicalAllocation);
+    const bool vmBindAvailable = getDrm(rootDeviceIndex).isVmBindAvailable();
     auto bufferObjects = drmAllocation->getBOs();
     for (auto bufferObject : bufferObjects) {
         if (bufferObject) {
@@ -814,7 +815,14 @@ bool DrmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAlloca
             }
             auto address = bufferObject->peekAddress();
             uint64_t offset = address - gpuRange;
+            if (!vmBindAvailable) {
+                // The physical offset was folded into the placement on map, so add it
+                // back to recover the BO's original (pre-map) base address.
+                offset += bufferObject->getPhysicalMemoryOffset();
+            }
             bufferObject->setAddress(offset);
+            bufferObject->setVirtualMappingSize(0u);
+            bufferObject->setPhysicalMemoryOffset(0u);
         }
     }
     physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
@@ -858,13 +866,51 @@ bool DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAll
     return (this->munmapFunction(addressToUnmap, sizeToUnmap) == 0);
 }
 
-bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags) {
+bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
     DrmAllocation *drmAllocation = reinterpret_cast<DrmAllocation *>(physicalAllocation);
+    const bool vmBindAvailable = getDrm(drmAllocation->getRootDeviceIndex()).isVmBindAvailable();
     auto bufferObjects = drmAllocation->getBOs();
+
+    size_t boCount = 0u;
     for (auto bufferObject : bufferObjects) {
         if (bufferObject) {
-            auto offset = bufferObject->peekAddress();
-            bufferObject->setAddress(gpuRange + offset);
+            boCount++;
+        }
+    }
+    // A multi-tile/multi-storage allocation is chunked across several BOs, each sized to
+    // its own chunk (peekSize()). These chunk BOs are not bound with a per-bind offset, so
+    // a non-zero physical offset cannot be honored - reject it explicitly rather than
+    // silently mapping each chunk at offset 0. (Mirrors the WDDM multiStorage handling.)
+    const bool multiBo = boCount > 1u;
+    if (multiBo && offset != 0u) {
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
+
+    for (auto bufferObject : bufferObjects) {
+        if (bufferObject) {
+            // Each device BO holds a single active mapping; remapping without an
+            // intervening unMap would clobber peekAddress() and the bind params.
+            DEBUG_BREAK_IF(bufferObject->getVirtualMappingSize() != 0u);
+            auto boCurrentAddress = bufferObject->peekAddress();
+            if (!multiBo) {
+                // Single-BO allocation: the whole buffer maps as one bind, so the physical
+                // offset/length apply directly. For the multi-BO chunked path these stay at
+                // their defaults so each chunk binds at its own peekSize() with no offset.
+                bufferObject->setPhysicalMemoryOffset(offset);
+                bufferObject->setVirtualMappingSize(bufferSize);
+            }
+            if (vmBindAvailable) {
+                // VM bind carries the physical offset/length to the kernel via the
+                // vm_bind ioctl, so the BO is placed exactly at the reserved range.
+                bufferObject->setAddress(gpuRange + boCurrentAddress);
+            } else {
+                // The legacy execbuffer residency path maps the whole BO at a single
+                // GPU VA and has no per-bind offset, so fold the physical offset into
+                // the placement: byte `offset` of the BO then resolves to gpuRange.
+                bufferObject->setAddress(gpuRange + boCurrentAddress - offset);
+            }
+            bufferObject->resetBindInfo();
         }
     }
     physicalAllocation->setCpuPtrAndGpuAddress(nullptr, gpuRange);
@@ -872,39 +918,65 @@ bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation
     return true;
 }
 
-bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) {
     auto drmPhysicalAllocation = static_cast<DrmAllocation *>(physicalAllocation);
     auto &drm = this->getDrm(drmPhysicalAllocation->getRootDeviceIndex());
     BufferObject *physicalBo = drmPhysicalAllocation->getBO();
-    uint64_t mmapOffset = physicalBo->getMmapOffset();
+    const bool vmBindAvailable = drm.isVmBindAvailable();
+
+    // On a non-vmBind system the BO is made resident through the execbuffer path, which maps the
+    // whole BO at a single GPU VA with no per-bind offset, and the i915 mmap-offset token must be
+    // used exactly (it cannot encode a byte offset). So fold the physical offset into the
+    // placement: object byte 0 is positioned at (gpuRange - offset) on both the CPU mmap and the
+    // GPU residency, so byte `offset` resolves to gpuRange. With vmBind the bind carries the
+    // offset/length, so the BO sits exactly at gpuRange and the token encodes the offset.
+    const uint64_t baseAddress = vmBindAvailable ? gpuRange : gpuRange - offset;
+    const size_t mappedSize = vmBindAvailable ? bufferSize : offset + bufferSize;
+    const uint64_t mmapOffset = vmBindAvailable ? physicalBo->getMmapOffset() + offset : physicalBo->getMmapOffset();
+
     uint64_t internalHandle = 0;
     if ((rootDeviceIndices.size() > 1) && (physicalAllocation->peekInternalHandle(this, internalHandle, nullptr) < 0)) {
         return false;
     }
 
-    [[maybe_unused]] auto retPtr = this->mmapFunction(addrToPtr(gpuRange), bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
-    DEBUG_BREAK_IF(retPtr != addrToPtr(gpuRange));
+    [[maybe_unused]] auto retPtr = this->mmapFunction(addrToPtr(baseAddress), mappedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
+    DEBUG_BREAK_IF(retPtr != addrToPtr(baseAddress));
 
     int physicalBoHandle = physicalBo->peekHandle();
     auto physicalBoHandleWrapper = tryToGetBoHandleWrapperWithSharedOwnership(physicalBoHandle, physicalAllocation->getRootDeviceIndex());
 
     auto memoryPool = MemoryPool::system4KBPages;
     auto patIndex = drm.getPatIndex(nullptr, AllocationType::bufferHostMemory, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
-    auto bo = new BufferObject(physicalAllocation->getRootDeviceIndex(), &drm, patIndex, std::move(physicalBoHandleWrapper), bufferSize, maxOsContextCount);
+    auto bo = new BufferObject(physicalAllocation->getRootDeviceIndex(), &drm, patIndex, std::move(physicalBoHandleWrapper), mappedSize, maxOsContextCount);
 
     bo->setMmapOffset(mmapOffset);
-    bo->setAddress(gpuRange);
-    bo->bind(getDefaultOsContext(drmPhysicalAllocation->getRootDeviceIndex()), 0, false);
+    bo->setAddress(baseAddress);
+    bo->setPhysicalMemoryOffset(offset);
+    bo->setVirtualMappingSize(bufferSize);
 
     auto drmAllocation = new DrmAllocation(drmPhysicalAllocation->getRootDeviceIndex(), 1u, AllocationType::bufferHostMemory, bo, addrToPtr(bo->peekAddress()), bo->peekSize(),
                                            static_cast<osHandle>(internalHandle), memoryPool, getGmmHelper(drmPhysicalAllocation->getRootDeviceIndex())->canonize(bo->peekAddress()));
 
+    if (vmBindAvailable) {
+        // vm_bind carries the physical offset/length to the kernel, placing the BO at gpuRange.
+        bo->bind(getDefaultOsContext(drmPhysicalAllocation->getRootDeviceIndex()), 0, false);
+    } else {
+        // No vm_bind: explicitly make the allocation resident so the execbuffer path softpins it
+        // at baseAddress. The default (non-vmBind) operations handler does not auto-resident
+        // sysMem allocations, so this cannot be left to mergeWithResidencyContainer.
+        auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[drmPhysicalAllocation->getRootDeviceIndex()]->memoryOperationsInterface.get());
+        GraphicsAllocation *gfxAllocation = drmAllocation;
+        for (auto &engine : getRegisteredEngines(drmPhysicalAllocation->getRootDeviceIndex())) {
+            memoryOperationsInterface->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&gfxAllocation, 1), false, false, true);
+        }
+    }
+
     drmAllocation->setUsmHostAllocation(true);
     drmAllocation->setShareableHostMemory(true);
-    drmAllocation->setMmapPtr(addrToPtr(gpuRange));
-    drmAllocation->setMmapSize(bufferSize);
-    drmAllocation->setCpuPtrAndGpuAddress(retPtr, gpuRange);
-    drmAllocation->setReservedAddressRange(addrToPtr(gpuRange), bufferSize);
+    drmAllocation->setMmapPtr(addrToPtr(baseAddress));
+    drmAllocation->setMmapSize(mappedSize);
+    drmAllocation->setCpuPtrAndGpuAddress(addrToPtr(gpuRange), gpuRange);
+    drmAllocation->setReservedAddressRange(addrToPtr(baseAddress), mappedSize);
     multiGraphicsAllocation.addAllocation(drmAllocation);
     this->registerSysMemAlloc(drmAllocation);
 
@@ -928,8 +1000,10 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
             return false;
         }
 
-        auto bo = new BufferObject(rootDeviceIndices[i], &drmToImport, patIndex, openFd.handle, bufferSize, maxOsContextCount);
-        bo->setAddress(gpuRange);
+        auto bo = new BufferObject(rootDeviceIndices[i], &drmToImport, patIndex, openFd.handle, mappedSize, maxOsContextCount);
+        bo->setAddress(baseAddress);
+        bo->setPhysicalMemoryOffset(offset);
+        bo->setVirtualMappingSize(bufferSize);
 
         auto canonizedGpuAddress = getGmmHelper(rootDeviceIndices[i])->canonize(bo->peekAddress());
         auto allocation = new DrmAllocation(rootDeviceIndices[i], 1u, AllocationType::bufferHostMemory, bo, addrToPtr(bo->peekAddress()), bo->peekSize(),

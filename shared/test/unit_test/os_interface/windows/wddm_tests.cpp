@@ -587,6 +587,26 @@ TEST_F(WddmTests, GivenWddmWhenMapGpuVaCalledThenGmmClientCallsMapGpuVa) {
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmTests, GivenWddmWhenMapGpuVaCalledWithNonNullFlagsThenFlagsAreAppliedToProtectionType) {
+    init();
+    wddm->callBaseDestroyAllocations = false;
+    wddm->pagingQueue = PAGINGQUEUE_HANDLE;
+    auto memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize}));
+
+    MemoryFlags flags{};
+    flags.readWrite = true;
+    flags.noAccess = false;
+    wddm->memoryFlagsToPass = &flags;
+
+    auto prevCallCount = reinterpret_cast<MockGmmClientContextBase *>(allocation->getDefaultGmm()->getGmmHelper()->getClientContext())->mapGpuVirtualAddressCalled;
+    wddm->mapGpuVirtualAddress(allocation);
+    EXPECT_GT(reinterpret_cast<MockGmmClientContextBase *>(allocation->getDefaultGmm()->getGmmHelper()->getClientContext())->mapGpuVirtualAddressCalled, prevCallCount);
+
+    wddm->memoryFlagsToPass = nullptr;
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmTests, givenCheckDeviceStateSetToTrueAndForceExecutionStateWhenSubmitThenProperValueIsReturned) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.EnableDebugBreak.set(false);

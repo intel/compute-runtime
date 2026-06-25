@@ -101,9 +101,9 @@ bool WddmMock::mapGpuVirtualAddress(WddmAllocation *allocation) {
         maximumAddress = MemoryConstants::maxSvmAddress;
     }
     return mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(), minimumAddress, maximumAddress,
-                                reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(allocation->getAlignedCpuPtr()), allocation->getGpuAddressToModify(), allocation->getAllocationType(), memoryFlagsToPass);
+                                reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(allocation->getAlignedCpuPtr()), allocation->getGpuAddressToModify(), allocation->getAllocationType(), memoryFlagsToPass, 0u);
 }
-bool WddmMock::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type, const MemoryFlags *memoryFlags) {
+bool WddmMock::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type, const MemoryFlags *memoryFlags, D3DGPU_SIZE_T offsetInPages) {
     mapGpuVirtualAddressResult.called++;
     mapGpuVirtualAddressResult.cpuPtrPassed = reinterpret_cast<void *>(preferredAddress);
     mapGpuVirtualAddressResult.uint64ParamPassed = preferredAddress;
@@ -111,7 +111,7 @@ bool WddmMock::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTU
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
     mapGpuVirtualAddressResult.alignment = gmmResourceParams->BaseAlignment;
     if (callBaseMapGpuVa) {
-        return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddress(gmm, handle, minimumAddress, maximumAddress, preferredAddress, gpuPtr, type, memoryFlags);
+        return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddress(gmm, handle, minimumAddress, maximumAddress, preferredAddress, gpuPtr, type, memoryFlags, offsetInPages);
     } else {
         gpuPtr = preferredAddress;
         return mapGpuVaStatus;

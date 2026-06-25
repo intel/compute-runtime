@@ -476,7 +476,7 @@ TEST(BaseMemoryManagerTest, givenCalltoMapAndUnMapThenVirtialAddressSetUnSetOnPh
     uint64_t gpuAddress = 0x1234;
     size_t size = 4096;
     MemoryFlags flags = {};
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(allocationBuffer, gpuAddress, size, &flags));
+    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(allocationBuffer, gpuAddress, size, &flags, 0u));
     EXPECT_EQ(gpuAddress, allocationBuffer->getGpuAddress());
 
     EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(allocationBuffer, gpuAddress, size, nullptr, 0u));

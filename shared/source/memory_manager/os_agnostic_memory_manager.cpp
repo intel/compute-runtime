@@ -441,13 +441,20 @@ bool OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGrap
     return true;
 }
 
-bool OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags) {
+bool OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
+    // offset is intentionally not modeled here. The allocation must keep gpuAddress == gpuRange
+    // (SVM tracking indexes by getGpuAddress(), matching the DRM/WDDM backends where the offset
+    // lives in the kernel binding, not on the GraphicsAllocation). The os-agnostic/AUB backend has
+    // no kernel binding to carry it, so the real offset semantics are exercised on DRM/WDDM only.
     physicalAllocation->setGpuPtr(gpuRange);
     physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
     return true;
 }
 
-bool OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+bool OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) {
+    // offset is intentionally not modeled here: these allocations only reference the physical
+    // memory by shared handle (no backing pointer to offset into), and gpuAddress must stay
+    // gpuRange for SVM tracking. The real offset semantics are exercised on DRM/WDDM only.
     for (size_t i = 0; i < rootDeviceIndices.size(); i++) {
         auto allocation = new GraphicsAllocation(rootDeviceIndices[i], 1u, AllocationType::bufferHostMemory, addrToPtr(gpuRange), bufferSize, physicalAllocation->peekSharedHandle(), MemoryPool::systemCpuInaccessible, 1, gpuRange);
         if (i == 0) {

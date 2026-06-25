@@ -1802,8 +1802,33 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         return ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT;
     }
 
+    if (offset) {
+        size_t alignedOffset = getPageAlignedSizeRequired(offset, nullptr, nullptr);
+        if (alignedOffset != offset) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT;
+        }
+
+        // offset + size must stay within the physical allocation, otherwise the bind
+        // would run past the physical BO. Checked overflow-safe against the size.
+        const size_t physicalSize = allocationNode->allocation->getUnderlyingBufferSize();
+        if ((offset > physicalSize) || ((physicalSize - offset) < size)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+
     NEO::VirtualMemoryReservation *virtualMemoryReservation = nullptr;
     auto lockVirtual = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
+
+    // Currently, a physical memory allocation may back only a single virtual address mapping.
+    // Reject the request if this physical handle is already mapped to any reserved VA range.
+    for (const auto &reservationPair : this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap()) {
+        for (const auto &mappedPair : reservationPair.second->mappedAllocations) {
+            if (mappedPair.second->physicalHandle == static_cast<void *>(hPhysicalMemory)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        }
+    }
+
     virtualMemoryReservation = findSupportedVirtualReservation(ptr, size);
     if (virtualMemoryReservation) {
         switch (access) {
@@ -1837,7 +1862,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
     }
 
     if (allocationNode->allocation->getAllocationType() == NEO::AllocationType::buffer) {
-        if (!this->driverHandle->getMemoryManager()->mapPhysicalDeviceMemoryToVirtualMemory(allocationNode->allocation, reinterpret_cast<uint64_t>(ptr), size, &virtualMemoryReservation->flags)) {
+        if (!this->driverHandle->getMemoryManager()->mapPhysicalDeviceMemoryToVirtualMemory(allocationNode->allocation, reinterpret_cast<uint64_t>(ptr), size, &virtualMemoryReservation->flags, offset)) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
         NEO::SvmAllocationData allocData(allocationNode->allocation->getRootDeviceIndex());
@@ -1854,6 +1879,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         mappedRange->ptr = ptr;
         mappedRange->size = size;
         mappedRange->mappedAllocation = *allocationNode;
+        mappedRange->physicalHandle = static_cast<void *>(hPhysicalMemory);
         virtualMemoryReservation->mappedAllocations.emplace(const_cast<void *>(ptr), mappedRange);
         this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
         NEO::MemoryOperationsHandler *memoryOperationsIface = allocationNode->device->getRootDeviceEnvironment().memoryOperationsInterface.get();
@@ -1864,7 +1890,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         RootDeviceIndicesContainer rootDeviceIndicesVector(this->rootDeviceIndices);
         auto maxRootDeviceIndex = *std::max_element(rootDeviceIndicesVector.begin(), rootDeviceIndicesVector.end(), std::less<uint32_t const>());
         NEO::SvmAllocationData allocData(maxRootDeviceIndex);
-        if (!this->driverHandle->getMemoryManager()->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, allocData.gpuAllocations, allocationNode->allocation, castToUint64(ptr), size)) {
+        if (!this->driverHandle->getMemoryManager()->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, allocData.gpuAllocations, allocationNode->allocation, castToUint64(ptr), size, offset)) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         allocData.cpuAllocation = nullptr;
@@ -1880,6 +1906,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         mappedRange->size = size;
         mappedRange->mappedAllocation = *allocationNode;
         mappedRange->mappedAllocation.allocation = allocData.gpuAllocations.getGraphicsAllocation(allocationNode->allocation->getRootDeviceIndex());
+        mappedRange->physicalHandle = static_cast<void *>(hPhysicalMemory);
         virtualMemoryReservation->mappedAllocations.emplace(const_cast<void *>(ptr), mappedRange);
         this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
         return ZE_RESULT_SUCCESS;

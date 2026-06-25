@@ -344,3 +344,21 @@ TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenUnbindingThenRegularPagingF
     ASSERT_TRUE(drm.context.receivedVmBindUserFence);
     EXPECT_EQ(castToUint64(drm.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
 }
+
+TEST(DrmVmBindTest, givenBoWithNonZeroVirtualMappingSizeWhenBindingThenVirtualMappingSizeIsUsedForLength) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    // Size != virtualMappingSize so we can verify which one is used
+    MockBufferObject bo(0, &drm, 3, MemoryConstants::pageSize, 0, 1);
+    bo.setVirtualMappingSize(MemoryConstants::pageSize64k);
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+    bo.bind(&osContext, 0, false);
+
+    ASSERT_TRUE(drm.context.receivedVmBind);
+    EXPECT_EQ(MemoryConstants::pageSize64k, drm.context.receivedVmBind->length);
+}

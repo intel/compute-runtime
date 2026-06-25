@@ -123,16 +123,16 @@ bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAl
     return true;
 }
 
-bool WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags) {
+bool WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
     WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
     auto decanonizedAddress = getGmmHelper(physicalAllocation->getRootDeviceIndex())->decanonize(gpuRange);
-    wddmAllocation->setMappedPhysicalMemoryReservation(mapGpuVirtualAddress(wddmAllocation, reinterpret_cast<void *>(decanonizedAddress), memoryflags));
+    wddmAllocation->setMappedPhysicalMemoryReservation(mapGpuVirtualAddress(wddmAllocation, reinterpret_cast<void *>(decanonizedAddress), memoryflags, offset));
     physicalAllocation->setCpuPtrAndGpuAddress(nullptr, gpuRange);
     physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
     return wddmAllocation->isMappedPhysicalMemoryReservation();
 }
 
-bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) {
     return false;
 }
 
@@ -282,9 +282,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
                 return nullptr;
             }
         }
-        status = mapGpuVirtualAddress(wddmAllocation.get(), requiredGpuVa, nullptr);
+        status = mapGpuVirtualAddress(wddmAllocation.get(), requiredGpuVa, nullptr, 0u);
     } else {
-        status = mapGpuVirtualAddress(wddmAllocation.get(), nullptr, nullptr);
+        status = mapGpuVirtualAddress(wddmAllocation.get(), nullptr, nullptr, 0u);
 
         if (alignGpuAddressTo64KB) {
             void *tempCPUPtr = cpuPtr;
@@ -666,9 +666,9 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
             }
             allocation->setReservedAddressRange(ptr, size);
         }
-        status = mapGpuVirtualAddress(allocation.get(), allocation->getReservedAddressPtr(), nullptr);
+        status = mapGpuVirtualAddress(allocation.get(), allocation->getReservedAddressPtr(), nullptr, 0u);
     } else {
-        status = mapPhysicalDeviceMemoryToVirtualMemory(allocation.get(), reinterpret_cast<uint64_t>(mapPointer), size, nullptr);
+        status = mapPhysicalDeviceMemoryToVirtualMemory(allocation.get(), reinterpret_cast<uint64_t>(mapPointer), size, nullptr, 0u);
     }
     this->registerSysMemAlloc(allocation.get());
     DEBUG_BREAK_IF(!status);
@@ -991,7 +991,7 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *r
     if (!status) {
         return false;
     }
-    return mapGpuVirtualAddress(allocation, requiredGpuPtr, nullptr);
+    return mapGpuVirtualAddress(allocation, requiredGpuPtr, nullptr, 0u);
 }
 
 size_t WddmMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
@@ -1058,7 +1058,7 @@ void WddmMemoryManager::freeCpuAddress(AddressRange addressRange) {
     osMemory->osReleaseCpuAddressRange(addrToPtr(addressRange.address), addressRange.size);
 }
 
-bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocation, const void *preferredGpuVirtualAddress, const MemoryFlags *flags) {
+bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocation, const void *preferredGpuVirtualAddress, const MemoryFlags *flags, size_t offset) {
     D3DGPU_VIRTUAL_ADDRESS addressToMap = castToUint64(preferredGpuVirtualAddress);
     auto heapIndex = selectHeap(allocation, preferredGpuVirtualAddress != nullptr, is32bit || executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm(), allocation->isAllocInFrontWindowPool());
     if (!executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm() && !is32bit) {
@@ -1089,11 +1089,12 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
     // addressToMap is requested but not within gfxPartition heap range
     DEBUG_BREAK_IF(addressToMap != 0 && !(minimumAddress <= addressToMap && addressToMap <= maximumAddress));
 
-    auto status = getWddm(allocation->getRootDeviceIndex()).mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(), minimumAddress, maximumAddress, addressToMap, allocation->getGpuAddressToModify(), allocation->getAllocationType(), flags);
+    D3DGPU_SIZE_T offsetInPages = offset / MemoryConstants::pageSize;
+    auto status = getWddm(allocation->getRootDeviceIndex()).mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(), minimumAddress, maximumAddress, addressToMap, allocation->getGpuAddressToModify(), allocation->getAllocationType(), flags, offsetInPages);
 
     if (!status && deferredDeleter) {
         deferredDeleter->drain(true, false);
-        status = getWddm(allocation->getRootDeviceIndex()).mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(), minimumAddress, maximumAddress, addressToMap, allocation->getGpuAddressToModify(), allocation->getAllocationType(), flags);
+        status = getWddm(allocation->getRootDeviceIndex()).mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(), minimumAddress, maximumAddress, addressToMap, allocation->getGpuAddressToModify(), allocation->getAllocationType(), flags, offsetInPages);
     }
     if (!status) {
         if (allocation->getReservedGpuVirtualAddress()) {
@@ -1138,12 +1139,12 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
     for (auto currentHandle = 0u; currentHandle < allocation->getNumGmms(); currentHandle++) {
         uint64_t gpuAddress = 0;
         auto status = wddm.mapGpuVirtualAddress(allocation->getGmm(currentHandle), allocation->getHandles()[currentHandle],
-                                                gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex), addressToMap, gpuAddress, allocation->getAllocationType(), flags);
+                                                gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex), addressToMap, gpuAddress, allocation->getAllocationType(), flags, 0u);
 
         if (!status && deferredDeleter) {
             deferredDeleter->drain(true, false);
             status = wddm.mapGpuVirtualAddress(allocation->getGmm(currentHandle), allocation->getHandles()[currentHandle],
-                                               gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex), addressToMap, gpuAddress, allocation->getAllocationType(), flags);
+                                               gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex), addressToMap, gpuAddress, allocation->getAllocationType(), flags, 0u);
         }
         if (!status) {
             if (allocation->getReservedGpuVirtualAddress()) {
@@ -1586,14 +1587,21 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     return wddmAllocation.release();
 }
 
-bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const void *requiredPtr, const MemoryFlags *flags) {
+bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const void *requiredPtr, const MemoryFlags *flags, size_t offset) {
     if (allocation->getNumGmms() > 1 && allocation->storageInfo.multiStorage) {
+        // The multi-handle path spreads the allocation across several GMMs/chunks and has
+        // no per-handle offset, so a non-zero offset cannot be honored here. Reject it
+        // explicitly rather than silently mapping the whole allocation at offset 0.
+        if (offset != 0u) {
+            DEBUG_BREAK_IF(true);
+            return false;
+        }
         return mapMultiHandleAllocationWithRetry(allocation, requiredPtr, flags);
     } else if (allocation->getAllocationType() == AllocationType::writeCombined) {
         requiredPtr = lockResource(allocation);
         allocation->setCpuAddress(const_cast<void *>(requiredPtr));
     }
-    return mapGpuVaForOneHandleAllocation(allocation, requiredPtr, flags);
+    return mapGpuVaForOneHandleAllocation(allocation, requiredPtr, flags, offset);
 }
 
 uint64_t WddmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {

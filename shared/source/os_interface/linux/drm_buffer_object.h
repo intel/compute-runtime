@@ -246,6 +246,18 @@ class BufferObject {
     void setMmapOffset(uint64_t offset) { this->mmapOffset = offset; };
     uint64_t getMmapOffset() const { return this->mmapOffset; };
 
+    void setPhysicalMemoryOffset(uint64_t offset) { this->physicalMemoryOffset = offset; };
+    uint64_t getPhysicalMemoryOffset() const { return this->physicalMemoryOffset; };
+
+    void setVirtualMappingSize(size_t size) { this->virtualMappingSize = size; };
+    size_t getVirtualMappingSize() const { return this->virtualMappingSize; };
+
+    void resetBindInfo() {
+        for (auto &entry : bindInfo) {
+            entry.fill(false);
+        }
+    }
+
     static constexpr int gpuHangDetected{-7171};
 
     uint32_t getOsContextId(OsContext *osContext);
@@ -316,6 +328,8 @@ class BufferObject {
     uint64_t patIndex = CommonConstants::unsupportedPatIndex;
     uint64_t userptr = 0u;
     uint64_t mmapOffset = 0u;
+    uint64_t physicalMemoryOffset = 0u;
+    size_t virtualMappingSize = 0u;
     size_t colourChunk = 0;
     uint64_t gpuAddress = 0llu;
 

@@ -326,18 +326,20 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         }
     }
 
-    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags) override {
+    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override {
+        passedMapPhysicalDeviceMemoryOffset = offset;
         if (failMapPhysicalToVirtualMemory) {
             return false;
         }
-        return OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(physicalAllocation, gpuRange, bufferSize, memoryflags);
+        return OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(physicalAllocation, gpuRange, bufferSize, memoryflags, offset);
     }
 
-    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override {
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override {
+        passedMapPhysicalHostMemoryOffset = offset;
         if (failMapPhysicalToVirtualMemory) {
             return false;
         }
-        return OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize);
+        return OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset);
     }
 
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override {
@@ -447,6 +449,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool callBaseAllocateGraphicsMemoryForNonSvmHostPtr = true;
     bool failMapPhysicalToVirtualMemory = false;
     bool failUnMapPhysicalToVirtualMemory = false;
+    size_t passedMapPhysicalDeviceMemoryOffset = 0u;
+    size_t passedMapPhysicalHostMemoryOffset = 0u;
     bool returnMockGAFromDevicePool = false;
     bool returnMockGAFromHostPool = false;
     bool storeIpcAllocations = false;

@@ -576,10 +576,10 @@ bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData) {
     return mapGpuVirtualAddress(osHandle->gmm,
                                 osHandle->handle,
                                 0u, MemoryConstants::maxSvmAddress, castToUint64(allocationStorageData->cpuPtr),
-                                osHandle->gpuPtr, AllocationType::externalHostPtr, nullptr);
+                                osHandle->gpuPtr, AllocationType::externalHostPtr, nullptr, 0u);
 }
 
-bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type, const MemoryFlags *flags) {
+bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type, const MemoryFlags *flags, D3DGPU_SIZE_T offsetInPages) {
     D3DDDI_MAPGPUVIRTUALADDRESS mapGPUVA = {};
     D3DDDIGPUVIRTUALADDRESS_PROTECTION_TYPE protectionType = {};
     if (flags) {
@@ -596,7 +596,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     mapGPUVA.Protection = protectionType;
 
     mapGPUVA.SizeInPages = size / MemoryConstants::pageSize;
-    mapGPUVA.OffsetInPages = 0;
+    mapGPUVA.OffsetInPages = offsetInPages;
 
     mapGPUVA.BaseAddress = preferredAddress;
     mapGPUVA.MinimumAddress = minimumAddress;

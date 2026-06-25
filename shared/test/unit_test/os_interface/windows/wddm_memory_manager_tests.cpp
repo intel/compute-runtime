@@ -70,7 +70,7 @@ class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<W
 
         return nullptr;
     }
-    bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr, const MemoryFlags *flags) override {
+    bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr, const MemoryFlags *flags, size_t offset) override {
         if (requiredGpuPtr != nullptr) {
             mapGpuVirtualAddressWithCpuPtr = true;
         } else {
@@ -288,7 +288,7 @@ class MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm : public MemoryManag
 
     bool mapGpuVirtualAddressWithCpuPtr = false;
 
-    bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr, const MemoryFlags *flags) override {
+    bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr, const MemoryFlags *flags, size_t offset) override {
         if (requiredGpuPtr != nullptr) {
             mapGpuVirtualAddressWithCpuPtr = true;
         } else {
@@ -1331,7 +1331,7 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalDeviceMemoryAndVirtualMemoryThe
     MemoryManager::AllocationStatus status;
     auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(allocation, gpuRange, allocationData.size, nullptr));
+    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(allocation, gpuRange, allocationData.size, nullptr, 0u));
     EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(allocation, gpuRange, allocationData.size, osContext, 0u));
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -1353,7 +1353,7 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalHostMemoryAndVirtualMemoryThenM
     rootDeviceIndices.pushUnique(0);
     rootDeviceIndices.pushUnique(1);
     MultiGraphicsAllocation multiGraphicsAllocations{2};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size));
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
     EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size));
 }
 
@@ -1811,6 +1811,93 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWriteCombinedAllocationThenCpuAddressIs
     }
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithMultipleGmmsAndNotMultiStorageWhenMapGpuVirtualAddressThenSingleHandlePathIsUsed) {
+    if (memoryManager->isLimitedRange(0)) {
+        GTEST_SKIP();
+    }
+
+    wddm->callBaseMapGpuVa = false;
+
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 2u);
+    allocation.setAllocationType(AllocationType::buffer);
+    allocation.storageInfo.multiStorage = false;
+
+    uint32_t calledBefore = wddm->mapGpuVirtualAddressResult.called;
+    memoryManager->createWddmAllocation(&allocation, nullptr);
+    EXPECT_EQ(calledBefore + 1u, wddm->mapGpuVirtualAddressResult.called);
+    wddm->destroyAllocation(&allocation, nullptr);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMultiStorageAllocationWhenMappingPhysicalDeviceMemoryWithNonZeroOffsetThenMappingIsRejected) {
+    if (memoryManager->isLimitedRange(0)) {
+        GTEST_SKIP();
+    }
+
+    wddm->callBaseMapGpuVa = false;
+
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 2u);
+    allocation.setAllocationType(AllocationType::buffer);
+    allocation.storageInfo.multiStorage = true;
+
+    uint64_t gpuRange = 0x1000;
+    size_t size = 2 * MemoryConstants::pageSize;
+    size_t offset = MemoryConstants::pageSize;
+
+    uint32_t calledBefore = wddm->mapGpuVirtualAddressResult.called;
+    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(&allocation, gpuRange, size, nullptr, offset));
+    EXPECT_EQ(calledBefore, wddm->mapGpuVirtualAddressResult.called);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenNonFullRangeSvmAndNot32BitWhenMapGpuVaForOneHandleAllocationThenAddressToMapIsZero) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(40);
+    ASSERT_FALSE(rootDeviceEnvironment->isFullRangeSvm());
+
+    wddm->callBaseMapGpuVa = false;
+
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 1u);
+    allocation.setAllocationType(AllocationType::buffer);
+
+    void *preferredPtr = reinterpret_cast<void *>(0x10000);
+    bool created = memoryManager->createWddmAllocation(&allocation, preferredPtr);
+    EXPECT_EQ(0u, wddm->mapGpuVirtualAddressResult.uint64ParamPassed);
+    if (created) {
+        wddm->destroyAllocation(&allocation, nullptr);
+    }
+
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenFullRangeSvmWhenMapGpuVaForOneHandleAllocationThenAddressToMapIsNotForcedToZero) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    ASSERT_TRUE(rootDeviceEnvironment->isFullRangeSvm());
+
+    wddm->callBaseMapGpuVa = false;
+
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 1u);
+    allocation.setAllocationType(AllocationType::buffer);
+
+    // Full-range SVM makes the (!isFullRangeSvm() && !is32bit) decision false (short-circuit),
+    // so the branch that forces addressToMap to zero is skipped. A null preferred address keeps
+    // addressToMap at zero on its own, so this exercises the false decision without relying on a
+    // specific in-heap address.
+    uint32_t calledBefore = wddm->mapGpuVirtualAddressResult.called;
+    bool created = memoryManager->createWddmAllocation(&allocation, nullptr);
+    EXPECT_EQ(calledBefore + 1u, wddm->mapGpuVirtualAddressResult.called);
+    if (created) {
+        wddm->destroyAllocation(&allocation, nullptr);
+    }
+
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenDebugVariableWhenCreatingWddmMemoryManagerThenSetSupportForMultiStorageResources) {
@@ -4448,7 +4535,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
 
     auto hwInfoMock = hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily];
     ASSERT_NE(nullptr, hwInfoMock);
-    auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr);
+    auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
     ASSERT_TRUE(result);
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
@@ -4494,7 +4581,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
 
     auto hwInfoMock = hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily];
     ASSERT_NE(nullptr, hwInfoMock);
-    auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr);
+    auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
     ASSERT_TRUE(result);
     EXPECT_EQ(gmmHelper->canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
     EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
@@ -4589,7 +4676,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenMappedGpuVaThe
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
 
-    auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr);
+    auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
     ASSERT_TRUE(result);
     EXPECT_EQ(0u, mockMngr->updateAuxTableCalled);
 }
@@ -4605,7 +4692,7 @@ TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRetur
     WddmMock wddm(*rootDeviceEnvironment);
     wddm.init();
 
-    auto result = wddm.mapGpuVirtualAddress(gmm.get(), 0, 0, 0, 0, gpuVa, AllocationType::unknown, nullptr);
+    auto result = wddm.mapGpuVirtualAddress(gmm.get(), 0, 0, 0, 0, gpuVa, AllocationType::unknown, nullptr, 0u);
     ASSERT_FALSE(result);
 }
 
@@ -4638,7 +4725,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsUnsetThenD
     delete wddmAlloc->getDefaultGmm();
     wddmAlloc->setDefaultGmm(myGmm);
 
-    auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr);
+    auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
     EXPECT_EQ(0u, mockMngr->updateAuxTableCalled);
@@ -4680,7 +4767,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenU
 
     auto expectedCallCount = memoryManager.getRegisteredEngines(rootDeviceIndex).size();
 
-    auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr);
+    auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
     EXPECT_TRUE(result);
 
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr.get());
@@ -4691,6 +4778,51 @@ HWTEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenU
 
     EXPECT_TRUE(ultCsr->stopDirectSubmissionCalled);
     EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
+}
+
+TEST_F(MockWddmMemoryManagerTest, givenCompressedGmmWithForcedPageTableSupportWhenMapGpuVaCalledThenLambdaCoversAllBranches) {
+    struct ProductHelperWithPageTableSupport : ProductHelperHw<IGFX_UNKNOWN> {
+        bool isPageTableManagerSupported(const HardwareInfo &) const override { return true; }
+    };
+    auto rootDeviceEnvironment1 = executionEnvironment.rootDeviceEnvironments[1].get();
+    auto origProductHelper = std::move(rootDeviceEnvironment1->productHelper);
+    rootDeviceEnvironment1->productHelper = std::make_unique<ProductHelperWithPageTableSupport>();
+
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment1->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    gmm->setCompressionEnabled(true);
+    D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
+    WddmMock localWddm(*rootDeviceEnvironment1);
+    localWddm.init();
+
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
+    auto hwInfo = *defaultHwInfo;
+    EngineInstancesContainer regularEngines = {{aub_stream::ENGINE_CCS, EngineUsage::regular}};
+    executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(),
+                                                                   EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
+                                                                                                                PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+
+    auto result = localWddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE,
+                                                 localWddm.getGfxPartition().Standard.Base,
+                                                 localWddm.getGfxPartition().Standard.Limit,
+                                                 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
+    EXPECT_TRUE(result);
+
+    auto mockMngr = new MockGmmPageTableMngr();
+    for (auto engine : executionEnvironment.memoryManager->getRegisteredEngines(1u)) {
+        engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
+    }
+    gpuVa = 0;
+    result = localWddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE,
+                                            localWddm.getGfxPartition().Standard.Base,
+                                            localWddm.getGfxPartition().Standard.Limit,
+                                            0u, gpuVa, AllocationType::unknown, nullptr, 0u);
+    EXPECT_TRUE(result);
+    EXPECT_GT(mockMngr->updateAuxTableCalled, 0u);
+
+    rootDeviceEnvironment1->productHelper = std::move(origProductHelper);
 }
 
 struct WddmMemoryManagerWithAsyncDeleterTest : public ::testing::Test {
@@ -5123,7 +5255,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalDeviceMemoryAndVirtualMemoryThe
     MemoryManager::AllocationStatus status;
     auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(allocation, gpuRange, allocationData.size, nullptr));
+    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(allocation, gpuRange, allocationData.size, nullptr, 0u));
 
     // Set the mock WDDM to return an error for reserveGpuVirtualAddress in the unMapPhysicalDeviceMemoryFromVirtualMemory call.
     wddm->failReserveGpuVirtualAddress = true;

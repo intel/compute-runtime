@@ -186,7 +186,7 @@ TEST(MemoryManagerTest, givenDeviceGraphicsAllocationWhenMapCalledThenDontResetC
     MockGraphicsAllocation allocation{&allocationStorage, 1};
     EXPECT_NE(nullptr, allocation.getUnderlyingBuffer());
 
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(&allocation, 0x12300, 0, nullptr));
+    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(&allocation, 0x12300, 0, nullptr, 0u));
     EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
     EXPECT_EQ(0x12300u, allocation.getGpuAddress());
 
@@ -207,7 +207,7 @@ TEST(MemoryManagerTest, givenHostGraphicsAllocationWhenMapCalledThenDontResetCpu
     rootDeviceIndices.pushUnique(0);
     rootDeviceIndices.pushUnique(1);
     MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
-    EXPECT_TRUE(memoryManager.mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, &allocation, 0x12300, 0));
+    EXPECT_TRUE(memoryManager.mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, &allocation, 0x12300, 0, 0u));
     EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
     EXPECT_NE(0x12300u, allocation.getGpuAddress());
     for (size_t i = 0; i < rootDeviceIndices.size(); i++) {
