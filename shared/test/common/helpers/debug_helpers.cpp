@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 #include <string>
 
 namespace NEO {
-void debugBreak(int line, const char *file) {
+COLD_SECTION void debugBreak(int line, const char *file) {
 }
-void abortUnrecoverable(int line, const char *file) {
+COLD_SECTION void abortUnrecoverable(int line, const char *file) {
     std::string message = "Abort was called at " + std::to_string(line) + " line in file " + file;
     throw std::runtime_error(message);
 }

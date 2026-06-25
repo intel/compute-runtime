@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,14 +14,14 @@
 #include <cstdio>
 
 namespace NEO {
-void debugBreak(int line, const char *file) {
+COLD_SECTION void debugBreak(int line, const char *file) {
     if (debugManager.flags.EnableDebugBreak.get()) {
         PRINT_STRING(true, stdout, "Assert was called at %d line in file:\n%s\n", line, file);
         fflush(stdout);
         assert(false);
     }
 }
-void abortUnrecoverable(int line, const char *file) {
+COLD_SECTION void abortUnrecoverable(int line, const char *file) {
     PRINT_STRING(true, stdout, "Abort was called at %d line in file:\n%s\n", line, file);
     fflush(stdout);
     abortExecution();

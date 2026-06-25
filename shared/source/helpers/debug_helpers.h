@@ -9,7 +9,7 @@
 #include "shared/source/helpers/preprocessor.h"
 
 #define UNRECOVERABLE_IF(expression)                             \
-    if (expression) {                                            \
+    if (expression) [[unlikely]] {                               \
         NEO::abortUnrecoverable(__LINE__, NEO_SOURCE_FILE_PATH); \
     }
 
@@ -25,7 +25,7 @@
 #ifdef _DEBUG
 #define DEBUG_BREAK_IF(expression)           \
                                              \
-    if (expression) {                        \
+    if (expression) [[unlikely]] {           \
         NEO::debugBreak(__LINE__, __FILE__); \
     }
 #else
@@ -43,7 +43,15 @@
 #endif
 #endif
 
+#ifndef COLD_SECTION
+#if defined(__GNUC__) || defined(__clang__)
+#define COLD_SECTION FORCE_NOINLINE __attribute__((cold))
+#else
+#define COLD_SECTION FORCE_NOINLINE
+#endif
+#endif
+
 namespace NEO {
-void debugBreak(int line, const char *file);
-[[noreturn]] void abortUnrecoverable(int line, const char *file);
+COLD_SECTION void debugBreak(int line, const char *file);
+[[noreturn]] COLD_SECTION void abortUnrecoverable(int line, const char *file);
 } // namespace NEO
