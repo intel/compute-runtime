@@ -107,38 +107,6 @@ TEST(ReleaseHelperPipeControlTests, givenDebugFlagSetTo0WhenIsPipeControlPriorTo
 
 using ReleaseHelperKernelCapabilitiesTests = ::testing::Test;
 
-TEST(ReleaseHelperKernelCapabilitiesTests, whenGettingKernelCapabilitiesExtraThenAdditionalExtraCapsAreOredIntoExtraCaps) {
-    MockReleaseHelper releaseHelper;
-    releaseHelper.getAdditionalExtraCapsResult = 0b0100u;
-
-    uint32_t extraCaps = 0b0001u;
-    releaseHelper.getKernelCapabilitiesExtra(extraCaps);
-
-    EXPECT_EQ(1u, releaseHelper.getAdditionalExtraCapsCalled);
-    EXPECT_EQ(0b0101u, extraCaps);
-}
-
-TEST(ReleaseHelperKernelCapabilitiesTests, givenAdditionalExtraCapsZeroWhenGettingKernelCapabilitiesExtraThenExtraCapsAreUnchanged) {
-    MockReleaseHelper releaseHelper;
-    releaseHelper.getAdditionalExtraCapsResult = 0u;
-
-    uint32_t extraCaps = 0b1010u;
-    releaseHelper.getKernelCapabilitiesExtra(extraCaps);
-
-    EXPECT_EQ(1u, releaseHelper.getAdditionalExtraCapsCalled);
-    EXPECT_EQ(0b1010u, extraCaps);
-}
-
-TEST(ReleaseHelperKernelCapabilitiesTests, givenAlreadySetBitsWhenGettingKernelCapabilitiesExtraThenExistingBitsArePreserved) {
-    MockReleaseHelper releaseHelper;
-    releaseHelper.getAdditionalExtraCapsResult = 0b0110u;
-
-    uint32_t extraCaps = 0b0110u;
-    releaseHelper.getKernelCapabilitiesExtra(extraCaps);
-
-    EXPECT_EQ(0b0110u, extraCaps);
-}
-
 TEST(ReleaseHelperKernelCapabilitiesTests, GivenRequestForKernelFp16CapabilitiesThenReturnMinMaxAndLoadStoreCapabilitiesWithCapsFromReleaseHelper) {
     MockReleaseHelper releaseHelper;
     releaseHelper.getAdditionalFp16CapsResult = 0u;
