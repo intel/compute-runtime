@@ -322,6 +322,105 @@ TEST_F(AllocateGlobalSurfacePoolingDisabledTest, whenAllocatingGlobalSurfaceWith
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
+TEST_F(AllocateGlobalSurfacePoolingDisabledTest, givenNonPooledAllocationWhenInitDataAndBssSectionThenMemsetAllocationIsCalledOnceForBssSection) {
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+
+    constexpr size_t initSize = 32u;
+    constexpr size_t zeroInitSize = 32u;
+    constexpr size_t totalSize = initSize + zeroInitSize;
+    std::vector<uint8_t> initData(initSize, 7u);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
+    mockMemoryManager->memsetAllocationCalled = 0;
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(
+        allocateGlobalsSurface(nullptr, device, totalSize, zeroInitSize, false, nullptr, initData.data()));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_FALSE(globalSurface->isFromPool());
+    EXPECT_EQ(1u, mockMemoryManager->memsetAllocationCalled);
+    device.getMemoryManager()->freeGraphicsMemory(globalSurface->getGraphicsAllocation());
+}
+
+TEST_F(AllocateGlobalSurfacePoolingDisabledTest, givenNonPooledAllocationWithBssOnlySectionThenMemsetAllocationIsCalledOnce) {
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+
+    constexpr size_t totalSize = 64u;
+    constexpr size_t zeroInitSize = totalSize;
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
+    mockMemoryManager->memsetAllocationCalled = 0;
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(
+        allocateGlobalsSurface(nullptr, device, totalSize, zeroInitSize, false, nullptr, nullptr));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_FALSE(globalSurface->isFromPool());
+    EXPECT_EQ(1u, mockMemoryManager->memsetAllocationCalled);
+    device.getMemoryManager()->freeGraphicsMemory(globalSurface->getGraphicsAllocation());
+}
+
+TEST_F(AllocateGlobalSurfacePoolingDisabledTest, givenNonPooledAllocationWhenOnlyInitDataWithoutBssSectionThenMemsetAllocationIsNotCalled) {
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+
+    constexpr size_t initSize = 64u;
+    constexpr size_t zeroInitSize = 0u;
+    constexpr size_t totalSize = initSize;
+    std::vector<uint8_t> initData(initSize, 7u);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
+    mockMemoryManager->memsetAllocationCalled = 0;
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(
+        allocateGlobalsSurface(nullptr, device, totalSize, zeroInitSize, false, nullptr, initData.data()));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_FALSE(globalSurface->isFromPool());
+    EXPECT_EQ(0u, mockMemoryManager->memsetAllocationCalled);
+    device.getMemoryManager()->freeGraphicsMemory(globalSurface->getGraphicsAllocation());
+}
+
+TEST_F(AllocateGlobalSurfacePoolingDisabledTest, givenNonPooledAllocationWithInitDataAndBssSectionThenInitDataPreservedAndBssZeroed) {
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+
+    constexpr size_t initSize = 32u;
+    constexpr size_t zeroInitSize = 32u;
+    constexpr size_t totalSize = initSize + zeroInitSize;
+    std::vector<uint8_t> initData(initSize, 7u);
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(
+        allocateGlobalsSurface(nullptr, device, totalSize, zeroInitSize, false, nullptr, initData.data()));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_FALSE(globalSurface->isFromPool());
+    auto alloc = globalSurface->getGraphicsAllocation();
+    ASSERT_NE(nullptr, alloc);
+
+    std::vector<uint8_t> expected(totalSize, 0);
+    std::memcpy(expected.data(), initData.data(), initSize);
+    EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), expected.data(), totalSize));
+    device.getMemoryManager()->freeGraphicsMemory(alloc);
+}
+
+TEST_F(AllocateGlobalSurfacePoolingDisabledTest, givenNonPooledAllocationWithBssOnlySectionThenEntireAllocationZeroed) {
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+
+    constexpr size_t totalSize = 64u;
+    constexpr size_t zeroInitSize = totalSize;
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(
+        allocateGlobalsSurface(nullptr, device, totalSize, zeroInitSize, false, nullptr, nullptr));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_FALSE(globalSurface->isFromPool());
+    auto alloc = globalSurface->getGraphicsAllocation();
+    ASSERT_NE(nullptr, alloc);
+
+    std::vector<uint8_t> expectedZeros(totalSize, 0);
+    EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), expectedZeros.data(), totalSize));
+    device.getMemoryManager()->freeGraphicsMemory(alloc);
+}
+
 TEST(AllocateGlobalSurfaceTest, whenAllocatingGlobalSurfaceWithZeroInitSizeGreaterThanZeroAndInitDataSizeSetToZeroThenDoNotTransferMemoryToAllocation) {
     MockDevice device{};
     auto memoryManager = std::make_unique<MockMemoryManager>(*device.getExecutionEnvironment());

@@ -142,7 +142,7 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
                                                                         device, gpuAllocation, allocationOffset, initData, initSize);
         UNRECOVERABLE_IF(!success);
 
-        if (isAllocatedFromPool && zeroInitSize > 0) {
+        if (zeroInitSize > 0) {
             auto success = MemoryTransferHelper::memsetAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation),
                                                                   device, gpuAllocation, allocationOffset + initSize, 0, zeroInitSize);
             UNRECOVERABLE_IF(!success);
@@ -151,11 +151,13 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
         if (isAllocatedFromPool) {
             device.getDefaultEngine().commandStreamReceiver->writePooledMemory(*globalSurfaceAllocation, true);
         }
-    } else if (isAllocatedFromPool) {
+    } else {
         auto success = MemoryTransferHelper::memsetAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation),
                                                               device, gpuAllocation, allocationOffset, 0, totalSize);
         UNRECOVERABLE_IF(!success);
-        device.getDefaultEngine().commandStreamReceiver->writePooledMemory(*globalSurfaceAllocation, true);
+        if (isAllocatedFromPool) {
+            device.getDefaultEngine().commandStreamReceiver->writePooledMemory(*globalSurfaceAllocation, true);
+        }
     }
     return globalSurfaceAllocation;
 }
