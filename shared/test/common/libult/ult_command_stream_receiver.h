@@ -140,7 +140,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::feSupportFlags;
     using BaseClass::CommandStreamReceiver::flushBcsTask;
     using BaseClass::CommandStreamReceiver::flushStamp;
-    using BaseClass::CommandStreamReceiver::forceSkipResourceCleanupRequired;
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
     using BaseClass::CommandStreamReceiver::globalStatelessHeapAllocation;
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
@@ -171,7 +170,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::ownershipMutex;
     using BaseClass::CommandStreamReceiver::perfCounterAllocator;
     using BaseClass::CommandStreamReceiver::pipelineSupportFlags;
-    using BaseClass::CommandStreamReceiver::pollForCompletionDuringCleanup;
     using BaseClass::CommandStreamReceiver::preemptionAllocation;
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
     using BaseClass::CommandStreamReceiver::releaseGlobalStatelessHeap;
