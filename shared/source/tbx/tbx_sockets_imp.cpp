@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,9 +24,21 @@ typedef struct sockaddr SOCKADDR;
 #endif
 #include "tbx_proto.h"
 
+#include <cerrno>
 #include <cstdint>
 
 namespace NEO {
+
+// Returns true when the last blocking socket call failed only because it was
+// interrupted by a signal (no data transferred). Such a call must be retried
+// rather than treated as a connection failure.
+static inline bool wasInterrupted() {
+#ifdef WIN32
+    return ::WSAGetLastError() == WSAEINTR;
+#else
+    return errno == EINTR;
+#endif
+}
 
 TbxSocketsImp::TbxSocketsImp(std::ostream &err)
     : cerrStream(err) {
@@ -276,7 +288,16 @@ bool TbxSocketsImp::sendWriteData(const void *buffer, size_t sizeInBytes) {
 
     do {
         auto bytesSent = ::send(socket, &dataBuffer[totalSent], static_cast<int>(sizeInBytes - totalSent), 0);
-        if (bytesSent == 0 || bytesSent == static_cast<int>(INVALID_SOCKET)) {
+        if (bytesSent == static_cast<int>(INVALID_SOCKET)) {
+            if (wasInterrupted()) {
+                // The blocking send was interrupted by a signal before any data was
+                // transferred. This is not a connection failure: retry the call.
+                continue;
+            }
+            logErrorInfo("Connection Closed.");
+            return false;
+        }
+        if (bytesSent == 0) {
             logErrorInfo("Connection Closed.");
             return false;
         }
@@ -293,7 +314,16 @@ bool TbxSocketsImp::getResponseData(void *buffer, size_t sizeInBytes) {
 
     do {
         auto bytesRecv = ::recv(socket, &dataBuffer[totalRecv], static_cast<int>(sizeInBytes - totalRecv), 0);
-        if (bytesRecv == 0 || bytesRecv == static_cast<int>(INVALID_SOCKET)) {
+        if (bytesRecv == static_cast<int>(INVALID_SOCKET)) {
+            if (wasInterrupted()) {
+                // The blocking recv was interrupted by a signal before any data was
+                // received. This is not a connection failure: retry the call.
+                continue;
+            }
+            logErrorInfo("Connection Closed.");
+            return false;
+        }
+        if (bytesRecv == 0) {
             logErrorInfo("Connection Closed.");
             return false;
         }
