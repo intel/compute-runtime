@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
+#include "shared/source/os_interface/user_fence.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "neo_igfxfmid.h"
@@ -131,6 +132,14 @@ class IoctlHelper {
     virtual int waitUserFence(uint32_t ctxId, uint64_t address,
                               uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
                               bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) = 0;
+    virtual int waitUserFence(UserFenceWaitOperation operation, uint32_t ctxId, uint64_t address,
+                              uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                              bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
+        if (operation != UserFenceWaitOperation::greaterOrEqual) {
+            return -1;
+        }
+        return waitUserFence(ctxId, address, value, dataWidth, timeout, flags, userInterrupt, externalInterruptId, allocForInterruptWait);
+    }
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getAtomicAccess(AtomicAccessMode mode) = 0;
     virtual uint64_t getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp, const std::vector<MemoryRegion> &memoryInfo) = 0;

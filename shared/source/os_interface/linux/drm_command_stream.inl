@@ -368,6 +368,22 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue,
 }
 
 template <typename GfxFamily>
+bool DrmCommandStreamReceiver<GfxFamily>::waitUserFence(UserFenceWaitOperation operation, uint64_t waitValue, uint64_t hostAddress, UserFenceValueWidth dataWidth, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *fence) {
+    auto drmValueWidth = Drm::ValueWidth::u64;
+    switch (dataWidth) {
+    case UserFenceValueWidth::u32:
+        drmValueWidth = Drm::ValueWidth::u32;
+        break;
+    case UserFenceValueWidth::u64:
+        drmValueWidth = Drm::ValueWidth::u64;
+        break;
+    }
+    int ret = drm->waitOnUserFences(operation, static_cast<OsContextLinux &>(*this->osContext), hostAddress, waitValue, drmValueWidth, this->activePartitions, timeout, this->immWritePostSyncWriteOffset, userInterrupt, externalInterruptId, allocForInterruptWait);
+
+    return (ret == 0);
+}
+
+template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::isGemCloseWorkerActive() const {
     return this->getMemoryManager()->peekGemCloseWorker() && !this->osContext->isInternalEngine() && !this->osContext->isDirectSubmissionLightActive() && this->getType() == CommandStreamReceiverType::hardware;
 }

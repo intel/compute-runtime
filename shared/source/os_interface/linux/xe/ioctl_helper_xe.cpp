@@ -816,6 +816,47 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
     return 0;
 }
 
+int IoctlHelperXe::waitUserFence(UserFenceWaitOperation operation, uint32_t ctxId, uint64_t address,
+                                 uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                                 bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
+    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x ctx=0x%x\n", __FUNCTION__, address, value, dataWidth, timeout, flags, ctxId);
+    if (!address) {
+        return 0;
+    }
+
+    uint16_t xeOperation = DRM_XE_UFENCE_WAIT_OP_GTE;
+    switch (operation) {
+    case UserFenceWaitOperation::notEqual:
+        xeOperation = DRM_XE_UFENCE_WAIT_OP_NEQ;
+        break;
+    case UserFenceWaitOperation::greaterOrEqual:
+        xeOperation = DRM_XE_UFENCE_WAIT_OP_GTE;
+        break;
+    }
+
+    uint64_t mask = std::numeric_limits<uint64_t>::max();
+    switch (static_cast<Drm::ValueWidth>(dataWidth)) {
+    case Drm::ValueWidth::u32:
+        mask = std::numeric_limits<uint32_t>::max();
+        break;
+    case Drm::ValueWidth::u64:
+        mask = std::numeric_limits<uint64_t>::max();
+        break;
+    default:
+        DEBUG_BREAK_IF(true);
+        return -1;
+    }
+
+    drm_xe_wait_user_fence waitUserFence = {};
+    setupXeWaitUserFenceStruct(&waitUserFence, ctxId, xeOperation, address, value, timeout);
+    waitUserFence.mask = mask;
+
+    auto retVal = IoctlHelper::ioctl(DrmIoctl::gemWaitUserFence, &waitUserFence);
+    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x ctx=0x%x retVal=0x%x\n", __FUNCTION__,
+          address, value, timeout, waitUserFence.flags, ctxId, retVal);
+    return retVal;
+}
+
 uint32_t IoctlHelperXe::getAtomicAdvise(bool /* isNonAtomic */) {
     XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return DRM_XE_MEM_RANGE_ATTR_ATOMIC;

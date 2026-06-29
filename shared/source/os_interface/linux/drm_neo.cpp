@@ -2003,17 +2003,54 @@ PhysicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
     return pciSpeedInfo;
 }
 
+namespace {
+
+uint64_t readUserFenceCompareValue(uint64_t address, Drm::ValueWidth dataWidth) {
+    switch (dataWidth) {
+    case Drm::ValueWidth::u32:
+        return *reinterpret_cast<uint32_t *>(address);
+    case Drm::ValueWidth::u64:
+        return *reinterpret_cast<uint64_t *>(address);
+    default:
+        DEBUG_BREAK_IF(true);
+        return 0;
+    }
+}
+
+bool isUserFenceWaitConditionMet(uint64_t currentValue, uint64_t waitValue, UserFenceWaitOperation operation) {
+    switch (operation) {
+    case UserFenceWaitOperation::notEqual:
+        return currentValue != waitValue;
+    case UserFenceWaitOperation::greaterOrEqual:
+        return currentValue >= waitValue;
+    }
+    return false;
+}
+
+} // namespace
+
 int Drm::waitOnUserFences(OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
                           uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
-
-    int ret = waitOnUserFencesImpl(static_cast<const OsContextLinux &>(osContext), address, value, numActiveTiles,
+    int ret = waitOnUserFencesImpl(UserFenceWaitOperation::greaterOrEqual, static_cast<const OsContextLinux &>(osContext), address, value, ValueWidth::u32, ValueWidth::u64, numActiveTiles,
                                    timeout, postSyncOffset, userInterrupt, externalInterruptId, allocForInterruptWait);
     if (ret != 0 && getErrno() == EIO && checkGpuPageFaultRequired()) {
         checkResetStatus(osContext);
     }
     return ret;
 }
-int Drm::waitOnUserFencesImpl(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
+
+int Drm::waitOnUserFences(UserFenceWaitOperation operation, OsContextLinux &osContext, uint64_t address, uint64_t value, ValueWidth dataWidth, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
+                          uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
+
+    int ret = waitOnUserFencesImpl(operation, static_cast<const OsContextLinux &>(osContext), address, value, dataWidth, dataWidth, numActiveTiles,
+                                   timeout, postSyncOffset, userInterrupt, externalInterruptId, allocForInterruptWait);
+    if (ret != 0 && getErrno() == EIO && checkGpuPageFaultRequired()) {
+        checkResetStatus(osContext);
+    }
+    return ret;
+}
+
+int Drm::waitOnUserFencesImpl(UserFenceWaitOperation operation, const OsContextLinux &osContext, uint64_t address, uint64_t value, ValueWidth readWidth, ValueWidth waitWidth, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
                               uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
     auto &drmContextIds = osContext.getDrmContextIds();
     UNRECOVERABLE_IF(numActiveTiles > drmContextIds.size());
@@ -2021,14 +2058,17 @@ int Drm::waitOnUserFencesImpl(const OsContextLinux &osContext, uint64_t address,
     const auto selectedTimeout = osContext.isHangDetected() ? 1 : timeout;
 
     for (auto drmIterator = 0u; drmIterator < numActiveTiles; drmIterator++) {
-        if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < value) {
+        auto currentValue = readUserFenceCompareValue(completionFenceCpuAddress, readWidth);
+        if (!isUserFenceWaitConditionMet(currentValue, value, operation)) {
             static constexpr uint16_t flags = 0;
-            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::u64, selectedTimeout, flags, userInterrupt, externalInterruptId, allocForInterruptWait);
+            int retVal = (operation == UserFenceWaitOperation::greaterOrEqual)
+                             ? waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, waitWidth, selectedTimeout, flags, userInterrupt, externalInterruptId, allocForInterruptWait)
+                             : ioctlHelper->waitUserFence(operation, drmContextIds[drmIterator], completionFenceCpuAddress, value, static_cast<uint32_t>(waitWidth), selectedTimeout, flags, userInterrupt, externalInterruptId, allocForInterruptWait);
             if (debugManager.flags.PrintCompletionFenceUsage.get()) {
                 std::cout << "Completion fence waited."
                           << " Status: " << retVal
                           << ", CPU address: " << std::hex << completionFenceCpuAddress << std::dec
-                          << ", current value: " << *reinterpret_cast<uint32_t *>(completionFenceCpuAddress)
+                          << ", current value: " << readUserFenceCompareValue(completionFenceCpuAddress, readWidth)
                           << ", wait value: " << value << std::endl;
             }
             if (retVal != 0) {
@@ -2037,7 +2077,7 @@ int Drm::waitOnUserFencesImpl(const OsContextLinux &osContext, uint64_t address,
         } else if (debugManager.flags.PrintCompletionFenceUsage.get()) {
             std::cout << "Completion fence already completed."
                       << " CPU address: " << std::hex << completionFenceCpuAddress << std::dec
-                      << ", current value: " << *reinterpret_cast<uint32_t *>(completionFenceCpuAddress)
+                      << ", current value: " << currentValue
                       << ", wait value: " << value << std::endl;
         }
 

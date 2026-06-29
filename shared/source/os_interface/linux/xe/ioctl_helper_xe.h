@@ -55,6 +55,9 @@ class IoctlHelperXe : public IoctlHelper {
     int waitUserFence(uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
                       bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
+    int waitUserFence(UserFenceWaitOperation operation, uint32_t ctxId, uint64_t address,
+                      uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                      bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
     uint64_t getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp, const std::vector<MemoryRegion> &memoryInfo) override;

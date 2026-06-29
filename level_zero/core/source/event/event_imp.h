@@ -74,6 +74,7 @@ struct EventImp : public Event {
                                                  bool cacheFlushRequiredForHostSync,
                                                  TaskCountType &taskCountToWaitForCacheFlush,
                                                  bool &taskCountWaitedForCacheFlush);
+    NEO::WaitStatus tryUserFenceWaitForHostSynchronize(int64_t timeSinceWait);
 
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusEventPackets(int64_t timeSinceWait);

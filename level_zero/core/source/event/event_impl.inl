@@ -419,6 +419,111 @@ NEO::WaitStatus EventImp<TagSizeT>::tryKmdWaitForHostSynchronize(NEO::CommandStr
 }
 
 template <typename TagSizeT>
+NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t timeSinceWait) {
+    auto *csr = csrs[0];
+    if (!csr->waitUserFenceSupported(nullptr)) {
+        return NEO::WaitStatus::notReady;
+    }
+
+    if (handlePreQueryStatusOperationsAndCheckCompletion()) {
+        return NEO::WaitStatus::ready;
+    }
+
+    if (isActiveExternalCbEvent() && !isPatchPreambleCounterCompleted(timeSinceWait)) {
+        return NEO::WaitStatus::notReady;
+    }
+
+    constexpr auto eventPacketWidth = sizeof(TagSizeT) == sizeof(uint64_t) ? NEO::UserFenceValueWidth::u64 : NEO::UserFenceValueWidth::u32;
+    constexpr auto infiniteTimeout = int64_t{-1};
+    const bool packetUserFenceWaitSupported = (csr->getActivePartitions() == 1u);
+
+    auto waitForPacket = [&](const void *queryAddress) -> bool {
+        auto typedAddress = static_cast<const TagSizeT *>(queryAddress);
+        const auto clearedValue = static_cast<TagSizeT>(Event::STATE_CLEARED);
+        if (*typedAddress != clearedValue) {
+            return true;
+        }
+
+        return csr->waitUserFence(NEO::UserFenceWaitOperation::notEqual, static_cast<uint64_t>(clearedValue), castToUint64(typedAddress), eventPacketWidth,
+                                  infiniteTimeout, false, this->externalInterruptId, getAllocation(this->device), nullptr);
+    };
+
+    if (this->heapfullCbEventWithProfiling && inOrderExecHelper.hasTimestampNodes()) {
+        if (!packetUserFenceWaitSupported) {
+            return NEO::WaitStatus::notReady;
+        }
+
+        auto waitForTimestampNode = [&](NEO::TagNodeBase *node) -> bool {
+            for (uint32_t i = 0; i < this->kernelCount; i++) {
+                uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
+                for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++) {
+                    auto queryAddress = ptrOffset(node->getCpuBase(), packetId * this->singlePacketSize + this->getCompletionFieldOffset());
+                    if (!waitForPacket(queryAddress)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        };
+
+        for (size_t nodeId = 0; nodeId < inOrderExecHelper.getTimestampNodesCount(); nodeId++) {
+            if (!waitForTimestampNode(inOrderExecHelper.getTimestampNode(nodeId))) {
+                return NEO::WaitStatus::notReady;
+            }
+        }
+        for (size_t nodeId = 0; nodeId < inOrderExecHelper.getAdditionalTimestampNodesCount(); nodeId++) {
+            if (!waitForTimestampNode(inOrderExecHelper.getAdditionalTimestampNode(nodeId))) {
+                return NEO::WaitStatus::notReady;
+            }
+        }
+        return NEO::WaitStatus::ready;
+    }
+
+    if (isCounterBased() || inOrderExecHelper.isDataAssigned()) {
+        if (!inOrderExecHelper.isDataAssigned() || !inOrderExecHelper.getBaseHostCpuAddress()) {
+            return NEO::WaitStatus::notReady;
+        }
+
+        auto waitAddress = castToUint64(ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset));
+        auto *hostAlloc = inOrderExecHelper.isHostStorageDuplicated() ? inOrderExecHelper.getHostCounterAllocation() : inOrderExecHelper.getDeviceCounterAllocation();
+        if (!csr->waitUserFence(static_cast<TaskCountType>(getInOrderExecBaseSignalValue()), waitAddress, infiniteTimeout, false, this->externalInterruptId, hostAlloc, nullptr)) {
+            return NEO::WaitStatus::notReady;
+        }
+
+        return NEO::WaitStatus::ready;
+    }
+
+    if (!packetUserFenceWaitSupported) {
+        return NEO::WaitStatus::notReady;
+    }
+
+    if (!getAllocation(this->device)) {
+        return NEO::WaitStatus::notReady;
+    }
+
+    uint32_t packets = 0;
+    for (uint32_t i = 0; i < this->kernelCount; i++) {
+        uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
+        for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++, packets++) {
+            auto queryAddress = ptrOffset(getHostAddress(), packets * this->singlePacketSize + this->getCompletionFieldOffset());
+            if (!waitForPacket(queryAddress)) {
+                return NEO::WaitStatus::notReady;
+            }
+        }
+    }
+
+    if (this->signalAllEventPackets && (packets < getMaxPacketsCount())) {
+        for (uint32_t packetId = packets; packetId < getMaxPacketsCount(); packetId++) {
+            auto queryAddress = ptrOffset(getHostAddress(), packetId * this->singlePacketSize + this->getCompletionFieldOffset());
+            if (!waitForPacket(queryAddress)) {
+                return NEO::WaitStatus::notReady;
+            }
+        }
+    }
+    return NEO::WaitStatus::ready;
+}
+
+template <typename TagSizeT>
 void EventImp<TagSizeT>::downloadAllTbxAllocations() {
     for (auto &csr : csrs) {
         auto taskCount = getTaskCount(*csr);
@@ -853,6 +958,11 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                                           (timeout == std::numeric_limits<uint64_t>::max()) &&
                                           EventHostSynchronize::isNativeWddm(*csrForCacheFlush) &&
                                           neoDevice->getHardwareInfo().capabilityTable.isIntegratedDevice;
+    const bool waitForUserFenceUsingKmd = (NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get() == 3) &&
+                                          NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get() &&
+                                          (timeout == std::numeric_limits<uint64_t>::max()) &&
+                                          EventHostSynchronize::isDrm(*csrs[0]) &&
+                                          csrs[0]->waitUserFenceSupported(nullptr);
     const auto kmdWaitInitialPollUs = std::max<int64_t>(NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get(), 0);
     TaskCountType taskCountToWaitForCacheFlush = 0;
     bool taskCountWaitedForCacheFlush = false;
@@ -949,6 +1059,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                 }
                 return ZE_RESULT_ERROR_DEVICE_LOST;
             }
+            if (waitStatus == NEO::WaitStatus::ready) {
+                continue;
+            }
+        }
+
+        if (!fenceWait && waitForUserFenceUsingKmd && (elapsedTimeSinceWaitStartUs >= kmdWaitInitialPollUs)) {
+            const auto waitStatus = tryUserFenceWaitForHostSynchronize(elapsedTimeSinceWaitStartUs);
             if (waitStatus == NEO::WaitStatus::ready) {
                 continue;
             }

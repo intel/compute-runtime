@@ -30,6 +30,12 @@ inline bool isNativeWddm(const NEO::CommandStreamReceiver &csr) {
     return !rootDeviceEnvironment->isWddmOnLinux();
 }
 
+inline bool isDrm(const NEO::CommandStreamReceiver &csr) {
+    auto osInterface = csr.getOSInterface();
+    auto driverModel = osInterface ? osInterface->getDriverModel() : nullptr;
+    return driverModel && (driverModel->getDriverModelType() == NEO::DriverModelType::drm);
+}
+
 struct WaitAction {
     int64_t sleepUs = 0;
 };

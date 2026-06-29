@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/user_fence.h"
 
 #include "neo_igfxfmid.h"
 
@@ -247,6 +248,8 @@ class Drm : public DriverModel {
 
     int waitOnUserFences(OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
                          uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait);
+    int waitOnUserFences(UserFenceWaitOperation operation, OsContextLinux &osContext, uint64_t address, uint64_t value, ValueWidth dataWidth, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
+                         uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait);
 
     void setNewResourceBoundToVM(BufferObject *bo, uint32_t vmHandleId);
 
@@ -291,7 +294,7 @@ class Drm : public DriverModel {
     std::unordered_map<uint32_t, IsaDebugData> isaDebugDataMap;
 
   protected:
-    int waitOnUserFencesImpl(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
+    int waitOnUserFencesImpl(UserFenceWaitOperation operation, const OsContextLinux &osContext, uint64_t address, uint64_t value, ValueWidth readWidth, ValueWidth waitWidth, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
                              uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait);
 
     int getQueueSliceCount(GemContextParamSseu *sseu);

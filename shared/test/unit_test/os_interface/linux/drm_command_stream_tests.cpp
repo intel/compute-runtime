@@ -11,7 +11,9 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -1289,6 +1291,60 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
         }
     }
 }
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
+                   givenOperationAwareWaitUserFenceWhenDrmCsrWaitsThenValueWidthAndGpuFaultHandlingAreForwarded) {
+    debugManager.flags.DisableScratchPages.set(true);
+    debugManager.flags.GpuFaultCheckThreshold.set(10);
+    mock->configureScratchPagePolicy();
+    mock->configureGpuFaultCheckThreshold();
+    mock->ioctlHelper = std::make_unique<IoctlHelperUpstream>(*mock);
+
+    IoctlHelper &baseIoctlHelper = *mock->ioctlHelper;
+    EXPECT_EQ(0, baseIoctlHelper.waitUserFence(UserFenceWaitOperation::greaterOrEqual, 1u, 0x1234u, 2u, static_cast<uint32_t>(Drm::ValueWidth::u64), -1, 0u, false, NEO::InterruptId::notUsed, nullptr));
+    EXPECT_EQ(-1, baseIoctlHelper.waitUserFence(UserFenceWaitOperation::notEqual, 1u, 0x1234u, 2u, static_cast<uint32_t>(Drm::ValueWidth::u64), -1, 0u, false, NEO::InterruptId::notUsed, nullptr));
+
+    auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
+    auto &drmCtxIds = const_cast<std::vector<uint32_t> &>(osContextLinux->getDrmContextIds());
+    if (drmCtxIds.empty()) {
+        drmCtxIds.push_back(5u);
+    } else {
+        drmCtxIds[0] = 5u;
+    }
+
+    uint64_t current64 = 1u;
+    EXPECT_TRUE(csr->waitUserFence(UserFenceWaitOperation::greaterOrEqual, 2u, castToUint64(&current64), UserFenceValueWidth::u64, -1, false, NEO::InterruptId::notUsed, nullptr, nullptr));
+    EXPECT_EQ(1u, mock->waitUserFenceCall.called);
+    EXPECT_EQ(Drm::ValueWidth::u64, mock->waitUserFenceCall.dataWidth);
+    EXPECT_EQ(castToUint64(&current64), mock->waitUserFenceCall.address);
+    EXPECT_EQ(2u, mock->waitUserFenceCall.value);
+
+    uint32_t completed32 = 7u;
+    debugManager.flags.PrintCompletionFenceUsage.set(1);
+    StreamCapture capture;
+    capture.captureStdout();
+    EXPECT_TRUE(csr->waitUserFence(UserFenceWaitOperation::notEqual, 3u, castToUint64(&completed32), UserFenceValueWidth::u32, -1, false, NEO::InterruptId::notUsed, nullptr, nullptr));
+    auto output = capture.getCapturedStdout();
+    EXPECT_NE(std::string::npos, output.find("Completion fence already completed."));
+    debugManager.flags.PrintCompletionFenceUsage.set(0);
+    EXPECT_EQ(1u, mock->waitUserFenceCall.called);
+
+    auto expectFailedWait = [&](int errnoValue, bool disableScratchPages, size_t expectedResetStatusCalls) {
+        debugManager.flags.DisableScratchPages.set(disableScratchPages);
+        mock->configureScratchPagePolicy();
+        mock->errnoValue = errnoValue;
+        mock->checkResetStatusCalled = 0u;
+        uint32_t pending32 = 5u;
+
+        EXPECT_FALSE(csr->waitUserFence(UserFenceWaitOperation::notEqual, pending32, castToUint64(&pending32), UserFenceValueWidth::u32, -1, false, NEO::InterruptId::notUsed, nullptr, nullptr));
+        EXPECT_EQ(expectedResetStatusCalls, mock->checkResetStatusCalled);
+    };
+
+    expectFailedWait(ETIME, true, 0u);
+    expectFailedWait(EIO, false, 0u);
+    expectFailedWait(EIO, true, 1u);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceFlagSetAndVmBindNotAvailableWhenDrmCsrWaitsForFlushStampThenExpectUseDrmGemWaitCall) {
     DebugManagerStateRestore restorer;

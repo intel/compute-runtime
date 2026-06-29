@@ -53,6 +53,7 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <thread>
 
 using namespace std::chrono_literals;
 
@@ -2050,6 +2051,7 @@ HWTEST_F(EventPoolCreateMultiDevice, GivenEnabledTimestampPoolAllocatorAndForced
 }
 
 using EventSynchronizeTest = Test<EventFixture<1, 0>>;
+using EventSynchronizeTimestampTest = Test<EventFixture<1, 1>>;
 using EventUsedPacketSignalSynchronizeTest = Test<EventUsedPacketSignalFixture<1, 0, 0, -1>>;
 
 HWTEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturned) {
@@ -2245,6 +2247,7 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAn
 
 TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhenDefaultsAreUsedThenKmdWaitStrategyAndDefaultTimingsAreSet) {
     EXPECT_EQ(3, NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get());
+    EXPECT_FALSE(NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get());
     EXPECT_EQ(5000, NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.get());
     EXPECT_EQ(750, NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.get());
     EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
@@ -2480,6 +2483,305 @@ HWTEST_F(EventSynchronizeTest, GivenBatteryOnlyEventHostSynchronizeWaitStrategyA
 
     event->hostSynchronize(10);
     EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingRegularEventThenUserFenceWaitsOnEventPacketWithNotEqual) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    csr.waitUserFenceParams.forceRetStatusEnabled = true;
+    csr.waitUserFenceParams.forceRetStatusValue = true;
+
+    auto eventAddress = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
+    *eventAddress = Event::STATE_CLEARED;
+    csr.waitUserFenceParams.onWait = [&]() { *eventAddress = Event::STATE_SIGNALED; };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, csr.waitUserFenceParams.callCount);
+    EXPECT_EQ(1u, csr.waitUserFenceParams.callCountWithOperation);
+    EXPECT_EQ(NEO::UserFenceWaitOperation::notEqual, csr.waitUserFenceParams.latestWaitOperation);
+    EXPECT_EQ(NEO::UserFenceValueWidth::u32, csr.waitUserFenceParams.latestWaitValueWidth);
+    EXPECT_EQ(castToUint64(eventAddress), csr.waitUserFenceParams.latestWaitedAddress);
+    EXPECT_EQ(static_cast<uint64_t>(Event::STATE_CLEARED), csr.waitUserFenceParams.latestWaitedValue);
+    EXPECT_EQ(-1, csr.waitUserFenceParams.latestWaitedTimeout);
+    EXPECT_EQ(event->getAllocation(device), csr.waitUserFenceParams.latestAllocForInterruptWait);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenLinuxUserFenceKmdWaitIsDisabledThenUserFenceWaitIsNotUsed) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+
+    auto eventAddress = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
+    *eventAddress = Event::STATE_CLEARED;
+
+    std::thread signalEvent([&]() {
+        std::this_thread::sleep_for(1ms);
+        *eventAddress = Event::STATE_SIGNALED;
+    });
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    signalEvent.join();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, csr.waitUserFenceParams.callCount);
+    EXPECT_EQ(0u, csr.waitUserFenceParams.callCountWithOperation);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyAndSignalAllPacketsWhenRemainingPacketWaitReturnsNotReadyThenHostSynchronizeFallsBackToPolling) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    std::vector<uint64_t> packetStorage;
+    auto maxPackets = event->getMaxPacketsCount();
+    if (maxPackets <= 1u) {
+        maxPackets = 2u;
+        event->maxPacketCount = maxPackets;
+        packetStorage.resize(alignUp(maxPackets * event->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
+        event->hostAddressFromPool = packetStorage.data();
+    }
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    csr.waitUserFenceParams.forceRetStatusEnabled = true;
+    csr.waitUserFenceParams.forceRetStatusValue = false;
+
+    event->signalAllEventPackets = true;
+    for (uint32_t packetId = 0; packetId < maxPackets; packetId++) {
+        auto packetAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), packetId * event->getSinglePacketSize() + event->getCompletionFieldOffset()));
+        *packetAddress = Event::STATE_CLEARED;
+    }
+
+    auto firstPacketAddress = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
+    *firstPacketAddress = Event::STATE_SIGNALED;
+    csr.waitUserFenceParams.onWait = [&]() {
+        for (uint32_t packetId = 0; packetId < maxPackets; packetId++) {
+            auto packetAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), packetId * event->getSinglePacketSize() + event->getCompletionFieldOffset()));
+            *packetAddress = Event::STATE_SIGNALED;
+        }
+    };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, csr.waitUserFenceParams.callCountWithOperation);
+    EXPECT_EQ(NEO::UserFenceWaitOperation::notEqual, csr.waitUserFenceParams.latestWaitOperation);
+    EXPECT_NE(castToUint64(firstPacketAddress), csr.waitUserFenceParams.latestWaitedAddress);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenUserFenceWaitReturnsNotReadyThenHostSynchronizeFallsBackToPolling) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    csr.waitUserFenceParams.forceRetStatusEnabled = true;
+    csr.waitUserFenceParams.forceRetStatusValue = false;
+
+    auto eventAddress = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
+    *eventAddress = Event::STATE_CLEARED;
+    csr.waitUserFenceParams.onWait = [&]() { *eventAddress = Event::STATE_SIGNALED; };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, csr.waitUserFenceParams.callCountWithOperation);
+    EXPECT_EQ(NEO::UserFenceWaitOperation::notEqual, csr.waitUserFenceParams.latestWaitOperation);
+}
+
+HWTEST_F(EventSynchronizeTimestampTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingHeapfullProfilingEventThenUserFenceWaitsOnTimestampNode) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    csr.waitUserFenceParams.forceRetStatusEnabled = true;
+    csr.waitUserFenceParams.forceRetStatusValue = true;
+
+    using TimestampPackets = NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>;
+    MockTagAllocator<TimestampPackets> timestampAllocator(0, neoDevice->getMemoryManager());
+    auto timestampNode = timestampAllocator.getTag();
+    timestampNode->initialize();
+
+    event->resetInOrderTimestampNode(timestampNode, 1);
+    event->setHeapfullCbEventWithProfiling(true);
+
+    uint64_t counterStorage = 1;
+    NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->getInOrderExecEventHelper().assignData(1u, 0u, 1u, 1u, &counterAllocation, &counterAllocation, counterAllocation.getGpuAddress(), counterAllocation.getGpuAddress(), &counterStorage, 0u, 0u, false, false);
+
+    auto timestampCompletionAddress = static_cast<uint32_t *>(ptrOffset(timestampNode->getCpuBase(), event->getCompletionFieldOffset()));
+    *timestampCompletionAddress = Event::STATE_CLEARED;
+    csr.waitUserFenceParams.onWait = [&]() { *timestampCompletionAddress = Event::STATE_SIGNALED; };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, csr.waitUserFenceParams.callCountWithOperation);
+    EXPECT_EQ(NEO::UserFenceWaitOperation::notEqual, csr.waitUserFenceParams.latestWaitOperation);
+    EXPECT_EQ(NEO::UserFenceValueWidth::u32, csr.waitUserFenceParams.latestWaitValueWidth);
+    EXPECT_EQ(castToUint64(timestampCompletionAddress), csr.waitUserFenceParams.latestWaitedAddress);
+    EXPECT_EQ(timestampNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()), csr.waitUserFenceParams.latestAllocForInterruptWait);
+}
+
+HWTEST_F(EventSynchronizeTimestampTest, GivenDrmAndKmdWaitStrategyWhenTimestampNodeUserFenceWaitReturnsNotReadyThenHostSynchronizeFallsBackToPolling) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    csr.waitUserFenceParams.forceRetStatusEnabled = true;
+    csr.waitUserFenceParams.forceRetStatusValue = false;
+
+    using TimestampPackets = NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>;
+    MockTagAllocator<TimestampPackets> timestampAllocator(0, neoDevice->getMemoryManager());
+    auto timestampNode = timestampAllocator.getTag();
+    timestampNode->initialize();
+
+    event->resetInOrderTimestampNode(timestampNode, 1);
+    event->setHeapfullCbEventWithProfiling(true);
+
+    uint64_t counterStorage = 1;
+    NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->getInOrderExecEventHelper().assignData(1u, 0u, 1u, 1u, &counterAllocation, &counterAllocation, counterAllocation.getGpuAddress(), counterAllocation.getGpuAddress(), &counterStorage, 0u, 0u, false, false);
+
+    auto timestampCompletionAddress = static_cast<uint32_t *>(ptrOffset(timestampNode->getCpuBase(), event->getCompletionFieldOffset()));
+    *timestampCompletionAddress = Event::STATE_CLEARED;
+    csr.waitUserFenceParams.onWait = [&]() { *timestampCompletionAddress = Event::STATE_SIGNALED; };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, csr.waitUserFenceParams.callCountWithOperation);
+    EXPECT_EQ(NEO::UserFenceWaitOperation::notEqual, csr.waitUserFenceParams.latestWaitOperation);
+    EXPECT_EQ(castToUint64(timestampCompletionAddress), csr.waitUserFenceParams.latestWaitedAddress);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingCounterBasedEventThenExistingUserFenceWaitIsUsed) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    csr.waitUserFenceParams.forceRetStatusEnabled = true;
+    csr.waitUserFenceParams.forceRetStatusValue = true;
+
+    uint64_t counterStorage = 0;
+    NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->getInOrderExecEventHelper().assignData(1u, 0u, 1u, 1u, &counterAllocation, &counterAllocation, counterAllocation.getGpuAddress(), counterAllocation.getGpuAddress(), &counterStorage, 0u, 0u, false, false);
+    csr.waitUserFenceParams.onWait = [&]() { counterStorage = 1; };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, csr.waitUserFenceParams.callCount);
+    EXPECT_EQ(0u, csr.waitUserFenceParams.callCountWithOperation);
+    EXPECT_EQ(castToUint64(&counterStorage), csr.waitUserFenceParams.latestWaitedAddress);
+    EXPECT_EQ(1u, csr.waitUserFenceParams.latestWaitedValue);
+    EXPECT_EQ(-1, csr.waitUserFenceParams.latestWaitedTimeout);
+    EXPECT_EQ(&counterAllocation, csr.waitUserFenceParams.latestAllocForInterruptWait);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenFenceWaitIsActiveThenAdditionalUserFenceWaitIsNotUsed) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    csr.waitUserFenceParams.forceRetStatusEnabled = true;
+    csr.waitUserFenceParams.forceRetStatusValue = true;
+
+    uint64_t counterStorage = 0;
+    NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->enableKmdWaitMode();
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->getInOrderExecEventHelper().assignData(1u, 0u, 1u, 1u, &counterAllocation, &counterAllocation, counterAllocation.getGpuAddress(), counterAllocation.getGpuAddress(), &counterStorage, 0u, 0u, false, false);
+    csr.waitUserFenceParams.onWait = [&]() { counterStorage = 1; };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, csr.waitUserFenceParams.callCount);
+    EXPECT_EQ(0u, csr.waitUserFenceParams.callCountWithOperation);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenPacketEventUsesMultiplePartitionsThenUserFenceWaitIsNotUsed) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    csr.setActivePartitions(2);
+
+    auto eventAddress = static_cast<TagAddressType *>(event->getCompletionFieldHostAddress());
+    *eventAddress = Event::STATE_CLEARED;
+
+    std::thread signalEvent([&]() {
+        std::this_thread::sleep_for(1ms);
+        *eventAddress = Event::STATE_SIGNALED;
+    });
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    signalEvent.join();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, csr.waitUserFenceParams.callCount);
+    EXPECT_EQ(0u, csr.waitUserFenceParams.callCountWithOperation);
 }
 
 HWTEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyAndWddmOnLinuxWhenHostSynchronizeIsCalledThenAcLineStatusIsNotQueried) {
@@ -5288,6 +5590,8 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
     using BaseClass::gpuEndTimestamp;
     using BaseClass::gpuStartTimestamp;
     using BaseClass::hostAddressFromPool;
+    using BaseClass::maxPacketCount;
+    using BaseClass::signalAllEventPackets;
 
     MockEventCompletion(MultiGraphicsAllocation *alloc, uint32_t eventSize, uint32_t maxKernelCount, uint32_t maxPacketsCount, int index, L0::Device *device) : BaseClass::EventImp(index, device, false) {
         auto neoDevice = device->getNEODevice();
@@ -5612,6 +5916,54 @@ HWTEST_F(EventTests, givenAubCsrAnd64BitTagWhenClearingTimestampTagDataThenUploa
     event->clearTimestampTagData(partitionCount, &timestampNode);
 
     EXPECT_EQ(partitionCount, ultCsr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(EventTests, Given64BitEventAndDrmKmdWaitStrategyWhenSignalAllPacketsUsesRemainingPacketThenHostSynchronizeFallsBackToPolling) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    csr.waitUserFenceParams.forceRetStatusEnabled = true;
+
+    auto prepareEvent = [&]() {
+        auto testedEvent = std::make_unique<MockEventCompletion<uint64_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+        testedEvent->maxPacketCount = 2u;
+        return testedEvent;
+    };
+
+    auto eventWithoutSignalAll = prepareEvent();
+    std::vector<uint64_t> regularEventStorage(alignUp(eventWithoutSignalAll->getMaxPacketsCount() * eventWithoutSignalAll->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
+    eventWithoutSignalAll->hostAddressFromPool = regularEventStorage.data();
+    auto regularPacketAddress = static_cast<uint64_t *>(eventWithoutSignalAll->getCompletionFieldHostAddress());
+    *regularPacketAddress = Event::STATE_CLEARED;
+    csr.waitUserFenceParams.forceRetStatusValue = true;
+    csr.waitUserFenceParams.onWait = [&]() { *regularPacketAddress = Event::STATE_SIGNALED; };
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventWithoutSignalAll->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(NEO::UserFenceValueWidth::u64, csr.waitUserFenceParams.latestWaitValueWidth);
+
+    auto signalAllEvent = prepareEvent();
+    std::vector<uint64_t> signalAllStorage(alignUp(signalAllEvent->getMaxPacketsCount() * signalAllEvent->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
+    signalAllEvent->hostAddressFromPool = signalAllStorage.data();
+    signalAllEvent->signalAllEventPackets = true;
+    auto firstPacketAddress = static_cast<uint64_t *>(signalAllEvent->getCompletionFieldHostAddress());
+    auto remainingPacketAddress = static_cast<uint64_t *>(ptrOffset(signalAllEvent->getHostAddress(), signalAllEvent->getSinglePacketSize() + signalAllEvent->getCompletionFieldOffset()));
+    *firstPacketAddress = Event::STATE_SIGNALED;
+    *remainingPacketAddress = Event::STATE_CLEARED;
+    csr.waitUserFenceParams.callCountWithOperation = 0;
+    csr.waitUserFenceParams.forceRetStatusValue = false;
+    csr.waitUserFenceParams.onWait = [&]() { *remainingPacketAddress = Event::STATE_SIGNALED; };
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, signalAllEvent->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(1u, csr.waitUserFenceParams.callCountWithOperation);
+    EXPECT_EQ(NEO::UserFenceValueWidth::u64, csr.waitUserFenceParams.latestWaitValueWidth);
+    EXPECT_EQ(castToUint64(remainingPacketAddress), csr.waitUserFenceParams.latestWaitedAddress);
 }
 
 HWTEST_F(EventTests, givenSimulationCsrWhenClearingTimestampTagDataThenUploadEachPartitionChunk) {

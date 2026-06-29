@@ -23,6 +23,7 @@
 #include "shared/source/host_function/host_function.h"
 #include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/os_interface/defs.h"
+#include "shared/source/os_interface/user_fence.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include <atomic>
@@ -574,6 +575,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     virtual bool waitUserFenceSupported(SyncFence *syncFence) { return false; }
     virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *userFence) { return false; }
+    virtual bool waitUserFence(UserFenceWaitOperation operation, uint64_t waitValue, uint64_t hostAddress, UserFenceValueWidth dataWidth, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *userFence) { return false; }
     virtual void allocateUserFence(std::unique_ptr<SyncFence> &mf) {}
     void setPrimaryCsr(CommandStreamReceiver *primaryCsr) {
         this->primaryCsr = primaryCsr;

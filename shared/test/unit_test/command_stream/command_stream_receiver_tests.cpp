@@ -214,6 +214,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCheckingGpuHangAfterCheckPeriodE
 
 TEST_F(CommandStreamReceiverTest, givenBaseCsrWhenCallingWaitUserFenceThenReturnFalse) {
     EXPECT_FALSE(commandStreamReceiver->waitUserFence(1, commandStreamReceiver->getCompletionAddress(), -1, false, InterruptId::notUsed, nullptr, nullptr));
+    EXPECT_FALSE(commandStreamReceiver->waitUserFence(UserFenceWaitOperation::notEqual, 0u, commandStreamReceiver->getCompletionAddress(), UserFenceValueWidth::u32, -1, false, InterruptId::notUsed, nullptr, nullptr));
     EXPECT_FALSE(commandStreamReceiver->waitUserFenceSupported(nullptr));
 }
 

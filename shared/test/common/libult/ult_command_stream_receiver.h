@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include <functional>
 #include <map>
 #include <optional>
 
@@ -31,11 +32,15 @@ struct WaitUserFenceParams {
     uint64_t latestWaitedValue = 0;
     int64_t latestWaitedTimeout = 0;
     uint32_t callCount = 0;
+    uint32_t callCountWithOperation = 0;
     uint32_t externalInterruptId = NEO::InterruptId::notUsed;
     GraphicsAllocation *latestAllocForInterruptWait = nullptr;
+    UserFenceWaitOperation latestWaitOperation = UserFenceWaitOperation::greaterOrEqual;
+    UserFenceValueWidth latestWaitValueWidth = UserFenceValueWidth::u64;
     bool userInterrupt = false;
     bool forceRetStatusEnabled = false;
     bool forceRetStatusValue = true;
+    std::function<void()> onWait;
 };
 
 struct WriteMemoryParams {
@@ -593,15 +598,39 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         waitUserFenceParams.latestWaitedAddress = hostAddress;
         waitUserFenceParams.latestWaitedValue = waitValue;
         waitUserFenceParams.latestWaitedTimeout = timeout;
-        waitUserFenceParams.userInterrupt = timeout;
+        waitUserFenceParams.userInterrupt = userInterrupt;
         waitUserFenceParams.externalInterruptId = externalInterruptId;
         waitUserFenceParams.latestAllocForInterruptWait = allocForInterruptWait;
+        if (waitUserFenceParams.onWait) {
+            waitUserFenceParams.onWait();
+        }
 
         if (waitUserFenceParams.forceRetStatusEnabled) {
             return waitUserFenceParams.forceRetStatusValue;
         }
 
         return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId, allocForInterruptWait, nullptr);
+    }
+
+    bool waitUserFence(UserFenceWaitOperation operation, uint64_t waitValue, uint64_t hostAddress, UserFenceValueWidth dataWidth, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *fence) override {
+        waitUserFenceParams.callCountWithOperation++;
+        waitUserFenceParams.latestWaitOperation = operation;
+        waitUserFenceParams.latestWaitValueWidth = dataWidth;
+        waitUserFenceParams.latestWaitedAddress = hostAddress;
+        waitUserFenceParams.latestWaitedValue = waitValue;
+        waitUserFenceParams.latestWaitedTimeout = timeout;
+        waitUserFenceParams.userInterrupt = userInterrupt;
+        waitUserFenceParams.externalInterruptId = externalInterruptId;
+        waitUserFenceParams.latestAllocForInterruptWait = allocForInterruptWait;
+        if (waitUserFenceParams.onWait) {
+            waitUserFenceParams.onWait();
+        }
+
+        if (waitUserFenceParams.forceRetStatusEnabled) {
+            return waitUserFenceParams.forceRetStatusValue;
+        }
+
+        return BaseClass::waitUserFence(operation, waitValue, hostAddress, dataWidth, timeout, userInterrupt, externalInterruptId, allocForInterruptWait, nullptr);
     }
 
     bool waitUserFenceSupported(SyncFence *syncFence) override { return isUserFenceWaitSupported; }

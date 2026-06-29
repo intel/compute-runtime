@@ -2219,6 +2219,52 @@ TEST_F(IoctlHelperXeTest, givenVmBindWaitUserFenceTimeoutWhenCallingVmBindThenWa
     }
 }
 
+TEST_F(IoctlHelperXeTest, givenNotEqualUserFenceWaitWhenCallingDrmWaitOnUserFencesThenXeWaitUserFenceUsesNeqOperationAndU32Mask) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    MockOsContextLinux osContext(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.drmContextIds.push_back(0x123u);
+
+    EXPECT_EQ(0, xeIoctlHelper->waitUserFence(UserFenceWaitOperation::notEqual, osContext.getDrmContextIds()[0], 0u, 1u, static_cast<uint32_t>(Drm::ValueWidth::u32), -1, 0u, false, NEO::InterruptId::notUsed, nullptr));
+    EXPECT_TRUE(drm->waitUserFenceInputs.empty());
+
+    uint64_t fenceValue64 = 1u;
+    EXPECT_EQ(0, xeIoctlHelper->waitUserFence(UserFenceWaitOperation::greaterOrEqual, osContext.getDrmContextIds()[0], castToUint64(&fenceValue64), 2u, static_cast<uint32_t>(Drm::ValueWidth::u64), 7, 0u, false, NEO::InterruptId::notUsed, nullptr));
+    ASSERT_EQ(1u, drm->waitUserFenceInputs.size());
+    EXPECT_EQ(castToUint64(&fenceValue64), drm->waitUserFenceInputs[0].addr);
+    EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_GTE), drm->waitUserFenceInputs[0].op);
+    EXPECT_EQ(2u, drm->waitUserFenceInputs[0].value);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), drm->waitUserFenceInputs[0].mask);
+    EXPECT_EQ(7, drm->waitUserFenceInputs[0].timeout);
+    EXPECT_EQ(osContext.getDrmContextIds()[0], drm->waitUserFenceInputs[0].exec_queue_id);
+
+    uint32_t fenceValue = std::numeric_limits<uint32_t>::max();
+    drm->waitUserFenceInputs.clear();
+
+    auto ret = drm->waitOnUserFences(UserFenceWaitOperation::notEqual,
+                                     osContext,
+                                     castToUint64(&fenceValue),
+                                     fenceValue,
+                                     Drm::ValueWidth::u32,
+                                     1u,
+                                     -1,
+                                     0u,
+                                     false,
+                                     NEO::InterruptId::notUsed,
+                                     nullptr);
+
+    EXPECT_EQ(0, ret);
+    ASSERT_EQ(1u, drm->waitUserFenceInputs.size());
+    const auto &waitUserFence = drm->waitUserFenceInputs[0];
+    EXPECT_EQ(castToUint64(&fenceValue), waitUserFence.addr);
+    EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_NEQ), waitUserFence.op);
+    EXPECT_EQ(static_cast<uint64_t>(fenceValue), waitUserFence.value);
+    EXPECT_EQ(static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()), waitUserFence.mask);
+    EXPECT_EQ(-1, waitUserFence.timeout);
+    EXPECT_EQ(osContext.getDrmContextIds()[0], waitUserFence.exec_queue_id);
+}
+
 TEST_F(IoctlHelperXeTest, whenGemVmBindFailsThenErrorIsPropagated) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
