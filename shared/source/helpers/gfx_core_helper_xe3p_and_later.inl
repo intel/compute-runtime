@@ -319,6 +319,13 @@ void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family
     pipeControl.setAmfsFlushEnable(args.amfsFlushEnable);
     pipeControl.setDisableGoSyncWithWalkerPostSync(!args.isWalkerWithProfilingEnqueued);
     setPipeControlRequiredFields(pipeControl, args);
+    bool drainAllQueuesMode = false;
+    auto isCacheInvalidated = args.instructionCacheInvalidateEnable || args.stateCacheInvalidationEnable ||
+                              args.textureCacheInvalidationEnable || args.constantCacheInvalidationEnable ||
+                              args.tlbInvalidation;
+    if (isCacheInvalidated) {
+        pipeControl.setQueueDrainMode(drainAllQueuesMode);
+    }
 
     auto flushCachesMask = debugManager.flags.FlushAllCaches.get();
     if (flushCachesMask) {
@@ -341,6 +348,26 @@ void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family
         pipeControl.setQueueDrainMode(!!debugManager.flags.PcQueueDrainMode.get());
     }
     EncodeCommandLevelMocs<Family>::apply(pipeControl);
+}
+
+template <>
+void MemorySynchronizationCommands<Family>::addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
+
+    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    cmd.setRenderTargetCacheFlushEnable(true);
+    cmd.setStateCacheInvalidationEnable(true);
+    cmd.setTextureCacheInvalidationEnable(true);
+
+    bool drainAllQueuesMode = false;
+    cmd.setQueueDrainMode(drainAllQueuesMode);
+    if (debugManager.flags.PcQueueDrainMode.get() != -1) {
+        cmd.setQueueDrainMode(!!debugManager.flags.PcQueueDrainMode.get());
+    }
+
+    auto commandsBuffer = commandStream.getSpace(sizeof(PIPE_CONTROL));
+    *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
 }
 
 template <>
