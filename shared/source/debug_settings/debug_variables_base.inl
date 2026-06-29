@@ -133,6 +133,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, DoCpuCopyOnWriteBuffer, -1, "Override CPU copy b
 DECLARE_DEBUG_VARIABLE(int32_t, PauseOnEnqueue, -1, "-1: default, -2: always, x: pause on enqueue number x and ask for user confirmation before and after execution, counted from 0")
 DECLARE_DEBUG_VARIABLE(int32_t, PauseOnBlitCopy, -1, "-1: default, -2: always, x: pause on blit enqueue number x and ask for user confirmation before and after execution, counted from 0. Note that single blit enqueue may have multiple copy instructions")
 DECLARE_DEBUG_VARIABLE(int32_t, PauseOnGpuMode, -1, "-1: default (before and after), 0: before only, 1: after only")
+DECLARE_DEBUG_VARIABLE(int32_t, PauseOnEnqueueRegisterOffset, 0x4f080, "register offset for MI_LOAD_REGISTER_IMM programmed before pause-on-enqueue semaphore")
+DECLARE_DEBUG_VARIABLE(int32_t, PauseOnEnqueueRegisterData, 0xaaaa, "register data for MI_LOAD_REGISTER_IMM programmed before pause-on-enqueue semaphore")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMultiStorageResources, -1, "-1: default, 0: Disable, 1: Enable")
 DECLARE_DEBUG_VARIABLE(int32_t, MultiStoragePolicy, -1, "-1: default, 0: subdevice count based, 1: chunk size based, 2: mapping based")
 DECLARE_DEBUG_VARIABLE(int32_t, MultiStorageGranularity, -1, "Forces granularity for chunk size and mapping colouring policies: -1: default 64 kB, >0 - enabled chunk size based colouring with granularity in kb (should be multiple of 64kb page size, because of alignment restrictions)")

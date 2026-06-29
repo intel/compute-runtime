@@ -296,6 +296,8 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
                 args);
         }
 
+        PauseOnGpuProperties::programPauseRegisterWrite<GfxFamily>(*commandStream, commandQueue.isBcs());
+
         {
             using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 

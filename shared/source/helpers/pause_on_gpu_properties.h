@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,12 @@
 #include <cstdint>
 
 namespace NEO {
+class LinearStream;
+template <typename GfxFamily>
+struct LriHelper;
+template <typename GfxFamily>
+struct EncodeSetMMIO;
+
 namespace PauseOnGpuProperties {
 enum PauseMode : int32_t {
     BeforeAndAfterWorkload = -1,
@@ -55,6 +61,14 @@ inline bool gpuScratchRegWriteAllowed(int32_t debugFlagValue, TaskCountType task
     }
 
     return (debugFlagValue == static_cast<int64_t>(taskCount));
+}
+
+template <typename GfxFamily>
+inline void programPauseRegisterWrite(LinearStream &commandStream, bool isBcs) {
+    const auto registerOffset = static_cast<uint32_t>(debugManager.flags.PauseOnEnqueueRegisterOffset.get());
+    const auto registerData = static_cast<uint32_t>(debugManager.flags.PauseOnEnqueueRegisterData.get());
+    LriHelper<GfxFamily>::program(&commandStream, registerOffset, registerData,
+                                  EncodeSetMMIO<GfxFamily>::isRemapApplicable(registerOffset), isBcs);
 }
 } // namespace PauseOnGpuProperties
 } // namespace NEO

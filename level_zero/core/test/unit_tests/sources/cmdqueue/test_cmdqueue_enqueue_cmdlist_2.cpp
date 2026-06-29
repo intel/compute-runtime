@@ -395,6 +395,51 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
         }
     }
 
+    template <typename FamilyType>
+    void findPauseLoadRegImms(GenCmdList &cmdList, uint32_t expectedOffset, uint32_t expectedData) {
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+        for (auto it = cmdList.begin(); it != cmdList.end(); ++it) {
+            if (nullptr == genCmdCast<PIPE_CONTROL *>(*it)) {
+                continue;
+            }
+
+            DebugPauseState semaphoreState;
+            if (verifyPipeControl<FamilyType>(it, debugPauseStateAddress, DebugPauseState::waitingForUserStartConfirmation)) {
+                semaphoreState = DebugPauseState::hasUserStartConfirmation;
+            } else if (verifyPipeControl<FamilyType>(it, debugPauseStateAddress, DebugPauseState::waitingForUserEndConfirmation)) {
+                semaphoreState = DebugPauseState::hasUserEndConfirmation;
+            } else {
+                continue;
+            }
+
+            auto next = it;
+            ++next;
+            auto loadRegImm = find<MI_LOAD_REGISTER_IMM *>(next, cmdList.end());
+            auto semaphore = find<MI_SEMAPHORE_WAIT *>(next, cmdList.end());
+
+            if (loadRegImm == cmdList.end() || semaphore == cmdList.end()) {
+                continue;
+            }
+            if (std::distance(cmdList.begin(), loadRegImm) > std::distance(cmdList.begin(), semaphore)) {
+                continue;
+            }
+
+            auto loadRegImmCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*loadRegImm);
+            if ((expectedOffset == loadRegImmCmd->getRegisterOffset()) &&
+                (expectedData == loadRegImmCmd->getDataDword()) &&
+                verifySemaphore<FamilyType>(semaphore, debugPauseStateAddress, semaphoreState)) {
+                if (semaphoreState == DebugPauseState::hasUserStartConfirmation) {
+                    pauseLoadRegImmBeforeWalkerFound++;
+                } else {
+                    pauseLoadRegImmAfterWalkerFound++;
+                }
+            }
+        }
+    }
+
     void enqueueKernel() {
         auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -421,6 +466,8 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
     uint32_t semaphoreAfterWalkerFound = 0;
     uint32_t pipeControlBeforeWalkerFound = 0;
     uint32_t pipeControlAfterWalkerFound = 0;
+    uint32_t pauseLoadRegImmBeforeWalkerFound = 0;
+    uint32_t pauseLoadRegImmAfterWalkerFound = 0;
 };
 
 struct PauseOnGpuTests : public PauseOnGpuFixture {
@@ -471,6 +518,46 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInser
     EXPECT_EQ(1u, semaphoreAfterWalkerFound);
     EXPECT_EQ(1u, pipeControlBeforeWalkerFound);
     EXPECT_EQ(1u, pipeControlAfterWalkerFound);
+}
+
+HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInsertLoadRegisterImmWithDefaultValuesBeforePauseSemaphore) {
+    debugManager.flags.PauseOnEnqueue.set(-2);
+
+    enqueueKernel();
+
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    findPauseLoadRegImms<FamilyType>(cmdList,
+                                     static_cast<uint32_t>(debugManager.flags.PauseOnEnqueueRegisterOffset.get()),
+                                     static_cast<uint32_t>(debugManager.flags.PauseOnEnqueueRegisterData.get()));
+
+    EXPECT_EQ(0x4f080u, static_cast<uint32_t>(debugManager.flags.PauseOnEnqueueRegisterOffset.get()));
+    EXPECT_EQ(0xaaaau, static_cast<uint32_t>(debugManager.flags.PauseOnEnqueueRegisterData.get()));
+    EXPECT_EQ(1u, pauseLoadRegImmBeforeWalkerFound);
+    EXPECT_EQ(1u, pauseLoadRegImmAfterWalkerFound);
+}
+
+HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueRegisterOverridesWhenDispatchWalkersThenInsertLoadRegisterImmWithOverriddenValuesBeforePauseSemaphore) {
+    debugManager.flags.PauseOnEnqueue.set(-2);
+    debugManager.flags.PauseOnEnqueueRegisterOffset.set(0x1234);
+    debugManager.flags.PauseOnEnqueueRegisterData.set(0x5678);
+
+    enqueueKernel();
+
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    findPauseLoadRegImms<FamilyType>(cmdList, 0x1234u, 0x5678u);
+
+    EXPECT_EQ(1u, pauseLoadRegImmBeforeWalkerFound);
+    EXPECT_EQ(1u, pauseLoadRegImmAfterWalkerFound);
 }
 
 HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetToAlwaysWhenDispatchWalkersThenInsertPauseCommandsAroundEachEnqueue) {
