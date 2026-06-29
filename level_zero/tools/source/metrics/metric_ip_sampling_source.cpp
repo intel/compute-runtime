@@ -55,18 +55,17 @@ void IpSamplingMetricSourceImp::enable() {
     const auto &hardwareInfo = device.getNEODevice()->getHardwareInfo();
     const auto &productHelper = device.getNEODevice()->getProductHelper();
 
-    isEnabled = false;
     if (productHelper.isIpSamplingSupported(hardwareInfo)) {
         if (metricIPSamplingOsInterface->isOsSupportAvailable()) {
-            // Confirm whether sample collection is possible
-            uint32_t referenceValues = 100;
-            if (ZE_RESULT_SUCCESS == getMetricOsInterface()->startMeasurement(referenceValues, referenceValues)) {
-                getMetricOsInterface()->stopMeasurement();
-                isEnabled = true;
-            } else {
-                METRICS_LOG_ERR("%s", "Cannot start measurement for IP Sampling");
-            }
+            isEnabled = true;
+
+        } else {
+            METRICS_LOG_ERR("%s", "IP Sampling OS support is not available");
+            isEnabled = false;
         }
+    } else {
+        METRICS_LOG_INFO("%s", "IP Sampling is not supported on this hardware");
+        isEnabled = false;
     }
 }
 
@@ -88,6 +87,9 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
             uint32_t count = 1;
             zet_metric_group_handle_t hMetricGroup = {};
             const auto result = source.metricGroupGet(&count, &hMetricGroup);
+            if (result == ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE) {
+                return result;
+            }
 
             // Getting MetricGroup from sub-device cannot fail, since RootDevice is successful
             UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
@@ -116,6 +118,18 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
         metricCount = static_cast<uint32_t>(metrics.size());
         cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(*this, subDeviceMetricGroup, metrics);
         return ZE_RESULT_SUCCESS;
+    }
+    // Confirm whether sample collection is possible
+    uint32_t notifyEveryNReports = 100;
+    uint32_t samplingPeriodNs = 100;
+    if (ZE_RESULT_SUCCESS == getMetricOsInterface()->startMeasurement(notifyEveryNReports, samplingPeriodNs)) {
+        if (ZE_RESULT_SUCCESS != getMetricOsInterface()->stopMeasurement()) {
+            METRICS_LOG_ERR("%s", "Failed to stop measurement for IP Sampling");
+            return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        }
+    } else {
+        METRICS_LOG_ERR("%s", "Cannot start measurement for IP Sampling");
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
     std::vector<IpSamplingMetricImp> metrics = {};

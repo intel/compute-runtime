@@ -164,8 +164,6 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenStopMeasurementFailsWhenStreamerClo
             subDeviceIndex = 2;
         }
 
-        osInterfaceVector[subDeviceIndex]->stopMeasurementReturn = ZE_RESULT_ERROR_UNKNOWN;
-
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
@@ -179,6 +177,8 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenStopMeasurementFailsWhenStreamerClo
         EXPECT_EQ(
             zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle),
             ZE_RESULT_SUCCESS);
+
+        osInterfaceVector[subDeviceIndex]->stopMeasurementReturn = ZE_RESULT_ERROR_UNKNOWN;
         EXPECT_EQ(zetMetricStreamerClose(streamerHandle), osInterfaceVector[subDeviceIndex]->stopMeasurementReturn);
     }
 }

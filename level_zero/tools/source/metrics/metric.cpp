@@ -217,6 +217,10 @@ ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_gro
         }
 
         result = metricSource->metricGroupGet(&requestCount, phMetricGroups);
+        if (result == ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE) {
+            result = ZE_RESULT_SUCCESS;
+            continue;
+        }
 
         if (result != ZE_RESULT_SUCCESS) {
             METRICS_LOG_ERR("Failed to get metrics from source:  %d", result);

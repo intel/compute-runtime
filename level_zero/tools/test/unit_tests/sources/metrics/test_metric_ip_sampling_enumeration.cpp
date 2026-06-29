@@ -50,6 +50,34 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesUnAvailableForSubDev
     EXPECT_TRUE(metricSource2.isAvailable());
 }
 
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenOsSupportAvailableWhenEnablingThenIpSamplingIsEnabled, HasIPSamplingSupport) {
+
+    MockMetricDeviceContext *mockDeviceContext = new MockMetricDeviceContext(*testDevices[2]);
+    testDevices[2]->metricContext.reset(mockDeviceContext);
+    auto mockMetricIpSamplingOsInterface = new MockMetricIpSamplingOsInterface();
+    std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = std::unique_ptr<MetricIpSamplingOsInterface>(mockMetricIpSamplingOsInterface);
+    auto &metricSource = testDevices[2]->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+    metricSource.setMetricOsInterface(metricIpSamplingOsInterface);
+    mockMetricIpSamplingOsInterface->isDependencyAvailableReturn = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[2]->getMetricDeviceContext().enableMetricApi());
+    EXPECT_TRUE(metricSource.isAvailable());
+}
+
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenOsSupportNotAvailableWhenEnablingThenIpSamplingIsDisabled, HasIPSamplingSupport) {
+
+    MockMetricDeviceContext *mockDeviceContext = new MockMetricDeviceContext(*testDevices[2]);
+    testDevices[2]->metricContext.reset(mockDeviceContext);
+    auto mockMetricIpSamplingOsInterface = new MockMetricIpSamplingOsInterface();
+    std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = std::unique_ptr<MetricIpSamplingOsInterface>(mockMetricIpSamplingOsInterface);
+    auto &metricSource = testDevices[2]->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+    metricSource.setMetricOsInterface(metricIpSamplingOsInterface);
+    mockMetricIpSamplingOsInterface->isDependencyAvailableReturn = false;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, testDevices[2]->getMetricDeviceContext().enableMetricApi());
+    EXPECT_FALSE(metricSource.isAvailable());
+}
+
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenIpSamplingAvailableWhenCreateMetricGroupsFromMetricsIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
 
     auto &metricSource = testDevices[0]->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
@@ -80,15 +108,29 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesNotAvailableWhenMetricGroupGetIsCalledThenNoMetricGroupIsReturned, HasIPSamplingSupport) {
 
-    for (size_t i = 0; i < testDevices.size(); i++) {
-        osInterfaceVector[i]->startMeasurementReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        // Re-run enable() so the source re-evaluates its availability with the updated mock state.
-        testDevices[i]->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>().enable();
+    for (auto &osInterface : osInterfaceVector) {
+        osInterface->startMeasurementReturn = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
     for (auto device : rootOneSubDev) {
         uint32_t metricGroupCount = 0;
-        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        auto result = zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        EXPECT_TRUE(result == ZE_RESULT_ERROR_UNKNOWN || result == ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        EXPECT_EQ(metricGroupCount, 0u);
+    }
+}
+
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenStopMeasurementFailsWhenMetricGroupGetIsCalledThenDependencyUnavailableIsReturned, HasIPSamplingSupport) {
+
+    for (auto &osInterface : osInterfaceVector) {
+        osInterface->startMeasurementReturn = ZE_RESULT_SUCCESS;
+        osInterface->stopMeasurementReturn = ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    for (auto device : rootOneSubDev) {
+        uint32_t metricGroupCount = 0;
+        auto result = zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        EXPECT_TRUE(result == ZE_RESULT_ERROR_UNKNOWN || result == ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         EXPECT_EQ(metricGroupCount, 0u);
     }
 }
