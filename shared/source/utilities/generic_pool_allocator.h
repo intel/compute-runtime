@@ -47,9 +47,6 @@ class GenericPool : public DeviceBuffersPool<GenericPool<Traits>> {
   public:
     GenericPool(Device *device, size_t poolSize);
 
-    GenericPool(const GenericPool &) = delete;
-    GenericPool &operator=(const GenericPool &) = delete;
-
     GenericPool(GenericPool &&pool) noexcept = default;
     GenericPool &operator=(GenericPool &&) = delete;
 
@@ -82,9 +79,6 @@ class GenericViewPool : public DeviceBuffersPool<GenericViewPool<Traits>> {
 
   public:
     GenericViewPool(Device *device, size_t poolSize);
-
-    GenericViewPool(const GenericViewPool &) = delete;
-    GenericViewPool &operator=(const GenericViewPool &) = delete;
 
     GenericViewPool(GenericViewPool &&pool) noexcept = default;
     GenericViewPool &operator=(GenericViewPool &&) = delete;

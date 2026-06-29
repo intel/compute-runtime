@@ -7,6 +7,7 @@
 
 #include "shared/source/utilities/pool_allocators.h"
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/generic_pool_allocator.inl"
 
 #include <type_traits>
@@ -16,6 +17,7 @@ namespace NEO {
 #define INSTANTIATE_POOL_ALLOCATOR(Traits)                                                                                                                    \
     static_assert(std::is_nothrow_move_constructible_v<GenericPool<Traits>>, "Pools live in std::vector and have a deleted copy ctor, so vector reallocation" \
                                                                              "requires a noexcept move ctor - otherwise it fails to compile.");               \
+    static_assert(NEO::NonCopyable<GenericPool<Traits>>);                                                                                                     \
     template class AbstractBuffersAllocator<GenericPool<Traits>, GraphicsAllocation>;                                                                         \
     template class GenericPoolAllocator<Traits>
 
@@ -28,6 +30,7 @@ INSTANTIATE_POOL_ALLOCATOR(ConstantSurfacePoolTraits);
 #define INSTANTIATE_VIEW_POOL_ALLOCATOR(Traits)                                                                                                                   \
     static_assert(std::is_nothrow_move_constructible_v<GenericViewPool<Traits>>, "Pools live in std::vector and have a deleted copy ctor, so vector reallocation" \
                                                                                  "requires a noexcept move ctor - otherwise it fails to compile.");               \
+    static_assert(NEO::NonCopyable<GenericViewPool<Traits>>);                                                                                                     \
     template class AbstractBuffersAllocator<GenericViewPool<Traits>, GraphicsAllocation>;                                                                         \
     template class GenericViewPoolAllocator<Traits>
 
