@@ -20,7 +20,7 @@ DriverDispatch globalDriverDispatch;
 
 DriverDispatch::DriverDispatch() {
     this->core.isValidFlag = true;
-    this->core.version = ZE_API_VERSION_1_15;
+    this->core.version = ZE_API_VERSION_1_16;
     this->core.RTASBuilderExp = &this->coreRTASBuilderExp;
     this->core.RTASBuilder = &this->coreRTASBuilder;
     this->core.RTASParallelOperationExp = &this->coreRTASParallelOperationExp;
@@ -158,6 +158,9 @@ DriverDispatch::DriverDispatch() {
     this->coreDevice.pfnGetVectorWidthPropertiesExt = L0::zeDeviceGetVectorWidthPropertiesExt;
     this->coreDevice.pfnSynchronize = L0::zeDeviceSynchronize;
     this->coreDevice.pfnGetAggregatedCopyOffloadIncrementValue = L0::zeDeviceGetAggregatedCopyOffloadIncrementValue;
+    this->coreDevice.pfnGetRuntimeRequirements = L0::zeDeviceGetRuntimeRequirements;
+    this->coreDevice.pfnGetRuntimeRequirementsKey = L0::zeDeviceGetRuntimeRequirementsKey;
+    this->coreDevice.pfnValidateRuntimeRequirements = L0::zeDeviceValidateRuntimeRequirements;
     this->coreDeviceExp.pfnGetFabricVertexExp = L0::zeDeviceGetFabricVertexExp;
     this->coreContext.pfnCreate = L0::zeContextCreate;
     this->coreContext.pfnDestroy = L0::zeContextDestroy;

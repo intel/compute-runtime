@@ -182,6 +182,9 @@ zeGetDeviceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetVectorWidthPropertiesExt, L0::globalDriverDispatch.coreDevice.pfnGetVectorWidthPropertiesExt, version, ZE_API_VERSION_1_13);
     fillDdiEntry(pDdiTable->pfnSynchronize, L0::globalDriverDispatch.coreDevice.pfnSynchronize, version, ZE_API_VERSION_1_14);
     fillDdiEntry(pDdiTable->pfnGetAggregatedCopyOffloadIncrementValue, L0::globalDriverDispatch.coreDevice.pfnGetAggregatedCopyOffloadIncrementValue, version, ZE_API_VERSION_1_15);
+    fillDdiEntry(pDdiTable->pfnGetRuntimeRequirements, L0::globalDriverDispatch.coreDevice.pfnGetRuntimeRequirements, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnGetRuntimeRequirementsKey, L0::globalDriverDispatch.coreDevice.pfnGetRuntimeRequirementsKey, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnValidateRuntimeRequirements, L0::globalDriverDispatch.coreDevice.pfnValidateRuntimeRequirements, version, ZE_API_VERSION_1_16);
     return result;
 }
 

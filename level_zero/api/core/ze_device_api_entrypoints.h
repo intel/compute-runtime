@@ -173,6 +173,27 @@ ze_result_t ZE_APICALL zeDeviceGetAggregatedCopyOffloadIncrementValue(
     return Event::counterBasedGetIncrementValue(hDevice, incrementValue);
 }
 
+ze_result_t ZE_APICALL zeDeviceGetRuntimeRequirements(
+    ze_device_handle_t hDevice,
+    const void *pObjDesc,
+    size_t *pSize,
+    char *pRequirements) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeDeviceGetRuntimeRequirementsKey(
+    ze_device_handle_t hDevice,
+    const char **pKey) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeDeviceValidateRuntimeRequirements(
+    ze_device_handle_t hDevice,
+    const char *pRequirements,
+    ze_validate_runtime_requirements_output_t *pOut) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -365,5 +386,26 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetAggregatedCopyOffloadIncrementVal
     ze_device_handle_t hDevice,
     uint32_t *incrementValue) {
     return L0::zeDeviceGetAggregatedCopyOffloadIncrementValue(hDevice, incrementValue);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetRuntimeRequirements(
+    ze_device_handle_t hDevice,
+    const void *pObjDesc,
+    size_t *pSize,
+    char *pRequirements) {
+    return L0::zeDeviceGetRuntimeRequirements(hDevice, pObjDesc, pSize, pRequirements);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetRuntimeRequirementsKey(
+    ze_device_handle_t hDevice,
+    const char **pKey) {
+    return L0::zeDeviceGetRuntimeRequirementsKey(hDevice, pKey);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceValidateRuntimeRequirements(
+    ze_device_handle_t hDevice,
+    const char *pRequirements,
+    ze_validate_runtime_requirements_output_t *pOut) {
+    return L0::zeDeviceValidateRuntimeRequirements(hDevice, pRequirements, pOut);
 }
 }
