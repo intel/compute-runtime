@@ -183,6 +183,12 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_pci_bus_info ";
     }
 
+    // LEO does not implement cl_intel_driver_diagnostics performance hints
+    const std::string driverDiagnosticsExtension = "cl_intel_driver_diagnostics ";
+    if (auto pos = deviceExtensions.find(driverDiagnosticsExtension); pos != std::string::npos) {
+        deviceExtensions.erase(pos, driverDiagnosticsExtension.length());
+    }
+
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
     deviceInfo.builtInKernels = "";
 
