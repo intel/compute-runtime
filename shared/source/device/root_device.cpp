@@ -116,7 +116,7 @@ bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceB
 
     rootCommandStreamReceiver->setDevice(this);
     rootCommandStreamReceiver->setupContext(*osContext);
-    rootCommandStreamReceiver->initializeResources(false, preemptionMode);
+    rootCommandStreamReceiver->initializeResources(preemptionMode);
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
     if (EngineHelpers::isComputeEngine(engineType)) {

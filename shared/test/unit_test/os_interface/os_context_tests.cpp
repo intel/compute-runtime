@@ -109,7 +109,7 @@ TEST(OSContext, givenReinitializeContextWhenContextIsInitThenContextIsStillIinit
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
     auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
     EXPECT_NO_THROW(pOsContext->reInitializeContext());
-    EXPECT_NO_THROW(pOsContext->ensureContextInitialized(false));
+    EXPECT_NO_THROW(pOsContext->ensureContextInitialized());
     delete pOsContext;
 }
 
@@ -249,7 +249,7 @@ struct DeferredOsContextCreationTests : ::testing::Test {
         const bool immediate = osContext->isImmediateContextInitializationEnabled(defaultEngine);
         EXPECT_EQ(expectedImmediate, immediate);
         if (immediate) {
-            osContext->ensureContextInitialized(false);
+            osContext->ensureContextInitialized();
             EXPECT_TRUE(osContext->isInitialized());
         }
     }
@@ -346,7 +346,7 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledAndRetu
         MyOsContext(uint32_t contextId,
                     const EngineDescriptor &engineDescriptor) : OsContext(0, contextId, engineDescriptor) {}
 
-        bool initializeContext(bool allocateInterrupt) override {
+        bool initializeContext() override {
             initializeContextCalled++;
             return false;
         }
@@ -357,7 +357,7 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledAndRetu
     MyOsContext osContext{0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsageRegular)};
     EXPECT_FALSE(osContext.isInitialized());
 
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     EXPECT_FALSE(osContext.isInitialized());
     EXPECT_EQ(1u, osContext.initializeContextCalled);
 }
@@ -367,7 +367,7 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipl
         MyOsContext(uint32_t contextId,
                     const EngineDescriptor &engineDescriptor) : OsContext(0, contextId, engineDescriptor) {}
 
-        bool initializeContext(bool allocateInterrupt) override {
+        bool initializeContext() override {
             initializeContextCalled++;
             return true;
         }
@@ -378,11 +378,11 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipl
     MyOsContext osContext{0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsageRegular)};
     EXPECT_FALSE(osContext.isInitialized());
 
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     EXPECT_TRUE(osContext.isInitialized());
     EXPECT_EQ(1u, osContext.initializeContextCalled);
 
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     EXPECT_TRUE(osContext.isInitialized());
     EXPECT_EQ(1u, osContext.initializeContextCalled);
 }
@@ -398,7 +398,7 @@ TEST_F(DeferredOsContextCreationTests, givenPrintOsContextInitializationsIsSetWh
     EXPECT_EQ(std::string{}, capture.getCapturedStdout());
 
     capture.captureStdout();
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
     std::string expectedMessage = "OsContext initialization: contextId=0 usage=Regular type=RCS isRootDevice=0 priorityLevel=std::nullopt\n";
     EXPECT_EQ(expectedMessage, capture.getCapturedStdout());
 }

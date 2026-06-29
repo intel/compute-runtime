@@ -1659,13 +1659,13 @@ void IoctlHelperXe::xeShowBindTable() {
     }
 }
 
-void IoctlHelperXe::applyContextFlags(void *execQueueCreate, bool allocateInterrupt) {
+void IoctlHelperXe::applyContextFlags(void *execQueueCreate) {
     if (this->isLowLatencyHintAvailable) {
         reinterpret_cast<drm_xe_exec_queue_create *>(execQueueCreate)->flags |= DRM_XE_EXEC_QUEUE_LOW_LATENCY_HINT;
     }
 }
 
-int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) {
+int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) {
     uint32_t drmContextId = 0;
 
     XELOG("createDrmContext VM=0x%x\n", drmVmId);
@@ -1686,7 +1686,7 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     create.vm_id = drmVmId;
     create.instances = castToUint64(contextParamEngine.data());
     create.extensions = (extPropertyIndex > 0U ? castToUint64(extProperties.data()) : 0UL);
-    applyContextFlags(&create, allocateInterrupt);
+    applyContextFlags(&create);
 
     int ret = IoctlHelper::ioctl(DrmIoctl::gemContextCreateExt, &create);
     drmContextId = create.exec_queue_id;

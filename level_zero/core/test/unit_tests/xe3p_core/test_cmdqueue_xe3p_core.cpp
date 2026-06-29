@@ -42,7 +42,7 @@ XE3P_CORETEST_F(CommandQueueScratchTestsXe3p, givenImplicitArgsScratchWhenPatchC
 
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
     auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr, &desc);
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandQueue->heaplessModeEnabled = true;
@@ -351,8 +351,8 @@ XE3P_CORETEST_F(CommandQueueHeaplessXe3p, givenSecondaryContextQueueWhenExecutin
     auto device = driverHandle->devices[0];
 
     ze_command_queue_desc_t desc = {};
-    auto csr1 = deviceFactory.rootDevices[0]->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, std::nullopt, false)->commandStreamReceiver;
-    auto csr2 = deviceFactory.rootDevices[0]->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, std::nullopt, false)->commandStreamReceiver;
+    auto csr1 = deviceFactory.rootDevices[0]->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, std::nullopt)->commandStreamReceiver;
+    auto csr2 = deviceFactory.rootDevices[0]->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, std::nullopt)->commandStreamReceiver;
 
     EXPECT_NE(csr1, csr2);
 

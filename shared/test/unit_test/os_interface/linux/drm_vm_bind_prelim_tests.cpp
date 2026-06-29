@@ -29,7 +29,7 @@ TEST(DrmVmBindTest, givenBoRequiringImmediateBindWhenBindingThenImmediateFlagIsP
     bo.requireImmediateBinding(true);
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     bo.bind(&osContext, 0, false);
 
     EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
@@ -47,7 +47,7 @@ TEST(DrmVmBindTest, givenBoRequiringExplicitResidencyWhenBindingThenMakeResident
         bo.requireExplicitResidency(requireResidency);
 
         OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-        osContext.ensureContextInitialized(false);
+        osContext.ensureContextInitialized();
         uint32_t vmHandleId = 0;
         bo.bind(&osContext, vmHandleId, false);
 
@@ -76,7 +76,7 @@ TEST(DrmVmBindTest,
         bo.requireExplicitResidency(requireResidency);
 
         OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-        osContext.ensureContextInitialized(false);
+        osContext.ensureContextInitialized();
         uint32_t vmHandleId = 0;
         bo.bind(&osContext, vmHandleId, false);
 
@@ -104,7 +104,7 @@ TEST(DrmVmBindTest, givenPerContextVmsAndBoRequiringExplicitResidencyWhenBinding
         bo.requireExplicitResidency(requireResidency);
 
         MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-        osContext.ensureContextInitialized(false);
+        osContext.ensureContextInitialized();
         uint32_t vmHandleId = 0;
         bo.bind(&osContext, vmHandleId, false);
 
@@ -143,7 +143,7 @@ TEST(DrmVmBindTest, whenCallingWaitForBindThenWaitUserFenceIsCalled) {
         bo.requireExplicitResidency(requireResidency);
 
         OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-        osContext.ensureContextInitialized(false);
+        osContext.ensureContextInitialized();
         uint32_t vmHandleId = 0;
         bo.bind(&osContext, vmHandleId, false);
 
@@ -165,7 +165,7 @@ TEST(DrmVmBindTest, givenUseKmdMigrationWhenCallingBindBoOnUnifiedSharedMemoryTh
     drm.pageFaultSupported = true;
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
@@ -191,7 +191,7 @@ TEST(DrmVmBindTest, givenDrmWithPageFaultSupportWhenCallingBindBoOnUnifiedShared
     executionEnvironment->memoryManager.reset(new MockDrmMemoryManager{GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment});
 
     OsContextLinux osContext(*drm, rootDeviceIndex, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(rootDeviceIndex, drm, 3, 0, 0, 1);
@@ -226,7 +226,7 @@ TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenBindingThenAsyncPagingFence
     bo.setAsyncPagingFenceRequired();
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
     bo.bind(&osContext, vmHandleId, false);
     ASSERT_TRUE(drm.context.receivedVmBindUserFence);
@@ -249,7 +249,7 @@ TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenBindingThenAsyncFenceValueI
     bo.setAsyncPagingFenceRequired();
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
     auto asyncFenceValBefore = bo.getAsyncFenceVal(&osContext, vmHandleId);
@@ -277,7 +277,7 @@ TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredAndPerContextVmsWhenBindingThen
     bo.setAsyncPagingFenceRequired();
 
     MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
     auto asyncFenceValBefore = bo.getAsyncFenceVal(&osContext, vmHandleId);
@@ -308,7 +308,7 @@ TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenBindingThenBindFenceMutexIs
     bo.setAsyncPagingFenceRequired();
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
     bo.bind(&osContext, vmHandleId, false);
@@ -332,7 +332,7 @@ TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenUnbindingThenRegularPagingF
     bo.setAsyncPagingFenceRequired();
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
     bo.bind(&osContext, vmHandleId, false);
@@ -356,7 +356,7 @@ TEST(DrmVmBindTest, givenBoWithNonZeroVirtualMappingSizeWhenBindingThenVirtualMa
     bo.setVirtualMappingSize(MemoryConstants::pageSize64k);
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     bo.bind(&osContext, 0, false);
 
     ASSERT_TRUE(drm.context.receivedVmBind);

@@ -314,7 +314,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     Device *getDevice() const { return this->device; }
     OsContext &getOsContext() const { return *osContext; }
     uint8_t getUmdPowerHintValue() const;
-    bool initializeResources(bool allocateInterrupt, const PreemptionMode preemptionMode);
+    bool initializeResources(const PreemptionMode preemptionMode);
     TagAllocatorBase *getEventTsAllocator();
     TagAllocatorBase *getEventPerfCountAllocator(const uint32_t tagSize);
     virtual TagAllocatorBase *getTimestampPacketAllocator() = 0;
@@ -643,7 +643,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual void submitLateMidThreadPreemptionStart() {}
 
     void initializeResourcesAndDirectSubmission(const PreemptionMode preemptionMode) {
-        this->initializeResources(false, preemptionMode);
+        this->initializeResources(preemptionMode);
         this->fillReusableAllocationsList();
         this->initDirectSubmission();
     }

@@ -58,7 +58,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         osContext = std::make_unique<OsContextLinux>(*mock, 0, 0u,
                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
 
         csr = new MockDrmCsr<GfxFamily>(executionEnvironment, 0, 1);
         ASSERT_NE(nullptr, csr);

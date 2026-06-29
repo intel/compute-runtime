@@ -36,8 +36,8 @@ struct WddmResidencyControllerMTTest : ::testing::Test {
         auto osContextBCS = executionEnvironment->memoryManager->createAndRegisterOsContext(csrBCS.get(), bcsDescriptor);
         csrCCS->setupContext(*osContextCCS);
         csrBCS->setupContext(*osContextBCS);
-        osContextCCS->ensureContextInitialized(false);
-        osContextBCS->ensureContextInitialized(false);
+        osContextCCS->ensureContextInitialized();
+        osContextBCS->ensureContextInitialized();
         residencyController = &wddm->getResidencyController();
     }
 

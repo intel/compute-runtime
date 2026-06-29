@@ -53,7 +53,7 @@ class OsContextLinux : public OsContext {
     }
 
   protected:
-    bool initializeContext(bool allocateInterrupt) override;
+    bool initializeContext() override;
     void isOpenVinoLoaded();
     void initializeOfflineDumpContextIds();
 

@@ -93,7 +93,7 @@ HWTEST2_F(L0DebuggerWindowsTest, givenWindowsOSWhenL0DebuggerIsCreatedAddressMod
 HWTEST_F(L0DebuggerWindowsTest, givenDebuggingEnabledAndCommandQueuesAreCreatedAndDestroyedThanDebuggerL0IsNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
 
-    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized(false);
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;

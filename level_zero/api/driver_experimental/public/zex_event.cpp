@@ -64,30 +64,6 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
     return L0::zexCounterBasedEventCreate2(hContext, hDevice, &counterBasedDesc, phEvent);
 }
 
-ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
-    auto context = L0::Context::fromHandle(toInternalType(hContext));
-
-    if (!context) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    if (!context->getDriverHandle()->getMemoryManager()->allocateInterrupt(networkInterruptId, context->rootDeviceIndices[0])) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
-    auto context = L0::Context::fromHandle(toInternalType(hContext));
-
-    if (!context || !context->getDriverHandle()->getMemoryManager()->releaseInterrupt(networkInterruptId, context->rootDeviceIndices[0])) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
     auto ret = Event::counterBasedGetIpcHandle(hEvent, reinterpret_cast<ze_ipc_event_counter_based_handle_t *>(phIpc));
     return ret;

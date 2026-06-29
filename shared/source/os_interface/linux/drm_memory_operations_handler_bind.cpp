@@ -30,7 +30,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *devi
     auto &engines = device->getAllEngines();
     MemoryOperationsStatus result = MemoryOperationsStatus::success;
     for (const auto &engine : engines) {
-        engine.commandStreamReceiver->initializeResources(false, device->getPreemptionMode());
+        engine.commandStreamReceiver->initializeResources(device->getPreemptionMode());
         result = this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false, forcePagingFence, true);
         if (result != MemoryOperationsStatus::success) {
             break;

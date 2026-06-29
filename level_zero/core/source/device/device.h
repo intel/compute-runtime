@@ -188,10 +188,10 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed);
     MOCKABLE_VIRTUAL void setSysmanHandle(SysmanDevice *pSysmanDevice);
     MOCKABLE_VIRTUAL SysmanDevice *getSysmanHandle();
-    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt) {
-        return getCsrForOrdinalAndIndex(csr, ordinal, index, priority, priorityLevel, allocateInterrupt, 0u);
+    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel) {
+        return getCsrForOrdinalAndIndex(csr, ordinal, index, priority, priorityLevel, 0u);
     }
-    MOCKABLE_VIRTUAL ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt, uint8_t powerHint);
+    MOCKABLE_VIRTUAL ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint);
     MOCKABLE_VIRTUAL ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bool copyOnly);
     ze_result_t getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool copyOnly);
     ze_result_t getCsrForPowerHint(NEO::CommandStreamReceiver **csr, bool copyOnly);
@@ -287,7 +287,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     void getP2PPropertiesDirectFabricConnection(Device *peerDevice,
                                                 ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
     bool fabricEdgeModelSupportsBandwidthAndLatency(const char *model);
-    bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, NEO::CommandStreamReceiver **csr, bool allocateInterrupt);
+    bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, NEO::CommandStreamReceiver **csr);
     void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
     void getReadonlyMemoryExtProperties(ze_base_properties_t *extendedProperties);
     MOCKABLE_VIRTUAL Module *createRequiredLibModule(const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result);

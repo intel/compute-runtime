@@ -28,7 +28,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
 
     bool isImmediateContextInitializationEnabled(bool isDefaultEngine) const;
     bool isInitialized() const { return contextInitialized; }
-    bool ensureContextInitialized(bool allocateInterrupt);
+    bool ensureContextInitialized();
 
     uint32_t getContextId() const { return contextId; }
     virtual uint64_t getOfflineDumpContextId(uint32_t deviceIndex) const { return 0; };
@@ -135,7 +135,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     virtual bool isPriorityChangeSupported() const { return false; }
 
   protected:
-    virtual bool initializeContext(bool allocateInterrupt) { return true; }
+    virtual bool initializeContext() { return true; }
 
     std::atomic<uint32_t> tlbFlushCounter{0};
     std::atomic<uint32_t> lastFlushedTlbFlushCounter{0};

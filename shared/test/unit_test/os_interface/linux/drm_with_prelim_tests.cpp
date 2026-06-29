@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -857,7 +857,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
 
     OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
     if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
@@ -866,7 +866,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
     }
 
     OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::cooperative}));
-    osContext2.ensureContextInitialized(false);
+    osContext2.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
     EXPECT_TRUE(drm->capturedCooperativeContextRequest);
@@ -878,7 +878,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupport
     drm->callBaseCreateDrmContext = false;
 
     OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
 
@@ -891,13 +891,13 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupport
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::offline);
 
     OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
-    osContext2.ensureContextInitialized(false);
+    osContext2.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
     EXPECT_FALSE(drm->capturedCooperativeContextRequest);
 
     OsContextLinux osContext3(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::cooperative}));
-    osContext3.ensureContextInitialized(false);
+    osContext3.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
     EXPECT_TRUE(drm->capturedCooperativeContextRequest);
@@ -917,7 +917,7 @@ TEST(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenIni
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
 
     OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     EXPECT_FALSE(drm->receivedGemVmControl.flags & PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH);
     EXPECT_TRUE(drm->receivedGemVmControl.flags & PRELIM_I915_VM_CREATE_FLAGS_USE_VM_BIND);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ class ClMockWddmMemoryManagerFixture {
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0],
                                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
 
         osContext->incRefInternal();
         mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(wddm->getTemporaryResourcesContainer());

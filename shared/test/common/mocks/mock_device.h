@@ -211,7 +211,7 @@ class MockDevice : public RootDevice {
         return mockSipLib.has_value() ? mockSipLib.value() : RootDevice::getSipExternalLibInterface();
     }
 
-    EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel, bool allocateInterrupt) override;
+    EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel) override;
 
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;

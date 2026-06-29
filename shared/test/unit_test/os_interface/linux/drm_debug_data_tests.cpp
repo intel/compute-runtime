@@ -116,7 +116,7 @@ TEST_F(DebugDataTest, givenUpstreamDebuggerAndPerContextVMRequiredWhenCallBindAd
     std::unique_ptr<NEO::Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment.release(), 0));
 
     MockOsContextLinux osContext(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     osContext.drmVmIds = {20, 1, 2, 3};
 
     osContext.pagingFence[0] = 0x12345;
@@ -192,7 +192,7 @@ TEST_F(DebugDataTest, givenUpstreamDebuggerAndPerContextVmRequiredWhenCallBindAd
     std::unique_ptr<NEO::Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment.release(), 0));
 
     MockOsContextLinux osContext(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     osContext.drmVmIds = {20, 1, 2, 3};
     osContext.pagingFence[0] = 0x12345;
     osContext.fenceVal[0] = initFenceValue;

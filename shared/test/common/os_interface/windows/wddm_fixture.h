@@ -60,7 +60,7 @@ struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
         auto engine = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
         mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(wddm->temporaryResources.get());
     }
 
@@ -92,7 +92,7 @@ struct WddmFixtureLuid : public Test<MockExecutionEnvironmentGmmFixture> {
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
         auto engine = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
         mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(wddm->temporaryResources.get());
     }
 
@@ -130,7 +130,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
         auto engine = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
     }
 
     void tearDown() {
@@ -178,7 +178,7 @@ struct WddmFixtureWithMockGdiDllWddmNoCleanup : public GdiDllFixture, public Moc
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
         auto engine = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
     }
 
     void tearDown() {
@@ -226,7 +226,7 @@ struct WddmCommandStreamFixture {
 
         csr = new WddmCommandStreamReceiver<GfxFamily>(*executionEnvironment, 0, device->getDeviceBitfield());
         device->resetCommandStreamReceiver(csr);
-        csr->getOsContext().ensureContextInitialized(false);
+        csr->getOsContext().ensureContextInitialized();
     }
 
     template <typename GfxFamily>

@@ -33,7 +33,7 @@ TEST(OSContextLinux, givenReinitializeContextWhenContextIsInitThenContextIsStill
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u, false);
     OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_NO_THROW(osContext.reInitializeContext());
-    EXPECT_NO_THROW(osContext.ensureContextInitialized(false));
+    EXPECT_NO_THROW(osContext.ensureContextInitialized());
 }
 
 TEST(OSContextLinux, givenInitializeContextWhenContextCreateIoctlFailsThenContextNotInitialized) {
@@ -43,7 +43,7 @@ TEST(OSContextLinux, givenInitializeContextWhenContextCreateIoctlFailsThenContex
     EXPECT_EQ(-1, pDrm->createDrmContext(1, false, false));
 
     OsContextLinux osContext(*pDrm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    EXPECT_EQ(false, osContext.ensureContextInitialized(false));
+    EXPECT_EQ(false, osContext.ensureContextInitialized());
     delete pDrm;
 }
 
@@ -108,7 +108,7 @@ TEST(OSContextLinux, givenPerContextVmsAndBindNotCompleteWhenWaitForPagingFenceT
     drm.requirePerContextVM = true;
 
     MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     drm.pagingFence[0] = 26u;
     drm.fenceVal[0] = 31u;
@@ -139,7 +139,7 @@ TEST(OSContextLinux, givenPerContextVmsAndBindCompleteWhenWaitForPagingFenceThen
     drm.requirePerContextVM = true;
 
     MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     osContext.pagingFence[0] = 3u;
     osContext.fenceVal[0] = 3u;
@@ -155,7 +155,7 @@ TEST(OSContextLinux, givenPerContextVmsAndBindCompleteWhenGetFenceAddressAndValT
     drm.requirePerContextVM = true;
 
     MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     osContext.pagingFence[0] = 2u;
     osContext.fenceVal[0] = 3u;

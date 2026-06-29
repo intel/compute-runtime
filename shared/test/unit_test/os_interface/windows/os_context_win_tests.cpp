@@ -31,19 +31,19 @@ struct OsContextWinTest : public WddmTestWithMockGdiDll {
 
 TEST_F(OsContextWinTest, givenWddm20WhenCreatingOsContextThenOsContextIsInitialized) {
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_NO_THROW(osContext->ensureContextInitialized(false));
+    EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }
 
 TEST_F(OsContextWinTest, givenWddm20WhenCreatingWddmContextFailThenOsContextCreationFails) {
     wddm->device = INVALID_HANDLE;
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_ANY_THROW(osContext->ensureContextInitialized(false));
+    EXPECT_ANY_THROW(osContext->ensureContextInitialized());
 }
 
 TEST_F(OsContextWinTest, givenWddm20WhenCreatingWddmMonitorFenceFailThenOsContextCreationFails) {
     *getCreateSynchronizationObject2FailCallFcn() = true;
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_ANY_THROW(osContext->ensureContextInitialized(false));
+    EXPECT_ANY_THROW(osContext->ensureContextInitialized());
 }
 
 TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackFailThenResidencyControllerIsNotInitialized) {
@@ -61,18 +61,18 @@ TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackIsDisabledThenOsCont
     *getRegisterTrimNotificationFailCallFcn() = true;
 
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_NO_THROW(osContext->ensureContextInitialized(false));
+    EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }
 
 TEST_F(OsContextWinTest, givenReinitializeContextWhenContextIsInitThenContextIsDestroyedAndRecreated) {
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
     EXPECT_NO_THROW(osContext->reInitializeContext());
-    EXPECT_NO_THROW(osContext->ensureContextInitialized(false));
+    EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }
 
 TEST_F(OsContextWinTest, givenReinitializeContextWhenContextIsNotInitThenContextIsCreated) {
     EXPECT_NO_THROW(osContext->reInitializeContext());
-    EXPECT_NO_THROW(osContext->ensureContextInitialized(false));
+    EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }
 
 TEST_F(OsContextWinTest, givenOsContextWinWhenQueryingForOfflineDumpContextIdThenCorrectValueIsReturned) {
@@ -193,7 +193,7 @@ TEST_F(OsContextWinTest, whenInitPrivateDataIsCalledTwiceWithoutReInitThenErrorI
     {
         debugManager.flags.OverrideLatePreemptionStart.set(0);
         auto osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::MidThread));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
         osContext->setCommandStreamReceiver(csr);
         EXPECT_EQ(static_cast<HANDLE>(NULL), osContext->latePreemptionStartEventHandle);
 
@@ -309,5 +309,5 @@ TEST_F(OsContextWinTestNoCleanup, givenReinitializeContextWhenContextIsInitThenC
     EXPECT_FALSE(this->wddm->isDriverAvailable());
     EXPECT_TRUE(this->wddm->skipResourceCleanup());
     EXPECT_NO_THROW(osContext->reInitializeContext());
-    EXPECT_NO_THROW(osContext->ensureContextInitialized(false));
+    EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }

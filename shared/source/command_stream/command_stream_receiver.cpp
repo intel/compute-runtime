@@ -451,11 +451,11 @@ uint8_t CommandStreamReceiver::getUmdPowerHintValue() const {
     return this->osContext ? this->osContext->getUmdPowerHintValue() : 0u;
 }
 
-bool CommandStreamReceiver::initializeResources(bool allocateInterrupt, const PreemptionMode preemptionMode) {
+bool CommandStreamReceiver::initializeResources(const PreemptionMode preemptionMode) {
     if (!resourcesInitialized) {
         auto lock = obtainUniqueOwnership();
         if (!resourcesInitialized) {
-            if (!osContext->ensureContextInitialized(allocateInterrupt)) {
+            if (!osContext->ensureContextInitialized()) {
                 return false;
             }
 

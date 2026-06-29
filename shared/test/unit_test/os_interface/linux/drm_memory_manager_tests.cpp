@@ -2396,42 +2396,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenRequiresStandard2MBHeapThenStandar
     EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapStandard2MB)), range);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingAllocateAndReleaseInterruptThenCallIoctlHelper) {
-    auto mockIoctlHelper = new MockIoctlHelper(*mock);
-
-    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
-    drm.ioctlHelper.reset(mockIoctlHelper);
-
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    bool interruptSupported = productHelper.isInterruptSupported(*rootDeviceEnvironment);
-
-    uint32_t handle = 0;
-
-    EXPECT_EQ(0u, mockIoctlHelper->allocateInterruptCalled);
-    EXPECT_EQ(0u, mockIoctlHelper->releaseInterruptCalled);
-
-    memoryManager->allocateInterrupt(handle, rootDeviceIndex);
-    if (interruptSupported) {
-        EXPECT_EQ(1u, mockIoctlHelper->allocateInterruptCalled);
-    } else {
-        EXPECT_EQ(0u, mockIoctlHelper->allocateInterruptCalled);
-    }
-    EXPECT_EQ(0u, mockIoctlHelper->releaseInterruptCalled);
-
-    handle = 123;
-    EXPECT_EQ(InterruptId::notUsed, mockIoctlHelper->latestReleaseInterruptHandle);
-
-    memoryManager->releaseInterrupt(handle, rootDeviceIndex);
-    if (interruptSupported) {
-        EXPECT_EQ(1u, mockIoctlHelper->allocateInterruptCalled);
-        EXPECT_EQ(1u, mockIoctlHelper->releaseInterruptCalled);
-        EXPECT_EQ(123u, mockIoctlHelper->latestReleaseInterruptHandle);
-    } else {
-        EXPECT_EQ(0u, mockIoctlHelper->allocateInterruptCalled);
-        EXPECT_EQ(0u, mockIoctlHelper->releaseInterruptCalled);
-    }
-}
-
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingGetExtraDevicePropertiesThenCallIoctlHelper) {
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
 
@@ -7059,7 +7023,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingB
     EXPECT_FALSE(drm.pageFaultSupported);
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -7085,7 +7049,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPageFaultIsSupportedAndKmdMigratio
     EXPECT_FALSE(drm.pageFaultSupported);
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -7117,7 +7081,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBin
     drm.pageFaultSupported = true;
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
     struct MockDrmAllocationToTestPageFault : MockDrmAllocation {

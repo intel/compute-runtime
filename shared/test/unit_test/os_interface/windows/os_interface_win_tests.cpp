@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment)[0], preemptionMode));
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
     EXPECT_EQ(osContext->getWddm(), wddm);
     EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
 }

@@ -660,7 +660,7 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0],
                                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
 
         osContext->incRefInternal();
         mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(wddm->getTemporaryResourcesContainer());
@@ -1398,7 +1398,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegi
     OsContext *osContext = memoryManager->createAndRegisterOsContext(csr.get(),
                                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex])[1],
                                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo), deviceBitfield));
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
     ASSERT_EQ(1u, memoryManager->getRegisteredEngines(rootDeviceIndex).size());
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({0u, 32, AllocationType::buffer, mockDeviceBitfield}));

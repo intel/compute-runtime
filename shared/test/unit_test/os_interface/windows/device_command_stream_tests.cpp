@@ -1309,7 +1309,7 @@ struct SemaphoreWaitForResidencyTest : public WddmCommandStreamTest {
         auto executionEnvironment = device->getExecutionEnvironment();
         mockCsr = new MockWddmDirectSubmissionCsr<GfxFamily>(*executionEnvironment, 0, 1);
         device->resetCommandStreamReceiver(mockCsr);
-        mockCsr->getOsContext().ensureContextInitialized(false);
+        mockCsr->getOsContext().ensureContextInitialized();
 
         buffer = memoryManager->allocateGraphicsMemoryWithProperties({mockCsr->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, device->getDeviceBitfield()});
         commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockCsr->getRootDeviceIndex(), MemoryConstants::pageSize});

@@ -1540,8 +1540,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexCounterBasedEventOpenIpcHandle) expectedCounterBasedEventOpenIpcHandle = L0::zexCounterBasedEventOpenIpcHandle;
     decltype(&zexCounterBasedEventCloseIpcHandle) expectedCounterBasedEventCloseIpcHandle = L0::zexCounterBasedEventCloseIpcHandle;
     decltype(&zexDeviceGetAggregatedCopyOffloadIncrementValue) expectedZexDeviceGetAggregatedCopyOffloadIncrementValueHandle = L0::zexDeviceGetAggregatedCopyOffloadIncrementValue;
-    decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = L0::zexIntelAllocateNetworkInterrupt;
-    decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = L0::zexIntelReleaseNetworkInterrupt;
     pfnEventGetCounterBasedFlags expectedEventGetCounterBasedFlags = L0::zeEventGetCounterBasedFlags;
 
     // memory function addresses
@@ -1656,12 +1654,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexMemFreeRegisterCallbackExt", &funPtr));
     EXPECT_EQ(expectedIntelMemFreeRegisterCallbackExt, reinterpret_cast<decltype(&zexMemFreeRegisterCallbackExt)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexIntelAllocateNetworkInterrupt", &funPtr));
-    EXPECT_EQ(expectedIntelAllocateNetworkInterrupt, reinterpret_cast<decltype(&zexIntelAllocateNetworkInterrupt)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexIntelReleaseNetworkInterrupt", &funPtr));
-    EXPECT_EQ(expectedIntelReleaseNetworkInterrupt, reinterpret_cast<decltype(&zexIntelReleaseNetworkInterrupt)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexEventGetDeviceAddress", &funPtr));
     EXPECT_EQ(expectedEventGetDeviceAddress, reinterpret_cast<decltype(&zexEventGetDeviceAddress)>(funPtr));

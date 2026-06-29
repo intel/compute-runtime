@@ -243,7 +243,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         return (getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr) && getCompilerInterface();
     }
 
-    MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority, bool allocateInterrupt);
+    MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority);
     bool isSecondaryContextEngineType(aub_stream::EngineType type) {
         return EngineHelpers::isCcs(type) || EngineHelpers::isBcs(type);
     }

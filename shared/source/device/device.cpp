@@ -603,7 +603,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     commandStreamReceiver->setDevice(this);
 
     if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
-        if (!commandStreamReceiver->initializeResources(false, this->getPreemptionMode())) {
+        if (!commandStreamReceiver->initializeResources(this->getPreemptionMode())) {
             return false;
         }
     }
@@ -661,7 +661,7 @@ bool Device::initializeEngines() {
         bool initializeDevice = (engine.osContext->isPartOfContextGroup() || isHeaplessPrologRequired) && !firstSubmissionDone;
 
         if (initializeDevice) {
-            engine.commandStreamReceiver->initializeResources(false, this->getPreemptionMode());
+            engine.commandStreamReceiver->initializeResources(this->getPreemptionMode());
 
             if (debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() != 1) {
                 engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
@@ -696,7 +696,7 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
     return true;
 }
 
-EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority, bool allocateInterrupt) {
+EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority) {
     if (secondaryEngines.find(engineTypeUsage.first) == secondaryEngines.end()) {
         return nullptr;
     }
@@ -706,14 +706,6 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, st
     auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, hwPriority);
 
     bool isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
-
-    if (isPrimaryContextInGroup && allocateInterrupt) {
-        // Context 0 is already pre-initialized. We need non-initialized context, to pass context creation flag.
-        // If all contexts are already initialized, just take next available. Interrupt request is only a hint.
-        engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, hwPriority);
-    }
-
-    isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
 
     if (!isPrimaryContextInGroup) {
         auto commandStreamReceiver = engineControl->commandStreamReceiver;
@@ -728,7 +720,7 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, st
 
             EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
 
-            if (!commandStreamReceiver->initializeResources(allocateInterrupt, this->getPreemptionMode())) {
+            if (!commandStreamReceiver->initializeResources(this->getPreemptionMode())) {
                 return nullptr;
             }
 

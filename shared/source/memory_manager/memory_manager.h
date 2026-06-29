@@ -402,9 +402,6 @@ class MemoryManager {
     virtual bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) = 0;
     bool allocateBindlessSlot(GraphicsAllocation *allocation);
     static uint64_t adjustToggleBitFlagForGpuVa(AllocationType inputAllocationType, uint64_t gpuAddress);
-    virtual bool allocateInterrupt(uint32_t &outHandle, uint32_t rootDeviceIndex) { return false; }
-    virtual bool releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceIndex) { return false; }
-
     virtual bool isCompressionSupportedForShareable(bool isShareable) { return true; }
 
     size_t getUsedLocalMemorySize(uint32_t rootDeviceIndex) const { return localMemAllocsSize[rootDeviceIndex]; }

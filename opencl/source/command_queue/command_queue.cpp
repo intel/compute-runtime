@@ -184,7 +184,7 @@ CommandQueue::~CommandQueue() {
 }
 
 void tryAssignSecondaryEngine(Device &device, EngineControl *&engineControl, EngineTypeUsage engineTypeUsage) {
-    auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false);
+    auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage, std::nullopt);
     if (newEngine) {
         engineControl = newEngine;
     }
@@ -389,7 +389,7 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
                     tryAssignSecondaryEngine(device->getDevice(), bcsEngines[bcsIndex], {bcsEngineType, engineUsage});
                 }
 
-                bcsEngines[bcsIndex]->osContext->ensureContextInitialized(false);
+                bcsEngines[bcsIndex]->osContext->ensureContextInitialized();
                 bcsEngines[bcsIndex]->commandStreamReceiver->initDirectSubmission();
             }
             bcsInitialized = true;

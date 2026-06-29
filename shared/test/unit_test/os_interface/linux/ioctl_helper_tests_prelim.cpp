@@ -979,20 +979,20 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     drmMock.preemptionSupported = false;
 
     OsContextLinux osContext1(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext1.ensureContextInitialized(false);
+    osContext1.ensureContextInitialized();
     OsContextLinux osContext2(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
-    osContext2.ensureContextInitialized(false);
+    osContext2.ensureContextInitialized();
 
     EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
 
     drmMock.preemptionSupported = true;
 
     OsContextLinux osContext3(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext3.ensureContextInitialized(false);
+    osContext3.ensureContextInitialized();
     EXPECT_EQ(6u, drmMock.receivedContextParamRequestCount);
 
     OsContextLinux osContext4(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
-    osContext4.ensureContextInitialized(false);
+    osContext4.ensureContextInitialized();
     EXPECT_EQ(9u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.storedDrmContextId, drmMock.receivedContextParamRequest.contextId);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);

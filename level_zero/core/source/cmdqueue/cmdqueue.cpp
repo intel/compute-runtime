@@ -425,9 +425,7 @@ QueueProperties CommandQueue::extractQueueProperties(const ze_command_queue_desc
     }
 
     while (baseProperties) {
-        if (static_cast<uint32_t>(baseProperties->stype) == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES) {
-            queueProperties.interruptHint = static_cast<const zex_intel_queue_allocate_msix_hint_exp_desc_t *>(desc.pNext)->uniqueMsix;
-        } else if (auto syncDispatchMode = getSyncDispatchMode(baseProperties)) {
+        if (auto syncDispatchMode = getSyncDispatchMode(baseProperties)) {
             if (syncDispatchMode.has_value()) {
                 queueProperties.synchronizedDispatchMode = syncDispatchMode.value();
             }

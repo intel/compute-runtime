@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         auto engine = gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0];
         osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
     }
 
     DebugManagerStateRestore *dbgRestorer = nullptr;

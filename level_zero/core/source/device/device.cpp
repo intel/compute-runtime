@@ -272,11 +272,7 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     auto queueProperties = CommandQueue::extractQueueProperties(*desc);
 
-    if (queueProperties.interruptHint && !neoDevice->getProductHelper().isInterruptSupported(neoDevice->getRootDeviceEnvironment())) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.priorityLevel, queueProperties.interruptHint, powerHint);
+    auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.priorityLevel, powerHint);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -1845,7 +1841,7 @@ bool Device::isQueueGroupOrdinalValid(uint32_t ordinal) {
     return true;
 }
 
-ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt, uint8_t powerHint) {
+ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint) {
     auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 
@@ -1958,18 +1954,18 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
         if (priorityLevel.has_value()) {
             hwPriority = gfxCoreHelper.getHwQueuePriority(priorityLevel.value());
         }
-        selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr, allocateInterrupt);
+        selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr);
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
-bool Device::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> hwPriority, NEO::CommandStreamReceiver **csr, bool allocateInterrupt) {
+bool Device::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> hwPriority, NEO::CommandStreamReceiver **csr) {
     if (neoDevice->isSecondaryContextEngineType(engineType)) {
         NEO::EngineTypeUsage engineTypeUsage;
         engineTypeUsage.first = engineType;
         engineTypeUsage.second = engineUsage;
-        auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage, hwPriority, allocateInterrupt);
+        auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage, hwPriority);
         if (engine) {
             *csr = engine->commandStreamReceiver;
             return true;

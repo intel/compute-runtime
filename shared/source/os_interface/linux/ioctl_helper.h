@@ -189,7 +189,7 @@ class IoctlHelper {
     virtual std::string getIoctlString(DrmIoctl ioctlRequest) const = 0;
 
     virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
-    virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) = 0;
+    virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) = 0;
 
     virtual void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) = 0;
     virtual void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) = 0;
@@ -241,9 +241,6 @@ class IoctlHelper {
     virtual bool isPreemptionSupported() = 0;
     virtual uint32_t getTileIdFromGtId(uint32_t gtId) const = 0;
     virtual uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const = 0;
-
-    virtual bool allocateInterrupt(uint32_t &outHandle) { return false; }
-    virtual bool releaseInterrupt(uint32_t handle) { return false; }
 
     virtual uint64_t *getPagingFenceAddress(uint32_t vmHandleId, OsContextLinux *osContext);
     virtual uint64_t acquireGpuRange(DrmMemoryManager &memoryManager, size_t &size, uint32_t rootDeviceIndex, AllocationType allocType, HeapIndex heapIndex);
@@ -297,7 +294,7 @@ class IoctlHelperI915 : public IoctlHelper {
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     std::string getDrmParamString(DrmParam param) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
-    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) override;
+    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override;
     std::string getFileForMaxGpuFrequency() const override;
     std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const override;
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const override;

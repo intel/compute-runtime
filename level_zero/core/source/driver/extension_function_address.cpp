@@ -90,8 +90,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     // event
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexEventGetDeviceAddress);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zexIntelAllocateNetworkInterrupt);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zexIntelReleaseNetworkInterrupt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate2);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventGetIpcHandle);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventOpenIpcHandle);

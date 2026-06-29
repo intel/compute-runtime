@@ -40,7 +40,7 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t rootDeviceIndex, uint32_t cont
     initializeOfflineDumpContextIds();
 }
 
-bool OsContextLinux::initializeContext(bool allocateInterrupt) {
+bool OsContextLinux::initializeContext() {
     auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(*hwInfo);
 
@@ -72,7 +72,7 @@ bool OsContextLinux::initializeContext(bool allocateInterrupt) {
                 this->drmVmIds[deviceIndex] = drmVmId;
             }
 
-            auto drmContextId = drm.getIoctlHelper()->createDrmContext(drm, *this, drmVmId, deviceIndex, allocateInterrupt);
+            auto drmContextId = drm.getIoctlHelper()->createDrmContext(drm, *this, drmVmId, deviceIndex);
             if (drmContextId < 0) {
                 return false;
             }

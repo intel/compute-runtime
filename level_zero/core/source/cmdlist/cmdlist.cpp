@@ -528,12 +528,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 engineGroupType = device->getInternalEngineGroupType();
             }
         } else {
-            if (queueProperties.interruptHint && !productHelper.isInterruptSupported(device->getNEODevice()->getRootDeviceEnvironment())) {
-                returnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-                return commandList;
-            }
-
-            returnValue = device->getCsrForOrdinalAndIndex(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.priorityLevel, queueProperties.interruptHint, powerHint);
+            returnValue = device->getCsrForOrdinalAndIndex(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.priorityLevel, powerHint);
             if (returnValue != ZE_RESULT_SUCCESS) {
                 return commandList;
             }
@@ -644,7 +639,7 @@ void CommandList::enableCopyOperationOffload() {
     NEO::CommandStreamReceiver *copyCsr = nullptr;
     uint32_t ordinal = device->getCopyEngineOrdinal();
 
-    device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, std::nullopt, false, this->powerHint);
+    device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, std::nullopt, this->powerHint);
     UNRECOVERABLE_IF(!copyCsr);
 
     if (immediateQueuePriority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !copyCsr->getOsContext().isLowPriority()) {

@@ -3125,7 +3125,7 @@ TEST_F(ContextCommandListCreate, givenDeferredEngineCreationWhenImmediateCommand
         const auto &group = groups[groupIndex];
         for (uint32_t queueIndex = 0; queueIndex < group.numQueues; queueIndex++) {
             CommandStreamReceiver *expectedCsr{};
-            EXPECT_EQ(ZE_RESULT_SUCCESS, device->getCsrForOrdinalAndIndex(&expectedCsr, groupIndex, queueIndex, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, device->getCsrForOrdinalAndIndex(&expectedCsr, groupIndex, queueIndex, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0));
 
             ze_command_queue_desc_t desc = {};
             desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;

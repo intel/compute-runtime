@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct DeferredOsContextCreationL0Tests : ::testing::Test {
         const bool immediate = osContext->isImmediateContextInitializationEnabled(defaultEngine);
         EXPECT_EQ(expectedImmediate, immediate);
         if (immediate) {
-            osContext->ensureContextInitialized(false);
+            osContext->ensureContextInitialized();
             EXPECT_TRUE(osContext->isInitialized());
         }
     }

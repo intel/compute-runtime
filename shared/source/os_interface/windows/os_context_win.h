@@ -54,7 +54,7 @@ class OsContextWin : public OsContext {
     D3DKMT_HANDLE latePreemptionStartSyncObjectHandle = 0;
 
   protected:
-    bool initializeContext(bool allocateInterrupt) override;
+    bool initializeContext() override;
 
     HardwareQueue hardwareQueue;
 

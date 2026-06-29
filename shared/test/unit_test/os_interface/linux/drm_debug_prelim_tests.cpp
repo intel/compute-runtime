@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -350,7 +350,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultE
     bo.addBindExtHandle(5);
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     bo.bind(&osContext, 0, false);
 
     EXPECT_NE(0u, drm.context.receivedVmBind->extensions);
@@ -370,7 +370,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternal
     bo.addBindExtHandle(5);
 
     OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/});
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     bo.bind(&osContext, 0, false);
 
     EXPECT_FALSE(drm.context.receivedVmBindUuidExt[0]);
@@ -386,7 +386,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngi
     drm.context.receivedVmBindUuidExt[0].reset();
 
     OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/});
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     bo.bind(&osContext, 0, false);
 
     EXPECT_FALSE(drm.context.receivedVmBindUuidExt[0]);
@@ -401,7 +401,7 @@ HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtens
     bo.addBindExtHandle(5);
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     bo.bind(&osContext, 0, false);
     EXPECT_NE(0u, drm.context.receivedVmBind.value().extensions);
 
@@ -429,7 +429,7 @@ TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWh
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
     OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     EXPECT_EQ(DrmPrelimHelper::getSIPContextParamDebugFlag() << 32 | DrmPrelimHelper::getSIPContextParamDebugFlag(), drm->context.receivedSetContextParamValue);
     // drmMock returns ctxId == 0
@@ -451,7 +451,7 @@ TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWh
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
     OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     EXPECT_EQ(DrmPrelimHelper::getSIPContextParamDebugFlag() << 32 | DrmPrelimHelper::getSIPContextParamDebugFlag(), drm->context.receivedSetContextParamValue);
     // drmMock returns ctxId == 0

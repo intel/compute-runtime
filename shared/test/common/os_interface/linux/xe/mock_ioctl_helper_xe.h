@@ -79,11 +79,11 @@ struct MockIoctlHelperXe : IoctlHelperXe {
         XELOG(args...);
     }
 
-    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) override {
+    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override {
         if (mockCreateDrmContext) {
             return 1;
         }
-        return IoctlHelperXe::createDrmContext(drm, osContext, drmVmId, deviceIndex, allocateInterrupt);
+        return IoctlHelperXe::createDrmContext(drm, osContext, drmVmId, deviceIndex);
     }
 
     int bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataVec, uint32_t vmId, VmBindExtUserFenceT *vmBindExtUserFence, bool isAdd) override {

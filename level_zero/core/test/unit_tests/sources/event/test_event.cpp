@@ -4657,7 +4657,7 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
     };
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
-    ultCsr->initializeResources(false, device->getDevicePreemptionMode());
+    ultCsr->initializeResources(device->getDevicePreemptionMode());
     VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
     ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadAllocationTrack[&gfxAllocation]++;
@@ -4740,7 +4740,7 @@ HWTEST_F(EventContextGroupTests, givenSecondaryCsrWhenDownloadingAllocationThenU
     OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
 
     ultCsr->setupContext(osContext);
-    ultCsr->initializeResources(false, device->getDevicePreemptionMode());
+    ultCsr->initializeResources(device->getDevicePreemptionMode());
 
     uint32_t downloadCounter = 0;
     ultCsr->downloadAllocationImpl = [&downloadCounter](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
@@ -4820,7 +4820,7 @@ HWTEST_F(EventContextGroupTests, givenPendingSelectedSecondaryCsrTaskWhenHostSyn
 
     OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
     secondaryCsr->setupContext(osContext);
-    secondaryCsr->initializeResources(false, device->getDevicePreemptionMode());
+    secondaryCsr->initializeResources(device->getDevicePreemptionMode());
     secondaryCsr->setPrimaryCsr(defaultCsr);
 
     secondaryCsr->taskCount = 1;
@@ -4878,7 +4878,7 @@ HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndInfiniteTimeoutWhenHostS
 
     OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
     secondaryCsr->setupContext(osContext);
-    secondaryCsr->initializeResources(false, device->getDevicePreemptionMode());
+    secondaryCsr->initializeResources(device->getDevicePreemptionMode());
     secondaryCsr->setPrimaryCsr(defaultCsr);
 
     secondaryCsr->taskCount = 1;
@@ -4941,7 +4941,7 @@ HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndFiniteTimeoutWhenHostSyn
 
     OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
     secondaryCsr->setupContext(osContext);
-    secondaryCsr->initializeResources(false, device->getDevicePreemptionMode());
+    secondaryCsr->initializeResources(device->getDevicePreemptionMode());
     secondaryCsr->taskCount = 1;
     secondaryCsr->latestFlushedTaskCount = 0;
     secondaryCsr->flushTagUpdateCalled = false;
@@ -5034,7 +5034,7 @@ HWTEST_F(EventContextGroupTests, givenNoPendingTaskOnSelectedSecondaryCsrWhenHos
 
     OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
     secondaryCsr->setupContext(osContext);
-    secondaryCsr->initializeResources(false, device->getDevicePreemptionMode());
+    secondaryCsr->initializeResources(device->getDevicePreemptionMode());
     secondaryCsr->setPrimaryCsr(defaultCsr);
 
     secondaryCsr->taskCount = 0;
@@ -5128,7 +5128,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     *eventAddress = Event::STATE_SIGNALED;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
-    ultCsr->initializeResources(false, device->getDevicePreemptionMode());
+    ultCsr->initializeResources(device->getDevicePreemptionMode());
 
     VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
     ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
@@ -5190,7 +5190,7 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeIsCalledThenPreamble
     *eventAddress = Event::STATE_SIGNALED;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
-    ultCsr->initializeResources(false, device->getDevicePreemptionMode());
+    ultCsr->initializeResources(device->getDevicePreemptionMode());
 
     VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
     ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
@@ -5287,7 +5287,7 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeUsesWaitFenceThenPre
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     event->csrs[0] = ultCsr;
-    ultCsr->initializeResources(false, device->getDevicePreemptionMode());
+    ultCsr->initializeResources(device->getDevicePreemptionMode());
     ultCsr->isGpuHangDetectedReturnValue = false;
 
     ultCsr->isUserFenceWaitSupported = true;
@@ -5364,17 +5364,6 @@ HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandle
     context->freeMem(hostAddress);
 }
 
-HWTEST_F(EventTests, givenOsAgnosticContextWhenAllocatingInterruptThenReturnError) {
-    uint32_t interruptId = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexIntelAllocateNetworkInterrupt(nullptr, interruptId));
-
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, L0::zexIntelAllocateNetworkInterrupt(context, interruptId));
-
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexIntelReleaseNetworkInterrupt(nullptr, interruptId));
-
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexIntelReleaseNetworkInterrupt(context, interruptId));
-}
-
 HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
 
@@ -5395,7 +5384,7 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
     *eventAddress = Event::STATE_SIGNALED;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
-    ultCsr->initializeResources(false, device->getDevicePreemptionMode());
+    ultCsr->initializeResources(device->getDevicePreemptionMode());
     VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
     ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadAllocationTrack[&gfxAllocation]++;
@@ -6357,9 +6346,9 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     auto ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice1->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     auto ultCsr2 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice1->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
-    rootCsr->initializeResources(false, device->getDevicePreemptionMode());
-    ultCsr0->initializeResources(false, device->getDevicePreemptionMode());
-    ultCsr1->initializeResources(false, device->getDevicePreemptionMode());
+    rootCsr->initializeResources(device->getDevicePreemptionMode());
+    ultCsr0->initializeResources(device->getDevicePreemptionMode());
+    ultCsr1->initializeResources(device->getDevicePreemptionMode());
 
     rootCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
     ultCsr0->commandStreamReceiverType = CommandStreamReceiverType::tbx;
@@ -6445,8 +6434,8 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     auto ultCsr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice0->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     auto ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice1->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    ultCsr0->initializeResources(false, device->getDevicePreemptionMode());
-    ultCsr1->initializeResources(false, device->getDevicePreemptionMode());
+    ultCsr0->initializeResources(device->getDevicePreemptionMode());
+    ultCsr1->initializeResources(device->getDevicePreemptionMode());
 
     ultCsr0->commandStreamReceiverType = CommandStreamReceiverType::tbx;
     ultCsr1->commandStreamReceiverType = CommandStreamReceiverType::tbx;

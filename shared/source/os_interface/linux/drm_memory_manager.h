@@ -128,9 +128,6 @@ class DrmMemoryManager : public MemoryManager {
 
     MOCKABLE_VIRTUAL void checkUnexpectedGpuPageFault();
 
-    bool allocateInterrupt(uint32_t &outHandle, uint32_t rootDeviceIndex) override;
-    bool releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceIndex) override;
-
     bool isCompressionSupportedForShareable(bool isShareable) override;
     MOCKABLE_VIRTUAL SubmissionStatus emitPinningRequestForBoContainer(BufferObject **bo, uint32_t boCount, uint32_t rootDeviceIndex) const;
 

@@ -1008,7 +1008,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
     ASSERT_NE(nullptr, csr);
 
     auto commandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>{device, csr, &desc};
@@ -1165,7 +1165,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteCommandListsIsCalledThenComputeDispatchAllWalkerEnableIsSet, IsAtLeastXeCore) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
     ASSERT_NE(nullptr, csr);
 
     auto commandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>{device, csr, &desc};
@@ -1201,7 +1201,7 @@ HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteC
 HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculated, IsAtLeastXeCore) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
     ASSERT_NE(nullptr, csr);
 
     auto commandQueue1 = new MockCommandQueueHw<FamilyType::gfxCoreFamily>{device, csr, &desc};
@@ -1392,100 +1392,6 @@ HWTEST2_F(DeferredFirstSubmissionCmdQueueTests, givenDebugFlagSetWhenSubmittingT
     commandList2->destroy();
     commandQueue1->destroy();
     commandQueue2->destroy();
-}
-
-TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesWithInterruptFlagThenPassInterruptRequestToOsContext) {
-    class MockOsContext : public OsContext {
-      public:
-        using OsContext::OsContext;
-
-        bool initializeContext(bool allocateInterrupt) override {
-            allocateInterruptPassed = allocateInterrupt;
-            return OsContext::initializeContext(allocateInterrupt);
-        }
-
-        bool allocateInterruptPassed = false;
-    };
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
-        GTEST_SKIP();
-    }
-
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ContextGroupSize.set(5);
-
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-
-    std::vector<MockOsContext *> mockOsContexts;
-
-    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
-    {
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
-        driverHandle->initialize(std::move(devices));
-        auto device = driverHandle->devices[0];
-
-        for (auto &engine : neoDevice->secondaryEngines[aub_stream::ENGINE_CCS].engines) {
-            EngineDescriptor descriptor({aub_stream::ENGINE_CCS, engine.osContext->getEngineUsage()}, engine.osContext->getDeviceBitfield(), PreemptionMode::Disabled, false);
-            auto newOsContext = new MockOsContext(0, 0, descriptor);
-            mockOsContexts.push_back(newOsContext);
-            newOsContext->incRefInternal();
-
-            newOsContext->setIsPrimaryEngine(engine.osContext->getIsPrimaryEngine());
-            newOsContext->setContextGroupCount(engine.osContext->isPartOfContextGroup() ? 5 : 0);
-
-            engine.osContext = newOsContext;
-            engine.commandStreamReceiver->setupContext(*newOsContext);
-        }
-
-        zex_intel_queue_allocate_msix_hint_exp_desc_t allocateMsix = {};
-        allocateMsix.stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES;
-        allocateMsix.uniqueMsix = true;
-
-        auto mockProductHelper = new MockProductHelper;
-        mockProductHelper->isInterruptSupportedResult = true;
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-
-        ze_command_queue_desc_t desc = {};
-        desc.pNext = &allocateMsix;
-        ze_command_queue_handle_t commandQueueHandle1, commandQueueHandle2, commandQueueHandle3, commandQueueHandle4;
-
-        auto result = device->createCommandQueue(&desc, &commandQueueHandle1);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-        result = device->createCommandQueue(&desc, &commandQueueHandle2);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-        allocateMsix.uniqueMsix = false;
-
-        result = device->createCommandQueue(&desc, &commandQueueHandle3);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-        allocateMsix.uniqueMsix = true;
-        mockProductHelper->isInterruptSupportedResult = false;
-        result = device->createCommandQueue(&desc, &commandQueueHandle4);
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-
-        auto commandQueue1 = L0::CommandQueue::fromHandle(commandQueueHandle1);
-        auto commandQueue2 = L0::CommandQueue::fromHandle(commandQueueHandle2);
-        auto commandQueue3 = L0::CommandQueue::fromHandle(commandQueueHandle3);
-
-        EXPECT_TRUE(static_cast<MockOsContext &>(commandQueue1->getCsr()->getOsContext()).allocateInterruptPassed);
-        EXPECT_TRUE(static_cast<MockOsContext &>(commandQueue2->getCsr()->getOsContext()).allocateInterruptPassed);
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandQueue3->getCsr()->getOsContext()).allocateInterruptPassed);
-
-        commandQueue1->destroy();
-        commandQueue2->destroy();
-        commandQueue3->destroy();
-    }
-
-    for (auto &context : mockOsContexts) {
-        context->decRefInternal();
-    }
 }
 
 HWTEST_F(CommandQueueTest, givenCommandQueueWhenRegisterCsrClientCalledMultipleTimesThenRegistersOnlyOnce) {

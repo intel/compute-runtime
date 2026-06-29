@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,11 +69,11 @@ struct WddmResidencyControllerMultiGpuSharedAllocationTest : ::testing::Test {
 
         // Create two OS contexts simulating two GPU contexts
         osContext1 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr1.get(), engineDescriptor);
-        osContext1->ensureContextInitialized(false);
+        osContext1->ensureContextInitialized();
         osContext1->incRefInternal();
 
         osContext2 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr2.get(), engineDescriptor);
-        osContext2->ensureContextInitialized(false);
+        osContext2->ensureContextInitialized();
         osContext2->incRefInternal();
 
         residencyController1 = &static_cast<OsContextWin *>(osContext1)->getResidencyController();

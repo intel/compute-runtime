@@ -4208,7 +4208,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         ASSERT_TRUE(engineGroups[ordinalCopy].engineGroupType == NEO::EngineGroupType::copy);
 
         uint32_t index = 1;
-        auto result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
+        auto result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, highPriorityCsr);
 
@@ -4225,7 +4225,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         EXPECT_TRUE(highPriorityCsr->getOsContext().isPartOfContextGroup());
         EXPECT_NE(nullptr, highPriorityCsr->getOsContext().getPrimaryContext());
 
-        result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr2, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
+        result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr2, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, highPriorityCsr2);
         EXPECT_NE(highPriorityCsr, highPriorityCsr2);
@@ -4234,24 +4234,24 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         EXPECT_TRUE(highPriorityCsr2->getOsContext().isPartOfContextGroup());
 
         index = 100;
-        result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
+        result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         index = 0;
         ordinal = 100;
-        result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
+        result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         // When no HP copy engine, then hp csr from group is returned
         NEO::CommandStreamReceiver *bcsEngine = nullptr, *bcsEngine2 = nullptr;
         EXPECT_EQ(nullptr, neoMockDevice->getHpCopyEngine());
 
-        result = mockDevice.getCsrForOrdinalAndIndex(&bcsEngine, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
+        result = mockDevice.getCsrForOrdinalAndIndex(&bcsEngine, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, bcsEngine);
         EXPECT_TRUE(bcsEngine->getOsContext().isHighPriority());
 
-        result = mockDevice.getCsrForOrdinalAndIndex(&bcsEngine2, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
+        result = mockDevice.getCsrForOrdinalAndIndex(&bcsEngine2, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_EQ(bcsEngine2, bcsEngine->getPrimaryCsr());
         EXPECT_TRUE(bcsEngine2->getOsContext().isRegular());
@@ -4354,7 +4354,7 @@ HWTEST2_F(DeviceTest, givenHpCopyEngineWhenGettingHighPriorityCsrThenCorrectCsrA
                 ordinal = i;
 
                 uint32_t index = 0;
-                auto result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, std::nullopt, false);
+                auto result = mockDevice.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, std::nullopt);
                 EXPECT_EQ(ZE_RESULT_SUCCESS, result);
                 ASSERT_NE(nullptr, highPriorityCsr);
 
@@ -4569,7 +4569,7 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhen
     NEO::CommandStreamReceiver *csr = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, device->getCsrForLowPriority(&csr, false));
 
-    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt, false);
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
@@ -4580,7 +4580,7 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingAndSingleDeviceModeTest, GivenSingleD
     EXPECT_TRUE(neoDevice->getRootDeviceEnvironment().isExposeSingleDeviceMode());
 
     NEO::CommandStreamReceiver *csr = nullptr;
-    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt, false);
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_NE(nullptr, csr);
     EXPECT_TRUE(csr->getOsContext().isLowPriority());
@@ -4592,7 +4592,7 @@ HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceW
     NEO::CommandStreamReceiver *csr = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, device->getCsrForLowPriority(&csr, false));
 
-    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt, false);
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
@@ -4603,7 +4603,7 @@ HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceW
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, device->getCsrForLowPriority(&csr, true));
 
     auto ordinal = device->getCopyEngineOrdinal();
-    auto ret = device->getCsrForOrdinalAndIndex(&csr, ordinal, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt, false);
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, ordinal, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_NE(nullptr, csr);
@@ -4653,7 +4653,7 @@ TEST_F(DevicePowerHintCsrTest, givenDeviceWhenGettingCsrForPowerHintForCopyOnlyT
 
 TEST_F(DevicePowerHintCsrTest, givenPowerHintMaxParameterWhenGettingCsrForOrdinalAndIndexThenPowerHintEngineIsReturned) {
     NEO::CommandStreamReceiver *csr = nullptr;
-    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false, NEO::OsContext::getUmdPowerHintMax());
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, NEO::OsContext::getUmdPowerHintMax());
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_NE(nullptr, csr);
     EXPECT_EQ(EngineUsage::powerHint, csr->getOsContext().getEngineUsage());
@@ -4661,7 +4661,7 @@ TEST_F(DevicePowerHintCsrTest, givenPowerHintMaxParameterWhenGettingCsrForOrdina
 
 TEST_F(DevicePowerHintCsrTest, givenPowerHintZeroParameterWhenGettingCsrForOrdinalAndIndexThenRegularEngineIsReturnedNotPowerHintEngine) {
     NEO::CommandStreamReceiver *csr = nullptr;
-    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false, 0u);
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_NE(nullptr, csr);
     EXPECT_NE(EngineUsage::powerHint, csr->getOsContext().getEngineUsage());
@@ -4670,7 +4670,7 @@ TEST_F(DevicePowerHintCsrTest, givenPowerHintZeroParameterWhenGettingCsrForOrdin
 TEST_F(DevicePowerHintCsrTest, givenPowerHintBelowMaxWhenGettingCsrForOrdinalAndIndexThenRegularEngineIsReturned) {
     NEO::CommandStreamReceiver *csr = nullptr;
     uint8_t intermediateHint = NEO::OsContext::getUmdPowerHintMax() - 1u;
-    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false, intermediateHint);
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, intermediateHint);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_NE(nullptr, csr);
     EXPECT_NE(EngineUsage::powerHint, csr->getOsContext().getEngineUsage());
@@ -4683,7 +4683,7 @@ TEST_F(DevicePowerHintCsrTest, givenPowerHintMaxWithCopyOrdinalWhenGettingCsrThe
     }
     NEO::CommandStreamReceiver *csr = nullptr;
     auto ret = device->getCsrForOrdinalAndIndex(&csr, copyOrdinalOpt.value(), 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
-                                                std::nullopt, false, NEO::OsContext::getUmdPowerHintMax());
+                                                std::nullopt, NEO::OsContext::getUmdPowerHintMax());
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_NE(nullptr, csr);
 }
@@ -4695,7 +4695,7 @@ TEST_F(DevicePowerHintCsrTest, givenCreateImmediateWithCsrWrapperWhenPowerHintIs
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt);
     ASSERT_NE(nullptr, csr);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -4711,7 +4711,7 @@ HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceW
     NEO::CommandStreamReceiver *csr = nullptr;
     auto ordinal = device->getCopyEngineOrdinal();
 
-    auto ret = device->getCsrForOrdinalAndIndex(&csr, ordinal, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, std::nullopt, false);
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, ordinal, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, std::nullopt);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_NE(nullptr, csr);
@@ -5506,7 +5506,7 @@ HWTEST_F(SingleDeviceModeTests, givenContextGroupSupportedWhenGettingCsrsThenSec
 
         uint32_t index = 0;
         CommandStreamReceiver *csr = nullptr;
-        auto result = device->getCsrForOrdinalAndIndex(&csr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+        auto result = device->getCsrForOrdinalAndIndex(&csr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, csr);
 
@@ -5523,24 +5523,24 @@ HWTEST_F(SingleDeviceModeTests, givenContextGroupSupportedWhenGettingCsrsThenSec
         EXPECT_NE(nullptr, secondaryEngines.engines[highPriorityIndex].osContext->getPrimaryContext());
 
         index = 100;
-        result = device->getCsrForOrdinalAndIndex(&csr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, 0, false);
+        result = device->getCsrForOrdinalAndIndex(&csr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, 0);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         index = 0;
         ordinal = 100;
-        result = device->getCsrForOrdinalAndIndex(&csr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, 0, false);
+        result = device->getCsrForOrdinalAndIndex(&csr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, 0);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         NEO::CommandStreamReceiver *bcsEngine = nullptr, *bcsEngine2 = nullptr;
         EXPECT_EQ(nullptr, neoMockDevice->getHpCopyEngine());
 
-        result = device->getCsrForOrdinalAndIndex(&bcsEngine, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, std::nullopt, false);
+        result = device->getCsrForOrdinalAndIndex(&bcsEngine, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, std::nullopt);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, bcsEngine);
         EXPECT_TRUE(bcsEngine->getOsContext().isHighPriority());
         EXPECT_EQ(1u, bcsEngine->getOsContext().getDeviceBitfield().count());
 
-        result = device->getCsrForOrdinalAndIndex(&bcsEngine2, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
+        result = device->getCsrForOrdinalAndIndex(&bcsEngine2, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_EQ(bcsEngine2, bcsEngine->getPrimaryCsr());
         EXPECT_TRUE(bcsEngine2->getOsContext().getIsPrimaryEngine());
@@ -5548,7 +5548,7 @@ HWTEST_F(SingleDeviceModeTests, givenContextGroupSupportedWhenGettingCsrsThenSec
         EXPECT_TRUE(bcsEngine2->getOsContext().getDeviceBitfield().test(0));
 
         bcsEngine2 = nullptr;
-        result = device->getCsrForOrdinalAndIndex(&bcsEngine2, ordinalCopy + 1, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
+        result = device->getCsrForOrdinalAndIndex(&bcsEngine2, ordinalCopy + 1, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(bcsEngine2, bcsEngine->getPrimaryCsr());
         EXPECT_TRUE(bcsEngine2->getOsContext().getIsPrimaryEngine());

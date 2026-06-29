@@ -125,7 +125,7 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     osContext->incRefInternal();
     newCsr->setupContext(*osContext);
     newCsr->setDevice(this);
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
     commandStreamReceivers[engineIndex].reset(newCsr);
     commandStreamReceivers[engineIndex]->initializeTagAllocation();
     commandStreamReceivers[engineIndex]->createGlobalFenceAllocation();
@@ -208,11 +208,11 @@ AILConfiguration *MockDevice::getAilConfigurationHelper() const {
     return Device::getAilConfigurationHelper();
 }
 
-EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel, bool allocateInterrupt) {
+EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel) {
     if (disableSecondaryEngines) {
         return nullptr;
     }
-    return RootDevice::getSecondaryEngineCsr(engineTypeUsage, priorityLevel, allocateInterrupt);
+    return RootDevice::getSecondaryEngineCsr(engineTypeUsage, priorityLevel);
 }
 
 std::unique_ptr<CommandStreamReceiver> MockDevice::createCommandStreamReceiver() const {

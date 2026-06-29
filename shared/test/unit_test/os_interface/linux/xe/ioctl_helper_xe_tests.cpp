@@ -2885,7 +2885,7 @@ TEST_F(IoctlHelperXeTest, givenLowPriorityContextWhenCreatingDrmContextThenExtPr
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
     OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}));
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     ASSERT_LE(1u, drm->execQueueProperties.size());
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY), drm->execQueueProperties[0].property);
@@ -3925,7 +3925,7 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCreateDrmContextAndLowLatencyHin
     xeIoctlHelper->contextParamEngine.push_back(drm_xe_engine_class_instance{});
     MockOsContextLinux osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
 
-    osContext.initializeContext(false);
+    osContext.initializeContext();
     EXPECT_EQ(0u, drm->latestExecQueueCreate.flags);
 }
 
@@ -3937,7 +3937,7 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCreateDrmContextAndLowLatencyHin
     MockOsContextLinux osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
 
     xeIoctlHelper->isLowLatencyHintAvailable = true;
-    osContext.initializeContext(false);
+    osContext.initializeContext();
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_LOW_LATENCY_HINT), drm->latestExecQueueCreate.flags);
 }
 
@@ -3948,7 +3948,7 @@ TEST_F(IoctlHelperXeTest, givenContextWithoutPriorityValueWhenInitializingThenPr
     xeIoctlHelper->contextParamEngine.push_back(drm_xe_engine_class_instance{});
     MockOsContextLinux osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
 
-    osContext.initializeContext(false);
+    osContext.initializeContext();
     ASSERT_TRUE(osContext.hasPriorityLevel());
     EXPECT_EQ(0u, osContext.getPriorityLevel());
 }
@@ -4032,12 +4032,12 @@ TEST_F(IoctlHelperXeTest, GivenContextWhenGetPrimaryContextIdCalledThenPrimaryCo
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
     OsContextLinux osContext(*drm, 0, 4u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
 
     osContext.setContextGroupCount(2);
-    osContext2.ensureContextInitialized(false);
+    osContext2.ensureContextInitialized();
     osContext2.setPrimaryContext(&osContext);
 
     EXPECT_EQ(osContext.getDrmContextIds()[0], xeIoctlHelper->getPrimaryContextId(osContext2, 0, 0));
@@ -4084,7 +4084,7 @@ TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenCreatingPrimaryDrmContextT
     OsContextLinux osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
 
     osContext.setContextGroupCount(8);
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     ASSERT_EQ(2u, drm->execQueueProperties.size());
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP), drm->execQueueProperties[0].property);
@@ -4107,10 +4107,10 @@ TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenCreatingSecondaryDrmContex
     OsContextLinux osContext2(*drm, 0, 6u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
 
     osContext.setContextGroupCount(8);
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     osContext2.setPrimaryContext(&osContext);
-    osContext2.ensureContextInitialized(false);
+    osContext2.ensureContextInitialized();
 
     ASSERT_EQ(4u, drm->execQueueProperties.size());
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP), drm->execQueueProperties[2].property);
@@ -4133,10 +4133,10 @@ TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenCreatingHighPriorityDrmCon
     OsContextLinux osContext2(*drm, 0, 6u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::highPriority}));
 
     osContext.setContextGroupCount(8);
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     osContext2.setPrimaryContext(&osContext);
-    osContext2.ensureContextInitialized(false);
+    osContext2.ensureContextInitialized();
 
     ASSERT_EQ(4u, drm->execQueueProperties.size());
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP), drm->execQueueProperties[2].property);
@@ -4182,7 +4182,7 @@ class MockIoctlHelperForOverridePriority : public IoctlHelperXe {
     bool isSetPairAvailable() override { return false; }
     bool isChunkingAvailable() override { return false; }
     bool isVmBindAvailable() override { return true; }
-    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) override {
+    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override {
         // Return a unique context ID for each call
         return ++contextIdCounter;
     }
@@ -4249,7 +4249,7 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenContextWithExistingPriorityWhenO
 
     const uint32_t initialPriority = 2;
     osContext.overridePriority(initialPriority);
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     mockIoctlHelper->reset();
 
@@ -4266,7 +4266,7 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenContextNotInGroupWhenOverridingI
 
     const uint32_t initialPriority = 2;
     osContext.overridePriority(initialPriority);
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
 
     mockIoctlHelper->reset();
 
@@ -4299,7 +4299,7 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenInitializedContextInGroupWhenOve
     const uint32_t initialPriority = 2;
     osContext.overridePriority(initialPriority);
 
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     const auto drmContextIds = osContext.getDrmContextIds();
     ASSERT_GT(drmContextIds.size(), 0u);
 
@@ -4329,7 +4329,7 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenMultipleDrmContextIdsWhenOverrid
     const uint32_t initialPriority = 2;
     osContext.overridePriority(initialPriority);
 
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     const auto drmContextIds = osContext.getDrmContextIds();
     const auto numContexts = drmContextIds.size();
     ASSERT_GT(numContexts, 1u); // Should have multiple contexts
@@ -4361,7 +4361,7 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenDebugFlagEnabledWhenOverridingIn
     const uint32_t initialPriority = 2;
     osContext.overridePriority(initialPriority);
 
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     ASSERT_GT(osContext.getDrmContextIds().size(), 0u);
 
     const uint32_t newPriority = 5;
@@ -4386,7 +4386,7 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenDebugFlagDisabledWhenOverridingI
     const uint32_t initialPriority = 2;
     osContext.overridePriority(initialPriority);
 
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     ASSERT_GT(osContext.getDrmContextIds().size(), 0u);
 
     const uint32_t newPriority = 5;
@@ -4428,7 +4428,7 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenContextInGroupWhenOverridingMult
     const uint32_t initialPriority = 2;
     osContext.overridePriority(initialPriority);
 
-    osContext.ensureContextInitialized(false);
+    osContext.ensureContextInitialized();
     ASSERT_GT(osContext.getDrmContextIds().size(), 0u);
     ASSERT_EQ(initialPriority, osContext.getPriorityLevel());
 

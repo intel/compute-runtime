@@ -131,24 +131,6 @@ typedef struct _zex_intel_event_sync_mode_exp_desc_t {
 } zex_intel_event_sync_mode_exp_desc_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Forward-declare zex_intel_queue_allocate_msix_hint_exp_desc_t
-typedef struct _zex_intel_queue_allocate_msix_hint_exp_desc_t zex_intel_queue_allocate_msix_hint_exp_desc_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Command queue descriptor for allocating unique msix. This structure may be
-/// passed as pNext member of ::ze_command_queue_desc_t.
-
-typedef struct _zex_intel_queue_allocate_msix_hint_exp_desc_t {
-    ze_structure_type_ext_t stype; ///< [in] type of this structure
-    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific
-                                   ///< structure (i.e. contains stype and pNext).
-    ze_bool_t uniqueMsix;          ///< [in] If set, try to allocate unique msix for command queue.
-                                   ///< If not set, driver will follow default behaviour. It may share msix for signaling completion with other queues.
-                                   ///< Number of unique msixes may be limited. On unsuccessful allocation, queue or immediate cmd list creation API fallbacks to default behaviour.
-
-} zex_intel_queue_allocate_msix_hint_exp_desc_t;
-
-///////////////////////////////////////////////////////////////////////////////
 /// @brief Command queue descriptor for enabling copy operations offload. This structure may be
 /// passed as pNext member of ::ze_command_queue_desc_t.
 

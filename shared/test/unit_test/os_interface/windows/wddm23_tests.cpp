@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         auto &gfxCoreHelper = this->executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
                                                    EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*this->executionEnvironment.rootDeviceEnvironments[0])[0], preemptionMode));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
     }
 
     void TearDown() override {
@@ -265,14 +265,14 @@ TEST_F(Wddm23TestsWithoutWddmInit, givenContextGroupWhenContextFromContextGroupC
 
     osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
                                                EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
-    EXPECT_TRUE(osContext->ensureContextInitialized(false));
+    EXPECT_TRUE(osContext->ensureContextInitialized());
     EXPECT_EQ(1u, wddmMockInterface->createHwQueueCalled);
 
     auto osContext2 = std::make_unique<OsContextWin>(*wddm, 0, 1u,
                                                      EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
     osContext2->setPrimaryContext(osContext.get());
 
-    EXPECT_TRUE(osContext2->ensureContextInitialized(false));
+    EXPECT_TRUE(osContext2->ensureContextInitialized());
     EXPECT_EQ(osContext->getWddmContextHandle(), osContext2->getWddmContextHandle());
     EXPECT_EQ(getCreateHwQueueData()->hHwContext, osContext->getWddmContextHandle());
 }
@@ -296,12 +296,12 @@ TEST_F(Wddm23TestsWithoutWddmInit, givenContextGroupWhenContextFromContextGroupD
 
         osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
                                                    EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
-        EXPECT_TRUE(osContext->ensureContextInitialized(false));
+        EXPECT_TRUE(osContext->ensureContextInitialized());
 
         auto osContext2 = std::make_unique<OsContextWin>(*wddm, 0, 1u,
                                                          EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
         osContext2->setPrimaryContext(osContext.get());
-        EXPECT_TRUE(osContext2->ensureContextInitialized(false));
+        EXPECT_TRUE(osContext2->ensureContextInitialized());
     }
 
     EXPECT_EQ(1u, wddm->destroyContextResult.called);

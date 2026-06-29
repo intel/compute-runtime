@@ -36,7 +36,6 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
 
     ADDMETHOD_NOBASE(vmBind, int, 0, (const VmBindParams &));
     ADDMETHOD_NOBASE(vmUnbind, int, 0, (const VmBindParams &));
-    ADDMETHOD_NOBASE(allocateInterrupt, bool, true, (uint32_t &));
     ADDMETHOD_CONST_NOBASE(overrideMaxSlicesSupported, bool, true, ());
     ADDMETHOD_NOBASE(queryDeviceParams, bool, true, (uint32_t *, uint16_t *));
 
@@ -60,12 +59,6 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
             return IoctlHelperPrelim20::getVmAdviseAtomicAttribute();
         }
         return vmAdviseAtomicAttribute;
-    }
-
-    bool releaseInterrupt(uint32_t handle) override {
-        releaseInterruptCalled++;
-        latestReleaseInterruptHandle = handle;
-        return releaseInterruptResult;
     }
 
     std::unique_ptr<MemoryInfo> createMemoryInfo() override {
@@ -97,10 +90,6 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     DrmQueryTopologyData topologyDataToSet{};
     TopologyMap topologyMapToSet{};
     int getDrmParamValueResult = 1234;
-    uint32_t releaseInterruptCalled = 0;
-    uint32_t latestReleaseInterruptHandle = InterruptId::notUsed;
-
-    bool releaseInterruptResult = true;
     bool callBaseVmAdviseAtomicAttribute = true;
     bool is2MBSizeAlignmentRequiredResult = false;
     std::optional<uint32_t> vmAdviseAtomicAttribute{};

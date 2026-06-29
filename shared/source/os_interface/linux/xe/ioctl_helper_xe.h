@@ -111,7 +111,7 @@ class IoctlHelperXe : public IoctlHelper {
     int getDrmParamValue(DrmParam drmParam) const override;
     int getDrmParamValueBase(DrmParam drmParam) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
-    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) override;
+    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override;
     std::string getDrmParamString(DrmParam param) const override;
     bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     std::string getFileForMaxGpuFrequency() const override;
@@ -201,7 +201,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint16_t getDefaultEngineClass(const aub_stream::EngineType &defaultEngineType);
     void setOptionalContextProperties(const OsContextLinux &osContext, Drm &drm, void *extProperties, uint32_t &extIndexInOut);
     void setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut);
-    virtual void applyContextFlags(void *execQueueCreate, bool allocateInterrupt);
+    virtual void applyContextFlags(void *execQueueCreate);
     virtual uint32_t getPriorityValue(const OsContextLinux &osContext);
 
     struct GtIpVersion {

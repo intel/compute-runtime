@@ -27,7 +27,7 @@ OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t rootDeviceInd
 
 OsContextWin::OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) : OsContext(rootDeviceIndex, contextId, engineDescriptor), wddm(wddm) {}
 
-bool OsContextWin::initializeContext(bool allocateInterrupt) {
+bool OsContextWin::initializeContext() {
 
     NEO::EnvironmentVariableReader envReader;
     bool disableContextCreationFlag = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);

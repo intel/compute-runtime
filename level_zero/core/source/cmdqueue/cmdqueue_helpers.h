@@ -36,7 +36,6 @@ struct CommandList;
 struct QueueProperties {
     NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
     NEO::QueueThrottle throttle = NEO::QueueThrottle::MEDIUM;
-    bool interruptHint = false;
     bool copyOffloadHint = false;
     std::optional<int> priorityLevel = std::nullopt;
 };

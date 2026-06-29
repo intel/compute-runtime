@@ -94,7 +94,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCall
             osContext = std::make_unique<OsContextLinux>(*mock, 0, 0,
                                                          EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::regular}, PreemptionMode::ThreadGroup));
 
-            osContext->ensureContextInitialized(false);
+            osContext->ensureContextInitialized();
 
             csr->setupContext(*osContext);
             static_cast<MockDrmCsr<FamilyType> *>(csr)->taskCount = 0;
@@ -248,7 +248,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdT
     osContext = std::make_unique<OsContextLinux>(*mock, csr->getRootDeviceIndex(), 1,
                                                  EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*csr->peekExecutionEnvironment().rootDeviceEnvironments[0])[0],
                                                                                               PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
     csr->setupContext(*osContext);
 
     auto &cs = csr->getCS();
@@ -788,7 +788,7 @@ struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDire
 
         osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,
                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
 
         device->allEngines.emplace_back(csr, osContext.get());
         csr->setupContext(*osContext);

@@ -3759,7 +3759,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     auto otherCsr = std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(static_cast<UltCommandStreamReceiver<FamilyType> *>(createCommandStream(*device->getNEODevice()->getExecutionEnvironment(), 0, 1)));
 
     otherCsr->setupContext(*neoDevice->getDefaultEngine().osContext);
-    otherCsr->initializeResources(false, neoDevice->getPreemptionMode());
+    otherCsr->initializeResources(neoDevice->getPreemptionMode());
     otherCsr->initializeTagAllocation();
     otherCsr->createGlobalFenceAllocation();
     otherCsr->createGlobalStatelessHeap();
@@ -3813,11 +3813,11 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     NEO::EngineTypeUsage engineTypeUsage;
     engineTypeUsage.first = hwInfo.capabilityTable.defaultEngineType;
     engineTypeUsage.second = NEO::EngineUsage::regular;
-    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false)->commandStreamReceiver;
+    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt)->commandStreamReceiver;
     EXPECT_EQ(nullptr, primaryCsr->getOsContext().getPrimaryContext());
     EXPECT_TRUE(primaryCsr->getOsContext().isPartOfContextGroup());
 
-    auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false)->commandStreamReceiver;
+    auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt)->commandStreamReceiver;
 
     ze_command_queue_desc_t desc = {};
     auto otherCommandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, secondaryCsr, &desc);
@@ -3865,11 +3865,11 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     NEO::EngineTypeUsage engineTypeUsage;
     engineTypeUsage.first = hwInfo.capabilityTable.defaultEngineType;
     engineTypeUsage.second = NEO::EngineUsage::regular;
-    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false)->commandStreamReceiver;
+    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt)->commandStreamReceiver;
     EXPECT_EQ(nullptr, primaryCsr->getOsContext().getPrimaryContext());
     EXPECT_TRUE(primaryCsr->getOsContext().isPartOfContextGroup());
 
-    [[maybe_unused]] auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false)->commandStreamReceiver;
+    [[maybe_unused]] auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt)->commandStreamReceiver;
 
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.ordinal = 0u;

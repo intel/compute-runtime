@@ -501,7 +501,7 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectB
 
     auto contextId = osContextCount / 2;
     auto osContext = engines[contextId].osContext;
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
 
     bo.bind(osContext, 0, false);
     EXPECT_TRUE(bo.bindInfo[contextId][0]);
@@ -545,7 +545,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
 
     auto contextId = osContextCount / 2;
     auto osContext = engines[contextId].osContext;
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
 
     StreamCapture capture;
     capture.captureStdout();
@@ -607,7 +607,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
 
     auto contextId = osContextCount / 2;
     auto osContext = engines[contextId].osContext;
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
 
     StreamCapture capture;
     capture.captureStderr();
@@ -743,7 +743,7 @@ TEST_P(DrmBufferObjectBindTestWithForcePagingFenceSucceeds, givenDrmWhenBindOper
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
@@ -811,7 +811,7 @@ TEST_P(DrmBufferObjectBindTestWithForcePagingFenceFalseWaitUserFenceNotCalled, g
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
@@ -878,7 +878,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationSucceedsWithForcePagingFenceWithD
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
@@ -1077,7 +1077,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsAndForceFenceWaitThenFe
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
@@ -1130,7 +1130,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsWaitBeforeBindFalseAndF
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
@@ -1183,7 +1183,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsWaitBeforeBindTrueAndFo
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext->ensureContextInitialized(false);
+    osContext->ensureContextInitialized();
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);

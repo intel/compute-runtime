@@ -117,7 +117,7 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                                                            preemptionMode));
         csr->setupContext(*osContext);
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
 
         osContext->incRefInternal();
         residencyController = &static_cast<OsContextWin *>(osContext)->getResidencyController();
@@ -154,7 +154,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                                                            PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-        osContext->ensureContextInitialized(false);
+        osContext->ensureContextInitialized();
 
         osContext->incRefInternal();
 

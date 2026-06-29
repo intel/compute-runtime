@@ -4628,7 +4628,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMPrepareIndirectAllocation
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
     L0::Device *l0Device0 = static_cast<L0::Device *>(device0);
-    auto ret = l0Device0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    auto ret = l0Device0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -4668,7 +4668,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, whenisRemoteResourceNeededIsCalledWit
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
     L0::Device *l0Device0 = static_cast<L0::Device *>(device0);
-    auto ret = l0Device0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    auto ret = l0Device0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -4743,7 +4743,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsRes
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
     L0::Device *l0Device1 = static_cast<L0::Device *>(device1);
-    auto ret = l0Device1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    auto ret = l0Device1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -4784,7 +4784,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeInternalAllocationsRes
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
     L0::Device *l0Device1 = static_cast<L0::Device *>(device1);
-    auto ret = l0Device1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    auto ret = l0Device1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;

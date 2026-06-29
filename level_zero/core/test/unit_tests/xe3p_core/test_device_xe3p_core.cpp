@@ -188,7 +188,7 @@ XE3P_CORETEST_F(CommandQueueGroupTest, givenContextGroupSupportAndCCSEngineEnabl
     csrs.resize(regularContextCount);
 
     for (size_t i = 0; i < regularContextCount; i++) {
-        ze_result_t res = mockDevice.getCsrForOrdinalAndIndex(&csrs[i], 0, 0, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
+        ze_result_t res = mockDevice.getCsrForOrdinalAndIndex(&csrs[i], 0, 0, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         EXPECT_EQ(secondaryEngines.engines[i].commandStreamReceiver, csrs[i]);
@@ -249,7 +249,7 @@ XE3P_CORETEST_F(CommandQueueGroupTest, givenContextGroupSupportAndBcsEngineEnabl
             csrs.resize(regularContextCount);
 
             for (size_t i = 0; i < regularContextCount; i++) {
-                ze_result_t res = mockDevice.getCsrForOrdinalAndIndex(&csrs[i], ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
+                ze_result_t res = mockDevice.getCsrForOrdinalAndIndex(&csrs[i], ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt);
                 EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
                 EXPECT_EQ(secondaryEngines.engines[i].commandStreamReceiver, csrs[i]);

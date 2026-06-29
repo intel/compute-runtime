@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,14 +141,9 @@ TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithMultipleExtensionsWith
     copyOffloadDesc.pNext = nullptr;
     copyOffloadDesc.copyOffloadEnabled = true;
 
-    zex_intel_queue_allocate_msix_hint_exp_desc_t msixDesc = {};
-    msixDesc.stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES;
-    msixDesc.pNext = &copyOffloadDesc;
-    msixDesc.uniqueMsix = true;
-
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
-    queueDesc.pNext = &msixDesc; // Extensions without priority
+    queueDesc.pNext = &copyOffloadDesc; // Extension without priority
     queueDesc.ordinal = 0;
     queueDesc.index = 0;
     queueDesc.flags = 0;
@@ -159,7 +154,6 @@ TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithMultipleExtensionsWith
 
     EXPECT_FALSE(queueProperties.priorityLevel.has_value());
     EXPECT_TRUE(queueProperties.copyOffloadHint);
-    EXPECT_TRUE(queueProperties.interruptHint);
 }
 
 TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithCopyOffloadFlagButNoPriorityExtensionWhenExtractingPropertiesThenPriorityLevelIsNotSet) {
@@ -234,7 +228,6 @@ TEST(CommandQueuePriorityExtensionTest, givenLegacyQueueCreationWithoutAnyExtens
 
     EXPECT_FALSE(queueProperties.priorityLevel.has_value());
     EXPECT_FALSE(queueProperties.copyOffloadHint);
-    EXPECT_FALSE(queueProperties.interruptHint);
 
     // Only the basic ze_command_queue_priority_t would be used, not the optional int
 }
