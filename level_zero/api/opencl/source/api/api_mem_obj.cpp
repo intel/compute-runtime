@@ -18,6 +18,7 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/mem_obj/buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/image.h"
+#include "level_zero/api/opencl/source/tracing/tracing_notify.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_imp.h"
@@ -31,7 +32,10 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
                                   size_t size,
                                   void *hostPtr,
                                   cl_int *errcodeRet) {
-    return clCreateBufferWithProperties(context, nullptr, flags, size, hostPtr, errcodeRet);
+    TRACING_ENTER(ClCreateBuffer, &context, &flags, &size, &hostPtr, &errcodeRet);
+    cl_mem tracingRetVal = clCreateBufferWithProperties(context, nullptr, flags, size, hostPtr, errcodeRet);
+    TRACING_EXIT(ClCreateBuffer, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
@@ -40,6 +44,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                                                 size_t size,
                                                 void *hostPtr,
                                                 cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateBufferWithProperties, &context, &properties, &flags, &size, &hostPtr, &errcodeRet);
     NEO::LEO::MemoryProperties memoryProperties{};
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
@@ -49,7 +54,9 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
         if (errcodeRet) {
             *errcodeRet = CL_INVALID_VALUE;
         }
-        return nullptr;
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateBufferWithProperties, &tracingRetVal);
+        return tracingRetVal;
     }
 
     if ((false == NEO::LEO::ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
@@ -57,7 +64,9 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
         if (errcodeRet) {
             *errcodeRet = CL_INVALID_VALUE;
         }
-        return nullptr;
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateBufferWithProperties, &tracingRetVal);
+        return tracingRetVal;
     }
 
     void *ptr = nullptr;
@@ -117,7 +126,9 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     }
 
     if (ret != ZE_RESULT_SUCCESS) {
-        return nullptr;
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateBufferWithProperties, &tracingRetVal);
+        return tracingRetVal;
     }
 
     if (copyFromHostPtr) {
@@ -137,7 +148,9 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     auto buffer = new NEO::LEO::Buffer(NEO::LEO::castToObject<NEO::LEO::Context>(context), memoryProperties, flags, ptr, cpuPtr, size, inputMemObjFound);
     buffer->storeProperties(properties);
     buffer->setUsesSvm(usesSvm);
-    return buffer;
+    cl_mem tracingRetVal = buffer;
+    TRACING_EXIT(ClCreateBufferWithProperties, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
@@ -146,7 +159,10 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
                                                      size_t size,
                                                      void *hostPtr,
                                                      cl_int *errcodeRet) {
-    return clCreateBufferWithProperties(context, properties, flags, size, hostPtr, errcodeRet);
+    TRACING_ENTER(ClCreateBufferWithPropertiesINTEL, &context, &properties, &flags, &size, &hostPtr, &errcodeRet);
+    cl_mem tracingRetVal = clCreateBufferWithProperties(context, properties, flags, size, hostPtr, errcodeRet);
+    TRACING_EXIT(ClCreateBufferWithPropertiesINTEL, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
@@ -154,6 +170,7 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
                                      cl_buffer_create_type bufferCreateType,
                                      const void *bufferCreateInfo,
                                      cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateSubBuffer, &buffer, &flags, &bufferCreateType, &bufferCreateInfo, &errcodeRet);
     auto parentBuffer = NEO::LEO::castToObject<NEO::LEO::Buffer>(buffer);
     const cl_buffer_region *region = reinterpret_cast<const cl_buffer_region *>(bufferCreateInfo);
     NEO::LEO::Buffer *subBuffer = nullptr;
@@ -165,7 +182,9 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
     if (errcodeRet) {
         *errcodeRet = ret;
     }
-    return subBuffer;
+    cl_mem tracingRetVal = subBuffer;
+    TRACING_EXIT(ClCreateSubBuffer, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_mem CL_API_CALL clCreateImage(cl_context context,
@@ -174,7 +193,10 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
                                  const cl_image_desc *imageDesc,
                                  void *hostPtr,
                                  cl_int *errcodeRet) {
-    return clCreateImageWithProperties(context, nullptr, flags, imageFormat, imageDesc, hostPtr, errcodeRet);
+    TRACING_ENTER(ClCreateImage, &context, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
+    cl_mem tracingRetVal = clCreateImageWithProperties(context, nullptr, flags, imageFormat, imageDesc, hostPtr, errcodeRet);
+    TRACING_EXIT(ClCreateImage, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
@@ -184,6 +206,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                                                const cl_image_desc *imageDesc,
                                                void *hostPtr,
                                                cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateImageWithProperties, &context, &properties, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
     NEO::LEO::MemoryProperties memoryProperties{};
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_flags_intel emptyFlagsIntel = 0;
@@ -193,7 +216,9 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         if (errcodeRet) {
             *errcodeRet = CL_INVALID_VALUE;
         }
-        return nullptr;
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
     }
 
     if ((false == NEO::LEO::ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
@@ -201,7 +226,9 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         if (errcodeRet) {
             *errcodeRet = CL_INVALID_VALUE;
         }
-        return nullptr;
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
     }
 
     ze_image_handle_t imageHandle{};
@@ -326,7 +353,9 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     image->setHostPtrRowPitch(imageDesc->image_row_pitch);
     image->setHostPtrSlicePitch(imageDesc->image_slice_pitch);
 
-    return image;
+    cl_mem tracingRetVal = image;
+    TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
@@ -336,7 +365,10 @@ cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
                                                     const cl_image_desc *imageDesc,
                                                     void *hostPtr,
                                                     cl_int *errcodeRet) {
-    return clCreateImageWithProperties(context, properties, flags, imageFormat, imageDesc, hostPtr, errcodeRet);
+    TRACING_ENTER(ClCreateImageWithPropertiesINTEL, &context, &properties, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
+    cl_mem tracingRetVal = clCreateImageWithProperties(context, properties, flags, imageFormat, imageDesc, hostPtr, errcodeRet);
+    TRACING_EXIT(ClCreateImageWithPropertiesINTEL, &tracingRetVal);
+    return tracingRetVal;
 }
 
 // deprecated OpenCL 1.1
@@ -348,12 +380,15 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
                                    size_t imageRowPitch,
                                    void *hostPtr,
                                    cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateImage2D, &context, &flags, &imageFormat, &imageWidth, &imageHeight, &imageRowPitch, &hostPtr, &errcodeRet);
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = imageWidth;
     imageDesc.image_height = imageHeight;
     imageDesc.image_row_pitch = imageRowPitch;
-    return clCreateImageWithProperties(context, nullptr, flags, imageFormat, &imageDesc, hostPtr, errcodeRet);
+    cl_mem tracingRetVal = clCreateImageWithProperties(context, nullptr, flags, imageFormat, &imageDesc, hostPtr, errcodeRet);
+    TRACING_EXIT(ClCreateImage2D, &tracingRetVal);
+    return tracingRetVal;
 }
 
 // deprecated OpenCL 1.1
@@ -367,6 +402,7 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
                                    size_t imageSlicePitch,
                                    void *hostPtr,
                                    cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateImage3D, &context, &flags, &imageFormat, &imageWidth, &imageHeight, &imageDepth, &imageRowPitch, &imageSlicePitch, &hostPtr, &errcodeRet);
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
     imageDesc.image_width = imageWidth;
@@ -374,27 +410,37 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
     imageDesc.image_depth = imageDepth;
     imageDesc.image_row_pitch = imageRowPitch;
     imageDesc.image_slice_pitch = imageSlicePitch;
-    return clCreateImageWithProperties(context, nullptr, flags, imageFormat, &imageDesc, hostPtr, errcodeRet);
+    cl_mem tracingRetVal = clCreateImageWithProperties(context, nullptr, flags, imageFormat, &imageDesc, hostPtr, errcodeRet);
+    TRACING_EXIT(ClCreateImage3D, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clRetainMemObject(cl_mem memobj) {
+    TRACING_ENTER(ClRetainMemObject, &memobj);
     auto [retVal, pMemObj] = NEO::LEO::validateAndCast(std::make_tuple(memobj));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClRetainMemObject, &retVal);
         return retVal;
     }
 
     pMemObj->incRefApi();
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClRetainMemObject, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clReleaseMemObject(cl_mem memobj) {
+    TRACING_ENTER(ClReleaseMemObject, &memobj);
     auto [retVal, pMemObj] = NEO::LEO::validateAndCast(std::make_tuple(memobj));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClReleaseMemObject, &retVal);
         return retVal;
     }
 
     pMemObj->decRefApi();
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClReleaseMemObject, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
@@ -403,17 +449,21 @@ cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
                                               cl_uint numEntries,
                                               cl_image_format *imageFormats,
                                               cl_uint *numImageFormats) {
+    TRACING_ENTER(ClGetSupportedImageFormats, &context, &flags, &imageType, &numEntries, &imageFormats, &numImageFormats);
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetSupportedImageFormats, &retVal);
         return retVal;
     }
 
-    return pContext->getSupportedImageFormats(&pContext->getClDevice()->getDevice(),
-                                              flags,
-                                              imageType,
-                                              numEntries,
-                                              imageFormats,
-                                              numImageFormats);
+    cl_int tracingRetVal = pContext->getSupportedImageFormats(&pContext->getClDevice()->getDevice(),
+                                                              flags,
+                                                              imageType,
+                                                              numEntries,
+                                                              imageFormats,
+                                                              numImageFormats);
+    TRACING_EXIT(ClGetSupportedImageFormats, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetMemObjectInfo(cl_mem memobj,
@@ -421,12 +471,16 @@ cl_int CL_API_CALL clGetMemObjectInfo(cl_mem memobj,
                                       size_t paramValueSize,
                                       void *paramValue,
                                       size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetMemObjectInfo, &memobj, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pMemObj] = NEO::LEO::validateAndCast(std::make_tuple(memobj));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetMemObjectInfo, &retVal);
         return retVal;
     }
 
-    return pMemObj->getMemObjectInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int tracingRetVal = pMemObj->getMemObjectInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetMemObjectInfo, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetImageInfo(cl_mem image,
@@ -434,12 +488,16 @@ cl_int CL_API_CALL clGetImageInfo(cl_mem image,
                                   size_t paramValueSize,
                                   void *paramValue,
                                   size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetImageInfo, &image, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pImage] = NEO::LEO::validateAndCast(std::make_tuple(NEO::LEO::ImageObj{image}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetImageInfo, &retVal);
         return retVal;
     }
 
-    return pImage->getImageInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int tracingRetVal = pImage->getImageInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetImageInfo, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
@@ -447,19 +505,26 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
                                          const cl_image_desc *imageDesc,
                                          size_t *imageRowPitch,
                                          size_t *imageSlicePitch) {
-    return CL_INVALID_OPERATION;
+    TRACING_ENTER(ClGetImageParamsINTEL, &context, &imageFormat, &imageDesc, &imageRowPitch, &imageSlicePitch);
+    cl_int tracingRetVal = CL_INVALID_OPERATION;
+    TRACING_EXIT(ClGetImageParamsINTEL, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clSetMemObjectDestructorCallback(cl_mem memobj,
                                                     void(CL_CALLBACK *funcNotify)(cl_mem, void *),
                                                     void *userData) {
+    TRACING_ENTER(ClSetMemObjectDestructorCallback, &memobj, &funcNotify, &userData);
     auto [retVal, pMemObj] = NEO::LEO::validateAndCast(std::make_tuple(memobj), std::make_tuple(reinterpret_cast<void *>(funcNotify)));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClSetMemObjectDestructorCallback, &retVal);
         return retVal;
     }
 
     pMemObj->addCallback(funcNotify, userData);
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClSetMemObjectDestructorCallback, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_mem CL_API_CALL clCreatePipe(cl_context context,
@@ -468,8 +533,11 @@ cl_mem CL_API_CALL clCreatePipe(cl_context context,
                                 cl_uint pipeMaxPackets,
                                 const cl_pipe_properties *properties,
                                 cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreatePipe, &context, &flags, &pipePacketSize, &pipeMaxPackets, &properties, &errcodeRet);
     ErrorCodeHelper err(errcodeRet, CL_INVALID_OPERATION);
-    return nullptr;
+    cl_mem tracingRetVal = nullptr;
+    TRACING_EXIT(ClCreatePipe, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
@@ -477,5 +545,8 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
                                  size_t paramValueSize,
                                  void *paramValue,
                                  size_t *paramValueSizeRet) {
-    return CL_INVALID_MEM_OBJECT;
+    TRACING_ENTER(ClGetPipeInfo, &pipe, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
+    TRACING_EXIT(ClGetPipeInfo, &tracingRetVal);
+    return tracingRetVal;
 }

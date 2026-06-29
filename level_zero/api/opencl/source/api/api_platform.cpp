@@ -15,6 +15,8 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/platform/platform.h"
 #include "level_zero/api/opencl/source/sharings/sharing_factory.h"
+#include "level_zero/api/opencl/source/tracing/tracing_api.h"
+#include "level_zero/api/opencl/source/tracing/tracing_notify.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
@@ -22,9 +24,12 @@
 cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                                     cl_platform_id *platforms,
                                     cl_uint *numPlatforms) {
+    TRACING_ENTER(ClGetPlatformIDs, &numEntries, &platforms, &numPlatforms);
     if ((numEntries == 0 && platforms != nullptr) ||
         (numEntries > 0 && platforms == nullptr && numPlatforms == nullptr)) [[unlikely]] {
-        return CL_INVALID_VALUE;
+        cl_int retVal = CL_INVALID_VALUE;
+        TRACING_EXIT(ClGetPlatformIDs, &retVal);
+        return retVal;
     }
 
     auto enableLEOFlag = NEO::debugManager.flags.EnableLEO.get();
@@ -32,14 +37,18 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         if (numPlatforms) {
             *numPlatforms = 0;
         }
-        return CL_SUCCESS;
+        cl_int retVal = CL_SUCCESS;
+        TRACING_EXIT(ClGetPlatformIDs, &retVal);
+        return retVal;
     }
 
     if (!NEO::LEO::platformsImpl) {
         if (numPlatforms) {
             *numPlatforms = 0;
         }
-        return CL_SUCCESS;
+        cl_int retVal = CL_SUCCESS;
+        TRACING_EXIT(ClGetPlatformIDs, &retVal);
+        return retVal;
     }
 
     if (NEO::LEO::platformsImpl->empty()) {
@@ -49,7 +58,9 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         ze_result_t ret = zeInitDrivers(&driverCount, nullptr, &desc);
 
         if (ret != ZE_RESULT_SUCCESS) {
-            return L0ToClResultMapper(ret);
+            cl_int retVal = L0ToClResultMapper(ret);
+            TRACING_EXIT(ClGetPlatformIDs, &retVal);
+            return retVal;
         }
 
         std::vector<ze_driver_handle_t> driverHandles(driverCount);
@@ -78,7 +89,9 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             if (numPlatforms) {
                 *numPlatforms = 0;
             }
-            return CL_SUCCESS;
+            cl_int retVal = CL_SUCCESS;
+            TRACING_EXIT(ClGetPlatformIDs, &retVal);
+            return retVal;
         }
     }
 
@@ -92,13 +105,18 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         }
     }
 
-    return CL_SUCCESS;
+    cl_int retVal = CL_SUCCESS;
+    TRACING_EXIT(ClGetPlatformIDs, &retVal);
+    return retVal;
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clIcdGetPlatformIDsKHR(cl_uint numEntries,
                                                        cl_platform_id *platforms,
                                                        cl_uint *numPlatforms) {
-    return clGetPlatformIDs(numEntries, platforms, numPlatforms);
+    TRACING_ENTER(ClIcdGetPlatformIDsKHR, &numEntries, &platforms, &numPlatforms);
+    cl_int retVal = clGetPlatformIDs(numEntries, platforms, numPlatforms);
+    TRACING_EXIT(ClIcdGetPlatformIDsKHR, &retVal);
+    return retVal;
 }
 
 cl_int CL_API_CALL clGetPlatformInfo(cl_platform_id platform,
@@ -106,16 +124,22 @@ cl_int CL_API_CALL clGetPlatformInfo(cl_platform_id platform,
                                      size_t paramValueSize,
                                      void *paramValue,
                                      size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetPlatformInfo, &platform, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pPlatform] = NEO::LEO::validateAndCast(std::make_tuple(platform));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetPlatformInfo, &retVal);
         return retVal;
     }
 
-    return pPlatform->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int ret = pPlatform->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetPlatformInfo, &ret);
+    return ret;
 }
 
 cl_int CL_API_CALL clUnloadPlatformCompiler(cl_platform_id platform) {
+    TRACING_ENTER(ClUnloadPlatformCompiler, &platform);
     auto [retVal, pPlatform] = NEO::LEO::validateAndCast(std::make_tuple(platform));
+    TRACING_EXIT(ClUnloadPlatformCompiler, &retVal);
     return retVal;
 }
 
@@ -123,14 +147,16 @@ cl_int CL_API_CALL clUnloadCompiler() {
     return CL_SUCCESS;
 }
 
-#define RETURN_FUNC_PTR_IF_EXIST(name)                  \
-    {                                                   \
-        if (!strcmp(funcName, #name)) {                 \
-            void *ret = reinterpret_cast<void *>(name); \
-            return ret;                                 \
-        }                                               \
+#define RETURN_FUNC_PTR_IF_EXIST(name)                                                    \
+    {                                                                                     \
+        if (!strcmp(funcName, #name)) {                                                   \
+            void *ret = reinterpret_cast<void *>(name);                                   \
+            TRACING_EXIT(ClGetExtensionFunctionAddress, reinterpret_cast<void **>(&ret)); \
+            return ret;                                                                   \
+        }                                                                                 \
     }
 void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
+    TRACING_ENTER(ClGetExtensionFunctionAddress, &funcName);
     // Support an internal call by the ICD
     RETURN_FUNC_PTR_IF_EXIST(clIcdGetPlatformIDsKHR);
 
@@ -146,6 +172,13 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clCreateImageWithPropertiesINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clAddCommentINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueVerifyMemoryINTEL);
+
+    RETURN_FUNC_PTR_IF_EXIST(clCreateTracingHandleINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clSetTracingPointINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clDestroyTracingHandleINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clEnableTracingINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clDisableTracingINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clGetTracingStateINTEL);
 
     RETURN_FUNC_PTR_IF_EXIST(clHostMemAllocINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clDeviceMemAllocINTEL);
@@ -170,6 +203,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
 
     void *ret = NEO::LEO::sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {
+        TRACING_EXIT(ClGetExtensionFunctionAddress, &ret);
         return ret;
     }
 
@@ -182,11 +216,15 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSize);
     RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSizeKHR);
     ret = NEO::getAdditionalExtensionFunctionAddress(funcName);
+    TRACING_EXIT(ClGetExtensionFunctionAddress, &ret);
     return ret;
 }
 
 // OpenCL 1.2
 void *CL_API_CALL clGetExtensionFunctionAddressForPlatform(cl_platform_id platform,
                                                            const char *funcName) {
-    return clGetExtensionFunctionAddress(funcName);
+    TRACING_ENTER(ClGetExtensionFunctionAddressForPlatform, &platform, &funcName);
+    void *ret = clGetExtensionFunctionAddress(funcName);
+    TRACING_EXIT(ClGetExtensionFunctionAddressForPlatform, &ret);
+    return ret;
 }

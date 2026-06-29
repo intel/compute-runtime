@@ -13,6 +13,7 @@
 #include "level_zero/api/opencl/source/helpers/cl_validators.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/sampler/sampler.h"
+#include "level_zero/api/opencl/source/tracing/tracing_notify.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 #include <level_zero/ze_api.h>
 
@@ -25,6 +26,7 @@ cl_sampler CL_API_CALL clCreateSampler(cl_context context,
                                        cl_addressing_mode addressingMode,
                                        cl_filter_mode filterMode,
                                        cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateSampler, &context, &normalizedCoords, &addressingMode, &filterMode, &errcodeRet);
     cl_sampler_properties samplerProperties[] = {CL_SAMPLER_NORMALIZED_COORDS, normalizedCoords,
                                                  CL_SAMPLER_ADDRESSING_MODE, addressingMode,
                                                  CL_SAMPLER_FILTER_MODE, filterMode,
@@ -35,17 +37,21 @@ cl_sampler CL_API_CALL clCreateSampler(cl_context context,
         NEO::LEO::castToObject<NEO::LEO::Sampler>(sampler)->resetProperties();
     }
 
+    TRACING_EXIT(ClCreateSampler, &sampler);
     return sampler;
 }
 
 cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
                                                      const cl_sampler_properties *samplerProperties,
                                                      cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateSamplerWithProperties, &context, &samplerProperties, &errcodeRet);
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         err.set(retVal);
-        return nullptr;
+        cl_sampler tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateSamplerWithProperties, &tracingRetVal);
+        return tracingRetVal;
     }
 
     ze_sampler_desc_t samplerDesc{ZE_STRUCTURE_TYPE_SAMPLER_DESC};
@@ -84,7 +90,9 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
                     break;
                 default:
                     err.set(CL_INVALID_PROPERTY);
-                    return nullptr;
+                    cl_sampler tracingRetVal = nullptr;
+                    TRACING_EXIT(ClCreateSamplerWithProperties, &tracingRetVal);
+                    return tracingRetVal;
                 }
                 break;
 
@@ -98,7 +106,9 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
                     break;
                 default:
                     err.set(CL_INVALID_PROPERTY);
-                    return nullptr;
+                    cl_sampler tracingRetVal = nullptr;
+                    TRACING_EXIT(ClCreateSamplerWithProperties, &tracingRetVal);
+                    return tracingRetVal;
                 }
                 break;
 
@@ -112,7 +122,9 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
                     break;
                 default:
                     err.set(CL_INVALID_PROPERTY);
-                    return nullptr;
+                    cl_sampler tracingRetVal = nullptr;
+                    TRACING_EXIT(ClCreateSamplerWithProperties, &tracingRetVal);
+                    return tracingRetVal;
                 }
                 break;
             case CL_SAMPLER_LOD_MIN_KHR: {
@@ -125,7 +137,9 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
             }
             default:
                 err.set(CL_INVALID_PROPERTY);
-                return nullptr;
+                cl_sampler tracingRetVal = nullptr;
+                TRACING_EXIT(ClCreateSamplerWithProperties, &tracingRetVal);
+                return tracingRetVal;
             }
         }
     }
@@ -146,32 +160,44 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
                 zeSamplerDestroy(h);
             }
             err.set(L0ToClResultMapper(createResult));
-            return nullptr;
+            cl_sampler tracingRetVal = nullptr;
+            TRACING_EXIT(ClCreateSamplerWithProperties, &tracingRetVal);
+            return tracingRetVal;
         }
         samplerHandles[rootDeviceIndex] = handle;
     }
 
-    return new NEO::LEO::Sampler(pContext, std::move(samplerHandles), samplerProperties);
+    cl_sampler tracingRetVal = new NEO::LEO::Sampler(pContext, std::move(samplerHandles), samplerProperties);
+    TRACING_EXIT(ClCreateSamplerWithProperties, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clRetainSampler(cl_sampler sampler) {
+    TRACING_ENTER(ClRetainSampler, &sampler);
     auto [retVal, pSampler] = NEO::LEO::validateAndCast(std::make_tuple(sampler));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClRetainSampler, &retVal);
         return retVal;
     }
 
     pSampler->incRefApi();
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClRetainSampler, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clReleaseSampler(cl_sampler sampler) {
+    TRACING_ENTER(ClReleaseSampler, &sampler);
     auto [retVal, pSampler] = NEO::LEO::validateAndCast(std::make_tuple(sampler));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClReleaseSampler, &retVal);
         return retVal;
     }
 
     pSampler->decRefApi();
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClReleaseSampler, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetSamplerInfo(cl_sampler sampler,
@@ -179,10 +205,14 @@ cl_int CL_API_CALL clGetSamplerInfo(cl_sampler sampler,
                                     size_t paramValueSize,
                                     void *paramValue,
                                     size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetSamplerInfo, &sampler, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pSampler] = NEO::LEO::validateAndCast(std::make_tuple(sampler));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetSamplerInfo, &retVal);
         return retVal;
     }
 
-    return pSampler->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int tracingRetVal = pSampler->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetSamplerInfo, &tracingRetVal);
+    return tracingRetVal;
 }

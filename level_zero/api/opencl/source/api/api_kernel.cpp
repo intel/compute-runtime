@@ -18,6 +18,7 @@
 #include "level_zero/api/opencl/source/mem_obj/image.h"
 #include "level_zero/api/opencl/source/program/program.h"
 #include "level_zero/api/opencl/source/sampler/sampler.h"
+#include "level_zero/api/opencl/source/tracing/tracing_notify.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
@@ -59,17 +60,22 @@ cl_int getKernelSuggestedLocalWorkSizeImpl(NEO::LEO::CommandQueue *commandQueue,
 cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
                                      const char *kernelName,
                                      cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateKernel, &clProgram, &kernelName, &errcodeRet);
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     auto [retVal, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(clProgram), std::make_tuple(const_cast<char *>(kernelName)));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         err.set(retVal);
-        return nullptr;
+        cl_kernel tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateKernel, &tracingRetVal);
+        return tracingRetVal;
     }
 
     if (pProgram->getModuleHandles().empty()) [[unlikely]] {
         err.set(CL_INVALID_PROGRAM_EXECUTABLE);
-        return nullptr;
+        cl_kernel tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateKernel, &tracingRetVal);
+        return tracingRetVal;
     }
 
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC, nullptr, 0, kernelName};
@@ -83,20 +89,26 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
                 zeKernelDestroy(handle);
             }
             err.set(L0ToClResultMapper(ret));
-            return nullptr;
+            cl_kernel tracingRetVal = nullptr;
+            TRACING_EXIT(ClCreateKernel, &tracingRetVal);
+            return tracingRetVal;
         }
         kernelHandles[rootDeviceIndex] = kernelHandle;
     }
 
-    return new NEO::LEO::Kernel(std::move(kernelHandles), pProgram);
+    cl_kernel tracingRetVal = new NEO::LEO::Kernel(std::move(kernelHandles), pProgram);
+    TRACING_EXIT(ClCreateKernel, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                                             cl_uint numKernels,
                                             cl_kernel *kernels,
                                             cl_uint *numKernelsRet) {
+    TRACING_ENTER(ClCreateKernelsInProgram, &clProgram, &numKernels, &kernels, &numKernelsRet);
     auto [retVal, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(clProgram));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClCreateKernelsInProgram, &retVal);
         return retVal;
     }
 
@@ -105,7 +117,9 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
 
     if (kernels) [[likely]] {
         if (numKernels < numUserKernels) [[unlikely]] {
-            return CL_INVALID_VALUE;
+            cl_int tracingRetVal = CL_INVALID_VALUE;
+            TRACING_EXIT(ClCreateKernelsInProgram, &tracingRetVal);
+            return tracingRetVal;
         }
 
         size_t i = 0u;
@@ -113,6 +127,7 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
             cl_int ret = CL_SUCCESS;
             kernels[i++] = clCreateKernel(clProgram, kernelName, &ret);
             if (ret != CL_SUCCESS) [[unlikely]] {
+                TRACING_EXIT(ClCreateKernelsInProgram, &ret);
                 return ret;
             }
         }
@@ -122,83 +137,115 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
         *numKernelsRet = numUserKernels;
     }
 
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClCreateKernelsInProgram, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clRetainKernel(cl_kernel kernel) {
+    TRACING_ENTER(ClRetainKernel, &kernel);
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClRetainKernel, &retVal);
         return retVal;
     }
 
     pKernel->incRefApi();
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClRetainKernel, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clReleaseKernel(cl_kernel kernel) {
+    TRACING_ENTER(ClReleaseKernel, &kernel);
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClReleaseKernel, &retVal);
         return retVal;
     }
 
     pKernel->decRefApi();
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClReleaseKernel, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
                                   cl_uint argIndex,
                                   size_t argSize,
                                   const void *argValue) {
+    TRACING_ENTER(ClSetKernelArg, &kernel, &argIndex, &argSize, &argValue);
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClSetKernelArg, &retVal);
         return retVal;
     }
 
     if (argIndex >= pKernel->getNumArgs()) [[unlikely]] {
-        return CL_INVALID_ARG_INDEX;
+        cl_int tracingRetVal = CL_INVALID_ARG_INDEX;
+        TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+        return tracingRetVal;
     }
     pKernel->markArgAsSet(argIndex);
     pKernel->clearImageArg(argIndex);
 
     const auto &argDescriptor = pKernel->getL0Object()->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
     if (argDescriptor.type == NEO::ArgDescriptor::argTValue) [[likely]] {
-        return pKernel->setArgumentValue(argIndex, argSize, argValue);
+        cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, argSize, argValue);
+        TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+        return tracingRetVal;
     } else if (argDescriptor.type == NEO::ArgDescriptor::argTPointer) {
         auto clMem = reinterpret_cast<const cl_mem *>(argValue);
         if (clMem && *clMem) [[likely]] {
             if (argSize != sizeof(cl_mem)) [[unlikely]] {
-                return CL_INVALID_ARG_SIZE;
+                cl_int tracingRetVal = CL_INVALID_ARG_SIZE;
+                TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+                return tracingRetVal;
             }
 
             auto pBuffer = NEO::LEO::castToObject<const NEO::LEO::Buffer>(*reinterpret_cast<const cl_mem *>(argValue));
             if (!pBuffer) {
-                return CL_INVALID_MEM_OBJECT;
+                cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
+                TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+                return tracingRetVal;
             }
 
             const auto ptr = pBuffer->getUsmPtr();
-            return pKernel->setArgumentValue(argIndex, sizeof(ptr), &ptr);
+            cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, sizeof(ptr), &ptr);
+            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+            return tracingRetVal;
         } else {
-            return pKernel->setArgumentValue(argIndex, argSize, nullptr);
+            cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, argSize, nullptr);
+            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+            return tracingRetVal;
         }
     } else if (argDescriptor.type == NEO::ArgDescriptor::argTImage) {
         if (argSize != sizeof(cl_mem)) [[unlikely]] {
-            return CL_INVALID_ARG_SIZE;
+            cl_int tracingRetVal = CL_INVALID_ARG_SIZE;
+            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+            return tracingRetVal;
         }
 
         if (!argValue) [[unlikely]] {
-            return CL_INVALID_MEM_OBJECT;
+            cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
+            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+            return tracingRetVal;
         }
 
         auto pImage = NEO::LEO::castToObject<NEO::LEO::Image>(*reinterpret_cast<const cl_mem *>(argValue));
         if (!pImage) {
-            return CL_INVALID_MEM_OBJECT;
+            cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
+            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+            return tracingRetVal;
         }
 
         auto accessQualifier = argDescriptor.getTraits().accessQualifier;
         cl_mem_flags imageFlags = pImage->getFlags();
         if ((accessQualifier == NEO::KernelArgMetadata::AccessReadOnly && ((imageFlags | CL_MEM_WRITE_ONLY) == imageFlags)) ||
             (accessQualifier == NEO::KernelArgMetadata::AccessWriteOnly && ((imageFlags | CL_MEM_READ_ONLY) == imageFlags))) {
-            return CL_INVALID_ARG_VALUE;
+            cl_int tracingRetVal = CL_INVALID_ARG_VALUE;
+            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+            return tracingRetVal;
         }
 
         cl_int result = CL_SUCCESS;
@@ -210,19 +257,26 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
             }
         }
         pKernel->setImageArg(argIndex, pImage);
+        TRACING_EXIT(ClSetKernelArg, &result);
         return result;
     } else if (argDescriptor.type == NEO::ArgDescriptor::argTSampler) {
         if (argSize != sizeof(cl_sampler)) [[unlikely]] {
-            return CL_INVALID_ARG_SIZE;
+            cl_int tracingRetVal = CL_INVALID_ARG_SIZE;
+            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+            return tracingRetVal;
         }
 
         if (!argValue) [[unlikely]] {
-            return CL_INVALID_SAMPLER;
+            cl_int tracingRetVal = CL_INVALID_SAMPLER;
+            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+            return tracingRetVal;
         }
 
         auto pSampler = NEO::LEO::castToObject<const NEO::LEO::Sampler>(*reinterpret_cast<const cl_sampler *>(argValue));
         if (!pSampler) {
-            return CL_INVALID_SAMPLER;
+            cl_int tracingRetVal = CL_INVALID_SAMPLER;
+            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+            return tracingRetVal;
         }
 
         cl_int result = CL_SUCCESS;
@@ -233,42 +287,56 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
                 result = ret;
             }
         }
+        TRACING_EXIT(ClSetKernelArg, &result);
         return result;
     } else {
-        return pKernel->setArgumentValue(argIndex, argSize, argValue);
+        cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, argSize, argValue);
+        TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
+        return tracingRetVal;
     }
 }
 
 cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                                             cl_uint argIndex,
                                             const void *argValue) {
+    TRACING_ENTER(ClSetKernelArgSvmPointer, &kernel, &argIndex, &argValue);
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
         return retVal;
     }
 
     if (argIndex >= pKernel->getNumArgs()) [[unlikely]] {
-        return CL_INVALID_ARG_INDEX;
+        cl_int tracingRetVal = CL_INVALID_ARG_INDEX;
+        TRACING_EXIT(ClSetKernelArgSvmPointer, &tracingRetVal);
+        return tracingRetVal;
     }
     pKernel->markArgAsSet(argIndex);
     pKernel->clearImageArg(argIndex);
 
-    return pKernel->setArgumentValue(argIndex, sizeof(argValue), &argValue);
+    cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, sizeof(argValue), &argValue);
+    TRACING_EXIT(ClSetKernelArgSvmPointer, &tracingRetVal);
+    return tracingRetVal;
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clSetKernelArgMemPointerINTEL(
     cl_kernel kernel,
     cl_uint argIndex,
     const void *argValue) {
-    return clSetKernelArgSVMPointer(kernel, argIndex, argValue);
+    TRACING_ENTER(ClSetKernelArgMemPointerINTEL, &kernel, &argIndex, &argValue);
+    cl_int tracingRetVal = clSetKernelArgSVMPointer(kernel, argIndex, argValue);
+    TRACING_EXIT(ClSetKernelArgMemPointerINTEL, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
                                        cl_kernel_exec_info paramName,
                                        size_t paramValueSize,
                                        const void *paramValue) {
+    TRACING_ENTER(ClSetKernelExecInfo, &kernel, &paramName, &paramValueSize, &paramValue);
     auto [validationResult, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (validationResult != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClSetKernelExecInfo, &validationResult);
         return validationResult;
     }
 
@@ -279,7 +347,9 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:
         if (nullptr == paramValue ||
             sizeof(cl_bool) != paramValueSize) [[unlikely]] {
-            return CL_INVALID_VALUE;
+            cl_int tracingRetVal = CL_INVALID_VALUE;
+            TRACING_EXIT(ClSetKernelExecInfo, &tracingRetVal);
+            return tracingRetVal;
         }
         retVal = pKernel->setIndirectAccess(paramName, *static_cast<const cl_bool *>(paramValue));
         break;
@@ -295,7 +365,9 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     case CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL:
         if (nullptr == paramValue ||
             sizeof(uint32_t) != paramValueSize) [[unlikely]] {
-            return CL_INVALID_VALUE;
+            cl_int tracingRetVal = CL_INVALID_VALUE;
+            TRACING_EXIT(ClSetKernelExecInfo, &tracingRetVal);
+            return tracingRetVal;
         }
         retVal = pKernel->setThreadArbitrationPolicy(*reinterpret_cast<const uint32_t *>(paramValue));
         break;
@@ -305,7 +377,9 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     case CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL:
         if (nullptr == paramValue ||
             sizeof(cl_execution_info_kernel_type_intel) != paramValueSize) [[unlikely]] {
-            return CL_INVALID_VALUE;
+            cl_int tracingRetVal = CL_INVALID_VALUE;
+            TRACING_EXIT(ClSetKernelExecInfo, &tracingRetVal);
+            return tracingRetVal;
         }
         retVal = pKernel->setKernelExecutionType(*reinterpret_cast<const cl_execution_info_kernel_type_intel *>(paramValue));
         break;
@@ -314,6 +388,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         break;
     }
 
+    TRACING_EXIT(ClSetKernelExecInfo, &retVal);
     return retVal;
 }
 
@@ -322,12 +397,16 @@ cl_int CL_API_CALL clGetKernelInfo(cl_kernel kernel,
                                    size_t paramValueSize,
                                    void *paramValue,
                                    size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetKernelInfo, &kernel, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetKernelInfo, &retVal);
         return retVal;
     }
 
-    return pKernel->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int tracingRetVal = pKernel->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetKernelInfo, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetKernelArgInfo(cl_kernel kernel,
@@ -336,12 +415,16 @@ cl_int CL_API_CALL clGetKernelArgInfo(cl_kernel kernel,
                                       size_t paramValueSize,
                                       void *paramValue,
                                       size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetKernelArgInfo, &kernel, &argIndx, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetKernelArgInfo, &retVal);
         return retVal;
     }
 
-    return pKernel->getArgInfo(argIndx, paramName, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int tracingRetVal = pKernel->getArgInfo(argIndx, paramName, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetKernelArgInfo, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetKernelWorkGroupInfo(cl_kernel kernel,
@@ -350,12 +433,16 @@ cl_int CL_API_CALL clGetKernelWorkGroupInfo(cl_kernel kernel,
                                             size_t paramValueSize,
                                             void *paramValue,
                                             size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetKernelWorkGroupInfo, &kernel, &device, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetKernelWorkGroupInfo, &retVal);
         return retVal;
     }
 
-    return pKernel->getWorkGroupInfo(device, paramName, 0u, nullptr, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int tracingRetVal = pKernel->getWorkGroupInfo(device, paramName, 0u, nullptr, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetKernelWorkGroupInfo, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
@@ -366,12 +453,16 @@ cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
                                            size_t paramValueSize,
                                            void *paramValue,
                                            size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetKernelSubGroupInfo, &kernel, &device, &paramName, &inputValueSize, &inputValue, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetKernelSubGroupInfo, &retVal);
         return retVal;
     }
 
-    return pKernel->getWorkGroupInfo(device, paramName, inputValueSize, inputValue, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int tracingRetVal = pKernel->getWorkGroupInfo(device, paramName, inputValueSize, inputValue, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetKernelSubGroupInfo, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
@@ -382,7 +473,10 @@ cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
                                               size_t paramValueSize,
                                               void *paramValue,
                                               size_t *paramValueSizeRet) {
-    return clGetKernelSubGroupInfo(kernel, device, paramName, inputValueSize, inputValue, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_ENTER(ClGetKernelSubGroupInfoKHR, &kernel, &device, &paramName, &inputValueSize, &inputValue, &paramValueSize, &paramValue, &paramValueSizeRet);
+    cl_int tracingRetVal = clGetKernelSubGroupInfo(kernel, device, paramName, inputValueSize, inputValue, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetKernelSubGroupInfoKHR, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue commandQueue,
@@ -391,12 +485,16 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
                                                           const size_t *globalWorkOffset,
                                                           const size_t *globalWorkSize,
                                                           size_t *suggestedLocalWorkSize) {
+    TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeINTEL, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
     auto [retVal, pCommandQueue, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue, kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeINTEL, &retVal);
         return retVal;
     }
 
-    return getKernelSuggestedLocalWorkSizeImpl(pCommandQueue, pKernel, workDim, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    cl_int tracingRetVal = getKernelSuggestedLocalWorkSizeImpl(pCommandQueue, pKernel, workDim, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeINTEL, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue commandQueue,
@@ -405,7 +503,10 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command
                                                         const size_t *globalWorkOffset,
                                                         const size_t *globalWorkSize,
                                                         size_t *suggestedLocalWorkSize) {
-    return clGetKernelSuggestedLocalWorkSizeINTEL(commandQueue, kernel, workDim, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeKHR, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
+    cl_int tracingRetVal = clGetKernelSuggestedLocalWorkSizeINTEL(commandQueue, kernel, workDim, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeKHR, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSize(cl_command_queue commandQueue,
@@ -414,12 +515,16 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSize(cl_command_queue commandQue
                                                      const size_t *globalWorkOffset,
                                                      const size_t *globalWorkSize,
                                                      size_t *suggestedLocalWorkSize) {
+    TRACING_ENTER(ClGetKernelSuggestedLocalWorkSize, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
     auto [retVal, pCommandQueue, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue, kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetKernelSuggestedLocalWorkSize, &retVal);
         return retVal;
     }
 
-    return getKernelSuggestedLocalWorkSizeImpl(pCommandQueue, pKernel, workDim, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    cl_int tracingRetVal = getKernelSuggestedLocalWorkSizeImpl(pCommandQueue, pKernel, workDim, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    TRACING_EXIT(ClGetKernelSuggestedLocalWorkSize, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetKernelMaxConcurrentWorkGroupCountINTEL(cl_command_queue commandQueue,
@@ -428,23 +533,32 @@ cl_int CL_API_CALL clGetKernelMaxConcurrentWorkGroupCountINTEL(cl_command_queue 
                                                                const size_t *globalWorkOffset,
                                                                const size_t *localWorkSize,
                                                                size_t *suggestedWorkGroupCount) {
+    TRACING_ENTER(ClGetKernelMaxConcurrentWorkGroupCountINTEL, &commandQueue, &kernel, &workDim, &globalWorkOffset, &localWorkSize, &suggestedWorkGroupCount);
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(kernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetKernelMaxConcurrentWorkGroupCountINTEL, &retVal);
         return retVal;
     }
 
-    return pKernel->getMaxConcurrentWorkGroupCount(workDim, localWorkSize, suggestedWorkGroupCount);
+    cl_int tracingRetVal = pKernel->getMaxConcurrentWorkGroupCount(workDim, localWorkSize, suggestedWorkGroupCount);
+    TRACING_EXIT(ClGetKernelMaxConcurrentWorkGroupCountINTEL, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
                                     cl_int *errcodeRet) {
+    TRACING_ENTER(ClCloneKernel, &sourceKernel, &errcodeRet);
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     auto [retVal, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(sourceKernel));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         err.set(retVal);
-        return nullptr;
+        cl_kernel tracingRetVal = nullptr;
+        TRACING_EXIT(ClCloneKernel, &tracingRetVal);
+        return tracingRetVal;
     }
 
-    return new NEO::LEO::Kernel(pKernel);
+    cl_kernel tracingRetVal = new NEO::LEO::Kernel(pKernel);
+    TRACING_EXIT(ClCloneKernel, &tracingRetVal);
+    return tracingRetVal;
 }

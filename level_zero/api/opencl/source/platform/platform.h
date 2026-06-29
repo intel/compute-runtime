@@ -46,9 +46,12 @@ class Platform : public BaseObject<_cl_platform_id> {
     const RootDeviceIndicesContainer &getRootDeviceIndices() const { return this->rootDeviceIndices; };
     const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const { return this->deviceBitfields; };
 
+    void tryNotifyGtpinInit();
+
   protected:
     std::unique_ptr<PlatformInfo> platformInfo{};
     std::once_flag initializeExtensionsWithVersionOnce;
+    std::once_flag oclInitGtpinOnce;
 
     std::vector<std::unique_ptr<ClDevice>> clDevices{};
 

@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/api/opencl/source/api/api.h"
+#include "level_zero/api/opencl/source/tracing/tracing_notify.h"
 
 #include "CL/cl.h"
 
@@ -15,12 +16,18 @@ cl_accelerator_intel CL_API_CALL clCreateAcceleratorINTEL(
     size_t descriptorSize,
     const void *descriptor,
     cl_int *errcodeRet) {
-    return nullptr;
+    TRACING_ENTER(ClCreateAcceleratorINTEL, &context, &acceleratorType, &descriptorSize, &descriptor, &errcodeRet);
+    cl_accelerator_intel accelerator = nullptr;
+    TRACING_EXIT(ClCreateAcceleratorINTEL, &accelerator);
+    return accelerator;
 }
 
 cl_int CL_API_CALL clRetainAcceleratorINTEL(
     cl_accelerator_intel accelerator) {
-    return CL_INVALID_OPERATION;
+    TRACING_ENTER(ClRetainAcceleratorINTEL, &accelerator);
+    cl_int retVal = CL_INVALID_OPERATION;
+    TRACING_EXIT(ClRetainAcceleratorINTEL, &retVal);
+    return retVal;
 }
 
 cl_int CL_API_CALL clGetAcceleratorInfoINTEL(
@@ -29,10 +36,16 @@ cl_int CL_API_CALL clGetAcceleratorInfoINTEL(
     size_t paramValueSize,
     void *paramValue,
     size_t *paramValueSizeRet) {
-    return CL_INVALID_OPERATION;
+    TRACING_ENTER(ClGetAcceleratorInfoINTEL, &accelerator, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    cl_int retVal = CL_INVALID_OPERATION;
+    TRACING_EXIT(ClGetAcceleratorInfoINTEL, &retVal);
+    return retVal;
 }
 
 cl_int CL_API_CALL clReleaseAcceleratorINTEL(
     cl_accelerator_intel accelerator) {
-    return CL_INVALID_OPERATION;
+    TRACING_ENTER(ClReleaseAcceleratorINTEL, &accelerator);
+    cl_int retVal = CL_INVALID_OPERATION;
+    TRACING_EXIT(ClReleaseAcceleratorINTEL, &retVal);
+    return retVal;
 }

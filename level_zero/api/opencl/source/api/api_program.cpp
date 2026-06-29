@@ -13,6 +13,7 @@
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/api/opencl/source/helpers/cl_validators.h"
 #include "level_zero/api/opencl/source/program/program.h"
+#include "level_zero/api/opencl/source/tracing/tracing_notify.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include <level_zero/ze_api.h>
@@ -24,20 +25,27 @@ cl_program CL_API_CALL clCreateProgramWithSource(cl_context context,
                                                  const char **strings,
                                                  const size_t *lengths,
                                                  cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateProgramWithSource, &context, &count, &strings, &lengths, &errcodeRet);
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context), std::make_tuple(const_cast<char **>(strings)));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         err.set(retVal);
-        return nullptr;
+        cl_program tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateProgramWithSource, &tracingRetVal);
+        return tracingRetVal;
     }
 
     if (count == 0) [[unlikely]] {
         err.set(CL_INVALID_VALUE);
-        return nullptr;
+        cl_program tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateProgramWithSource, &tracingRetVal);
+        return tracingRetVal;
     }
 
-    return new NEO::LEO::Program(pContext, count, strings, lengths);
+    cl_program tracingRetVal = new NEO::LEO::Program(pContext, count, strings, lengths);
+    TRACING_EXIT(ClCreateProgramWithSource, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_program CL_API_CALL clCreateProgramWithBinary(cl_context context,
@@ -47,13 +55,16 @@ cl_program CL_API_CALL clCreateProgramWithBinary(cl_context context,
                                                  const unsigned char **binaries,
                                                  cl_int *binaryStatus,
                                                  cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateProgramWithBinary, &context, &numDevices, &deviceList, &lengths, &binaries, &binaryStatus, &errcodeRet);
     auto [status, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
     if (status != CL_SUCCESS) {
         ErrorCodeHelper(errcodeRet, status);
         if (binaryStatus) {
             binaryStatus[0] = status;
         }
-        return new NEO::LEO::Program(nullptr);
+        cl_program tracingRetVal = new NEO::LEO::Program(nullptr);
+        TRACING_EXIT(ClCreateProgramWithBinary, &tracingRetVal);
+        return tracingRetVal;
     }
 
     if (lengths == nullptr ||
@@ -81,17 +92,22 @@ cl_program CL_API_CALL clCreateProgramWithBinary(cl_context context,
         binaryStatus[0] = status;
     }
     ErrorCodeHelper(errcodeRet, status);
-    return pProgram;
+    cl_program tracingRetVal = pProgram;
+    TRACING_EXIT(ClCreateProgramWithBinary, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_program CL_API_CALL clCreateProgramWithIL(cl_context context,
                                              const void *il,
                                              size_t length,
                                              cl_int *errcodeRet) {
+    TRACING_ENTER(ClCreateProgramWithIl, &context, &il, &length, &errcodeRet);
     auto [status, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
     if (status != CL_SUCCESS) {
         ErrorCodeHelper(errcodeRet, status);
-        return new NEO::LEO::Program(nullptr);
+        cl_program tracingRetVal = new NEO::LEO::Program(nullptr);
+        TRACING_EXIT(ClCreateProgramWithIl, &tracingRetVal);
+        return tracingRetVal;
     }
 
     if (il == nullptr) {
@@ -106,14 +122,19 @@ cl_program CL_API_CALL clCreateProgramWithIL(cl_context context,
     }
 
     ErrorCodeHelper(errcodeRet, status);
-    return pProgram;
+    cl_program tracingRetVal = pProgram;
+    TRACING_EXIT(ClCreateProgramWithIl, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
                                                 const void *il,
                                                 size_t length,
                                                 cl_int *errcodeRet) {
-    return clCreateProgramWithIL(context, il, length, errcodeRet);
+    TRACING_ENTER(ClCreateProgramWithILKHR, &context, &il, &length, &errcodeRet);
+    cl_program tracingRetVal = clCreateProgramWithIL(context, il, length, errcodeRet);
+    TRACING_EXIT(ClCreateProgramWithILKHR, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
@@ -121,27 +142,38 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
                                                          const cl_device_id *deviceList,
                                                          const char *kernelNames,
                                                          cl_int *errcodeRet) {
-    return nullptr;
+    TRACING_ENTER(ClCreateProgramWithBuiltInKernels, &context, &numDevices, &deviceList, &kernelNames, &errcodeRet);
+    cl_program tracingRetVal = nullptr;
+    TRACING_EXIT(ClCreateProgramWithBuiltInKernels, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clRetainProgram(cl_program program) {
+    TRACING_ENTER(ClRetainProgram, &program);
     auto [retVal, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(program));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClRetainProgram, &retVal);
         return retVal;
     }
 
     pProgram->incRefApi();
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClRetainProgram, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clReleaseProgram(cl_program program) {
+    TRACING_ENTER(ClReleaseProgram, &program);
     auto [retVal, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(program));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClReleaseProgram, &retVal);
         return retVal;
     }
 
     pProgram->decRefApi();
-    return CL_SUCCESS;
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClReleaseProgram, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clBuildProgram(cl_program program,
@@ -150,16 +182,22 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
                                   const char *options,
                                   void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
                                   void *userData) {
+    TRACING_ENTER(ClBuildProgram, &program, &numDevices, &deviceList, &options, &funcNotify, &userData);
     auto [validationResult, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(program));
     if (validationResult != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClBuildProgram, &validationResult);
         return validationResult;
     }
 
     if (!NEO::LEO::Program::isValidCallback(funcNotify, userData)) [[unlikely]] {
-        return CL_INVALID_VALUE;
+        cl_int tracingRetVal = CL_INVALID_VALUE;
+        TRACING_EXIT(ClBuildProgram, &tracingRetVal);
+        return tracingRetVal;
     }
 
-    return pProgram->build(options, funcNotify, userData);
+    cl_int tracingRetVal = pProgram->build(options, funcNotify, userData);
+    TRACING_EXIT(ClBuildProgram, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clCompileProgram(cl_program program,
@@ -171,16 +209,22 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
                                     const char **headerIncludeNames,
                                     void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
                                     void *userData) {
+    TRACING_ENTER(ClCompileProgram, &program, &numDevices, &deviceList, &options, &numInputHeaders, &inputHeaders, &headerIncludeNames, &funcNotify, &userData);
     auto [validationResult, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(program));
     if (validationResult != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClCompileProgram, &validationResult);
         return validationResult;
     }
 
     if (!NEO::LEO::Program::isValidCallback(funcNotify, userData)) [[unlikely]] {
-        return CL_INVALID_VALUE;
+        cl_int tracingRetVal = CL_INVALID_VALUE;
+        TRACING_EXIT(ClCompileProgram, &tracingRetVal);
+        return tracingRetVal;
     }
 
-    return pProgram->compile(options, numInputHeaders, inputHeaders, headerIncludeNames, funcNotify, userData);
+    cl_int tracingRetVal = pProgram->compile(options, numInputHeaders, inputHeaders, headerIncludeNames, funcNotify, userData);
+    TRACING_EXIT(ClCompileProgram, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_program CL_API_CALL clLinkProgram(cl_context context,
@@ -192,17 +236,22 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
                                      void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
                                      void *userData,
                                      cl_int *errcodeRet) {
+    TRACING_ENTER(ClLinkProgram, &context, &numDevices, &deviceList, &options, &numInputPrograms, &inputPrograms, &funcNotify, &userData, &errcodeRet);
     ErrorCodeHelper errcodeHelper(errcodeRet, CL_SUCCESS);
 
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         errcodeHelper.set(retVal);
-        return nullptr;
+        cl_program tracingRetVal = nullptr;
+        TRACING_EXIT(ClLinkProgram, &tracingRetVal);
+        return tracingRetVal;
     }
 
     if (!NEO::LEO::Program::isValidCallback(funcNotify, userData)) [[unlikely]] {
         errcodeHelper.set(CL_INVALID_VALUE);
-        return nullptr;
+        cl_program tracingRetVal = nullptr;
+        TRACING_EXIT(ClLinkProgram, &tracingRetVal);
+        return tracingRetVal;
     }
 
     auto retProgram = std::make_unique<NEO::LEO::Program>(pContext);
@@ -211,19 +260,25 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
     if (numInputPrograms == 0 || inputPrograms == nullptr) [[unlikely]] {
         errcodeHelper.set(CL_INVALID_VALUE);
         retProgram->invokeCallback(funcNotify, userData);
-        return retProgram.release();
+        cl_program tracingRetVal = retProgram.release();
+        TRACING_EXIT(ClLinkProgram, &tracingRetVal);
+        return tracingRetVal;
     }
 
     const cl_int linkResult = retProgram->link(options, numInputPrograms, inputPrograms);
     if (CL_SUCCESS != linkResult) [[unlikely]] {
         errcodeHelper.set(linkResult);
         retProgram->invokeCallback(funcNotify, userData);
-        return retProgram.release();
+        cl_program tracingRetVal = retProgram.release();
+        TRACING_EXIT(ClLinkProgram, &tracingRetVal);
+        return tracingRetVal;
     }
 
     retProgram->setBuildStatus(CL_BUILD_SUCCESS);
     retProgram->invokeCallback(funcNotify, userData);
-    return retProgram.release();
+    cl_program tracingRetVal = retProgram.release();
+    TRACING_EXIT(ClLinkProgram, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetProgramInfo(cl_program program,
@@ -231,12 +286,16 @@ cl_int CL_API_CALL clGetProgramInfo(cl_program program,
                                     size_t paramValueSize,
                                     void *paramValue,
                                     size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetProgramInfo, &program, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(program));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetProgramInfo, &retVal);
         return retVal;
     }
 
-    return pProgram->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int tracingRetVal = pProgram->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetProgramInfo, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetProgramBuildInfo(cl_program program,
@@ -245,25 +304,36 @@ cl_int CL_API_CALL clGetProgramBuildInfo(cl_program program,
                                          size_t paramValueSize,
                                          void *paramValue,
                                          size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetProgramBuildInfo, &program, &device, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(program));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClGetProgramBuildInfo, &retVal);
         return retVal;
     }
 
-    return pProgram->getBuildInfo(device, paramName, paramValueSize, paramValue, paramValueSizeRet);
+    cl_int tracingRetVal = pProgram->getBuildInfo(device, paramName, paramValueSize, paramValue, paramValueSizeRet);
+    TRACING_EXIT(ClGetProgramBuildInfo, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clSetProgramReleaseCallback(cl_program program,
                                                void(CL_CALLBACK *pfnNotify)(cl_program /* program */, void * /* user_data */),
                                                void *userData) {
-    return CL_INVALID_OPERATION;
+    TRACING_ENTER(ClSetProgramReleaseCallback, &program, &pfnNotify, &userData);
+    cl_int tracingRetVal = CL_INVALID_OPERATION;
+    TRACING_EXIT(ClSetProgramReleaseCallback, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clSetProgramSpecializationConstant(cl_program program, cl_uint specId, size_t specSize, const void *specValue) {
+    TRACING_ENTER(ClSetProgramSpecializationConstant, &program, &specId, &specSize, &specValue);
     auto [retVal, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(program), std::make_tuple(const_cast<void *>(specValue)));
     if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClSetProgramSpecializationConstant, &retVal);
         return retVal;
     }
 
-    return pProgram->setProgramSpecializationConstant(specId, specSize, specValue);
+    cl_int tracingRetVal = pProgram->setProgramSpecializationConstant(specId, specSize, specValue);
+    TRACING_EXIT(ClSetProgramSpecializationConstant, &tracingRetVal);
+    return tracingRetVal;
 }
