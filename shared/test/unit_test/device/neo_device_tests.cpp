@@ -2682,6 +2682,10 @@ HWTEST_F(DeviceTests, givenHpCopyEngineAndDebugFlagSetWhenCreatingSecondaryEngin
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment.release(), 0));
 
     EXPECT_NE(nullptr, device->getHpCopyEngine());
+    EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(hpEngine));
+    for (auto &enginePair : device->secondaryEngines.find(hpEngine)->second.engines) {
+        EXPECT_TRUE(enginePair.osContext->isExclusivelyHpContext());
+    }
 }
 
 HWTEST_F(DeviceTests, givenHpCopyEngineAndAggregatedProcessCountWhenCreatingSecondaryEnginesThenContextCountIsDividedByProcessCount) {

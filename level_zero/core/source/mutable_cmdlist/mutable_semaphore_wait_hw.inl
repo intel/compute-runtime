@@ -34,14 +34,14 @@ void MutableSemaphoreWaitHw<GfxFamily>::restoreWithSemaphoreAddress(GpuAddress s
                                                                 semaphoreAddress,
                                                                 Event::STATE_CLEARED,
                                                                 CompareOperation::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                                false, true, false, false, true, this->useSemaphore64bCmd);
+                                                                false, true, false, false, false, this->useSemaphore64bCmd);
     } else if (type == Type::cbEventWait) {
         bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->qwordData, this->useSemaphore64bCmd);
         NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<SemaphoreWait *>(semWait),
                                                                 semaphoreAddress,
                                                                 0,
                                                                 CompareOperation::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                false, true, this->qwordData, qwordIndirect, true, this->useSemaphore64bCmd);
+                                                                false, true, this->qwordData, qwordIndirect, false, this->useSemaphore64bCmd);
     }
 }
 

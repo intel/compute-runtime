@@ -36,7 +36,7 @@ HWTEST2_F(MutableSemaphoreWaitTest, givenMutableSemaphoreWaitCbEventIndirectComm
                                                              semaphoreAddress + offset,
                                                              data,
                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                             false, true, qwordData, indirectMode, true, HasSemaphore64bCmd<FamilyType>);
+                                                             false, true, qwordData, indirectMode, false, HasSemaphore64bCmd<FamilyType>);
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));

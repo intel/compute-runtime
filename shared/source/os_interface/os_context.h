@@ -130,6 +130,8 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     }
     void adjustSettings(const ProductHelper &productHelper);
     virtual bool isDirectSubmissionLightActive() const { return false; }
+    void setExclusivelyHpContext() { exclusivelyHpContext = true; }
+    bool isExclusivelyHpContext() const { return exclusivelyHpContext; }
     virtual bool isPriorityChangeSupported() const { return false; }
 
   protected:
@@ -162,5 +164,6 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     bool isPrimaryEngine = false;
     bool isDefaultEngine = false;
+    bool exclusivelyHpContext = false;
 };
 } // namespace NEO
