@@ -248,7 +248,7 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyWithParameters(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(hCommandList, dstptr, srcptr, size, pNext, numWaitEvents, phWaitEvents, hSignalEvent);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryCopyWithParameters>(hCommandList, dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
@@ -267,7 +267,7 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(hCommandList, ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryFillWithParameters>(hCommandList, ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
