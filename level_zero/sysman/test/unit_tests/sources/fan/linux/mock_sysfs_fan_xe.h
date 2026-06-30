@@ -35,7 +35,6 @@ constexpr int32_t mockFanRpm = 2000;
 constexpr int32_t mockFanMaxRpm = 4000;
 constexpr int32_t mockPwmEnableAutoStock = 2;
 constexpr int32_t mockPwmEnableManual = 1;
-constexpr int32_t mockPwmEnableFullSpeed = 0;
 constexpr int32_t mockPwmVal = 128;
 constexpr int32_t mockTempMilliDeg = 60000;
 
@@ -51,10 +50,14 @@ struct MockFanSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     bool failTempRead = false;
     bool failPwmValRead = false;
     bool allAutoPointsExist = false;
+    bool failPwmNodeRead = false;
+    int32_t pwmAutoPointReadCount = 0;
+    int32_t failPwmAutoPointReadAfterCount = -1; // -1 = never fail; N = fail on (N+1)th auto_point_pwm read
     bool failHwmonDirScan = false;
     uint32_t fanCount = 1;
     int32_t writeFailAfterCount = -1;
     int32_t writeCount = 0;
+    ze_result_t mockAutoPointPwm1ReadResult = ZE_RESULT_SUCCESS;
 
     bool fanMaxExists = true;
     bool pwmExists = true;
@@ -122,6 +125,13 @@ struct MockFanSysfsAccess : public L0::Sysman::SysFsAccessInterface {
             val = pwmEnableVal;
             return ZE_RESULT_SUCCESS;
         }
+        if (file == fanHwmonDir + "/" + pwmNode) {
+            if (failPwmNodeRead) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            val = pwmVal0;
+            return ZE_RESULT_SUCCESS;
+        }
         if (file == fanHwmonDir + "/" + pwmAutoPointTempNode0) {
             if (failTempRead) {
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -131,6 +141,9 @@ struct MockFanSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         }
         if (file == fanHwmonDir + "/" + pwmAutoPointPwmNode0) {
             if (failPwmValRead) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            if (failPwmAutoPointReadAfterCount >= 0 && ++pwmAutoPointReadCount > failPwmAutoPointReadAfterCount) {
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
             val = pwmVal0;
@@ -143,8 +156,24 @@ struct MockFanSysfsAccess : public L0::Sysman::SysFsAccessInterface {
             val = tempVal1;
             return ZE_RESULT_SUCCESS;
         }
+        for (uint32_t p = 2; p < 10; p++) {
+            const std::string node = fanHwmonDir + "/pwm1_auto_point" + std::to_string(p + 1) + "_pwm";
+            if (file == node) {
+                if (failPwmAutoPointReadAfterCount >= 0 && ++pwmAutoPointReadCount > failPwmAutoPointReadAfterCount) {
+                    return ZE_RESULT_ERROR_NOT_AVAILABLE;
+                }
+                val = pwmVal0;
+                return ZE_RESULT_SUCCESS;
+            }
+        }
         if (file == fanHwmonDir + "/" + pwmAutoPointPwmNode1) {
+            if (mockAutoPointPwm1ReadResult != ZE_RESULT_SUCCESS) {
+                return mockAutoPointPwm1ReadResult;
+            }
             if (failPwmValRead) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            if (failPwmAutoPointReadAfterCount >= 0 && ++pwmAutoPointReadCount > failPwmAutoPointReadAfterCount) {
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
             val = pwmVal1;
@@ -220,7 +249,7 @@ class SysmanDeviceFanFixtureXe : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
 
-    std::unique_ptr<PublicLinuxFanImp> makeLinuxFanImp(uint32_t fanIndex = 1) {
+    std::unique_ptr<PublicLinuxFanImp> createFanImp(uint32_t fanIndex = 1) {
         return std::make_unique<PublicLinuxFanImp>(pOsSysman, fanIndex, false);
     }
 };

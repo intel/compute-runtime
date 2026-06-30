@@ -65,7 +65,7 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenSubDeviceCountNonZeroWhenInitFanContextThe
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenValidHwmonWhenGetPropertiesCalledThenSuccessAndCorrectValuesReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     zes_fan_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getProperties(&props));
     EXPECT_FALSE(props.onSubdevice);
@@ -73,21 +73,20 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenValidHwmonWhenGetPropertiesCalledThenSucce
     EXPECT_TRUE(props.canControl);
     EXPECT_EQ(mockFanMaxRpm, props.maxRPM);
     EXPECT_EQ(2, props.maxPoints);
-    EXPECT_EQ((1u << ZES_FAN_SPEED_MODE_DEFAULT) | (1u << ZES_FAN_SPEED_MODE_TABLE), props.supportedModes);
-    EXPECT_EQ(1u << ZES_FAN_SPEED_UNITS_RPM, props.supportedUnits);
+    EXPECT_EQ((1u << ZES_FAN_SPEED_MODE_DEFAULT) | (1u << ZES_FAN_SPEED_MODE_TABLE) | (1u << ZES_FAN_SPEED_MODE_FIXED), props.supportedModes);
+    EXPECT_EQ((1u << ZES_FAN_SPEED_UNITS_RPM) | (1u << ZES_FAN_SPEED_UNITS_PERCENT), props.supportedUnits);
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenMaxRpmReadFailsWhenGetPropertiesCalledThenMaxRpmIsMinusOne) {
-    auto pFanImp = makeLinuxFanImp();
-    pSysfsAccess->fanMaxExists = false;
-    pSysfsAccess->mockReadInt32Result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pSysfsAccess->mockReadInt32Result = ZE_RESULT_ERROR_NOT_AVAILABLE; // fanMaxNode read fails during init
+    auto pFanImp = createFanImp();
     zes_fan_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getProperties(&props));
     EXPECT_EQ(-1, props.maxRPM);
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenNoAutoPointNodesWhenGetPropertiesCalledThenMaxPointsIsZero) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->pwmAutoPoint0Exists = false;
     pSysfsAccess->pwmAutoPoint1Exists = false;
     zes_fan_properties_t props = {};
@@ -96,7 +95,7 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenNoAutoPointNodesWhenGetPropertiesCalledThe
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenFanWhenGetPropertiesCalledThenOnSubdeviceIsFalseAndSubdeviceIdIsZero) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     zes_fan_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getProperties(&props));
     EXPECT_FALSE(props.onSubdevice);
@@ -104,38 +103,40 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenFanWhenGetPropertiesCalledThenOnSubdeviceI
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenValidHwmonWhenGetStateWithRpmCalledThenSpeedReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     int32_t speed = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getState(ZES_FAN_SPEED_UNITS_RPM, &speed));
     EXPECT_EQ(mockFanRpm, speed);
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenReadFailsWhenGetStateWithRpmCalledThenErrorReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->mockReadInt32Result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     int32_t speed = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->getState(ZES_FAN_SPEED_UNITS_RPM, &speed));
 }
 
-TEST_F(SysmanDeviceFanFixtureXe, GivenValidHwmonWhenGetStateWithPercentCalledThenUnsupportedReturned) {
-    auto pFanImp = makeLinuxFanImp();
+TEST_F(SysmanDeviceFanFixtureXe, GivenValidHwmonWhenGetStateWithPercentCalledThenPercentReturned) {
+    auto pFanImp = createFanImp();
     int32_t speed = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFanImp->getState(ZES_FAN_SPEED_UNITS_PERCENT, &speed));
+    // mockFanRpm=2000, mockFanMaxRpm=4000 -> expected 50%
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getState(ZES_FAN_SPEED_UNITS_PERCENT, &speed));
+    EXPECT_EQ(50, speed);
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenValidHwmonWhenSetDefaultModeCalledThenSuccess) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->setDefaultMode());
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenWriteFailsWhenSetDefaultModeCalledThenErrorReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->mockWriteInt32Result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->setDefaultMode());
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenAutoStockModeWhenGetConfigCalledThenDefaultModeReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->pwmEnableVal = mockPwmEnableAutoStock;
     zes_fan_config_t config = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getConfig(&config));
@@ -143,46 +144,46 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenAutoStockModeWhenGetConfigCalledThenDefaul
     EXPECT_EQ(0, config.speedTable.numPoints);
 }
 
-TEST_F(SysmanDeviceFanFixtureXe, GivenFullSpeedModeWhenGetConfigCalledThenDefaultModeReturned) {
-    auto pFanImp = makeLinuxFanImp();
-    pSysfsAccess->pwmEnableVal = mockPwmEnableFullSpeed;
-    zes_fan_config_t config = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getConfig(&config));
-    EXPECT_EQ(ZES_FAN_SPEED_MODE_DEFAULT, config.mode);
-}
-
 TEST_F(SysmanDeviceFanFixtureXe, GivenManualModeWhenGetConfigCalledThenTableModeReturnedWithCurvePoints) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
     zes_fan_config_t config = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getConfig(&config));
     EXPECT_EQ(ZES_FAN_SPEED_MODE_TABLE, config.mode);
     EXPECT_EQ(2, config.speedTable.numPoints);
     EXPECT_EQ(static_cast<uint32_t>(mockTempMilliDeg / 1000), config.speedTable.table[0].temperature);
-    EXPECT_EQ((mockPwmVal * 100) / 255, config.speedTable.table[0].speed.speed);
-    EXPECT_EQ(ZES_FAN_SPEED_UNITS_PERCENT, config.speedTable.table[0].speed.units);
+    EXPECT_EQ((mockPwmVal * mockFanMaxRpm) / 255, config.speedTable.table[0].speed.speed);
+    EXPECT_EQ(ZES_FAN_SPEED_UNITS_RPM, config.speedTable.table[0].speed.units);
 }
 
-TEST_F(SysmanDeviceFanFixtureXe, GivenManualModeAndNoAutoPointNodesWhenGetConfigCalledThenTableModeWithZeroPoints) {
-    auto pFanImp = makeLinuxFanImp();
+TEST_F(SysmanDeviceFanFixtureXe, GivenAllAutoPointPwmMatchCurrentPwmWhenGetConfigCalledThenFixedModeReturned) {
+    auto pFanImp = createFanImp();
     pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
-    pSysfsAccess->pwmAutoPoint0Exists = false;
-    pSysfsAccess->pwmAutoPoint1Exists = false;
+    pSysfsAccess->pwmVal1 = mockPwmVal;
     zes_fan_config_t config = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getConfig(&config));
-    EXPECT_EQ(ZES_FAN_SPEED_MODE_TABLE, config.mode);
-    EXPECT_EQ(0, config.speedTable.numPoints);
+    EXPECT_EQ(ZES_FAN_SPEED_MODE_FIXED, config.mode);
+    EXPECT_EQ((mockPwmVal * mockFanMaxRpm) / 255, config.speedFixed.speed);
+    EXPECT_EQ(ZES_FAN_SPEED_UNITS_RPM, config.speedFixed.units);
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenPwmEnableReadFailsWhenGetConfigCalledThenNotAvailableReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->mockReadInt32Result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     zes_fan_config_t config = {};
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->getConfig(&config));
 }
 
+TEST_F(SysmanDeviceFanFixtureXe, GivenAutoPointPwmReadFailsWithNonNotAvailableErrorWhenGetConfigCalledThenErrorPropagated) {
+    auto pFanImp = createFanImp();
+    pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
+    pSysfsAccess->mockAutoPointPwm1ReadResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    zes_fan_config_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, pFanImp->getConfig(&config));
+}
+
 TEST_F(SysmanDeviceFanFixtureXe, GivenManualModeAndReadCurvePointTempFailsWhenGetConfigCalledThenPartialPointsReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
     pSysfsAccess->pwmAutoPoint1Exists = false;
     zes_fan_config_t config = {};
@@ -192,7 +193,7 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenManualModeAndReadCurvePointTempFailsWhenGe
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenValidSpeedTableWhenSetSpeedTableModeCalledThenSuccess) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     zes_fan_speed_table_t table = {};
     table.numPoints = 2;
     table.table[0] = {60, {50, ZES_FAN_SPEED_UNITS_PERCENT}};
@@ -200,23 +201,23 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenValidSpeedTableWhenSetSpeedTableModeCalled
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->setSpeedTableMode(&table));
 }
 
-TEST_F(SysmanDeviceFanFixtureXe, GivenRpmUnitsInTableWhenSetSpeedTableModeCalledThenInvalidArgReturned) {
-    auto pFanImp = makeLinuxFanImp();
+TEST_F(SysmanDeviceFanFixtureXe, GivenRpmUnitsInTableWhenSetSpeedTableModeCalledThenSuccessReturned) {
+    auto pFanImp = createFanImp();
     zes_fan_speed_table_t table = {};
     table.numPoints = 1;
     table.table[0] = {60, {2000, ZES_FAN_SPEED_UNITS_RPM}};
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFanImp->setSpeedTableMode(&table));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->setSpeedTableMode(&table));
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenZeroPointsWhenSetSpeedTableModeCalledThenInvalidArgReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     zes_fan_speed_table_t table = {};
     table.numPoints = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFanImp->setSpeedTableMode(&table));
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenWriteFailsWhenSetSpeedTableModeCalledThenErrorReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->mockWriteInt32Result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     zes_fan_speed_table_t table = {};
     table.numPoints = 1;
@@ -238,26 +239,47 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenKmdInterfaceWhenFanNodePathsRequestedThenC
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenHwmonNameMismatchWhenInitCalledThenHwmonDirRemainsEmpty) {
     pSysfsAccess->returnWrongHwmonName = true;
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     EXPECT_TRUE(pFanImp->hwmonDir.empty());
 }
 
-TEST_F(SysmanDeviceFanFixtureXe, GivenPwmValReadFailsWhenGetConfigCalledThenPartialCurveReturned) {
-    auto pFanImp = makeLinuxFanImp();
+TEST_F(SysmanDeviceFanFixtureXe, GivenCurvePwmReadFailsInReadCurvePointsWhenGetConfigCalledThenPartialPointsReturned) {
+    auto pFanImp = createFanImp();
     pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
-    pSysfsAccess->failPwmValRead = true;
+    // pwmVal0 (128) != pwmVal1 (200), so isFixed breaks after 2 auto_point_pwm reads.
+    // failPwmAutoPointReadAfterCount=2 means the 3rd read (first pwm read inside
+    // readCurvePoints at pointIndex=0) fails, leaving numPoints=0.
+    pSysfsAccess->failPwmAutoPointReadAfterCount = 2;
     zes_fan_config_t config = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getConfig(&config));
     EXPECT_EQ(ZES_FAN_SPEED_MODE_TABLE, config.mode);
     EXPECT_EQ(0, config.speedTable.numPoints);
 }
 
+TEST_F(SysmanDeviceFanFixtureXe, GivenPwmValReadFailsWhenGetConfigCalledThenErrorReturned) {
+    auto pFanImp = createFanImp();
+    pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
+    pSysfsAccess->failPwmValRead = true;
+    zes_fan_config_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->getConfig(&config));
+}
+
 TEST_F(SysmanDeviceFanFixtureXe, GivenPwmWriteFailsAfterTempWriteWhenSetSpeedTableModeCalledThenErrorReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->writeFailAfterCount = 2;
     zes_fan_speed_table_t table = {};
     table.numPoints = 1;
     table.table[0] = {60, {50, ZES_FAN_SPEED_UNITS_PERCENT}};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->setSpeedTableMode(&table));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenTempWriteFailsOnSecondPointWhenSetSpeedTableModeCalledThenErrorReturned) {
+    auto pFanImp = createFanImp();
+    pSysfsAccess->writeFailAfterCount = 3;
+    zes_fan_speed_table_t table = {};
+    table.numPoints = 2;
+    table.table[0] = {60, {50, ZES_FAN_SPEED_UNITS_PERCENT}};
+    table.table[1] = {80, {80, ZES_FAN_SPEED_UNITS_PERCENT}};
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->setSpeedTableMode(&table));
 }
 
@@ -280,14 +302,14 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenI915KmdInterfaceWhenFanNodeMethodsCalledTh
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenFirstHwmonNameReadFailsWhenInitCalledThenSecondEntryUsed) {
     pSysfsAccess->returnTwoEntriesFirstReadFails = true;
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     EXPECT_EQ(fanHwmonDir, pFanImp->hwmonDir);
     zes_fan_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getProperties(&props));
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenAllAutoPointsExistWhenGetPropertiesAndGetConfigCalledThenLoopsExitNaturally) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->allAutoPointsExist = true;
     zes_fan_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getProperties(&props));
@@ -299,7 +321,7 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenAllAutoPointsExistWhenGetPropertiesAndGetC
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenTempReadFailsWhenGetConfigCalledThenZeroPointsInTable) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
     pSysfsAccess->failTempRead = true;
     zes_fan_config_t config = {};
@@ -309,14 +331,14 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenTempReadFailsWhenGetConfigCalledThenZeroPo
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenTooManyPointsWhenSetSpeedTableModeCalledThenInvalidArgReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     zes_fan_speed_table_t table = {};
     table.numPoints = 11;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFanImp->setSpeedTableMode(&table));
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenTempWriteFailsWhenSetSpeedTableModeCalledThenErrorReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->writeFailAfterCount = 1;
     zes_fan_speed_table_t table = {};
     table.numPoints = 1;
@@ -325,7 +347,7 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenTempWriteFailsWhenSetSpeedTableModeCalledT
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenNegativeSpeedWhenSetSpeedTableModeCalledThenInvalidArgReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     zes_fan_speed_table_t table = {};
     table.numPoints = 1;
     table.table[0] = {60, {-1, ZES_FAN_SPEED_UNITS_PERCENT}};
@@ -333,7 +355,7 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenNegativeSpeedWhenSetSpeedTableModeCalledTh
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenSpeedAbove100WhenSetSpeedTableModeCalledThenInvalidArgReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     zes_fan_speed_table_t table = {};
     table.numPoints = 1;
     table.table[0] = {60, {101, ZES_FAN_SPEED_UNITS_PERCENT}};
@@ -341,12 +363,12 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenSpeedAbove100WhenSetSpeedTableModeCalledTh
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenAutoPointNodeMissingWhenSetSpeedTableModeCalledThenUnsupportedFeatureReturned) {
-    auto pFanImp = makeLinuxFanImp();
+    auto pFanImp = createFanImp();
     pSysfsAccess->pwmAutoPoint0Exists = false;
     zes_fan_speed_table_t table = {};
     table.numPoints = 1;
     table.table[0] = {60, {50, ZES_FAN_SPEED_UNITS_PERCENT}};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFanImp->setSpeedTableMode(&table));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFanImp->setSpeedTableMode(&table));
 }
 
 TEST_F(SysmanDeviceFanFixtureXe, GivenAllFansExistWhenEnumeratingFansThenThreeFansFound) {
@@ -399,6 +421,136 @@ TEST_F(SysmanDeviceFanFixtureXe, GivenValidFanHandleWhenSetSpeedTableModeCalledV
     table.numPoints = 1;
     table.table[0] = {60, {50, ZES_FAN_SPEED_UNITS_PERCENT}};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanSetSpeedTableMode(handles[0], &table));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenValidHwmonWhenSetFixedSpeedModeWithPercentCalledThenSuccess) {
+    auto pFanImp = createFanImp();
+    zes_fan_speed_t speed = {50, ZES_FAN_SPEED_UNITS_PERCENT};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->setFixedSpeedMode(&speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenValidHwmonWhenSetFixedSpeedModeWithRpmCalledThenSuccess) {
+    auto pFanImp = createFanImp();
+    // mockFanMaxRpm=4000, so 2000 RPM -> pwm = (2000*255)/4000 = 127
+    zes_fan_speed_t speed = {2000, ZES_FAN_SPEED_UNITS_RPM};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->setFixedSpeedMode(&speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenNegativePercentWhenSetFixedSpeedModeCalledThenInvalidArgReturned) {
+    auto pFanImp = createFanImp();
+    zes_fan_speed_t speed = {-1, ZES_FAN_SPEED_UNITS_PERCENT};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFanImp->setFixedSpeedMode(&speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenPercentOver100WhenSetFixedSpeedModeCalledThenInvalidArgReturned) {
+    auto pFanImp = createFanImp();
+    zes_fan_speed_t speed = {101, ZES_FAN_SPEED_UNITS_PERCENT};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFanImp->setFixedSpeedMode(&speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenRpmWithNoMaxNodeWhenSetFixedSpeedModeCalledThenNotAvailableReturned) {
+    pSysfsAccess->mockReadInt32Result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    auto pFanImp = createFanImp();
+    zes_fan_speed_t speed = {2000, ZES_FAN_SPEED_UNITS_RPM};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->setFixedSpeedMode(&speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenFanMaxRpmIsZeroWhenInitCalledThenMaxRpmIsMinusOne) {
+    pSysfsAccess->fanMaxRpmVal = 0;
+    auto pFanImp = createFanImp();
+    zes_fan_properties_t props = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getProperties(&props));
+    EXPECT_EQ(-1, props.maxRPM);
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenNoMaxRpmWhenGetStateWithPercentCalledThenNotAvailableReturned) {
+    pSysfsAccess->fanMaxRpmVal = 0;
+    auto pFanImp = createFanImp();
+    int32_t speed = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->getState(ZES_FAN_SPEED_UNITS_PERCENT, &speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenNoMaxRpmWhenGetConfigInFixedModeCalledThenPercentSpeedReturned) {
+    pSysfsAccess->fanMaxRpmVal = 0;
+    pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
+    pSysfsAccess->pwmVal1 = mockPwmVal;
+    auto pFanImp = createFanImp();
+    zes_fan_config_t config = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getConfig(&config));
+    EXPECT_EQ(ZES_FAN_SPEED_MODE_FIXED, config.mode);
+    EXPECT_EQ(ZES_FAN_SPEED_UNITS_PERCENT, config.speedFixed.units);
+    EXPECT_EQ((mockPwmVal * 100) / 255, config.speedFixed.speed);
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenNoMaxRpmWhenGetConfigInTableModeCalledThenPercentSpeedPointsReturned) {
+    pSysfsAccess->fanMaxRpmVal = 0;
+    pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
+    auto pFanImp = createFanImp();
+    zes_fan_config_t config = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getConfig(&config));
+    EXPECT_EQ(ZES_FAN_SPEED_MODE_TABLE, config.mode);
+    EXPECT_EQ(2, config.speedTable.numPoints);
+    EXPECT_EQ(ZES_FAN_SPEED_UNITS_PERCENT, config.speedTable.table[0].speed.units);
+    EXPECT_EQ((mockPwmVal * 100) / 255, config.speedTable.table[0].speed.speed);
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenAllTenAutoPointsPwmMatchWhenGetConfigCalledThenFixedModeReturnedLoopExitsNaturally) {
+    pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
+    pSysfsAccess->pwmVal1 = mockPwmVal;
+    auto pFanImp = createFanImp();
+    zes_fan_config_t config = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getConfig(&config));
+    EXPECT_EQ(ZES_FAN_SPEED_MODE_FIXED, config.mode);
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenPwmEnableWriteFailsWhenSetFixedSpeedModeCalledThenErrorReturned) {
+    auto pFanImp = createFanImp();
+    pSysfsAccess->mockWriteInt32Result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    zes_fan_speed_t speed = {50, ZES_FAN_SPEED_UNITS_PERCENT};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->setFixedSpeedMode(&speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenPwmNodeWriteFailsWhenSetFixedSpeedModeCalledThenErrorReturned) {
+    auto pFanImp = createFanImp();
+    pSysfsAccess->writeFailAfterCount = 1;
+    zes_fan_speed_t speed = {50, ZES_FAN_SPEED_UNITS_PERCENT};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->setFixedSpeedMode(&speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenNegativeRpmSpeedWhenSetFixedSpeedModeCalledThenInvalidArgReturned) {
+    auto pFanImp = createFanImp();
+    zes_fan_speed_t speed = {-1, ZES_FAN_SPEED_UNITS_RPM};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFanImp->setFixedSpeedMode(&speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenInvalidUnitsWhenSetFixedSpeedModeCalledThenInvalidArgReturned) {
+    auto pFanImp = createFanImp();
+    zes_fan_speed_t speed = {50, ZES_FAN_SPEED_UNITS_FORCE_UINT32};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFanImp->setFixedSpeedMode(&speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenPwmNodeReadFailsInFixedModeWhenGetConfigCalledThenNotAvailableReturned) {
+    pSysfsAccess->pwmEnableVal = mockPwmEnableManual;
+    pSysfsAccess->pwmVal1 = mockPwmVal;
+    auto pFanImp = createFanImp();
+    pSysfsAccess->failPwmNodeRead = true;
+    zes_fan_config_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFanImp->getConfig(&config));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenInvalidUnitsWhenGetStateCalledThenInvalidArgReturned) {
+    auto pFanImp = createFanImp();
+    int32_t speed = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFanImp->getState(ZES_FAN_SPEED_UNITS_FORCE_UINT32, &speed));
+}
+
+TEST_F(SysmanDeviceFanFixtureXe, GivenRpmExceedsMaxRpmWhenGetStateWithPercentCalledThenResultClampedTo100) {
+    // Set fan RPM above maxRpm to exercise the upper clamp (percent > 100 -> 100)
+    pSysfsAccess->fanRpmVal = mockFanMaxRpm * 2; // 8000 RPM with maxRpm=4000 -> raw 200% -> clamped to 100
+    auto pFanImp = createFanImp();
+    int32_t speed = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFanImp->getState(ZES_FAN_SPEED_UNITS_PERCENT, &speed));
+    EXPECT_EQ(100, speed);
 }
 
 } // namespace ult

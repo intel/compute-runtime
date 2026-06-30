@@ -47,6 +47,7 @@ class LinuxFanImp : public OsFan, NEO::NonCopyableAndNonMovableClass {
     std::string fanMaxNode;
     std::string pwmNode;
     std::string pwmEnableNode;
+    int32_t maxRpm = -1;
     std::array<std::string, maxFanControlPoints> autoPointTempNodes{};
     std::array<std::string, maxFanControlPoints> autoPointPwmNodes{};
 
@@ -56,6 +57,10 @@ class LinuxFanImp : public OsFan, NEO::NonCopyableAndNonMovableClass {
 
     void init();
     ze_result_t readCurvePoints(zes_fan_config_t *pConfig, uint32_t numPoints);
+    // Converts a user-supplied zes_fan_speed_t to a raw PWM value (0-255).
+    // Returns ZE_RESULT_ERROR_INVALID_ARGUMENT for out-of-range or unrecognised unit values.
+    // Returns ZE_RESULT_ERROR_NOT_AVAILABLE when RPM units are requested but maxRPM is unavailable.
+    ze_result_t speedToPwm(const zes_fan_speed_t &speed, int32_t &pwmOut) const;
 };
 
 } // namespace Sysman

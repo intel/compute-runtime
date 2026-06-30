@@ -64,17 +64,19 @@ TEST_F(SysmanDeviceFanFixture, GivenComponentCountZeroWhenEnumeratingFanDomainsT
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingFixedSpeedModeThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingFixedSpeedModeWithPercentThenInvalidArgReturned) {
     zes_fan_handle_t fanHandle = pFan->toHandle();
-    zes_fan_speed_t fanSpeed = {0};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanSetFixedSpeedMode(fanHandle, &fanSpeed));
+    zes_fan_speed_t fanSpeed = {-1, ZES_FAN_SPEED_UNITS_PERCENT}; // invalid: -1 percent
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesFanSetFixedSpeedMode(fanHandle, &fanSpeed));
 }
 
-TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanSpeedWithPercentUnitThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanSpeedWithPercentUnitThenErrorReturnedWhenNoHwmon) {
     zes_fan_handle_t fanHandle = pFan->toHandle();
     zes_fan_speed_units_t unit = zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_PERCENT;
     int32_t fanSpeed = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanGetState(fanHandle, unit, &fanSpeed));
+    // pFan is created with no hwmon; fanInputNode is empty so the sysfs read
+    // returns ZE_RESULT_ERROR_UNKNOWN (empty read, parse failure).
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesFanGetState(fanHandle, unit, &fanSpeed));
 }
 
 TEST_F(SysmanDeviceFanFixture, GivenFanHandleContextWhenCallingCreateHandleThenHandleIsCreatedSuccessfully) {
