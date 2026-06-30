@@ -1216,6 +1216,10 @@ HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitializ
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isRayTracingSupportedResult = true;
+    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+
     auto result = kernel->initialize(&kernelDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto rtMemoryBackedBuffer = module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer();
@@ -1241,6 +1245,135 @@ HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitializ
     }
 }
 
+HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndReleaseDoesNotSupportRayTracingThenUnsupportedFeatureIsReturnedAndRayTracingIsNotInitialized) {
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
+    mockDescriptor.kernelMetadata.kernelName = "rt_test";
+    for (auto i = 0u; i < 3u; i++) {
+        mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
+    }
+
+    std::unique_ptr<MockImmutableData> mockKernelImmutableData =
+        std::make_unique<MockImmutableData>(32u);
+    mockKernelImmutableData->kernelDescriptor = &mockDescriptor;
+    mockDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize = 4;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    module = std::make_unique<MockModule>(device,
+                                          moduleBuildLog,
+                                          ModuleType::user,
+                                          32u,
+                                          mockKernelImmutableData.get());
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isRayTracingSupportedResult = false;
+    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "rt_test";
+
+    auto immDataVector =
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
+
+    immDataVector->push_back(std::move(mockKernelImmutableData));
+
+    auto result = kernel->initialize(&kernelDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndReleaseSupportsRayTracingThenRayTracingIsInitialized) {
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = false;
+    hwInfo.gtSystemInfo.SliceCount = 1;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
+    hwInfo.gtSystemInfo.SubSliceCount = 1;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 1;
+    hwInfo.gtSystemInfo.DualSubSliceCount = 1;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 1;
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
+    mockDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    mockDescriptor.kernelMetadata.kernelName = "rt_test";
+    for (auto i = 0u; i < 3u; i++) {
+        mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
+    }
+
+    std::unique_ptr<MockImmutableData> mockKernelImmutableData =
+        std::make_unique<MockImmutableData>(32u);
+    mockKernelImmutableData->kernelDescriptor = &mockDescriptor;
+    mockDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize = 4;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    module = std::make_unique<MockModule>(device,
+                                          moduleBuildLog,
+                                          ModuleType::user,
+                                          32u,
+                                          mockKernelImmutableData.get());
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isRayTracingSupportedResult = true;
+    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "rt_test";
+
+    auto immDataVector =
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
+
+    immDataVector->push_back(std::move(mockKernelImmutableData));
+
+    auto result = kernel->initialize(&kernelDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
+
+    auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
+    EXPECT_NE(nullptr, rtDispatchGlobals);
+}
+
+HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseAndReleaseDoesNotSupportRayTracingThenInitializeSucceeds) {
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = false;
+    mockDescriptor.kernelMetadata.kernelName = "rt_test";
+    for (auto i = 0u; i < 3u; i++) {
+        mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
+    }
+
+    std::unique_ptr<MockImmutableData> mockKernelImmutableData =
+        std::make_unique<MockImmutableData>(32u);
+    mockKernelImmutableData->kernelDescriptor = &mockDescriptor;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    module = std::make_unique<MockModule>(device,
+                                          moduleBuildLog,
+                                          ModuleType::user,
+                                          32u,
+                                          mockKernelImmutableData.get());
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isRayTracingSupportedResult = false;
+    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "rt_test";
+
+    auto immDataVector =
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
+
+    immDataVector->push_back(std::move(mockKernelImmutableData));
+
+    auto result = kernel->initialize(&kernelDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRtDispatchGlobalsPointerSizeIsZeroThenRayTracingIsInitialized) {
     static_cast<OsAgnosticMemoryManager *>(device->getNEODevice()->getMemoryManager())->turnOnFakingBigAllocations();
 
@@ -1262,6 +1395,10 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRtDispatchGlobalsPointer
                                           ModuleType::user,
                                           32u,
                                           mockKernelImmutableData.get());
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isRayTracingSupportedResult = true;
+    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1301,6 +1438,10 @@ HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIs
                                           ModuleType::user,
                                           32u,
                                           mockKernelImmutableData.get());
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isRayTracingSupportedResult = true;
+    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1342,6 +1483,10 @@ HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRTStackAllocationFail
                                           ModuleType::user,
                                           32u,
                                           mockKernelImmutableData.get());
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isRayTracingSupportedResult = true;
+    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1458,6 +1603,10 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
                                           ModuleType::user,
                                           32u,
                                           mockKernelImmutableData.get());
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isRayTracingSupportedResult = true;
+    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());

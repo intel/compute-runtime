@@ -1365,6 +1365,11 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     if (this->usesRayTracing()) {
+        if (!rootDeviceEnvironment.getReleaseHelper().isRayTracingSupported()) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Ray tracing detected in kernel, but the current device does not support ray tracing. Returning ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.\n");
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+
         uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
 
         if (NEO::debugManager.flags.SetMaxBVHLevels.get() != -1) {
