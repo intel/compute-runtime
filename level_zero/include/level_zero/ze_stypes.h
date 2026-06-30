@@ -49,6 +49,7 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030031)
 #define ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030032)
 
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 16)
 #ifndef ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES
 #define ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00020030)
 #endif
@@ -66,6 +67,7 @@ typedef struct _ze_device_readonly_memory_ext_properties_t {
     void *pNext;
     ze_device_readonly_memory_capability_t readonlyCapability;
 } ze_device_readonly_memory_ext_properties_t;
+#endif
 #endif
 
 // Metric structure types

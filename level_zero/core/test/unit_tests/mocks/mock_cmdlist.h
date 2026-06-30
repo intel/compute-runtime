@@ -684,7 +684,7 @@ struct Mock<CommandList> : public CommandList {
     ADDMETHOD_NOBASE(appendHostFunction, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_host_function_callback_t pHostFunction,
                       void *pUserData,
-                      void *pNext,
+                      const void *pNext,
                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListHostFunctionParameters &parameters));
     ADDMETHOD_NOBASE_VOIDRETURN(dispatchHostFunction, (ze_host_function_callback_t pHostFunction, void *pUserData, bool memorySynchronizationRequired));
     ADDMETHOD_NOBASE_VOIDRETURN(addHostFunctionToPatchCommands, (const NEO::HostFunction &hostFunction, bool memorySynchronizationRequired));
@@ -993,7 +993,7 @@ struct MockCommandListExtSem : public WhiteBox<::L0::CommandListCoreFamily<gfxCo
     using BaseClass::semaphoreWaitHostFunction;
     using typename BaseClass::ExternalSemaphoreHostFunctionData;
 
-    ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, void *pNext,
+    ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, const void *pNext,
                                    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                    CmdListHostFunctionParameters &parameters) override {
         appendHostFunctionCalledTimes++;
@@ -1054,7 +1054,7 @@ struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFam
         BaseClass::appendSignalInOrderDependencyCounter(signalEvent, copyOffloadOperation, stall, textureFlushRequired, skipAggregatedEventSignaling);
     }
 
-    ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, void *pNext,
+    ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, const void *pNext,
                                    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                    CmdListHostFunctionParameters &parameters) override {
         appendHostFunctionCalledTimes++;

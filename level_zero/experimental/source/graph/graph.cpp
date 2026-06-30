@@ -1157,7 +1157,7 @@ ze_result_t Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::i
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendHostFunction>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_host_function_callback_t, void *, void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_host_function_callback_t, void *, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendHostFunction>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.pHostFunction, apiArgs.pUserData, apiArgs.pNext,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);

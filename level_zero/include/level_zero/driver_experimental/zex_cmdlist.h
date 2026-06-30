@@ -59,7 +59,7 @@ zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,     ///< [in] handle of the command list
     ze_host_function_callback_t pHostFunction, ///< [in] host function to call
     void *pUserData,                           ///< [in] user specific data that would be passed to function
-    void *pNext,                               ///< [in][optional] extensions
+    const void *pNext,                         ///< [in][optional] extensions
     ze_event_handle_t hSignalEvent,            ///< [in][optional] handle of the event to signal on completion
     uint32_t numWaitEvents,                    ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents);          ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching

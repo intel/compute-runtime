@@ -1447,7 +1447,7 @@ struct Closure<CaptureApi::zeCommandListAppendHostFunction> {
         ze_command_list_handle_t hCommandList;
         ze_host_function_callback_t pHostFunction;
         void *pUserData;
-        void *pNext;
+        const void *pNext;
         ze_event_handle_t hSignalEvent;
         uint32_t numWaitEvents;
         ze_event_handle_t *phWaitEvents;

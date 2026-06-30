@@ -5602,7 +5602,7 @@ TEST_F(DeviceTest, givenDeviceWhenQueryingUsableMemSizePropertiesThenPNextChainI
 TEST_F(DeviceTest, givenDeviceWithNoOsInterfaceWhenQueryingReadonlyMemoryCapabilityThenReturnsNone) {
     ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_readonly_memory_ext_properties_t roProps = {};
-    roProps.stype = static_cast<ze_structure_type_ext_t>(ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES);
+    roProps.stype = ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES;
     roProps.readonlyCapability = ZE_DEVICE_READONLY_MEMORY_CAPABILITY_ENFORCED;
 
     devProps.pNext = &roProps;
@@ -5618,7 +5618,7 @@ TEST_F(DeviceTest, givenDeviceWithWddmOsInterfaceWhenQueryingReadonlyMemoryCapab
 
     ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_readonly_memory_ext_properties_t roProps = {};
-    roProps.stype = static_cast<ze_structure_type_ext_t>(ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES);
+    roProps.stype = ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES;
 
     devProps.pNext = &roProps;
 
@@ -5637,7 +5637,7 @@ TEST_F(DeviceTest, givenDeviceWithVmBindAvailableWhenQueryingReadonlyMemoryCapab
 
     ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_readonly_memory_ext_properties_t roProps = {};
-    roProps.stype = static_cast<ze_structure_type_ext_t>(ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES);
+    roProps.stype = ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES;
 
     devProps.pNext = &roProps;
 
@@ -5652,7 +5652,7 @@ TEST_F(DeviceTest, givenDeviceWithNoVmBindWhenQueryingReadonlyMemoryCapabilityTh
 
     ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_readonly_memory_ext_properties_t roProps = {};
-    roProps.stype = static_cast<ze_structure_type_ext_t>(ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES);
+    roProps.stype = ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES;
 
     devProps.pNext = &roProps;
 
