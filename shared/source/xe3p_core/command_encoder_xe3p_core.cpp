@@ -229,31 +229,6 @@ inline auto &EncodePostSync<Family>::getPostSync(CommandType &cmd, size_t index)
 }
 
 template <typename Family>
-size_t EncodeSemaphore<Family>::getSizeMiSemaphoreWait() {
-    static_assert(sizeof(MI_SEMAPHORE_WAIT) == sizeof(typename Family::MI_SEMAPHORE_WAIT_LEGACY), "MI_SEMAPHORE_WAIT_64/MI_SEMAPHORE_WAIT size mismatch");
-    return sizeof(MI_SEMAPHORE_WAIT);
-}
-
-template <typename Family>
-void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
-                                                        uint64_t compareAddress,
-                                                        uint64_t compareData,
-                                                        COMPARE_OPERATION compareMode,
-                                                        bool registerPollMode,
-                                                        bool useQwordData,
-                                                        bool indirect,
-                                                        bool switchOnUnsuccessful,
-                                                        bool native64bCmd,
-                                                        void **outSemWaitCmd) {
-    void *semaphoreCommand = commandStream.getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
-
-    if (outSemWaitCmd != nullptr) {
-        *outSemWaitCmd = semaphoreCommand;
-    }
-    programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(semaphoreCommand), compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful, native64bCmd);
-}
-
-template <typename Family>
 void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      uint64_t compareAddress,
                                                      uint64_t compareData,

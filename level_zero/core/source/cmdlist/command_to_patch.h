@@ -80,8 +80,11 @@ struct PatchSignalEventPostSyncPipeControl {
 };
 
 struct PatchWaitEventSemaphoreWait {
+    uint64_t gpuDestination = 0;
     void *pDestination = nullptr;
+    void *commandView = nullptr;
     size_t offset = 0;
+    size_t patchSize = 0;
 };
 
 struct PatchTimestampEventPostSyncStoreRegMem {
@@ -90,8 +93,11 @@ struct PatchTimestampEventPostSyncStoreRegMem {
 };
 
 struct PatchCbEventTimestampPostSyncSemaphoreWait {
+    uint64_t gpuDestination = 0;
     void *pDestination = nullptr;
+    void *commandView = nullptr;
     size_t offset = 0;
+    size_t patchSize = 0;
 };
 
 struct PatchCbEventTimestampClearStoreDataImm {
@@ -100,8 +106,11 @@ struct PatchCbEventTimestampClearStoreDataImm {
 };
 
 struct PatchCbWaitEventSemaphoreWait {
+    uint64_t gpuDestination = 0;
     void *pDestination = nullptr;
+    void *commandView = nullptr;
     size_t offset = 0;
+    size_t patchSize = 0;
 };
 
 struct PatchCbWaitEventLoadRegisterImm {
@@ -141,6 +150,58 @@ using CommandToPatchInCmdList = std::variant<
     PatchCbWaitEventLoadRegisterImm,
     PatchPrefetchKernelMemory>;
 
-using CommandToPatchContainer = std::vector<CommandToPatchInCmdList>;
+struct CommandToPatchContainer {
+    using VectorType = std::vector<CommandToPatchInCmdList>;
+    using iterator = VectorType::iterator;                 // NOLINT(readability-identifier-naming)
+    using reverse_iterator = VectorType::reverse_iterator; // NOLINT(readability-identifier-naming)
+
+    iterator begin() {
+        return container.begin();
+    }
+
+    iterator end() {
+        return container.end();
+    }
+
+    void clear() {
+        return container.clear();
+    }
+
+    reverse_iterator rbegin() {
+        return container.rbegin();
+    }
+
+    reverse_iterator rend() {
+        return container.rend();
+    }
+
+    template <typename... ArgsT>
+    void push_back(ArgsT &&...val) { // NOLINT(readability-identifier-naming)
+        container.push_back(std::forward<ArgsT>(val)...);
+    }
+
+    template <typename... ArgsT>
+    auto &emplace_back(ArgsT &&...val) { // NOLINT(readability-identifier-naming)
+        return container.emplace_back(std::forward<ArgsT>(val)...);
+    }
+
+    auto size() {
+        return container.size();
+    }
+
+    auto &operator[](size_t index) {
+        return container[index];
+    }
+
+    const auto &operator[](size_t index) const {
+        return container[index];
+    }
+
+  private:
+    VectorType container;
+
+  public:
+    bool makeCommandView = false;
+};
 
 } // namespace L0

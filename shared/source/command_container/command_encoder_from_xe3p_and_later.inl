@@ -274,4 +274,30 @@ void EncodeCommandLevelMocs<Family>::apply(CmdType &cmd) {
     }
 }
 
+template <typename Family>
+size_t EncodeSemaphore<Family>::getSizeMiSemaphoreWait() {
+    static_assert(sizeof(MI_SEMAPHORE_WAIT) == sizeof(typename Family::MI_SEMAPHORE_WAIT_LEGACY), "MI_SEMAPHORE_WAIT_64/MI_SEMAPHORE_WAIT size mismatch");
+    return sizeof(MI_SEMAPHORE_WAIT);
+}
+
+template <typename Family>
+void *EncodeSemaphore<Family>::allocateSemaphoreWaitCommand(bool native64bCmd) {
+    if (native64bCmd) {
+        return new typename Family::MI_SEMAPHORE_WAIT;
+    } else {
+        return new typename Family::MI_SEMAPHORE_WAIT_LEGACY;
+    }
+}
+
+template <typename Family>
+void EncodeSemaphore<Family>::deallocateSemaphoreWaitCommand(void *cmdBuffer, bool native64bCmd) {
+    using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
+    using MI_SEMAPHORE_WAIT_LEGACY = typename Family::MI_SEMAPHORE_WAIT_LEGACY;
+    if (native64bCmd) {
+        delete reinterpret_cast<MI_SEMAPHORE_WAIT *>(cmdBuffer);
+    } else {
+        delete reinterpret_cast<MI_SEMAPHORE_WAIT_LEGACY *>(cmdBuffer);
+    }
+}
+
 } // namespace NEO

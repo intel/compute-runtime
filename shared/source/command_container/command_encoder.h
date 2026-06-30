@@ -52,6 +52,15 @@ struct StreamProperties;
 struct ImplicitArgs;
 struct EncodeKernelArgsExt;
 
+struct EncodeCaptureCommandData {
+    uint64_t gpuAddress = 0u;
+    void *commandView = nullptr;
+    void *cpuBuffer = nullptr;
+    size_t cmdSize = 0;
+
+    bool makeCommandView = false;
+};
+
 struct EncodePostSyncArgs {
     size_t eventPacketSize = 0;
     uint32_t eventPacketsCount = 0;
@@ -579,7 +588,10 @@ struct EncodeSemaphore {
                                           bool indirect,
                                           bool switchOnUnsuccessful,
                                           bool native64bCmd,
-                                          void **outSemWaitCmd);
+                                          EncodeCaptureCommandData *outSemWaitCmd);
+
+    static void *allocateSemaphoreWaitCommand(bool native64bCmd);
+    static void deallocateSemaphoreWaitCommand(void *cmdBuffer, bool native64bCmd);
 
     static size_t getSizeMiSemaphoreWait();
 };

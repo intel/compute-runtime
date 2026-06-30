@@ -876,6 +876,41 @@ inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(con
 }
 
 template <typename Family>
+void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
+                                                        uint64_t compareAddress,
+                                                        uint64_t compareData,
+                                                        COMPARE_OPERATION compareMode,
+                                                        bool registerPollMode,
+                                                        bool useQwordData,
+                                                        bool indirect,
+                                                        bool switchOnUnsuccessful,
+                                                        bool native64bCmd,
+                                                        EncodeCaptureCommandData *outSemWaitCmd) {
+    bool makeCommandView = false;
+    MI_SEMAPHORE_WAIT *programedSemaphoreCommand = nullptr;
+    auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    if (outSemWaitCmd != nullptr) {
+        outSemWaitCmd->cpuBuffer = semaphoreCommand;
+        outSemWaitCmd->cmdSize = getSizeMiSemaphoreWait();
+        if (outSemWaitCmd->makeCommandView) {
+            outSemWaitCmd->gpuAddress = commandStream.getCurrentGpuAddressPosition() - outSemWaitCmd->cmdSize;
+            outSemWaitCmd->commandView = EncodeSemaphore<Family>::allocateSemaphoreWaitCommand(native64bCmd);
+        }
+        makeCommandView = outSemWaitCmd->makeCommandView;
+    }
+
+    if (makeCommandView) {
+        programedSemaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(outSemWaitCmd->commandView);
+    } else {
+        programedSemaphoreCommand = semaphoreCommand;
+    }
+    programMiSemaphoreWait(programedSemaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful, native64bCmd);
+    if (makeCommandView) {
+        *semaphoreCommand = *programedSemaphoreCommand;
+    }
+}
+
+template <typename Family>
 void EncodeSemaphore<Family>::programMiSemaphoreWaitCommand(LinearStream *commandStream,
                                                             void *cmdBuffer,
                                                             uint64_t compareAddress,

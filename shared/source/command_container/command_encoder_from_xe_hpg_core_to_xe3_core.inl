@@ -56,21 +56,13 @@ size_t EncodeSemaphore<Family>::getSizeMiSemaphoreWait() {
 }
 
 template <typename Family>
-void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
-                                                        uint64_t compareAddress,
-                                                        uint64_t compareData,
-                                                        COMPARE_OPERATION compareMode,
-                                                        bool registerPollMode,
-                                                        bool useQwordData,
-                                                        bool indirect,
-                                                        bool switchOnUnsuccessful,
-                                                        bool native64bCmd,
-                                                        void **outSemWaitCmd) {
-    auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    if (outSemWaitCmd != nullptr) {
-        *outSemWaitCmd = semaphoreCommand;
-    }
-    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful, native64bCmd);
+void *EncodeSemaphore<Family>::allocateSemaphoreWaitCommand(bool native64bCmd) {
+    return new typename Family::MI_SEMAPHORE_WAIT;
+}
+
+template <typename Family>
+void EncodeSemaphore<Family>::deallocateSemaphoreWaitCommand(void *cmdBuffer, bool native64bCmd) {
+    delete reinterpret_cast<typename Family::MI_SEMAPHORE_WAIT *>(cmdBuffer);
 }
 
 template <typename Family>

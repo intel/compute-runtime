@@ -3489,12 +3489,16 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
                 break;
             } else {
-                using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
                 using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
                 bool indirectMode = false;
                 const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
                 const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(isQwordInOrderCounter(), useSemaphore64bCmd);
+
+                NEO::EncodeCaptureCommandData cmdCaptureData = {};
+                if (outListCommands != nullptr) {
+                    cmdCaptureData.makeCommandView = outListCommands->makeCommandView;
+                }
 
                 if (qwordIndirect) {
                     indirectMode = true;
@@ -3515,23 +3519,24 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
 
                     if (outListCommands != nullptr) {
                         outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{.pDestination = lri1, .offset = firstRegister});
-
                         outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{.pDestination = lri2, .offset = secondRegister});
                     }
                 }
 
-                auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()));
-
-                if (!noopDispatch) {
-                    auto switchOnUnsuccessful = !implicitDependency && this->isHighPriorityImmediateCmdList();
-                    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                            false, true, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful, useSemaphore64bCmd);
-                } else {
-                    memset(semaphoreCommand, 0, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
+                auto switchOnUnsuccessful = !implicitDependency && this->isHighPriorityImmediateCmdList();
+                NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
+                                                                           false, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful, useSemaphore64bCmd, &cmdCaptureData);
+                if (noopDispatch) {
+                    memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
                 }
 
                 if (outListCommands != nullptr) {
-                    outListCommands->emplace_back(PatchCbWaitEventSemaphoreWait{.pDestination = semaphoreCommand, .offset = i * immWriteOffset});
+                    outListCommands->emplace_back(PatchCbWaitEventSemaphoreWait{
+                        .gpuDestination = cmdCaptureData.gpuAddress,
+                        .pDestination = cmdCaptureData.cpuBuffer,
+                        .commandView = cmdCaptureData.commandView,
+                        .offset = i * immWriteOffset,
+                        .patchSize = cmdCaptureData.cmdSize});
                 }
             }
         }
@@ -4964,10 +4969,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
     uint64_t gpuAddr = event->getCompletionFieldGpuAddress(this->device);
     uint32_t packetsToWait = event->getPacketsToWait();
 
-    void **outSemWaitCmdBuffer = nullptr;
-    void *outSemWaitCmd = nullptr;
+    NEO::EncodeCaptureCommandData *outSemWaitCaptureDataPtr = nullptr;
+    NEO::EncodeCaptureCommandData outSemWaitCaptureData = {};
     if (outWaitCmds != nullptr) {
-        outSemWaitCmdBuffer = &outSemWaitCmd;
+        outSemWaitCaptureData.makeCommandView = outWaitCmds->makeCommandView;
+        outSemWaitCaptureDataPtr = &outSemWaitCaptureData;
     }
 
     for (uint32_t i = 0u; i < packetsToWait; i++) {
@@ -4979,14 +4985,17 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
             NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
                                                                        gpuAddr,
                                                                        Event::STATE_CLEARED,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, this->isHighPriorityImmediateCmdList(), useSemaphore64bCmd, outSemWaitCmdBuffer);
+                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, this->isHighPriorityImmediateCmdList(), useSemaphore64bCmd, outSemWaitCaptureDataPtr);
 
             if (outWaitCmds != nullptr) {
                 if constexpr (!std::is_same_v<PatchSemaphoreType, PatchInvalidPatchType>) {
                     auto offset = i * event->getSinglePacketSize() + event->getCompletionFieldOffset();
                     outWaitCmds->emplace_back(PatchSemaphoreType{
-                        .pDestination = outSemWaitCmd,
-                        .offset = offset});
+                        .gpuDestination = outSemWaitCaptureData.gpuAddress,
+                        .pDestination = outSemWaitCaptureData.cpuBuffer,
+                        .commandView = outSemWaitCaptureData.commandView,
+                        .offset = offset,
+                        .patchSize = outSemWaitCaptureData.cmdSize});
                 } else {
                     UNRECOVERABLE_IF(true);
                 }
