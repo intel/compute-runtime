@@ -276,38 +276,3 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenWddmOnLinuxAndSlmTotalSizeExc
 
     verifyPreferredSlmValues<FamilyType>(valuesToTest, rootDeviceEnvironment);
 }
-
-HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenBarriersWhenLimitingActiveWorkGroupCountThenWorkGroupCountIsClampedAccordingToBarrierCount, IsAtLeastXe2HpgCore) {
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-
-    const uint32_t maxBarrierCount = static_cast<uint32_t>(gfxCoreHelper.getMaxBarrierRegisterPerSlice());
-    const uint32_t workGroupCount = maxBarrierCount + 1;
-
-    struct BarrierCountTestCase {
-        uint8_t barrierCount;
-        uint32_t expectedWorkGroupCount;
-    };
-
-    const std::vector<BarrierCountTestCase> testCases = {
-        {0u, workGroupCount},
-        {1u, std::min(workGroupCount, maxBarrierCount / 1u)},
-        {2u, std::min(workGroupCount, maxBarrierCount / 2u)},
-        {3u, std::min(workGroupCount, maxBarrierCount / 4u)},
-        {4u, std::min(workGroupCount, maxBarrierCount / 4u)},
-        {5u, std::min(workGroupCount, maxBarrierCount / 8u)},
-        {8u, std::min(workGroupCount, maxBarrierCount / 8u)},
-        {9u, std::min(workGroupCount, maxBarrierCount / 16u)},
-        {16u, std::min(workGroupCount, maxBarrierCount / 16u)},
-        {17u, std::min(workGroupCount, maxBarrierCount / 24u)},
-        {24u, std::min(workGroupCount, maxBarrierCount / 24u)},
-        {25u, std::min(workGroupCount, maxBarrierCount / 32u)},
-        {32u, std::min(workGroupCount, maxBarrierCount / 32u)},
-    };
-
-    for (const auto &testCase : testCases) {
-        const uint32_t limitedWorkGroupCount = EncodeDispatchKernel<FamilyType>::limitActiveWorkGroupCountPerSubSliceByBarriers(gfxCoreHelper, workGroupCount, testCase.barrierCount);
-
-        EXPECT_EQ(testCase.expectedWorkGroupCount, limitedWorkGroupCount) << "barrierCount=" << static_cast<uint32_t>(testCase.barrierCount);
-    }
-}

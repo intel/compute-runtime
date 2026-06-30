@@ -25,7 +25,6 @@ struct MutableWalkerSpecificFieldsArguments {
     const uint32_t totalWorkGroupSize;
     uint32_t slmTotalSizePerThreadGroup;
     uint32_t slmPolicy;
-    uint8_t barrierCount;
     uint32_t partitionCount;
     NEO::RequiredPartitionDim requiredPartitionDim;
     bool isRequiredDispatchWorkGroupOrder;

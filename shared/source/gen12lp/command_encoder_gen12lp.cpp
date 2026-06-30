@@ -444,13 +444,8 @@ template <typename WalkerType, typename InterfaceDescriptorType>
 inline void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs) {}
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::limitActiveWorkGroupCountPerSubSliceByBarriers(const GfxCoreHelper &gfxCoreHelper, uint32_t workGroupCount, uint8_t barrierCount) {
-    return workGroupCount;
-}
-
-template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint8_t barrierCount, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {}
+void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {}
 
 template <typename Family>
 template <typename InterfaceDescriptorType>

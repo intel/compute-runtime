@@ -9,7 +9,6 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/release_helper/release_helper.h"
 
@@ -34,45 +33,12 @@ uint32_t EncodeDispatchKernel<Family>::alignPreferredSlmSize(uint32_t slmSize, [
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::limitActiveWorkGroupCountPerSubSliceByBarriers(const GfxCoreHelper &gfxCoreHelper, uint32_t workGroupCount, uint8_t barrierCount) {
-    auto maxBarrierCount = gfxCoreHelper.getMaxBarrierRegisterPerSlice();
-
-    if (barrierCount == 0) {
-        return workGroupCount;
-    }
-
-    uint8_t programmableNumberOfBarriers = barrierCount;
-    if (barrierCount <= 2) {
-        // do nothing - programmableNumberOfBarriers is already initialized with correct value
-    } else if (barrierCount <= 4) {
-        programmableNumberOfBarriers = 4;
-    } else if (barrierCount <= 8) {
-        programmableNumberOfBarriers = 8;
-    } else if (barrierCount <= 16) {
-        programmableNumberOfBarriers = 16;
-    } else if (barrierCount <= 24) {
-        programmableNumberOfBarriers = 24;
-    } else {
-        programmableNumberOfBarriers = 32;
-    }
-
-    workGroupCount = std::min(workGroupCount, static_cast<uint32_t>(maxBarrierCount / programmableNumberOfBarriers));
-
-    return workGroupCount;
-}
-
-template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint8_t barrierCount, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {
+void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
-    uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
-
-    if (slmTotalSizePerThreadGroup > 0) {
-        auto &gfxHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-        workGroupCountPerDss = limitActiveWorkGroupCountPerSubSliceByBarriers(gfxHelper, workGroupCountPerDss, barrierCount);
-    }
+    const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
 
     slmTotalSizePerThreadGroup = EncodeDispatchKernel<Family>::alignPreferredSlmSize(slmTotalSizePerThreadGroup, rootDeviceEnvironment.getReleaseHelper());
 

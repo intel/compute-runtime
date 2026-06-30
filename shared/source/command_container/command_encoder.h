@@ -28,7 +28,6 @@ class CommandContainer;
 class Device;
 class Gmm;
 class GmmHelper;
-class GfxCoreHelper;
 class GraphicsAllocation;
 class IndirectHeap;
 class InOrderExecInfo;
@@ -232,12 +231,10 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
 
     template <typename InterfaceDescriptorType>
     static void encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
-                                         const uint32_t threadsPerThreadGroup, uint8_t barrierCount, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy);
+                                         const uint32_t threadsPerThreadGroup, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy);
 
     template <typename InterfaceDescriptorType>
     static void encodeSlmSizePerThreadGroup(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled);
-
-    static uint32_t limitActiveWorkGroupCountPerSubSliceByBarriers(const GfxCoreHelper &gfxCoreHelper, uint32_t workGroupCount, uint8_t barrierCount);
 
     static uint32_t getThreadCountPerSubslice(const HardwareInfo &hwInfo);
     static uint32_t alignPreferredSlmSize(uint32_t slmSize, const ReleaseHelper &releaseHelper);

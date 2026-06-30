@@ -288,7 +288,6 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
         NEO::EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&idd,
                                                                        device.getRootDeviceEnvironment(),
                                                                        args.threadsPerThreadGroup,
-                                                                       args.barrierCount,
                                                                        args.slmTotalSizePerThreadGroup,
                                                                        static_cast<NEO::SlmPolicy>(args.slmPolicy));
     }

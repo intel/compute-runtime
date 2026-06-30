@@ -36,34 +36,33 @@ DG2TEST_F(CommandEncodeStatesDg2Test, whenSelectingPreferredSlmSizePerDssThenUse
     hwInfo.gtSystemInfo.ThreadCount = 1024;
     hwInfo.gtSystemInfo.DualSubSliceCount = 8;
     hwInfo.gtSystemInfo.SubSliceCount = 2 * hwInfo.gtSystemInfo.DualSubSliceCount;
-    const uint8_t barrierCount = 1;
 
     {
         const uint32_t threadsPerThreadGroup = 7; // 18 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 2 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-        EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, barrierCount, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
+        EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
         EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB, idd.getPreferredSlmAllocationSize());
     }
     {
         const uint32_t threadsPerThreadGroup = 8; // 16 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 2 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-        EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, barrierCount, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
+        EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
         EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB, idd.getPreferredSlmAllocationSize());
     }
     {
         const uint32_t threadsPerThreadGroup = 9; // 14 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 2 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-        EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, barrierCount, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
+        EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
         EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB, idd.getPreferredSlmAllocationSize());
     }
     {
         const uint32_t threadsPerThreadGroup = 50; // 2 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 16 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-        EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, barrierCount, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
+        EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
         EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB, idd.getPreferredSlmAllocationSize());
     }
 }
