@@ -315,7 +315,6 @@ ClDevice *Context::getClDeviceByRootDeviceIndex(uint32_t rootDeviceIndex) const 
 }
 
 cl_int Context::getSupportedImageFormats(
-    Device *device,
     cl_mem_flags flags,
     cl_mem_object_type imageType,
     cl_uint numEntries,
@@ -323,8 +322,8 @@ cl_int Context::getSupportedImageFormats(
     cl_uint *numImageFormatsReturned) {
     size_t numImageFormats = 0;
 
-    const bool nv12ExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().nv12Extension;
-    const bool packedYuvExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().packedYuvExtension;
+    const bool nv12ExtensionEnabled = getClDevice()->getDeviceInfo().nv12Extension;
+    const bool packedYuvExtensionEnabled = getClDevice()->getDeviceInfo().packedYuvExtension;
 
     auto appendImageFormats = [&](ArrayRef<const ClSurfaceFormatInfo> formats) {
         if (imageFormats) {

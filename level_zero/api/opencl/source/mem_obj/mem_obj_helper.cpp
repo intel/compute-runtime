@@ -137,8 +137,8 @@ bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &memoryP
         return false;
     }
 
-    auto pClDevice = memoryProperties.pDevice->getSpecializedDevice<LEO::ClDevice>();
-    bool isRootDeviceAssociated = (std::find_if(context.getClDevices().begin(), context.getClDevices().end(), [pClDevice](auto contextClDevice) { return contextClDevice->getRootDeviceIndex() == pClDevice->getRootDeviceIndex(); }) != context.getClDevices().end());
+    const auto rootDeviceIndex = memoryProperties.pDevice->getRootDeviceIndex();
+    bool isRootDeviceAssociated = (std::find_if(context.getClDevices().begin(), context.getClDevices().end(), [rootDeviceIndex](auto contextClDevice) { return contextClDevice->getRootDeviceIndex() == rootDeviceIndex; }) != context.getClDevices().end());
     return isRootDeviceAssociated;
 }
 

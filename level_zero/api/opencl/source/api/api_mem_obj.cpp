@@ -456,12 +456,16 @@ cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
         return retVal;
     }
 
-    cl_int tracingRetVal = pContext->getSupportedImageFormats(&pContext->getClDevice()->getDevice(),
-                                                              flags,
-                                                              imageType,
-                                                              numEntries,
-                                                              imageFormats,
-                                                              numImageFormats);
+    cl_int tracingRetVal = CL_SUCCESS;
+    if (pContext->getClDevice()->getHardwareInfo().capabilityTable.supportsImages) {
+        tracingRetVal = pContext->getSupportedImageFormats(flags,
+                                                           imageType,
+                                                           numEntries,
+                                                           imageFormats,
+                                                           numImageFormats);
+    } else if (numImageFormats) {
+        *numImageFormats = 0u;
+    }
     TRACING_EXIT(ClGetSupportedImageFormats, &tracingRetVal);
     return tracingRetVal;
 }

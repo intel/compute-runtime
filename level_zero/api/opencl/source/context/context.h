@@ -74,7 +74,6 @@ class Context : public BaseObject<_cl_context> {
     void *getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize);
 
     cl_int getSupportedImageFormats(
-        Device *device,
         cl_mem_flags flags,
         cl_mem_object_type imageType,
         cl_uint numEntries,
