@@ -133,6 +133,35 @@ bool EncodeEnableRayTracing<Family>::is48bResourceNeededForRayTracing() {
     return false;
 }
 
+template <>
+uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] const ReleaseHelper &releaseHelper) {
+    static constexpr uint32_t alignedSlmSizes[] = {
+        0u,
+        1u * MemoryConstants::kiloByte,
+        2u * MemoryConstants::kiloByte,
+        4u * MemoryConstants::kiloByte,
+        8u * MemoryConstants::kiloByte,
+        16u * MemoryConstants::kiloByte,
+        24u * MemoryConstants::kiloByte,
+        32u * MemoryConstants::kiloByte,
+        48u * MemoryConstants::kiloByte,
+        64u * MemoryConstants::kiloByte,
+        96u * MemoryConstants::kiloByte,
+        128u * MemoryConstants::kiloByte,
+        192u * MemoryConstants::kiloByte,
+        256u * MemoryConstants::kiloByte,
+        384u * MemoryConstants::kiloByte,
+    };
+
+    for (auto &alignedSlmSize : alignedSlmSizes) {
+        if (slmSize <= alignedSlmSize) {
+            return alignedSlmSize;
+        }
+    }
+
+    UNRECOVERABLE_IF(true);
+    return 0;
+}
 } // namespace NEO
 
 #include "shared/source/command_container/command_encoder_enablers.inl"

@@ -1563,6 +1563,24 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCou
     EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
 }
 
+HWTEST2_F(CommandEncodeStatesTest, givenTotalDispatchedThreadGroupCountWhenCalculateThreadGroupCountPerSubsliceThenDivideByDualSubSliceCountAndRoundUp, IsAtMostXeCore) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.DualSubSliceCount = 8;
+    EXPECT_EQ(0u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 0));
+    EXPECT_EQ(1u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 1));
+    EXPECT_EQ(1u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 8));
+    EXPECT_EQ(2u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 9));
+    EXPECT_EQ(2u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 16));
+    EXPECT_EQ(3u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 17));
+
+    hwInfo.gtSystemInfo.DualSubSliceCount = 4;
+    EXPECT_EQ(4u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 16));
+    EXPECT_EQ(5u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 17));
+}
+
 HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCountPerSubsliceThenUseSubSliceAsDenominator, IsAtLeastXe2HpgCore) {
     auto &hwInfo = pDevice->getHardwareInfo();
     auto expectedValue = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;

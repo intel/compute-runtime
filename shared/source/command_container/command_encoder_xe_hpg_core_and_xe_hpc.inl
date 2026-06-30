@@ -54,13 +54,14 @@ void EncodeWA<Family>::adjustCompressionFormatForPlanarImage(uint32_t &compressi
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {
+void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, const uint32_t totalDispatchedThreadGroupCount, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
     const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
 
-    slmTotalSizePerThreadGroup = EncodeDispatchKernel<Family>::alignPreferredSlmSize(slmTotalSizePerThreadGroup, rootDeviceEnvironment.getReleaseHelper());
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    slmTotalSizePerThreadGroup = EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(slmTotalSizePerThreadGroup, releaseHelper);
 
     uint32_t slmSize = 0u;
 
@@ -77,7 +78,6 @@ void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorT
     uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment);
     slmSize = std::min(slmSize, static_cast<uint32_t>(availableSlmSizePerSubslice * MemoryConstants::kiloByte));
 
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     const auto &sizeToPreferredSlmValueArray = releaseHelper.getSizeToPreferredSlmValue();
 
     uint32_t programmableIdPreferredSlmSize = 0;

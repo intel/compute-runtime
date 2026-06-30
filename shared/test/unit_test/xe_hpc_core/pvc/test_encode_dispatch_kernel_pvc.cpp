@@ -33,7 +33,7 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenZeroSlmSizeWhenSetAdditionalInfoIsCal
     uint32_t slmTotalSizePerThreadGroup = 0;
 
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-    EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsCount, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
+    EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsCount, 1024, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
     EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB, idd.getPreferredSlmAllocationSize());
 }
 
@@ -113,11 +113,12 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredAndA
         }
     }
 }
+
 using CommandEncodeStatesTestPvc = Test<CommandEncodeStatesFixture>;
 PVCTEST_F(CommandEncodeStatesTestPvc, GivenVariousSlmTotalSizesWhenSetPreferredSlmIsCalledThenCorrectValuesAreSet) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
-    const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
+    const std::vector<PreferredSlmTestValuesPreXe2<FamilyType>> valuesToTest = {
         {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
         {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
         {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
@@ -126,5 +127,5 @@ PVCTEST_F(CommandEncodeStatesTestPvc, GivenVariousSlmTotalSizesWhenSetPreferredS
         {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128KB},
     };
 
-    verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
+    verifyPreferredSlmValuesPreXe2<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
 }

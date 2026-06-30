@@ -22,8 +22,8 @@ uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareI
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::alignPreferredSlmSize(uint32_t slmSize, const ReleaseHelper &releaseHelper) {
-    return EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(slmSize, releaseHelper);
+uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t totalDispatchedThreadGroupCount) {
+    return static_cast<uint32_t>(Math::divideAndRoundUp(totalDispatchedThreadGroupCount, hwInfo.gtSystemInfo.DualSubSliceCount));
 }
 
 template <typename Family>

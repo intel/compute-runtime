@@ -14,7 +14,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 template <typename FamilyType>
-struct PreferredSlmTestValues {
+struct PreferredSlmTestValuesPreXe2 {
 
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
@@ -25,7 +25,7 @@ struct PreferredSlmTestValues {
 };
 
 template <typename FamilyType>
-void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+void verifyPreferredSlmValuesPreXe2(std::vector<PreferredSlmTestValuesPreXe2<FamilyType>> valuesToTest, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
 
@@ -53,6 +53,7 @@ void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> va
                 NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd,
                                                                                 rootDeviceEnvironment,
                                                                                 threadsPerThreadGroup,
+                                                                                1024,
                                                                                 slmTotalSizePerThreadGroup,
                                                                                 slmPolicy);
 
