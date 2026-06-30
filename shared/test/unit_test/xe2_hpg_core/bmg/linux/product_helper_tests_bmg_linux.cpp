@@ -66,6 +66,11 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSuppor
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIfVmBindResourceDecompressionSupportedThenReturnTrue) {
+
+    EXPECT_TRUE(productHelper->isVmBindResourceDecompressionSupported());
+}
+
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {
     EXPECT_EQ(0ull, productHelper->getSharedSystemPatIndex());
 }

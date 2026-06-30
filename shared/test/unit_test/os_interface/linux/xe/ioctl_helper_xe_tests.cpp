@@ -3004,6 +3004,136 @@ TEST_F(IoctlHelperXeTest, givenImmediateAndReadOnlyBindFlagsSupportedWhenGetting
     }
 }
 
+struct MockIoctlHelperXeIsVmBindDecompress : MockIoctlHelperXe {
+    using MockIoctlHelperXe::ioctl;
+    using MockIoctlHelperXe::MockIoctlHelperXe;
+
+    bool isVmBindDecompressAvailable(uint32_t vmId) override {
+        return IoctlHelperXe::isVmBindDecompressAvailable(vmId);
+    }
+
+    uint32_t getVmBindDecompressFlag() const override {
+        return vmBindDecompressFlagValue;
+    }
+
+    uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override {
+        createGemCalled++;
+        return createGemResult;
+    }
+
+    int vmBind(const VmBindParams &vmBindParams) override {
+        vmBindCalled++;
+        vmBindFlags = vmBindParams.flags;
+        vmBindVmId = vmBindParams.vmId;
+        return vmBindResult;
+    }
+
+    int vmUnbind(const VmBindParams &vmBindParams) override {
+        vmUnbindCalled++;
+        vmUnbindVmId = vmBindParams.vmId;
+        return vmUnbindResult;
+    }
+
+    int ioctl(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::gemClose) {
+            gemCloseCalled++;
+            return 0;
+        }
+        return IoctlHelperXe::ioctl(request, arg);
+    }
+
+    uint32_t vmBindDecompressFlagValue = DRM_XE_VM_BIND_FLAG_DECOMPRESS;
+    uint32_t createGemResult = 1u;
+    int vmBindResult = 0;
+    int vmUnbindResult = 0;
+    uint32_t createGemCalled = 0;
+    uint32_t vmBindCalled = 0;
+    uint32_t vmUnbindCalled = 0;
+    uint32_t gemCloseCalled = 0;
+    uint64_t vmBindFlags = 0;
+    uint32_t vmBindVmId = 0;
+    uint32_t vmUnbindVmId = 0;
+};
+
+TEST_F(IoctlHelperXeTest, givenVmBindDecompressFlagIsZeroWhenIsVmBindDecompressAvailableThenReturnsFalseAndDoesNotProbe) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeIsVmBindDecompress>(*drm);
+    xeIoctlHelper->vmBindDecompressFlagValue = 0u;
+
+    EXPECT_FALSE(xeIoctlHelper->isVmBindDecompressAvailable(0u));
+    EXPECT_EQ(0u, xeIoctlHelper->createGemCalled);
+    EXPECT_EQ(0u, xeIoctlHelper->vmBindCalled);
+    EXPECT_EQ(0u, xeIoctlHelper->vmUnbindCalled);
+    EXPECT_EQ(0u, xeIoctlHelper->gemCloseCalled);
+}
+
+TEST_F(IoctlHelperXeTest, givenCreateGemFailsWhenIsVmBindDecompressAvailableThenReturnsFalseAndDoesNotBind) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeIsVmBindDecompress>(*drm);
+    xeIoctlHelper->createGemResult = 0u;
+
+    EXPECT_FALSE(xeIoctlHelper->isVmBindDecompressAvailable(0u));
+    EXPECT_EQ(1u, xeIoctlHelper->createGemCalled);
+    EXPECT_EQ(0u, xeIoctlHelper->vmBindCalled);
+    EXPECT_EQ(0u, xeIoctlHelper->vmUnbindCalled);
+    EXPECT_EQ(0u, xeIoctlHelper->gemCloseCalled);
+}
+
+TEST_F(IoctlHelperXeTest, givenProbeVmBindFailsWhenIsVmBindDecompressAvailableThenReturnsFalseAndClosesGemWithoutUnbinding) {
+    constexpr uint32_t vmId = 3u;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeIsVmBindDecompress>(*drm);
+    xeIoctlHelper->createGemResult = 1u;
+    xeIoctlHelper->vmBindResult = -1;
+
+    EXPECT_FALSE(xeIoctlHelper->isVmBindDecompressAvailable(vmId));
+    EXPECT_EQ(1u, xeIoctlHelper->createGemCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->vmBindCalled);
+    EXPECT_EQ(0u, xeIoctlHelper->vmUnbindCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->gemCloseCalled);
+    EXPECT_EQ(vmId, xeIoctlHelper->vmBindVmId);
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_IMMEDIATE | DRM_XE_VM_BIND_FLAG_DECOMPRESS), xeIoctlHelper->vmBindFlags);
+}
+
+TEST_F(IoctlHelperXeTest, givenProbeVmBindSucceedsWhenIsVmBindDecompressAvailableThenReturnsTrueAndUnbindsAndClosesGem) {
+    constexpr uint32_t vmId = 5u;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeIsVmBindDecompress>(*drm);
+    xeIoctlHelper->createGemResult = 1u;
+    xeIoctlHelper->vmBindResult = 0;
+
+    EXPECT_TRUE(xeIoctlHelper->isVmBindDecompressAvailable(vmId));
+    EXPECT_EQ(1u, xeIoctlHelper->createGemCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->vmBindCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->vmUnbindCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->gemCloseCalled);
+    EXPECT_EQ(vmId, xeIoctlHelper->vmBindVmId);
+    EXPECT_EQ(vmId, xeIoctlHelper->vmUnbindVmId);
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_IMMEDIATE | DRM_XE_VM_BIND_FLAG_DECOMPRESS), xeIoctlHelper->vmBindFlags);
+}
+
+TEST_F(IoctlHelperXeTest, givenIsVmBindDecompressAvailableAlreadyCheckedWhenCalledAgainThenCachedResultIsReturnedWithoutProbing) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeIsVmBindDecompress>(*drm);
+
+    EXPECT_TRUE(xeIoctlHelper->isVmBindDecompressAvailable(0u));
+    EXPECT_EQ(1u, xeIoctlHelper->createGemCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->vmBindCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->vmUnbindCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->gemCloseCalled);
+
+    EXPECT_TRUE(xeIoctlHelper->isVmBindDecompressAvailable(0u));
+    EXPECT_EQ(1u, xeIoctlHelper->createGemCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->vmBindCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->vmUnbindCalled);
+    EXPECT_EQ(1u, xeIoctlHelper->gemCloseCalled);
+}
+
 struct DrmMockXePageFault : public DrmMockXe {
     static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {
         auto drm = std::unique_ptr<DrmMockXePageFault>(new DrmMockXePageFault{rootDeviceEnvironment});

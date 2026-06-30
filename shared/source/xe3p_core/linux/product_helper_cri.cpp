@@ -46,11 +46,6 @@ bool ProductHelperHw<gfxProduct>::isEuDebugPageFaultSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isVmBindResourceDecompressionSupported() const {
-    return true;
-}
-
-template <>
 uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
     return 0;
 }

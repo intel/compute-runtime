@@ -462,6 +462,11 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupported
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfVmBindResourceDecompressionSupportedThenReturnFalse, IsNotBMG) {
+
+    EXPECT_FALSE(productHelper->isVmBindResourceDecompressionSupported());
+}
+
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnFalse, IsNotBMG) {
     EXPECT_FALSE(productHelper->isDeferBackingEnabled());
 }
