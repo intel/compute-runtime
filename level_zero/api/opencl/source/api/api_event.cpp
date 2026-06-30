@@ -167,10 +167,12 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
 
             ze_command_list_handle_t cmdList;
             std::unique_lock<std::mutex> internalLock;
+            std::unique_lock<std::recursive_mutex> cmdQLock;
             if (pEvent->isUserEvent()) {
                 internalLock = pEvent->getContext()->lockInternalCompute();
                 cmdList = pEvent->getContext()->getInternalComputeCmdList();
             } else {
+                cmdQLock = pEvent->getCommandQueue()->takeOwnership();
                 cmdList = pEvent->getCommandQueue()->getL0Handle();
             }
 

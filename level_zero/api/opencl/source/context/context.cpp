@@ -88,14 +88,16 @@ cl_int Context::initialize() {
         if (this->internalCopyCmdLists.count(rootDeviceIndex) != 0) {
             continue;
         }
-
-        auto internalCopyCmdList = L0::CommandList::createImmediate(clDevice->getHardwareInfo().platform.eProductFamily, clDevice->getL0Object(), &cmdListDesc, true, NEO::EngineGroupType::copy, resultValue);
+        ze_command_list_handle_t internalCopyCmdList{};
+        resultValue = zeCommandListCreateImmediate(contextHandle, clDevice->getL0Handle(), &cmdListDesc, &internalCopyCmdList);
         if (resultValue != ZE_RESULT_SUCCESS) {
             return L0ToClResultMapper(resultValue);
         }
         this->internalCopyCmdLists.emplace(rootDeviceIndex, internalCopyCmdList);
 
-        auto internalComputeCmdList = L0::CommandList::createImmediate(clDevice->getHardwareInfo().platform.eProductFamily, clDevice->getL0Object(), &cmdListDesc, true, NEO::EngineGroupType::compute, resultValue);
+        cmdListDesc.flags = 0;
+        ze_command_list_handle_t internalComputeCmdList{};
+        resultValue = zeCommandListCreateImmediate(contextHandle, clDevice->getL0Handle(), &cmdListDesc, &internalComputeCmdList);
         if (resultValue != ZE_RESULT_SUCCESS) {
             return L0ToClResultMapper(resultValue);
         }
