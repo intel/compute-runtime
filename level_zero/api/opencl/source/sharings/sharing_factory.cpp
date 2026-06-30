@@ -89,6 +89,13 @@ SharingBuilderFactory *SharingFactory::sharingContextBuilder[SharingType::MAX_SH
     nullptr,
 };
 
+void SharingFactory::clearSharingBuilders() {
+    for (auto &builder : sharingContextBuilder) {
+        delete builder;
+        builder = nullptr;
+    }
+}
+
 void SharingFactory::verifyExtensionSupport(DriverInfo *driverInfo) {
     for (auto &builder : sharingContextBuilder) {
         if (builder == nullptr) {

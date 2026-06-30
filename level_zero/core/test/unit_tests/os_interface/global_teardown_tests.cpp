@@ -7,6 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/os_interface/global_teardown_tests.h"
 
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
@@ -15,6 +16,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/platform/platform.h"
+#include "level_zero/api/opencl/source/sharings/sharing_factory.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/global_teardown.h"
@@ -24,9 +26,39 @@
 namespace L0 {
 namespace ult {
 
+namespace {
+uint32_t leoSharingBuilderDestructorCount = 0u;
+
+struct MockLeoSharingBuilderFactory : public NEO::LEO::SharingBuilderFactory {
+    ~MockLeoSharingBuilderFactory() override { leoSharingBuilderDestructorCount++; }
+    std::unique_ptr<NEO::LEO::SharingContextBuilder> createContextBuilder() override { return nullptr; }
+    std::string getExtensions(NEO::LEO::DriverInfo *) override { return {}; }
+    void *getExtensionFunctionAddress(const std::string &) override { return nullptr; }
+};
+
+class LeoSharingFactoryStateRestore : public NEO::LEO::SharingFactory {
+  public:
+    using NEO::LEO::SharingFactory::sharingContextBuilder;
+
+    LeoSharingFactoryStateRestore() {
+        memcpy_s(savedState, sizeof(savedState), sharingContextBuilder, sizeof(sharingContextBuilder));
+        for (auto &builder : sharingContextBuilder) {
+            builder = nullptr;
+        }
+    }
+    ~LeoSharingFactoryStateRestore() {
+        memcpy_s(sharingContextBuilder, sizeof(sharingContextBuilder), savedState, sizeof(savedState));
+    }
+
+  protected:
+    decltype(NEO::LEO::SharingFactory::sharingContextBuilder) savedState;
+};
+} // namespace
+
 struct GlobalTearDownTests : public ::testing::Test {
     VariableBackup<decltype(globalDriverHandles)> globalDriverHandlesBackup{&globalDriverHandles, nullptr};
     VariableBackup<decltype(NEO::LEO::platformsImpl)> platformsImplBackup{&NEO::LEO::platformsImpl, nullptr};
+    LeoSharingFactoryStateRestore leoSharingStateRestore;
 };
 
 TEST_F(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionForTranslateHandleIsLoadedIfAvailable) {
@@ -211,6 +243,18 @@ TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenGlobalSetupAndTeardownA
     EXPECT_FALSE(globalDriverDispatch.tools.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.sysman.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.runtime.isValidFlag);
+}
+
+TEST_F(GlobalTearDownTests, givenLeoSharingBuildersRegisteredWhenGlobalDriverTeardownCalledThenAllBuildersAreCleared) {
+    leoSharingBuilderDestructorCount = 0u;
+    leoSharingStateRestore.sharingContextBuilder[NEO::LEO::SharingType::CLGL_SHARING] = new MockLeoSharingBuilderFactory();
+    leoSharingStateRestore.sharingContextBuilder[NEO::LEO::SharingType::UNIFIED_SHARING] = new MockLeoSharingBuilderFactory();
+
+    globalDriverTeardown();
+
+    EXPECT_EQ(2u, leoSharingBuilderDestructorCount);
+    EXPECT_EQ(nullptr, leoSharingStateRestore.sharingContextBuilder[NEO::LEO::SharingType::CLGL_SHARING]);
+    EXPECT_EQ(nullptr, leoSharingStateRestore.sharingContextBuilder[NEO::LEO::SharingType::UNIFIED_SHARING]);
 }
 
 TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenTerminationThenPageFaultHandlerIsRemoved) {

@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 
 #include "level_zero/api/opencl/source/platform/platform.h"
+#include "level_zero/api/opencl/source/sharings/sharing_factory.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/ddi/ze_ddi_tables.h"
@@ -55,6 +56,7 @@ void globalDriverTeardown() {
         delete NEO::LEO::platformsImpl;
     }
     NEO::LEO::platformsImpl = nullptr;
+    NEO::LEO::SharingFactory::clearSharingBuilders();
 
     if (levelZeroDriverInitialized) {
         NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");

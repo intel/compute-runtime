@@ -61,6 +61,7 @@ class SharingFactory {
     };
 
     static std::unique_ptr<SharingFactory> build();
+    static void clearSharingBuilders();
     bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue);
     bool finalizeProperties(Context &context, int32_t &errcodeRet);
     std::string getExtensions(DriverInfo *driverInfo);

@@ -7,6 +7,7 @@
 
 #include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/source/sharings/sharing_factory.h"
 
 namespace NEO {
 volatile bool wasPlatformTeardownCalled = false;
@@ -27,5 +28,6 @@ void globalPlatformTeardown(bool processTermination) {
     leoTeardown();
     delete platformsImpl;
     platformsImpl = nullptr;
+    SharingFactory::clearSharingBuilders();
 }
 } // namespace NEO
