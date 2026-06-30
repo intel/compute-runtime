@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
@@ -116,6 +117,30 @@ TEST_P(ReleaseHelperGen12LpTests, whenIsSingleDispatchRequiredForMultiCCSCalledT
 
 TEST_P(ReleaseHelperGen12LpTests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
+}
+
+TEST_P(ReleaseHelperGen12LpTests, givenDebugFlagSetTo1WhenIsPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenTrueReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
+
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
+    }
+}
+
+TEST_P(ReleaseHelperGen12LpTests, givenDebugFlagSetTo0WhenIsPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenFalseReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
+
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(

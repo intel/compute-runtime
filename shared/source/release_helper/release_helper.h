@@ -43,7 +43,6 @@ class ReleaseHelper {
     virtual bool isAdjustWalkOrderAvailable() const = 0;
     virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
     virtual bool isDotProductAccumulateSystolicSupported() const = 0;
-    std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const = 0;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const = 0;
     virtual bool isPipeControlPriorToPipelineSelectWaRequired() const = 0;

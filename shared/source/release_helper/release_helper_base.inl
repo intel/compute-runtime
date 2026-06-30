@@ -33,6 +33,9 @@ bool ReleaseHelperHw<releaseType>::isPipeControlPriorToNonPipelinedStateCommands
 
 template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    if (debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
+        return debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
+    }
     return false;
 }
 

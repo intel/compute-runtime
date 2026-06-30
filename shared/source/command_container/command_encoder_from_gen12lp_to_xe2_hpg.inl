@@ -16,11 +16,9 @@ template <typename Family>
 inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
     LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
     bool hasSharedHandles, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush) {
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, rootDeviceEnvironment, isRcs);
     const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
-    std::ignore = isExtendedWARequired;
+    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
 
     if (isBasicWARequired) {
         PipeControlArgs args;

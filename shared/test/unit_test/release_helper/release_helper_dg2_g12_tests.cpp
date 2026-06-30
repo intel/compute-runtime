@@ -170,3 +170,23 @@ TEST_F(ReleaseHelperDg2G12Tests, whenNumberOfCCSEnabledEqualToOneAndIsRcsTrueThe
     releaseHelper = ReleaseHelper::create(ipVersion);
     EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, true));
 }
+
+TEST_F(ReleaseHelperDg2G12Tests, givenDebugFlagSetTo1WhenIsPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenTrueReturnedRegardlessOfCCSAndRcs) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    releaseHelper = ReleaseHelper::create(ipVersion);
+    EXPECT_TRUE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, true));
+}
+
+TEST_F(ReleaseHelperDg2G12Tests, givenDebugFlagSetTo0WhenIsPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenFalseReturnedRegardlessOfCCSAndRcs) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    releaseHelper = ReleaseHelper::create(ipVersion);
+    EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, false));
+}

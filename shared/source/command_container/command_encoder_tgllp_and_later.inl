@@ -18,9 +18,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvir
     size_t size = 0;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
-    std::ignore = isExtendedWARequired;
+    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
 
     if (isBasicWARequired) {
         size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier();

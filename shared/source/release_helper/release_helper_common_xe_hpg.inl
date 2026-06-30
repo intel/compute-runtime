@@ -57,6 +57,9 @@ bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsBase
 
 template <>
 bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    if (debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
+        return debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
+    }
     return hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 && !isRcs;
 }
 

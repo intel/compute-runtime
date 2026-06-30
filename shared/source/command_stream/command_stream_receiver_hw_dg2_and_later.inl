@@ -22,8 +22,7 @@ template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
     size_t size = sizeof(_3DSTATE_BTD);
     const auto &releaseHelper = getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-    std::ignore = isBasicWARequired;
+    const bool isExtendedWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, isRcs());
 
     if (isExtendedWARequired) {
         size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier();
@@ -36,8 +35,7 @@ template <>
 void CommandStreamReceiverHw<Family>::dispatchRayTracingStateCommand(LinearStream &cmdStream, Device &device) {
     auto &hwInfo = peekHwInfo();
     const auto &releaseHelper = getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-    std::ignore = isBasicWARequired;
+    const bool isExtendedWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, isRcs());
 
     if (isExtendedWARequired) {
         PipeControlArgs args;

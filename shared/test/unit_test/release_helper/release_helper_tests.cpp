@@ -65,46 +65,6 @@ TEST(ReleaseHelperSemaphore64Tests, givenEnable64BitSemaphoreFlagSetWhenIsAvaila
     EXPECT_TRUE(releaseHelper.isAvailableSemaphore64(hwInfo));
 }
 
-using ReleaseHelperPipeControlTests = ::testing::Test;
-
-TEST(ReleaseHelperPipeControlTests, givenOnlyBaseWaRequiredWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenOnlyBasicIsRequired) {
-    MockReleaseHelper releaseHelper{};
-    releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequiredResult = true;
-    releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredResult = false;
-
-    EXPECT_EQ((std::pair<bool, bool>{true, false}), releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, false));
-}
-
-TEST(ReleaseHelperPipeControlTests, givenOnlyExtendedWaRequiredWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenOnlyExtendedIsRequired) {
-    MockReleaseHelper releaseHelper{};
-    releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequiredResult = false;
-    releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredResult = true;
-
-    EXPECT_EQ((std::pair<bool, bool>{false, true}), releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, false));
-}
-
-TEST(ReleaseHelperPipeControlTests, givenDebugFlagSetTo1WhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenExtendedIsForcedToTrue) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
-
-    MockReleaseHelper releaseHelper{};
-    releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequiredResult = false;
-    releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredResult = false;
-
-    EXPECT_EQ((std::pair<bool, bool>{false, true}), releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, false));
-}
-
-TEST(ReleaseHelperPipeControlTests, givenDebugFlagSetTo0WhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenExtendedIsForcedToFalse) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
-
-    MockReleaseHelper releaseHelper{};
-    releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequiredResult = true;
-    releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredResult = true;
-
-    EXPECT_EQ((std::pair<bool, bool>{true, false}), releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, false));
-}
-
 using ReleaseHelperKernelCapabilitiesTests = ::testing::Test;
 
 TEST(ReleaseHelperKernelCapabilitiesTests, GivenRequestForKernelFp16CapabilitiesThenReturnMinMaxAndLoadStoreCapabilitiesWithCapsFromReleaseHelper) {
