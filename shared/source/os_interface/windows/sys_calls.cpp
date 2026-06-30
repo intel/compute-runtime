@@ -275,5 +275,23 @@ bool isShutdownInProgress() {
     auto rtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
     return rtlDllShutdownInProgress();
 }
+
+BOOL processIdToSessionId(DWORD dwProcessId, DWORD *pSessionId) {
+    return ProcessIdToSessionId(dwProcessId, pSessionId);
+}
+
+void rtlInitUnicodeString(PUNICODE_STRING destinationString, PCWSTR sourceString) {
+    using rtlInitUnicodeStringPtr = VOID(NTAPI *)(PUNICODE_STRING, PCWSTR);
+    auto handle = GetModuleHandleA("ntdll.dll");
+    auto rtlInitUnicodeStringFunc = reinterpret_cast<rtlInitUnicodeStringPtr>(GetProcAddress(handle, "RtlInitUnicodeString"));
+    rtlInitUnicodeStringFunc(destinationString, sourceString);
+}
+
+NTSTATUS ntOpenDirectoryObject(PHANDLE directoryHandle, ACCESS_MASK desiredAccess, POBJECT_ATTRIBUTES objectAttributes) {
+    using ntOpenDirectoryObjectPtr = NTSTATUS(NTAPI *)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES);
+    auto handle = GetModuleHandleA("ntdll.dll");
+    auto ntOpenDirectoryObjectFunc = reinterpret_cast<ntOpenDirectoryObjectPtr>(GetProcAddress(handle, "NtOpenDirectoryObject"));
+    return ntOpenDirectoryObjectFunc(directoryHandle, desiredAccess, objectAttributes);
+}
 } // namespace SysCalls
 } // namespace NEO

@@ -11,6 +11,7 @@
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 
 #include <cstdint>
+#include <cwchar>
 #include <unordered_map>
 #include <vector>
 
@@ -169,8 +170,40 @@ BOOL (*sysCallsRegisterWaitForSingleObject)(PHANDLE phNewWaitObject, HANDLE hObj
 
 BOOL (*sysCallsUnregisterWait)(HANDLE waitHandle) = nullptr;
 
+size_t ntOpenDirectoryObjectCalled = 0u;
+BOOL (*sysCallsProcessIdToSessionId)(DWORD dwProcessId, DWORD *pSessionId) = nullptr;
+void (*sysCallsRtlInitUnicodeString)(PUNICODE_STRING destinationString, PCWSTR sourceString) = nullptr;
+NTSTATUS (*sysCallsNtOpenDirectoryObject)(PHANDLE directoryHandle, ACCESS_MASK desiredAccess, POBJECT_ATTRIBUTES objectAttributes) = nullptr;
+
 bool isShutdownInProgress() {
     return isShutdownInProgressRetVal;
+}
+
+BOOL processIdToSessionId(DWORD dwProcessId, DWORD *pSessionId) {
+    if (sysCallsProcessIdToSessionId != nullptr) {
+        return sysCallsProcessIdToSessionId(dwProcessId, pSessionId);
+    }
+    *pSessionId = 0;
+    return TRUE;
+}
+
+void rtlInitUnicodeString(PUNICODE_STRING destinationString, PCWSTR sourceString) {
+    if (sysCallsRtlInitUnicodeString != nullptr) {
+        sysCallsRtlInitUnicodeString(destinationString, sourceString);
+        return;
+    }
+    destinationString->Buffer = const_cast<PWSTR>(sourceString);
+    destinationString->Length = static_cast<USHORT>(wcslen(sourceString) * sizeof(wchar_t));
+    destinationString->MaximumLength = static_cast<USHORT>(destinationString->Length + sizeof(wchar_t));
+}
+
+NTSTATUS ntOpenDirectoryObject(PHANDLE directoryHandle, ACCESS_MASK desiredAccess, POBJECT_ATTRIBUTES objectAttributes) {
+    ntOpenDirectoryObjectCalled++;
+    if (sysCallsNtOpenDirectoryObject != nullptr) {
+        return sysCallsNtOpenDirectoryObject(directoryHandle, desiredAccess, objectAttributes);
+    }
+    *directoryHandle = reinterpret_cast<HANDLE>(dummyHandle);
+    return STATUS_SUCCESS;
 }
 
 void exit(int code) {

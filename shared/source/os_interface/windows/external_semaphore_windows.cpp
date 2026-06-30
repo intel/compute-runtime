@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
@@ -42,12 +43,81 @@ std::unique_ptr<ExternalSemaphoreWindows> ExternalSemaphoreWindows::create(OSInt
     return extSemWindows;
 }
 
+std::wstring ExternalSemaphoreWindows::getNamedObjectDirectoryPath(uint32_t sessionId, const wchar_t *name, const wchar_t **relativeName) {
+    constexpr wchar_t globalPrefix[] = L"Global\\";
+    constexpr wchar_t localPrefix[] = L"Local\\";
+    constexpr size_t globalPrefixLength = (sizeof(globalPrefix) / sizeof(wchar_t)) - 1;
+    constexpr size_t localPrefixLength = (sizeof(localPrefix) / sizeof(wchar_t)) - 1;
+
+    *relativeName = name;
+
+    if (wcsncmp(name, globalPrefix, globalPrefixLength) == 0) {
+        *relativeName = name + globalPrefixLength;
+        return std::wstring(L"\\BaseNamedObjects");
+    }
+
+    if (wcsncmp(name, localPrefix, localPrefixLength) == 0) {
+        *relativeName = name + localPrefixLength;
+    }
+
+    // Session 0 (services) has no \Sessions\0 subtree; its base directory is \BaseNamedObjects.
+    if (sessionId == 0) {
+        return std::wstring(L"\\BaseNamedObjects");
+    }
+
+    wchar_t buffer[64];
+    swprintf_s(buffer, L"\\Sessions\\%u\\BaseNamedObjects", sessionId);
+    return std::wstring(buffer);
+}
+
+void *ExternalSemaphoreWindows::openSyncObjectByName(Gdi *gdi, const wchar_t *name, uint32_t desiredAccess, bool forceGlobal) {
+    DWORD sessionId = 0;
+    if (!forceGlobal) {
+        SysCalls::processIdToSessionId(GetCurrentProcessId(), &sessionId);
+    }
+
+    const wchar_t *relativeName = name;
+    std::wstring directoryPath = getNamedObjectDirectoryPath(sessionId, name, &relativeName);
+
+    UNICODE_STRING unicodeDirectory;
+    SysCalls::rtlInitUnicodeString(&unicodeDirectory, directoryPath.c_str());
+    OBJECT_ATTRIBUTES directoryAttributes;
+    InitializeObjectAttributes(&directoryAttributes, &unicodeDirectory, 0, nullptr, nullptr);
+
+    HANDLE rootDirectory = nullptr;
+    if (SysCalls::ntOpenDirectoryObject(&rootDirectory, 0x0002 /* DIRECTORY_TRAVERSE */, &directoryAttributes) != STATUS_SUCCESS) {
+        return nullptr;
+    }
+
+    UNICODE_STRING unicodeName;
+    SysCalls::rtlInitUnicodeString(&unicodeName, relativeName);
+    OBJECT_ATTRIBUTES objectAttributes;
+    InitializeObjectAttributes(&objectAttributes, &unicodeName, 0, rootDirectory, nullptr);
+
+    D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME openName = {};
+    openName.dwDesiredAccess = desiredAccess;
+    openName.pObjAttrib = &objectAttributes;
+    auto status = gdi->openSyncObjectNtHandleFromName(&openName);
+    SysCalls::closeHandle(rootDirectory);
+    if (status != STATUS_SUCCESS) {
+        return nullptr;
+    }
+
+    return openName.hNtHandle;
+}
+
 bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) {
+    bool isD3dFence = false;
+    bool isNameable = false;
     switch (type) {
     case ExternalSemaphore::D3d12Fence:
     case ExternalSemaphore::D3d11Fence:
-    case ExternalSemaphore::OpaqueWin32:
+        isD3dFence = true;
+        [[fallthrough]];
     case ExternalSemaphore::TimelineSemaphoreWin32:
+        isNameable = true;
+        [[fallthrough]];
+    case ExternalSemaphore::OpaqueWin32:
         break;
     default:
         return false;
@@ -57,6 +127,7 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
     this->type = type;
 
     auto wddm = this->osInterface->getDriverModel()->as<Wddm>();
+    Gdi *gdi = wddm->getGdi();
 
     syncNtHandle = reinterpret_cast<HANDLE>(extHandle);
 
@@ -100,7 +171,7 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
         D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME openName = {};
         openName.dwDesiredAccess = access;
         openName.pObjAttrib = &objectAttributes;
-        auto status = wddm->getGdi()->openSyncObjectNtHandleFromName(&openName);
+        auto status = gdi->openSyncObjectNtHandleFromName(&openName);
         if (status != STATUS_SUCCESS) {
             return false;
         }
@@ -108,56 +179,28 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
         syncNtHandle = openName.hNtHandle;
     }
 
-    if (type == ExternalSemaphore::TimelineSemaphoreWin32 && name != nullptr) {
-        auto moduleHandle = GetModuleHandleA("ntdll.dll");
-        _RtlInitUnicodeString rtlInitUnicodeString = (_RtlInitUnicodeString)GetProcAddress(moduleHandle, "RtlInitUnicodeString");
-        _NtOpenDirectoryObject ntOpenDirectoryObject = (_NtOpenDirectoryObject)GetProcAddress(moduleHandle, "NtOpenDirectoryObject");
-
-        HANDLE rootDirectory;
-        OBJECT_ATTRIBUTES objectAttributesRootDirectory;
-        UNICODE_STRING unicodeNameRootDirectory;
-        PUNICODE_STRING pUnicodeNameRootDirectory = NULL;
-
-        wchar_t baseName[] = L"\\BaseNamedObjects";
-        rtlInitUnicodeString(&unicodeNameRootDirectory, baseName);
-        pUnicodeNameRootDirectory = &unicodeNameRootDirectory;
-        InitializeObjectAttributes(&objectAttributesRootDirectory, pUnicodeNameRootDirectory, 0, nullptr, nullptr);
-        ntOpenDirectoryObject(&rootDirectory, 0x0004 /* DIRECTORY_CREATE_OBJECT */, &objectAttributesRootDirectory);
-
-        OBJECT_ATTRIBUTES objectAttributes;
-        UNICODE_STRING unicodeName;
-
-        PUNICODE_STRING pUnicodeName = NULL;
+    if (name != nullptr && isNameable) {
         std::wstring wideName;
         size_t length = strlen(name) + 1;
         wideName.resize(length);
         mbstowcs(&wideName[0], name, length);
+        bool forceGlobal = (type == ExternalSemaphore::TimelineSemaphoreWin32);
 
-        const wchar_t *pName = wideName.c_str();
-
-        rtlInitUnicodeString(&unicodeName, pName);
-        pUnicodeName = &unicodeName;
-
-        InitializeObjectAttributes(&objectAttributes, pUnicodeName, 0, rootDirectory, nullptr);
-
-        D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME openName = {};
-        openName.dwDesiredAccess = D3DDDI_SYNC_OBJECT_ALL_ACCESS;
-        openName.pObjAttrib = &objectAttributes;
-        auto status = wddm->getGdi()->openSyncObjectNtHandleFromName(&openName);
-        if (status != STATUS_SUCCESS) {
+        syncNtHandle = openSyncObjectByName(gdi, wideName.c_str(), D3DDDI_SYNC_OBJECT_ALL_ACCESS, forceGlobal);
+        if (syncNtHandle == nullptr) {
             return false;
         }
-
-        syncNtHandle = openName.hNtHandle;
     }
 
     D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 open = {};
     open.hNtHandle = syncNtHandle;
     open.hDevice = wddm->getDeviceHandle();
-    open.Flags.NoGPUAccess = (type == ExternalSemaphore::D3d12Fence ||
-                              type == ExternalSemaphore::D3d11Fence);
+    open.Flags.NoGPUAccess = isD3dFence;
 
-    auto status = wddm->getGdi()->openSyncObjectFromNtHandle2(&open);
+    auto status = gdi->openSyncObjectFromNtHandle2(&open);
+    if (syncNtHandle != reinterpret_cast<HANDLE>(extHandle)) {
+        SysCalls::closeHandle(syncNtHandle);
+    }
     if (status != STATUS_SUCCESS) {
         return false;
     }

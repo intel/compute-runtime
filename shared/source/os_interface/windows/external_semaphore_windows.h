@@ -20,6 +20,8 @@
 
 namespace NEO {
 
+class Gdi;
+
 typedef wchar_t SharedSyncName[9 + 2 * (sizeof(uint32_t) + sizeof(uint64_t))];
 
 struct SharedMemoryContentHeader {
@@ -45,6 +47,16 @@ class ExternalSemaphoreWindows : public ExternalSemaphore {
     }
 
   protected:
+    // Resolves the NT object-manager directory for a Win32-style named object, honoring an
+    // optional "Global\\" / "Local\\" prefix the same way kernelbase does. relativeName is set
+    // to the portion of name to open under the returned directory. sessionId is the caller's
+    // session; session 0 has no \Sessions\0 directory, so it collapses to \BaseNamedObjects.
+    static std::wstring getNamedObjectDirectoryPath(uint32_t sessionId, const wchar_t *name, const wchar_t **relativeName);
+
+    // Opens the named sync object, resolving its namespace via getNamedObjectDirectoryPath, and
+    // returns an owned NT handle (caller must CloseHandle) or nullptr on failure.
+    static void *openSyncObjectByName(Gdi *gdi, const wchar_t *name, uint32_t desiredAccess, bool forceGlobal = false);
+
     D3DKMT_HANDLE syncHandle;
     void *pCpuAddress = nullptr;
     volatile uint64_t *pLastSignaledValue = nullptr;

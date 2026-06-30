@@ -93,5 +93,10 @@ extern BOOL (*sysCallsUnregisterWait)(HANDLE waitHandle);
 extern DWORD waitForMultipleObjectsLastTimeout;
 extern DWORD waitForMultipleObjectsReturnValue;
 extern size_t waitForMultipleObjectsCalled;
+
+extern size_t ntOpenDirectoryObjectCalled;
+extern BOOL (*sysCallsProcessIdToSessionId)(DWORD dwProcessId, DWORD *pSessionId);
+extern void (*sysCallsRtlInitUnicodeString)(PUNICODE_STRING destinationString, PCWSTR sourceString);
+extern NTSTATUS (*sysCallsNtOpenDirectoryObject)(PHANDLE directoryHandle, ACCESS_MASK desiredAccess, POBJECT_ATTRIBUTES objectAttributes);
 } // namespace SysCalls
 } // namespace NEO

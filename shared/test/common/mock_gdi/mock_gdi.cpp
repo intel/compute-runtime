@@ -708,7 +708,8 @@ NTSTATUS __stdcall mockD3DKMTOpenSyncObjectFromNtHandle2(IN OUT D3DKMT_OPENSYNCO
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall mockD3DKMTOpenSyncObjectNtHandleFromName(IN OUT D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *) {
+NTSTATUS __stdcall mockD3DKMTOpenSyncObjectNtHandleFromName(IN OUT D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *openSyncObject) {
+    openSyncObject->hNtHandle = reinterpret_cast<HANDLE>(0x1);
     return STATUS_SUCCESS;
 }
 
