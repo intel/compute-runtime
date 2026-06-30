@@ -860,7 +860,7 @@ TEST_F(D3D11Test, givenD3DFenceAndInteropUserSyncNotSetAndSharedResourceBufferWh
     EXPECT_EQ(0u, this->mockSharingFcns->copySubresourceRegionCalled);
 }
 
-TEST_F(D3D11Test, givenD3DFenceAndInteropUserSyncSetAndSharedResourceBufferWhenAcquiredThenDoNotCopySubregionAndSignalAndWait) {
+TEST_F(D3D11Test, givenD3DFenceAndInteropUserSyncSetAndSharedResourceBufferWhenAcquiredThenDoNotCopySubregionAndDoNotSignalAndWait) {
     this->context->setInteropUserSyncEnabled(true);
 
     this->mockSharingFcns->createFenceSetParams = true;
@@ -880,7 +880,31 @@ TEST_F(D3D11Test, givenD3DFenceAndInteropUserSyncSetAndSharedResourceBufferWhenA
     EXPECT_EQ(1u, buffer->acquireCount);
 
     EXPECT_EQ(0u, this->mockSharingFcns->flushAndWaitCalled);
-    EXPECT_EQ(1u, this->mockSharingFcns->signalAndWaitCalled);
+    EXPECT_EQ(0u, this->mockSharingFcns->signalAndWaitCalled);
+    EXPECT_EQ(0u, this->mockSharingFcns->copySubresourceRegionCalled);
+}
+
+TEST_F(D3D11Test, givenD3DFenceAndInteropUserSyncSetAndSharedResourceTextureWhenAcquiredThenDoNotSignalAndWait) {
+    this->context->setInteropUserSyncEnabled(true);
+
+    this->mockSharingFcns->createFenceSetParams = true;
+    this->mockSharingFcns->createFenceParamsSet.fence = reinterpret_cast<D3DFence *>(0x10);
+
+    this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+    this->mockSharingFcns->getTexture2dDescSetParams = true;
+    this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
+
+    auto image = std::unique_ptr<Image>(D3DTexture<D3DTypesHelper::D3D11>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 0, nullptr));
+    ASSERT_NE(nullptr, image.get());
+    cl_mem imageMem = image.get();
+
+    EXPECT_EQ(0u, image->acquireCount);
+    auto retVal = this->enqueueAcquireD3DObjectsApi(this->mockSharingFcns, this->cmdQ, 1, &imageMem, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, image->acquireCount);
+
+    EXPECT_EQ(0u, this->mockSharingFcns->flushAndWaitCalled);
+    EXPECT_EQ(0u, this->mockSharingFcns->signalAndWaitCalled);
     EXPECT_EQ(0u, this->mockSharingFcns->copySubresourceRegionCalled);
 }
 

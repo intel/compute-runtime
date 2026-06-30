@@ -62,8 +62,10 @@ void D3DSharing<NEO::D3DTypesHelper::D3D11>::synchronizeObject(UpdateData &updat
     if (d3dFence) {
         if (!sharedResource) {
             sharingFunctions->copySubresourceRegion(resourceStaging, 0, resource, subresource);
+            sharingFunctions->signalAndWait(d3dFence);
+        } else if (!context->getInteropUserSyncEnabled()) {
+            sharingFunctions->signalAndWait(d3dFence);
         }
-        sharingFunctions->signalAndWait(d3dFence);
     } else {
         if (!sharedResource) {
             sharingFunctions->copySubresourceRegion(resourceStaging, 0, resource, subresource);
