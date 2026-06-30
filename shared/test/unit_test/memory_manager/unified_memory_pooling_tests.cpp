@@ -773,7 +773,7 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
     size_t totalSize = 0u;
     for (auto &poolInfo : usmMemAllocPoolsManager->getPoolInfos()) {
         size_t minServicedSize = poolInfo.minServicedSize ? poolInfo.minServicedSize : 1;
-        totalSize += poolInfo.poolSize;
+        totalSize += usmMemAllocPoolsManager->preallocatedPoolsCount * poolInfo.poolSize;
 
         auto poolAllocMinSize = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(minServicedSize, *poolMemoryProperties.get());
         EXPECT_NE(nullptr, poolAllocMinSize);

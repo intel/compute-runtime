@@ -125,6 +125,7 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
   public:
     using CustomCleanupFn = UsmMemAllocPool::CustomCleanupFn;
     static constexpr size_t maxEmptyPoolsPerBucket = 1u;
+    static constexpr size_t preallocatedPoolsCount = 3u;
 
     UsmMemAllocPoolsManager(InternalMemoryType memoryType,
                             const RootDeviceIndicesContainer &rootDeviceIndices,

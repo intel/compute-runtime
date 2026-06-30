@@ -259,6 +259,11 @@ void *UsmMemAllocPoolsManager::createUnifiedMemoryAllocation(size_t size, const 
     void *ptr = nullptr;
     for (const auto &poolInfo : getPoolInfos()) {
         if (size <= poolInfo.maxServicedSize) {
+            if (this->pools[poolInfo].empty()) [[unlikely]] {
+                for (auto i = 0u; i < preallocatedPoolsCount; ++i) {
+                    tryAddPool(poolInfo);
+                }
+            }
             for (auto &pool : this->pools[poolInfo]) {
                 if (nullptr != (ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties))) {
                     break;
