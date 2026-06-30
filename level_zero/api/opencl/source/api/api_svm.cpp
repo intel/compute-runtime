@@ -5,7 +5,10 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device_info.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/api/api.h"
@@ -21,6 +24,7 @@
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 
 void *CL_API_CALL clSVMAlloc(cl_context context,
                              cl_svm_mem_flags flags,
@@ -28,15 +32,64 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
                              cl_uint alignment) {
     TRACING_ENTER(ClSvmAlloc, &context, &flags, &size, &alignment);
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
+    void *ptr = nullptr;
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClSvmAlloc, &tracingRetVal);
-        return tracingRetVal;
+        TRACING_EXIT(ClSvmAlloc, &ptr);
+        return ptr;
     }
 
-    void *tracingRetVal = clSharedMemAllocINTEL(context, nullptr, nullptr, size, alignment, nullptr);
-    TRACING_EXIT(ClSvmAlloc, &tracingRetVal);
-    return tracingRetVal;
+    {
+        // allow CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL with every combination
+        cl_svm_mem_flags tempFlags = flags & (~CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL);
+
+        if (tempFlags == 0) {
+            tempFlags = CL_MEM_READ_WRITE;
+        }
+
+        if (!((tempFlags == CL_MEM_READ_WRITE) ||
+              (tempFlags == CL_MEM_WRITE_ONLY) ||
+              (tempFlags == CL_MEM_READ_ONLY) ||
+              (tempFlags == CL_MEM_SVM_FINE_GRAIN_BUFFER) ||
+              (tempFlags == (CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) ||
+              (tempFlags == (CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
+              (tempFlags == (CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) ||
+              (tempFlags == (CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
+              (tempFlags == (CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) ||
+              (tempFlags == (CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
+              (tempFlags == (CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)))) {
+            TRACING_EXIT(ClSvmAlloc, &ptr);
+            return ptr;
+        }
+    }
+
+    auto pClDevice = pContext->getClDevice();
+    const bool allowUnrestrictedSize = (flags & CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) || NEO::debugManager.flags.AllowUnrestrictedSize.get();
+
+    if ((size == 0) ||
+        (!allowUnrestrictedSize && (size > pClDevice->getSharedDeviceInfo().maxMemAllocSize))) {
+        TRACING_EXIT(ClSvmAlloc, &ptr);
+        return ptr;
+    }
+
+    if ((alignment && (alignment & (alignment - 1))) || (alignment > sizeof(cl_ulong16))) {
+        TRACING_EXIT(ClSvmAlloc, &ptr);
+        return ptr;
+    }
+
+    if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
+        bool supportsFineGrained = pClDevice->getHardwareInfo().capabilityTable.ftrSupportsCoherency;
+        if (NEO::debugManager.flags.ForceFineGrainedSVMSupport.get() != -1) {
+            supportsFineGrained = !!NEO::debugManager.flags.ForceFineGrainedSVMSupport.get();
+        }
+        if (!supportsFineGrained) {
+            TRACING_EXIT(ClSvmAlloc, &ptr);
+            return ptr;
+        }
+    }
+
+    ptr = clSharedMemAllocINTEL(context, nullptr, nullptr, size, alignment, nullptr);
+    TRACING_EXIT(ClSvmAlloc, &ptr);
+    return ptr;
 }
 
 void CL_API_CALL clSVMFree(cl_context context,

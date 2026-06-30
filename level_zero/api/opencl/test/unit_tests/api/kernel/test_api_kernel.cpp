@@ -6,19 +6,27 @@
  */
 
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/api/api.h"
 #include "level_zero/api/opencl/source/api/dispatch.h"
+#include "level_zero/api/opencl/source/cl_device/cl_device.h"
 #include "level_zero/api/opencl/source/command_queue/command_queue.h"
 #include "level_zero/api/opencl/source/context/context.h"
 #include "level_zero/api/opencl/source/kernel/kernel.h"
 #include "level_zero/api/opencl/source/program/program.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/module/module.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 
 #include <limits>
 #include <map>
@@ -381,6 +389,121 @@ TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenNullCommandQueueWhenGetKerne
     auto retVal = clGetKernelSuggestedLocalWorkSizeKHR(nullptr, kernel.get(), 1, nullptr, globalWorkSize, suggestedLocalWorkSize);
 
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
+}
+
+struct DriverBackedL0Context : public L0::ult::Mock<L0::Context> {
+    DriverBackedL0Context(L0::DriverHandle *driverHandle) : L0::ult::Mock<L0::Context>(driverHandle), backingDriver(driverHandle) {}
+    L0::DriverHandle *getDriverHandle() override { return backingDriver; }
+    L0::DriverHandle *backingDriver = nullptr;
+};
+
+struct SvmKernelValidationFixture : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        cl_device_id clDeviceId = clDevice;
+        l0Context = std::make_unique<DriverBackedL0Context>(driverHandle.get());
+        context = std::make_unique<Context>(nullptr, l0Context->toHandle(), 1, &clDeviceId, true);
+        program = std::make_unique<Program>(context.get());
+        l0Kernel = std::make_unique<L0::ult::Mock<L0::KernelImp>>();
+        l0Kernel->privateState.kernelArgHandlers.resize(1);
+        l0Kernel->checkPassedArgumentValues = true;
+        l0Kernel->passedArgumentValues.resize(1);
+        auto &explicitArgs = l0Kernel->descriptor.payloadMappings.explicitArgs;
+        explicitArgs.resize(1);
+        explicitArgs[0] = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+        std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
+        kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
+    }
+
+    void TearDown() override {
+        kernel.reset();
+        l0Kernel.release();
+        program.reset();
+        context.reset();
+        l0Context.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    void setArgAddressQualifier(NEO::KernelArgMetadata::AddressSpaceQualifier addressQualifier) {
+        l0Kernel->descriptor.payloadMappings.explicitArgs[0].getTraits().addressQualifier = addressQualifier;
+    }
+
+    ClDevice *clDevice = nullptr;
+    std::unique_ptr<DriverBackedL0Context> l0Context;
+    std::unique_ptr<Context> context;
+    std::unique_ptr<Program> program;
+    std::unique_ptr<L0::ult::Mock<L0::KernelImp>> l0Kernel;
+    std::unique_ptr<Kernel> kernel;
+};
+
+TEST_F(SvmKernelValidationFixture, givenLocalAddressQualifierArgWhenSetKernelArgSVMPointerThenReturnsInvalidArgValue) {
+    setArgAddressQualifier(NEO::KernelArgMetadata::AddrLocal);
+    int dummy = 0;
+    auto retVal = clSetKernelArgSVMPointer(kernel.get(), 0, &dummy);
+    EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
+}
+
+TEST_F(SvmKernelValidationFixture, givenGlobalAddressQualifierArgWhenSetKernelArgSVMPointerThenReturnsSuccess) {
+    setArgAddressQualifier(NEO::KernelArgMetadata::AddrGlobal);
+    int dummy = 0;
+    auto retVal = clSetKernelArgSVMPointer(kernel.get(), 0, &dummy);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(SvmKernelValidationFixture, givenArgIndexOutOfRangeWhenSetKernelArgSVMPointerThenReturnsInvalidArgIndex) {
+    int dummy = 0;
+    auto retVal = clSetKernelArgSVMPointer(kernel.get(), 1, &dummy);
+    EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
+}
+
+TEST_F(SvmKernelValidationFixture, givenSvmPtrsWithSizeNotMultipleOfPointerSizeWhenSetKernelExecInfoThenReturnsInvalidValue) {
+    int dummy = 0;
+    void *ptr = &dummy;
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_SVM_PTRS, 3, &ptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(SvmKernelValidationFixture, givenSvmPtrsWithUnknownPointerWhenSetKernelExecInfoThenReturnsInvalidValue) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
+    void *unknownPtr = reinterpret_cast<void *>(0x1000);
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_SVM_PTRS, sizeof(void *), &unknownPtr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(SvmKernelValidationFixture, givenInvalidParamNameWhenSetKernelExecInfoThenReturnsInvalidValue) {
+    int dummy = 0;
+    void *ptr = &dummy;
+    auto retVal = clSetKernelExecInfo(kernel.get(), 0, sizeof(void *), &ptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(SvmKernelValidationFixture, givenFineGrainSystemWhenSetKernelExecInfoThenReturnsInvalidOperation) {
+    cl_bool enabled = CL_TRUE;
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM, sizeof(cl_bool), &enabled);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
+TEST_F(SvmKernelValidationFixture, givenKnownSvmPointerWhenSetKernelExecInfoSvmPtrsThenSucceedsAndEnablesIndirectAccess) {
+    constexpr uint64_t gpuAddress = 0x1000u;
+    void *svmPtr = reinterpret_cast<void *>(gpuAddress);
+    NEO::MockGraphicsAllocation mockAllocation(svmPtr, gpuAddress, 0x1000u);
+    NEO::SvmAllocationData allocData(0u);
+    allocData.size = 0x1000u;
+    allocData.gpuAllocations.addAllocation(&mockAllocation);
+    context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->insertSVMAlloc(allocData);
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_SVM_PTRS, sizeof(void *), &svmPtr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto unifiedMemoryControls = l0Kernel->getUnifiedMemoryControls();
+    EXPECT_TRUE(unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+    EXPECT_TRUE(unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_TRUE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
+
+    context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->removeSVMAlloc(allocData);
 }
 
 } // namespace ult

@@ -5,11 +5,15 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/api/opencl/source/api/api.h"
+#include "level_zero/api/opencl/source/cl_device/cl_device.h"
 #include "level_zero/api/opencl/source/command_queue/command_queue.h"
+#include "level_zero/api/opencl/source/context/context.h"
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/api/opencl/source/helpers/cl_validators.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
@@ -19,6 +23,7 @@
 #include "level_zero/api/opencl/source/program/program.h"
 #include "level_zero/api/opencl/source/sampler/sampler.h"
 #include "level_zero/api/opencl/source/tracing/tracing_notify.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
@@ -311,6 +316,16 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         TRACING_EXIT(ClSetKernelArgSvmPointer, &tracingRetVal);
         return tracingRetVal;
     }
+
+    const auto &argDescriptor = pKernel->getL0Object()->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
+    const auto addressQualifier = argDescriptor.getTraits().getAddressQualifier();
+    if (addressQualifier != NEO::KernelArgMetadata::AddrGlobal &&
+        addressQualifier != NEO::KernelArgMetadata::AddrConstant) {
+        cl_int tracingRetVal = CL_INVALID_ARG_VALUE;
+        TRACING_EXIT(ClSetKernelArgSvmPointer, &tracingRetVal);
+        return tracingRetVal;
+    }
+
     pKernel->markArgAsSet(argIndex);
     pKernel->clearImageArg(argIndex);
 
@@ -355,13 +370,46 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         break;
 
     case CL_KERNEL_EXEC_INFO_SVM_PTRS:
-    case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
-        if (0u != paramValueSize && nullptr != paramValue) [[likely]] {
+    case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL: {
+        if ((0u == paramValueSize && nullptr != paramValue) ||
+            (paramValueSize % sizeof(void *)) ||
+            (0u != paramValueSize && nullptr == paramValue)) [[unlikely]] {
+            cl_int tracingRetVal = CL_INVALID_VALUE;
+            TRACING_EXIT(ClSetKernelExecInfo, &tracingRetVal);
+            return tracingRetVal;
+        }
+
+        auto pContext = pKernel->getContext();
+        auto svmAllocsManager = pContext->getL0Object()->getDriverHandle()->getSvmAllocsManager();
+        bool sharedSystemSupported = true;
+        for (auto clDevice : pContext->getClDevices()) {
+            if (!clDevice->getDevice().areSharedSystemAllocationsAllowed()) {
+                sharedSystemSupported = false;
+                break;
+            }
+        }
+
+        const size_t numPointers = paramValueSize / sizeof(void *);
+        auto svmPointers = reinterpret_cast<void *const *>(paramValue);
+        for (size_t i = 0; i < numPointers; i++) {
+            auto svmData = svmAllocsManager ? svmAllocsManager->getSVMAlloc(svmPointers[i]) : nullptr;
+            if (svmPointers[i] != nullptr && svmData == nullptr && sharedSystemSupported) {
+                continue;
+            }
+            if (svmData == nullptr) {
+                cl_int tracingRetVal = CL_INVALID_VALUE;
+                TRACING_EXIT(ClSetKernelExecInfo, &tracingRetVal);
+                return tracingRetVal;
+            }
+        }
+
+        if (numPointers > 0u) {
             pKernel->setIndirectAccess(CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL, CL_TRUE);
             pKernel->setIndirectAccess(CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL, CL_TRUE);
             pKernel->setIndirectAccess(CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL, CL_TRUE);
         }
         break;
+    }
     case CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL:
         if (nullptr == paramValue ||
             sizeof(uint32_t) != paramValueSize) [[unlikely]] {
