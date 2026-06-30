@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,7 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     struct OsSysmanDriver *pOsSysmanDriver = nullptr;
     SysmanDevice *getSysmanDeviceFromCoreDeviceHandle(ze_device_handle_t hDevice);
     SysmanDriverHandle *getSysmanDriverHandleFromCoreDriverHandle(ze_driver_handle_t handle);
+    ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) override;
     const std::unordered_map<std::string, SysmanDevice *> &getUuidDeviceMap() const {
         return uuidDeviceMap;
     }

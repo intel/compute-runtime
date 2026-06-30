@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,12 +12,18 @@
 namespace L0 {
 namespace Sysman {
 
+struct InfoLogHandleContext;
+
 class WddmSysmanDriverImp : public OsSysmanDriver {
   public:
     WddmSysmanDriverImp() = default;
-    ~WddmSysmanDriverImp() override = default;
+    ~WddmSysmanDriverImp() override;
 
     ze_result_t eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
+    ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) override;
+
+  private:
+    InfoLogHandleContext *pInfoLogHandleContext = nullptr;
 };
 
 } // namespace Sysman

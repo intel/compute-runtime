@@ -804,6 +804,159 @@ ze_result_t ZE_APICALL zesIntelDeviceSetHealthExp(
     const char *pAuthToken                       ///< [in][optional] Authorization token passed through to firmware.
 );
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME
+/// @brief Driver info logs extension name
+#define ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME "ZES_intel_experimental_driver_info_logs"
+#endif // ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver info logs extension Version(s)
+typedef enum _zes_intel_driver_info_logs_exp_version_t {
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                          ///< version 1.0
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_info_logs_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Handle to an info log instance
+typedef struct _zes_intel_info_log_handle_t *zes_intel_info_log_handle_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get handles for Info Logs
+///
+/// @details
+///     - This function retrieves the list of available info logs.
+///     - The caller should first call this function with count pointer set to 0 to retrieve the total number of available logs.
+///     - Subsequent calls with a non-zero count will return the info log handles.
+///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pCount`
+ze_result_t ZE_APICALL zesIntelDriverEnumInfoLogsExp(
+    zes_driver_handle_t hDriver,            ///< [in] handle of the driver
+    uint32_t *pCount,                       ///< [in,out] pointer to the number of info logs.
+                                            ///< if count is zero, then the driver shall update the value with the
+                                            ///< total number of available info logs.
+                                            ///< if count is non-zero, then driver shall only retrieve that number
+                                            ///< of info logs.
+    zes_intel_info_log_handle_t *phInfoLogs ///< [in][out][optional] array of info log handles.
+                                            ///< if count is less than the number of available logs, then
+                                            ///< driver shall only retrieve that number of logs.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Info log type
+typedef enum _zes_intel_info_log_type_exp_t {
+    ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE = 0, ///< Device info log
+    ZES_INTEL_INFO_LOG_TYPE_EXP_FORCE_UINT32 = 0x7fffffff
+} zes_intel_info_log_type_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Info Log format
+typedef enum _zes_intel_info_log_format_exp_t {
+    ZES_INTEL_INFO_LOG_FORMAT_CPER = 0,
+    ZES_INTEL_INFO_LOG_FORMAT_FORCE_UINT32 = 0x7fffffff
+} zes_intel_info_log_format_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Info log properties structure
+typedef struct _zes_intel_info_log_properties_exp_t {
+    zes_structure_type_ext_t stype;                ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP
+    void *pNext;                                   ///< [in,out][optional] pointer to extension-specific structure
+    zes_intel_info_log_type_exp_t infoLogType;     ///< [out] Type of the info log
+    zes_intel_info_log_format_exp_t infoLogFormat; ///< [out] Format of the info log.
+    uint32_t maxSize;                              ///< [out] Maximum size of the info log in bytes. This is the maximum size
+                                                   ///< of the buffer that can be allocated to read the info log. The application should not
+                                                   ///< allocate a buffer larger than this size.
+} zes_intel_info_log_properties_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get Info Log Properties
+///
+/// @details
+///     - This function retrieves the properties of an info log handle.
+///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hInfoLog`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pProperties`
+ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(
+    zes_intel_info_log_handle_t hInfoLog,            ///< [in] handle of the info log
+    zes_intel_info_log_properties_exp_t *pProperties ///< [in,out] pointer to info log properties
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Read Info Log
+///
+/// @details
+///     - This function reads the info log content for the supplied info log handle.
+///     - If `*pSize` is 0, the API returns the required buffer size in bytes.
+///     - If `*pSize` is non-zero, the API reads the info log into `pBuffer`.
+///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + `*pSize` is less than required to hold the info log data.
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hInfoLog`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pSize`
+ze_result_t ZE_APICALL zesIntelInfoLogReadExp(
+    zes_intel_info_log_handle_t hInfoLog, ///< [in] handle of the info log
+    uint32_t *pSize,                      ///< [in,out] size of info log data in bytes. The application should set this value < zes_intel_info_log_properties_exp_t.maxSize
+                                          ///< The API returns the size of info log data in bytes which can be <= zes_intel_info_log_properties_exp_t.maxSize
+    uint8_t *pBuffer                      ///< [in,out][optional][range(0, *pSize)] buffer to hold info log data.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Enable Tracefs Event
+///
+/// @details
+///     - This function enables an info log event for the supplied driver.
+///     - The event "xe_error_cper" can be enabled via this API to trace CPER error events.
+///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///         + User does not have permissions to enable tracefs events.
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hInfoLog`
+ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(
+    zes_intel_info_log_handle_t hInfoLog, ///< [in] handle of the info log
+    bool state                            ///< [in] state of the info log. If state == true, info log collection is enabled,
+                                          ///< else info log collection is disabled.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

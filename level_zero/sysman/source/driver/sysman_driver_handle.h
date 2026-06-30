@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
@@ -29,6 +30,7 @@ struct SysmanDriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
                                            uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
     virtual ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                              uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
+    virtual ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) = 0;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<SysmanDriverHandle>);

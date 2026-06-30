@@ -282,6 +282,15 @@ ze_result_t SysmanDriverHandleImp::sysmanEventsListenEx(uint64_t timeout, uint32
     return pOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 };
 
+ze_result_t SysmanDriverHandleImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
+    if (pOsSysmanDriver == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Os Sysman Driver Not initialized\n");
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pOsSysmanDriver->enumInfoLogs(pCount, phInfoLogs);
+}
+
 SysmanDriverHandleImp::~SysmanDriverHandleImp() {
     for (auto &device : this->sysmanDevices) {
         delete device;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,10 @@
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
+#include "level_zero/sysman/source/api/info_log/sysman_info_log.h"
 #include "level_zero/sysman/source/device/os_sysman.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
@@ -40,6 +42,21 @@ ze_result_t WddmSysmanDriverImp::eventsListen(uint64_t timeout, uint32_t count, 
     } while ((L0::Sysman::SteadyClock::now() <= timeToExitLoop));
 
     return ZE_RESULT_SUCCESS;
+}
+
+WddmSysmanDriverImp::~WddmSysmanDriverImp() {
+    if (pInfoLogHandleContext != nullptr) {
+        delete pInfoLogHandleContext;
+        pInfoLogHandleContext = nullptr;
+    }
+}
+
+ze_result_t WddmSysmanDriverImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
+    if (pInfoLogHandleContext == nullptr) {
+        pInfoLogHandleContext = new InfoLogHandleContext();
+    }
+
+    return pInfoLogHandleContext->infoLogGet(pCount, phInfoLogs);
 }
 
 OsSysmanDriver *OsSysmanDriver::create() {

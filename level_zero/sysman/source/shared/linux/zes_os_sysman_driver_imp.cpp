@@ -11,7 +11,9 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
+#include "level_zero/sysman/source/api/info_log/sysman_info_log.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 
 namespace L0 {
 namespace Sysman {
@@ -32,6 +34,15 @@ ze_result_t LinuxSysmanDriverImp::eventsListen(uint64_t timeout, uint32_t count,
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxSysmanDriverImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
+
+    if (pInfoLogHandleContext == nullptr) {
+        pInfoLogHandleContext = new InfoLogHandleContext();
+    }
+
+    return pInfoLogHandleContext->infoLogGet(pCount, phInfoLogs);
 }
 
 void LinuxSysmanDriverImp::eventRegister(zes_event_type_flags_t events, SysmanDeviceImp *pSysmanDevice) {
@@ -61,6 +72,11 @@ LinuxSysmanDriverImp::~LinuxSysmanDriverImp() {
     if (nullptr != pLinuxEventsUtil) {
         delete pLinuxEventsUtil;
         pLinuxEventsUtil = nullptr;
+    }
+
+    if (nullptr != pInfoLogHandleContext) {
+        delete pInfoLogHandleContext;
+        pInfoLogHandleContext = nullptr;
     }
 }
 
