@@ -183,6 +183,7 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device,
     zeKernelGetProperties(this->getL0Handle(rootDeviceIndex), &kernelProperties);
 
     size_t requiredWorkgroupSize[3] = {kernelProperties.requiredGroupSizeX, kernelProperties.requiredGroupSizeY, kernelProperties.requiredGroupSizeZ};
+    size_t requiredSubgroupSize = kernelProperties.requiredSubgroupSize;
     std::array<size_t, 3> localSizeForSubGroupCount = {0u, 0u, 0u};
     switch (paramName) {
     case CL_KERNEL_WORK_GROUP_SIZE:
@@ -231,8 +232,8 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device,
         break;
 
     case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL:
-        srcSize = sizeof(kernelProperties.requiredSubgroupSize);
-        pSrc = &kernelProperties.requiredSubgroupSize;
+        srcSize = sizeof(requiredSubgroupSize);
+        pSrc = &requiredSubgroupSize;
         break;
 
     case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR:
