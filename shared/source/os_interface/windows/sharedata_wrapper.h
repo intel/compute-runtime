@@ -211,5 +211,17 @@ inline void propagateData(ADAPTER_INFO_KMD &adapterInfo) {
     base.WaTable = adapterInfo.WaTable;
     base.GfxPlatform = adapterInfo.GfxPlatform;
 }
-struct CREATEHWQUEUE_PVTDATA {}; // NOLINT(readability-identifier-naming)
+
+enum QUEUE_PRIORITY {               // NOLINT(readability-identifier-naming)
+    XE3P_QUEUE_PRIORITY_LOW = 0,    // NOLINT(readability-identifier-naming)
+    XE3P_QUEUE_PRIORITY_NORMAL = 1, // NOLINT(readability-identifier-naming)
+    XE3P_QUEUE_PRIORITY_HIGH = 2,   // NOLINT(readability-identifier-naming)
+    XE3P_QUEUE_PRIORITY_MAX = 3,    // NOLINT(readability-identifier-naming)
+};
+
+struct CREATEHWQUEUE_PVTDATA // NOLINT(readability-identifier-naming)
+{
+    QUEUE_PRIORITY QueuePriority; // NOLINT(readability-identifier-naming)
+    uint8_t reserved[20];
+};
 #endif
