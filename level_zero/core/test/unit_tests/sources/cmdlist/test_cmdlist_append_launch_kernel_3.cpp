@@ -174,6 +174,92 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenAppendLaunchM
     context->freeMem(reinterpret_cast<void *>(numLaunchArgs));
 }
 
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenDispatchArgumentsBufferWhenCallingAppendLaunchKernelIndirectThenGroupCountAllocationIsResidentAndDispatchDimRegistersUseResolvedAddress) {
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+
+    createKernel();
+
+    ze_result_t returnValue;
+    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    void *alloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto pThreadGroupDimensions = static_cast<ze_group_count_t *>(alloc);
+
+    result = commandList->appendLaunchKernelIndirect(kernel->toHandle(), *pThreadGroupDimensions, nullptr, 0, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<void *>(pThreadGroupDimensions));
+    ASSERT_NE(nullptr, allocData);
+    auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAllocation);
+
+    auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
+    auto itorAlloc = std::find(residencyContainer.begin(), residencyContainer.end(), gpuAllocation);
+    EXPECT_NE(residencyContainer.end(), itorAlloc);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
+
+    auto expectedXAddress = reinterpret_cast<uint64_t>(ptrOffset(pThreadGroupDimensions, offsetof(ze_group_count_t, groupCountX)));
+    auto expectedYAddress = reinterpret_cast<uint64_t>(ptrOffset(pThreadGroupDimensions, offsetof(ze_group_count_t, groupCountY)));
+    auto expectedZAddress = reinterpret_cast<uint64_t>(ptrOffset(pThreadGroupDimensions, offsetof(ze_group_count_t, groupCountZ)));
+
+    auto itor = find<MI_LOAD_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(RegisterOffsets::gpgpuDispatchDimX, cmd->getRegisterAddress());
+    EXPECT_EQ(expectedXAddress, cmd->getMemoryAddress());
+
+    itor = find<MI_LOAD_REGISTER_MEM *>(++itor, cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    cmd = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(RegisterOffsets::gpgpuDispatchDimY, cmd->getRegisterAddress());
+    EXPECT_EQ(expectedYAddress, cmd->getMemoryAddress());
+
+    itor = find<MI_LOAD_REGISTER_MEM *>(++itor, cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    cmd = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(RegisterOffsets::gpgpuDispatchDimZ, cmd->getRegisterAddress());
+    EXPECT_EQ(expectedZAddress, cmd->getMemoryAddress());
+
+    context->freeMem(alloc);
+}
+
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenLaunchKernelArgsWhenCallingAppendLaunchMultipleKernelsIndirectThenCountBufferAllocationIsResident) {
+    createKernel();
+
+    ze_result_t returnValue;
+    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    const ze_kernel_handle_t launchKernels = kernel->toHandle();
+    const ze_group_count_t launchKernelArgs = {1, 1, 1};
+    uint32_t *numLaunchArgs = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(
+        device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, &launchKernelArgs, nullptr, 0, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<void *>(numLaunchArgs));
+    ASSERT_NE(nullptr, allocData);
+    auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAllocation);
+
+    auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
+    auto itorAlloc = std::find(residencyContainer.begin(), residencyContainer.end(), gpuAllocation);
+    EXPECT_NE(residencyContainer.end(), itorAlloc);
+
+    context->freeMem(reinterpret_cast<void *>(numLaunchArgs));
+}
+
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMultipleKernelsThenUsesMathAndWalker) {
     createKernel();
 

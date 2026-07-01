@@ -658,12 +658,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     }
 
     appendEventForProfiling(event, nullptr, true, false, false, false);
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<const void *>(pNumLaunchArguments));
-    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-    commandContainer.addToResidencyContainer(alloc);
+
+    auto countBufferAllocData = getAlignedAllocationData(this->device, false, pNumLaunchArguments, sizeof(uint32_t), false, false, nullptr);
+    commandContainer.addToResidencyContainer(countBufferAllocData.alloc);
+    auto countBufferGpuAddress = ptrOffset(countBufferAllocData.alignedAllocationPtr, countBufferAllocData.offset);
 
     for (uint32_t i = 0; i < numKernels; i++) {
-        NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer, alloc->getGpuAddress(), i, isCopyOnly(false));
+        NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer, countBufferGpuAddress, i, isCopyOnly(false));
         launchParams.isKernelPatched = false;
         ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandles[i]),
                                            pLaunchArgumentsBuffer[i],
@@ -4069,18 +4070,10 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze_group_count_t *threadGroupDimensions) {
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<const void *>(threadGroupDimensions));
     if (allocData) {
-        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        commandContainer.addToResidencyContainer(alloc);
+        auto groupCountAllocData = getAlignedAllocationData(this->device, false, threadGroupDimensions, sizeof(ze_group_count_t), false, false, nullptr);
+        commandContainer.addToResidencyContainer(groupCountAllocData.alloc);
+        auto groupCount = ptrOffset(groupCountAllocData.alignedAllocationPtr, groupCountAllocData.offset);
 
-        size_t groupCountOffset = 0;
-        if (allocData->cpuAllocation != nullptr) {
-            commandContainer.addToResidencyContainer(allocData->cpuAllocation);
-            groupCountOffset = ptrDiff(threadGroupDimensions, allocData->cpuAllocation->getUnderlyingBuffer());
-        } else {
-            groupCountOffset = ptrDiff(threadGroupDimensions, alloc->getGpuAddress());
-        }
-
-        auto groupCount = ptrOffset(alloc->getGpuAddress(), groupCountOffset);
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, RegisterOffsets::gpgpuDispatchDimX,
                                                  ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountX)), isCopyOnly(false));
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, RegisterOffsets::gpgpuDispatchDimY,
