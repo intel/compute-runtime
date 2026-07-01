@@ -32,10 +32,18 @@ Metrics collection depends on:
 As described in Level-Zero specification [Tools Section](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/tools/PROG.html#environment-variables) environment variable `ZET_ENABLE_METRICS` must be set to 1.
 
 ## Linux
-Additionally in Linux environment, is is required to disable the kernel module driver i915 performance stream paranoid mode. This can be done with command
+Additionally in Linux environment, it is required to disable the kernel module driver performance stream paranoid mode. The exact setting depends on the Kernel Mode Driver (KMD) used by the platform.
+
+For the i915 KMD:
 
 ```
  sudo sysctl dev.i915.perf_stream_paranoid=0
+```
+
+For the Xe KMD:
+
+```
+ sudo sysctl dev.xe.observation_paranoid=0
 ```
 
 # GPU performance metrics
