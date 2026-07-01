@@ -63,6 +63,61 @@ TEST_F(GetSupportedImageFormatsTest, givenImagesSupportedWhenGetSupportedImageFo
     EXPECT_NE(0u, numImageFormats);
 }
 
+struct CreateImageWithoutSupportTest : LeoMemObjApiFixture {
+    void SetUp() override {
+        LeoMemObjApiFixture::SetUp();
+        setSupportsImages(false);
+        imageFormat.image_channel_order = CL_RGBA;
+        imageFormat.image_channel_data_type = CL_UNORM_INT8;
+        imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        imageDesc.image_width = 4;
+        imageDesc.image_height = 4;
+    }
+
+    cl_image_format imageFormat{};
+    cl_image_desc imageDesc{};
+};
+
+TEST_F(CreateImageWithoutSupportTest, givenImagesNotSupportedWhenCreateImageThenInvalidOperationReturnedAndNoImageCreated) {
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImage(context.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
+TEST_F(CreateImageWithoutSupportTest, givenImagesNotSupportedWhenCreateImageWithPropertiesThenInvalidOperationReturnedAndNoImageCreated) {
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImageWithProperties(context.get(), nullptr, CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
+TEST_F(CreateImageWithoutSupportTest, givenImagesNotSupportedWhenCreateImageWithPropertiesINTELThenInvalidOperationReturnedAndNoImageCreated) {
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImageWithPropertiesINTEL(context.get(), nullptr, CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
+TEST_F(CreateImageWithoutSupportTest, givenImagesNotSupportedWhenCreateImage2DThenInvalidOperationReturnedAndNoImageCreated) {
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImage2D(context.get(), CL_MEM_READ_WRITE, &imageFormat, 4, 4, 0, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
+TEST_F(CreateImageWithoutSupportTest, givenImagesNotSupportedWhenCreateImage3DThenInvalidOperationReturnedAndNoImageCreated) {
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImage3D(context.get(), CL_MEM_READ_WRITE, &imageFormat, 4, 4, 4, 0, 0, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
+TEST_F(CreateImageWithoutSupportTest, givenImagesNotSupportedWhenCreateImageWithoutErrcodeRetThenNoImageCreated) {
+    auto image = clCreateImage(context.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, nullptr);
+    EXPECT_EQ(nullptr, image);
+}
+
 using MemObjHelperTest = LeoMemObjApiFixture;
 
 TEST_F(MemObjHelperTest, givenContextDeviceWhenValidateMemoryPropertiesForBufferThenDeviceIsAssociated) {

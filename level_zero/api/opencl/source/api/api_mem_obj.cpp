@@ -207,12 +207,32 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                                                void *hostPtr,
                                                cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateImageWithProperties, &context, &properties, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
+
+    auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
+    if (!pContext) {
+        if (errcodeRet) {
+            *errcodeRet = CL_INVALID_CONTEXT;
+        }
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    if (!pContext->getClDevice()->getHardwareInfo().capabilityTable.supportsImages) {
+        if (errcodeRet) {
+            *errcodeRet = CL_INVALID_OPERATION;
+        }
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
     NEO::LEO::MemoryProperties memoryProperties{};
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_flags_intel emptyFlagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if ((false == NEO::LEO::ClMemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
-                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *NEO::LEO::castToObject<NEO::LEO::Context>(context)))) {
+                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext))) {
         if (errcodeRet) {
             *errcodeRet = CL_INVALID_VALUE;
         }
@@ -222,7 +242,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     }
 
     if ((false == NEO::LEO::ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *NEO::LEO::castToObject<NEO::LEO::Context>(context)))) {
+                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext))) {
         if (errcodeRet) {
             *errcodeRet = CL_INVALID_VALUE;
         }
@@ -260,7 +280,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
 
         ze_image_pitched_exp_desc_t imageFromBuffer{ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC};
 
-        auto device = NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0Object()->getDevices().begin()->second;
+        auto device = pContext->getL0Object()->getDevices().begin()->second;
         if (imageDesc->mem_object) {
             imageFromBuffer.ptr = NEO::LEO::castToObject<NEO::LEO::Buffer>(imageDesc->mem_object)->getUsmPtr();
             imageFromBuffer.pNext = l0imageDesc.pNext;
@@ -287,21 +307,20 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
             l0imageDesc.pNext = &depthStencilDesc;
         }
 
-        ret = zeImageCreate(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0ContextHandle(),
+        ret = zeImageCreate(pContext->getL0ContextHandle(),
                             device,
                             &l0imageDesc,
                             &imageHandle);
 
-        auto pCtx = NEO::LEO::castToObject<NEO::LEO::Context>(context);
-        if (ret == ZE_RESULT_SUCCESS && !pCtx->isSingleDeviceContext()) {
-            const auto primaryRootDeviceIndex = pCtx->getL0Object()->getDevices().begin()->first;
-            for (auto clDevice : pCtx->getClDevices()) {
+        if (ret == ZE_RESULT_SUCCESS && !pContext->isSingleDeviceContext()) {
+            const auto primaryRootDeviceIndex = pContext->getL0Object()->getDevices().begin()->first;
+            for (auto clDevice : pContext->getClDevices()) {
                 const auto extraRootDeviceIndex = clDevice->getRootDeviceIndex();
                 if (extraRootDeviceIndex == primaryRootDeviceIndex || extraImageHandles.count(extraRootDeviceIndex) != 0) {
                     continue;
                 }
                 ze_image_handle_t extraImageHandle{};
-                if (zeImageCreate(pCtx->getL0ContextHandle(), clDevice->getL0Handle(), &l0imageDesc, &extraImageHandle) == ZE_RESULT_SUCCESS) {
+                if (zeImageCreate(pContext->getL0ContextHandle(), clDevice->getL0Handle(), &l0imageDesc, &extraImageHandle) == ZE_RESULT_SUCCESS) {
                     extraImageHandles[extraRootDeviceIndex] = extraImageHandle;
                 }
             }
@@ -316,7 +335,6 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     }
 
     if (memoryProperties.flags.copyHostPtr || memoryProperties.flags.useHostPtr) {
-        auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
         {
             auto lock = pContext->lockInternalCopy();
             uint32_t regionHeight = std::max(l0imageDesc.height, 1u);
@@ -328,7 +346,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
             }
             ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width),
                                      regionHeight, regionDepth};
-            ret = zeCommandListAppendImageCopyFromMemoryExt(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getInternalCopyCmdList(),
+            ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(),
                                                             imageHandle,
                                                             hostPtr,
                                                             &region,
@@ -344,8 +362,8 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     }
 
     cl_mem associatedMemObject = inputMemObjFound ? nullptr : imageDesc->mem_object;
-    auto image = new NEO::LEO::Image(NEO::LEO::castToObject<NEO::LEO::Context>(context), memoryProperties, flags, imageHandle, cpuPtr, nullptr, inputMemObjFound, resolvedFormat, associatedMemObject);
-    image->setOwnerRootDeviceIndex(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0Object()->getDevices().begin()->first);
+    auto image = new NEO::LEO::Image(pContext, memoryProperties, flags, imageHandle, cpuPtr, nullptr, inputMemObjFound, resolvedFormat, associatedMemObject);
+    image->setOwnerRootDeviceIndex(pContext->getL0Object()->getDevices().begin()->first);
     for (auto &[extraRootDeviceIndex, extraImageHandle] : extraImageHandles) {
         image->addPerDeviceHandle(extraRootDeviceIndex, extraImageHandle);
     }
