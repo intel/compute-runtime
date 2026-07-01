@@ -596,7 +596,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
         return subGraphs;
     }
 
-    ze_result_t execute(L0::CommandList *executionTarget, void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t execute(L0::CommandList *executionTarget, const void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     WeaklyShared<ExternalCbEventInfoContainer> getExternalCbEventInfoContainer() {

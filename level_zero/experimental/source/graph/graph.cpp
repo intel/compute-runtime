@@ -1380,7 +1380,7 @@ ze_result_t ExecutableGraph::instantiateFrom(const OrderedCommandsSegment &segme
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     if (nullptr == executionTarget) {
         executionTarget = this->executionTarget;
     }

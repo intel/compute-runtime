@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,8 @@ struct DriverDispatch {
     ze_virtual_mem_dditable_t coreVirtualMem{};
     ze_fabric_vertex_exp_dditable_t coreFabricVertexExp{};
     ze_fabric_edge_exp_dditable_t coreFabricEdgeExp{};
+    ze_graph_dditable_t coreGraph{};
+    ze_executable_graph_dditable_t coreExecutableGraph{};
 
     zet_metric_programmable_exp_dditable_t toolsMetricProgrammableExp{};
     zet_metric_tracer_exp_dditable_t toolsMetricTracerExp{};
