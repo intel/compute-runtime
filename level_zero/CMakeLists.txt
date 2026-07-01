@@ -448,10 +448,6 @@ if(BUILD_WITH_L0)
     endif()
   endif()
 
-  if(WIN32 AND NOT L0_BLACK_BOX_TEST_USE_DRIVER)
-    target_compile_definitions(${L0_RELEASE_LIB_NAME} PRIVATE ZE_APIEXPORT=)
-  endif()
-
   append_sources_from_properties(L0_SHARED_LIB_SRCS L0_SRCS_DLL NEO_CORE_SRCS_LINK NEO_SRCS_ENABLE_CORE)
   target_sources(${TARGET_NAME_L0} PRIVATE $<TARGET_OBJECTS:${L0_RELEASE_LIB_NAME}> ${L0_SHARED_LIB_SRCS})
 
@@ -463,13 +459,8 @@ if(BUILD_WITH_L0)
   if(UNIX)
     target_link_libraries(${TARGET_NAME_L0} PRIVATE ${GMM_LINK_NAME})
     if(NOT ENABLE_DYNAMIC_MEMORY_TRACKING)
-      if(L0_BLACK_BOX_TEST_USE_DRIVER)
-        set(L0_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze_internal.exports")
-      else()
-        set(L0_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze_release.exports")
-      endif()
       set_property(TARGET ${TARGET_NAME_L0}
-                   APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${L0_EXPORTS_FILE}"
+                   APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux${BRANCH_DIR_SUFFIX}/ze.exports"
       )
     endif()
     set_property(TARGET ${TARGET_NAME_L0} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic")
