@@ -960,16 +960,14 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
     if (vmBindAvailable) {
         // vm_bind carries the physical offset/length to the kernel, placing the BO at gpuRange.
         bo->bind(getDefaultOsContext(drmPhysicalAllocation->getRootDeviceIndex()), 0, false);
-    } else {
-        // No vm_bind: explicitly make the allocation resident so the execbuffer path softpins it
-        // at baseAddress. The default (non-vmBind) operations handler does not auto-resident
-        // sysMem allocations, so this cannot be left to mergeWithResidencyContainer.
-        auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[drmPhysicalAllocation->getRootDeviceIndex()]->memoryOperationsInterface.get());
-        GraphicsAllocation *gfxAllocation = drmAllocation;
-        for (auto &engine : getRegisteredEngines(drmPhysicalAllocation->getRootDeviceIndex())) {
-            memoryOperationsInterface->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&gfxAllocation, 1), false, false, true);
-        }
     }
+    // On a non-vmBind system the mapping is softpinned via the legacy execbuffer path. It is made
+    // resident on demand by the command list that references the VA (the pointer is resolved to
+    // this allocation and added to the per-submission residency container). It must NOT be forced
+    // into the persistent global residency here: a single physical BO may back several VAs, and
+    // every mapping shares the same GEM handle, so pinning more than one of them globally would put
+    // the same handle at conflicting addresses in one execbuffer and the submission would be
+    // rejected. Per-command-list residency keeps only the VA actually in use resident.
 
     drmAllocation->setUsmHostAllocation(true);
     drmAllocation->setShareableHostMemory(true);

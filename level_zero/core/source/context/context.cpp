@@ -1819,12 +1819,15 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
     NEO::VirtualMemoryReservation *virtualMemoryReservation = nullptr;
     auto lockVirtual = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
 
-    // Currently, a physical memory allocation may back only a single virtual address mapping.
-    // Reject the request if this physical handle is already mapped to any reserved VA range.
-    for (const auto &reservationPair : this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap()) {
-        for (const auto &mappedPair : reservationPair.second->mappedAllocations) {
-            if (mappedPair.second->physicalHandle == static_cast<void *>(hPhysicalMemory)) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    // Physical device memory may currently back only a single virtual address mapping; host
+    // physical memory does support multiple mappings, so this restriction is limited to device
+    // memory. Reject the request if this device physical handle is already mapped to a reserved VA.
+    if (allocationNode->allocation->getAllocationType() == NEO::AllocationType::buffer) {
+        for (const auto &reservationPair : this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap()) {
+            for (const auto &mappedPair : reservationPair.second->mappedAllocations) {
+                if (mappedPair.second->physicalHandle == static_cast<void *>(hPhysicalMemory)) {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
             }
         }
     }

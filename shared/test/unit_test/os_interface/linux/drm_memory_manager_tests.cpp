@@ -8286,6 +8286,60 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenVmBindUnavailableWhenM
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
 
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenVmBindUnavailableWhenMappingSinglePhysicalHostMemoryToMultipleVirtualRangesThenMappingsAreNotForcedIntoGlobalResidency) {
+    // On the non-vmBind (softpin/execbuffer) path every VA mapping of one physical allocation
+    // shares the same GEM handle. Forcing them into the persistent global residency would place
+    // the same handle at conflicting addresses in a single execbuffer, which the kernel rejects.
+    // The map path must therefore leave residency to the referencing command list.
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = false;
+
+    // The fixture's device already registers engines with the memory manager, so the pre-fix map
+    // path would have iterated them and pushed each mapping into the operations handler's residency
+    // list. The assertions below therefore fail on the old (forced-residency) behaviour and pass on
+    // the fixed one, making this a genuine regression guard.
+    ASSERT_FALSE(memoryManager->getRegisteredEngines(rootDeviceIndex).empty());
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 2 * MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.type = AllocationType::bufferHostMemory;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto physicalAllocation = static_cast<DrmAllocation *>(memoryManager->allocatePhysicalHostMemory(allocData, status));
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
+
+    uint64_t gpuAddress0 = 0x100000;
+    uint64_t gpuAddress1 = 0x200000;
+    MultiGraphicsAllocation multiGraphicsAllocation0{numRootDevices};
+    MultiGraphicsAllocation multiGraphicsAllocation1{numRootDevices};
+
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation0, physicalAllocation, gpuAddress0, allocData.size, 0u));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation1, physicalAllocation, gpuAddress1, allocData.size, 0u));
+
+    auto mappedAllocation0 = multiGraphicsAllocation0.getGraphicsAllocation(rootDeviceIndex);
+    auto mappedAllocation1 = multiGraphicsAllocation1.getGraphicsAllocation(rootDeviceIndex);
+    ASSERT_NE(nullptr, mappedAllocation0);
+    ASSERT_NE(nullptr, mappedAllocation1);
+
+    auto drmMemoryOperationsHandler = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, drmMemoryOperationsHandler->isResident(device.get(), *mappedAllocation0));
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, drmMemoryOperationsHandler->isResident(device.get(), *mappedAllocation1));
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation0, physicalAllocation, gpuAddress0, allocData.size));
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation1, physicalAllocation, gpuAddress1, allocData.size));
+
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHolesAndPrimeHandleToFdFailsWhenMappingPhysicalHostMemoryThenMappingFails) {
     mock->failOnPrimeHandleToFd = true;
 
