@@ -63,4 +63,24 @@ uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const
     return releaseHelper.getTotalMemBankSize() / GfxCoreHelper::getSubDevicesCount(pHwInfo);
 }
 
+std::string AubHelper::getDeviceConfigString(bool includeTileCount, bool includeXeCuSegment, uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) {
+    char configString[16] = {0};
+    int err = 0;
+    if (includeXeCuSegment) {
+        uint32_t xecuCount = 1;
+        if (sliceCount > 4) {
+            UNRECOVERABLE_IF(sliceCount % 4u != 0u);
+            xecuCount = sliceCount / 4;
+            sliceCount = sliceCount / xecuCount;
+        }
+        err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%utx%ux%ux%ux%u", tileCount, xecuCount, sliceCount, subSliceCount, euPerSubSliceCount);
+    } else if (includeTileCount || tileCount > 1) {
+        err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%utx%ux%ux%u", tileCount, sliceCount, subSliceCount, euPerSubSliceCount);
+    } else {
+        err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%ux%ux%u", sliceCount, subSliceCount, euPerSubSliceCount);
+    }
+    UNRECOVERABLE_IF(err < 0);
+    return configString;
+}
+
 } // namespace NEO

@@ -8,7 +8,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
@@ -105,16 +104,13 @@ const ThreadsPerEUConfigs ReleaseHelperHw<releaseType>::getThreadsPerEUConfigs(u
 }
 
 template <ReleaseType releaseType>
-const std::string ReleaseHelperHw<releaseType>::getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const {
-    char configString[16] = {0};
-    if (tileCount > 1) {
-        auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%utx%ux%ux%u", tileCount, sliceCount, subSliceCount, euPerSubSliceCount);
-        UNRECOVERABLE_IF(err < 0);
-    } else {
-        auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%ux%ux%u", sliceCount, subSliceCount, euPerSubSliceCount);
-        UNRECOVERABLE_IF(err < 0);
-    }
-    return configString;
+bool ReleaseHelperHw<releaseType>::isDeviceConfigStringTileCountIncluded() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isDeviceConfigStringXeCuSegmentIncluded() const {
+    return false;
 }
 
 template <ReleaseType releaseType>

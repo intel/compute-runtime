@@ -29,6 +29,21 @@ TEST(AubHelper, WhenGetPtEntryBitsIsCalledThenEntryBitsAreNotMasked) {
     EXPECT_EQ(entryBits, maskedEntryBits);
 }
 
+TEST(AubHelper, givenConditionalTileFormatWhenGettingDeviceConfigStringThenTileCountIsIncludedOnlyForMultipleTiles) {
+    EXPECT_EQ("2x3x4", AubHelper::getDeviceConfigString(false, false, 1, 2, 3, 4));
+    EXPECT_EQ("2tx2x3x4", AubHelper::getDeviceConfigString(false, false, 2, 2, 3, 4));
+}
+
+TEST(AubHelper, givenAlwaysIncludeTileFormatWhenGettingDeviceConfigStringThenTileCountIsAlwaysIncluded) {
+    EXPECT_EQ("1tx2x3x4", AubHelper::getDeviceConfigString(true, false, 1, 2, 3, 4));
+    EXPECT_EQ("12tx9x6x3", AubHelper::getDeviceConfigString(true, false, 12, 9, 6, 3));
+}
+
+TEST(AubHelper, givenXeCuSegmentFormatWhenGettingDeviceConfigStringThenXeCuCountIsDerivedFromSliceCount) {
+    EXPECT_EQ("1tx1x4x3x2", AubHelper::getDeviceConfigString(true, true, 1, 4, 3, 2));
+    EXPECT_EQ("1tx2x4x3x2", AubHelper::getDeviceConfigString(true, true, 1, 8, 3, 2));
+}
+
 TEST(AubHelper, GivenMultipleSubDevicesWhenGettingDeviceCountThenCorrectValueIsReturned) {
     DebugManagerStateRestore stateRestore;
     FeatureTable featureTable = {};

@@ -31,17 +31,13 @@ uint64_t ReleaseHelperHw<release>::getTotalMemBankSize() const {
 }
 
 template <>
-const std::string ReleaseHelperHw<release>::getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const {
-    char configString[16] = {0};
-    uint32_t xecuCount = 1;
-    if (sliceCount > 4) {
-        UNRECOVERABLE_IF(sliceCount % 4u != 0u);
-        xecuCount = sliceCount / 4;
-        sliceCount = sliceCount / xecuCount;
-    }
-    auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%utx%ux%ux%ux%u", tileCount, xecuCount, sliceCount, subSliceCount, euPerSubSliceCount);
-    UNRECOVERABLE_IF(err < 0);
-    return configString;
+bool ReleaseHelperHw<release>::isDeviceConfigStringTileCountIncluded() const {
+    return true;
+}
+
+template <>
+bool ReleaseHelperHw<release>::isDeviceConfigStringXeCuSegmentIncluded() const {
+    return true;
 }
 
 template <>

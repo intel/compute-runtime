@@ -126,3 +126,13 @@ TEST_F(ReleaseHelperPvcTests, whenIsSingleDispatchRequiredForMultiCCSCalledThenF
 TEST_F(ReleaseHelperPvcTests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
 }
+
+TEST_F(ReleaseHelperPvcTests, whenGettingDeviceConfigStringFormatThenTileCountIsConditionalAndNoXeCuSegment) {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isDeviceConfigStringTileCountIncluded());
+        EXPECT_FALSE(releaseHelper->isDeviceConfigStringXeCuSegmentIncluded());
+    }
+}

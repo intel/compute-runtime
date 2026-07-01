@@ -48,11 +48,8 @@ uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
 }
 
 template <>
-const std::string ReleaseHelperHw<release>::getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const {
-    char configString[16] = {0};
-    auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%utx%ux%ux%u", tileCount, sliceCount, subSliceCount, euPerSubSliceCount);
-    UNRECOVERABLE_IF(err < 0);
-    return configString;
+bool ReleaseHelperHw<release>::isDeviceConfigStringTileCountIncluded() const {
+    return true;
 }
 
 template <>
