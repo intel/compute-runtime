@@ -7,7 +7,9 @@
 
 #include "CL/cl.h"
 #include "ocloc_api.h"
+#include <climits>
 
+#include <cerrno>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
