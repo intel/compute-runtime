@@ -210,6 +210,7 @@ class ProductHelperHw : public ProductHelper {
     bool isFlushBetweenBlitsRequired() const override;
     bool isNonCoherentTimestampsModeEnabled() const override;
     bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const override;
+    bool isPidFdOrSocketForIpcSupported() const override;
     bool checkBcsForDirectSubmissionStop() const override;
     bool shouldRegisterEnqueuedWalkerWithProfiling() const override;
     uint32_t getAvailableSlmSizePerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment) const override;

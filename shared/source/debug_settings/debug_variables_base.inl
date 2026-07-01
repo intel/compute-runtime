@@ -325,6 +325,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceIndirectDetectionForCMKernels, -1, "-1: def
 DECLARE_DEBUG_VARIABLE(int32_t, PipelinedEuThreadArbitration, -1, "-1: default. 1: Use Walker field, 0: Use StateComputeMode command to program pipelinedEuThreadArbitration")
 DECLARE_DEBUG_VARIABLE(bool, ForceUseOnlyGlobalTimestamps, 0, "0: default disabled, 1: enable use only global timestamp")
 DECLARE_DEBUG_VARIABLE(int32_t, GetSipBinaryFromExternalLib, -1, "-1: default, 0: disabled, 1: enabled. If enabled, then retrieve Sip from external library")
+DECLARE_DEBUG_VARIABLE(int32_t, EnablePidFdOrSocketsForIpc, -1, "-1: default, 0: disabled (default), 1: enabled. If enabled, L0 IPC handles are opaque and pidfd or sockets are used for IPC exchange")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCopyOffloadMode, -1, "-1: default, 0: disabled, >=1: if enabled, override to any value from CopyOffloadModes enum")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideFillCopyOffloadThresholdKb, -1, "-1: default, >0: if copy offload is enabled, offload fill operations if size is below this threshold (in kb)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxMemAllocSizeMb, -1, "-1: default, >=0 override reported max mem alloc size in MB")

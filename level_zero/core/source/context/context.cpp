@@ -2186,11 +2186,6 @@ void Context::initOpaqueHandleResources() {
     });
 }
 
-uint8_t Context::isWddmOpaqueHandleSupported(IpcHandleType *handleType) {
-    *handleType = IpcHandleType::ntHandle;
-    return OpaqueHandlingType::nthandle;
-}
-
 template void Context::setIPCHandleData<IpcMemoryData>(NEO::GraphicsAllocation *, uint64_t, IpcMemoryData &, uint64_t, uint8_t, NEO::UsmMemAllocPool *, IpcHandleType, void *);
 template void Context::setIPCHandleData<IpcOpaqueMemoryData>(NEO::GraphicsAllocation *, uint64_t, IpcOpaqueMemoryData &, uint64_t, uint8_t, NEO::UsmMemAllocPool *, IpcHandleType, void *);
 } // namespace L0
