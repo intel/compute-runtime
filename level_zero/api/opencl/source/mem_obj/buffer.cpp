@@ -80,7 +80,7 @@ Buffer::~Buffer() {
         peekSharingHandler()->releaseReusedGraphicsAllocation();
         this->checkUsageAndReleaseOldAllocation(this->getContext()->getClDevice()->getRootDeviceIndex());
     } else {
-        if (!externalHandle) {
+        if (!externalHandle && !usesSvm) {
             zeMemFree(context->getL0ContextHandle(), usmPtr);
         }
     }
