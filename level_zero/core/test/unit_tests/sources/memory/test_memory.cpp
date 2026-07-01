@@ -6975,6 +6975,7 @@ TEST_F(MemoryTest, givenDeviceMemoryAndFailedLockWhenCallingMapDeviceMemToHostTh
 struct AllocUsmPoolMemoryTest : public MemoryTest {
     void SetUp() override {
         NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+        NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(1);
 
         MemoryTest::SetUp();
     }

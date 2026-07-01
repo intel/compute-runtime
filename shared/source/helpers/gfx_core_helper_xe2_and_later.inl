@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
 namespace NEO {
 
@@ -121,6 +122,11 @@ bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
 
 template <>
 bool GfxCoreHelperHw<Family>::isExtendedUsmPoolSizeEnabled() const {
+    return true;
+}
+
+template <>
+bool GfxCoreHelperHw<Family>::isUsmPoolManagerSupported(InternalMemoryType memoryType) const {
     return true;
 }
 

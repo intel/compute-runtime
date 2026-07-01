@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -958,8 +959,13 @@ TEST_P(UnifiedMemoryPoolingFacadeTest, givenNoDebugFlagsWhenInitializingPoolsFac
     mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get(), {});
 
     EXPECT_TRUE(mockUsmMemAllocPoolsFacade.isInitialized());
-    EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
-    EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.pool.get());
+    if (device->getGfxCoreHelper().isUsmPoolManagerSupported(poolMemoryType)) {
+        EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
+        EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.pool.get());
+    } else {
+        EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
+        EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.pool.get());
+    }
 }
 
 TEST_P(UnifiedMemoryPoolingFacadeTest, givenPoolManagerDisabledAndCustomPoolSizeWhenInitializingPoolsFacadeThenPoolHasCorrectSize) {

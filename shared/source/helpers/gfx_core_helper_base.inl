@@ -28,6 +28,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "encode_surface_state_args.h"
@@ -961,6 +962,11 @@ uintptr_t GfxCoreHelperHw<Family>::getSurfaceBaseAddressAlignment() const {
 template <typename Family>
 bool GfxCoreHelperHw<Family>::isExtendedUsmPoolSizeEnabled() const {
     return false;
+}
+
+template <typename Family>
+bool GfxCoreHelperHw<Family>::isUsmPoolManagerSupported(InternalMemoryType memoryType) const {
+    return memoryType == InternalMemoryType::hostUnifiedMemory;
 }
 
 template <typename Family>

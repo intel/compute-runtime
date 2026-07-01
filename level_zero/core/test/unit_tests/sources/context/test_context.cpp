@@ -5504,6 +5504,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNonNullUsmPoolAndRefCountG
     // Enable USM pooling to create allocations with usmPool
     debugManager.flags.EnableHostUsmAllocationPool.set(1);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+    debugManager.flags.EnableUsmAllocationPoolManager.set(1);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};

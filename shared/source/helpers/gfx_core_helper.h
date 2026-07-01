@@ -20,6 +20,8 @@
 #include <cstdint>
 #include <memory>
 
+enum class InternalMemoryType : uint32_t;
+
 namespace NEO {
 enum class AuxTranslationMode;
 struct FeatureTable;
@@ -212,6 +214,7 @@ class GfxCoreHelper {
     virtual uintptr_t getSurfaceBaseAddressAlignment() const = 0;
 
     virtual bool isExtendedUsmPoolSizeEnabled() const = 0;
+    virtual bool isUsmPoolManagerSupported(InternalMemoryType memoryType) const = 0;
     virtual bool crossEngineCacheFlushRequired() const = 0;
     int32_t getHighestQueuePriorityLevel() const;
     int32_t getLowestQueuePriorityLevel() const;
@@ -479,6 +482,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getHwQueuePriority(int32_t apiPriority) const override;
 
     bool isExtendedUsmPoolSizeEnabled() const override;
+
+    bool isUsmPoolManagerSupported(InternalMemoryType memoryType) const override;
 
     bool crossEngineCacheFlushRequired() const override;
 

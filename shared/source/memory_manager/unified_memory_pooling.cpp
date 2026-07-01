@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -387,7 +388,7 @@ bool UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType memoryType, bool 
 }
 
 bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager, const InitParams &initParams) {
-    bool poolManagerEnabled = true;
+    bool poolManagerEnabled = device->getGfxCoreHelper().isUsmPoolManagerSupported(memoryType);
     if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
         poolManagerEnabled = NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != 0;
     }

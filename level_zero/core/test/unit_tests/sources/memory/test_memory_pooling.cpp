@@ -811,7 +811,7 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDebugFlagWhenInitializing
     EXPECT_TRUE(neoDevice->getDeviceUsmMemAllocPoolFacade().getPool()->isTrackingResidency());
 }
 
-using AllocUsmDeviceEnabledMemoryNewVersionTest = AllocUsmPoolMemoryTest<-1, 1, -1>;
+using AllocUsmDeviceEnabledMemoryNewVersionTest = AllocUsmPoolMemoryTest<-1, 1, 1>;
 
 TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenDebugFlagWhenInitializingPoolManagerThenEnableResidencyTrackingCorrectly) {
     auto neoDevice = l0Devices[0]->getNEODevice();
