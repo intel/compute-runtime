@@ -654,6 +654,8 @@ struct CommandList : _ze_command_list_handle_t {
                                   uint64_t &outDeviceAddress,
                                   NEO::GraphicsAllocation *&outGraphicsAllocation);
 
+    virtual void handlePostSyncPrintfAndAssert(bool hangDetected) {};
+
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 

@@ -244,6 +244,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     size_t getTransferThreshold(TransferType transferType);
     bool isBarrierRequired();
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override;
+    void handlePostSyncPrintfAndAssert(bool hangDetected) final;
 
   protected:
     using BaseClass::inOrderExecInfo;

@@ -212,6 +212,15 @@ ze_result_t Event::signal() {
 
 cl_int Event::queryAndUpdateEventStatus() {
     if (zeEventQueryStatus(this->eventHandle) == ZE_RESULT_SUCCESS) {
+        if (!this->isUserEvent()) {
+            auto cmdList = this->getCommandQueue()->getL0Object();
+
+            if (!cmdList->getPrintfKernelContainer().empty()) {
+
+                auto ret = this->wait();
+                this->getCommandQueue()->getL0Object()->handlePostSyncPrintfAndAssert(ret != ZE_RESULT_SUCCESS);
+            }
+        }
         this->eventStatus = CL_COMPLETE;
     }
     return this->eventStatus;

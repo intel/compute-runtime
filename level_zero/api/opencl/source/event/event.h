@@ -104,7 +104,7 @@ class Event : public BaseObject<_cl_event> {
                         void *paramValue,
                         size_t *paramValueSizeRet);
 
-    ze_result_t wait();
+    MOCKABLE_VIRTUAL ze_result_t wait();
     ze_result_t signal();
     cl_int queryAndUpdateEventStatus();
 

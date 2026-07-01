@@ -1337,12 +1337,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             }
 
             bool hangDetected = status == ZE_RESULT_ERROR_DEVICE_LOST;
-            this->printKernelsPrintfOutput(hangDetected);
-            this->checkAssert();
-            {
-                this->cmdQImmediate->printKernelsPrintfOutput(hangDetected);
-                this->cmdQImmediate->checkAssert();
-            }
+            this->handlePostSyncPrintfAndAssert(hangDetected);
         }
         this->kernelWithAssertAppended = false;
     }
@@ -1769,6 +1764,16 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::printKernelsPrintfOutput(boo
     }
     this->printfKernelContainer.clear();
 }
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::handlePostSyncPrintfAndAssert(bool hangDetected) {
+    this->printKernelsPrintfOutput(hangDetected);
+    this->checkAssert();
+    {
+        this->cmdQImmediate->printKernelsPrintfOutput(hangDetected);
+        this->cmdQImmediate->checkAssert();
+    }
+};
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
