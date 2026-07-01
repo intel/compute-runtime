@@ -11,6 +11,9 @@
 #include "shared/source/xe2_hpg_core/hw_cmds_bmg.h"
 #include "shared/source/xe2_hpg_core/hw_info_bmg.h"
 
+#include <algorithm>
+#include <array>
+
 constexpr static auto gfxProduct = IGFX_BMG;
 
 #include "shared/source/os_interface/linux/product_helper_mtl_and_later.inl"
@@ -58,24 +61,42 @@ bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return true;
 }
 
+namespace {
+struct BmgPublicSkuMemoryConfig {
+    uint32_t memoryClockRateInMhz = 0u;
+    uint32_t memoryBusWidthInBits = 0u;
+};
+
+BmgPublicSkuMemoryConfig getBmgPublicSkuMemoryConfig(unsigned short deviceId) {
+    static constexpr std::array<unsigned short, 2> arcB580DeviceIds = {0xE209, 0xE20B};
+    static constexpr std::array<unsigned short, 1> arcB570DeviceIds = {0xE20C};
+    static constexpr std::array<unsigned short, 1> arcProB60DeviceIds = {0xE211};
+    static constexpr std::array<unsigned short, 1> arcProB50DeviceIds = {0xE212};
+    static constexpr std::array<unsigned short, 1> arcProB70DeviceIds = {0xE223};
+
+    auto matches = [deviceId](const auto &deviceIds) {
+        return std::find(deviceIds.begin(), deviceIds.end(), deviceId) != deviceIds.end();
+    };
+
+    if (matches(arcB580DeviceIds) || matches(arcProB60DeviceIds)) {
+        return {19000u, 192u};
+    }
+    if (matches(arcB570DeviceIds)) {
+        return {19000u, 160u};
+    }
+    if (matches(arcProB50DeviceIds)) {
+        return {14000u, 128u};
+    }
+    if (matches(arcProB70DeviceIds)) {
+        return {19000u, 256u};
+    }
+    return {};
+}
+} // namespace
+
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
-    if (osIface == nullptr) {
-        return 0;
-    }
-
-    auto driverModel = osIface->getDriverModel();
-    if (driverModel->getDriverModelType() != DriverModelType::drm) {
-        return 0;
-    }
-
-    auto pDrm = driverModel->as<Drm>();
-    uint32_t memoryMaxClkRateInMhz = 0;
-    if (pDrm->getDeviceMemoryMaxClockRateInMhz(subDeviceIndex, memoryMaxClkRateInMhz) == false) {
-        return 0;
-    }
-
-    return memoryMaxClkRateInMhz;
+    return getBmgPublicSkuMemoryConfig(hwInfo.platform.usDeviceID).memoryClockRateInMhz;
 }
 
 template <>
@@ -104,16 +125,8 @@ template <>
 uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(
     const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
 
-    uint64_t memoryMaxClkRateInMhz = getDeviceMemoryMaxClkRate(hwInfo, osIface, subDeviceIndex);
-    if (memoryMaxClkRateInMhz == 0) {
-        return 0;
-    }
-
-    const uint32_t euCount = hwInfo.gtSystemInfo.EUCount;
-    const uint64_t memoryBusWidthInBits = (euCount >= 448) ? 256u : 192u;
-
-    // Bandwidth = Clock Rate (MHz) x 10^6 x Bus Width (bits) / 8
-    return memoryMaxClkRateInMhz * 1000 * 1000 * memoryBusWidthInBits / 8;
+    const auto memoryConfig = getBmgPublicSkuMemoryConfig(hwInfo.platform.usDeviceID);
+    return static_cast<uint64_t>(memoryConfig.memoryClockRateInMhz) * 1000u * 1000u * memoryConfig.memoryBusWidthInBits / 8u;
 }
 
 template class ProductHelperHw<gfxProduct>;

@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
@@ -51,26 +52,53 @@ uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const O
 
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
-
     if (osIface == nullptr) {
         return 0;
     }
-
-    auto pDrm = osIface->getDriverModel()->as<Drm>();
+    auto driverModel = osIface->getDriverModel();
+    if (driverModel == nullptr || driverModel->getDriverModelType() != DriverModelType::drm) {
+        return 0;
+    }
+    auto pDrm = driverModel->as<Drm>();
     uint32_t memoryMaxClkRateInMhz = 0;
     if (pDrm->getDeviceMemoryMaxClockRateInMhz(subDeviceIndex, memoryMaxClkRateInMhz) == false) {
         return 0;
     }
-
     return memoryMaxClkRateInMhz;
 }
 
 template <>
 uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
     uint64_t memoryMaxClkRateInMhz = getDeviceMemoryMaxClkRate(hwInfo, osIface, subDeviceIndex);
-    const uint64_t numberOfHbmStacksPerTile = 4u;
-    const uint64_t memoryBusWidth = 128u;
-    return memoryMaxClkRateInMhz * 1000 * 1000 * numberOfHbmStacksPerTile * memoryBusWidth / 8;
+    if (memoryMaxClkRateInMhz == 0) {
+        return 0;
+    }
+
+    if (osIface == nullptr) {
+        return 0;
+    }
+    auto driverModel = osIface->getDriverModel();
+    if (driverModel == nullptr || driverModel->getDriverModelType() != DriverModelType::drm) {
+        return 0;
+    }
+    auto pDrm = driverModel->as<Drm>();
+    auto systemInfo = pDrm->getSystemInfo();
+    if (systemInfo == nullptr) {
+        return 0;
+    }
+
+    // HBM: total bus width (bits) = numHbmStacksPerTile x numChannelsPerHbmStack x 64
+    const uint64_t memoryBusWidthInBits =
+        static_cast<uint64_t>(systemInfo->getNumHbmStacksPerTile()) *
+        static_cast<uint64_t>(systemInfo->getNumChannelsPerHbmStack()) * 64u;
+    if (memoryBusWidthInBits == 0) {
+        return 0;
+    }
+
+    // Bandwidth = Clock Rate (MHz) x 10^6 x Bus Width (bits) / 8 * 2
+    // HBM memory clock as reported by sysfs file node requires 2x
+    // data-rate multiplier for correct peak BW reporting.
+    return memoryMaxClkRateInMhz * 1000 * 1000 * memoryBusWidthInBits / 4;
 }
 
 template <>

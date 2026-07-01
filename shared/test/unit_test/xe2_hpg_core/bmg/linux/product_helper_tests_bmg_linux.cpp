@@ -111,27 +111,24 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenCallDeferMOCSToPatOnWSLTh
     EXPECT_TRUE(productHelper.deferMOCSToPatIndex(true));
 }
 
-BMGTEST_F(BmgProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
-}
+BMGTEST_F(BmgProductHelperLinux, givenPublicSkuDeviceIdWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnSpecValue) {
+    pInHwInfo.platform.usDeviceID = 0xE209;
+    EXPECT_EQ(19000u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
 
-BMGTEST_F(BmgProductHelperLinux, givenMockDriverModelWithUnknownTypeWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
-    // This simulates the test scenario that was causing the abort
-    auto mockDriverModel = std::make_unique<MockDriverModel>(); // Defaults to DriverModelType::unknown
-    osInterface->setDriverModel(std::move(mockDriverModel));
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
-}
+    pInHwInfo.platform.usDeviceID = 0xE20B;
+    EXPECT_EQ(19000u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
 
-BMGTEST_F(BmgProductHelperLinux, givenDrmQueryFailsWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
-    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = false;
-    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
-}
+    pInHwInfo.platform.usDeviceID = 0xE20C;
+    EXPECT_EQ(19000u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
 
-BMGTEST_F(BmgProductHelperLinux, givenDrmQuerySucceedsWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnClockRate) {
-    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
-    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
-    EXPECT_EQ(800u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+    pInHwInfo.platform.usDeviceID = 0xE211;
+    EXPECT_EQ(19000u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
+
+    pInHwInfo.platform.usDeviceID = 0xE212;
+    EXPECT_EQ(14000u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
+
+    pInHwInfo.platform.usDeviceID = 0xE223;
+    EXPECT_EQ(19000u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
 }
 
 BMGTEST_F(BmgProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
@@ -156,69 +153,24 @@ BMGTEST_F(BmgProductHelperLinux, givenDrmQuerySucceedsWhenGetDeviceMemoryPhysica
     EXPECT_EQ(1024u, productHelper->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
 }
 
-BMGTEST_F(BmgProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
-}
+BMGTEST_F(BmgProductHelperLinux, givenPublicSkuDeviceIdWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnPublicSpec) {
+    pInHwInfo.platform.usDeviceID = 0xE209;
+    EXPECT_EQ(456000000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
 
-BMGTEST_F(BmgProductHelperLinux, givenMockDriverModelWithUnknownTypeWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {
-    auto mockDriverModel = std::make_unique<MockDriverModel>();
-    osInterface->setDriverModel(std::move(mockDriverModel));
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, osInterface, 0));
-}
+    pInHwInfo.platform.usDeviceID = 0xE20B;
+    EXPECT_EQ(456000000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
 
-BMGTEST_F(BmgProductHelperLinux, givenDrmClockRateQueryFailsWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {
-    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = false;
-    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, osInterface, 0));
-}
+    pInHwInfo.platform.usDeviceID = 0xE20C;
+    EXPECT_EQ(380000000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
 
-BMGTEST_F(BmgProductHelperLinux, givenHighEndSkuWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturn256BitBandwidth) {
-    auto testHwInfo = pInHwInfo;
-    testHwInfo.gtSystemInfo.EUCount = 512;
+    pInHwInfo.platform.usDeviceID = 0xE211;
+    EXPECT_EQ(456000000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
 
-    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
-    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    pInHwInfo.platform.usDeviceID = 0xE212;
+    EXPECT_EQ(224000000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
 
-    uint64_t expectedBandwidth = 800ULL * 1000 * 1000 * 256 / 8;
-    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenMidRangeSkuWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturn192BitBandwidth) {
-    auto testHwInfo = pInHwInfo;
-    testHwInfo.gtSystemInfo.EUCount = 358;
-
-    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
-    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
-
-    uint64_t expectedBandwidth = 800ULL * 1000 * 1000 * 192 / 8;
-    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenEntryLevelSkuWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturn192BitBandwidth) {
-    auto testHwInfo = pInHwInfo;
-    testHwInfo.gtSystemInfo.EUCount = 256;
-
-    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
-    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
-
-    uint64_t expectedBandwidth = 800ULL * 1000 * 1000 * 192 / 8;
-    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenBoundaryEuCountWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenCorrectBusWidthIsUsed) {
-    auto testHwInfo = pInHwInfo;
-
-    // Test exactly 448 EUs (boundary) - should use 256-bit
-    testHwInfo.gtSystemInfo.EUCount = 448;
-    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
-    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
-    uint64_t expectedBandwidth = 800ULL * 1000 * 1000 * 256 / 8;
-    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
-
-    // Test 447 EUs (just below) - should use 192-bit
-    testHwInfo.gtSystemInfo.EUCount = 447;
-    expectedBandwidth = 800ULL * 1000 * 1000 * 192 / 8;
-    EXPECT_EQ(expectedBandwidth, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
+    pInHwInfo.platform.usDeviceID = 0xE223;
+    EXPECT_EQ(608000000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
 }
 
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnTrue) {

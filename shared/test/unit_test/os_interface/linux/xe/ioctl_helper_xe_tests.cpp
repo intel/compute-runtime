@@ -921,7 +921,7 @@ TEST_F(IoctlHelperXeTest, whenGettingFileNamesForFrequencyThenProperStringIsRetu
     ioctlHelper->initialize();
     EXPECT_STREQ("/device/tile0/gt0/freq0/max_freq", ioctlHelper->getFileForMaxGpuFrequency().c_str());
     EXPECT_STREQ("/device/tile0/gt0/freq0/max_freq", ioctlHelper->getFileForMaxGpuFrequencyOfSubDevice(0).c_str());
-    EXPECT_STREQ("/device/tile1/gt2/freq0/rp0_freq", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
+    EXPECT_STREQ("/device/tile1/memory/freq0/max_freq", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
 }
 
 TEST_F(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
