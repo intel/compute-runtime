@@ -380,6 +380,13 @@ TEST_F(ZesPerformanceFixtureXe, GivenPerfFactorDomainsWhenGettingPerfHandlesThen
     delete pLinuxPerformanceImp;
 }
 
+using ZesProductHelperPerformanceTest = SysmanDeviceFixture;
+
+TEST_F(ZesProductHelperPerformanceTest, GivenPerformanceModuleWhenQueryingPerfFactorSupportedThenPerfFactorIsSupported) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(true, pSysmanProductHelper->isPerfFactorSupported());
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

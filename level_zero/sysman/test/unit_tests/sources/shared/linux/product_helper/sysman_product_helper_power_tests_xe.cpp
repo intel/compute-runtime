@@ -247,7 +247,6 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
                     ret = sizeof(uint32_t);
                 }
                 break;
-            case 1016:
             case 1024:
                 if (readFailCount == 2) {
                     errno = ENOENT;
@@ -306,7 +305,6 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
             case 4:
                 memcpy(buf, &mockXtalFrequency, count);
                 break;
-            case 1016:
             case 1024:
                 memcpy(buf, &mockTimestamp, count);
                 break;
@@ -389,7 +387,6 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
             case 4:
                 memcpy(buf, &mockXtalFrequency, count);
                 break;
-            case 1016:
             case 1024:
                 memcpy(buf, &mockTimestamp, xtalReturnCount);
                 break;

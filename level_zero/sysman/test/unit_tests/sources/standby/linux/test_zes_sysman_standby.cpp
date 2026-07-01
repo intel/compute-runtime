@@ -467,6 +467,13 @@ TEST_F(ZesStandbyMultiDeviceFixture, GivenOnSubdeviceNotSetWhenValidatingOsStand
     EXPECT_EQ(properties.onSubdevice, onSubdevice);
 }
 
+using SysmanProductHelperStandbyTest = SysmanDeviceFixture;
+
+TEST_F(SysmanProductHelperStandbyTest, GivenValidProductHelperHandleWhenQueryingStandbySupportThenFalseIsReturned) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(true, pSysmanProductHelper->isStandbySupported(pLinuxSysmanImp->getSysmanKmdInterface()));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

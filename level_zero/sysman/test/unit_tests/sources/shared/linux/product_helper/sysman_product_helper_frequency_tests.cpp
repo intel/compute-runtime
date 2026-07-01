@@ -246,7 +246,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL1WhenCallin
     EXPECT_EQ(throttleReason, setAllThrottleReasonsExceptPL1);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetStateWithLegacyPathThenVerifyzesFrequencyGetStateTestCallSucceeds, IsXeCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetStateWithLegacyPathThenVerifyCallSucceeds, IsXeCore) {
 
     pSysfsAccess->isLegacy = true;
     pSysfsAccess->directoryExistsResult = false;
@@ -349,7 +349,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFr
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds, IsPVC) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCallingZesFrequencyGetAvailableClocksThenCallSucceeds, IsPVC) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         EXPECT_NE(handle, nullptr);
@@ -378,7 +378,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhe
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndCorrectCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds, IsPVC) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndCorrectCountWhenCallingZesFrequencyGetAvailableClocksThenCallSucceeds, IsPVC) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         uint32_t count = 0;
@@ -430,7 +430,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFreq
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFrequencyImp->frequencySetRange(&limits));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds, IsXeCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingZesFrequencySetRangeWithNewMaxLessThanOldMinThenVerifyCallSucceeds, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMin = 900.0;
@@ -467,7 +467,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenNegativeUnityRangeSetWhenGetRangeIs
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds, IsXeCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingZesFrequencySetRangeWithNewMinGreaterThanOldMaxThenVerifyCallSucceeds, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMax = 600.0;
@@ -500,7 +500,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFr
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFrequencyImp->frequencySetRange(&limits));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeWithLegacyPathThenVerifyzesFrequencySetRangeTestCallSucceeds, IsXeCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingZesFrequencySetRangeWithLegacyPathThenVerifyCallSucceeds, IsXeCore) {
     pSysfsAccess->isLegacy = true;
     pSysfsAccess->directoryExistsResult = false;
     for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
@@ -523,7 +523,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesF
     }
 }
 
-HWTEST2_F(FreqMultiDeviceFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetPropertiesThenSuccessIsReturned, IsNotCRI) {
+HWTEST2_F(FreqMultiDeviceFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetPropertiesThenSuccessIsReturned, IsNotCRI) {
     uint32_t count = 0U;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
     EXPECT_EQ(count, multiHandleComponentCount);

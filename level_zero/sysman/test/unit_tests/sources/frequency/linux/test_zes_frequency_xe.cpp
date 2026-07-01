@@ -37,7 +37,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenActualComponentCountTwoWhenTryingToG
     EXPECT_EQ(count, 1u);
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyGetPropertiesThenSuccessIsReturned) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyGetPropertiesThenSuccessIsReturned) {
     MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
     pMockSysmanProductHelper->isFrequencySetRangeSupportedResult = true;
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
@@ -85,7 +85,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidateFrequencyGetRangeWhengetMaxA
     EXPECT_EQ(-1, limit.min);
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyGetRangeThenVerifyzesFrequencyGetRangeTestCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyGetRangeThenVerifyzesFrequencyGetRangeTestCallSucceeds) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_freq_range_t limits;
@@ -109,7 +109,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAnd
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenInvalidFrequencyLimitsWhenCallingFrequencySetRangeThenVerifyFrequencySetRangeTest4ReturnsError) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenInvalidFrequencyLimitsWhenCallingFrequencySetRangeThenVerifyFrequencySetRangeTestReturnsError) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
@@ -122,7 +122,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenInvalidFrequencyLimitsWhenCallingFre
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pFrequencyImp->frequencySetRange(&limits));
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenFrequencySetRangeNotSupportedWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeFails) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenFrequencySetRangeNotSupportedWhenCallingZesFrequencySetRangeThenVerifyzesFrequencySetRangeFails) {
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
@@ -141,7 +141,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenFrequencySetRangeNotSupportedWhenCal
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyGetStateThenVerifyzesFrequencyGetStateTestCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyGetStateThenVerifyzesFrequencyGetStateTestCallSucceeds) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double testRequestValue = 450.0;
@@ -259,7 +259,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenOnSubdeviceSetWhenValidatingAnyFrequ
     EXPECT_EQ(1, properties.canControl);
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeAndIfgetMaxFailsThenVerifyzesFrequencySetRangeTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencySetRangeAndIfgetMaxFailsThenVerifyzesFrequencySetRangeTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMax = 600.0;
@@ -276,7 +276,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeAndIfsetMaxFailsThenVerifyzesFrequencySetRangeTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencySetRangeAndIfsetMaxFailsThenVerifyzesFrequencySetRangeTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMax = 600.0;
@@ -293,7 +293,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetFrequencyTargetThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcGetFrequencyTargetThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         double freqTarget = 0.0;
@@ -301,7 +301,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcSetFrequencyTargetThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         double freqTarget = 0.0;
@@ -309,7 +309,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetVoltageTargetThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcGetVoltageTargetThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         double voltTarget = 0.0, voltOffset = 0.0;
@@ -317,7 +317,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcSetVoltageTargetThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         double voltTarget = 0.0, voltOffset = 0.0;
@@ -325,7 +325,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetModeThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcSetModeThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_oc_mode_t mode = ZES_OC_MODE_OFF;
@@ -333,7 +333,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetModeThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcGetModeThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_oc_mode_t mode = ZES_OC_MODE_OFF;
@@ -341,7 +341,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetCapabilitiesThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcGetCapabilitiesThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_oc_capabilities_t caps = {};
@@ -349,7 +349,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetIccMaxThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcGetIccMaxThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         double iccMax = 0.0;
@@ -357,7 +357,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetIccMaxThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcSetIccMaxThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         double iccMax = 0.0;
@@ -365,7 +365,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetTjMaxThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcGetTjMaxThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         double tjMax = 0.0;
@@ -373,12 +373,19 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetTjMaxThenVerifyTestCallFail) {
+TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingZesFrequencyOcSetTjMaxThenVerifyTestCallFail) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         double tjMax = 0.0;
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcSetTjMax(handle, tjMax));
     }
+}
+
+using SysmanProductHelperFrequencyTest = SysmanDeviceFixture;
+
+TEST_F(SysmanProductHelperFrequencyTest, GivenValidProductHelperHandleWhenQueryingIsFrequencySetRangeSupportedThenTrueIsReturned) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(true, pSysmanProductHelper->isFrequencySetRangeSupported());
 }
 
 } // namespace ult

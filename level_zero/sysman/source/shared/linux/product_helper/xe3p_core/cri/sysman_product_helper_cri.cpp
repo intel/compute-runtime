@@ -53,7 +53,7 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"VRAM_FREQUENCY", 56},
       {"VCCDDRQX_VID", 60},
       {"VCCDDRQ_VID", 60},
-      {"XTAL_COUNT", 1016},
+      {"XTAL_COUNT", 1024},
       {"XTAL_CLK_FREQUENCY", 4}}},
     {"0x5e2fa230", // CRI OOBMSM Rev 0
      {{"SOC_TOPDIE_TEMPERATURE", 128},
@@ -262,21 +262,6 @@ template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getEccConfigurable(LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t *pConfigurable) {
     *pConfigurable = false;
     return ZE_RESULT_SUCCESS;
-}
-
-template <>
-bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
-    return false;
-}
-
-template <>
-bool SysmanProductHelperHw<gfxProduct>::isPerfFactorSupported() {
-    return false;
-}
-
-template <>
-bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) {
-    return false;
 }
 
 template <>

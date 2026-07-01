@@ -53,11 +53,6 @@ HWTEST2_F(SysmanProductHelperPerformanceTest, GivenMediaPerformanceFactorWhenGet
     EXPECT_EQ(1, multiplier);
 }
 
-HWTEST2_F(SysmanProductHelperPerformanceTest, GivenPerformanceModuleWhenQueryingPerfFactorSupportedThenPerfFactorIsSupported, IsXeCore) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    EXPECT_EQ(true, pSysmanProductHelper->isPerfFactorSupported());
-}
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0
