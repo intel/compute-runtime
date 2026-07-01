@@ -26,6 +26,20 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
 
 CREATEHWQUEUE_PVTDATA initHwQueuePrivateData(OsContextWin &osContext) {
     CREATEHWQUEUE_PVTDATA privateData = {};
+    QUEUE_PRIORITY priority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_NORMAL;
+
+    switch (osContext.getEngineUsage()) {
+    case EngineUsage::lowPriority:
+        priority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_LOW;
+        break;
+    case EngineUsage::highPriority:
+        priority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_HIGH;
+        break;
+    default:
+        break;
+    }
+    privateData.QueuePriority = priority;
+
     return privateData;
 }
 
