@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1593,8 +1593,12 @@ std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
     }
 }
 
-inline std::string getDirectoryWithFrequencyFiles(int tileId, int gtId) {
+inline std::string getDirectoryWithGTFrequencyFiles(int tileId, int gtId) {
     return "/device/tile" + std::to_string(tileId) + "/gt" + std::to_string(gtId) + "/freq0";
+}
+
+inline std::string getDirectoryWithMemFrequencyFiles(int tileId) {
+    return "/device/tile" + std::to_string(tileId) + "/memory/freq0";
 }
 
 std::string IoctlHelperXe::getFileForMaxGpuFrequency() const {
@@ -1602,11 +1606,11 @@ std::string IoctlHelperXe::getFileForMaxGpuFrequency() const {
 }
 
 std::string IoctlHelperXe::getFileForMaxGpuFrequencyOfSubDevice(int tileId) const {
-    return getDirectoryWithFrequencyFiles(tileId, tileIdToGtId[tileId]) + "/max_freq";
+    return getDirectoryWithGTFrequencyFiles(tileId, tileIdToGtId[tileId]) + "/max_freq";
 }
 
 std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const {
-    return getDirectoryWithFrequencyFiles(tileId, tileIdToGtId[tileId]) + "/rp0_freq";
+    return getDirectoryWithMemFrequencyFiles(tileId) + "/max_freq";
 }
 
 void IoctlHelperXe::configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
