@@ -25,6 +25,7 @@ namespace NEO {
 
 template <typename Family>
 void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const ReleaseHelper &releaseHelper) {
+    surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }
 
 template <typename Family>

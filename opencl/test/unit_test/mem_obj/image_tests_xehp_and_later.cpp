@@ -232,12 +232,10 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetAuxParamsForMultisamp
 
     imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
 
-    const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
-    RENDER_SURFACE_STATE expectedSS = {};
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&expectedSS, releaseHelper);
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     EXPECT_NE(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
-    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedSS.getAuxiliarySurfaceMode());
+    EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS, surfaceState.getAuxiliarySurfaceMode());
 }
 
 HWTEST2_F(XeHPAndLaterImageTests, givenImageWithUnifiedMcsWhenSetAuxParamsForMultisampleThenAuxModeIsExpected, IsAtLeastXe2HpgCore) {
@@ -262,11 +260,9 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithUnifiedMcsWhenSetAuxParamsForMul
 
     imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
 
-    const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
-    RENDER_SURFACE_STATE expectedSS = {};
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&expectedSS, releaseHelper);
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     EXPECT_NE(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
-    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedSS.getAuxiliarySurfaceMode());
+    EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS, surfaceState.getAuxiliarySurfaceMode());
 }
 
 HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWhenSetAuxParamsForMultisampleThenAuxSurfBaseAddredssIsZero, IsAtLeastXe2HpgCore) {

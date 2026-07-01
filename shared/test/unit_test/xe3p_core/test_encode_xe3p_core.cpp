@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/stream_properties.h"
@@ -27,6 +28,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
@@ -1376,4 +1378,12 @@ XE3P_CORETEST_F(CommandContainerXe3pTest, GivenComputeWalker2AndArgsWhencallingS
 
     EXPECT_TRUE(walkerCmd->getPostSync().getInterruptSignalEnable());
     EXPECT_TRUE(walkerCmd->getPostSyncOpn1().getInterruptSignalEnable());
+}
+
+XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenSurfaceStateWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }

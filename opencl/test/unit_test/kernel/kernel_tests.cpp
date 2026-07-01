@@ -630,6 +630,31 @@ HWTEST_F(BindlessKernelTests, givenBindlessKernelAndSamplersWhenPatchBindlessSam
     EXPECT_EQ(bindlessInlineSamplerStateAddress, crossThreadData[2]);
 }
 
+HWTEST_F(BindlessKernelTests, givenBindlessKernelAndSamplerWithZeroSizeWhenPatchBindlessSamplerStatesInCrossThreadDataThenAddressIsWritten) {
+    auto argDescriptorSampler = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    argDescriptorSampler.as<NEO::ArgDescSampler>() = NEO::ArgDescSampler();
+    argDescriptorSampler.as<NEO::ArgDescSampler>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorSampler.as<NEO::ArgDescSampler>().bindless = 0x0;
+    argDescriptorSampler.as<NEO::ArgDescSampler>().size = 0;
+    argDescriptorSampler.as<NEO::ArgDescSampler>().index = 0;
+
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorSampler);
+
+    MockKernel mockKernel(pProgram, pProgram->mockKernelInfo, *pClDevice);
+    mockKernel.setCrossThreadData(nullptr, sizeof(uint64_t));
+
+    const uint64_t baseAddress = 0x1000ULL;
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
+    const uint64_t expectedAddress = baseAddress + 0 * samplerStateSize;
+
+    mockKernel.patchBindlessSamplerStatesInCrossThreadData(baseAddress);
+
+    uint64_t patchedValue = 0;
+    memcpy(&patchedValue, mockKernel.crossThreadData, sizeof(uint64_t));
+    EXPECT_EQ(expectedAddress, patchedValue);
+}
+
 TEST_F(BindlessKernelTests, givenNoEntryInBindlessOffsetsMapWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
     pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;

@@ -2097,8 +2097,8 @@ void Kernel::patchBindlessSamplerStatesInCrossThreadData(uint64_t bindlessSample
         auto &sampler = arg.template as<NEO::ArgDescSampler>();
         auto patchLocation = ptrOffset(crossThreadDataPtr, sampler.bindless);
         auto samplerStateAddress = static_cast<uint64_t>(bindlessSamplerStatesBaseAddress + sampler.index * samplerStateSize);
-        auto patchValue = samplerStateAddress;
-        patchWithRequiredSize(patchLocation, sampler.size, patchValue);
+        auto patchSize = sampler.size != 0 ? sampler.size : static_cast<uint32_t>(sizeof(uint64_t));
+        patchWithRequiredSize(patchLocation, patchSize, samplerStateAddress);
     }
 
     auto inlineSamplers = kernelInfo.kernelDescriptor.inlineSamplers | std::views::filter([](const auto &sampler) {
@@ -2108,8 +2108,8 @@ void Kernel::patchBindlessSamplerStatesInCrossThreadData(uint64_t bindlessSample
     for (auto &sampler : inlineSamplers) {
         auto patchLocation = ptrOffset(crossThreadDataPtr, sampler.bindless);
         auto samplerStateAddress = static_cast<uint64_t>(bindlessSamplerStatesBaseAddress + sampler.samplerIndex * samplerStateSize);
-        auto patchValue = samplerStateAddress;
-        patchWithRequiredSize(patchLocation, sampler.size, patchValue);
+        auto patchSize = sampler.size != 0 ? sampler.size : static_cast<uint32_t>(sizeof(uint64_t));
+        patchWithRequiredSize(patchLocation, patchSize, samplerStateAddress);
     }
 }
 
