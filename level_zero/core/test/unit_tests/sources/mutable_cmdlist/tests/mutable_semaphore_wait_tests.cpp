@@ -68,7 +68,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
                                                              semaphoreAddress + offset,
                                                              data,
                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                             false, true, false, false, false, useSemaphore64bCmd);
+                                                             false, true, false, false, true, useSemaphore64bCmd);
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
@@ -98,7 +98,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
                                                              semaphoreAddress + offset,
                                                              data,
                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                             false, true, false, false, false, useSemaphore64bCmd);
+                                                             false, true, false, false, true, useSemaphore64bCmd);
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
@@ -129,7 +129,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
                                                              semaphoreAddress + offset,
                                                              data,
                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                             false, true, qwordData, indirectMode, false, useSemaphore64bCmd);
+                                                             false, true, qwordData, indirectMode, true, useSemaphore64bCmd);
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
