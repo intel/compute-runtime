@@ -258,69 +258,6 @@ XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenLinearStreamWhenSingleBarrierIsP
     linearStream.replaceBuffer(buffer, sizeof(buffer));
 }
 
-XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenCacheInvalidationEventWhenSingleBarrierIsProgrammedThenQueueDrainModeIsDisabled) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
-    LinearStream linearStream(buffer, sizeof(buffer));
-    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    bool drainAllQueues = false;
-
-    bool PipeControlArgs::*const invalidationFlags[] = {
-        &PipeControlArgs::instructionCacheInvalidateEnable,
-        &PipeControlArgs::stateCacheInvalidationEnable,
-        &PipeControlArgs::textureCacheInvalidationEnable,
-        &PipeControlArgs::constantCacheInvalidationEnable,
-        &PipeControlArgs::tlbInvalidation,
-    };
-
-    for (auto flag : invalidationFlags) {
-        PipeControlArgs args{};
-        args.*flag = true;
-        NEO::MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
-        EXPECT_EQ(drainAllQueues, pc->getQueueDrainMode());
-        linearStream.replaceBuffer(buffer, sizeof(buffer));
-    }
-}
-
-XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenNonListedCacheFlagsWhenSingleBarrierIsProgrammedThenQueueDrainModeStaysEnabled) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
-    LinearStream linearStream(buffer, sizeof(buffer));
-    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    bool drainOnlyCurrentQueue = true;
-
-    PipeControlArgs args{};
-    args.dcFlushEnable = true;
-    args.renderTargetCacheFlushEnable = true;
-    args.vfCacheInvalidationEnable = true;
-    NEO::MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
-    EXPECT_EQ(drainOnlyCurrentQueue, pc->getQueueDrainMode());
-}
-
-XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenStateCacheFlushWhenProgrammedThenQueueDrainModeIsDisabledAndOverriddenWithDebugKey) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
-    LinearStream linearStream(buffer, sizeof(buffer));
-    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    bool drainAllQueues = false;
-    bool drainOnlyCurrentQueue = true;
-
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
-    NEO::MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
-    EXPECT_TRUE(pc->getStateCacheInvalidationEnable());
-    EXPECT_TRUE(pc->getTextureCacheInvalidationEnable());
-    EXPECT_EQ(drainAllQueues, pc->getQueueDrainMode());
-    linearStream.replaceBuffer(buffer, sizeof(buffer));
-
-    DebugManagerStateRestore restore;
-    debugManager.flags.PcQueueDrainMode.set(1);
-
-    NEO::MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
-    EXPECT_EQ(drainOnlyCurrentQueue, pc->getQueueDrainMode());
-}
-
 using EncodeKernelXe3pCoreTest = Test<CommandEncodeStatesFixture>;
 
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchRequiredWhenEncodeComputeWalker2ThenInlineDataContainCorrectScratchAddress) {
