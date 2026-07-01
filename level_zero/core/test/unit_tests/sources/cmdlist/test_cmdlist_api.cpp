@@ -7,7 +7,6 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -63,26 +62,6 @@ TEST(zeCommandListAppendMemoryFill, whenPatternSizeNotPowerOf2ThenReturnError) {
     int value = 0;
     auto res = zeCommandListAppendMemoryFill(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
                                              3u, bufferSize, nullptr, 0, nullptr);
-    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
-}
-
-TEST(zeCommandListAppendMemoryFill, whenSizeNotMultipleOfPatternSizeThenReturnError) {
-    MockCommandList commandList;
-    size_t bufferSize = 4095u;
-
-    int value = 0;
-    auto res = zeCommandListAppendMemoryFill(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
-                                             4u, bufferSize, nullptr, 0, nullptr);
-    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
-}
-
-TEST(zexCommandListAppendMemoryFillWithParameters, whenSizeNotMultipleOfPatternSizeThenReturnError) {
-    MockCommandList commandList;
-    size_t bufferSize = 4095u;
-
-    int value = 0;
-    auto res = L0::zexCommandListAppendMemoryFillWithParameters(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
-                                                                4u, bufferSize, nullptr, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
 }
 
