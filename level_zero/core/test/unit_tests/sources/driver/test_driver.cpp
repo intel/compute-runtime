@@ -29,6 +29,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/core/ze_graph_api_entrypoints.h"
 #include "level_zero/api/internal/l0_internal.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/device/device.h"

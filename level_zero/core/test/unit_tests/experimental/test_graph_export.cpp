@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 
+#include "level_zero/api/core/ze_graph_api_entrypoints.h"
 #include "level_zero/api/internal/l0_graph.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"

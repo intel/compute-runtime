@@ -51,6 +51,8 @@ DriverDispatch::DriverDispatch() {
     this->core.VirtualMem = &this->coreVirtualMem;
     this->core.FabricVertexExp = &this->coreFabricVertexExp;
     this->core.FabricEdgeExp = &this->coreFabricEdgeExp;
+    this->core.Graph = &this->coreGraph;
+    this->core.ExecutableGraph = &this->coreExecutableGraph;
 
     this->tools.isValidFlag = true;
     this->tools.version = ZE_API_VERSION_1_13;
@@ -218,6 +220,12 @@ DriverDispatch::DriverDispatch() {
     this->coreCommandList.pfnAppendMemoryCopyWithParameters = L0::zeCommandListAppendMemoryCopyWithParameters;
     this->coreCommandList.pfnAppendMemoryFillWithParameters = L0::zeCommandListAppendMemoryFillWithParameters;
     this->coreCommandList.pfnImmediateAppendCommandListsWithParameters = L0::zeCommandListImmediateAppendCommandListsWithParameters;
+    this->coreCommandList.pfnBeginGraphCaptureExt = L0::zeCommandListBeginGraphCaptureExt;
+    this->coreCommandList.pfnBeginCaptureIntoGraphExt = L0::zeCommandListBeginCaptureIntoGraphExt;
+    this->coreCommandList.pfnIsGraphCaptureEnabledExt = L0::zeCommandListIsGraphCaptureEnabledExt;
+    this->coreCommandList.pfnEndGraphCaptureExt = L0::zeCommandListEndGraphCaptureExt;
+    this->coreCommandList.pfnGetGraphExt = L0::zeCommandListGetGraphExt;
+    this->coreCommandList.pfnAppendGraphExt = L0::zeCommandListAppendGraphExt;
     this->coreCommandListExp.pfnCreateCloneExp = L0::zeCommandListCreateCloneExp;
     this->coreCommandListExp.pfnImmediateAppendCommandListsExp = L0::zeCommandListImmediateAppendCommandListsExp;
     this->coreCommandListExp.pfnGetNextCommandIdExp = L0::zeCommandListGetNextCommandIdExp;
@@ -327,6 +335,15 @@ DriverDispatch::DriverDispatch() {
     this->coreFabricEdgeExp.pfnGetExp = L0::zeFabricEdgeGetExp;
     this->coreFabricEdgeExp.pfnGetVerticesExp = L0::zeFabricEdgeGetVerticesExp;
     this->coreFabricEdgeExp.pfnGetPropertiesExp = L0::zeFabricEdgeGetPropertiesExp;
+    this->coreGraph.pfnCreateExt = L0::zeGraphCreateExt;
+    this->coreGraph.pfnGetPrimaryCommandListExt = L0::zeGraphGetPrimaryCommandListExt;
+    this->coreGraph.pfnSetDestructionCallbackExt = L0::zeGraphSetDestructionCallbackExt;
+    this->coreGraph.pfnInstantiateExt = L0::zeGraphInstantiateExt;
+    this->coreGraph.pfnIsEmptyExt = L0::zeGraphIsEmptyExt;
+    this->coreGraph.pfnDumpContentsExt = L0::zeGraphDumpContentsExt;
+    this->coreGraph.pfnDestroyExt = L0::zeGraphDestroyExt;
+    this->coreExecutableGraph.pfnGetSourceGraphExt = L0::zeExecutableGraphGetSourceGraphExt;
+    this->coreExecutableGraph.pfnDestroyExt = L0::zeExecutableGraphDestroyExt;
 
     this->toolsMetricProgrammableExp.pfnGetExp = L0::zetMetricProgrammableGetExp;
     this->toolsMetricProgrammableExp.pfnGetPropertiesExp = L0::zetMetricProgrammableGetPropertiesExp;

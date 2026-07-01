@@ -25,13 +25,13 @@ ze_result_t ZE_APICALL zeExecutableGraphDestroyExp(ze_executable_graph_handle_t 
 ze_result_t ZE_APICALL zeCommandListIsGraphCaptureEnabledExp(ze_command_list_handle_t hCommandList);
 ze_result_t ZE_APICALL zeGraphIsEmptyExp(ze_graph_handle_t hGraph);
 ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const char *filePath, void *pNext);
-ze_result_t ZE_APICALL zeGraphVisitExt(ze_graph_handle_t hGraph, const ze_visit_ext_desc_t *desc);
 ze_result_t ZE_APICALL zeCommandListGetGraphExp(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph);
 ze_result_t ZE_APICALL zeGraphSetDestructionCallbackExp(ze_graph_handle_t hGraph, zex_mem_graph_free_callback_fn_t pfnCallback, void *pUserData, void *pNext);
 ze_result_t ZE_APICALL zeExecutableGraphGetSourceGraphExt(ze_executable_graph_handle_t hGraph, ze_graph_handle_t *phSourceGraph);
 ze_result_t ZE_APICALL zeGraphGetPrimaryCommandListExt(ze_graph_handle_t hGraph, ze_command_list_handle_t *phCommandList);
+ze_result_t ZE_APICALL zeGraphVisitExt(ze_graph_handle_t hGraph, const ze_visit_ext_desc_t *desc);
 ze_result_t ZE_APICALL zeGraphPauseCaptureExt(ze_graph_handle_t hGraph);
 ze_result_t ZE_APICALL zeGraphResumeCaptureExt(ze_graph_handle_t hGraph);
-ze_result_t ZE_APICALL zeGraphGetIdExt(ze_graph_handle_t hGraph, uint64_t *pGraphId);
+ze_result_t ZE_APICALL zeGraphGetIdExt(ze_graph_handle_t hGraph, uint64_t *graphId);
 
 } // namespace L0

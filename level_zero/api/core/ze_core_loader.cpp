@@ -279,6 +279,12 @@ zeGetCommandListProcAddrTable(
     fillDdiEntry(pDdiTable->pfnAppendMemoryCopyWithParameters, L0::globalDriverDispatch.coreCommandList.pfnAppendMemoryCopyWithParameters, version, ZE_API_VERSION_1_16);
     fillDdiEntry(pDdiTable->pfnAppendMemoryFillWithParameters, L0::globalDriverDispatch.coreCommandList.pfnAppendMemoryFillWithParameters, version, ZE_API_VERSION_1_16);
     fillDdiEntry(pDdiTable->pfnImmediateAppendCommandListsWithParameters, L0::globalDriverDispatch.coreCommandList.pfnImmediateAppendCommandListsWithParameters, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnBeginGraphCaptureExt, L0::globalDriverDispatch.coreCommandList.pfnBeginGraphCaptureExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnBeginCaptureIntoGraphExt, L0::globalDriverDispatch.coreCommandList.pfnBeginCaptureIntoGraphExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnIsGraphCaptureEnabledExt, L0::globalDriverDispatch.coreCommandList.pfnIsGraphCaptureEnabledExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnEndGraphCaptureExt, L0::globalDriverDispatch.coreCommandList.pfnEndGraphCaptureExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnGetGraphExt, L0::globalDriverDispatch.coreCommandList.pfnGetGraphExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnAppendGraphExt, L0::globalDriverDispatch.coreCommandList.pfnAppendGraphExt, version, ZE_API_VERSION_1_17);
     return result;
 }
 
@@ -302,6 +308,45 @@ zeGetCommandListExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnUpdateMutableCommandWaitEventsExp, L0::globalDriverDispatch.coreCommandListExp.pfnUpdateMutableCommandWaitEventsExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetNextCommandIdWithKernelsExp, L0::globalDriverDispatch.coreCommandListExp.pfnGetNextCommandIdWithKernelsExp, version, ZE_API_VERSION_1_10);
     fillDdiEntry(pDdiTable->pfnUpdateMutableCommandKernelsExp, L0::globalDriverDispatch.coreCommandListExp.pfnUpdateMutableCommandKernelsExp, version, ZE_API_VERSION_1_10);
+    return result;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeGetGraphProcAddrTable(
+    ze_api_version_t version,
+    ze_graph_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    fillDdiEntry(pDdiTable->pfnCreateExt, L0::globalDriverDispatch.coreGraph.pfnCreateExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnGetPrimaryCommandListExt, L0::globalDriverDispatch.coreGraph.pfnGetPrimaryCommandListExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnSetDestructionCallbackExt, L0::globalDriverDispatch.coreGraph.pfnSetDestructionCallbackExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnInstantiateExt, L0::globalDriverDispatch.coreGraph.pfnInstantiateExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnIsEmptyExt, L0::globalDriverDispatch.coreGraph.pfnIsEmptyExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnDumpContentsExt, L0::globalDriverDispatch.coreGraph.pfnDumpContentsExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnDestroyExt, L0::globalDriverDispatch.coreGraph.pfnDestroyExt, version, ZE_API_VERSION_1_17);
+    return result;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeGetExecutableGraphProcAddrTable(
+    ze_api_version_t version,
+    ze_executable_graph_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    fillDdiEntry(pDdiTable->pfnGetSourceGraphExt, L0::globalDriverDispatch.coreExecutableGraph.pfnGetSourceGraphExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnDestroyExt, L0::globalDriverDispatch.coreExecutableGraph.pfnDestroyExt, version, ZE_API_VERSION_1_17);
     return result;
 }
 

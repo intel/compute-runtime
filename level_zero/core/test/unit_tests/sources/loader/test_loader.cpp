@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,6 +101,51 @@ TEST(zeGetCommandListProcAddrTableTest,
 
     ze_result_t result = zeGetCommandListProcAddrTable(version, &pDdiTable);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST(zeGetCommandListProcAddrTableTest,
+     whenCallingZeGetCommandListProcAddrTableForGraphApisThenGraphFunctionsArePopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_17;
+    ze_command_list_dditable_t pDdiTable = {};
+
+    ze_result_t result = zeGetCommandListProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnBeginGraphCaptureExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnBeginCaptureIntoGraphExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnIsGraphCaptureEnabledExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnEndGraphCaptureExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetGraphExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnAppendGraphExt);
+}
+
+TEST(zeGetGraphProcAddrTableTest,
+     whenCallingZeGetGraphProcAddrTableForSupportedVersionThenGraphFunctionsArePopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_17;
+    ze_graph_dditable_t pDdiTable = {};
+
+    ze_result_t result = zeGetGraphProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnCreateExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetPrimaryCommandListExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnSetDestructionCallbackExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnInstantiateExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnIsEmptyExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnDumpContentsExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnDestroyExt);
+}
+
+TEST(zeGetExecutableGraphProcAddrTableTest,
+     whenCallingZeGetExecutableGraphProcAddrTableForSupportedVersionThenGraphFunctionsArePopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_17;
+    ze_executable_graph_dditable_t pDdiTable = {};
+
+    ze_result_t result = zeGetExecutableGraphProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetSourceGraphExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnDestroyExt);
 }
 
 TEST(zeGetFenceProcAddrTableTest,
