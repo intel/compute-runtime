@@ -232,7 +232,7 @@ ze_result_t ZE_APICALL zeGraphDumpContentsExt(ze_graph_handle_t hGraph, const ch
     const ze_base_desc_t *desc = reinterpret_cast<const ze_base_desc_t *>(pNext);
 
     if (desc != nullptr) {
-        if (desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC) {
+        if ((desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC) || (desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC)) {
             const auto *dumpDesc = reinterpret_cast<const ze_record_replay_graph_exp_dump_desc_t *>(desc);
             if (dumpDesc->mode == ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE) {
                 exportStyle = L0::GraphExportStyle::simple;
