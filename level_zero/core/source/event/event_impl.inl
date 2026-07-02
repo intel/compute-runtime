@@ -561,7 +561,7 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
         unsetInOrderExecInfo();
     }
     for (auto &csr : csrs) {
-        csr->getInternalAllocationStorage()->cleanAllocationList(*csr->getTagAddress(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+        csr->getInternalAllocationStorage()->cleanAllocationList(csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
 
     inOrderExecHelper.releaseNotUsedTempTimestampNodes();
