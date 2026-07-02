@@ -12,6 +12,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -1151,4 +1152,26 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenWddmWhenGetEngi
 
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::powerHint));
     EXPECT_EQ(1u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::powerHint));
+}
+
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenRtStacksPerDssBelowLimitsWhenAdjustingRTDispatchGlobalsThenValuesAreNotClamped) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    constexpr uint32_t rtStacksPerDss = 1024u;
+    RTDispatchGlobals dispatchGlobals = {};
+    gfxCoreHelper.adjustRTDispatchGlobals(dispatchGlobals, rtStacksPerDss);
+
+    EXPECT_EQ(rtStacksPerDss, dispatchGlobals.numDSSRTStacks);
+    EXPECT_EQ(rtStacksPerDss, dispatchGlobals.syncNumDSSRTStacks);
+}
+
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenRtStacksPerDssAboveLimitsWhenAdjustingRTDispatchGlobalsThenValuesAreClamped) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    constexpr uint32_t rtStacksPerDss = 8192u;
+    RTDispatchGlobals dispatchGlobals = {};
+    gfxCoreHelper.adjustRTDispatchGlobals(dispatchGlobals, rtStacksPerDss);
+
+    EXPECT_EQ(2048u, dispatchGlobals.numDSSRTStacks);
+    EXPECT_EQ(4096u, dispatchGlobals.syncNumDSSRTStacks);
 }

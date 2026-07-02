@@ -986,6 +986,10 @@ template <typename Family>
 void GfxCoreHelperHw<Family>::initCommandLevelMocsDefaults(GmmHelper &gmmHelper) const {
 }
 
+template <typename Family>
+void GfxCoreHelperHw<Family>::adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, uint32_t rtStacksPerDss) const {
+}
+
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setPipeControlRequiredFields(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
 }

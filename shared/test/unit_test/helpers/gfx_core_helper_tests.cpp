@@ -13,6 +13,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -79,6 +80,18 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForTimestampPacketAlignm
 HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingISAPaddingThenCorrectValueIsReturned, IsAtMostXeHpgCore) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(gfxCoreHelper.getPaddingForISAAllocation(), 512u);
+}
+
+HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAdjustingRTDispatchGlobalsThenValuesAreNotModified, IsAtMostXe3Core) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    constexpr uint32_t rtStacksPerDss = 8192u;
+    RTDispatchGlobals dispatchGlobals = {};
+    dispatchGlobals.numDSSRTStacks = rtStacksPerDss;
+    gfxCoreHelper.adjustRTDispatchGlobals(dispatchGlobals, rtStacksPerDss);
+
+    EXPECT_EQ(rtStacksPerDss, dispatchGlobals.numDSSRTStacks);
+    EXPECT_EQ(0u, dispatchGlobals.syncNumDSSRTStacks);
 }
 
 HWTEST_F(GfxCoreHelperTest, givenForceExtendedKernelIsaSizeSetWhenGettingISAPaddingThenCorrectValueIsReturned) {

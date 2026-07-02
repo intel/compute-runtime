@@ -134,10 +134,6 @@ uint32_t ReleaseHelperHw<releaseType>::getStackSizePerRay() const {
 }
 
 template <ReleaseType releaseType>
-void ReleaseHelperHw<releaseType>::adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, uint32_t rtStacksPerDss) const {
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isLocalOnlyAllowed() const {
     return true;
 }

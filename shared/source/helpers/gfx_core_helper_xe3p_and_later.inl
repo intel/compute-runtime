@@ -14,6 +14,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -432,6 +433,16 @@ uint32_t GfxCoreHelperHw<Family>::getDefaultSshSize(const ProductHelper &product
         return 2 * defaultSshSize;
     }
     return defaultSshSize;
+}
+
+template <>
+void GfxCoreHelperHw<Family>::adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, uint32_t rtStacksPerDss) const {
+
+    constexpr uint32_t maxNumDSSRTStacks = 2048u;
+    constexpr uint32_t maxSyncNumDSSRTStacks = 4096u;
+
+    rtDispatchGlobals.numDSSRTStacks = std::min(rtStacksPerDss, maxNumDSSRTStacks);
+    rtDispatchGlobals.syncNumDSSRTStacks = std::min(rtStacksPerDss, maxSyncNumDSSRTStacks);
 }
 
 } // namespace NEO

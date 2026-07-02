@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <memory>
 
+struct RTDispatchGlobals;
 enum class InternalMemoryType : uint32_t;
 
 namespace NEO {
@@ -223,6 +224,7 @@ class GfxCoreHelper {
     virtual bool isWalkerPostSyncSkipEnabled(bool isBarrierUsedForImplicitDependency) const = 0;
     virtual bool isPerContextDebugSipRequired() const = 0;
     virtual void initCommandLevelMocsDefaults(GmmHelper &gmmHelper) const = 0;
+    virtual void adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, uint32_t rtStacksPerDss) const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -492,6 +494,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isPerContextDebugSipRequired() const override;
 
     void initCommandLevelMocsDefaults(GmmHelper &gmmHelper) const override;
+
+    void adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, uint32_t rtStacksPerDss) const override;
 
     ~GfxCoreHelperHw() override = default;
 
