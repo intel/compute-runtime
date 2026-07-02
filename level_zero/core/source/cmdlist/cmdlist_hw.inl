@@ -4320,10 +4320,9 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::getTotalSizeForCopyRegion(co
     const size_t height = region->height;
     const size_t depth = region->depth;
 
-    size_t hostPtrOffsetInBytes = originY * pitch + originX;
+    size_t hostPtrOffsetInBytes = originZ * slicePitch + originY * pitch + originX;
     size_t hostPtrRegionSizeInbytes = width + pitch * (height - 1);
     if (depth > 1) {
-        hostPtrOffsetInBytes += originZ * slicePitch;
         hostPtrRegionSizeInbytes += slicePitch * (depth - 1);
     }
     size_t hostPtrSize = hostPtrOffsetInBytes + hostPtrRegionSizeInbytes;

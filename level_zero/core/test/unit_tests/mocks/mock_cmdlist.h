@@ -102,6 +102,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::getHostPtrAlloc;
     using BaseClass::getInOrderIncrementValue;
     using BaseClass::getIohAllocationAndOffsetForPrefetch;
+    using BaseClass::getTotalSizeForCopyRegion;
     using BaseClass::heaplessModeEnabled;
     using BaseClass::hostPtrMap;
     using BaseClass::immediateCmdListHeapSharing;

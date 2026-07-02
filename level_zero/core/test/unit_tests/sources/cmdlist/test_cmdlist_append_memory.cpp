@@ -117,6 +117,39 @@ HWTEST_F(AppendMemoryCopyTests, givenCommandListAndAlignedHostPointersWhenBlitMe
     EXPECT_EQ(cmdList.dstBlitCopyRegionOffset, 0u);
 }
 
+HWTEST_F(AppendMemoryCopyTests, givenSingleSliceCopyRegionWithNonZeroOriginZWhenGettingTotalSizeThenZOriginOffsetIsIncluded) {
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    constexpr uint32_t rowPitch = 832u;
+    constexpr uint32_t slicePitch = 236288u;
+    ze_copy_region_t region = {122u, 142u, 40u, 60u, 51u, 1u};
+
+    auto size = cmdList.getTotalSizeForCopyRegion(&region, rowPitch, slicePitch);
+
+    size_t expectedSize = region.originZ * static_cast<size_t>(slicePitch) +
+                          (region.originY + region.height - 1) * rowPitch +
+                          region.originX + region.width;
+    EXPECT_EQ(expectedSize, size);
+    EXPECT_GT(size, region.originZ * static_cast<size_t>(slicePitch));
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenMultiSliceCopyRegionWhenGettingTotalSizeThenFullExtentIsReturned) {
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    constexpr uint32_t rowPitch = 832u;
+    constexpr uint32_t slicePitch = 236288u;
+    ze_copy_region_t region = {122u, 142u, 40u, 60u, 51u, 8u};
+
+    auto size = cmdList.getTotalSizeForCopyRegion(&region, rowPitch, slicePitch);
+
+    size_t expectedSize = (region.originZ + region.depth - 1) * static_cast<size_t>(slicePitch) +
+                          (region.originY + region.height - 1) * rowPitch +
+                          region.originX + region.width;
+    EXPECT_EQ(expectedSize, size);
+}
+
 HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListAndDestinationPtrOffsetWhenMemoryCopyRegionToSameUsmHostAllocationThenDestinationBlitCopyRegionHasOffset) {
 
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
