@@ -669,7 +669,7 @@ struct MockRasFwInterface : public FirmwareUtil {
 struct MockRasNeoDrm : public NEO::Drm {
     using NEO::Drm::ioctlHelper;
     uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::hbm2e;
-    const int mockFd = 33;
+    static constexpr int mockFd = 33;
     std::vector<bool> mockQuerySystemInfoReturnValue{};
     bool isRepeated = false;
     bool mockReturnEmptyRegions = false;

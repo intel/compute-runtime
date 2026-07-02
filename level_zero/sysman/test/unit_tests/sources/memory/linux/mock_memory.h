@@ -98,7 +98,7 @@ const std::string mockPhysicalSize = "0x00000040000000";
 struct MockMemoryNeoDrm : public NEO::Drm {
     using Drm::ioctlHelper;
     using Drm::memoryInfo;
-    const int mockFd = 33;
+    static constexpr int mockFd = 33;
     uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::hbm2e;
     std::vector<bool> mockQuerySystemInfoReturnValue{};
     bool isRepeated = false;

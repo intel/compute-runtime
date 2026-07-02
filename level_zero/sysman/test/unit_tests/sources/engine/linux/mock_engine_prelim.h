@@ -56,7 +56,7 @@ class MockEngineSysmanHwDeviceIdDrm : public MockSysmanHwDeviceIdDrm {
 struct MockEngineNeoDrmPrelim : public Drm {
     using Drm::engineInfo;
     using Drm::setupIoctlHelper;
-    const int mockFd = 0;
+    static constexpr int mockFd = 0;
     MockEngineNeoDrmPrelim(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
     MockEngineNeoDrmPrelim(RootDeviceEnvironment &rootDeviceEnvironment, int mockFileDescriptor) : Drm(std::make_unique<MockEngineSysmanHwDeviceIdDrm>(mockFileDescriptor, ""), rootDeviceEnvironment) {}
 

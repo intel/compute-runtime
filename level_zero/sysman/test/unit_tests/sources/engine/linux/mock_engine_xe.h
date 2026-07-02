@@ -30,7 +30,7 @@ struct MockNeoDrm : public NEO::Drm {
   public:
     using NEO::Drm::getEngineInfo;
     using NEO::Drm::ioctlHelper;
-    const int mockFd = 0;
+    static constexpr int mockFd = 0;
 
     MockNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : NEO::Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 

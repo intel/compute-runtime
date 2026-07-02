@@ -71,7 +71,7 @@ struct MockVfPmuInterfaceImp : public MockPmuInterfaceImpForSysman {
 struct MockVfNeoDrm : public NEO::Drm {
     using NEO::Drm::engineInfo;
     using NEO::Drm::setupIoctlHelper;
-    const int mockFd = 0;
+    static constexpr int mockFd = 0;
     MockVfNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : NEO::Drm(std::make_unique<NEO::HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
     ~MockVfNeoDrm() override = default;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,7 +207,7 @@ struct MockMemorySysfsAccess : public SysfsAccess {
 
 struct MockMemoryNeoDrm : public Drm {
     using Drm::ioctlHelper;
-    const int mockFd = 33;
+    static constexpr int mockFd = 33;
     std::vector<bool> mockQuerySystemInfoReturnValue{};
     bool isRepeated = false;
     bool mockReturnEmptyRegions = false;

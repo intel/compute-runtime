@@ -276,7 +276,7 @@ struct MockEventsFwInterface : public L0::Sysman::FirmwareUtil {
 struct MockEventNeoDrm : public Drm {
     using Drm::setupIoctlHelper;
     uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::hbm2e;
-    const int mockFd = 33;
+    static constexpr int mockFd = 33;
     std::vector<bool> mockQuerySystemInfoReturnValue{};
     bool isRepeated = false;
     bool mockReturnEmptyRegions = false;

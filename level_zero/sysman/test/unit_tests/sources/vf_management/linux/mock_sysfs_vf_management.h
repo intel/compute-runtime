@@ -86,7 +86,7 @@ struct MockEngineSysmanHwDeviceIdDrm : public MockSysmanHwDeviceIdDrm {
 struct MockVfNeoDrm : public NEO::Drm {
     using NEO::Drm::engineInfo;
     using NEO::Drm::setupIoctlHelper;
-    const int mockFd = 0;
+    static constexpr int mockFd = 0;
     MockVfNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : NEO::Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
     MockVfNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment, int mockFileDescriptor) : NEO::Drm(std::make_unique<MockEngineSysmanHwDeviceIdDrm>(mockFileDescriptor, ""), rootDeviceEnvironment) {}
     ~MockVfNeoDrm() override = default;
