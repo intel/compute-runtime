@@ -78,8 +78,7 @@ class ReleaseHelper {
     virtual bool shouldQueryPeerAccess() const = 0;
     virtual bool isSingleDispatchRequiredForMultiCCS() const = 0;
     virtual bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const = 0;
-    virtual bool isAvailableSemaphore64Base() const = 0;
-    bool isAvailableSemaphore64(const HardwareInfo &hwInfo) const;
+    virtual bool isAvailableSemaphore64() const = 0;
     virtual bool isLatePreemptionStartSupportedHelper() const = 0;
     virtual bool isReducedSurfaceStateSupported() const = 0;
     virtual uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const = 0;
@@ -136,7 +135,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool shouldQueryPeerAccess() const override;
     bool isSingleDispatchRequiredForMultiCCS() const override;
     bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const override;
-    bool isAvailableSemaphore64Base() const override;
+    bool isAvailableSemaphore64() const override;
     bool isLatePreemptionStartSupportedHelper() const override;
     bool isReducedSurfaceStateSupported() const override;
     uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const override;

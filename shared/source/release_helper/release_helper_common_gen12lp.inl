@@ -19,7 +19,10 @@ bool ReleaseHelperHw<release>::isResolvingSubDeviceIDNeeded() const {
     return true;
 }
 template <>
-bool ReleaseHelperHw<release>::isAvailableSemaphore64Base() const {
+bool ReleaseHelperHw<release>::isAvailableSemaphore64() const {
+    if (debugManager.flags.Enable64BitSemaphore.get() != -1) {
+        return debugManager.flags.Enable64BitSemaphore.get() == 1;
+    }
     return false;
 }
 

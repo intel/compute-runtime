@@ -179,7 +179,7 @@ struct TimestampPacketHelper {
         }
 
         const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-        const bool useSemaphore64bCmd = releaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+        const bool useSemaphore64bCmd = releaseHelper.isAvailableSemaphore64();
 
         for (auto &node : container.peekNodes()) {
             TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node, useSemaphore64bCmd);

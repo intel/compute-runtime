@@ -231,9 +231,9 @@ TEST_F(ReleaseHelperNvlPTests, whenIsAvailableSemaphore64CalledThenCorrectValueR
             releaseHelper = ReleaseHelper::create(ipVersion);
             ASSERT_NE(nullptr, releaseHelper);
             if (revision != 0) {
-                EXPECT_TRUE(releaseHelper->isAvailableSemaphore64Base());
+                EXPECT_TRUE(releaseHelper->isAvailableSemaphore64());
             } else {
-                EXPECT_FALSE(releaseHelper->isAvailableSemaphore64Base());
+                EXPECT_FALSE(releaseHelper->isAvailableSemaphore64());
             }
         }
     }

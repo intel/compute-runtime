@@ -27,16 +27,4 @@ void ReleaseHelper::getKernelFp16AtomicCapabilities(uint32_t &fp16Caps) const {
     fp16Caps |= this->getAdditionalFp16Caps();
 }
 
-bool ReleaseHelper::isAvailableSemaphore64(const HardwareInfo &hwInfo) const {
-    if (debugManager.flags.Enable64BitSemaphore.get() != -1) {
-        return debugManager.flags.Enable64BitSemaphore.get() == 1;
-    }
-
-    if (!hwInfo.featureTable.flags.ftrHwSemaphore64) {
-        return false;
-    }
-
-    return this->isAvailableSemaphore64Base();
-}
-
 } // namespace NEO

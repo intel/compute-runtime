@@ -42,7 +42,7 @@ TEST_F(ReleaseHelperNvlUTests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_EQ(64u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_TRUE(releaseHelper->getFtrXe2Compression());
-        EXPECT_FALSE(releaseHelper->isAvailableSemaphore64Base());
+        EXPECT_FALSE(releaseHelper->isAvailableSemaphore64());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
