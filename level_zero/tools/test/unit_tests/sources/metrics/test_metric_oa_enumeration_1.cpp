@@ -3149,6 +3149,9 @@ TEST_F(MetricEnumerationTest, givenLoadedMetricsLibraryAndDiscoveryAndMetricsLib
 
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
+    openMetricsAdapter();
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     EXPECT_EQ(metricSource.loadDependencies(), true);
     EXPECT_EQ(metricSource.isInitialized(), true);
@@ -3186,6 +3189,19 @@ TEST_F(MetricEnumerationTest, givenRootDeviceWhenLoadDependenciesIsCalledThenLeg
     mockMetricEnumeration->isInitializedCallBase = true;
     EXPECT_EQ(mockMetricEnumeration->isInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricEnumerationTest, givenAdapterGroupSetWithoutMetricsDiscoveryLibraryWhenCleanupMetricsDiscoveryThenAdapterGroupIsNotClosed) {
+
+    Mock<IAdapterGroup_1_13> mockAdapterGroup;
+    mockMetricEnumeration->setAdapterGroup(&mockAdapterGroup);
+    mockMetricEnumeration->hMetricsDiscovery.reset();
+
+    EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockMetricEnumeration->getMdapiAdapterGroup(), &mockAdapterGroup);
+    EXPECT_EQ(mockAdapterGroup.CloseCalled, 0u);
+
+    mockMetricEnumeration->setAdapterGroup(nullptr);
 }
 
 class MetricEnumerationTestMetricTypes : public MetricEnumerationTest,

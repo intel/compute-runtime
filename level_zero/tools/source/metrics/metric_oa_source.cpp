@@ -87,6 +87,10 @@ bool OaMetricSourceImp::loadDependencies() {
         result = false;
         DEBUG_BREAK_IF(!result);
     }
+    if (result && metricEnumeration->testOpeningMetricsAdapter() != ZE_RESULT_SUCCESS) {
+        result = false;
+        DEBUG_BREAK_IF(!result);
+    }
     if (result && !metricsLibrary->load()) {
         result = false;
         DEBUG_BREAK_IF(!result);

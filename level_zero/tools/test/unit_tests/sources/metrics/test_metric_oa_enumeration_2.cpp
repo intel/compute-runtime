@@ -149,6 +149,38 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
     EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MetricEnumerationMultiDeviceTest, givenImplicitScalingCapableDeviceWhenLoadDependenciesRunsProbeThenSubDeviceAdaptersAreReset) {
+
+    auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    Mock<IAdapterGroup_1_13> mockAdapterGroup;
+    Mock<IAdapter_1_13> mockAdapter;
+    Mock<IMetricsDevice_1_13> mockDevice;
+
+    mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&mockAdapterGroup);
+    mockMetricEnumeration->getMetricsAdapterResult = &mockAdapter;
+
+    mockAdapter.openMetricsSubDeviceOutDevice = &mockDevice;
+    mockAdapter.openMetricsDeviceOutDevice = &mockDevice;
+
+    setupDefaultMocksForMetricDevice(mockDevice);
+
+    for (auto &subDeviceEnumeration : mockMetricEnumerationSubDevices) {
+        subDeviceEnumeration->getMetricsAdapterResult = &mockAdapter;
+    }
+
+    devices[0]->getMetricDeviceContext().setSubDeviceIndex(0);
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+
+    EXPECT_EQ(nullptr, mockMetricEnumeration->getMdapiAdapter());
+    EXPECT_EQ(nullptr, mockMetricEnumeration->getMdapiAdapterGroup());
+
+    for (auto &subDeviceEnumeration : mockMetricEnumerationSubDevices) {
+        EXPECT_EQ(nullptr, subDeviceEnumeration->getMdapiAdapter());
+    }
+}
+
 TEST_F(MetricEnumerationMultiDeviceTest, givenSubDeviceWhenOpenMetricsDiscoveryIsCalledThenOpenMetricsSubDeviceWillBeCalled) {
 
     // Use sub device
@@ -209,8 +241,8 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
     devices[0]->getMetricDeviceContext().setSubDeviceIndex(0);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    EXPECT_EQ(metricSource.loadDependencies(), true);
-    EXPECT_EQ(metricSource.isInitialized(), true);
+    EXPECT_EQ(metricSource.loadDependencies(), false);
+    EXPECT_EQ(metricSource.isInitialized(), false);
     mockMetricEnumeration->isInitializedCallBase = true;
     EXPECT_EQ(mockMetricEnumeration->isInitialized(), false);
     EXPECT_EQ(0u, mockDevice.GetParamsCalled);
@@ -237,8 +269,8 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesAndO
     devices[0]->getMetricDeviceContext().setSubDeviceIndex(0);
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
-    EXPECT_EQ(metricSource.loadDependencies(), true);
-    EXPECT_EQ(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(metricSource.loadDependencies(), false);
+    EXPECT_EQ(metricSource.isInitialized(), false);
 }
 
 TEST_F(MetricEnumerationMultiDeviceTest, givenIncorrectMetricsDiscoveryInterfaceVersionWhenZetGetMetricGroupIsCalledThenReturnsFail) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,43 @@ TEST_F(MetricEnumerationTestWddm, givenCorrectWddmAdapterWhenGetMetricsAdapterTh
     mockMetricEnumeration->getMetricsAdapterResult = &adapter;
 
     EXPECT_EQ(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricEnumerationTestWddm, givenCorrectWddmAdapterWhenLoadDependenciesIsCalledThenAdapterProbeSucceedsAndAdapterIsClosed) {
+
+    auto &rootDevice = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()];
+    auto &osInterface = rootDevice->osInterface;
+    auto wddm = new WddmMock(*rootDevice);
+    auto adapterGroupParams = TAdapterGroupParams_1_6{};
+    auto adapterParams = TAdapterParams_1_9{};
+
+    osInterface = std::make_unique<NEO::OSInterface>();
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+
+    adapterGroupParams.AdapterCount = 1;
+    adapterParams.SystemId.Type = MetricsDiscovery::TAdapterIdType::ADAPTER_ID_TYPE_LUID;
+    adapterParams.SystemId.Luid.HighPart = 0;
+    adapterParams.SystemId.Luid.LowPart = 0;
+
+    openMetricsAdapterGroup();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    adapterGroup.GetParamsResult = &adapterGroupParams;
+    adapterGroup.GetAdapterResult = &adapter;
+    adapter.GetParamsResult = &adapterParams;
+
+    mockMetricEnumeration->getAdapterIdOutMajor = adapterParams.SystemId.Luid.HighPart;
+    mockMetricEnumeration->getAdapterIdOutMinor = adapterParams.SystemId.Luid.LowPart;
+
+    mockMetricEnumeration->getMetricsAdapterResult = &adapter;
+
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+    EXPECT_TRUE(metricSource.isAvailable());
+    EXPECT_EQ(nullptr, mockMetricEnumeration->getMdapiAdapterGroup());
 }
 } // namespace ult
 } // namespace L0

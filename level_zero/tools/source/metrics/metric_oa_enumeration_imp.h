@@ -34,6 +34,7 @@ struct MetricEnumeration {
     virtual bool isInitialized();
 
     virtual ze_result_t loadMetricsDiscovery();
+    ze_result_t testOpeningMetricsAdapter();
     void getMetricsDiscoveryFilename(std::vector<const char *> &names) const;
     uint32_t getMaxOaBufferSize() const { return maximumOaBufferSize; }
     bool readGlobalSymbol(const char *name, uint32_t &symbolValue);
@@ -108,6 +109,7 @@ struct MetricEnumeration {
     virtual bool getAdapterId(uint32_t &major, uint32_t &minor);
     virtual MetricsDiscovery::IAdapter_1_13 *getMetricsAdapter();
     ze_result_t cleanupMetricsDiscovery();
+    void closeMetricsAdapter();
 
     ze_result_t cacheMetricInformation();
     ze_result_t cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,

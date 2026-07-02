@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,8 +49,53 @@ TEST_F(MetricInitializationTest, GivenOaDependenciesAreAvailableThenMetricInitia
 
     globalDriverHandles->push_back(driverHandle.get());
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
+
+    openMetricsAdapter();
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
     EXPECT_EQ(device->getMetricDeviceContext().enableMetricApi(), ZE_RESULT_SUCCESS);
     globalDriverHandles->clear();
+}
+
+TEST_F(MetricInitializationTest, GivenMdapiAdapterCannotBeOpenedWhenLoadDependenciesIsCalledThenSourceIsNotAvailable) {
+
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_EQ(metricSource.loadDependencies(), false);
+    EXPECT_FALSE(metricSource.isAvailable());
+}
+
+TEST_F(MetricInitializationTest, GivenMdapiAdapterOpensSuccessfullyWhenLoadDependenciesIsCalledThenSourceIsAvailableAndAdapterIsClosed) {
+
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    openMetricsAdapter();
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+    EXPECT_TRUE(metricSource.isAvailable());
+
+    EXPECT_NE(nullptr, mockMetricEnumeration->hMetricsDiscovery.get());
+    EXPECT_NE(nullptr, mockMetricEnumeration->openAdapterGroup);
+    EXPECT_EQ(nullptr, mockMetricEnumeration->getMdapiAdapterGroup());
+    EXPECT_EQ(nullptr, mockMetricEnumeration->getMdapiAdapter());
+    EXPECT_EQ(nullptr, mockMetricEnumeration->getMdapiDevice());
+}
+
+TEST_F(MetricInitializationTest, GivenSuccessfulAdapterProbeWhenRealMetricsDiscoveryOpenIsCalledLaterThenItStillSucceeds) {
+
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    openMetricsAdapter();
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+
+    EXPECT_EQ(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
 } // namespace ult
