@@ -370,7 +370,7 @@ bool Linker::relocateSymbols(const SegmentInfo &globalVariables, const SegmentIn
                 return false;
             }
             auto &segment = instructionsSegments[symbolInfo.instructionSegmentId];
-            if (symbolInfo.offset + symbolInfo.size > segment.segmentSize) {
+            if ((symbolInfo.size > segment.segmentSize) || (symbolInfo.offset > segment.segmentSize - symbolInfo.size)) {
                 return false;
             }
             relocatedSymbols[symbolName] = {symbolInfo, segment.gpuAddress + symbolInfo.offset};
@@ -403,7 +403,7 @@ bool Linker::relocateSymbols(const SegmentInfo &globalVariables, const SegmentIn
                 break;
             }
 
-            if (offset + symbolInfo.size > seg->segmentSize) {
+            if ((symbolInfo.size > seg->segmentSize) || (offset > seg->segmentSize - symbolInfo.size)) {
                 DEBUG_BREAK_IF(true);
                 return false;
             }
@@ -460,7 +460,8 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
         auto &segment = instructionsSegments[segId];
         for (const auto &relocation : relocationsPerSegment[segId]) {
             UNRECOVERABLE_IF(nullptr == segment.hostPointer);
-            bool invalidRelocation = relocation.offset + addressSizeInBytes(relocation.type) > segment.segmentSize;
+            const auto relocationSize = addressSizeInBytes(relocation.type);
+            bool invalidRelocation = (relocationSize > segment.segmentSize) || (relocation.offset > segment.segmentSize - relocationSize);
             if (invalidRelocation) {
                 outUnresolvedExternals.push_back(UnresolvedExternal{relocation, static_cast<uint32_t>(segId), invalidRelocation});
                 DEBUG_BREAK_IF(true);
@@ -531,7 +532,8 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         }
 
         auto relocType = (LinkerInput::Traits::PointerSize::Ptr32bit == data.getTraits().pointerSize) ? RelocationInfo::Type::addressLow : relocation.type;
-        bool invalidOffset = relocation.offset + addressSizeInBytes(relocType) > dst.size();
+        const auto relocationSize = addressSizeInBytes(relocType);
+        bool invalidOffset = (relocationSize > dst.size()) || (relocation.offset > dst.size() - relocationSize);
         DEBUG_BREAK_IF(invalidOffset);
         if (invalidOffset) {
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});

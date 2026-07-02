@@ -684,6 +684,76 @@ TEST_F(LinkerTests, GivenSymbolToInstructionBiggerThanCorrespondingInstructionSe
     EXPECT_FALSE(result);
 }
 
+TEST_F(LinkerTests, GivenSymbolToInstructionWithOffsetPlusSizeOverflowingWhenRelocatingSymbolsThenFail) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    auto &symbol = linkerInput.symbols["func"];
+    symbol.segment = SegmentType::instructions;
+    symbol.instructionSegmentId = 0;
+    symbol.offset = std::numeric_limits<uint64_t>::max() - 4U;
+    symbol.size = 8U;
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    Linker::PatchableSegments instSegments(1);
+    instSegments[0].segmentSize = 32U;
+
+    // symbol.offset + symbol.size wraps around, but the symbol is still out of bounds
+    auto result = linker.relocateSymbols({}, {}, {}, {}, instSegments, 0U, 0U);
+    EXPECT_FALSE(result);
+}
+
+TEST_F(LinkerTests, GivenSymbolToInstructionWithSizeExceedingInstructionSegmentWhenRelocatingSymbolsThenFail) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    auto &symbol = linkerInput.symbols["func"];
+    symbol.segment = SegmentType::instructions;
+    symbol.instructionSegmentId = 0;
+    symbol.offset = 0U;
+    symbol.size = 8U;
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    Linker::PatchableSegments instSegments(1);
+    instSegments[0].segmentSize = 4U;
+
+    // symbol size exceeds the whole segment, so size > segmentSize guards the (segmentSize - size) underflow
+    auto result = linker.relocateSymbols({}, {}, {}, {}, instSegments, 0U, 0U);
+    EXPECT_FALSE(result);
+}
+
+TEST_F(LinkerTests, GivenGlobalSymbolWithOffsetPlusSizeOverflowingWhenRelocatingSymbolsThenFail) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    auto &symbol = linkerInput.symbols["data"];
+    symbol.segment = SegmentType::globalVariables;
+    symbol.global = true;
+    symbol.offset = std::numeric_limits<uint64_t>::max() - 4U;
+    symbol.size = 8U;
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    Linker::SegmentInfo globalVariables;
+    globalVariables.gpuAddress = 0xaabbccdd;
+    globalVariables.segmentSize = 32U;
+
+    // symbol.offset + symbol.size wraps around, but the symbol is still out of bounds
+    auto result = linker.relocateSymbols(globalVariables, {}, {}, {}, {}, 0U, 0U);
+    EXPECT_FALSE(result);
+}
+
+TEST_F(LinkerTests, GivenGlobalSymbolWithSizeExceedingSegmentWhenRelocatingSymbolsThenFail) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    auto &symbol = linkerInput.symbols["data"];
+    symbol.segment = SegmentType::globalVariables;
+    symbol.global = true;
+    symbol.offset = 0U;
+    symbol.size = 8U;
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    Linker::SegmentInfo globalVariables;
+    globalVariables.gpuAddress = 0xaabbccdd;
+    globalVariables.segmentSize = 4U;
+
+    // symbol size exceeds the whole segment, so size > segmentSize guards the (segmentSize - size) underflow
+    auto result = linker.relocateSymbols(globalVariables, {}, {}, {}, {}, 0U, 0U);
+    EXPECT_FALSE(result);
+}
+
 TEST_F(LinkerTests, GivenValidSymbolToInstructionsWhenRelocatingSymbolsThenSymbolIsProperlyRelocated) {
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &symbol = linkerInput.symbols["func"];
@@ -728,6 +798,63 @@ TEST_F(LinkerTests, GivenRelocationToInstructionSegmentWithLocalUndefinedSymbolW
     auto instructionSegmentPatchedData = reinterpret_cast<uint64_t *>(ptrOffset(instructionSegmentToPatch.hostPointer, static_cast<size_t>(rela.offset)));
     EXPECT_EQ(0u, static_cast<uint64_t>(*instructionSegmentPatchedData));
     EXPECT_EQ(0u, unresolvedExternals.size());
+}
+
+TEST_F(LinkerTests, GivenRelocationWithOffsetPlusSizeOverflowingWhenPatchingInstructionsSegmentsThenRelocationIsUnresolved) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
+    NEO::LinkerInput::RelocationInfo rela;
+    rela.offset = std::numeric_limits<uint64_t>::max() - 2U;
+    rela.addend = 128U;
+    rela.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    rela.symbolName = "";
+    rela.relocationSegment = NEO::SegmentType::instructions;
+    linkerInput.textRelocations.push_back({rela});
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+
+    uint64_t instructionSegmentData{std::numeric_limits<uint64_t>::max()};
+    NEO::Linker::PatchableSegment instructionSegmentToPatch;
+    instructionSegmentToPatch.hostPointer = reinterpret_cast<void *>(&instructionSegmentData);
+    instructionSegmentToPatch.segmentSize = sizeof(instructionSegmentData);
+
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+
+    // rela.offset + addressSizeInBytes wraps around, but the relocation is still out of bounds
+    linker.patchInstructionsSegments({instructionSegmentToPatch}, unresolvedExternals, kernelDescriptors, pDevice);
+    ASSERT_EQ(1u, unresolvedExternals.size());
+    EXPECT_TRUE(unresolvedExternals[0].internalError);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), instructionSegmentData);
+}
+
+TEST_F(LinkerTests, GivenRelocationSizeExceedingInstructionSegmentWhenPatchingInstructionsSegmentsThenRelocationIsUnresolved) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
+    NEO::LinkerInput::RelocationInfo rela;
+    rela.offset = 0U;
+    rela.addend = 128U;
+    rela.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    rela.symbolName = "";
+    rela.relocationSegment = NEO::SegmentType::instructions;
+    linkerInput.textRelocations.push_back({rela});
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+
+    // Segment must be smaller than any address relocation size (4 bytes on 32-bit builds, 8 on 64-bit),
+    // so relocationSize > segmentSize on all platforms and the (segmentSize - relocationSize) underflow is guarded.
+    uint16_t instructionSegmentData{std::numeric_limits<uint16_t>::max()};
+    NEO::Linker::PatchableSegment instructionSegmentToPatch;
+    instructionSegmentToPatch.hostPointer = reinterpret_cast<void *>(&instructionSegmentData);
+    instructionSegmentToPatch.segmentSize = sizeof(instructionSegmentData);
+
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+
+    linker.patchInstructionsSegments({instructionSegmentToPatch}, unresolvedExternals, kernelDescriptors, pDevice);
+    ASSERT_EQ(1u, unresolvedExternals.size());
+    EXPECT_TRUE(unresolvedExternals[0].internalError);
+    EXPECT_EQ(std::numeric_limits<uint16_t>::max(), instructionSegmentData);
 }
 
 TEST(LinkerInputTests, GivenInvalidFunctionsSymbolsUsedInFunctionsRelocationsWhenParsingRelocationsForExtFuncUsageThenDoNotAddDependency) {
@@ -1985,6 +2112,96 @@ HWTEST_F(LinkerTests, givenInvalidRelocationOffsetWhenPatchingDataSegmentsThenRe
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
                                   globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), {},
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData),
+                                  initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
+    EXPECT_EQ(1U, unresolvedExternals.size());
+}
+
+HWTEST_F(LinkerTests, givenRelocationOffsetPlusSizeOverflowingWhenPatchingDataSegmentsThenRelocationIsUnresolved) {
+    uint64_t initGlobalConstantData[3] = {};
+    uint64_t initGlobalVariablesData[3] = {};
+
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{initGlobalConstantData, sizeof(initGlobalConstantData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA);
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA);
+
+    NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
+    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
+
+    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
+
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    auto &symbol = linkerInput.symbols["symbol"];
+    symbol.segment = SegmentType::globalVariables;
+    symbol.offset = 0U;
+    symbol.size = 8U;
+
+    NEO::LinkerInput::RelocationInfo relocationInfo;
+    relocationInfo.offset = std::numeric_limits<uint64_t>::max() - 2U;
+    relocationInfo.relocationSegment = NEO::SegmentType::globalConstants;
+    relocationInfo.symbolName = "symbol";
+    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    linkerInput.dataRelocations.push_back(relocationInfo);
+
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+
+    // relocationInfo.offset + addressSizeInBytes wraps around, but the relocation is still out of bounds
+    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
+                                  globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), {},
+                                  unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData),
+                                  initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
+    EXPECT_EQ(1U, unresolvedExternals.size());
+}
+
+HWTEST_F(LinkerTests, givenRelocationSizeExceedingSegmentSizeWhenPatchingDataSegmentsThenRelocationIsUnresolved) {
+    uint64_t initGlobalConstantData[3] = {};
+    uint64_t initGlobalVariablesData[3] = {};
+
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{initGlobalConstantData, sizeof(initGlobalConstantData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA);
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA);
+
+    NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
+    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
+
+    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
+
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    auto &symbol = linkerInput.symbols["symbol"];
+    symbol.segment = SegmentType::globalVariables;
+    symbol.offset = 0U;
+    symbol.size = 8U;
+
+    NEO::LinkerInput::RelocationInfo relocationInfo;
+    relocationInfo.offset = 0U;
+    relocationInfo.relocationSegment = NEO::SegmentType::globalConstants;
+    relocationInfo.symbolName = "symbol";
+    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    linkerInput.dataRelocations.push_back(relocationInfo);
+
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+
+    // constants init data is smaller than any address relocation, so relocationSize > dst.size().
+    // Must be < sizeof(uint32_t) so it also exceeds a 4-byte addressLow relocation on 32-bit builds.
+    constexpr size_t smallConstantsInitDataSize = sizeof(uint32_t) - 1U;
+    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
+                                  globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), {},
+                                  unresolvedExternals, pDevice, initGlobalConstantData, smallConstantsInitDataSize,
                                   initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
     EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
     EXPECT_EQ(1U, unresolvedExternals.size());
