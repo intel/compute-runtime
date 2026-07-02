@@ -46,6 +46,60 @@ HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
     }
 }
 
+HWTEST_F(CommandSetMMIOTest, GivenCaptureIsProvidedWithCommandViewWhenProgrammingLriCommandThenLoadRegisterImmIsDispatchedAndCommandViewProgrammed) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    constexpr size_t bufferSize = 128;
+    alignas(4) uint8_t buffer[bufferSize];
+
+    LinearStream stream(buffer, bufferSize);
+
+    constexpr uint64_t gpuBase = 0x1A0000;
+    stream.setGpuBase(gpuBase);
+
+    EncodeCaptureCommandData cmdCaptureData = {};
+    cmdCaptureData.makeCommandView = true;
+
+    EncodeSetMMIO<FamilyType>::encodeIMM(stream, 0x2000, 0xbaa, false, false, &cmdCaptureData);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());
+
+    auto itorLRI = find<MI_LOAD_REGISTER_IMM *>(commands.begin(), commands.end());
+    ASSERT_NE(itorLRI, commands.end());
+
+    auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
+    EXPECT_EQ(0x2000u, cmd->getRegisterOffset());
+    EXPECT_EQ(0xbaau, cmd->getDataDword());
+
+    EXPECT_EQ(cmd, cmdCaptureData.cpuBuffer);
+    EXPECT_EQ(gpuBase, cmdCaptureData.gpuAddress);
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), cmdCaptureData.cmdSize);
+    ASSERT_NE(nullptr, cmdCaptureData.commandView);
+    EXPECT_EQ(0, memcmp(cmdCaptureData.commandView, cmdCaptureData.cpuBuffer, cmdCaptureData.cmdSize));
+
+    EncodeSetMMIO<FamilyType>::deallocateLoadRegisterImmCommand(cmdCaptureData.commandView);
+
+    cmdCaptureData = {};
+    auto usedBefore = stream.getUsed();
+    EncodeSetMMIO<FamilyType>::encodeIMM(stream, 0x2004, 0x1A00, false, false, &cmdCaptureData);
+
+    commands.clear();
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(stream.getCpuBase(), usedBefore), stream.getUsed());
+
+    itorLRI = find<MI_LOAD_REGISTER_IMM *>(commands.begin(), commands.end());
+    ASSERT_NE(itorLRI, commands.end());
+
+    cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
+    EXPECT_EQ(0x2004u, cmd->getRegisterOffset());
+    EXPECT_EQ(0x1A00u, cmd->getDataDword());
+
+    EXPECT_EQ(cmd, cmdCaptureData.cpuBuffer);
+    EXPECT_EQ(0u, cmdCaptureData.gpuAddress);
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), cmdCaptureData.cmdSize);
+    EXPECT_EQ(nullptr, cmdCaptureData.commandView);
+}
+
 HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterMemIsUsed) {
     EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x2000, 0xDEADBEEFCAF0, false);
 

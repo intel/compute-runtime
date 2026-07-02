@@ -269,7 +269,8 @@ inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStr
                                         PartitionRegisters<GfxFamily>::addressOffsetCCSOffset,
                                         addressOffset,
                                         true,
-                                        isBcs);
+                                        isBcs,
+                                        nullptr);
 }
 
 template <typename GfxFamily>

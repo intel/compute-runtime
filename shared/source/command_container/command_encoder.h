@@ -477,13 +477,20 @@ struct EncodeSetMMIO {
     static void encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address, bool isBcs);
     static void encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset, bool isBcs);
 
-    static void encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap, bool isBcs);
+    static void encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap, bool isBcs, EncodeCaptureCommandData *captureData);
     static void encodeMEM(LinearStream &cmdStream, uint32_t offset, uint64_t address, bool isBcs);
     static void encodeREG(LinearStream &cmdStream, uint32_t dstOffset, uint32_t srcOffset, bool isBcs);
 
     static bool isRemapApplicable(uint32_t offset);
     static void remapOffset(MI_LOAD_REGISTER_MEM *pMiLoadReg);
     static void remapOffset(MI_LOAD_REGISTER_REG *pMiLoadReg);
+
+    static void *allocateLoadRegisterImmCommand() {
+        return new MI_LOAD_REGISTER_IMM;
+    }
+    static void deallocateLoadRegisterImmCommand(void *cmdBuffer) {
+        delete reinterpret_cast<MI_LOAD_REGISTER_IMM *>(cmdBuffer);
+    }
 };
 
 template <typename GfxFamily>

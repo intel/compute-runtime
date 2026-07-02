@@ -20,7 +20,11 @@
 namespace L0 {
 namespace ult {
 
-void MutableCommandListFixtureInit::setUp(bool createInOrder) {
+void MutableCommandListFixtureInit::setUp(bool createInOrder, int32_t useSemaphore64) {
+    if (useSemaphore64 != -1) {
+        NEO::debugManager.flags.Enable64BitSemaphore.set(useSemaphore64);
+    }
+
     this->createInOrder = createInOrder;
     ModuleImmutableDataFixture::setUp();
 

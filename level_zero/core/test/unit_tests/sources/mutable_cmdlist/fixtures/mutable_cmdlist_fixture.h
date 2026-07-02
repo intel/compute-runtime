@@ -38,7 +38,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     static constexpr uint32_t kernel2Bit = (1u << 1);
     static constexpr uint32_t kernelAllMask = kernel1Bit | kernel2Bit;
 
-    void setUp(bool createInOrder);
+    void setUp(bool createInOrder, int32_t useSemaphore64);
     void tearDown();
 
     std::unique_ptr<MockImmutableData> prepareKernelImmData(uint32_t isaSize);
@@ -102,10 +102,10 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     bool createInOrder;
 };
 
-template <bool createInOrderT>
+template <bool createInOrderT, int32_t useSemaphore64>
 struct MutableCommandListFixture : public MutableCommandListFixtureInit {
     void setUp() {
-        MutableCommandListFixtureInit::setUp(createInOrderT);
+        MutableCommandListFixtureInit::setUp(createInOrderT, useSemaphore64);
     }
 
     void fillOffsets(CrossThreadDataOffset offsets[3], uint32_t srcOffset, size_t num) {
@@ -113,6 +113,18 @@ struct MutableCommandListFixture : public MutableCommandListFixtureInit {
             offsets[i] = srcOffset + static_cast<decltype(srcOffset)>(i * sizeof(srcOffset));
         }
     };
+
+    template <typename FamilyType>
+    void waitCbEventBelongToCurrentMutateToDifferent();
+
+    template <typename FamilyType>
+    void waitCbEventBelongToCurrentMutateToCurrent();
+
+    template <typename FamilyType>
+    void waitCbEventBelongToDifferentMutateToCurrent();
+
+    template <typename FamilyType>
+    void waitCbEventBelongToDifferentNoopMutateBack();
 };
 
 struct WhiteBoxMutableResidencyAllocations : public ::L0::MCL::MutableResidencyAllocations {

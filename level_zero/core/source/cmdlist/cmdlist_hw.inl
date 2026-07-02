@@ -3489,8 +3489,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
                 break;
             } else {
-                using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-
                 bool indirectMode = false;
                 const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
                 const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(isQwordInOrderCounter(), useSemaphore64bCmd);
@@ -3506,20 +3504,30 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                     constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
                     constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
 
-                    auto lri1 = commandContainer.getCommandStream()->template getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-                    auto lri2 = commandContainer.getCommandStream()->template getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-
-                    if (!noopDispatch) {
-                        NEO::LriHelper<GfxFamily>::program(lri1, firstRegister, getLowPart(waitValue), true, copyOnlyWait);
-                        NEO::LriHelper<GfxFamily>::program(lri2, secondRegister, getHighPart(waitValue), true, copyOnlyWait);
-                    } else {
-                        memset(lri1, 0, sizeof(MI_LOAD_REGISTER_IMM));
-                        memset(lri2, 0, sizeof(MI_LOAD_REGISTER_IMM));
+                    NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), firstRegister, getLowPart(waitValue), true, copyOnlyWait, &cmdCaptureData);
+                    if (noopDispatch) {
+                        memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+                    }
+                    if (outListCommands != nullptr) {
+                        outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{
+                            .gpuDestination = cmdCaptureData.gpuAddress,
+                            .pDestination = cmdCaptureData.cpuBuffer,
+                            .commandView = cmdCaptureData.commandView,
+                            .offset = firstRegister,
+                            .patchSize = cmdCaptureData.cmdSize});
                     }
 
+                    NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), secondRegister, getHighPart(waitValue), true, copyOnlyWait, &cmdCaptureData);
+                    if (noopDispatch) {
+                        memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+                    }
                     if (outListCommands != nullptr) {
-                        outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{.pDestination = lri1, .offset = firstRegister});
-                        outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{.pDestination = lri2, .offset = secondRegister});
+                        outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{
+                            .gpuDestination = cmdCaptureData.gpuAddress,
+                            .pDestination = cmdCaptureData.cpuBuffer,
+                            .commandView = cmdCaptureData.commandView,
+                            .offset = secondRegister,
+                            .patchSize = cmdCaptureData.cmdSize});
                     }
                 }
 

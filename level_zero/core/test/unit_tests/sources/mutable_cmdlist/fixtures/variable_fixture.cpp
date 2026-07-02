@@ -18,7 +18,7 @@ namespace ult {
 
 void VariableFixture::setUp(bool inOrder) {
     this->inOrder = inOrder;
-    MutableCommandListFixtureInit::setUp(inOrder);
+    MutableCommandListFixtureInit::setUp(inOrder, -1);
     this->qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->mutableCommandList->isQwordInOrderCounter(), this->device->getDeviceInfo().semaphore64bCmdSupport);
 
     this->grfSize = this->device->getHwInfo().capabilityTable.grfSize;

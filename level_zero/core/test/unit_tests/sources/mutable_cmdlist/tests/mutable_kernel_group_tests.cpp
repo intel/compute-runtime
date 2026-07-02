@@ -17,7 +17,7 @@
 namespace L0 {
 namespace ult {
 
-struct MutableKernelGroupFixture : public MutableCommandListFixture<false> {
+struct MutableKernelGroupFixture : public MutableCommandListFixture<false, -1> {
     using AlignedUniquePtr = std::unique_ptr<void, std::function<decltype(alignedFree)>>;
 
     void createMutableKernelGroup() {

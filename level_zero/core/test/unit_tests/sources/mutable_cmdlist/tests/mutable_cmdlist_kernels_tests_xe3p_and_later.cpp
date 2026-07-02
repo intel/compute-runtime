@@ -18,8 +18,8 @@
 namespace L0 {
 namespace ult {
 
-using MutableCommandListKernelTest = Test<MutableCommandListFixture<false>>;
-using MutableCommandListInOrderTest = Test<MutableCommandListFixture<true>>;
+using MutableCommandListKernelTest = Test<MutableCommandListFixture<false, -1>>;
+using MutableCommandListInOrderTest = Test<MutableCommandListFixture<true, -1>>;
 
 HWTEST2_F(MutableCommandListInOrderTest,
           givenInOrderMutableCmdListWhenAppendingKernelWithSignalEventAggregatedAndMutateItThenExpectPatchNewEventAddress,

@@ -25,7 +25,7 @@
 namespace L0 {
 namespace ult {
 
-using MutableCommandListTest = Test<MutableCommandListFixture<false>>;
+using MutableCommandListTest = Test<MutableCommandListFixture<false, -1>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
@@ -1919,7 +1919,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE, result);
 }
 
-using MutableCommandListInOrderTest = Test<MutableCommandListFixture<true>>;
+using MutableCommandListInOrderTest = Test<MutableCommandListFixture<true, -1>>;
+using MutableCommandListInOrderSem64Test = Test<MutableCommandListFixture<true, 1>>;
+using MutableCommandListInOrderNoSem64Test = Test<MutableCommandListFixture<true, 0>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListInOrderTest,
@@ -2507,52 +2509,52 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(baseGpuVa, srmBaseCmd->getMemoryAddress());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE,
-            MutableCommandListInOrderTest,
-            givenKernelWithWaitCbEventBelongingToCmdListWhenMutateIntoEventFromDifferentCmdListThenDataIsUpdatedAndCommandResotred) {
+template <bool createInOrderT, int32_t useSemaphore64>
+template <typename FamilyType>
+void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelongToCurrentMutateToDifferent() {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    bool qwordInUse = mutableCommandList->isQwordInOrderCounter();
+    bool qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
 
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto signalEvent = createTestEvent(false, false, false, false);
+    auto signalEvent = this->createTestEvent(false, false, false, false);
     auto signalEventHandle = signalEvent->toHandle();
-    auto event = createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(true, false, false, false);
+    auto newEvent = this->createTestEvent(true, false, false, false);
     auto newEventHandle = newEvent->toHandle();
 
-    auto externalCmdList = createMutableCmdList();
+    auto externalCmdList = this->createMutableCmdList();
     // attach event 2 to the external command list
-    auto result = externalCmdList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
+    auto result = externalCmdList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = externalCmdList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // attach event 1 to the command list
-    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    result = this->mutableCommandList->appendLaunchKernel(this->kernel->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // mutation point
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
-    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = this->mutableCommandList->getNextCommandId(&this->mutableCommandIdDesc, 0, nullptr, &this->commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // use event 1 as wait event and signal event 0
-    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, signalEventHandle, 1, &eventHandle, this->testLaunchParams);
+    result = this->mutableCommandList->appendLaunchKernel(this->kernel->toHandle(), this->testGroupCount, signalEventHandle, 1, &eventHandle, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    auto waitEvents = this->getVariableList(this->commandId, L0::MCL::VariableType::waitEvent, nullptr);
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
-    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, this->device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
     const size_t expectedLriSize = lriRequired ? 2 : 0;
 
     ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
@@ -2576,10 +2578,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
@@ -2595,40 +2597,52 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
-            MutableCommandListInOrderTest,
-            givenKernelWithWaitCbEventBelongingToCmdListWhenMutateIntoEventFromSameCmdListThenDataIsUpdatedAndNoopRemain) {
+            MutableCommandListInOrderNoSem64Test,
+            givenSemaphore64OffAndKernelWithWaitCbEventBelongingToCmdListWhenMutateIntoEventFromDifferentCmdListThenDataIsUpdatedAndCommandResotred) {
+    waitCbEventBelongToCurrentMutateToDifferent<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderSem64Test,
+            givenSemaphore64OnAndKernelWithWaitCbEventBelongingToCmdListWhenMutateIntoEventFromDifferentCmdListThenDataIsUpdatedAndCommandResotred) {
+    waitCbEventBelongToCurrentMutateToDifferent<FamilyType>();
+}
+
+template <bool createInOrderT, int32_t useSemaphore64>
+template <typename FamilyType>
+void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelongToCurrentMutateToCurrent() {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    bool qwordInUse = mutableCommandList->isQwordInOrderCounter();
+    bool qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
 
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto event = createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(true, false, false, false);
+    auto newEvent = this->createTestEvent(true, false, false, false);
     auto newEventHandle = newEvent->toHandle();
 
     // attach events 1 & 2 to the command list
-    auto result = mutableCommandList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
+    auto result = this->mutableCommandList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = mutableCommandList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    result = this->mutableCommandList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // mutation point
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
-    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = this->mutableCommandList->getNextCommandId(&this->mutableCommandIdDesc, 0, nullptr, &this->commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // use event 1 as wait event
-    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    result = this->mutableCommandList->appendLaunchKernel(this->kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    auto waitEvents = this->getVariableList(this->commandId, L0::MCL::VariableType::waitEvent, nullptr);
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
@@ -2655,10 +2669,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0, memcmp(semWaitCmd, semWaitNoopSpace, sizeof(MI_SEMAPHORE_WAIT)));
@@ -2669,45 +2683,57 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
-            MutableCommandListInOrderTest,
-            givenKernelWithWaitCbEventBelongingToDifferentCmdListWhenMutateIntoEventOwnedToCurrentCmdListThenDataIsUpdatedAndCommandNooped) {
+            MutableCommandListInOrderNoSem64Test,
+            givenSemaphore64OffAndKernelWithWaitCbEventBelongingToCmdListWhenMutateIntoEventFromSameCmdListThenDataIsUpdatedAndNoopRemain) {
+    waitCbEventBelongToCurrentMutateToCurrent<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderSem64Test,
+            givenSemaphore64OnAndKernelWithWaitCbEventBelongingToCmdListWhenMutateIntoEventFromSameCmdListThenDataIsUpdatedAndNoopRemain) {
+    waitCbEventBelongToCurrentMutateToCurrent<FamilyType>();
+}
+
+template <bool createInOrderT, int32_t useSemaphore64>
+template <typename FamilyType>
+void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelongToDifferentMutateToCurrent() {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    bool qwordInUse = mutableCommandList->isQwordInOrderCounter();
+    bool qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
 
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto event = createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(true, false, false, false);
+    auto newEvent = this->createTestEvent(true, false, false, false);
     auto newEventHandle = newEvent->toHandle();
 
-    auto externalCmdList = createMutableCmdList();
+    auto externalCmdList = this->createMutableCmdList();
     // attach event 1 to the external command list
-    auto result = externalCmdList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    auto result = externalCmdList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = externalCmdList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // attach event 2 to the command list
-    result = mutableCommandList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
+    result = this->mutableCommandList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // mutation point
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
-    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = this->mutableCommandList->getNextCommandId(&this->mutableCommandIdDesc, 0, nullptr, &this->commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // use event 1 as wait event
-    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    result = this->mutableCommandList->appendLaunchKernel(this->kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    auto waitEvents = this->getVariableList(this->commandId, L0::MCL::VariableType::waitEvent, nullptr);
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
@@ -2740,10 +2766,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0, memcmp(semWaitCmd, semWaitNoopSpace, sizeof(MI_SEMAPHORE_WAIT)));
@@ -2752,6 +2778,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(0, memcmp(lriCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderNoSem64Test,
+            givenSemaphore64OffAndKernelWithWaitCbEventBelongingToDifferentCmdListWhenMutateIntoEventOwnedToCurrentCmdListThenDataIsUpdatedAndCommandNooped) {
+    waitCbEventBelongToDifferentMutateToCurrent<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderSem64Test,
+            givenSemaphore64OnAndKernelWithWaitCbEventBelongingToDifferentCmdListWhenMutateIntoEventOwnedToCurrentCmdListThenDataIsUpdatedAndCommandNooped) {
+    waitCbEventBelongToDifferentMutateToCurrent<FamilyType>();
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -2816,45 +2854,45 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE,
-            MutableCommandListInOrderTest,
-            givenKernelWithWaitCbEventBelongingToDifferentCmdListWhenNoopedAndMutatedBackThenDataIsUpdatedAndCommandNoopedAndRestored) {
+template <bool createInOrderT, int32_t useSemaphore64>
+template <typename FamilyType>
+void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelongToDifferentNoopMutateBack() {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    bool qwordInUse = mutableCommandList->isQwordInOrderCounter();
+    bool qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
 
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto event = createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(true, false, false, false);
+    auto newEvent = this->createTestEvent(true, false, false, false);
     auto newEventHandle = newEvent->toHandle();
     ze_event_handle_t noopHandle = nullptr;
 
-    auto externalCmdList = createMutableCmdList();
+    auto externalCmdList = this->createMutableCmdList();
     // attach event 1 to the external command list
-    auto result = externalCmdList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    auto result = externalCmdList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = externalCmdList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
+    result = externalCmdList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = externalCmdList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // mutation point
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
-    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = this->mutableCommandList->getNextCommandId(&this->mutableCommandIdDesc, 0, nullptr, &this->commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // use event 1 as wait event
-    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    result = this->mutableCommandList->appendLaunchKernel(this->kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    auto waitEvents = this->getVariableList(this->commandId, L0::MCL::VariableType::waitEvent, nullptr);
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
@@ -2887,10 +2925,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &noopHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &noopHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0, memcmp(semWaitCmd, semWaitNoopSpace, sizeof(MI_SEMAPHORE_WAIT)));
@@ -2899,10 +2937,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &eventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
@@ -2911,10 +2949,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->close();
+    result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
@@ -2924,6 +2962,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(firstRegister, lriCmd->getRegisterOffset());
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
     }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderNoSem64Test,
+            givenSemaphore64OffAndKernelWithWaitCbEventBelongingToDifferentCmdListWhenNoopedAndMutatedBackThenDataIsUpdatedAndCommandNoopedAndRestored) {
+    waitCbEventBelongToDifferentNoopMutateBack<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderSem64Test,
+            givenSemaphore64OnAndKernelWithWaitCbEventBelongingToDifferentCmdListWhenNoopedAndMutatedBackThenDataIsUpdatedAndCommandNoopedAndRestored) {
+    waitCbEventBelongToDifferentNoopMutateBack<FamilyType>();
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

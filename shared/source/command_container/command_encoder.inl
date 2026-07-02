@@ -358,7 +358,7 @@ void EncodeMath<Family>::bitwiseAnd(CommandContainer &container,
 
 template <typename Family>
 inline void EncodeSetMMIO<Family>::encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap, bool isBcs) {
-    EncodeSetMMIO<Family>::encodeIMM(*container.getCommandStream(), offset, data, remap, isBcs);
+    EncodeSetMMIO<Family>::encodeIMM(*container.getCommandStream(), offset, data, remap, isBcs, nullptr);
 }
 
 template <typename Family>
@@ -372,12 +372,33 @@ inline void EncodeSetMMIO<Family>::encodeREG(CommandContainer &container, uint32
 }
 
 template <typename Family>
-inline void EncodeSetMMIO<Family>::encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap, bool isBcs) {
-    LriHelper<Family>::program(&cmdStream,
+inline void EncodeSetMMIO<Family>::encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap, bool isBcs, EncodeCaptureCommandData *captureData) {
+    bool makeCommandView = false;
+    MI_LOAD_REGISTER_IMM *programedLriCommand = nullptr;
+    auto lriCommand = cmdStream.getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+    if (captureData != nullptr) {
+        captureData->cpuBuffer = lriCommand;
+        captureData->cmdSize = sizeIMM;
+        if (captureData->makeCommandView) {
+            captureData->gpuAddress = cmdStream.getCurrentGpuAddressPosition() - captureData->cmdSize;
+            captureData->commandView = EncodeSetMMIO<Family>::allocateLoadRegisterImmCommand();
+        }
+        makeCommandView = captureData->makeCommandView;
+    }
+
+    if (makeCommandView) {
+        programedLriCommand = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(captureData->commandView);
+    } else {
+        programedLriCommand = lriCommand;
+    }
+    LriHelper<Family>::program(programedLriCommand,
                                offset,
                                data,
                                remap,
                                isBcs);
+    if (makeCommandView) {
+        *lriCommand = *programedLriCommand;
+    }
 }
 
 template <typename Family>

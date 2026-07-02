@@ -80,7 +80,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
         // indirect MI_BATCH_BUFFER_START consumes GPR0 and keeps GPR0-GPR11 live across task
         // dispatch, so clobbering them here corrupts the scheduler's jump target.
         // Store SBA field offset to GPR13
-        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(cmdStream, RegisterOffsets::csGprR13, static_cast<uint32_t>(pair.first), true, false);
+        NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(cmdStream, RegisterOffsets::csGprR13, static_cast<uint32_t>(pair.first), true, false, nullptr);
         // Add GPR13 to GPR15, store result in GPR14
         NEO::EncodeMath<GfxFamily>::addition(cmdStream, AluRegisters::gpr13, static_cast<AluRegisters>(DebuggerAluRegisters::gpr15), AluRegisters::gpr14);
 

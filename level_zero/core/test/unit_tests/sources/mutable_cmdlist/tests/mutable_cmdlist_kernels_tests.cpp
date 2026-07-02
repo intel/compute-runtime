@@ -35,8 +35,8 @@
 namespace L0 {
 namespace ult {
 
-using MutableCommandListKernelTest = Test<MutableCommandListFixture<false>>;
-using MutableCommandListKernelInOrderTest = Test<MutableCommandListFixture<true>>;
+using MutableCommandListKernelTest = Test<MutableCommandListFixture<false, -1>>;
+using MutableCommandListKernelInOrderTest = Test<MutableCommandListFixture<true, -1>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,

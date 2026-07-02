@@ -114,8 +114,11 @@ struct PatchCbWaitEventSemaphoreWait {
 };
 
 struct PatchCbWaitEventLoadRegisterImm {
+    uint64_t gpuDestination = 0;
     void *pDestination = nullptr;
+    void *commandView = nullptr;
     size_t offset = 0;
+    size_t patchSize = 0;
 };
 
 struct PatchPrefetchKernelMemory {
