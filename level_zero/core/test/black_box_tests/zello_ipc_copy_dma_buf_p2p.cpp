@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,8 +34,13 @@ inline void initializeProcess(ze_context_handle_t &context,
 
     SUCCESS_OR_TERMINATE(zeInitDrivers(&driverCount, nullptr, &desc));
 
-    ze_driver_handle_t driverHandle;
+    if (driverCount == 0) {
+        std::cerr << "No driver handle found!\n";
+        std::terminate();
+    }
 
+    ze_driver_handle_t driverHandle = nullptr;
+    driverCount = 1;
     SUCCESS_OR_TERMINATE(zeInitDrivers(&driverCount, &driverHandle, &desc));
 
     ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};

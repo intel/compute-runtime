@@ -486,6 +486,7 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
         std::terminate();
     }
 
+    driverCount = 1;
     SUCCESS_OR_TERMINATE(zeInitDrivers(&driverCount, &driverHandle, &desc));
     testDriverHandle = driverHandle;
 
