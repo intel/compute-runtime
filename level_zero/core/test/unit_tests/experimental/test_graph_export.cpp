@@ -1542,7 +1542,7 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCa
     setupSuccessfulWrite(testGraph, GraphExportStyle::simple);
 
     ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
-    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
     dumpDesc.pNext = nullptr;
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE;
 
@@ -1574,7 +1574,7 @@ TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIs
     setupSuccessfulWrite(testGraph);
 
     ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
-    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
     dumpDesc.pNext = nullptr;
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED;
 
@@ -1603,7 +1603,7 @@ TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExpIsC
     setupSuccessfulWrite(testGraph);
 
     ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
-    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
     dumpDesc.pNext = nullptr;
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_FORCE_UINT32;
 

@@ -15,64 +15,24 @@
 #include <map>
 #include <sstream>
 
-using zeGraphCreateExpFP = ze_result_t(ZE_APICALL *)(ze_context_handle_t context, ze_graph_handle_t *phGraph, void *pNext);
-using zeCommandListBeginGraphCaptureExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, void *pNext);
-using zeCommandListBeginCaptureIntoGraphExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, ze_graph_handle_t hGraph, void *pNext);
-using zeCommandListEndGraphCaptureExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph, void *pNext);
-using zeCommandListInstantiateGraphExpFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph, ze_executable_graph_handle_t *phGraph, void *pNext);
-using zeCommandListAppendGraphExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, ze_executable_graph_handle_t hGraph, void *pNext,
-                                                                ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
-using zeCommandListGetGraphExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph);
-using zeGraphDestroyExpFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
-using zeExecutableGraphDestroyExpFP = ze_result_t(ZE_APICALL *)(ze_executable_graph_handle_t hGraph);
-
-using zeCommandListIsGraphCaptureEnabledExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList);
-using zeGraphIsEmptyExpFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
-using zeGraphDumpContentsExpFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph, const char *filePath, void *pNext);
-using zeGraphPauseCaptureExtFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
-using zeGraphResumeCaptureExtFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
-
 using TestKernelsContainer = std::map<std::string, ze_kernel_handle_t>;
-
-struct GraphApi {
-    zeGraphCreateExpFP graphCreate = nullptr;
-    zeCommandListBeginGraphCaptureExpFP commandListBeginGraphCapture = nullptr;
-    zeCommandListBeginCaptureIntoGraphExpFP commandListBeginCaptureIntoGraph = nullptr;
-    zeCommandListEndGraphCaptureExpFP commandListEndGraphCapture = nullptr;
-    zeCommandListInstantiateGraphExpFP commandListInstantiateGraph = nullptr;
-    zeCommandListAppendGraphExpFP commandListAppendGraph = nullptr;
-    zeCommandListGetGraphExpFP commandListGetGraph = nullptr;
-    zeGraphDestroyExpFP graphDestroy = nullptr;
-    zeExecutableGraphDestroyExpFP executableGraphDestroy = nullptr;
-
-    zeCommandListIsGraphCaptureEnabledExpFP commandListIsGraphCaptureEnabled = nullptr;
-    zeGraphIsEmptyExpFP graphIsEmpty = nullptr;
-    zeGraphDumpContentsExpFP graphDumpContents = nullptr;
-    zeGraphPauseCaptureExtFP graphPauseCapture = nullptr;
-    zeGraphResumeCaptureExtFP graphResumeCapture = nullptr;
-
-    bool valid() const {
-        return graphCreate && commandListBeginGraphCapture && commandListBeginCaptureIntoGraph && commandListEndGraphCapture && commandListInstantiateGraph && commandListAppendGraph && commandListGetGraph && graphDestroy && executableGraphDestroy && commandListIsGraphCaptureEnabled && graphIsEmpty && graphDumpContents && graphPauseCapture && graphResumeCapture;
-    }
-    bool loaded = false;
-};
 
 struct GraphDumpSettings {
     bool dump = false;
-    ze_record_replay_graph_exp_dump_mode_t mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED;
+    ze_record_replay_graph_ext_dump_mode_t mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_DETAILED;
 };
 
-void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtualGraph, const std::string &testName, const GraphDumpSettings &dumpSettings) {
+void dumpGraphToDotIfEnabled(ze_graph_handle_t virtualGraph, const std::string &testName, const GraphDumpSettings &dumpSettings) {
     if (!dumpSettings.dump) {
         return;
     }
-    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
-    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    ze_record_replay_graph_ext_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
     dumpDesc.mode = dumpSettings.mode;
     dumpDesc.pNext = nullptr;
 
     std::string filename = testName + "_graph.gv";
-    ze_result_t dumpResult = graphApi.graphDumpContents(virtualGraph, filename.c_str(), &dumpDesc);
+    ze_result_t dumpResult = zeGraphDumpContentsExt(virtualGraph, filename.c_str(), &dumpDesc);
 
     if (dumpResult == ZE_RESULT_SUCCESS) {
         std::cout << "Graph dumped to " << filename << std::endl;
@@ -81,37 +41,11 @@ void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtual
     }
 }
 
-GraphApi &loadGraphApi(ze_driver_handle_t driver) {
-    static GraphApi testGraphFunctions;
-
-    if (testGraphFunctions.loaded) {
-        return testGraphFunctions;
-    }
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphCreateExp", reinterpret_cast<void **>(&testGraphFunctions.graphCreate));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListBeginGraphCaptureExp", reinterpret_cast<void **>(&testGraphFunctions.commandListBeginGraphCapture));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListBeginCaptureIntoGraphExp", reinterpret_cast<void **>(&testGraphFunctions.commandListBeginCaptureIntoGraph));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListEndGraphCaptureExp", reinterpret_cast<void **>(&testGraphFunctions.commandListEndGraphCapture));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListInstantiateGraphExp", reinterpret_cast<void **>(&testGraphFunctions.commandListInstantiateGraph));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListAppendGraphExp", reinterpret_cast<void **>(&testGraphFunctions.commandListAppendGraph));
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListGetGraphExp", reinterpret_cast<void **>(&testGraphFunctions.commandListGetGraph));
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphDestroyExp", reinterpret_cast<void **>(&testGraphFunctions.graphDestroy));
-    zeDriverGetExtensionFunctionAddress(driver, "zeExecutableGraphDestroyExp", reinterpret_cast<void **>(&testGraphFunctions.executableGraphDestroy));
-
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListIsGraphCaptureEnabledExp", reinterpret_cast<void **>(&testGraphFunctions.commandListIsGraphCaptureEnabled));
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphIsEmptyExp", reinterpret_cast<void **>(&testGraphFunctions.graphIsEmpty));
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphDumpContentsExp", reinterpret_cast<void **>(&testGraphFunctions.graphDumpContents));
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphPauseCaptureExt", reinterpret_cast<void **>(&testGraphFunctions.graphPauseCapture));
-    zeDriverGetExtensionFunctionAddress(driver, "zeGraphResumeCaptureExt", reinterpret_cast<void **>(&testGraphFunctions.graphResumeCapture));
-
-    testGraphFunctions.loaded = true;
-    return testGraphFunctions;
-}
-
-bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
+bool testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
     ze_graph_handle_t virtualGraph = nullptr;
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
 
     const size_t allocSize = 4096;
 
@@ -138,17 +72,17 @@ bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_d
     ze_command_list_handle_t cmdList;
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdList, virtualGraph, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, heapBuffer, allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, stackBuffer, zeBuffer, allocSize, nullptr, 0, nullptr));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdList, nullptr, nullptr));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
@@ -163,23 +97,23 @@ bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_d
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, heapBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, stackBuffer));
 
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
 
     return validRet;
 }
 
-bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
+bool testMultiGraph(ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
     ze_graph_handle_t virtualGraph = nullptr;
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
 
     const size_t allocSize = 4096;
     void *heapBuffer = nullptr;
@@ -226,7 +160,7 @@ bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListMain);
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListSub);
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListMain, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListMain, virtualGraph, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdListMain, zeBuffer, heapBuffer, allocSize, eventFork, 0, nullptr));
     // fork :
@@ -234,11 +168,11 @@ bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_
     // join :
     SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdListMain, 1, &eventJoin));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListMain, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdListMain, nullptr, nullptr));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListMain, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListMain, physicalGraph, nullptr, nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListMain, std::numeric_limits<uint64_t>::max()));
 
@@ -253,14 +187,14 @@ bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, heapBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, stackBuffer));
 
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
 
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListSub));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListMain));
@@ -270,11 +204,11 @@ bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_
     return validRet;
 }
 
-bool testMultiGraphPostJoinTrailingSync(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
+bool testMultiGraphPostJoinTrailingSync(ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
     ze_graph_handle_t virtualGraph = nullptr;
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
 
     constexpr size_t allocSize = 4096;
     uint8_t *sharedBuffer = nullptr;
@@ -311,7 +245,7 @@ bool testMultiGraphPostJoinTrailingSync(GraphApi &graphApi, ze_context_handle_t 
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListMain);
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListSub);
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListMain, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListMain, virtualGraph, nullptr));
 
     // parent: signal fork
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListMain, eventFork, 0, nullptr));
@@ -325,10 +259,10 @@ bool testMultiGraphPostJoinTrailingSync(GraphApi &graphApi, ze_context_handle_t 
     // parent: wait join
     SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdListMain, 1, &eventJoin));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListMain, nullptr, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdListMain, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListMain, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListMain, physicalGraph, nullptr, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListMain, std::numeric_limits<uint64_t>::max()));
 
     // Checks post-join signal, should be signaled at this point
@@ -338,10 +272,10 @@ bool testMultiGraphPostJoinTrailingSync(GraphApi &graphApi, ze_context_handle_t 
         validRet = LevelZeroBlackBoxTests::validateToValue(pattern, sharedBuffer, allocSize);
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
 
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListSub));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListMain));
@@ -378,8 +312,7 @@ inline auto allocateDispatchTraits(ze_context_handle_t context, bool indirect) {
     return RetUniquePtr(rawPtr, dispatchTraitsDeleter);
 }
 
-bool testAppendLaunchKernel(GraphApi &graphApi,
-                            ze_context_handle_t &context,
+bool testAppendLaunchKernel(ze_context_handle_t &context,
                             ze_device_handle_t &device,
                             TestKernelsContainer &testKernels,
                             bool areDispatchTraitsIndirect,
@@ -430,8 +363,8 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
 
     // Start capturing commands
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdList, virtualGraph, nullptr));
 
     // Encode buffers initialization
     uint8_t srcInitValue = 0xa;
@@ -471,12 +404,12 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
     std::memset(outputData.get(), 0x9, allocSize);
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, outputData.get(), dstBuffer, allocSize, nullptr, 0, nullptr));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdList, nullptr, nullptr));
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
     // Dispatch and wait
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
     // Validate
@@ -489,7 +422,7 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
@@ -501,13 +434,12 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
     SUCCESS_OR_TERMINATE(zeEventDestroy(eventCopied));
     SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
 
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
     return validRet;
 }
 
-bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
-                                             ze_context_handle_t &context,
+bool testAppendLaunchMultipleKernelsIndirect(ze_context_handle_t &context,
                                              ze_device_handle_t &device,
                                              TestKernelsContainer &testKernels,
                                              bool aubMode,
@@ -570,8 +502,8 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
 
     // Start capturing commands
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdList, virtualGraph, nullptr));
 
     // Encode buffers initialization
     const std::byte srcInitialValue{0xA};
@@ -619,12 +551,12 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
     auto incrementedOut = std::vector<std::byte>(allocSize);
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, incrementedOut.data(), incrementedBuffer, allocSize, nullptr, 1, &eventCopied));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdList, nullptr, nullptr));
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
     // Dispatch and wait
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
     // Validate
@@ -648,7 +580,7 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
         validRet &= validRet2; // Combine results
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dispatchTraits));
@@ -663,13 +595,12 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
     SUCCESS_OR_TERMINATE(zeEventDestroy(eventCopied));
     SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
 
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
     return validRet;
 }
 
-bool testMultipleGraphExecution(GraphApi &graphApi,
-                                ze_context_handle_t &context,
+bool testMultipleGraphExecution(ze_context_handle_t &context,
                                 ze_device_handle_t &device,
                                 TestKernelsContainer &testKernels,
                                 bool aubMode,
@@ -697,8 +628,8 @@ bool testMultipleGraphExecution(GraphApi &graphApi,
     }
 
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdList, virtualGraph, nullptr));
 
     uint32_t groupSizeX = 64;
     uint32_t groupSizeY = 1u;
@@ -709,30 +640,29 @@ bool testMultipleGraphExecution(GraphApi &graphApi,
     ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernelAddConstant, &groupCount, nullptr, 0, nullptr));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdList, nullptr, nullptr));
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
     // Dispatch and wait
     for (uint32_t i = 0; i < loopCount; i++) {
-        SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
     }
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
     if (aubMode == false) {
         validRet = LevelZeroBlackBoxTests::validateToValue(expectedValue, buffer, elemCount);
     }
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     return validRet;
 }
 
-bool testExternalGraphCbEvents(GraphApi &graphApi,
-                               ze_context_handle_t &context,
+bool testExternalGraphCbEvents(ze_context_handle_t &context,
                                ze_device_handle_t &device,
                                TestKernelsContainer &testKernels,
                                bool aubMode,
@@ -775,8 +705,8 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     auto buf2 = reinterpret_cast<volatile uint32_t *>(buffer);
     std::cout << "\nBuffer before graph execution: " << buf2[0] << ", " << buf2[1] << ", " << buf2[2] << std::endl;
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdList, virtualGraph, nullptr));
 
     uint32_t groupSizeX = 64;
     uint32_t groupSizeY = 1u;
@@ -788,16 +718,16 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     // attach external event to append operation
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernelAddConstant, &groupCount, eventCb, 0, nullptr));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdList, nullptr, nullptr));
 
     // create two physical graphs from the same virtual graph
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
     ze_executable_graph_handle_t physicalGraph2 = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph2, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph2));
 
     // Dispatch and wait physicalGraph 1
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
     // synchronize using event
     SUCCESS_OR_TERMINATE(zeEventHostSynchronize(eventCb, std::numeric_limits<uint64_t>::max()));
 
@@ -807,7 +737,7 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     }
 
     // Dispatch and wait physicalGraph 2
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph2, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdList, physicalGraph2, nullptr, nullptr, 0, nullptr));
     // synchronize using the same event, but different executable graph
     SUCCESS_OR_TERMINATE(zeEventHostSynchronize(eventCb, std::numeric_limits<uint64_t>::max()));
 
@@ -819,19 +749,18 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     // Final sync to ensure all operations are done
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph2));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph2));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeEventDestroy(eventCb));
     return validRet;
 }
 
-bool testExternalGraphCbEventsMultiExecution(GraphApi &graphApi,
-                                             ze_context_handle_t &context,
+bool testExternalGraphCbEventsMultiExecution(ze_context_handle_t &context,
                                              ze_device_handle_t &device,
                                              TestKernelsContainer &testKernels,
                                              uint32_t executionCount,
@@ -878,8 +807,8 @@ bool testExternalGraphCbEventsMultiExecution(GraphApi &graphApi,
     }
 
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdList, virtualGraph, nullptr));
 
     uint32_t groupSizeX = 32;
     uint32_t groupSizeY = 1u;
@@ -892,18 +821,18 @@ bool testExternalGraphCbEventsMultiExecution(GraphApi &graphApi,
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernelAddConstant, &groupCount, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendSignalEvent(cmdList, eventCb));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdList, nullptr, nullptr));
 
     // create physical graph
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
     std::vector<int64_t> eventSyncTimings(executionCount);
     std::vector<int64_t> commandListSyncTimings(executionCount);
 
     // Dispatch physicalGraph and wait on cb event
     for (uint32_t i = 0; i < executionCount; ++i) {
-        SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
         // synchronize using event
         auto startTime = std::chrono::high_resolution_clock::now();
         SUCCESS_OR_TERMINATE(zeEventHostSynchronize(eventCb, std::numeric_limits<uint64_t>::max()));
@@ -928,18 +857,17 @@ bool testExternalGraphCbEventsMultiExecution(GraphApi &graphApi,
         std::cout << "  Iteration " << i << ": event: " << eventSyncTimings[i] << " command list: " << commandListSyncTimings[i] << " us" << std::endl;
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeEventDestroy(eventCb));
     return validRet;
 }
 
-bool testMultipleLevelGraph(GraphApi &graphApi,
-                            LevelZeroBlackBoxTests::VisitExtension::VisitApi *visitApi,
+bool testMultipleLevelGraph(LevelZeroBlackBoxTests::VisitExtension::VisitApi *visitApi,
                             ze_context_handle_t &context,
                             ze_device_handle_t &device,
                             TestKernelsContainer &testKernels,
@@ -1004,8 +932,8 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
 
     ze_graph_handle_t virtualGraph = nullptr;
     if (immediate == false) {
-        SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-        SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListRoot, virtualGraph, nullptr));
+        SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+        SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListRoot, virtualGraph, nullptr));
     }
 
     uint32_t groupSizeX = std::min(64u, static_cast<uint32_t>(elemCount));
@@ -1067,16 +995,16 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
     ze_executable_graph_handle_t physicalGraph = nullptr;
     if (immediate == false) {
         // create physical graphs from the same virtual graph
-        SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListRoot, nullptr, nullptr));
-        SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdListRoot, nullptr, nullptr));
+        SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
     }
 
     if (immediate == false) {
         // Dispatch and wait physicalGraph
         if (executeUsingVisitor == false) {
-            SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
+            SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
         } else {
-            ze_visit_ext_desc_t visitDesc{ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
+            ze_visit_ext_desc_t visitDesc{static_cast<decltype(ze_visit_ext_desc_t::stype)>(0x00030032)};
             visitDesc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
             SUCCESS_OR_TERMINATE(visitApi->graphVisit(virtualGraph, &visitDesc));
         }
@@ -1089,9 +1017,9 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
     }
 
     if (immediate == false) {
-        dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
-        SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-        SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+        dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
+        SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+        SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     }
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
@@ -1107,8 +1035,7 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
     return validRet;
 }
 
-bool testMultipleForkJoinsGraph(GraphApi &graphApi,
-                                ze_context_handle_t &context,
+bool testMultipleForkJoinsGraph(ze_context_handle_t &context,
                                 ze_device_handle_t &device,
                                 TestKernelsContainer &testKernels,
                                 bool aubMode,
@@ -1186,8 +1113,8 @@ bool testMultipleForkJoinsGraph(GraphApi &graphApi,
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &finalBuffer));
 
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListRoot, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListRoot, virtualGraph, nullptr));
 
     uint32_t groupSizeX = std::min(64u, static_cast<uint32_t>(elemCount));
     uint32_t groupSizeY = 1u;
@@ -1265,11 +1192,11 @@ bool testMultipleForkJoinsGraph(GraphApi &graphApi,
 
     ze_executable_graph_handle_t physicalGraph = nullptr;
     // create physical graphs from the same virtual graph
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListRoot, nullptr, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdListRoot, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
     // Dispatch and wait physicalGraph
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListRoot, std::numeric_limits<uint64_t>::max()));
 
     // verify data
@@ -1280,9 +1207,9 @@ bool testMultipleForkJoinsGraph(GraphApi &graphApi,
     std::stringstream ss;
     ss << __func__ << (reuse ? "_reuse_join2" : "_new_join2");
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, ss.str(), dumpSettings);
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    dumpGraphToDotIfEnabled(virtualGraph, ss.str(), dumpSettings);
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, stage1Buffer));
@@ -1298,8 +1225,7 @@ bool testMultipleForkJoinsGraph(GraphApi &graphApi,
     return validRet;
 }
 
-bool testForkedGraphMultipleExecutionEventSync(GraphApi &graphApi,
-                                               ze_context_handle_t &context,
+bool testForkedGraphMultipleExecutionEventSync(ze_context_handle_t &context,
                                                ze_device_handle_t &device,
                                                TestKernelsContainer &testKernels,
                                                bool aubMode,
@@ -1373,8 +1299,8 @@ bool testForkedGraphMultipleExecutionEventSync(GraphApi &graphApi,
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
 
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListCopy, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListCopy, virtualGraph, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdListCopy, zeBuffer, inputData.data(), allocSize, eventFork, 0, nullptr));
 
@@ -1389,9 +1315,9 @@ bool testForkedGraphMultipleExecutionEventSync(GraphApi &graphApi,
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdListCopy, outputData.data(), zeBuffer, allocSize, nullptr, 1, &eventJoin));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListCopy, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdListCopy, nullptr, nullptr));
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
     auto eventStatus = [](ze_result_t evStatus, std::string evType, bool before) -> std::string {
         std::ostringstream caseName;
@@ -1410,7 +1336,7 @@ bool testForkedGraphMultipleExecutionEventSync(GraphApi &graphApi,
         evStatus = zeEventQueryStatus(eventJoin);
         std::cout << eventStatus(evStatus, "join", true);
 
-        SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListReplay[i], physicalGraph, nullptr, eventReplay[i], 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListReplay[i], physicalGraph, nullptr, eventReplay[i], 0, nullptr));
         SUCCESS_OR_TERMINATE(zeEventHostSynchronize(eventReplay[i], std::numeric_limits<uint64_t>::max()));
 
         if (aubMode == false) {
@@ -1425,14 +1351,14 @@ bool testForkedGraphMultipleExecutionEventSync(GraphApi &graphApi,
         SUCCESS_OR_TERMINATE(zeEventHostReset(eventJoin));
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
     for (uint32_t i = 0; i < executionCount; i++) {
         SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListReplay[i], std::numeric_limits<uint64_t>::max()));
     }
 
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListCopy));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListExecute));
@@ -1455,8 +1381,7 @@ enum TestWrappedMultipleEnginesForkPolicy {
     max
 };
 
-bool testWrappedMultipleEngines(GraphApi &graphApi,
-                                ze_context_handle_t &context,
+bool testWrappedMultipleEngines(ze_context_handle_t &context,
                                 ze_device_handle_t &device,
                                 TestKernelsContainer &testKernels,
                                 bool aubMode,
@@ -1547,8 +1472,8 @@ bool testWrappedMultipleEngines(GraphApi &graphApi,
     ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
 
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListSequence[0], virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListSequence[0], virtualGraph, nullptr));
 
     ze_event_handle_t signalEvent = nullptr, waitEvent = nullptr;
     uint32_t numWaitEvents = 0;
@@ -1559,12 +1484,12 @@ bool testWrappedMultipleEngines(GraphApi &graphApi,
         waitEvent = signalEvent;
     }
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListSequence[0], nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdListSequence[0], nullptr, nullptr));
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
     // Dispatch and wait
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListSequence[0], physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListSequence[0], physicalGraph, nullptr, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListSequence[0], std::numeric_limits<uint64_t>::max()));
 
     if (aubMode == false) {
@@ -1573,10 +1498,10 @@ bool testWrappedMultipleEngines(GraphApi &graphApi,
 
     std::stringstream ss;
     ss << __func__ << forkPolicyString;
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, ss.str(), dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, ss.str(), dumpSettings);
 
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     for (uint32_t i = 0; i < queueCount; i++) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListCreated[i]));
@@ -1588,8 +1513,7 @@ bool testWrappedMultipleEngines(GraphApi &graphApi,
     return validRet;
 }
 
-bool testSingleWrappedEngineDeepFork(GraphApi &graphApi,
-                                     ze_context_handle_t &context,
+bool testSingleWrappedEngineDeepFork(ze_context_handle_t &context,
                                      ze_device_handle_t &device,
                                      TestKernelsContainer &testKernels,
                                      bool aubMode,
@@ -1666,8 +1590,8 @@ bool testSingleWrappedEngineDeepFork(GraphApi &graphApi,
     ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
 
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListSequence[0], virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListSequence[0], virtualGraph, nullptr));
 
     ze_event_handle_t signalEvent = nullptr, waitEvent = nullptr;
     uint32_t numWaitEvents = 0;
@@ -1678,12 +1602,12 @@ bool testSingleWrappedEngineDeepFork(GraphApi &graphApi,
         waitEvent = signalEvent;
     }
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListSequence[0], nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdListSequence[0], nullptr, nullptr));
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
     // Dispatch and wait
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListSequence[0], physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListSequence[0], physicalGraph, nullptr, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListSequence[0], std::numeric_limits<uint64_t>::max()));
 
     if (aubMode == false) {
@@ -1692,10 +1616,10 @@ bool testSingleWrappedEngineDeepFork(GraphApi &graphApi,
 
     std::stringstream ss;
     ss << __func__;
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, ss.str(), dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, ss.str(), dumpSettings);
 
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     for (uint32_t i = 0; i < queueCount; i++) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListCreated[i]));
@@ -1707,8 +1631,7 @@ bool testSingleWrappedEngineDeepFork(GraphApi &graphApi,
     return validRet;
 }
 
-bool testCopyEngineSimpleGraph(GraphApi &graphApi,
-                               ze_context_handle_t &context,
+bool testCopyEngineSimpleGraph(ze_context_handle_t &context,
                                ze_device_handle_t &device,
                                bool aubMode,
                                const GraphDumpSettings &dumpSettings) {
@@ -1744,20 +1667,20 @@ bool testCopyEngineSimpleGraph(GraphApi &graphApi,
 
     // begin recording graph
     ze_graph_handle_t virtualGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(copyIcl, virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(copyIcl, virtualGraph, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(copyIcl, zeBuffer, srcBuffer, allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(copyIcl, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(copyIcl, dstBuffer, zeBuffer, allocSize, nullptr, 0, nullptr));
 
     // instantiate graph
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(copyIcl, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(copyIcl, nullptr, nullptr));
     ze_executable_graph_handle_t physicalGraph = nullptr;
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
 
     // Dispatch and wait
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(copyIcl, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(copyIcl, physicalGraph, nullptr, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(copyIcl, std::numeric_limits<uint64_t>::max()));
 
     if (aubMode == false) {
@@ -1766,11 +1689,11 @@ bool testCopyEngineSimpleGraph(GraphApi &graphApi,
 
     std::stringstream ss;
     ss << __func__;
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, ss.str(), dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, ss.str(), dumpSettings);
 
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(copyIcl));
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
@@ -1781,8 +1704,17 @@ bool testCopyEngineSimpleGraph(GraphApi &graphApi,
 // 1) Start graph capture and copy patternA to device buffer
 // 2) Pause capture, copy patternB to the same device buffer and validate
 // 3) Resume capture, copy from device buffer to host and validate patternA is copied (patternB copy should not be captured)
-bool testPauseResumeCapture(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
+bool testPauseResumeCapture(ze_driver_handle_t driverHandle, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
+
+    using GraphPauseCaptureExtFn = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
+    using GraphResumeCaptureExtFn = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
+    GraphPauseCaptureExtFn graphPauseCaptureExt = nullptr;
+    GraphResumeCaptureExtFn graphResumeCaptureExt = nullptr;
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphPauseCaptureExt", reinterpret_cast<void **>(&graphPauseCaptureExt)));
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphResumeCaptureExt", reinterpret_cast<void **>(&graphResumeCaptureExt)));
+    SUCCESS_OR_TERMINATE_BOOL(graphPauseCaptureExt != nullptr);
+    SUCCESS_OR_TERMINATE_BOOL(graphResumeCaptureExt != nullptr);
 
     constexpr size_t allocSize = 4096;
     constexpr uint8_t patternA = 0xAA;
@@ -1808,14 +1740,14 @@ bool testPauseResumeCapture(GraphApi &graphApi, ze_context_handle_t &context, ze
     ze_command_list_handle_t cmdList{};
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListBeginGraphCapture(cmdList, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginGraphCaptureExt(cmdList, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, srcBufferA, allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
     ze_graph_handle_t virtualGraph{};
-    SUCCESS_OR_TERMINATE(graphApi.commandListGetGraph(cmdList, &virtualGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphPauseCapture(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListGetGraphExt(cmdList, &virtualGraph));
+    SUCCESS_OR_TERMINATE(graphPauseCaptureExt(virtualGraph));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, srcBufferB, allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
@@ -1830,15 +1762,15 @@ bool testPauseResumeCapture(GraphApi &graphApi, ze_context_handle_t &context, ze
         }
     }
 
-    SUCCESS_OR_TERMINATE(graphApi.graphResumeCapture(virtualGraph));
+    SUCCESS_OR_TERMINATE(graphResumeCaptureExt(virtualGraph));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, zeBuffer, allocSize, nullptr, 0, nullptr));
 
-    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdList, nullptr, &virtualGraph));
 
     ze_executable_graph_handle_t physicalGraph{};
-    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
-    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
     if (aubMode == false) {
@@ -1850,14 +1782,14 @@ bool testPauseResumeCapture(GraphApi &graphApi, ze_context_handle_t &context, ze
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBufferA));
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBufferB));
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
-    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
-    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     return validRet;
 }
@@ -1885,7 +1817,7 @@ int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
     bool dumpGraph = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-d", "--dump_graph");
-    auto graphMode = static_cast<ze_record_replay_graph_exp_dump_mode_t>(LevelZeroBlackBoxTests::getParamValue(argc, argv, "-sm", "--dump_graph_mode", 0U));
+    auto graphMode = static_cast<ze_record_replay_graph_ext_dump_mode_t>(LevelZeroBlackBoxTests::getParamValue(argc, argv, "-sm", "--dump_graph_mode", 0U));
     GraphDumpSettings graphDumpSettings = {.dump = dumpGraph, .mode = graphMode};
 
     const std::string blackBoxName("Zello Graph");
@@ -1895,7 +1827,7 @@ int main(int argc, char *argv[]) {
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
 
     auto device0 = devices[0];
-    ze_record_replay_graph_exp_properties_t graphProperties = {ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES};
+    ze_record_replay_graph_ext_properties_t graphProperties = {ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_PROPERTIES};
     ze_device_properties_t device0Properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     device0Properties.pNext = &graphProperties;
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device0, &device0Properties));
@@ -1903,22 +1835,17 @@ int main(int argc, char *argv[]) {
 
     std::vector<ze_driver_extension_properties_t> extensionVector;
     ze_driver_extension_properties_t graphExtension{};
-    std::string graphExtensionString = "ZE_experimental_record_replay_graph";
+    std::string graphExtensionString = ZE_RECORD_REPLAY_GRAPH_EXT_NAME;
     std::snprintf(graphExtension.name, sizeof(graphExtension.name), "%s", graphExtensionString.c_str());
-    graphExtension.version = ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_1_0;
+    graphExtension.version = ZE_RECORD_REPLAY_GRAPH_EXT_VERSION_1_0;
     extensionVector.push_back(graphExtension);
     bool graphExtensionPresent = LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionVector);
     if (!graphExtensionPresent) {
         std::cerr << "Graph extension not present" << std::endl;
         return 1;
     }
-    if (false == !!(graphProperties.graphFlags & ZE_RECORD_REPLAY_GRAPH_EXP_FLAG_IMMUTABLE_GRAPH)) {
+    if (false == !!(graphProperties.graphFlags & ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_IMMUTABLE_GRAPH)) {
         std::cerr << "Device not supporting graph" << std::endl;
-        return 1;
-    }
-    auto &graphApi = loadGraphApi(driverHandle);
-    if (false == graphApi.valid()) {
-        std::cerr << "Graph API not available" << std::endl;
         return 1;
     }
 
@@ -1939,7 +1866,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestStandardMemoryCopy)) {
         currentTest = "Standard Memory Copy";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testAppendMemoryCopy(graphApi, context, device0, aubMode, graphDumpSettings);
+        casePass = testAppendMemoryCopy(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -1947,13 +1874,13 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestStandardMemoryCopyMultigraph)) {
         currentTest = "Standard Memory Copy - multigraph";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testMultiGraph(graphApi, context, device0, aubMode, graphDumpSettings);
+        casePass = testMultiGraph(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
 
         currentTest = "Standard Memory Copy - multigraph post-join trailing synchronization";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testMultiGraphPostJoinTrailingSync(graphApi, context, device0, aubMode, graphDumpSettings);
+        casePass = testMultiGraphPostJoinTrailingSync(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -1961,7 +1888,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestAppendLaunchKernel)) {
         currentTest = "AppendLaunchKernel";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testAppendLaunchKernel(graphApi, context, device0, kernelsMap, false, aubMode, graphDumpSettings);
+        casePass = testAppendLaunchKernel(context, device0, kernelsMap, false, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -1969,7 +1896,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestAppendLaunchKernelIndirect)) {
         currentTest = "AppendLaunchKernelIndirect";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testAppendLaunchKernel(graphApi, context, device0, kernelsMap, true, aubMode, graphDumpSettings);
+        casePass = testAppendLaunchKernel(context, device0, kernelsMap, true, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -1977,7 +1904,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestAppendLaunchMultipleKernelsIndirect)) {
         currentTest = "AppendLaunchMultipleKernelsIndirect";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testAppendLaunchMultipleKernelsIndirect(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings);
+        casePass = testAppendLaunchMultipleKernelsIndirect(context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -1985,7 +1912,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestMultipleExecution)) {
         currentTest = "Multiple Graph Execution";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testMultipleGraphExecution(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings);
+        casePass = testMultipleGraphExecution(context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -1994,7 +1921,7 @@ int main(int argc, char *argv[]) {
         if (testSubMask.test(0)) {
             currentTest = "External Graph CB Events";
             std::cout << "Starting test: " << currentTest << std::endl;
-            casePass = testExternalGraphCbEvents(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings);
+            casePass = testExternalGraphCbEvents(context, device0, kernelsMap, aubMode, graphDumpSettings);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }
@@ -2011,7 +1938,7 @@ int main(int argc, char *argv[]) {
             currentTest = getCaseName(executionCount);
 
             std::cout << "Starting test: " << currentTest << std::endl;
-            casePass = testExternalGraphCbEventsMultiExecution(graphApi, context, device0, kernelsMap, executionCount, aubMode, graphDumpSettings);
+            casePass = testExternalGraphCbEventsMultiExecution(context, device0, kernelsMap, executionCount, aubMode, graphDumpSettings);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }
@@ -2029,7 +1956,7 @@ int main(int argc, char *argv[]) {
         bool immediate = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-i", "--immediate");
         currentTest = getCaseName(immediate);
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testMultipleLevelGraph(graphApi, nullptr, context, device0, kernelsMap, aubMode, graphDumpSettings, immediate, false);
+        casePass = testMultipleLevelGraph(nullptr, context, device0, kernelsMap, aubMode, graphDumpSettings, immediate, false);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -2058,7 +1985,7 @@ int main(int argc, char *argv[]) {
             bool reuse = reuseValues[i];
             currentTest = getCaseName(reuse);
             std::cout << "Starting test: " << currentTest << std::endl;
-            casePass = testMultipleForkJoinsGraph(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, reuse);
+            casePass = testMultipleForkJoinsGraph(context, device0, kernelsMap, aubMode, graphDumpSettings, reuse);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }
@@ -2077,7 +2004,7 @@ int main(int argc, char *argv[]) {
 
         currentTest = getCaseName(executionCount);
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testForkedGraphMultipleExecutionEventSync(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, executionCount);
+        casePass = testForkedGraphMultipleExecutionEventSync(context, device0, kernelsMap, aubMode, graphDumpSettings, executionCount);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -2111,7 +2038,7 @@ int main(int argc, char *argv[]) {
                 auto currentForkPolicy = forkPolicyValues[i];
                 currentTest = getCaseName(engineCount, pairCount, currentForkPolicy);
                 std::cout << "Starting test: " << currentTest << std::endl;
-                casePass = testWrappedMultipleEngines(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount, pairCount, currentForkPolicy);
+                casePass = testWrappedMultipleEngines(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount, pairCount, currentForkPolicy);
                 LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
                 boxPass &= casePass;
             }
@@ -2127,7 +2054,7 @@ int main(int argc, char *argv[]) {
 
             currentTest = getCaseName(engineCount);
             std::cout << "Starting test: " << currentTest << std::endl;
-            casePass = testSingleWrappedEngineDeepFork(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount);
+            casePass = testSingleWrappedEngineDeepFork(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }
@@ -2136,7 +2063,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestCopyEngineSimpleGraph)) {
         currentTest = "Copy Engine Simple Graph";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testCopyEngineSimpleGraph(graphApi, context, device0, aubMode, graphDumpSettings);
+        casePass = testCopyEngineSimpleGraph(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -2148,7 +2075,7 @@ int main(int argc, char *argv[]) {
         if (!visitApi.valid()) {
             std::cout << "Visit extension API is not available, skipping test" << std::endl;
         } else {
-            casePass = testMultipleLevelGraph(graphApi, &visitApi, context, device0, kernelsMap, aubMode, graphDumpSettings, false, true);
+            casePass = testMultipleLevelGraph(&visitApi, context, device0, kernelsMap, aubMode, graphDumpSettings, false, true);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }
@@ -2157,7 +2084,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestPauseResume)) {
         currentTest = "Pause Resume Graph Capture";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testPauseResumeCapture(graphApi, context, device0, aubMode, graphDumpSettings);
+        casePass = testPauseResumeCapture(driverHandle, context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
