@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 * [Support and Limitations](#Support-and-Limitations)
 * [Mapping core device handle to sysman device handle](#Mapping-core-device-handle-to-sysman-device-handle-with-zesInit-initialization)
 * [Recommendation](#Recommendation)
+* [Sampling Interval Recommendation](#Sampling-Interval-Recommendation)
 
 # Introduction
 
@@ -114,3 +115,10 @@ Note: Along with mapped sysman device handle, `onSubdevice` and `subdeviceId` ou
 1. Only one initialization of sysman is supported for a process and it is suggested that all libraries using sysman in the same process should use either legacy mode(zeInit + ZES_ENABLE_SYSMAN=1) or zesInit based initialization.
 2. We recommend to use legacy mode(zeInit + ZES_ENABLE_SYSMAN=1) of sysman till PVC platforms.
 3. For post PVC platforms, zesInit based sysman initialization should be used.
+
+# Sampling Interval Recommendation
+
+For the below use-cases the recommended sampling interval is at least 100 milliseconds
+1. To calculate average power from energy counter using `zes_power_energy_counter_t`
+2. To calculate memory bandwidth percentage using `zes_mem_bandwidth_t`
+3. To calculate PCI Throughput and replay percentage using `zes_pci_stats_t`
