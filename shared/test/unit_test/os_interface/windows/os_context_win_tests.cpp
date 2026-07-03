@@ -219,7 +219,9 @@ TEST_F(OsContextWinTest, whenInitPrivateDataIsCalledTwiceWithoutReInitThenErrorI
 
 TEST_F(OsContextWinTest, whenLatePreemptionStartEventIsSignalledThenCommandsAreProgrammed) {
     DebugManagerStateRestore restorer;
+    constexpr uint64_t mockKmdCpuEvent = 0x1234;
     VariableBackup<decltype(NEO::pCallEscape)> mockCallEscape(&NEO::pCallEscape, [](D3DKMT_ESCAPE &escapeCommand) -> NTSTATUS {
+        reinterpret_cast<D3DDDI_DRIVERESCAPE_CPUEVENTUSAGE *>(escapeCommand.pPrivateDriverData)->hKmdCpuEvent = mockKmdCpuEvent;
         return STATUS_SUCCESS;
     });
     VariableBackup<decltype(SysCalls::sysCallsRegisterWaitForSingleObject)> mockSysCallsRegisterWaitForSingleObject(
@@ -240,12 +242,14 @@ TEST_F(OsContextWinTest, whenLatePreemptionStartEventIsSignalledThenCommandsAreP
     auto privateData = initPrivateData(*osContext);
     EXPECT_FALSE(privateData.DisableWmtp);
     EXPECT_FALSE(privateData.NotifyPreemptExceedThreshold);
+    EXPECT_EQ(0u, privateData.hPreemptCpuEventObject);
     EXPECT_EQ(0u, csr.submitLateMidThreadPreemptionStartCounter);
 
     debugManager.flags.OverrideLatePreemptionStart.set(1);
     privateData = initPrivateData(*osContext);
     EXPECT_TRUE(privateData.DisableWmtp);
     EXPECT_TRUE(privateData.NotifyPreemptExceedThreshold);
+    EXPECT_EQ(mockKmdCpuEvent, privateData.hPreemptCpuEventObject);
     EXPECT_EQ(1u, csr.submitLateMidThreadPreemptionStartCounter);
 }
 

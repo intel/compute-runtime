@@ -157,18 +157,33 @@ typedef struct __GMM_GFX_PARTITIONING {
         Heap32[4];            // NOLINT(readability-identifier-naming)
 } GMM_GFX_PARTITIONING;
 
+typedef union UMD_POWER_HINT_REC { // NOLINT(readability-identifier-naming)
+    struct {
+        uint8_t Value : 7;   // NOLINT(readability-identifier-naming)
+        uint8_t IsValid : 1; // NOLINT(readability-identifier-naming)
+    };
+    uint8_t Data; // NOLINT(readability-identifier-naming)
+} UMD_POWER_HINT;
+
 struct CREATECONTEXT_PVTDATA { // NOLINT(readability-identifier-naming)
     unsigned long *pHwContextId;
     uint32_t NumberOfHwContextIds; // NOLINT(readability-identifier-naming)
 
-    uint32_t ProcessID;              // NOLINT(readability-identifier-naming)
-    uint8_t IsProtectedProcess;      // NOLINT(readability-identifier-naming)
-    uint8_t IsDwm;                   // NOLINT(readability-identifier-naming)
-    uint8_t IsMediaUsage;            // NOLINT(readability-identifier-naming)
-    uint8_t GpuVAContext;            // NOLINT(readability-identifier-naming)
-    BOOLEAN NoRingFlushes;           // NOLINT(readability-identifier-naming)
-    BOOLEAN DummyPageBackingEnabled; // NOLINT(readability-identifier-naming)
-    uint32_t UmdContextType;         // NOLINT(readability-identifier-naming)
+    uint32_t ProcessID;                   // NOLINT(readability-identifier-naming)
+    uint8_t IsProtectedProcess;           // NOLINT(readability-identifier-naming)
+    uint8_t IsDwm;                        // NOLINT(readability-identifier-naming)
+    uint8_t IsMediaUsage;                 // NOLINT(readability-identifier-naming)
+    uint8_t GpuVAContext;                 // NOLINT(readability-identifier-naming)
+    BOOLEAN NoRingFlushes;                // NOLINT(readability-identifier-naming)
+    BOOLEAN DummyPageBackingEnabled;      // NOLINT(readability-identifier-naming)
+    uint32_t UmdContextType;              // NOLINT(readability-identifier-naming)
+    UMD_POWER_HINT PowerHint;             // NOLINT(readability-identifier-naming)
+    BOOLEAN DebugSIPInstalled;            // NOLINT(readability-identifier-naming)
+    uint8_t NumHwQueues;                  // NOLINT(readability-identifier-naming)
+    BOOLEAN DisableWmtp;                  // NOLINT(readability-identifier-naming)
+    BOOLEAN NotifyPreemptExceedThreshold; // NOLINT(readability-identifier-naming)
+    uint64_t hPreemptCpuEventObject;      // NOLINT(readability-identifier-naming)
+    uint32_t UseHw64bToken : 1;           // NOLINT(readability-identifier-naming)
 };
 
 struct PLATFORM_KMD : PLATFORM_GMM { // NOLINT(readability-identifier-naming)
