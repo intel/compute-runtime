@@ -276,6 +276,37 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenHostSynchronize
     EXPECT_EQ(initialFlushedTaskCountMainCsr + 1, mainCsr->peekLatestFlushedTaskCount());
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenAppendingCopyThenInOrderCounterIsResidentOnCopyCsr, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+
+    if (!device->getProductHelper().blitEnqueuePreferred(false)) {
+        GTEST_SKIP();
+    }
+
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+    copyCsr->storeMakeResidentAllocations = true;
+
+    auto copyTaskCountBefore = copyCsr->taskCount.load();
+
+    auto usmDevice = allocDeviceMem(1);
+    immCmdList->appendMemoryCopy(usmDevice, &copyData2, 1, nullptr, 0, nullptr, copyParams);
+
+    ASSERT_LT(copyTaskCountBefore, copyCsr->taskCount.load());
+
+    auto deviceCounterAllocation = immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
+    ASSERT_NE(nullptr, deviceCounterAllocation);
+    EXPECT_NE(0u, copyCsr->makeResidentAllocations[deviceCounterAllocation]);
+
+    if (auto *hostCounterAllocation = immCmdList->inOrderExecInfo->getHostCounterAllocation()) {
+        EXPECT_NE(0u, copyCsr->makeResidentAllocations[hostCounterAllocation]);
+    }
+
+    context->freeMem(usmDevice);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenCopyEngineNotReadyThenDoNotWaitOnCompute, IsAtLeastXeCore) {
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 

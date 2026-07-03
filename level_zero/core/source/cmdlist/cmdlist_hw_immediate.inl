@@ -507,6 +507,13 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
             }
         }
 
+        if (this->isInOrderExecutionEnabled() && this->inOrderExecInfo.get() && (cmdQ == this->cmdQImmediateCopyOffload)) {
+            this->commandContainer.addToResidencyContainer(this->getDeviceCounterAllocForResidency(this->inOrderExecInfo->getDeviceCounterAllocation()));
+            if (auto *hostCounterAllocation = this->inOrderExecInfo->getHostCounterAllocation()) {
+                this->commandContainer.addToResidencyContainer(hostCounterAllocation);
+            }
+        }
+
         cmdQ->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
 
         if (performMigration) {

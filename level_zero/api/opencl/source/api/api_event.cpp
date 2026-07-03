@@ -165,16 +165,8 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
 
             pEvent->incRefInternal();
 
-            ze_command_list_handle_t cmdList;
-            std::unique_lock<std::mutex> internalLock;
-            std::unique_lock<std::recursive_mutex> cmdQLock;
-            if (pEvent->isUserEvent()) {
-                internalLock = pEvent->getContext()->lockInternalCompute();
-                cmdList = pEvent->getContext()->getInternalComputeCmdList();
-            } else {
-                cmdQLock = pEvent->getCommandQueue()->takeOwnership();
-                cmdList = pEvent->getCommandQueue()->getL0Handle();
-            }
+            auto internalLock = pEvent->getContext()->lockInternalCompute();
+            ze_command_list_handle_t cmdList = pEvent->getContext()->getInternalComputeCmdList();
 
             cl_int tracingRetVal = L0ToClResultMapper(L0::zeCommandListAppendHostFunction(cmdList,
                                                                                           reinterpret_cast<ze_host_function_callback_t>(NEO::LEO::Event::clCallbackWrapper),
