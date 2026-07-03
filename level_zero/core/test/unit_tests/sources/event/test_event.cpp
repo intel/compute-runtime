@@ -5060,5 +5060,19 @@ HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndC
     context->freeMem(devicePtr);
 }
 
+TEST_F(EventTests, givenImplicitlyEnabledCounterBasedEventWhenResetThenModeReturnsToInitialAndCanBeEnabledAgain) {
+    event->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    EXPECT_TRUE(event->isCounterBased());
+    EXPECT_EQ(ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE, event->getCounterBasedFlags());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->reset());
+    EXPECT_FALSE(event->isCounterBased());
+    EXPECT_EQ(0u, event->getCounterBasedFlags());
+
+    event->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    EXPECT_TRUE(event->isCounterBased());
+    EXPECT_EQ(ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE, event->getCounterBasedFlags());
+}
+
 } // namespace ult
 } // namespace L0
