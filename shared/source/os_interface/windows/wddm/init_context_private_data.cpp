@@ -22,7 +22,7 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
     privateData.IsMediaUsage = FALSE;
     privateData.UmdContextType = UMD_OCL;
     privateData.UseHw64bToken = debugManager.flags.WddmUseHw64bToken.get() &&
-                                rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64();
+                                rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
     if (osContext.checkLatePreemptionStartSupport()) {
         osContext.prepareLatePreemptionStart(privateData);
     }

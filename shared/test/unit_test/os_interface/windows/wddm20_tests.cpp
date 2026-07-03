@@ -210,7 +210,7 @@ TEST_F(Wddm20Tests, whenInitPrivateDataThenDefaultValuesAreSet) {
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, whenInitPrivateDataWithPowerHintThenPowerHintIsSet) {
     init();
     auto newContext = osContext.get();
-    const auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64() ? 1u : 0u;
+    const auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64(*wddm->rootDeviceEnvironment.getHardwareInfo()) ? 1u : 0u;
 
     newContext->setUmdPowerHintValue(1);
     EXPECT_EQ(1, newContext->getUmdPowerHintValue());
@@ -237,7 +237,7 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenWddmUseHw64bTokenSetWhenIn
     debugManager.flags.Enable64BitSemaphore.set(true);
     hwInfo->featureTable.flags.ftrHwSemaphore64 = true;
     CREATECONTEXT_PVTDATA privateData = initPrivateData(*newContext);
-    auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64() ? 1u : 0u;
+    auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64(*wddm->rootDeviceEnvironment.getHardwareInfo()) ? 1u : 0u;
     EXPECT_EQ(privateData.UseHw64bToken, expectedUseHw64bToken);
 
     debugManager.flags.WddmUseHw64bToken.set(false);

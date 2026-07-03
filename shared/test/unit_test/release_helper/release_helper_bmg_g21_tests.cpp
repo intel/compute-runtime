@@ -42,7 +42,7 @@ TEST_F(ReleaseHelperBmgG21Tests, whenGettingCapabilitiesThenCorrectPropertiesAre
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
-        EXPECT_FALSE(releaseHelper->isAvailableSemaphore64());
+        EXPECT_FALSE(releaseHelper->isAvailableSemaphore64Base());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
