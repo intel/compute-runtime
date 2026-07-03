@@ -8,7 +8,9 @@
 {
   global:
       ze*Get*ProcAddrTable;
-      cl*;
+      clGetExtensionFunctionAddress;
+      clIcdGetPlatformIDsKHR;
+      clGetPlatformInfo;
   local:
       *;
 };
