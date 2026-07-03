@@ -1014,7 +1014,7 @@ struct TOKSTR__CREATECONTEXT_PVTDATA {
     TokenVariableLength base;
 
     TOKSTR__CREATECONTEXT_PVTDATA(uint16_t tokenId, uint32_t elementId = 0)
-        : base(tokenId, elementId, offsetof(TOKSTR__CREATECONTEXT_PVTDATA, NoRingFlushes) + sizeof(NoRingFlushes) - offsetof(TOKSTR__CREATECONTEXT_PVTDATA, pHwContextId), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+        : base(tokenId, elementId, offsetof(TOKSTR__CREATECONTEXT_PVTDATA, NumHwQueues) + sizeof(NumHwQueues) - offsetof(TOKSTR__CREATECONTEXT_PVTDATA, pHwContextId), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
     TOKSTR__CREATECONTEXT_PVTDATA()
         : base(TOK_S_CREATECONTEXT_PVTDATA, 0, sizeof(*this) - sizeof(base)) {}
@@ -1042,6 +1042,12 @@ struct TOKSTR__CREATECONTEXT_PVTDATA {
     TokenDword GpuVAContext = {TOK_FBC_CREATECONTEXT_PVTDATA__GPU_VACONTEXT};
     TokenDword NoRingFlushes = {TOK_FBC_CREATECONTEXT_PVTDATA__NO_RING_FLUSHES};
     TokenDword UmdContextType = {TOK_FBD_CREATECONTEXT_PVTDATA__UMD_CONTEXT_TYPE};
+    TokenDword UseHw64bToken = {TOK_FBD_CREATECONTEXT_PVTDATA__USE_HW64B_TOKEN};
+    TokenDword DisableWmtp = {TOK_FBC_CREATECONTEXT_PVTDATA__DISABLE_WMTP};
+    TokenDword NotifyPreemptExceedThreshold = {TOK_FBC_CREATECONTEXT_PVTDATA__NOTIFY_PREEMPT_EXCEED_THRESHOLD};
+    TokenQword hPreemptCpuEventObject = {TOK_FBQ_CREATECONTEXT_PVTDATA__H_PREEMPT_CPU_EVENT_OBJECT};
+    TokenDword DebugSIPInstalled = {TOK_FBC_CREATECONTEXT_PVTDATA__DEBUG_SIPINSTALLED};
+    TokenDword NumHwQueues = {TOK_FBC_CREATECONTEXT_PVTDATA__NUM_HW_QUEUES};
 };
 static_assert(std::is_standard_layout_v<TOKSTR__CREATECONTEXT_PVTDATA>, "");
 static_assert(sizeof(TOKSTR__CREATECONTEXT_PVTDATA) % sizeof(uint32_t) == 0, "");

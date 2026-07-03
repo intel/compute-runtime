@@ -1030,6 +1030,12 @@ inline void marshall(TOKSTR__CREATECONTEXT_PVTDATA &dst, const _CREATECONTEXT_PV
     dst.GpuVAContext.setValue(src.GpuVAContext);
     dst.NoRingFlushes.setValue(src.NoRingFlushes);
     dst.UmdContextType.setValue(src.UmdContextType);
+    dst.UseHw64bToken.setValue(src.UseHw64bToken);
+    dst.DisableWmtp.setValue(src.DisableWmtp);
+    dst.NotifyPreemptExceedThreshold.setValue(src.NotifyPreemptExceedThreshold);
+    dst.hPreemptCpuEventObject.setValue(src.hPreemptCpuEventObject);
+    dst.DebugSIPInstalled.setValue(src.DebugSIPInstalled);
+    dst.NumHwQueues.setValue(src.NumHwQueues);
 }
 template <>
 struct Marshaller<TOK_S_CREATECONTEXT_PVTDATA> {

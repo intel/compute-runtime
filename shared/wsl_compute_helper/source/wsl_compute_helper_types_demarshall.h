@@ -2057,6 +2057,24 @@ struct Demarshaller<TOK_S_CREATECONTEXT_PVTDATA> {
                 case TOK_FBC_CREATECONTEXT_PVTDATA__NO_RING_FLUSHES: {
                     dst.NoRingFlushes = readTokValue<decltype(dst.NoRingFlushes)>(*tok);
                 } break;
+                case TOK_FBD_CREATECONTEXT_PVTDATA__USE_HW64B_TOKEN: {
+                    dst.UseHw64bToken = readTokValue<decltype(dst.UseHw64bToken)>(*tok);
+                } break;
+                case TOK_FBC_CREATECONTEXT_PVTDATA__DISABLE_WMTP: {
+                    dst.DisableWmtp = readTokValue<decltype(dst.DisableWmtp)>(*tok);
+                } break;
+                case TOK_FBC_CREATECONTEXT_PVTDATA__NOTIFY_PREEMPT_EXCEED_THRESHOLD: {
+                    dst.NotifyPreemptExceedThreshold = readTokValue<decltype(dst.NotifyPreemptExceedThreshold)>(*tok);
+                } break;
+                case TOK_FBQ_CREATECONTEXT_PVTDATA__H_PREEMPT_CPU_EVENT_OBJECT: {
+                    dst.hPreemptCpuEventObject = readTokValue<decltype(dst.hPreemptCpuEventObject)>(*tok);
+                } break;
+                case TOK_FBC_CREATECONTEXT_PVTDATA__DEBUG_SIPINSTALLED: {
+                    dst.DebugSIPInstalled = readTokValue<decltype(dst.DebugSIPInstalled)>(*tok);
+                } break;
+                case TOK_FBC_CREATECONTEXT_PVTDATA__NUM_HW_QUEUES: {
+                    dst.NumHwQueues = readTokValue<decltype(dst.NumHwQueues)>(*tok);
+                } break;
                 };
                 tok = tok + 1 + tok->valueDwordCount;
             } else {

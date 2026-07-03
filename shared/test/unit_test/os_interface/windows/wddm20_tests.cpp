@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
@@ -18,6 +19,7 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_wddm_interface23.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_gmm_memory.h"
@@ -201,6 +203,128 @@ TEST_F(Wddm20Tests, whenInitPrivateDataThenDefaultValuesAreSet) {
     EXPECT_FALSE(privateData.IsDwm);
     EXPECT_TRUE(privateData.GpuVAContext);
     EXPECT_FALSE(privateData.IsMediaUsage);
+    EXPECT_EQ(0u, privateData.PowerHint.IsValid);
+    EXPECT_EQ(0u, privateData.NumHwQueues);
+}
+
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, whenInitPrivateDataWithPowerHintThenPowerHintIsSet) {
+    init();
+    auto newContext = osContext.get();
+    const auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64() ? 1u : 0u;
+
+    newContext->setUmdPowerHintValue(1);
+    EXPECT_EQ(1, newContext->getUmdPowerHintValue());
+    CREATECONTEXT_PVTDATA privateData = initPrivateData(*newContext);
+    EXPECT_FALSE(privateData.IsProtectedProcess);
+    EXPECT_FALSE(privateData.IsDwm);
+    EXPECT_TRUE(privateData.GpuVAContext);
+    EXPECT_FALSE(privateData.IsMediaUsage);
+    EXPECT_EQ(privateData.PowerHint.IsValid, 1);
+    EXPECT_EQ(privateData.PowerHint.Value, 1);
+    EXPECT_EQ(privateData.UseHw64bToken, expectedUseHw64bToken);
+}
+
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenWddmUseHw64bTokenSetWhenInitPrivateDataThenProperValueIsSet) {
+    DebugManagerStateRestore restore;
+    init();
+    auto newContext = osContext.get();
+
+    auto hwInfo = wddm->rootDeviceEnvironment.getMutableHardwareInfo();
+    newContext->setUmdPowerHintValue(1);
+    EXPECT_EQ(1, newContext->getUmdPowerHintValue());
+
+    debugManager.flags.WddmUseHw64bToken.set(true);
+    debugManager.flags.Enable64BitSemaphore.set(true);
+    hwInfo->featureTable.flags.ftrHwSemaphore64 = true;
+    CREATECONTEXT_PVTDATA privateData = initPrivateData(*newContext);
+    auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64() ? 1u : 0u;
+    EXPECT_EQ(privateData.UseHw64bToken, expectedUseHw64bToken);
+
+    debugManager.flags.WddmUseHw64bToken.set(false);
+    privateData = initPrivateData(*newContext);
+    EXPECT_EQ(privateData.UseHw64bToken, 0u);
+
+    debugManager.flags.WddmUseHw64bToken.set(true);
+    debugManager.flags.Enable64BitSemaphore.set(false);
+    hwInfo->featureTable.flags.ftrHwSemaphore64 = false;
+    privateData = initPrivateData(*newContext);
+    EXPECT_EQ(privateData.UseHw64bToken, 0u);
+}
+
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenDebugVariableSetWhenCreatingContextPrivateDataThenOverridePowerHintValue) {
+    DebugManagerStateRestore restore;
+    uint8_t powerHintValue = 123;
+
+    debugManager.flags.OverrideWddmContextPowerHint.set(powerHintValue);
+
+    init();
+    auto newContext = osContext.get();
+
+    CREATECONTEXT_PVTDATA privateData = initPrivateData(*newContext);
+
+    EXPECT_EQ(privateData.PowerHint.IsValid, 1);
+    EXPECT_EQ(privateData.PowerHint.Value, powerHintValue);
+}
+
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenContextGroupWhenPrimaryContextFromContextGroupCreatedThenNumHwQueuesAndPriorityAreSet) {
+    if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore retore;
+    debugManager.flags.ContextGroupSize.set(4);
+
+    auto wddmMockInterface = new WddmMockInterface23(*wddm);
+    wddm->init();
+    wddm->wddmInterface.reset(wddmMockInterface);
+
+    EngineTypeUsage engineUsage = {};
+    engineUsage.first = aub_stream::EngineType::ENGINE_CCS;
+    engineUsage.second = EngineUsage::regular;
+
+    osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
+                                               EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
+    osContext->setContextGroupCount(4);
+    EXPECT_TRUE(osContext->ensureContextInitialized());
+
+    EXPECT_EQ(getCreateHwQueueData()->hHwContext, osContext->getWddmContextHandle());
+    ASSERT_NE(nullptr, getCreateHwQueueData()->pPrivateDriverData);
+    auto privateData = reinterpret_cast<CREATEHWQUEUE_PVTDATA *>(getCreateHwQueueData()->pPrivateDriverData);
+    EXPECT_EQ(privateData->QueuePriority, QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_NORMAL);
+
+    ASSERT_NE(nullptr, getCreateContextData()->pPrivateDriverData);
+    auto privateDataContext = reinterpret_cast<CREATECONTEXT_PVTDATA *>(getCreateContextData()->pPrivateDriverData);
+    EXPECT_EQ(4u, privateDataContext->NumHwQueues);
+
+    engineUsage.second = EngineUsage::highPriority;
+    osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
+                                               EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
+    osContext->setContextGroupCount(4);
+    EXPECT_TRUE(osContext->ensureContextInitialized());
+
+    EXPECT_EQ(getCreateHwQueueData()->hHwContext, osContext->getWddmContextHandle());
+    ASSERT_NE(nullptr, getCreateHwQueueData()->pPrivateDriverData);
+    privateData = reinterpret_cast<CREATEHWQUEUE_PVTDATA *>(getCreateHwQueueData()->pPrivateDriverData);
+    EXPECT_EQ(privateData->QueuePriority, QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_HIGH);
+
+    ASSERT_NE(nullptr, getCreateContextData()->pPrivateDriverData);
+    privateDataContext = reinterpret_cast<CREATECONTEXT_PVTDATA *>(getCreateContextData()->pPrivateDriverData);
+    EXPECT_EQ(4u, privateDataContext->NumHwQueues);
+
+    engineUsage.second = EngineUsage::lowPriority;
+    osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
+                                               EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
+    osContext->setContextGroupCount(4);
+    EXPECT_TRUE(osContext->ensureContextInitialized());
+
+    EXPECT_EQ(getCreateHwQueueData()->hHwContext, osContext->getWddmContextHandle());
+    ASSERT_NE(nullptr, getCreateHwQueueData()->pPrivateDriverData);
+    privateData = reinterpret_cast<CREATEHWQUEUE_PVTDATA *>(getCreateHwQueueData()->pPrivateDriverData);
+    EXPECT_EQ(privateData->QueuePriority, QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_LOW);
+
+    ASSERT_NE(nullptr, getCreateContextData()->pPrivateDriverData);
+    privateDataContext = reinterpret_cast<CREATECONTEXT_PVTDATA *>(getCreateContextData()->pPrivateDriverData);
+    EXPECT_EQ(4u, privateDataContext->NumHwQueues);
 }
 
 TEST_F(Wddm20Tests, WhenCreatingAllocationAndDestroyingAllocationThenCorrectResultReturned) {

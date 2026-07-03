@@ -122,7 +122,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_debug.h
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_wrapper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/init_context_private_data.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/init_context_private_data.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/wddm_debug_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/wddm_features_extra.cpp
 )
