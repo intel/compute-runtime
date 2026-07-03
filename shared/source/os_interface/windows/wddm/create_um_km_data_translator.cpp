@@ -63,6 +63,7 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
         commandBufferHeaderStructSize = getStructSizeFn(TOK_S_COMMAND_BUFFER_HEADER_REC);
         gmmResourceInfoStructSize = getStructSizeFn(TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT);
         gmmGfxPartitioningStructSize = getStructSizeFn(TOK_S_GMM_GFX_PARTITIONING);
+        createHwQueueDataStructSize = getStructSizeFn(TOK_S_CREATEHWQUEUE_PVTDATA);
 
         procAddr = this->wslComputeHelperLibrary->getProcAddress(getSizeRequiredForTokensName);
         UNRECOVERABLE_IF(nullptr == procAddr);
@@ -155,6 +156,23 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
         return tokensToStructFn(TOK_S_CREATECONTEXT_PVTDATA, dst, dstSize, &marshalled.base.header, reinterpret_cast<TokenHeader *>(&marshalled + 1));
     }
 
+    size_t getSizeForCreateHwQueueDataInternalRepresentation() override {
+        if (computeHelperLibraryVersion <= 2) {
+            return sizeof(CREATEHWQUEUE_PVTDATA);
+        }
+
+        return createHwQueueDataStructSize;
+    }
+
+    bool translateCreateHwQueueDataToInternalRepresentation(void *dst, size_t dstSize, const CREATEHWQUEUE_PVTDATA &src) override {
+        if (computeHelperLibraryVersion <= 2) {
+            return (0 == memcpy_s(dst, dstSize, &src, sizeof(src)));
+        }
+
+        auto marshalled = Marshaller<TOK_S_CREATEHWQUEUE_PVTDATA>::marshall(src);
+        return tokensToStructFn(TOK_S_CREATEHWQUEUE_PVTDATA, dst, dstSize, &marshalled.base.header, reinterpret_cast<TokenHeader *>(&marshalled + 1));
+    }
+
     bool translateCommandBufferHeaderDataToInternalRepresentation(void *dst, size_t dstSize, const COMMAND_BUFFER_HEADER &src) override {
         auto marshalled = Marshaller<TOK_S_COMMAND_BUFFER_HEADER_REC>::marshall(src);
         return tokensToStructFn(TOK_S_COMMAND_BUFFER_HEADER_REC, dst, dstSize, &marshalled.base.header, reinterpret_cast<TokenHeader *>(&marshalled + 1));
@@ -222,6 +240,7 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
     size_t gmmResourceInfoTokensSize = 0U;
     size_t gmmGfxPartitioningStructSize = 0U;
     size_t gmmGfxPartitioningTokensSize = 0U;
+    size_t createHwQueueDataStructSize = 0U;
 };
 
 WslComputeHelperGmmHandleAllocator::WslComputeHelperGmmHandleAllocator(WslComputeHelperUmKmDataTranslator *translator)

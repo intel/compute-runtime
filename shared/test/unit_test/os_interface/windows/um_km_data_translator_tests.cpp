@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,9 @@ constexpr uint16_t mockStrToTokDriverBuildNumber = 0xbadc;
 constexpr uint32_t mockStrToTokProcessID = 0xcdbaebfc;
 constexpr uint64_t mockStrToTokHeapBase = 0xabcdefbc;
 
+constexpr QUEUE_PRIORITY mockTokToStrQueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_HIGH;
+constexpr QUEUE_PRIORITY mockStrToTokQueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_LOW;
+
 extern "C" {
 EXPORT size_t CCONV getSizeRequiredForStruct(TOK structId) {
     switch (structId) {
@@ -52,6 +55,8 @@ EXPORT size_t CCONV getSizeRequiredForStruct(TOK structId) {
         return sizeof(GmmResourceInfoWinStruct);
     case TOK_S_GMM_GFX_PARTITIONING:
         return sizeof(GMM_GFX_PARTITIONING) + 4;
+    case TOK_S_CREATEHWQUEUE_PVTDATA:
+        return sizeof(CREATEHWQUEUE_PVTDATA) + 4;
     }
     return 0;
 }
@@ -87,6 +92,11 @@ EXPORT bool CCONV tokensToStruct(TOK structId, void *dst, size_t dstSizeInBytes,
         gfxPartitioning->Heap32->Base = mockTokToStrHeapBase;
         return true;
     } break;
+    case TOK_S_CREATEHWQUEUE_PVTDATA: {
+        auto hwQueuePrivateData = new (dst) CREATEHWQUEUE_PVTDATA{};
+        hwQueuePrivateData->QueuePriority = mockTokToStrQueuePriority;
+        return true;
+    } break;
     }
     return true;
 }
@@ -105,6 +115,8 @@ EXPORT size_t CCONV getSizeRequiredForTokens(TOK structId) {
         return sizeof(TOKSTR_GmmResourceInfoWinStruct);
     case TOK_S_GMM_GFX_PARTITIONING:
         return sizeof(TOKSTR___GMM_GFX_PARTITIONING);
+    case TOK_S_CREATEHWQUEUE_PVTDATA:
+        return sizeof(TOKSTR__CREATEHWQUEUE_PVTDATA);
     }
 
     return 0;
@@ -146,6 +158,11 @@ EXPORT bool CCONV structToTokens(TOK structId, TokenHeader *dst, size_t dstSizeI
         gfxPartitioning->Heap32->Base.setValue(mockStrToTokHeapBase);
         return true;
     } break;
+    case TOK_S_CREATEHWQUEUE_PVTDATA: {
+        auto hwQueuePrivateData = new (dst) TOKSTR__CREATEHWQUEUE_PVTDATA{};
+        hwQueuePrivateData->QueuePriority.setValue(mockStrToTokQueuePriority);
+        return true;
+    } break;
     }
     return false;
 }
@@ -183,6 +200,7 @@ TEST(UmKmDataTranslator, whenUsingDefaultTranslatorThenTranslationIsDisabled) {
     EXPECT_EQ(sizeof(ADAPTER_INFO), translator.getSizeForAdapterInfoInternalRepresentation());
     EXPECT_EQ(sizeof(COMMAND_BUFFER_HEADER), translator.getSizeForCommandBufferHeaderDataInternalRepresentation());
     EXPECT_EQ(sizeof(CREATECONTEXT_PVTDATA), translator.getSizeForCreateContextDataInternalRepresentation());
+    EXPECT_EQ(sizeof(CREATEHWQUEUE_PVTDATA), translator.getSizeForCreateHwQueueDataInternalRepresentation());
 
     ADAPTER_INFO srcAdapterInfo, dstAdapterInfo;
     memset(&srcAdapterInfo, 7, sizeof(srcAdapterInfo));
@@ -201,6 +219,12 @@ TEST(UmKmDataTranslator, whenUsingDefaultTranslatorThenTranslationIsDisabled) {
     ret = translator.translateCreateContextDataToInternalRepresentation(&dstCreateContextPvtData, sizeof(CREATECONTEXT_PVTDATA), srcCreateContextPvtData);
     EXPECT_TRUE(ret);
     EXPECT_EQ(0, memcmp(&dstCreateContextPvtData, &srcCreateContextPvtData, sizeof(CREATECONTEXT_PVTDATA)));
+
+    CREATEHWQUEUE_PVTDATA srcCreateHwQueuePvtData, dstCreateHwQueuePvtData;
+    memset(&srcCreateHwQueuePvtData, 7, sizeof(srcCreateHwQueuePvtData));
+    ret = translator.translateCreateHwQueueDataToInternalRepresentation(&dstCreateHwQueuePvtData, sizeof(CREATEHWQUEUE_PVTDATA), srcCreateHwQueuePvtData);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0, memcmp(&dstCreateHwQueuePvtData, &srcCreateHwQueuePvtData, sizeof(CREATEHWQUEUE_PVTDATA)));
 }
 
 TEST(UmKmDataTranslator, givenToggledDebugKeyWhenCreatingDefaultTranslatorThenTranslationIsEnabled) {
@@ -355,4 +379,43 @@ TEST(WslUmKmDataTranslator, whenTranslatingGraphicsPartitionThenResultIsBasedOnW
     ret = translatorV1->translateGmmGfxPartitioningFromInternalRepresentation(dst, &src, sizeof(GMM_GFX_PARTITIONING) + 4);
     EXPECT_TRUE(ret);
     EXPECT_EQ(mockStrToTokHeapBase, dst.Heap32->Base);
+}
+
+TEST(WslUmKmDataTranslator, whenTranslatingCreateHwQueueDataThenResultIsBasedOnWslComputeHelperVersion) {
+    DebugManagerStateRestore debugSettingsRestore;
+
+    NEO::debugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::wslComputeHelperLibNameToLoad = "";
+    NEO::Gdi gdi;
+    auto handle = validHandle;
+    gdi.queryAdapterInfo.mFunc = QueryAdapterInfoMock::queryadapterinfo;
+
+    ASSERT_EQ(translatorVersion, 0U);
+    translatorVersion = 2;
+    auto translatorV2 = NEO::createUmKmDataTranslator(gdi, handle);
+    translatorVersion = 3;
+    auto translatorV3 = NEO::createUmKmDataTranslator(gdi, handle);
+    translatorVersion = 0;
+
+    EXPECT_EQ(sizeof(CREATEHWQUEUE_PVTDATA), translatorV2->getSizeForCreateHwQueueDataInternalRepresentation());
+    EXPECT_EQ(sizeof(CREATEHWQUEUE_PVTDATA) + 4, translatorV3->getSizeForCreateHwQueueDataInternalRepresentation());
+
+    CREATEHWQUEUE_PVTDATA src = {}, dst = {};
+    src.QueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_NORMAL;
+    dst.QueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_LOW;
+    auto ret = translatorV2->translateCreateHwQueueDataToInternalRepresentation(&dst, sizeof(CREATEHWQUEUE_PVTDATA), src);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_NORMAL, dst.QueuePriority);
+
+    src.QueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_NORMAL;
+    dst.QueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_LOW;
+    ret = translatorV3->translateCreateHwQueueDataToInternalRepresentation(&dst, sizeof(CREATEHWQUEUE_PVTDATA), src);
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_LOW, dst.QueuePriority);
+
+    src.QueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_NORMAL;
+    dst.QueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_LOW;
+    ret = translatorV3->translateCreateHwQueueDataToInternalRepresentation(&dst, sizeof(CREATEHWQUEUE_PVTDATA) + 4, src);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(mockTokToStrQueuePriority, dst.QueuePriority);
 }

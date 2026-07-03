@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,6 +105,7 @@ bool NEO::WddmInterface20::createFenceForDirectSubmission(MonitoredFence &monito
 bool WddmInterface23::createHwQueue(OsContextWin &osContext) {
     D3DKMT_CREATEHWQUEUE createHwQueue = {};
     CREATEHWQUEUE_PVTDATA hwQueuePrivateData = {};
+    UmKmDataTempStorage<CREATEHWQUEUE_PVTDATA> internalRepresentation;
 
     if (!wddm.getGdi()->setupHwQueueProcAddresses()) {
         return false;
@@ -112,8 +113,16 @@ bool WddmInterface23::createHwQueue(OsContextWin &osContext) {
 
     if (osContext.isPartOfContextGroup()) {
         hwQueuePrivateData = initHwQueuePrivateData(osContext);
-        createHwQueue.pPrivateDriverData = &hwQueuePrivateData;
-        createHwQueue.PrivateDriverDataSize = sizeof(hwQueuePrivateData);
+        auto umKmDataTranslator = wddm.getHwDeviceId()->getUmKmDataTranslator();
+        if (umKmDataTranslator->enabled()) {
+            internalRepresentation.resize(umKmDataTranslator->getSizeForCreateHwQueueDataInternalRepresentation());
+            umKmDataTranslator->translateCreateHwQueueDataToInternalRepresentation(internalRepresentation.data(), internalRepresentation.size(), hwQueuePrivateData);
+            createHwQueue.pPrivateDriverData = internalRepresentation.data();
+            createHwQueue.PrivateDriverDataSize = static_cast<uint32_t>(internalRepresentation.size());
+        } else {
+            createHwQueue.pPrivateDriverData = &hwQueuePrivateData;
+            createHwQueue.PrivateDriverDataSize = sizeof(hwQueuePrivateData);
+        }
     }
 
     createHwQueue.hHwContext = osContext.getWddmContextHandle();

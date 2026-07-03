@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,9 @@ constexpr uint16_t mockStrToTokDriverBuildNumber = 0xbadc;
 constexpr uint32_t mockStrToTokProcessID = 0xcdbaebfc;
 constexpr uint64_t mockStrToTokHeapBase = 0xabcdefbc;
 
+constexpr QUEUE_PRIORITY mockTokToStrQueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_HIGH;
+constexpr QUEUE_PRIORITY mockStrToTokQueuePriority = QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_LOW;
+
 extern "C" {
 EXPORT size_t CCONV getSizeRequiredForStruct(TOK structId) {
     switch (structId) {
@@ -43,6 +46,8 @@ EXPORT size_t CCONV getSizeRequiredForStruct(TOK structId) {
         return sizeof(COMMAND_BUFFER_HEADER);
     case TOK_S_CREATECONTEXT_PVTDATA:
         return sizeof(CREATECONTEXT_PVTDATA);
+    case TOK_S_CREATEHWQUEUE_PVTDATA:
+        return sizeof(CREATEHWQUEUE_PVTDATA) + 4;
     case TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT:
         return sizeof(GmmResourceInfoWinStruct);
     case TOK_S_GMM_GFX_PARTITIONING:
@@ -72,6 +77,11 @@ EXPORT bool CCONV tokensToStruct(TOK structId, void *dst, size_t dstSizeInBytes,
         createCtxData->ProcessID = mockTokToStrProcessID;
         return true;
     } break;
+    case TOK_S_CREATEHWQUEUE_PVTDATA: {
+        auto hwQueuePrivateData = new (dst) CREATEHWQUEUE_PVTDATA{};
+        hwQueuePrivateData->QueuePriority = mockTokToStrQueuePriority;
+        return true;
+    } break;
     case TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT: {
         auto gmmResourceInfo = new (dst) GmmResourceInfoWinStruct{};
         gmmResourceInfo->GmmResourceInfoCommon.pPrivateData = mockTokToStrDriverBuildNumber;
@@ -96,6 +106,8 @@ EXPORT size_t CCONV getSizeRequiredForTokens(TOK structId) {
         return sizeof(TOKSTR_COMMAND_BUFFER_HEADER_REC);
     case TOK_S_CREATECONTEXT_PVTDATA:
         return sizeof(TOKSTR__CREATECONTEXT_PVTDATA);
+    case TOK_S_CREATEHWQUEUE_PVTDATA:
+        return sizeof(TOKSTR__CREATEHWQUEUE_PVTDATA);
     case TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT:
         return sizeof(TOKSTR_GmmResourceInfoWinStruct);
     case TOK_S_GMM_GFX_PARTITIONING:
@@ -129,6 +141,11 @@ EXPORT bool CCONV structToTokens(TOK structId, TokenHeader *dst, size_t dstSizeI
     case TOK_S_CREATECONTEXT_PVTDATA: {
         auto createCtxData = new (dst) TOKSTR__CREATECONTEXT_PVTDATA{};
         createCtxData->ProcessID.setValue(mockStrToTokProcessID);
+        return true;
+    } break;
+    case TOK_S_CREATEHWQUEUE_PVTDATA: {
+        auto hwQueuePrivateData = new (dst) TOKSTR__CREATEHWQUEUE_PVTDATA{};
+        hwQueuePrivateData->QueuePriority.setValue(mockStrToTokQueuePriority);
         return true;
     } break;
     case TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT: {

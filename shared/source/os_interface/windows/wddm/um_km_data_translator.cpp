@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,14 @@ size_t UmKmDataTranslator::getSizeForCommandBufferHeaderDataInternalRepresentati
 
 bool UmKmDataTranslator::translateCommandBufferHeaderDataToInternalRepresentation(void *dst, size_t dstSize, const COMMAND_BUFFER_HEADER &src) {
     return (0 == memcpy_s(dst, dstSize, &src, sizeof(COMMAND_BUFFER_HEADER)));
+}
+
+size_t UmKmDataTranslator::getSizeForCreateHwQueueDataInternalRepresentation() {
+    return sizeof(CREATEHWQUEUE_PVTDATA);
+}
+
+bool UmKmDataTranslator::translateCreateHwQueueDataToInternalRepresentation(void *dst, size_t dstSize, const CREATEHWQUEUE_PVTDATA &src) {
+    return (0 == memcpy_s(dst, dstSize, &src, sizeof(CREATEHWQUEUE_PVTDATA)));
 }
 
 size_t UmKmDataTranslator::getSizeForGmmGfxPartitioningInternalRepresentation() {

@@ -12,7 +12,9 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -275,6 +277,38 @@ TEST_F(Wddm23TestsWithoutWddmInit, givenContextGroupWhenContextFromContextGroupC
     EXPECT_TRUE(osContext2->ensureContextInitialized());
     EXPECT_EQ(osContext->getWddmContextHandle(), osContext2->getWddmContextHandle());
     EXPECT_EQ(getCreateHwQueueData()->hHwContext, osContext->getWddmContextHandle());
+}
+
+TEST_F(Wddm23TestsWithoutWddmInit, givenUmKmDataTranslatorEnabledWhenCreateHwQueueCalledForContextGroupThenPrivateDataIsTranslated) {
+    wddmMockInterface = static_cast<WddmMockInterface23 *>(wddm->wddmInterface.release());
+    wddm->init();
+    wddm->wddmInterface.reset(wddmMockInterface);
+
+    struct MockUmKmDataTranslator : UmKmDataTranslator {
+        using UmKmDataTranslator::isEnabled;
+    };
+    auto translator = std::make_unique<MockUmKmDataTranslator>();
+    translator->isEnabled = true;
+    auto hwDeviceId = std::make_unique<HwDeviceIdWddm>(wddm->hwDeviceId->getAdapter(),
+                                                       wddm->hwDeviceId->getAdapterLuid(),
+                                                       1u,
+                                                       executionEnvironment.osEnvironment.get(),
+                                                       std::move(translator));
+    wddm->hwDeviceId.reset(hwDeviceId.release());
+
+    EngineTypeUsage engineUsage = {};
+    engineUsage.first = defaultHwInfo->capabilityTable.defaultEngineType;
+    engineUsage.second = EngineUsage::regular;
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
+
+    OsContextWin contextGroupContext(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineUsage, preemptionMode));
+    contextGroupContext.setContextGroupCount(4);
+
+    EXPECT_TRUE(wddm->wddmInterface->createHwQueue(contextGroupContext));
+    EXPECT_EQ(static_cast<UINT>(sizeof(CREATEHWQUEUE_PVTDATA)), getCreateHwQueueData()->PrivateDriverDataSize);
+    ASSERT_NE(nullptr, getCreateHwQueueData()->pPrivateDriverData);
+    auto privateData = reinterpret_cast<CREATEHWQUEUE_PVTDATA *>(getCreateHwQueueData()->pPrivateDriverData);
+    EXPECT_EQ(QUEUE_PRIORITY::XE3P_QUEUE_PRIORITY_NORMAL, privateData->QueuePriority);
 }
 
 TEST_F(Wddm23TestsWithoutWddmInit, givenContextGroupWhenContextFromContextGroupDestroyedThenPrimaryContextHandleIsDestroyedOnce) {

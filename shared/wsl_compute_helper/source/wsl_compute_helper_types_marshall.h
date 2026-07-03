@@ -1635,3 +1635,18 @@ struct Marshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
         return ret;
     }
 };
+
+template <typename _CREATEHWQUEUE_PVTDATAT>
+inline void marshall(TOKSTR__CREATEHWQUEUE_PVTDATA &dst, const _CREATEHWQUEUE_PVTDATAT &src) {
+    dst = {};
+    dst.QueuePriority.setValue(src.QueuePriority);
+}
+template <>
+struct Marshaller<TOK_S_CREATEHWQUEUE_PVTDATA> {
+    template <typename _CREATEHWQUEUE_PVTDATAT>
+    static TOKSTR__CREATEHWQUEUE_PVTDATA marshall(const _CREATEHWQUEUE_PVTDATAT &src) {
+        TOKSTR__CREATEHWQUEUE_PVTDATA ret = {};
+        ::marshall(ret, src);
+        return ret;
+    }
+};

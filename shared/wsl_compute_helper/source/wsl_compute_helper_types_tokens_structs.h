@@ -1619,3 +1619,17 @@ struct TOKSTR_GmmResourceInfoWinStruct {
 };
 static_assert(std::is_standard_layout_v<TOKSTR_GmmResourceInfoWinStruct>, "");
 static_assert(sizeof(TOKSTR_GmmResourceInfoWinStruct) % sizeof(uint32_t) == 0, "");
+
+struct TOKSTR__CREATEHWQUEUE_PVTDATA {
+    TokenVariableLength base;
+
+    TOKSTR__CREATEHWQUEUE_PVTDATA(uint16_t tokenId, uint32_t elementId = 0)
+        : base(tokenId, elementId, offsetof(TOKSTR__CREATEHWQUEUE_PVTDATA, QueuePriority) + sizeof(QueuePriority) - offsetof(TOKSTR__CREATEHWQUEUE_PVTDATA, QueuePriority), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+
+    TOKSTR__CREATEHWQUEUE_PVTDATA()
+        : base(TOK_S_CREATEHWQUEUE_PVTDATA, 0, sizeof(*this) - sizeof(base)) {}
+
+    TokenDword QueuePriority = {TOK_FBD_CREATEHWQUEUE_PVTDATA__QUEUE_PRIORITY};
+};
+static_assert(std::is_standard_layout_v<TOKSTR__CREATEHWQUEUE_PVTDATA>, "");
+static_assert(sizeof(TOKSTR__CREATEHWQUEUE_PVTDATA) % sizeof(uint32_t) == 0, "");

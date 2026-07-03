@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,9 @@ class UmKmDataTranslator {
 
     virtual size_t getSizeForCommandBufferHeaderDataInternalRepresentation();
     virtual bool translateCommandBufferHeaderDataToInternalRepresentation(void *dst, size_t dstSize, const COMMAND_BUFFER_HEADER &src);
+
+    virtual size_t getSizeForCreateHwQueueDataInternalRepresentation();
+    virtual bool translateCreateHwQueueDataToInternalRepresentation(void *dst, size_t dstSize, const CREATEHWQUEUE_PVTDATA &src);
 
     virtual size_t getSizeForGmmGfxPartitioningInternalRepresentation();
     virtual bool translateGmmGfxPartitioningToInternalRepresentation(void *dst, size_t dstSize, const GMM_GFX_PARTITIONING &src);

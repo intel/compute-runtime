@@ -5268,3 +5268,43 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
         return true;
     }
 };
+
+template <>
+struct Demarshaller<TOK_S_CREATEHWQUEUE_PVTDATA> {
+    template <typename _CREATEHWQUEUE_PVTDATAT>
+    static bool demarshall(_CREATEHWQUEUE_PVTDATAT &dst, const TokenHeader *srcTokensBeg, const TokenHeader *srcTokensEnd) {
+        const TokenHeader *tok = srcTokensBeg;
+        while (tok < srcTokensEnd) {
+            if (false == tok->flags.flag4IsVariableLength) {
+                switch (tok->id) {
+                default:
+                    if (tok->flags.flag3IsMandatory) {
+                        return false;
+                    }
+                    break;
+                case TOK_FBD_CREATEHWQUEUE_PVTDATA__QUEUE_PRIORITY: {
+                    dst.QueuePriority = readTokValue<decltype(dst.QueuePriority)>(*tok);
+                } break;
+                };
+                tok = tok + 1 + tok->valueDwordCount;
+            } else {
+                auto varLen = reinterpret_cast<const TokenVariableLength *>(tok);
+                switch (tok->id) {
+                default:
+                    if (tok->flags.flag3IsMandatory) {
+                        return false;
+                    }
+                    break;
+                case TOK_S_CREATEHWQUEUE_PVTDATA:
+                    if (false == demarshall(dst, varLen->getValue<TokenHeader>(), varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader))) {
+                        return false;
+                    }
+                    break;
+                };
+                tok = tok + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+            }
+        }
+        WCH_ASSERT(tok == srcTokensEnd);
+        return true;
+    }
+};
