@@ -6740,6 +6740,25 @@ TEST_F(EventTests, givenCounterBasedEventWhenCallingGetCounterBasedFlagsThenRetu
     EXPECT_TRUE(event->isCounterBased());
 }
 
+TEST_F(EventTests, givenImplicitlyEnabledCounterBasedEventWhenResetThenModeReturnsToInitialAndCanBeEnabledAgain) {
+    ze_event_counter_based_flags_t flags{};
+
+    event->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    EXPECT_TRUE(event->isCounterBased());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->getCounterBasedFlags(&flags));
+    EXPECT_EQ(ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE, flags);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->reset());
+    EXPECT_FALSE(event->isCounterBased());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->getCounterBasedFlags(&flags));
+    EXPECT_EQ(0u, flags);
+
+    event->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    EXPECT_TRUE(event->isCounterBased());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->getCounterBasedFlags(&flags));
+    EXPECT_EQ(ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE, flags);
+}
+
 using CounterBasedEventTests = Test<CounterBasedEventFixture>;
 TEST_F(CounterBasedEventTests, givenEventCreatedWithCounterBasedEventPoolAndCallingGetCounterBasedEventFlagsThenEventIsCounterBasedAndCorrectFlagsReturned) {
     EXPECT_TRUE(event->isCounterBased());

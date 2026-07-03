@@ -1112,6 +1112,10 @@ ze_result_t EventImp<TagSizeT>::reset() {
 
     unsetInOrderExecInfo();
     unsetCmdQueue();
+    if (this->counterBasedMode != CounterBasedMode::implicitlyDisabled) {
+        this->counterBasedMode = CounterBasedMode::initiallyDisabled;
+        this->counterBasedFlags = 0;
+    }
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();

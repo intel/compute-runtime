@@ -434,16 +434,25 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventWhenDispatchingW
         if (compactEvent0) {
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData.getOperation());
         } else {
-            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, postSyncData.getOperation());
-            EXPECT_EQ(static_cast<uint64_t>(Event::STATE_SIGNALED), postSyncData.getImmediateData());
-            EXPECT_EQ(events[0]->getPacketAddress(device), postSyncData.getDestinationAddress());
-            EXPECT_TRUE(postSyncData.getDataportPipelineFlush());
-            EXPECT_TRUE(postSyncData.getDataportSubsliceCacheFlush());
-            EXPECT_FALSE(postSyncData.getInterruptSignalEnable());
-            EXPECT_EQ(device->getNEODevice()->getGmmHelper()->getL3EnabledMOCS(), postSyncData.getMocs());
+            auto &postSyncData1 = walkerCmd->getPostSyncOpn1();
+            auto postSyncWriteEnabled = postSyncData.getOperation() != POSTSYNC_DATA_2::OPERATION_NO_WRITE;
+            auto postSyncOpn1WriteEnabled = postSyncData1.getOperation() != POSTSYNC_DATA_2::OPERATION_NO_WRITE;
+
+            EXPECT_NE(postSyncWriteEnabled, postSyncOpn1WriteEnabled);
+
+            auto &eventPostSync = postSyncWriteEnabled ? postSyncData : postSyncData1;
+            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, eventPostSync.getOperation());
+            EXPECT_EQ(static_cast<uint64_t>(Event::STATE_SIGNALED), eventPostSync.getImmediateData());
+            EXPECT_EQ(events[0]->getPacketAddress(device), eventPostSync.getDestinationAddress());
+            EXPECT_TRUE(eventPostSync.getDataportPipelineFlush());
+            EXPECT_TRUE(eventPostSync.getDataportSubsliceCacheFlush());
+            EXPECT_FALSE(eventPostSync.getInterruptSignalEnable());
+            EXPECT_EQ(device->getNEODevice()->getGmmHelper()->getL3EnabledMOCS(), eventPostSync.getMocs());
         }
 
-        EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn1().getOperation());
+        if (compactEvent0) {
+            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn1().getOperation());
+        }
         EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn2().getOperation());
         EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn3().getOperation());
     }

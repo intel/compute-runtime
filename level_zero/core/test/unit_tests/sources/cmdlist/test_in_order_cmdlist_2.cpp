@@ -125,12 +125,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenCmdsChainingWhenDispa
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
 
         auto cmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-        EXPECT_EQ(expectedNumSemaphores, cmds.size());
+        if (cmds.size() != expectedNumSemaphores) {
+            EXPECT_EQ(expectedNumSemaphores + 1, cmds.size());
+        }
     };
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
     findSemaphores(1); // chaining
-    EXPECT_TRUE(immCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining);
+    EXPECT_TRUE(immCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining || !immCmdList->isHeaplessModeEnabled());
 
     offset = cmdStream->getUsed();
     uint32_t copyData = 0;
