@@ -276,6 +276,7 @@ class ProductHelper {
     virtual bool isFlushBetweenBlitsRequired() const = 0;
     virtual bool isNonCoherentTimestampsModeEnabled() const = 0;
     virtual bool isPackedCopyFormatSupported() const = 0;
+    virtual bool isPidFdOrSocketForIpcSupported() const = 0;
     virtual bool checkBcsForDirectSubmissionStop() const = 0;
     virtual bool shouldRegisterEnqueuedWalkerWithProfiling() const = 0;
     virtual bool isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;

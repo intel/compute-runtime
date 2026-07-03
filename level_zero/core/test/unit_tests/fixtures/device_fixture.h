@@ -29,7 +29,6 @@ class MockMemoryManager;
 class OsAgnosticMemoryManager;
 class MemoryManagerMemHandleMock;
 class Device;
-class DriverModel;
 } // namespace NEO
 
 namespace L0 {
@@ -37,7 +36,6 @@ struct Context;
 struct Device;
 struct Context;
 struct DeviceImp;
-enum class IpcHandleType : uint8_t;
 
 namespace ult {
 class MockBuiltins;
@@ -108,11 +106,6 @@ struct GetMemHandlePtrTestFixture {
 
     void setUp();
     void tearDown();
-
-    // Installs the given driver model on the context's execution environment and invokes
-    // isOpaqueHandleSupported, returning its result and writing the resolved handle type to handleType.
-    uint8_t callIsOpaqueHandleSupported(std::unique_ptr<NEO::DriverModel> driverModel, IpcHandleType &handleType);
-
     NEO::MemoryManager *prevMemoryManager = nullptr;
     MemoryManagerMemHandleMock *currMemoryManager = nullptr;
     std::unique_ptr<DriverHandleGetMemHandlePtrMock> driverHandle;

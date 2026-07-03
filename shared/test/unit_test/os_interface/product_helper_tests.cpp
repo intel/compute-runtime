@@ -1316,6 +1316,24 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingPreferredWorkgroupCount
     EXPECT_EQ(0u, productHelper->getPreferredWorkgroupCountPerSubslice());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWithDebugKeyWhenPidFdOrSocketForIpcIsSupportedThenExpectedValueReturned) {
+    DebugManagerStateRestore restore;
+
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+    EXPECT_TRUE(productHelper->isPidFdOrSocketForIpcSupported());
+
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(0);
+    EXPECT_FALSE(productHelper->isPidFdOrSocketForIpcSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsSupportedThenTrueReturned, IsAtLeastXe2HpgCore) {
+    EXPECT_TRUE(productHelper->isPidFdOrSocketForIpcSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSupportedThenFalseReturned, IsAtMostXeCore) {
+    EXPECT_FALSE(productHelper->isPidFdOrSocketForIpcSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }
