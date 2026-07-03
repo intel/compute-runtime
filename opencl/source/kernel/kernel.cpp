@@ -2097,7 +2097,9 @@ void Kernel::patchBindlessSamplerStatesInCrossThreadData(uint64_t bindlessSample
         auto &sampler = arg.template as<NEO::ArgDescSampler>();
         auto patchLocation = ptrOffset(crossThreadDataPtr, sampler.bindless);
         auto samplerStateAddress = static_cast<uint64_t>(bindlessSamplerStatesBaseAddress + sampler.index * samplerStateSize);
-        auto patchSize = sampler.size != 0 ? sampler.size : static_cast<uint32_t>(sizeof(uint64_t));
+        const bool isSamplerSizeDefault = sampler.size == 0; // unspecified in zeInfo
+        constexpr uint32_t defaultSamplerSize = sizeof(uint64_t);
+        const auto patchSize = isSamplerSizeDefault ? defaultSamplerSize : sampler.size;
         patchWithRequiredSize(patchLocation, patchSize, samplerStateAddress);
     }
 
@@ -2108,7 +2110,9 @@ void Kernel::patchBindlessSamplerStatesInCrossThreadData(uint64_t bindlessSample
     for (auto &sampler : inlineSamplers) {
         auto patchLocation = ptrOffset(crossThreadDataPtr, sampler.bindless);
         auto samplerStateAddress = static_cast<uint64_t>(bindlessSamplerStatesBaseAddress + sampler.samplerIndex * samplerStateSize);
-        auto patchSize = sampler.size != 0 ? sampler.size : static_cast<uint32_t>(sizeof(uint64_t));
+        const bool isSamplerSizeDefault = sampler.size == 0; // unspecified in zeInfo
+        constexpr uint32_t defaultSamplerSize = sizeof(uint64_t);
+        const auto patchSize = isSamplerSizeDefault ? defaultSamplerSize : sampler.size;
         patchWithRequiredSize(patchLocation, patchSize, samplerStateAddress);
     }
 }
