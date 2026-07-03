@@ -681,7 +681,7 @@ bool testExternalGraphCbEvents(ze_context_handle_t &context,
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventCb = nullptr;
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
     counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
     counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
@@ -785,7 +785,7 @@ bool testExternalGraphCbEventsMultiExecution(ze_context_handle_t &context,
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventCb = nullptr;
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
     counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
     counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
@@ -895,7 +895,7 @@ bool testMultipleLevelGraph(LevelZeroBlackBoxTests::VisitExtension::VisitApi *vi
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventCb = nullptr;
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
@@ -1069,7 +1069,7 @@ bool testMultipleForkJoinsGraph(ze_context_handle_t &context,
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventCbArray[2] = {nullptr, nullptr};
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,

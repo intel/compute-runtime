@@ -533,6 +533,14 @@ struct CommandList : _ze_command_list_handle_t {
         return this->graphCapture != nullptr;
     }
 
+    void setIsGraphInstantiationTarget(bool value) {
+        this->isGraphInstantiationTarget = value;
+    }
+
+    bool getIsGraphInstantiationTarget() const {
+        return this->isGraphInstantiationTarget;
+    }
+
     Graph *releaseGraphCaptureTarget() {
         return std::exchange(this->graphCapture, nullptr);
     }
@@ -758,6 +766,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::ScratchSpaceController *usedScratchController = nullptr;
     Graph *graphCapture = nullptr;                    // immediate cmdlist graph capturing
     std::unique_ptr<RecordedApiCommands> flatCapture; // regular cmdlist capturing
+    bool isGraphInstantiationTarget = false;          // regular cmdlist used to replay recorded (immediate) graph commands
 
     size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
     size_t cmdListCurrentStartOffset = 0;

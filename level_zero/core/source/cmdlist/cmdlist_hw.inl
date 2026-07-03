@@ -5045,13 +5045,17 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         }
 
         const auto counterBasedFlags = signalEvent->getCounterBasedFlags();
+        const bool isImmediateCounterBasedEvent = (counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
 
-        if (isImmediateType() && !(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE)) {
+        if (isImmediateType() && !isImmediateCounterBasedEvent) {
             return false;
         }
 
         if (!isImmediateType()) {
-            if (!(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE)) {
+            const bool acceptsRecordedImmediateEvent = this->getIsGraphInstantiationTarget() && isImmediateCounterBasedEvent;
+            const bool isNonImmediateCounterBasedEvent = (counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE);
+
+            if (!isNonImmediateCounterBasedEvent && !acceptsRecordedImmediateEvent) {
                 return false;
             }
 

@@ -1198,8 +1198,9 @@ L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode() {
     ze_command_list_handle_t newCmdListHandle = nullptr;
     src->getContext()->createCommandList(src->getCaptureTargetDesc().hDevice, &src->getCaptureTargetDesc().desc, &newCmdListHandle);
     L0::CommandList *newCmdList = L0::CommandList::fromHandle(newCmdListHandle);
-    newCmdList->disableFlatCapture();
     UNRECOVERABLE_IF(nullptr == newCmdList);
+    newCmdList->disableFlatCapture();
+    newCmdList->setIsGraphInstantiationTarget(true);
     this->myCommandLists.emplace_back(newCmdList);
     return newCmdList;
 }
