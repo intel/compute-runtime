@@ -6,8 +6,11 @@
 
 LIBRARY    "ze_intel_gpu64"
 EXPORTS
+clIcdGetPlatformIDsKHR
+clGetPlatformIDs
 clGetPlatformInfo
 clGetExtensionFunctionAddress
+clGetDeviceIDs
 
 clEnqueueMarkerWithSyncObjectINTEL
 clGetCLObjectInfoINTEL

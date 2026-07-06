@@ -10,7 +10,13 @@
       ze*Get*ProcAddrTable;
       clGetExtensionFunctionAddress;
       clIcdGetPlatformIDsKHR;
+      clGetPlatformIDs;
       clGetPlatformInfo;
+      clGetDeviceIDs;       
+      clEnqueueMarkerWithSyncObjectINTEL;
+      clGetCLObjectInfoINTEL;
+      clGetCLEventInfoINTEL;
+      clReleaseGlSharedEventINTEL;
   local:
       *;
 };
