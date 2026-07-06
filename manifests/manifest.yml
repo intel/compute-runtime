@@ -56,7 +56,7 @@ components:
     dest_dir: metrics/discovery
     type: git
     branch: master
-    revision: 1.16.189
+    revision: 1.16.190
     repository: https://github.com/intel/metrics-discovery.git
   metrics-library:
     asset_name: metrics-library
