@@ -71,7 +71,7 @@ HWTEST_F(IOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeC
     EXPECT_EQ(commandStreamReceiver.heaplessPrologProgrammed ? 2u : 1u, pipeControl->getImmediateData());
 }
 
-HWTEST_F(IOQWithTwoWalkers, GivenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithStatefulAccessAreEnqueuedThenPipeControlWithStateCacheInvalidationIsInsertedBetweenWalkers) {
+HWTEST_F(IOQWithTwoWalkers, GivenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithStatefulAccessAreEnqueuedThenPipeControlWithStateCacheInvalidationAndCsStallIsInsertedBetweenWalkers) {
     NEO::ArgDescriptor ptrArg(NEO::ArgDescriptor::argTPointer);
     auto &explicitArgs = const_cast<KernelDescriptor &>(pKernel->getDescriptor()).payloadMappings.explicitArgs;
     explicitArgs.clear();
@@ -86,20 +86,21 @@ HWTEST_F(IOQWithTwoWalkers, GivenStateCacheInvalidationWaIsRequiredWhenTwoKernel
 
     auto itorPC = findAll<PIPE_CONTROL *>(walkers[0], walkers[1]);
 
-    bool foundStateCacheInvalidation = false;
+    PIPE_CONTROL *stateCacheInvalidationPipeControl = nullptr;
     for (auto it : itorPC) {
         auto pcCmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (pcCmd->getStateCacheInvalidationEnable()) {
-            foundStateCacheInvalidation = true;
+            stateCacheInvalidationPipeControl = pcCmd;
             break;
         }
     }
 
     const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
     if (releaseHelper.isStateCacheInvalidationWaRequired(false, false)) {
-        EXPECT_TRUE(foundStateCacheInvalidation);
+        ASSERT_NE(nullptr, stateCacheInvalidationPipeControl);
+        EXPECT_TRUE(stateCacheInvalidationPipeControl->getCommandStreamerStallEnable());
     } else {
-        EXPECT_FALSE(foundStateCacheInvalidation);
+        EXPECT_EQ(nullptr, stateCacheInvalidationPipeControl);
     }
 }
 

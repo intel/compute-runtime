@@ -538,17 +538,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     const auto &releaseHelper = neoDevice->getReleaseHelper();
     bool kernelContainsStatefulAccess = kernelImp->checkKernelContainsStatefulAccess();
     bool kernelUsesRayTracing = kernelImp->usesRayTracing();
-    bool useStateCacheInvalidationWithoutCsStall = kernelContainsStatefulAccess &&
-                                                   !kernelUsesRayTracing &&
-                                                   releaseHelper.isStateCacheInvalidationWaRequired(this->isImmediateType(),
-                                                                                                    kernelDescriptor.kernelAttributes.usesImageOrSamplerState());
+    const bool programStateCacheInvalidation = kernelUsesRayTracing ||
+                                               (kernelContainsStatefulAccess &&
+                                                releaseHelper.isStateCacheInvalidationWaRequired(this->isImmediateType(),
+                                                                                                 kernelDescriptor.kernelAttributes.usesImageOrSamplerState()));
 
-    if (useStateCacheInvalidationWithoutCsStall) {
-        NEO::PipeControlArgs args{};
-        args.stateCacheInvalidationEnable = true;
-        args.disableCsStall = true;
-        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
-    } else if (kernelUsesRayTracing) {
+    if (programStateCacheInvalidation) {
         NEO::PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

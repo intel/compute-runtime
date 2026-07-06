@@ -46,7 +46,6 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
     if (!enable && stateCacheInvalidationWaRequired) {
         PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;
-        args.disableCsStall = true;
         MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
     }
 }
