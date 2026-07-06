@@ -22,7 +22,7 @@ struct CmdParse;
 namespace NEO {
 
 struct Xe3pCore {
-#include "hw_cmds_xe3p_core_include.h"
+#include "shared/source/generated/xe3p_core/hw_cmds_generated_xe3p_core.inl"
 
     static constexpr uint32_t stateComputeModeLSCSamplerBackingThresholdMask = (0b11u << 5);
     static constexpr uint32_t stateComputeModeEnableVariableRegisterSizeAllocationMask = (1u << 10);

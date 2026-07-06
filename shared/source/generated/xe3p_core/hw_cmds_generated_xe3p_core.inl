@@ -637,8 +637,7 @@ typedef struct tagPIPE_CONTROL {
     union tagTheStructure {
         struct tagCommon {
             // DWORD 0
-            uint32_t DwordLength : BITFIELD_RANGE(0, 3); // patched
-            uint32_t MocsIndex : BITFIELD_RANGE(4, 7);   // patched
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t PredicateEnable : BITFIELD_RANGE(8, 8);
             uint32_t DataportFlush : BITFIELD_RANGE(9, 9);
             uint32_t L3ReadOnlyCacheInvalidationEnable : BITFIELD_RANGE(10, 10);
@@ -748,13 +747,6 @@ typedef struct tagPIPE_CONTROL {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 6);
         return TheStructure.RawData[index];
-    }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
     }
     inline void setPredicateEnable(const bool value) {
         TheStructure.Common.PredicateEnable = value;
@@ -996,8 +988,7 @@ typedef struct tagMI_ATOMIC {
     union tagTheStructure {
         struct tagCommon {
             // DWORD 0
-            uint32_t DwordLength : BITFIELD_RANGE(0, 3); // patched
-            uint32_t MocsIndex : BITFIELD_RANGE(4, 7);   // patched
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t AtomicOpcode : BITFIELD_RANGE(8, 15);
             uint32_t ReturnDataControl : BITFIELD_RANGE(16, 16);
             uint32_t CsStall : BITFIELD_RANGE(17, 17);
@@ -1086,13 +1077,6 @@ typedef struct tagMI_ATOMIC {
     }
     inline DWORD_LENGTH getDwordLength() const {
         return static_cast<DWORD_LENGTH>(TheStructure.Common.DwordLength);
-    }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
     }
     inline void setAtomicOpcode(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xff);
@@ -3608,7 +3592,7 @@ typedef struct tagMI_CONDITIONAL_BATCH_BUFFER_END {
         struct tagCommon {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t MocsIndex : BITFIELD_RANGE(8, 11);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 11);
             uint32_t CompareOperation : BITFIELD_RANGE(12, 14);
             uint32_t PredicateEnable : BITFIELD_RANGE(15, 15);
             uint32_t Reserved_16 : BITFIELD_RANGE(16, 17);
@@ -3664,13 +3648,6 @@ typedef struct tagMI_CONDITIONAL_BATCH_BUFFER_END {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 4);
         return TheStructure.RawData[index];
-    }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
     }
     inline void setCompareOperation(const COMPARE_OPERATION value) {
         TheStructure.Common.CompareOperation = value;
@@ -4949,7 +4926,7 @@ typedef struct tagMI_FLUSH_DW {
             uint32_t Reserved_6 : BITFIELD_RANGE(6, 7);
             uint32_t NotifyEnable : BITFIELD_RANGE(8, 8);
             uint32_t FlushLlc : BITFIELD_RANGE(9, 9);
-            uint32_t MocsIndex : BITFIELD_RANGE(10, 13);
+            uint32_t Reserved_10 : BITFIELD_RANGE(10, 13);
             uint32_t PostSyncOperation : BITFIELD_RANGE(14, 15);
             uint32_t FlushCcs : BITFIELD_RANGE(16, 16);
             uint32_t Reserved_17 : BITFIELD_RANGE(17, 17);
@@ -5015,13 +4992,6 @@ typedef struct tagMI_FLUSH_DW {
     }
     inline bool getFlushLlc() const {
         return TheStructure.Common.FlushLlc;
-    }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
     }
     inline void setPostSyncOperation(const POST_SYNC_OPERATION value) {
         TheStructure.Common.PostSyncOperation = value;
@@ -7637,9 +7607,7 @@ typedef struct tagMI_BATCH_BUFFER_START {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t AddressSpaceIndicator : BITFIELD_RANGE(8, 8);
-            uint32_t Reserved_9 : BITFIELD_RANGE(9, 9);
-            uint32_t MocsIndex : BITFIELD_RANGE(10, 13);
-            uint32_t Reserved_14 : BITFIELD_RANGE(14, 14);
+            uint32_t Reserved_9 : BITFIELD_RANGE(9, 14);
             uint32_t PredicationEnable : BITFIELD_RANGE(15, 15);
             uint32_t Reserved_16 : BITFIELD_RANGE(16, 17);
             uint32_t IndirectAddressEnable : BITFIELD_RANGE(18, 18);
@@ -7714,13 +7682,6 @@ typedef struct tagMI_BATCH_BUFFER_START {
     inline ADDRESS_SPACE_INDICATOR getAddressSpaceIndicator() const {
         return static_cast<ADDRESS_SPACE_INDICATOR>(TheStructure.Common.AddressSpaceIndicator);
     }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
-    }
     inline void setPredicationEnable(const bool value) {
         TheStructure.Common.PredicationEnable = value;
     }
@@ -7769,8 +7730,7 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
         struct tagCommon {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t Reserved_8 : BITFIELD_RANGE(8, 11);
-            uint32_t MocsIndex : BITFIELD_RANGE(12, 15);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
             uint32_t WorkloadPartitionIdOffsetEnable : BITFIELD_RANGE(16, 16);
             uint32_t MmioRemapEnable : BITFIELD_RANGE(17, 17);
             uint32_t Reserved_18 : BITFIELD_RANGE(18, 18);
@@ -7813,13 +7773,6 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 4);
         return TheStructure.RawData[index];
-    }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
     }
     inline void setWorkloadPartitionIdOffsetEnable(const bool value) {
         TheStructure.Common.WorkloadPartitionIdOffsetEnable = value;
@@ -7977,8 +7930,7 @@ typedef struct tagMI_SEMAPHORE_WAIT {
     union tagTheStructure {
         struct tagCommon {
             // DWORD 0
-            uint32_t DwordLength : BITFIELD_RANGE(0, 3); // patched
-            uint32_t MocsIndex : BITFIELD_RANGE(4, 7);   // patched
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 10);
             uint32_t QueueSwitchMode : BITFIELD_RANGE(11, 11);
             uint32_t CompareOperation : BITFIELD_RANGE(12, 14);
@@ -8061,13 +8013,6 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         UNRECOVERABLE_IF(index >= 5);
         return TheStructure.RawData[index];
     }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
-    }
     inline void setQueueSwitchMode(const QUEUE_SWITCH_MODE value) {
         TheStructure.Common.QueueSwitchMode = value;
     }
@@ -8147,8 +8092,7 @@ typedef struct tagMI_SEMAPHORE_WAIT_64 {
     union tagTheStructure {
         struct tagCommon {
             // DWORD 0
-            uint32_t DwordLength : BITFIELD_RANGE(0, 3); // patched
-            uint32_t MocsIndex : BITFIELD_RANGE(4, 7);   // patched
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t SwTokenInfo : BITFIELD_RANGE(8, 10);
             uint32_t QueueSwitchMode : BITFIELD_RANGE(11, 11);
             uint32_t CompareOperation : BITFIELD_RANGE(12, 14);
@@ -8228,13 +8172,6 @@ typedef struct tagMI_SEMAPHORE_WAIT_64 {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 7);
         return TheStructure.RawData[index];
-    }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
     }
     inline void setSwTokenInfo(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7);
@@ -8339,8 +8276,7 @@ typedef struct tagMI_STORE_DATA_IMM {
             uint32_t DwordLength : BITFIELD_RANGE(0, 9);
             uint32_t ForceWriteCompletionCheck : BITFIELD_RANGE(10, 10);
             uint32_t WorkloadPartitionIdOffsetEnable : BITFIELD_RANGE(11, 11);
-            uint32_t MocsIndex : BITFIELD_RANGE(12, 15);
-            uint32_t Reserved_16 : BITFIELD_RANGE(16, 20);
+            uint32_t Reserved_12 : BITFIELD_RANGE(12, 20);
             uint32_t StoreQword : BITFIELD_RANGE(21, 21);
             uint32_t UseGlobalGtt : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
@@ -8399,13 +8335,6 @@ typedef struct tagMI_STORE_DATA_IMM {
     inline bool getWorkloadPartitionIdOffsetEnable() const {
         return TheStructure.Common.WorkloadPartitionIdOffsetEnable;
     }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
-    }
     inline void setStoreQword(const bool value) {
         TheStructure.Common.StoreQword = value;
     }
@@ -8455,8 +8384,7 @@ typedef struct tagMI_STORE_REGISTER_MEM {
         struct tagCommon {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t Reserved_8 : BITFIELD_RANGE(8, 11);
-            uint32_t MocsIndex : BITFIELD_RANGE(12, 15);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
             uint32_t WorkloadPartitionIdOffsetEnable : BITFIELD_RANGE(16, 16);
             uint32_t MmioRemapEnable : BITFIELD_RANGE(17, 17);
             uint32_t Reserved_18 : BITFIELD_RANGE(18, 18);
@@ -8499,13 +8427,6 @@ typedef struct tagMI_STORE_REGISTER_MEM {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 4);
         return TheStructure.RawData[index];
-    }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
     }
     inline void setWorkloadPartitionIdOffsetEnable(const bool value) {
         TheStructure.Common.WorkloadPartitionIdOffsetEnable = value;
@@ -9627,8 +9548,7 @@ typedef struct tagRESOURCE_BARRIER {
             uint32_t QueueDrainMode : BITFIELD_RANGE(12, 12);
             uint32_t Reserved_13 : BITFIELD_RANGE(13, 14);
             uint32_t DisableGoSyncWithWalkerPostSync : BITFIELD_RANGE(15, 15);
-            uint32_t MocsIndex : BITFIELD_RANGE(16, 19);
-            uint32_t Reserved_20 : BITFIELD_RANGE(20, 23);
+            uint32_t Reserved_16 : BITFIELD_RANGE(16, 23);
             uint32_t PredicateEnable : BITFIELD_RANGE(24, 24);
             uint32_t Reserved_25 : BITFIELD_RANGE(25, 25);
             uint32_t Opcode : BITFIELD_RANGE(26, 28);
@@ -9730,13 +9650,6 @@ typedef struct tagRESOURCE_BARRIER {
     }
     inline bool getDisableGoSyncWithWalkerPostSync() const {
         return TheStructure.Common.DisableGoSyncWithWalkerPostSync;
-    }
-    inline void setMocsIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
-        TheStructure.Common.MocsIndex = value;
-    }
-    inline uint32_t getMocsIndex() const {
-        return TheStructure.Common.MocsIndex;
     }
     inline void setPredicateEnable(const bool value) {
         TheStructure.Common.PredicateEnable = value;

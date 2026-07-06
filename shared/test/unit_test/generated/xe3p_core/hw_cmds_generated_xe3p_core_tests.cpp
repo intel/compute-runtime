@@ -376,7 +376,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenPipeControlWhenInitCalledThenFieldsSe
     cmd.init();
 
     EXPECT_EQ(PIPE_CONTROL::DWORD_LENGTH_DWORD_COUNT_N, cmd.TheStructure.Common.DwordLength);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.PredicateEnable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DataportFlush);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.L3ReadOnlyCacheInvalidationEnable);
@@ -406,11 +405,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenPipeControlWhenSetterUsedThenGetterRe
     using PIPE_CONTROL = NEO::Xe3pCoreFamily::PIPE_CONTROL;
     PIPE_CONTROL cmd;
     cmd.init();
-
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
 
     cmd.setPredicateEnable(0x0u);
     EXPECT_EQ(0x0u, cmd.getPredicateEnable());
@@ -527,7 +521,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiAtomicWhenInitCalledThenFieldsSetTo
     cmd.init();
 
     EXPECT_EQ(MI_ATOMIC::DWORD_LENGTH_INLINE_DATA_0, cmd.TheStructure.Common.DwordLength);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.AtomicOpcode);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ReturnDataControl);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.CsStall);
@@ -559,11 +552,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiAtomicWhenSetterUsedThenGetterRetur
 
     cmd.setDwordLength(MI_ATOMIC::DWORD_LENGTH_INLINE_DATA_1);
     EXPECT_EQ(MI_ATOMIC::DWORD_LENGTH_INLINE_DATA_1, cmd.getDwordLength());
-
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
 
     cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_4B_MOVE);              // patched
     EXPECT_EQ(MI_ATOMIC::ATOMIC_4B_MOVE, cmd.getAtomicOpcode()); // patched
@@ -2528,7 +2516,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiConditionalBatchBufferEndWhenInitCa
     cmd.init();
 
     EXPECT_EQ(MI_CONDITIONAL_BATCH_BUFFER_END::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(MI_CONDITIONAL_BATCH_BUFFER_END::COMPARE_OPERATION_MAD_GREATER_THAN_IDD, cmd.TheStructure.Common.CompareOperation);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.PredicateEnable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.EndCurrentBatchBufferLevel);
@@ -2543,11 +2530,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiConditionalBatchBufferEndWhenSetter
     using MI_CONDITIONAL_BATCH_BUFFER_END = NEO::Xe3pCoreFamily::MI_CONDITIONAL_BATCH_BUFFER_END;
     MI_CONDITIONAL_BATCH_BUFFER_END cmd;
     cmd.init();
-
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
 
     cmd.setCompareOperation(MI_CONDITIONAL_BATCH_BUFFER_END::COMPARE_OPERATION_MAD_GREATER_THAN_IDD);
     EXPECT_EQ(MI_CONDITIONAL_BATCH_BUFFER_END::COMPARE_OPERATION_MAD_GREATER_THAN_IDD, cmd.getCompareOperation());
@@ -3954,7 +3936,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiFlushDwWhenInitCalledThenFieldsSetT
 
     EXPECT_EQ(MI_FLUSH_DW::DWORD_LENGTH_QWORD, cmd.TheStructure.Common.DwordLength);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.NotifyEnable);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_NO_WRITE, cmd.TheStructure.Common.PostSyncOperation);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TlbInvalidate);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.StoreDataIndex);
@@ -3974,11 +3955,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiFlushDwWhenSetterUsedThenGetterRetu
     EXPECT_EQ(0x0u, cmd.getNotifyEnable());
     cmd.setNotifyEnable(0x1u);
     EXPECT_EQ(0x1u, cmd.getNotifyEnable());
-
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
 
     cmd.setPostSyncOperation(MI_FLUSH_DW::POST_SYNC_OPERATION_NO_WRITE);
     EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_NO_WRITE, cmd.getPostSyncOperation());
@@ -4213,7 +4189,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenPostsyncDataWhenInitCalledThenFieldsS
     cmd.init();
 
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, cmd.TheStructure.Common.Operation);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndexToMocsTables);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SystemMemoryFenceRequest);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DataportSubsliceCacheFlush);
     EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.DestinationAddress); // patched
@@ -4265,7 +4240,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenPostsyncData2WhenInitCalledThenFields
     POSTSYNC_DATA_2 cmd;
     cmd.init();
 
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndexToMocsTables);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SystemMemoryFenceRequest);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DataportSubsliceCacheFlush);
     EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, cmd.TheStructure.Common.Operation);
@@ -5825,7 +5799,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiBatchBufferStartWhenInitCalledThenF
 
     EXPECT_EQ(MI_BATCH_BUFFER_START::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
     EXPECT_EQ(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_GGTT, cmd.TheStructure.Common.AddressSpaceIndicator);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.PredicationEnable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.EnableCommandCache);
     EXPECT_EQ(MI_BATCH_BUFFER_START::MI_COMMAND_OPCODE_MI_BATCH_BUFFER_START, cmd.TheStructure.Common.MiCommandOpcode);
@@ -5845,11 +5818,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiBatchBufferStartWhenSetterUsedThenG
 
     cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     EXPECT_EQ(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT, cmd.getAddressSpaceIndicator());
-
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
 
     cmd.setPredicationEnable(0x0u);
     EXPECT_EQ(0x0u, cmd.getPredicationEnable());
@@ -5885,7 +5853,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiLoadRegisterMemWhenInitCalledThenFi
     cmd.init();
 
     EXPECT_EQ(MI_LOAD_REGISTER_MEM::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.WorkloadPartitionIdOffsetEnable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MmioRemapEnable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.AddCsMmioStartOffset);
@@ -5899,11 +5866,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiLoadRegisterMemWhenSetterUsedThenGe
     using MI_LOAD_REGISTER_MEM = NEO::Xe3pCoreFamily::MI_LOAD_REGISTER_MEM;
     MI_LOAD_REGISTER_MEM cmd;
     cmd.init();
-
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
 
     cmd.setWorkloadPartitionIdOffsetEnable(0x0u);
     EXPECT_EQ(0x0u, cmd.getWorkloadPartitionIdOffsetEnable());
@@ -5989,7 +5951,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiSemaphoreWaitWhenInitCalledThenFiel
     cmd.init();
 
     EXPECT_EQ(MI_SEMAPHORE_WAIT::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, cmd.TheStructure.Common.QueueSwitchMode);
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_GREATER_THAN_SDD, cmd.TheStructure.Common.CompareOperation);
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_SIGNAL_MODE, cmd.TheStructure.Common.WaitMode);
@@ -6009,11 +5970,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiSemaphoreWaitWhenSetterUsedThenGett
     using MI_SEMAPHORE_WAIT = NEO::Xe3pCoreFamily::MI_SEMAPHORE_WAIT_LEGACY; // patched
     MI_SEMAPHORE_WAIT cmd;
     cmd.init();
-
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
 
     cmd.setQueueSwitchMode(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED);
     EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, cmd.getQueueSwitchMode());
@@ -6092,7 +6048,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiSemaphoreWait64WhenInitCalledThenFi
     cmd.init();
 
     EXPECT_EQ(MI_SEMAPHORE_WAIT_64::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SwTokenInfo);
     EXPECT_EQ(MI_SEMAPHORE_WAIT_64::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, cmd.TheStructure.Common.QueueSwitchMode);
     EXPECT_EQ(MI_SEMAPHORE_WAIT_64::COMPARE_OPERATION_SAD_GREATER_THAN_SDD, cmd.TheStructure.Common.CompareOperation);
@@ -6115,11 +6070,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiSemaphoreWait64WhenSetterUsedThenGe
     using MI_SEMAPHORE_WAIT_64 = NEO::Xe3pCoreFamily::MI_SEMAPHORE_WAIT_64;
     MI_SEMAPHORE_WAIT_64 cmd;
     cmd.init();
-
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
 
     cmd.setSwTokenInfo(0x0u);
     EXPECT_EQ(0x0u, cmd.getSwTokenInfo());
@@ -6217,7 +6167,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiStoreDataImmWhenInitCalledThenField
     EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_DWORD, cmd.TheStructure.Common.DwordLength); // patched
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ForceWriteCompletionCheck);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.WorkloadPartitionIdOffsetEnable);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(MI_STORE_DATA_IMM::MI_COMMAND_OPCODE_MI_STORE_DATA_IMM, cmd.TheStructure.Common.MiCommandOpcode);
     EXPECT_EQ(MI_STORE_DATA_IMM::COMMAND_TYPE_MI_COMMAND, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.CoreModeEnable);
@@ -6246,11 +6195,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiStoreDataImmWhenSetterUsedThenGette
     cmd.setWorkloadPartitionIdOffsetEnable(0x1u);
     EXPECT_EQ(0x1u, cmd.getWorkloadPartitionIdOffsetEnable());
 
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
-
     cmd.setCoreModeEnable(0x0u);
     EXPECT_EQ(0x0u, cmd.getCoreModeEnable());
     cmd.setCoreModeEnable(0x1u);
@@ -6278,7 +6222,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiStoreRegisterMemWhenInitCalledThenF
     cmd.init();
 
     EXPECT_EQ(MI_STORE_REGISTER_MEM::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndex);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.WorkloadPartitionIdOffsetEnable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MmioRemapEnable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.AddCsMmioStartOffset);
@@ -6293,11 +6236,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiStoreRegisterMemWhenSetterUsedThenG
     using MI_STORE_REGISTER_MEM = NEO::Xe3pCoreFamily::MI_STORE_REGISTER_MEM;
     MI_STORE_REGISTER_MEM cmd;
     cmd.init();
-
-    cmd.setMocsIndex(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMocsIndex());
-    cmd.setMocsIndex(0xfu);
-    EXPECT_EQ(0xfu, cmd.getMocsIndex());
 
     cmd.setWorkloadPartitionIdOffsetEnable(0x0u);
     EXPECT_EQ(0x0u, cmd.getWorkloadPartitionIdOffsetEnable());

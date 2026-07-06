@@ -8,7 +8,6 @@ list(APPEND shared_exclude_patterns
      "/neo_gmmlib.h"
      "/aarch64/"
      "/wsl_compute_helper/"
-     "/hw_cmds_xe3p_core_include.h"
 )
 
 if(UNIX)
