@@ -43,6 +43,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     ADDMETHOD_NOBASE(closFree, CacheRegion, CacheRegion::none, (CacheRegion));
     ADDMETHOD_NOBASE(closAllocWays, uint16_t, 0U, (CacheRegion, uint16_t, uint16_t));
     ADDMETHOD_NOBASE(isEuStallSupported, bool, true, ());
+    ADDMETHOD_NOBASE(getEuStallMaxReportsPerXeCore, int64_t, 0, ());
 
     int getDrmParamValue(DrmParam drmParam) const override {
         if (drmParam == DrmParam::memoryClassSystem) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,12 +38,17 @@ int DrmMockXePerf::ioctl(DrmIoctl request, void *arg) {
             if (querySizeZero) {
                 euStallDeviceQuery->size = 0;
                 return 0;
+            } else if (querySizeUndersized) {
+                euStallDeviceQuery->size = sizeof(drm_xe_query_eu_stall) - sizeof(uint64_t);
+                return 0;
             } else {
                 uint32_t sizeNeeded = sizeof(drm_xe_query_eu_stall) + sizeof(samplingRates);
                 euStallDeviceQuery->size = sizeNeeded;
             }
         } else {
             drm_xe_query_eu_stall *euStallQueryData = reinterpret_cast<drm_xe_query_eu_stall *>(euStallDeviceQuery->data);
+            euStallQueryData->record_size = recordSize;
+            euStallQueryData->per_xecore_buf_size = perXecoreBufSize;
             if (numSamplingRateCountZero) {
                 euStallQueryData->num_sampling_rates = 0;
                 return 0;

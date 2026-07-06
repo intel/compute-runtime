@@ -177,6 +177,13 @@ class IoctlHelper {
     virtual uint32_t getEuStallFdParameter() = 0;
     virtual bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) = 0;
     virtual bool perfDisableEuStallStream(int32_t *stream) = 0;
+    // Returns the per-Xe-core EU-stall report capacity:
+    //   > 0  real capacity (xe KMD that answers the device query).
+    //   == 0 query not available: i915/upstream (base default), or an older xe KMD that does not
+    //        recognize the query. The caller falls back to the static per-DSS estimate.
+    //   < 0  (-1) the query is present but failed/returned garbage (xe only). The caller must abort,
+    //        since the value cannot be trusted and the static estimate does not match such a KMD.
+    virtual int64_t getEuStallMaxReportsPerXeCore() { return 0; }
     virtual UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) = 0;
     virtual UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) = 0;
     virtual int unregisterUuid(uint32_t handle) = 0;

@@ -7,6 +7,7 @@
 
 #include "os_metric_ip_sampling_imp_linux.h"
 
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
@@ -21,6 +22,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 
 namespace L0 {
 
@@ -49,7 +51,9 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    notifyEveryNReports = clampNReports(notifyEveryNReports);
+    if (ze_result_t clampResult = clampNReports(notifyEveryNReports); clampResult != ZE_RESULT_SUCCESS) {
+        return clampResult;
+    }
     if (!ioctlHelper->perfOpenEuStallStream(euStallFdParameter, samplingPeriodNs, classInstance->engineInstance, notifyEveryNReports, gpuTimeStampfrequency, &stream)) {
         METRICS_LOG_ERR("%s", "Failed to open EU stall stream");
         return ZE_RESULT_ERROR_UNKNOWN;
@@ -58,13 +62,34 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
     return ZE_RESULT_SUCCESS;
 }
 
-uint32_t MetricIpSamplingLinuxImp::clampNReports(uint32_t notifyEveryNReports) {
-    auto reqBufSize = getRequiredBufferSize(notifyEveryNReports);
-    if (reqBufSize > 1u) {
-        return std::clamp(notifyEveryNReports, 1u, reqBufSize);
+ze_result_t MetricIpSamplingLinuxImp::clampNReports(uint32_t &notifyEveryNReports) {
+    const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
+    const int64_t perXeCoreMaxReports = drm->getIoctlHelper()->getEuStallMaxReportsPerXeCore();
+    if (perXeCoreMaxReports < 0) {
+        // The KMD exposes the capacity query but it failed; we cannot tell whether the request will
+        // be accepted, and the static estimate does not match a query-capable xe KMD. Fail rather
+        // than risk a stream open the KMD will reject.
+        METRICS_LOG_ERR("%s", "Failed to query EU stall max reports per Xe-core");
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
-
-    return std::min(notifyEveryNReports, reqBufSize);
+    if (perXeCoreMaxReports == 0) {
+        // No KMD capacity query (i915 or an older xe KMD): clamp to the static buffer estimate,
+        // matching long-standing pre-query behaviour.
+        notifyEveryNReports = clampToMaxSupportedReports(notifyEveryNReports);
+        return ZE_RESULT_SUCCESS;
+    }
+    const auto &hwInfo = device.getNEODevice()->getHardwareInfo();
+    // The EU-stall buffer is allocated per Xe-core, so device-wide capacity is the per-Xe-core
+    // report count scaled by the number of Xe-cores. A Xe-core maps to a DualSubSlice, and on the
+    // Linux topology path NEO sets DualSubSliceCount == SubSliceCount == subSliceCount
+    // (drm_neo.cpp), so this holds on platforms where gmmlib leaves DualSubSliceCount unset. A live
+    // device always has at least one enabled Xe-core; a zero count means the topology query is
+    // broken, which is an unrecoverable invariant violation rather than something to paper over.
+    UNRECOVERABLE_IF(hwInfo.gtSystemInfo.DualSubSliceCount == 0);
+    const uint64_t maxReports = static_cast<uint64_t>(perXeCoreMaxReports) * hwInfo.gtSystemInfo.DualSubSliceCount;
+    notifyEveryNReports = static_cast<uint32_t>(std::min<uint64_t>(notifyEveryNReports,
+                                                                   std::min<uint64_t>(maxReports, std::numeric_limits<uint32_t>::max())));
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {

@@ -246,6 +246,68 @@ TEST_F(IoctlHelperXeTest, whenCallingPerfOpenEuStallStreamWithNoIoctlSupportThen
     EXPECT_FALSE(xeIoctlHelper.get()->perfOpenEuStallStream(0u, samplingPeriodNs, 1, 20u, 10000u, &invalidFd));
 }
 
+TEST_F(IoctlHelperXeTest, givenXeHelperWhenCallingGetEuStallMaxReportsThenPerXeCoreCapacityIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    {
+        // Default geometry: 512KB / 64 = 8192 reports.
+        auto drm = DrmMockXePerf::create(*executionEnvironment->rootDeviceEnvironments[0]);
+        auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+        xeIoctlHelper->initialize();
+        EXPECT_EQ(8192u, xeIoctlHelper->getEuStallMaxReportsPerXeCore());
+    }
+
+    {
+        // record_size == 0 is a present-but-broken query -> -1 (also avoids divide-by-zero).
+        auto drm = DrmMockXePerf::create(*executionEnvironment->rootDeviceEnvironments[0]);
+        auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+        xeIoctlHelper->initialize();
+        drm->recordSize = 0u;
+        EXPECT_EQ(-1, xeIoctlHelper->getEuStallMaxReportsPerXeCore());
+    }
+
+    {
+        // First (size) probe failing means an older KMD that does not recognize the query -> treat
+        // as "query unavailable" (0) so the caller falls back to the static estimate.
+        auto drm = DrmMockXePerf::create(*executionEnvironment->rootDeviceEnvironments[0]);
+        auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+        xeIoctlHelper->initialize();
+        drm->failPerfQueryOnCall = 1;
+        EXPECT_EQ(0, xeIoctlHelper->getEuStallMaxReportsPerXeCore());
+    }
+
+    {
+        // First (size) probe succeeds, so the KMD knows the query; a failing data probe is then a
+        // present-but-broken query -> -1.
+        auto drm = DrmMockXePerf::create(*executionEnvironment->rootDeviceEnvironments[0]);
+        auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+        xeIoctlHelper->initialize();
+        drm->failPerfQueryOnCall = 2;
+        EXPECT_EQ(-1, xeIoctlHelper->getEuStallMaxReportsPerXeCore());
+    }
+
+    {
+        // The size probe succeeded but reported a zero size: a present-but-broken query. To stay
+        // recoverable on older/mismatched KMDs this returns -1 rather than crashing the process.
+        auto drm = DrmMockXePerf::create(*executionEnvironment->rootDeviceEnvironments[0]);
+        auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+        xeIoctlHelper->initialize();
+        drm->querySizeZero = true;
+        EXPECT_EQ(-1, xeIoctlHelper->getEuStallMaxReportsPerXeCore());
+    }
+
+    {
+        // A non-zero reply smaller than the fixed header (mismatched KMD uAPI) would over-read the
+        // query buffer through the reinterpret_cast, so it is rejected as a broken query and returns
+        // -1 rather than proceeding or aborting the process.
+        auto drm = DrmMockXePerf::create(*executionEnvironment->rootDeviceEnvironments[0]);
+        auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+        xeIoctlHelper->initialize();
+        drm->querySizeUndersized = true;
+        EXPECT_EQ(-1, xeIoctlHelper->getEuStallMaxReportsPerXeCore());
+    }
+}
+
 TEST_F(IoctlHelperXeTest, whenCallingPerfDisableEuStallStreamWithNoIoctlSupportThenFailueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);

@@ -53,6 +53,10 @@ ze_result_t MetricIpSamplingWindowsImp::startMeasurement(uint32_t &notifyEveryNR
     }
 
     notifyEveryNReports = std::max(notifyEveryNReports, 1u);
+    // notifyEveryNReports is the UMD-side event-signaling threshold (see isNReportsAvailable); a
+    // value above the HW buffer's report capacity could never be reached, so the notification event
+    // would never signal. Clamp it to capacity and write the used value back to the caller.
+    notifyEveryNReports = clampToMaxSupportedReports(notifyEveryNReports);
     // Set the maximum DSS buffer size supported which is 512KB.
     uint32_t minBufferSize = 512 * MemoryConstants::kiloByte;
 

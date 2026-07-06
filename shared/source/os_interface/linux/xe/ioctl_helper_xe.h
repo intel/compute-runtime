@@ -97,6 +97,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t getEuStallFdParameter() override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;
     bool perfDisableEuStallStream(int32_t *stream) override;
+    int64_t getEuStallMaxReportsPerXeCore() override;
     MOCKABLE_VIRTUAL int perfOpenIoctl(DrmIoctl request, void *arg);
     unsigned int getIoctlRequestValuePerf(DrmIoctl ioctlRequest) const;
     UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;

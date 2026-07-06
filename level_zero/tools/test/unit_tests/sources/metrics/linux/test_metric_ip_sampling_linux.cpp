@@ -12,6 +12,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/metrics/linux/os_metric_ip_sampling_imp_linux.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
@@ -60,6 +61,49 @@ HWTEST2_F(MetricIpSamplingLinuxTest, GivenEuStallNotSupportedWhenIsOsSupportAvai
     auto mockIoctlHelper = static_cast<MockIoctlHelper *>(drm->getIoctlHelper());
     mockIoctlHelper->isEuStallSupportedResult = false;
     EXPECT_FALSE(metricIpSamplingOsInterface->isOsSupportAvailable());
+}
+
+HWTEST2_F(MetricIpSamplingLinuxTest, GivenEuStallMaxReportsWhenClampNReportsIsCalledThenValueIsClampedToEnabledXeCoreLimit, HasIPSamplingSupport) {
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
+    auto mockIoctlHelper = static_cast<MockIoctlHelper *>(drm->getIoctlHelper());
+    auto linuxIface = static_cast<MetricIpSamplingLinuxImp *>(metricIpSamplingOsInterface.get());
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.gtSystemInfo.DualSubSliceCount = 2u;
+
+    // > 0: real per-Xe-core capacity scaled by enabled Xe-cores (8192 * 2 = 16384).
+    mockIoctlHelper->getEuStallMaxReportsPerXeCoreResult = 8192;
+    uint32_t notifyEveryNReports = 32768u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, linuxIface->clampNReports(notifyEveryNReports));
+    EXPECT_EQ(16384u, notifyEveryNReports);
+    notifyEveryNReports = 16384u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, linuxIface->clampNReports(notifyEveryNReports));
+    EXPECT_EQ(16384u, notifyEveryNReports);
+    notifyEveryNReports = 3000u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, linuxIface->clampNReports(notifyEveryNReports));
+    EXPECT_EQ(3000u, notifyEveryNReports);
+
+    // == 0: no KMD query (i915/PVC or older xe) -> static estimate
+    // (maxDssBufferSize/unitReportSize) * MaxDualSubSlicesSupported = 8192 * 2 = 16384.
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 2u;
+    mockIoctlHelper->getEuStallMaxReportsPerXeCoreResult = 0;
+    notifyEveryNReports = 32768u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, linuxIface->clampNReports(notifyEveryNReports));
+    EXPECT_EQ(16384u, notifyEveryNReports);
+    notifyEveryNReports = 3000u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, linuxIface->clampNReports(notifyEveryNReports));
+    EXPECT_EQ(3000u, notifyEveryNReports);
+
+    // < 0: query present but failed -> abort.
+    mockIoctlHelper->getEuStallMaxReportsPerXeCoreResult = -1;
+    notifyEveryNReports = 32768u;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, linuxIface->clampNReports(notifyEveryNReports));
+
+    // A zero enabled Xe-core count on the queried path is a topology-query invariant violation.
+    mockIoctlHelper->getEuStallMaxReportsPerXeCoreResult = 8192;
+    hwInfo.gtSystemInfo.DualSubSliceCount = 0u;
+    notifyEveryNReports = 32768u;
+    EXPECT_THROW(linuxIface->clampNReports(notifyEveryNReports), std::exception);
 }
 
 HWTEST2_F(MetricIpSamplingLinuxTest, GivenLinuxSupportIsAvailableThenIpSamplingSourceIsAvailable, HasIPSamplingSupport) {

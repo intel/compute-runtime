@@ -135,6 +135,43 @@ bool IoctlHelperXe::perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t 
     return (ret == 0) ? true : false;
 }
 
+int64_t IoctlHelperXe::getEuStallMaxReportsPerXeCore() {
+    drm_xe_device_query euStallDeviceQuery = {};
+    euStallDeviceQuery.query = DRM_XE_DEVICE_QUERY_EU_STALL;
+
+    // An older KMD that does not recognize the EU-stall query fails here, so
+    // let the caller fall back to the static estimate.
+    int ret = ioctl(DrmIoctl::perfQuery, &euStallDeviceQuery);
+    if (ret != 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_XE_DEVICE_QUERY (DRM_XE_DEVICE_QUERY_EU_STALL size)", errno, ret);
+        return 0;
+    }
+    if (euStallDeviceQuery.size < sizeof(drm_xe_query_eu_stall)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s returned invalid size %u\n", "DRM_IOCTL_XE_DEVICE_QUERY (DRM_XE_DEVICE_QUERY_EU_STALL size)", euStallDeviceQuery.size);
+        return -1;
+    }
+
+    std::vector<uint8_t> queryBuffer(euStallDeviceQuery.size);
+    auto euStallQueryData = reinterpret_cast<drm_xe_query_eu_stall *>(queryBuffer.data());
+    euStallDeviceQuery.data = reinterpret_cast<uint64_t>(euStallQueryData);
+
+    ret = ioctl(DrmIoctl::perfQuery, &euStallDeviceQuery);
+    if (ret != 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_XE_DEVICE_QUERY (DRM_XE_DEVICE_QUERY_EU_STALL)", errno, ret);
+        return -1;
+    }
+    if (euStallQueryData->record_size == 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "DRM_IOCTL_XE_DEVICE_QUERY (DRM_XE_DEVICE_QUERY_EU_STALL) returned zero record_size\n");
+        return -1;
+    }
+
+    return euStallQueryData->per_xecore_buf_size / euStallQueryData->record_size;
+}
+
 bool IoctlHelperXe::perfDisableEuStallStream(int32_t *stream) {
     int disableStatus = ioctl(*stream, DrmIoctl::perfDisable, 0);
     PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,

@@ -58,6 +58,11 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIfSmallBarConfigIsAllowedThenTrueIsRet
     EXPECT_TRUE(ioctlHelper.isSmallBarConfigAllowed());
 }
 
+TEST_F(IoctlPrelimHelperTests, whenGettingEuStallMaxReportsThenZeroIsReturned) {
+    // Prelim does not override the base, so the default reports "query unavailable" (0).
+    EXPECT_EQ(0, ioctlHelper.getEuStallMaxReportsPerXeCore());
+}
+
 TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsReturned) {
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::getparam), static_cast<unsigned int>(DRM_IOCTL_I915_GETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemExecbuffer2), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_EXECBUFFER2));

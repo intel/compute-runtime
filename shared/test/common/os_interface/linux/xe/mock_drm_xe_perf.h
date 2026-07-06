@@ -17,9 +17,12 @@ struct DrmMockXePerf : public DrmMockXe {
 
     int32_t curFd = 0;
     bool querySizeZero = false;
+    bool querySizeUndersized = false;
     bool numSamplingRateCountZero = false;
     uint32_t perfQueryCallCount = 0;
     uint32_t failPerfQueryOnCall = 0;
+    uint64_t recordSize = 64u;
+    uint64_t perXecoreBufSize = 512u * 1024u;
 
   protected:
     // Don't call directly, use the create() function

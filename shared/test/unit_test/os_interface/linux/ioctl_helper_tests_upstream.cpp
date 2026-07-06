@@ -135,6 +135,14 @@ TEST(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned) 
     EXPECT_FALSE(ioctlHelper.isImmediateVmBindRequired());
 }
 
+TEST(IoctlHelperUpstreamTest, whenGettingEuStallMaxReportsThenZeroIsReturned) {
+    // Upstream does not override the base, so the default reports "query unavailable" (0).
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+    EXPECT_EQ(0, ioctlHelper.getEuStallMaxReportsPerXeCore());
+}
+
 TEST(IoctlHelperUpstreamTest, whenGettingIfSmallBarConfigIsAllowedThenTrueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);

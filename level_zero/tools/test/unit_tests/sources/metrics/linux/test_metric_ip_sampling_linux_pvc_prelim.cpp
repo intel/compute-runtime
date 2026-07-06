@@ -200,11 +200,22 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenI915PerfIoctlEnableFailsThenClam
 
     auto linuxIface = static_cast<MetricIpSamplingLinuxImp *>(metricIpSamplingOsInterface.get());
 
-    EXPECT_EQ(0u, linuxIface->clampNReports(0));
-    EXPECT_EQ(1u, linuxIface->clampNReports(1));
+    uint32_t notifyEveryNReports = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, linuxIface->clampNReports(notifyEveryNReports));
+    EXPECT_EQ(0u, notifyEveryNReports);
 
-    auto reqBufSize = metricIpSamplingOsInterface->getRequiredBufferSize(std::numeric_limits<uint32_t>::max());
-    EXPECT_EQ(reqBufSize, linuxIface->clampNReports(std::numeric_limits<uint32_t>::max()));
+    notifyEveryNReports = 1u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, linuxIface->clampNReports(notifyEveryNReports));
+    EXPECT_EQ(1u, notifyEveryNReports);
+
+    // PVC uses the i915 KMD, which has no capacity query, so the request is clamped to the static
+    // buffer estimate rather than passed through.
+    const uint32_t maxSupportedReportCount =
+        metricIpSamplingOsInterface->getRequiredBufferSize(std::numeric_limits<uint32_t>::max()) /
+        metricIpSamplingOsInterface->getUnitReportSize();
+    notifyEveryNReports = std::numeric_limits<uint32_t>::max();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, linuxIface->clampNReports(notifyEveryNReports));
+    EXPECT_EQ(maxSupportedReportCount, notifyEveryNReports);
 }
 
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenPerfOpenEuStallStreamWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {

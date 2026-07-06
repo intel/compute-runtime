@@ -18,7 +18,7 @@ class MetricIpSamplingLinuxImp : public MetricIpSamplingOsInterface {
     ze_result_t stopMeasurement() override;
     ze_result_t readData(uint8_t *pRawData, size_t *pRawDataSize) override;
     uint32_t getRequiredBufferSize(const uint32_t maxReportCount) override;
-    uint32_t clampNReports(uint32_t notifyEveryNReports);
+    ze_result_t clampNReports(uint32_t &notifyEveryNReports);
     uint32_t getUnitReportSize() override;
     bool isNReportsAvailable() override;
     bool isOsSupportAvailable() override;

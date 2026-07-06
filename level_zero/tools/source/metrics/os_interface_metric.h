@@ -11,6 +11,9 @@
 
 #include <level_zero/zet_api.h>
 
+#include <algorithm>
+#include <cstdint>
+#include <limits>
 #include <memory>
 #include <sys/types.h>
 
@@ -39,6 +42,14 @@ class MetricIpSamplingOsInterface : public MetricOsInterface {
     uint32_t maxDssBufferSize = 512 * MemoryConstants::kiloByte;
     uint32_t defaultPollPeriodNs = 10000000u;
     uint32_t unitReportSize = 64u;
+
+  protected:
+    // Clamp a report count to the static buffer-report capacity reported by getRequiredBufferSize
+    // (the long-standing per-platform estimate). Used where no authoritative KMD capacity query is
+    // available (i915/PVC, older xe, and Windows).
+    uint32_t clampToMaxSupportedReports(uint32_t notifyEveryNReports) {
+        return std::min(notifyEveryNReports, getRequiredBufferSize(std::numeric_limits<uint32_t>::max()) / getUnitReportSize());
+    }
 };
 
 } // namespace L0

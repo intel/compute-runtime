@@ -81,6 +81,26 @@ HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenCorrectArgumentsWhenStartMeasu
     EXPECT_EQ(samplingPeriodNs, samplingGranularity * samplingUnit * gpuClockPeriodNs);
 }
 
+HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenNotifyEveryNReportsExceedsBufferCapacityWhenStartMeasurementIsCalledThenItIsClampedAndWrittenBack, IsXe2HpgCore) {
+    VariableBackup<decltype(NEO::pGetTimestampFrequency)> mockGetTimestampFrequency(&NEO::pGetTimestampFrequency, []() -> uint32_t {
+        return 1u;
+    });
+    VariableBackup<decltype(NEO::pPerfOpenEuStallStream)> mockPerfOpenEuStallStream(&NEO::pPerfOpenEuStallStream, [](uint32_t sampleRate, uint32_t minBufferSize) -> bool {
+        return true;
+    });
+    constexpr uint32_t samplingGranularity = 251u;
+    constexpr uint32_t gpuClockPeriodNs = 1000000000ull;
+    constexpr uint32_t samplingUnit = 1;
+    // notifyEveryNReports is the UMD event-signaling threshold; an over-large request must be
+    // clamped to the buffer's report capacity and the used value written back to the caller.
+    const uint32_t maxSupportedReportCount =
+        metricIpSamplingOsInterface->getRequiredBufferSize(std::numeric_limits<uint32_t>::max()) /
+        metricIpSamplingOsInterface->getUnitReportSize();
+    uint32_t notifyEveryNReports = std::numeric_limits<uint32_t>::max(), samplingPeriodNs = samplingGranularity * samplingUnit * gpuClockPeriodNs;
+    EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(maxSupportedReportCount, notifyEveryNReports);
+}
+
 HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, givenGetTimestampFrequencyReturnsFrequencyEqualZeroWhenStartMeasurementIsCalledThenReturnFailure, IsXe2HpgCore) {
     VariableBackup<decltype(NEO::pGetTimestampFrequency)> mockGetTimestampFrequency(&NEO::pGetTimestampFrequency, []() -> uint32_t {
         return 0u;
