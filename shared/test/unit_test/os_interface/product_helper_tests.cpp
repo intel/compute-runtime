@@ -1396,7 +1396,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsMemSetExtendedPayload
     EXPECT_FALSE(productHelper->isMemSetExtendedPayloadSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingIsRayTracingWalkerAdjustmentRequiredThenCorrectValueIsReturned, IsAtMostXe3Core) {
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingIsRayTracingWalkerAdjustmentRequiredThenFalseIsReturned) {
     EXPECT_FALSE(productHelper->isRayTracingWalkerAdjustmentRequired());
 }
 
