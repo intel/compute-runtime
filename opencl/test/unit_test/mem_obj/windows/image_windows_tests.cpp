@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
@@ -20,8 +21,10 @@ struct ImageWindowsTestsMockMemoryManager : MockMemoryManager {
                                                          4096u, osHandleData.handle, MemoryPool::systemCpuInaccessible,
                                                          properties.rootDeviceIndex, false, false, false);
 
-        graphicsAllocation->setDefaultGmm(new MockGmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper()));
-        graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo()->OverrideSurfaceType(RESOURCE_BUFFER);
+        auto gmm = new MockGmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper());
+        auto mockGmmResourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+        mockGmmResourceInfo->mockResourceCreateParams.Type = RESOURCE_BUFFER;
+        graphicsAllocation->setDefaultGmm(gmm);
 
         return graphicsAllocation;
     }
