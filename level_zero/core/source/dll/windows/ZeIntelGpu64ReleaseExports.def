@@ -6,6 +6,8 @@
 
 LIBRARY    "ze_intel_gpu64"
 EXPORTS
+
+; OpenCL API entries queried by LEO forwarding
 clIcdGetPlatformIDsKHR
 clGetPlatformIDs
 clGetPlatformInfo

@@ -8,6 +8,8 @@
 {
   global:
       ze*Get*ProcAddrTable;
+      
+/* OpenCL API entries queried by LEO forwarding */
       clGetExtensionFunctionAddress;
       clIcdGetPlatformIDsKHR;
       clGetPlatformIDs;
@@ -17,6 +19,7 @@
       clGetCLObjectInfoINTEL;
       clGetCLEventInfoINTEL;
       clReleaseGlSharedEventINTEL;
+
   local:
       *;
 };
