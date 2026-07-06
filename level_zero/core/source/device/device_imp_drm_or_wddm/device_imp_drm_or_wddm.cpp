@@ -60,8 +60,10 @@ ze_result_t Device::getExternalMemoryProperties(ze_device_external_memory_proper
         } else {
             pExternalMemoryProperties->imageExportTypes = 0u;
             pExternalMemoryProperties->imageImportTypes = 0u;
-            pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
-            pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+            pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF |
+                                                                     ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
+            pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF |
+                                                                     ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
         }
     }
     return ZE_RESULT_SUCCESS;
