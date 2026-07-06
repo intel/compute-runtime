@@ -63,6 +63,7 @@ lint:
     - IGC
     - HSD
     - GSD
+    - SYSM
 
   commit_message:
     signed_off:
