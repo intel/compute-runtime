@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 #include "shared/test/common/test_macros/test_excludes.h"
+#include "shared/test/common/test_macros/test_matcher_registry.h"
 
 #ifdef NEO_IGNORE_INVALID_TEST_EXCLUDES
 constexpr bool ignoreInvalidTestExcludes = true;
@@ -98,6 +99,14 @@ constexpr bool ignoreInvalidTestExcludes = false;
                 parent_class>::GetTearDownCaseOrSuite(__FILE__, __LINE__),                                                                  \
             new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(                                                                \
                 test_suite_name, test_name)>);                                                                                              \
+    static const bool test_suite_name##test_name##_matcherRegistered_ =                                                                     \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                         \
+             #test_suite_name #test_name,                                                                                                   \
+             [](PRODUCT_FAMILY currentProduct) -> bool {                                                                                    \
+                 return (::renderCoreFamily == (match_core)) &&                                                                             \
+                        (NEO::maxProductEnumValue == (match_product) || currentProduct == (match_product));                                 \
+             }),                                                                                                                            \
+         true);                                                                                                                             \
     template <typename FamilyType>                                                                                                          \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::testBodyHw()
 
@@ -152,5 +161,13 @@ constexpr bool ignoreInvalidTestExcludes = false;
     int GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                                           \
                                test_name)::gtest_registering_dummy_ =                                                                                     \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::AddToRegistry();                                                                              \
+    static const bool test_suite_name##test_name##_matcherRegistered_ =                                                                                   \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                                       \
+             #test_suite_name #test_name,                                                                                                                 \
+             [](PRODUCT_FAMILY currentProduct) -> bool {                                                                                                  \
+                 return (::renderCoreFamily == (match_core)) &&                                                                                           \
+                        (NEO::maxProductEnumValue == (match_product) || currentProduct == (match_product));                                               \
+             }),                                                                                                                                          \
+         true);                                                                                                                                           \
     template <typename FamilyType>                                                                                                                        \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::testBodyHw()

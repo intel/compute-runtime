@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,16 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/test_base.h"
+#include "shared/test/common/test_macros/test_matcher_registry.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
+    if (!NEO::TestMatcherRegistry::willRunForCurrentProduct(testInfo, ::productFamily)) {
+        return;
+    }
     BaseUltConfigListener::OnTestStart(testInfo);
 
     auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
@@ -26,6 +31,10 @@ void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
 }
 
 void NEO::UltConfigListener::OnTestEnd(const ::testing::TestInfo &testInfo) {
+    if (!NEO::TestMatcherRegistry::willRunForCurrentProduct(testInfo, ::productFamily)) {
+        return;
+    }
+
     // Clear global platform that it shouldn't be reused between tests
     platformsImpl->clear();
     MemoryManager::maxOsContextCount = 0u;

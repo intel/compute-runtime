@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/test_macros/hw_test_base.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/test_matcher_registry.h"
 
 #include "gtest/gtest.h"
 #include "hw_cmds.h"
@@ -123,6 +124,11 @@
             ::testing::internal::SuiteApiResolver<parent_class>::GetTearDownCaseOrSuite(__FILE__, __LINE__),                                \
             new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(test_suite_name,                                                \
                                                                             test_name)>);                                                   \
+    static const bool test_suite_name##test_name##_matcherRegistered_ =                                                                     \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                         \
+             #test_suite_name #test_name,                                                                                                   \
+             &checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>),                                                       \
+         true);                                                                                                                             \
                                                                                                                                             \
     template <unsigned int matcherOrdinal>                                                                                                  \
     void GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                            \
@@ -141,14 +147,7 @@
     template <unsigned int matcherOrdinal>                                                                                                  \
     bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                            \
                                 test_name)::checkMatch(PRODUCT_FAMILY matchProduct) {                                                       \
-        constexpr PRODUCT_FAMILY productFamily = supportedProductFamilies[matcherOrdinal];                                                  \
-                                                                                                                                            \
-        if (matchProduct == productFamily) {                                                                                                \
-            return MatcherType::isMatched<productFamily>();                                                                                 \
-        } else if constexpr (matcherOrdinal > 0) {                                                                                          \
-            return checkMatch<matcherOrdinal - 1u>(matchProduct);                                                                           \
-        }                                                                                                                                   \
-        return false;                                                                                                                       \
+        return checkProductMatch<MatcherType, matcherOrdinal>(matchProduct);                                                                \
     }                                                                                                                                       \
                                                                                                                                             \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                                                      \
@@ -219,6 +218,11 @@
             ::testing::internal::SuiteApiResolver<parent_class>::GetTearDownCaseOrSuite(__FILE__, __LINE__),                                \
             new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(test_suite_name,                                                \
                                                                             test_name)>);                                                   \
+    static const bool test_suite_name##test_name##_matcherRegistered_ =                                                                     \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                         \
+             #test_suite_name #test_name,                                                                                                   \
+             &checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>),                                                       \
+         true);                                                                                                                             \
                                                                                                                                             \
     template <unsigned int matcherOrdinal>                                                                                                  \
     void GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                            \
@@ -237,14 +241,7 @@
     template <unsigned int matcherOrdinal>                                                                                                  \
     bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                            \
                                 test_name)::checkMatch(PRODUCT_FAMILY matchProduct) {                                                       \
-        constexpr PRODUCT_FAMILY productFamily = supportedProductFamilies[matcherOrdinal];                                                  \
-                                                                                                                                            \
-        if (matchProduct == productFamily) {                                                                                                \
-            return MatcherType::isMatched<productFamily>();                                                                                 \
-        } else if constexpr (matcherOrdinal > 0) {                                                                                          \
-            return checkMatch<matcherOrdinal - 1u>(matchProduct);                                                                           \
-        }                                                                                                                                   \
-        return false;                                                                                                                       \
+        return checkProductMatch<MatcherType, matcherOrdinal>(matchProduct);                                                                \
     }                                                                                                                                       \
                                                                                                                                             \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                                                      \
@@ -660,14 +657,7 @@
     template <unsigned int matcherOrdinal>                                                                                                  \
     bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                            \
                                 test_name)::checkMatch(PRODUCT_FAMILY matchProduct) {                                                       \
-        constexpr PRODUCT_FAMILY productFamily = supportedProductFamilies[matcherOrdinal];                                                  \
-                                                                                                                                            \
-        if (matchProduct == productFamily) {                                                                                                \
-            return MatcherType::isMatched<productFamily>();                                                                                 \
-        } else if constexpr (matcherOrdinal > 0) {                                                                                          \
-            return checkMatch<matcherOrdinal - 1u>(matchProduct);                                                                           \
-        }                                                                                                                                   \
-        return false;                                                                                                                       \
+        return checkProductMatch<MatcherType, matcherOrdinal>(matchProduct);                                                                \
     }                                                                                                                                       \
                                                                                                                                             \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                                                      \
@@ -694,6 +684,11 @@
                                                                                                                                             \
     int GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::gtest_registering_dummy_ =                                                      \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::AddToRegistry();                                                                \
+    static const bool test_suite_name##test_name##_matcherRegistered_ =                                                                     \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                         \
+             #test_suite_name #test_name,                                                                                                   \
+             &checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>),                                                       \
+         true);                                                                                                                             \
     template <PRODUCT_FAMILY productFamily, typename FamilyType>                                                                            \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
 
@@ -752,6 +747,13 @@
             ::testing::internal::SuiteApiResolver<test_fixture>::GetSetUpCaseOrSuite(__FILE__, __LINE__),                             \
             ::testing::internal::SuiteApiResolver<test_fixture>::GetTearDownCaseOrSuite(__FILE__, __LINE__),                          \
             new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(test_fixture, test_name)>);                               \
+    static const bool test_fixture##test_name##_matcherRegistered_ =                                                                  \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                   \
+             #test_fixture #test_name,                                                                                                \
+             [](PRODUCT_FAMILY currentProduct) -> bool {                                                                              \
+                 return currentProduct == DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;                                      \
+             }),                                                                                                                      \
+         true);                                                                                                                       \
     void GTEST_TEST_CLASS_NAME_(test_fixture, test_name)::TestBody()
 
 #define TEST_P_DEFAULT(test_suite_name, test_name)                                                                                                        \
@@ -798,6 +800,13 @@
     int GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                                           \
                                test_name)::gtest_registering_dummy_ =                                                                                     \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::AddToRegistry();                                                                              \
+    static const bool test_suite_name##test_name##_matcherRegistered_ =                                                                                   \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                                       \
+             #test_suite_name #test_name,                                                                                                                 \
+             [](PRODUCT_FAMILY currentProduct) -> bool {                                                                                                  \
+                 return currentProduct == DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;                                                          \
+             }),                                                                                                                                          \
+         true);                                                                                                                                           \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody()
 
 #include "per_product_test_definitions.h"
@@ -828,5 +837,18 @@
     void GTEST_TEST_CLASS_NAME_(CaseName, TestName)<gtest_TypeParam_>::testBodyHw()
 
 [[maybe_unused]] static constexpr std::array supportedProductFamilies = {SUPPORTED_TEST_PRODUCT_FAMILIES};
+
+// Shared by HWTEST2_* macros and NEO::TestMatcherRegistry to avoid duplicating this lookup.
+template <typename MatcherType, unsigned int matcherOrdinal>
+bool checkProductMatch(PRODUCT_FAMILY matchProduct) {
+    constexpr PRODUCT_FAMILY productFamily = supportedProductFamilies[matcherOrdinal];
+
+    if (matchProduct == productFamily) {
+        return MatcherType::template isMatched<productFamily>();
+    } else if constexpr (matcherOrdinal > 0) {
+        return checkProductMatch<MatcherType, matcherOrdinal - 1u>(matchProduct);
+    }
+    return false;
+}
 
 #include "common_matchers.h"
