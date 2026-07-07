@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ int MockProgram::getInternalOptionsCalled = 0;
 std::string MockProgram::getCachedFileName() const {
     CompilerCache cache(CompilerCacheConfig{});
     std::string igcRevision = "0001";
+    std::string igcRegKeys = "";
     size_t igcLibSize = 1000;
     time_t igcLibMTime = 0;
     auto hwInfo = this->context->getDevice(0)->getHardwareInfo();
@@ -31,7 +32,7 @@ std::string MockProgram::getCachedFileName() const {
     auto opts = ArrayRef<const char>(this->options.c_str(), this->options.size());
     auto internalOptions = getInternalOptions();
     auto internalOpts = ArrayRef<const char>(internalOptions.c_str(), internalOptions.size());
-    return cache.getCachedFileName(hwInfo, input, opts, internalOpts, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
+    return cache.getCachedFileName(hwInfo, input, opts, internalOpts, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcRegKeys, igcLibSize, igcLibMTime);
 }
 
 } // namespace NEO

@@ -143,6 +143,7 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
   protected:
     struct CompilerLibraryEntry {
         std::string revision;
+        std::string igcRegKeys;
         size_t libSize{};
         time_t libMTime{};
         std::unique_ptr<OsLibrary> library;

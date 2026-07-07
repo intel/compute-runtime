@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -389,7 +389,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenNeoCachePersistentSetToZeroWhenGetDefau
     EXPECT_FALSE(cacheConfig.enabled);
 }
 
-TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigIsEnabledOrDisabledAsExpected) {
+TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetThenCacheConfigRemainsEnabled) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -418,33 +418,9 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigIsEna
         VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, NEO::ULT::MockEnvironBackup::defaultStatMock);
 
         auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-        EXPECT_FALSE(cacheConfig.enabled);
+        EXPECT_TRUE(cacheConfig.enabled);
+        EXPECT_EQ(cacheConfig.cacheDir, "ult/directory/");
     }
-}
-
-TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetWhenGetDefaultCacheConfigThenWarningIsPrinted) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.PrintDebugMessages.set(true);
-
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
-    mockableEnvs["IGC_DEBUG"] = "1";
-
-    std::vector<std::string> envStorage;
-    auto environVec = NEO::ULT::MockEnvironBackup::buildEnvironFromMap(mockableEnvs, envStorage);
-    NEO::ULT::MockEnvironBackup mockEnvBackup(environVec.data());
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, NEO::ULT::MockEnvironBackup::defaultStatMock);
-
-    StreamCapture capture;
-    capture.captureStdout();
-    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    std::string output = capture.getCapturedStdout();
-
-    EXPECT_FALSE(cacheConfig.enabled);
-    EXPECT_STREQ(output.c_str(), "WARNING: Detected IGC_* environment variable(s). Compiler cache is disabled.\n");
 }
 
 } // namespace NEO

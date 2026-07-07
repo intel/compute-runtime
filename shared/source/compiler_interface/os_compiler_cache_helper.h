@@ -13,5 +13,4 @@ class EnvironmentVariableReader;
 bool checkDefaultCacheDirSettings(std::string &cacheDir, NEO::EnvironmentVariableReader &reader);
 time_t getFileModificationTime(const std::string &path);
 size_t getFileSize(const std::string &path);
-bool isAnyIgcEnvVarSet();
 } // namespace NEO

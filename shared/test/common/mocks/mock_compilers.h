@@ -213,7 +213,7 @@ struct MockOclTranslationOutput : MockCIF<NEO::OclTranslationOutputTag> {
     MockCIFBuffer *debugData = nullptr;
 };
 
-struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<3>> {
+struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<6>> {
     static CIF::ICIF *Create(CIF::InterfaceId_t intId, CIF::Version_t version); // NOLINT(readability-identifier-naming)
 
     MockIgcOclDeviceCtx();
@@ -251,10 +251,13 @@ struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<3>> {
 
     const char *GetIGCRevision() override;
 
+    void GetIGCRegKeys(CIF::Builtins::BufferSimple *outIgcRegKeysBuffer) override;
+
     void SetDebugVars(MockCompilerDebugVars &debugVars) { // NOLINT(readability-identifier-naming)
         this->debugVars = debugVars;
     }
 
+    std::string igcRegKeysToReturn = "mockigcregkeys";
     MockCIFPlatform *platform = nullptr;
     MockGTSystemInfo *gtSystemInfo = nullptr;
     MockIgcFeaturesAndWorkarounds *igcFtrWa = nullptr;

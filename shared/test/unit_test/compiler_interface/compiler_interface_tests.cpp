@@ -173,6 +173,15 @@ TEST(CompilerInterfaceCreateInstance, WhenInitializeFailedThenReturnNull) {
     EXPECT_EQ(nullptr, CompilerInterface::createInstance<FailInitializeCompilerInterface>(std::make_unique<CompilerCache>(CompilerCacheConfig{}), false));
 }
 
+TEST(CompilerInterface, GivenIgcWhenLoadingIgcBasedCompilerThenIgcRevisionAndRegKeysAreQueriedAndStored) {
+    MockCompilerInterface ci;
+    bool initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), true);
+    ASSERT_TRUE(initSuccess);
+
+    EXPECT_STREQ("mockigcrevision", ci.defaultIgc.revision.c_str());
+    EXPECT_STREQ("mockigcregkeys", ci.defaultIgc.igcRegKeys.c_str());
+}
+
 TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenCompilingToIsaThenSuccessIsReturned) {
 
     TranslationOutput translationOutput;

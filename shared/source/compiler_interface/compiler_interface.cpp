@@ -75,7 +75,7 @@ TranslationErrorCode CompilerInterface::build(
         kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
                                                   input.src,
                                                   input.apiOptions,
-                                                  input.internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igc.revision, igc.libSize, igc.libMTime);
+                                                  input.internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igc.revision, igc.igcRegKeys, igc.libSize, igc.libMTime);
 
         bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output);
         if (success) {
@@ -141,7 +141,7 @@ TranslationErrorCode CompilerInterface::build(
         const auto &igc = *getIgc(&device);
         kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), irRef,
                                                   input.apiOptions,
-                                                  input.internalOptions, specIdsRef, specValuesRef, igc.revision, igc.libSize, igc.libMTime);
+                                                  input.internalOptions, specIdsRef, specValuesRef, igc.revision, igc.igcRegKeys, igc.libSize, igc.libMTime);
 
         bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output);
         if (success) {
@@ -433,6 +433,17 @@ bool CompilerInterface::loadIgcBasedCompiler(CompilerLibraryEntry &entry, const 
         auto igcDeviceCtx3 = entry.entryPoint->CreateInterface<IGC::IgcOclDeviceCtx<3>>();
         if (igcDeviceCtx3) {
             entry.revision = igcDeviceCtx3->GetIGCRevision();
+        }
+
+        auto igcDeviceCtx6 = entry.entryPoint->CreateInterface<IGC::IgcOclDeviceCtx<6>>();
+        if (igcDeviceCtx6) {
+            auto igcRegKeysBuffer = entry.entryPoint->CreateBuiltin<CIF::Builtins::BufferLatest>();
+            if (igcRegKeysBuffer) {
+                igcDeviceCtx6->GetIGCRegKeys(igcRegKeysBuffer.get());
+                if (igcRegKeysBuffer->GetSizeRaw() > 0) {
+                    entry.igcRegKeys.assign(igcRegKeysBuffer->GetMemory<char>(), igcRegKeysBuffer->GetSizeRaw());
+                }
+            }
         }
     }
     return result;

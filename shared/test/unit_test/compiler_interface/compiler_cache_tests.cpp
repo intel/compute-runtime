@@ -148,6 +148,11 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
                                                 std::string("0000000000000000000000000000000000000001"),
                                                 std::string("abcdef1234567890abcdef123456789000000000")}};
 
+    std::array<std::string, 4> igcRegKeysArray = {{std::string(""),
+                                                   std::string("IGC_ShaderDumpEnable=1"),
+                                                   std::string("IGC_ShaderDumpEnable=0"),
+                                                   std::string("IGC_ShaderDumpEnable=1,IGC_EnableZEBinary=1")}};
+
     const size_t igcLibSize = 304297;
     const time_t igcLibMTime = 167594873;
     const size_t igcLibSizes[] = {0, 1, 1024, igcLibSize};
@@ -185,8 +190,10 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     std::unique_ptr<char[]> buf1(new char[bufSize]);
     std::unique_ptr<char[]> buf2(new char[bufSize]);
     std::unique_ptr<char[]> buf3(new char[bufSize]);
+    std::unique_ptr<char[]> buf4(new char[bufSize]);
 
     ArrayRef<char> igcRevision;
+    ArrayRef<char> igcRegKeys;
 
     ArrayRef<char> src;
     ArrayRef<char> apiOptions;
@@ -196,6 +203,8 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
 
     strcpy_s(buf0.get(), bufSize, igcRevisions[0].c_str());
     igcRevision = ArrayRef<char>(buf0.get(), strlen(buf0.get()));
+    strcpy_s(buf4.get(), bufSize, igcRegKeysArray[0].c_str());
+    igcRegKeys = ArrayRef<char>(buf4.get(), strlen(buf4.get()));
     strcpy_s(buf1.get(), bufSize, inputArray[0].c_str());
     src = ArrayRef<char>(buf1.get(), strlen(buf1.get()));
     strcpy_s(buf2.get(), bufSize, optionsArray[0].c_str());
@@ -212,7 +221,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     hwInfo.ipVersion.revision = ipVersionValues[0];
 
     auto verifyHash = [&]() -> void {
-        std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, libSize, libMTime);
+        std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcRegKeys, libSize, libMTime);
 
         ASSERT_TRUE(hashes.find(hash) == hashes.end());
         hashes.emplace(hash);
@@ -222,6 +231,11 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     for (size_t i = 1; i < igcRevisions.size(); i++) {
         strcpy_s(buf0.get(), bufSize, igcRevisions[i].c_str());
         igcRevision = ArrayRef<char>(buf0.get(), strlen(buf0.get()));
+        verifyHash();
+    }
+    for (size_t i = 1; i < igcRegKeysArray.size(); i++) {
+        strcpy_s(buf4.get(), bufSize, igcRegKeysArray[i].c_str());
+        igcRegKeys = ArrayRef<char>(buf4.get(), strlen(buf4.get()));
         verifyHash();
     }
     for (size_t i = 1; i < arrayCount(igcLibSizes); i++) {
@@ -272,8 +286,8 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
         verifyHash();
     }
 
-    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
-    std::string hash2 = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcRegKeys, igcLibSize, igcLibMTime);
+    std::string hash2 = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcRegKeys, igcLibSize, igcLibMTime);
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
 }
 
@@ -286,6 +300,7 @@ TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFilesAreCrea
         const char *pattern;
     } verifyData[] = {
         {false, "---- igcRevision ----"},
+        {false, "---- igcRegKeys ----"},
         {false, "---- input ----"},
         {false, "---- options ----"},
         {false, "---- internal options ----"},
@@ -326,7 +341,7 @@ TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFilesAreCrea
     size_t libSize = 0;
     time_t libMTime = 0;
     CompilerCache cache(CompilerCacheConfig{});
-    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), revision, libSize, libMTime);
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), revision, ArrayRef<const char>(), libSize, libMTime);
 
     for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
         EXPECT_TRUE(verifyData[idx].matched);
@@ -360,7 +375,7 @@ TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetAndOpenFailesThenNoCl
     size_t libSize = 0;
     time_t libMTime = 0;
     CompilerCache cache(CompilerCacheConfig{});
-    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), revision, libSize, libMTime);
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), revision, ArrayRef<const char>(), libSize, libMTime);
 
     EXPECT_EQ(IoFunctions::mockFopenCalled, 2u);
     EXPECT_EQ(IoFunctions::mockFcloseCalled, 0u);

@@ -629,12 +629,13 @@ int OfflineCompiler::buildToIrBinary() {
 
     if (allowCaching) {
         const std::string igcRevision = igcFacade->getIgcRevision();
+        const auto &igcRegKeys = igcFacade->getIgcRegKeys();
         const auto igcLibSize = igcFacade->getIgcLibSize();
         const auto igcLibMTime = igcFacade->getIgcLibMTime();
         irHash = cache->getCachedFileName(getHardwareInfo(),
                                           sourceCode,
                                           options,
-                                          internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
+                                          internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcRegKeys, igcLibSize, igcLibMTime);
         irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
         if (irBinary) {
             return retVal;
@@ -761,6 +762,7 @@ int OfflineCompiler::buildSourceCode() {
     }
 
     const std::string igcRevision = igcFacade->getIgcRevision();
+    const auto &igcRegKeys = igcFacade->getIgcRegKeys();
     const auto igcLibSize = igcFacade->getIgcLibSize();
     const auto igcLibMTime = igcFacade->getIgcLibMTime();
     const bool generateDebugInfo = CompilerOptions::contains(options, CompilerOptions::generateDebugInfo);
@@ -802,14 +804,14 @@ int OfflineCompiler::buildSourceCode() {
                                            ArrayRef<const char>(irBinary, irBinarySize),
                                            options, internalOptions,
                                            specIdsRef, specValuesRef,
-                                           igcRevision, igcLibSize, igcLibMTime);
+                                           igcRevision, igcRegKeys, igcLibSize, igcLibMTime);
 
         if (generateDebugInfo) {
             dbgHash = cache->getCachedFileName(getHardwareInfo(),
                                                irHash,
                                                options, internalOptions,
                                                specIdsRef, specValuesRef,
-                                               igcRevision, igcLibSize, igcLibMTime);
+                                               igcRevision, igcRegKeys, igcLibSize, igcLibMTime);
         }
 
         genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();

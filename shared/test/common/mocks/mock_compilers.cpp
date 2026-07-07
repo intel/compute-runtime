@@ -356,6 +356,12 @@ const char *MockIgcOclDeviceCtx::GetIGCRevision() {
     return "mockigcrevision";
 }
 
+void MockIgcOclDeviceCtx::GetIGCRegKeys(CIF::Builtins::BufferSimple *outIgcRegKeysBuffer) {
+    if (outIgcRegKeysBuffer != nullptr && !igcRegKeysToReturn.empty()) {
+        outIgcRegKeysBuffer->PushBackRawBytes(igcRegKeysToReturn.data(), igcRegKeysToReturn.size());
+    }
+}
+
 MockIgcOclTranslationCtx::MockIgcOclTranslationCtx() = default;
 MockIgcOclTranslationCtx::~MockIgcOclTranslationCtx() = default;
 

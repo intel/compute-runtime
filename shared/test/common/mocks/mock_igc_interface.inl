@@ -117,6 +117,9 @@ const char *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 3)::GetIGCRevision() {
     return "";
 }
 
+void CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 6)::GetIGCRegKeys(CIF::Builtins::BufferSimple *outIgcRegKeysBuffer) {
+}
+
 IgcBuiltinsBase *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 4)::GetIgcBuiltinsHandleImpl(CIF::Version_t ver) {
     return nullptr;
 }
