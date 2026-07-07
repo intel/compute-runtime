@@ -37,6 +37,7 @@ add_executable(igdrcl_${target_name}
                ${NEO_SHARED_DIRECTORY}/dll/linux${BRANCH_DIR_SUFFIX}/options_linux.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.inl
                ${NEO_SOURCE_DIR}/opencl/source/dll/command_queue_dll.cpp
+               ${NEO_SOURCE_DIR}/opencl/source/dll/leo_forwarding_dll.cpp
                ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
 )
 if(NEO__LIBVA_FOUND)

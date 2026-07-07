@@ -19,6 +19,7 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
     ${NEO_SOURCE_DIR}/opencl/source/api/api.cpp
     ${NEO_SOURCE_DIR}/opencl/source/dll/debug_manager.cpp
+    ${NEO_SOURCE_DIR}/opencl/source/dll/leo_forwarding_dll.cpp
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
 
     ${HW_SRC_LINK}

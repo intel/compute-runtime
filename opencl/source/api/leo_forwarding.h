@@ -50,6 +50,8 @@ struct L0ForwardingState {
 
 extern L0ForwardingState *l0ForwardingState;
 
+bool leoForwardingSelfLoad();
+
 void leoSetup();
 void leoTeardown();
 

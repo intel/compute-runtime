@@ -36,7 +36,9 @@ struct UltHwConfig {
 
     bool recompileKernelsWhenL1PolicyMissmatch = false;
 
-    char padding[7];
+    bool leoForwardingSelfLoad = true;
+
+    char padding[6];
 };
 
 extern UltHwConfig ultHwConfig;

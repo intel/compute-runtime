@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -19,8 +21,20 @@ static void resetL0Library() {
     leoSetup();
 }
 
+namespace {
+bool capturedPerformSelfLoad = false;
+bool capturedLibraryNameEmpty = true;
+
+OsLibrary *mockCapturingLoad(const OsLibraryCreateProperties &properties) {
+    capturedPerformSelfLoad = properties.performSelfLoad;
+    capturedLibraryNameEmpty = properties.libraryName.empty();
+    return nullptr;
+}
+} // namespace
+
 TEST(AdditionalExtension, whenCheckIsLEOEnabledWithFlagSetTo1ThenReturnTrue) {
     DebugManagerStateRestore restorer;
+    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, mockCapturingLoad};
     resetL0Library();
 
     debugManager.flags.EnableLEO.set(1);
@@ -31,6 +45,7 @@ TEST(AdditionalExtension, whenCheckIsLEOEnabledWithFlagSetTo1ThenReturnTrue) {
 
 TEST(AdditionalExtension, whenCheckIsLEOEnabledWithFlagSetTo0ThenReturnFalse) {
     DebugManagerStateRestore restorer;
+    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, mockCapturingLoad};
     resetL0Library();
 
     debugManager.flags.EnableLEO.set(0);
@@ -41,6 +56,7 @@ TEST(AdditionalExtension, whenCheckIsLEOEnabledWithFlagSetTo0ThenReturnFalse) {
 
 TEST(AdditionalExtension, whenCheckIsLEOEnabledWithDefaultFlagAndNoLibraryThenReturnFalse) {
     DebugManagerStateRestore restorer;
+    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, mockCapturingLoad};
     resetL0Library();
 
     EXPECT_FALSE(isLEOEnabled());
@@ -290,6 +306,28 @@ TEST_F(L0LibraryLoadTest, givenFlag1WhenLibraryReturnsNoPlatformsThenIsLEOEnable
     EXPECT_NE(nullptr, l0ForwardingState->library.get());
 
     OsLibrary::loadFunc = savedLoadFunc;
+}
+
+TEST_F(L0LibraryLoadTest, givenLeoForwardingSelfLoadEnabledWhenLoadingLibraryThenSelfLoadIsRequestedAndRealLibraryIsNotSearched) {
+    debugManager.flags.EnableLEO.set(1);
+    VariableBackup<bool> selfLoadBackup{&ultHwConfig.leoForwardingSelfLoad, true};
+    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, mockCapturingLoad};
+    capturedPerformSelfLoad = false;
+
+    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(capturedPerformSelfLoad);
+}
+
+TEST_F(L0LibraryLoadTest, givenLeoForwardingSelfLoadDisabledWhenLoadingLibraryThenRealLibraryIsRequested) {
+    debugManager.flags.EnableLEO.set(1);
+    VariableBackup<bool> selfLoadBackup{&ultHwConfig.leoForwardingSelfLoad, false};
+    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, mockCapturingLoad};
+    capturedPerformSelfLoad = true;
+    capturedLibraryNameEmpty = true;
+
+    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_FALSE(capturedPerformSelfLoad);
+    EXPECT_FALSE(capturedLibraryNameEmpty);
 }
 
 } // namespace NEO

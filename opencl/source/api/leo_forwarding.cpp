@@ -55,6 +55,7 @@ static void loadL0Library() {
         "libze_intel_gpu.so.1";
 #endif
     OsLibraryCreateProperties properties(l0LibraryName);
+    properties.performSelfLoad = leoForwardingSelfLoad();
     l0ForwardingState->library.reset(OsLibrary::loadFunc(properties));
     if (l0ForwardingState->library && l0ForwardingState->library->isLoaded()) {
         l0ForwardingState->clGetPlatformIDsFunc = reinterpret_cast<decltype(&clGetPlatformIDs)>(l0ForwardingState->library->getProcAddress("clGetPlatformIDs"));
