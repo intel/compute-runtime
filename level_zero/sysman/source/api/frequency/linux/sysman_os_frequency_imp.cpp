@@ -120,6 +120,8 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
 ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     ze_result_t result;
 
+    pSysfsAccess->clearFdCache();
+
     result = getRequest(pState->request);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,

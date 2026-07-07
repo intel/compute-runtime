@@ -53,11 +53,20 @@ int FdCacheInterface::getFd(std::string file) {
     return fdMap[file].first;
 }
 
-FdCacheInterface::~FdCacheInterface() {
+void FdCacheInterface::clearFdCache() {
     for (auto it = fdMap.begin(); it != fdMap.end(); ++it) {
         NEO::SysCalls::close(it->second.first);
     }
     fdMap.clear();
+}
+
+FdCacheInterface::~FdCacheInterface() {
+    clearFdCache();
+}
+
+void FsAccessInterface::clearFdCache() {
+    auto lock = this->obtainMutex();
+    pFdCacheInterface->clearFdCache();
 }
 
 template <typename T>
@@ -611,6 +620,10 @@ std::string SysFsAccessInterface::getDevicePciBdf() {
     }
 
     return realPath.substr(lastSlash + 1);
+}
+
+void SysFsAccessInterface::clearFdCache() {
+    FsAccessInterface::clearFdCache();
 }
 
 } // namespace Sysman

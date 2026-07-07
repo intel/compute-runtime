@@ -28,6 +28,7 @@ class FdCacheInterface : public NEO::NonCopyableAndNonMovableClass {
 
     static const int maxSize = 10;
     int getFd(std::string file);
+    void clearFdCache();
 
   protected:
     // Map of File name to pair of file descriptor and reference count to file.
@@ -65,6 +66,7 @@ class FsAccessInterface {
     std::string getDirName(const std::string path);
     virtual bool fileExists(const std::string file);
     virtual bool directoryExists(const std::string path);
+    virtual void clearFdCache();
 
   protected:
     FsAccessInterface();
@@ -133,6 +135,7 @@ class SysFsAccessInterface : protected FsAccessInterface {
     bool directoryExists(const std::string path) override;
     bool isRootUser() override;
     std::string getDevicePciBdf();
+    void clearFdCache() override;
 
   protected:
     SysFsAccessInterface();

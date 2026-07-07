@@ -918,6 +918,44 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenReadVectorStringFailsAft
     EXPECT_TRUE(lines.empty());
 }
 
+TEST_F(SysmanDeviceFixture, GivenSysFsAccessInterfaceWhenCallingClearFdCacheThenCacheIsClearedAndFileDescriptorsAreClosed) {
+    static uint32_t closeCallCount = 0;
+    closeCallCount = 0;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpendir(&NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        return nullptr;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        static int fdCounter = 1;
+        return fdCounter++;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        closeCallCount++;
+        return 0;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view value = "42";
+        auto size = std::min(count, value.size());
+        memcpy(buf, value.data(), size);
+        return static_cast<ssize_t>(size);
+    });
+
+    auto pSysFsAccess = SysFsAccessInterface::create("");
+    ASSERT_NE(nullptr, pSysFsAccess);
+
+    int32_t val = 0;
+    for (int i = 0; i < 5; i++) {
+        std::string filename = "mockFile" + std::to_string(i) + ".txt";
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pSysFsAccess->read(filename, val));
+    }
+
+    pSysFsAccess->clearFdCache();
+    EXPECT_EQ(5u, closeCallCount);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0
