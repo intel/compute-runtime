@@ -22,8 +22,6 @@ using namespace NEO;
 
 using DeviceTestsPvc = ::testing::Test;
 
-HWTEST_EXCLUDE_PRODUCT(DeviceTests, givenZexNumberOfCssEnvVariableSetAmbigouslyWhenDeviceIsCreatedThenDontApplyAnyLimitations, IGFX_PVC)
-
 PVCTEST_F(DeviceTestsPvc, WhenDeviceIsCreatedThenOnlyOneCcsEngineIsExposed) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;

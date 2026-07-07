@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,6 @@
 using namespace NEO;
 
 using DeviceTestsDg2 = ::testing::Test;
-
-HWTEST_EXCLUDE_PRODUCT(DeviceTests, givenZexNumberOfCssEnvVariableSetAmbigouslyWhenDeviceIsCreatedThenDontApplyAnyLimitations, IGFX_DG2)
 
 DG2TEST_F(DeviceTestsDg2, WhenAdjustCCSCountImplCalledThenHwInfoReportOneComputeEngine) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);

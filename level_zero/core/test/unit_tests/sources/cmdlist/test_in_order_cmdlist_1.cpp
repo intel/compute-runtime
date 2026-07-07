@@ -2280,7 +2280,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeCont
     EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
 }
 
-HWCMDTEST_F(IGFX_XE_HPC_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxedOrderingThenProgramAllDependencies) {
+HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxedOrderingThenProgramAllDependencies, IsXeHpcCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
@@ -2694,7 +2694,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenAddingRela
     EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lrrCmd->getDestinationRegisterAddress());
 }
 
-HWCMDTEST_F(IGFX_XE_HPC_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenAppendNeedsRelaxedOrderingThenSubmitInOrderCounter) {
+HWTEST2_F(InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenAppendNeedsRelaxedOrderingThenSubmitInOrderCounter, IsXeHpcCore) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
