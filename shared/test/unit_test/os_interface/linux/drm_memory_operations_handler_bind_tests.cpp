@@ -35,6 +35,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include <memory>
+#include <set>
 
 using namespace NEO;
 
@@ -1510,6 +1511,145 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenMultipleBufferObjectsAllocationW
         }
     }
     delete mockDrmAllocation;
+}
+
+struct ScopedExtraEngine {
+    ScopedExtraEngine(MockDevice *device, EngineControl engineControl) : device(device) {
+        device->allEngines.push_back(engineControl);
+    }
+    ~ScopedExtraEngine() {
+        device->allEngines.pop_back();
+    }
+    MockDevice *device;
+};
+
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationSharedAcrossEnginesWhenDecompressCalledThenVmBindIssuedOncePerUniqueVmNotPerEngine) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+
+    VariableBackup<uint32_t> maxOsContextCountBackup(&MemoryManager::maxOsContextCount, MemoryManager::maxOsContextCount + 1);
+    auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(device->getDeviceBitfield()));
+    csr->setupContext(*osContext);
+    csr->initializeResources(device->getPreemptionMode());
+    ScopedExtraEngine extraEngine(device, EngineControl{csr.get(), osContext});
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    auto &engines = device->getAllEngines();
+    ASSERT_GT(engines.size(), 1u);
+
+    std::set<uint32_t> expectedVmIds;
+    uint32_t preFixBindCount = 0u;
+    for (auto &engine : engines) {
+        auto deviceBitfield = engine.osContext->getDeviceBitfield();
+        for (uint32_t vmHandleId = 0u; vmHandleId < deviceBitfield.size(); vmHandleId++) {
+            if (deviceBitfield.test(vmHandleId)) {
+                expectedVmIds.insert(mock->getVmIdForContext(*engine.osContext, vmHandleId));
+                preFixBindCount++;
+            }
+        }
+    }
+    ASSERT_LT(expectedVmIds.size(), preFixBindCount);
+
+    auto vmBindCalledBefore = mock->context.vmBindCalled;
+
+    auto status = operationHandler->decompress(device, *allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, status);
+
+    EXPECT_EQ(vmBindCalledBefore + expectedVmIds.size(), mock->context.vmBindCalled);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+using DrmMemoryOperationsHandlerBindPerContextVmDecompressTest = DrmMemoryOperationsHandlerBindWithPerContextVms;
+
+HWTEST_F(DrmMemoryOperationsHandlerBindPerContextVmDecompressTest, givenPerContextVmsWhenDecompressCalledThenVmBindIssuedOncePerDistinctRealVm) {
+    mock->bindAvailable = true;
+    mock->incrementVmId = true;
+
+    VariableBackup<uint32_t> maxOsContextCountBackup(&MemoryManager::maxOsContextCount, MemoryManager::maxOsContextCount + 1);
+    auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(device->getDeviceBitfield()));
+    csr->setupContext(*osContext);
+    csr->initializeResources(device->getPreemptionMode());
+    ScopedExtraEngine extraEngine(device, EngineControl{csr.get(), osContext});
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    auto &engines = device->getAllEngines();
+    ASSERT_GT(engines.size(), 1u);
+
+    std::set<uint32_t> expectedVmIds;
+    uint32_t preFixBindCount = 0u;
+    for (auto &engine : engines) {
+        auto deviceBitfield = engine.osContext->getDeviceBitfield();
+        for (uint32_t vmHandleId = 0u; vmHandleId < deviceBitfield.size(); vmHandleId++) {
+            if (deviceBitfield.test(vmHandleId)) {
+                expectedVmIds.insert(mock->getVmIdForContext(*engine.osContext, vmHandleId));
+                preFixBindCount++;
+            }
+        }
+    }
+    ASSERT_EQ(expectedVmIds.size(), preFixBindCount);
+
+    auto vmBindCalledBefore = mock->context.vmBindCalled;
+
+    auto status = operationHandler->decompress(device, *allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, status);
+
+    EXPECT_EQ(vmBindCalledBefore + expectedVmIds.size(), mock->context.vmBindCalled);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWithPendingGpuWorkWhenDecompressCalledThenWaitForEnginesCompletionIsInvoked) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    auto &engine = device->getAllEngines()[0];
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+    csr->callBaseWaitForCompletionWithTimeout = false;
+    *csr->getTagAddress() = 0u;
+    allocation->updateTaskCount(1u, engine.osContext->getContextId());
+
+    auto waitCalledBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
+
+    auto status = operationHandler->decompress(device, *allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, status);
+
+    EXPECT_EQ(waitCalledBefore + 1u, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, csr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenDecompressCalledThenPagingFenceIsForcedAndWaitedOnPerBind) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    ASSERT_EQ(MemoryOperationsStatus::success, operationHandler->decompress(device, *allocation));
+
+    auto vmBindCalledBefore = mock->context.vmBindCalled;
+    auto waitUserFenceCalledBefore = mock->context.waitUserFenceCalled;
+
+    auto status = operationHandler->decompress(device, *allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, status);
+
+    auto vmBindIssued = mock->context.vmBindCalled - vmBindCalledBefore;
+    ASSERT_GT(vmBindIssued, 0u);
+
+    EXPECT_EQ(waitUserFenceCalledBefore + vmBindIssued, mock->context.waitUserFenceCalled);
+
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 using DrmResidencyHandlerTests = ::testing::Test;

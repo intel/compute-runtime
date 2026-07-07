@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
@@ -42,6 +43,8 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *devi
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::decompress(Device *device, GraphicsAllocation &gfxAllocation) {
     auto drmAllocation = static_cast<DrmAllocation *>(&gfxAllocation);
     auto &engines = device->getAllEngines();
+    device->getMemoryManager()->waitForEnginesCompletion(gfxAllocation);
+    const auto drm = rootDeviceEnvironment.osInterface->getDriverModel()->as<Drm>();
 
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -59,6 +62,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::decompress(Device *device
         }
     };
 
+    const bool perContextVms = drm->isPerContextVMRequired();
     for (const auto &engine : engines) {
         auto osContext = engine.osContext;
         auto deviceBitfield = osContext->getDeviceBitfield();
@@ -72,13 +76,17 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::decompress(Device *device
 
             setDecompressOnBOs(true);
 
-            int retVal = drmAllocation->bindBOs(osContext, vmHandleId, nullptr, true, false);
+            int retVal = drmAllocation->bindBOs(osContext, vmHandleId, nullptr, true, true);
 
             setDecompressOnBOs(false);
 
             if (retVal) {
                 return MemoryOperationsStatus::failed;
             }
+        }
+
+        if (not perContextVms) {
+            break;
         }
     }
     return MemoryOperationsStatus::success;
