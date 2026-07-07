@@ -41,23 +41,16 @@
         template <typename T>                                                                                                               \
         void emptyFcn() {}                                                                                                                  \
         void SetUp() override {                                                                                                             \
-            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                             \
-                GTEST_SKIP();                                                                                                               \
-            }                                                                                                                               \
             parent_class::SetUp();                                                                                                          \
             FAMILY_SELECTOR(::renderCoreFamily, SetUpT_name);                                                                               \
         }                                                                                                                                   \
         void TearDown() override {                                                                                                          \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
-                FAMILY_SELECTOR(::renderCoreFamily, TearDownT_name)                                                                         \
-                parent_class::TearDown();                                                                                                   \
-            }                                                                                                                               \
+            FAMILY_SELECTOR(::renderCoreFamily, TearDownT_name)                                                                             \
+            parent_class::TearDown();                                                                                                       \
         }                                                                                                                                   \
                                                                                                                                             \
         void TestBody() override {                                                                                                          \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
-                FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                             \
-            }                                                                                                                               \
+            FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                                 \
         }                                                                                                                                   \
         static ::testing::TestInfo *const test_info_;                                                                                       \
     };                                                                                                                                      \
@@ -106,9 +99,6 @@
         template <unsigned int matcherOrdinal>                                                                                              \
         void checkForMatch(PRODUCT_FAMILY matchProduct);                                                                                    \
                                                                                                                                             \
-        template <unsigned int matcherOrdinal>                                                                                              \
-        bool checkMatch(PRODUCT_FAMILY matchProduct);                                                                                       \
-                                                                                                                                            \
         void SetUp() override;                                                                                                              \
         void TearDown() override;                                                                                                           \
         void TestBody() override;                                                                                                           \
@@ -144,31 +134,15 @@
             checkForMatch<matcherOrdinal - 1u>(matchProduct);                                                                               \
         }                                                                                                                                   \
     }                                                                                                                                       \
-    template <unsigned int matcherOrdinal>                                                                                                  \
-    bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                            \
-                                test_name)::checkMatch(PRODUCT_FAMILY matchProduct) {                                                       \
-        return checkProductMatch<MatcherType, matcherOrdinal>(matchProduct);                                                                \
-    }                                                                                                                                       \
                                                                                                                                             \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                                                      \
-        if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                 \
-            GTEST_SKIP();                                                                                                                   \
-        }                                                                                                                                   \
-        if (checkMatch<supportedProductFamilies.size() - 1u>(::productFamily)) {                                                            \
-            parent_class::SetUp();                                                                                                          \
-        }                                                                                                                                   \
+        parent_class::SetUp();                                                                                                              \
     }                                                                                                                                       \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TearDown() {                                                                   \
-        if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                \
-            if (checkMatch<supportedProductFamilies.size() - 1u>(::productFamily)) {                                                        \
-                parent_class::TearDown();                                                                                                   \
-            }                                                                                                                               \
-        }                                                                                                                                   \
+        parent_class::TearDown();                                                                                                           \
     }                                                                                                                                       \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody() {                                                                   \
-        if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                \
-            checkForMatch<supportedProductFamilies.size() - 1u>(::productFamily);                                                           \
-        }                                                                                                                                   \
+        checkForMatch<supportedProductFamilies.size() - 1u>(::productFamily);                                                               \
     }                                                                                                                                       \
                                                                                                                                             \
     template <PRODUCT_FAMILY productFamily, typename FamilyType>                                                                            \
@@ -200,9 +174,6 @@
         template <unsigned int matcherOrdinal>                                                                                              \
         void checkForMatch(PRODUCT_FAMILY matchProduct);                                                                                    \
                                                                                                                                             \
-        template <unsigned int matcherOrdinal>                                                                                              \
-        bool checkMatch(PRODUCT_FAMILY matchProduct);                                                                                       \
-                                                                                                                                            \
         void SetUp() override;                                                                                                              \
         void TearDown() override;                                                                                                           \
         void TestBody() override;                                                                                                           \
@@ -238,33 +209,17 @@
             checkForMatch<matcherOrdinal - 1u>(matchProduct);                                                                               \
         }                                                                                                                                   \
     }                                                                                                                                       \
-    template <unsigned int matcherOrdinal>                                                                                                  \
-    bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                            \
-                                test_name)::checkMatch(PRODUCT_FAMILY matchProduct) {                                                       \
-        return checkProductMatch<MatcherType, matcherOrdinal>(matchProduct);                                                                \
-    }                                                                                                                                       \
                                                                                                                                             \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                                                      \
-        if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                 \
-            GTEST_SKIP();                                                                                                                   \
-        }                                                                                                                                   \
-        if (checkMatch<supportedProductFamilies.size() - 1u>(::productFamily)) {                                                            \
-            parent_class::SetUp();                                                                                                          \
-            FAMILY_SELECTOR(::renderCoreFamily, SetUpT_name)                                                                                \
-        }                                                                                                                                   \
+        parent_class::SetUp();                                                                                                              \
+        FAMILY_SELECTOR(::renderCoreFamily, SetUpT_name)                                                                                    \
     }                                                                                                                                       \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TearDown() {                                                                   \
-        if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                \
-            if (checkMatch<supportedProductFamilies.size() - 1u>(::productFamily)) {                                                        \
-                FAMILY_SELECTOR(::renderCoreFamily, TearDownT_name)                                                                         \
-                parent_class::TearDown();                                                                                                   \
-            }                                                                                                                               \
-        }                                                                                                                                   \
+        FAMILY_SELECTOR(::renderCoreFamily, TearDownT_name)                                                                                 \
+        parent_class::TearDown();                                                                                                           \
     }                                                                                                                                       \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody() {                                                                   \
-        if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                \
-            checkForMatch<supportedProductFamilies.size() - 1u>(::productFamily);                                                           \
-        }                                                                                                                                   \
+        checkForMatch<supportedProductFamilies.size() - 1u>(::productFamily);                                                               \
     }                                                                                                                                       \
                                                                                                                                             \
     template <PRODUCT_FAMILY productFamily, typename FamilyType>                                                                            \
@@ -305,9 +260,7 @@
                                                                                                                                             \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
         auto runCmdTestHwIfSupported() -> typename std::enable_if<ShouldBeTested>::type {                                                   \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
-                testBodyHw<FamilyType>();                                                                                                   \
-            }                                                                                                                               \
+            testBodyHw<FamilyType>();                                                                                                       \
         }                                                                                                                                   \
                                                                                                                                             \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
@@ -319,15 +272,10 @@
             FAMILY_SELECTOR(::renderCoreFamily, runCmdTestHwIfSupported)                                                                    \
         }                                                                                                                                   \
         void SetUp() override {                                                                                                             \
-            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                             \
-                GTEST_SKIP();                                                                                                               \
-            }                                                                                                                               \
             CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::SetUp());                                                                      \
         }                                                                                                                                   \
         void TearDown() override {                                                                                                          \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
-                CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::TearDown());                                                               \
-            }                                                                                                                               \
+            CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::TearDown());                                                                   \
         }                                                                                                                                   \
         static ::testing::TestInfo *const test_info_;                                                                                       \
     };                                                                                                                                      \
@@ -367,9 +315,7 @@
                                                                                                                                             \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
         auto runCmdTestHwIfSupported() -> typename std::enable_if<ShouldBeTested>::type {                                                   \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
-                testBodyHw<FamilyType>();                                                                                                   \
-            }                                                                                                                               \
+            testBodyHw<FamilyType>();                                                                                                       \
         }                                                                                                                                   \
                                                                                                                                             \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
@@ -381,17 +327,12 @@
             FAMILY_SELECTOR(::renderCoreFamily, runCmdTestHwIfSupported)                                                                    \
         }                                                                                                                                   \
         void SetUp() override {                                                                                                             \
-            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                             \
-                GTEST_SKIP();                                                                                                               \
-            }                                                                                                                               \
             CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::SetUp());                                                                      \
             FAMILY_SELECTOR(::renderCoreFamily, SetUpT_name);                                                                               \
         }                                                                                                                                   \
         void TearDown() override {                                                                                                          \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
-                FAMILY_SELECTOR(::renderCoreFamily, TearDownT_name);                                                                        \
-                CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::TearDown());                                                               \
-            }                                                                                                                               \
+            FAMILY_SELECTOR(::renderCoreFamily, TearDownT_name);                                                                            \
+            CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::TearDown());                                                                   \
         }                                                                                                                                   \
         static ::testing::TestInfo *const test_info_;                                                                                       \
     };                                                                                                                                      \
@@ -436,20 +377,13 @@
         void testBodyHw();                                                                                                                                \
                                                                                                                                                           \
         void TestBody() override {                                                                                                                        \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
-                FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                                           \
-            }                                                                                                                                             \
+            FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                                               \
         }                                                                                                                                                 \
         void SetUp() override {                                                                                                                           \
-            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                           \
-                GTEST_SKIP();                                                                                                                             \
-            }                                                                                                                                             \
             test_suite_name::SetUp();                                                                                                                     \
         }                                                                                                                                                 \
         void TearDown() override {                                                                                                                        \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
-                test_suite_name::TearDown();                                                                                                              \
-            }                                                                                                                                             \
+            test_suite_name::TearDown();                                                                                                                  \
         }                                                                                                                                                 \
                                                                                                                                                           \
       private:                                                                                                                                            \
@@ -489,22 +423,15 @@
         void testBodyHw();                                                                                                                                \
                                                                                                                                                           \
         void TestBody() override {                                                                                                                        \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
-                FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                                           \
-            }                                                                                                                                             \
+            FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                                               \
         }                                                                                                                                                 \
         void SetUp() override {                                                                                                                           \
-            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                           \
-                GTEST_SKIP();                                                                                                                             \
-            }                                                                                                                                             \
             test_suite_name::SetUp();                                                                                                                     \
             FAMILY_SELECTOR(::renderCoreFamily, setUpT);                                                                                                  \
         }                                                                                                                                                 \
         void TearDown() override {                                                                                                                        \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
-                FAMILY_SELECTOR(::renderCoreFamily, tearDownT)                                                                                            \
-                test_suite_name::TearDown();                                                                                                              \
-            }                                                                                                                                             \
+            FAMILY_SELECTOR(::renderCoreFamily, tearDownT)                                                                                                \
+            test_suite_name::TearDown();                                                                                                                  \
         }                                                                                                                                                 \
                                                                                                                                                           \
       private:                                                                                                                                            \
@@ -556,20 +483,13 @@
         }                                                                                                                                                 \
                                                                                                                                                           \
         void TestBody() override {                                                                                                                        \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
-                FAMILY_SELECTOR(::renderCoreFamily, runCmdTestHwIfSupported)                                                                              \
-            }                                                                                                                                             \
+            FAMILY_SELECTOR(::renderCoreFamily, runCmdTestHwIfSupported)                                                                                  \
         }                                                                                                                                                 \
         void SetUp() override {                                                                                                                           \
-            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                           \
-                GTEST_SKIP();                                                                                                                             \
-            }                                                                                                                                             \
             CALL_IF_SUPPORTED(cmdset_gen_base, test_suite_name::SetUp());                                                                                 \
         }                                                                                                                                                 \
         void TearDown() override {                                                                                                                        \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
-                CALL_IF_SUPPORTED(cmdset_gen_base, test_suite_name::TearDown());                                                                          \
-            }                                                                                                                                             \
+            CALL_IF_SUPPORTED(cmdset_gen_base, test_suite_name::TearDown());                                                                              \
         }                                                                                                                                                 \
                                                                                                                                                           \
       private:                                                                                                                                            \
@@ -617,9 +537,6 @@
         template <unsigned int matcherOrdinal>                                                                                              \
         void checkForMatch(PRODUCT_FAMILY matchProduct);                                                                                    \
                                                                                                                                             \
-        template <unsigned int matcherOrdinal>                                                                                              \
-        bool checkMatch(PRODUCT_FAMILY matchProduct);                                                                                       \
-                                                                                                                                            \
         void SetUp() override;                                                                                                              \
         void TearDown() override;                                                                                                           \
                                                                                                                                             \
@@ -654,32 +571,15 @@
         }                                                                                                                                   \
     }                                                                                                                                       \
                                                                                                                                             \
-    template <unsigned int matcherOrdinal>                                                                                                  \
-    bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                            \
-                                test_name)::checkMatch(PRODUCT_FAMILY matchProduct) {                                                       \
-        return checkProductMatch<MatcherType, matcherOrdinal>(matchProduct);                                                                \
-    }                                                                                                                                       \
-                                                                                                                                            \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                                                      \
-        if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                 \
-            GTEST_SKIP();                                                                                                                   \
-        }                                                                                                                                   \
-        if (checkMatch<supportedProductFamilies.size() - 1u>(::productFamily)) {                                                            \
-            test_suite_name::SetUp();                                                                                                       \
-        }                                                                                                                                   \
+        test_suite_name::SetUp();                                                                                                           \
     }                                                                                                                                       \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TearDown() {                                                                   \
-        if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                \
-            if (checkMatch<supportedProductFamilies.size() - 1u>(::productFamily)) {                                                        \
-                test_suite_name::TearDown();                                                                                                \
-            }                                                                                                                               \
-        }                                                                                                                                   \
+        test_suite_name::TearDown();                                                                                                        \
     }                                                                                                                                       \
                                                                                                                                             \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody() {                                                                   \
-        if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                \
-            checkForMatch<supportedProductFamilies.size() - 1u>(::productFamily);                                                           \
-        }                                                                                                                                   \
+        checkForMatch<supportedProductFamilies.size() - 1u>(::productFamily);                                                               \
     }                                                                                                                                       \
                                                                                                                                             \
     int GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::gtest_registering_dummy_ =                                                      \
@@ -694,9 +594,6 @@
 
 // Macros for running tests only on the default platform.
 // Use only for product-agnostic tests that don't need to run on every enabled platform.
-
-#define IS_DEFAULT_PLATFORM() \
-    (::productFamily == DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily)
 
 #define HWTEST_F_DEFAULT(test_fixture, test_name)                    \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
@@ -725,16 +622,10 @@
       private:                                                                                                                        \
         void TestBody() override;                                                                                                     \
         void SetUp() override {                                                                                                       \
-            if (!IS_DEFAULT_PLATFORM()) {                                                                                             \
-                GTEST_SKIP();                                                                                                         \
-                return;                                                                                                               \
-            }                                                                                                                         \
             test_fixture::SetUp();                                                                                                    \
         }                                                                                                                             \
         void TearDown() override {                                                                                                    \
-            if (IS_DEFAULT_PLATFORM()) {                                                                                              \
-                test_fixture::TearDown();                                                                                             \
-            }                                                                                                                         \
+            test_fixture::TearDown();                                                                                                 \
         }                                                                                                                             \
         static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                                                         \
     };                                                                                                                                \
@@ -772,16 +663,10 @@
       private:                                                                                                                                            \
         void TestBody() override;                                                                                                                         \
         void SetUp() override {                                                                                                                           \
-            if (!IS_DEFAULT_PLATFORM()) {                                                                                                                 \
-                GTEST_SKIP();                                                                                                                             \
-                return;                                                                                                                                   \
-            }                                                                                                                                             \
             test_suite_name::SetUp();                                                                                                                     \
         }                                                                                                                                                 \
         void TearDown() override {                                                                                                                        \
-            if (IS_DEFAULT_PLATFORM()) {                                                                                                                  \
-                test_suite_name::TearDown();                                                                                                              \
-            }                                                                                                                                             \
+            test_suite_name::TearDown();                                                                                                                  \
         }                                                                                                                                                 \
                                                                                                                                                           \
         static int AddToRegistry() {                                                                                                                      \

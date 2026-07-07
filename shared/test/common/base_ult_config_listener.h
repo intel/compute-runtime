@@ -21,6 +21,8 @@ class BaseUltConfigListener : public ::testing::EmptyTestEventListener {
     void OnTestStart(const ::testing::TestInfo &) override;
     void OnTestEnd(const ::testing::TestInfo &) override;
 
+    bool testExcluded = false;
+
   private:
     DebugVariables debugVarSnapshot;
     void *injectFcnSnapshot = nullptr;

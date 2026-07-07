@@ -31,17 +31,6 @@ constexpr bool ignoreInvalidTestExcludes = false;
         }                                                                           \
     } test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family##_init;
 
-#define IS_TEST_EXCLUDED(test_suite_name, test_name) \
-    NEO::TestExcludes::isTestExcluded(#test_suite_name #test_name, ::productFamily, ::renderCoreFamily)
-
-#define CALL_IF_MATCH(match_core, match_product, expr)                                   \
-    auto matchCore = match_core;                                                         \
-    auto matchProduct = match_product;                                                   \
-    if ((::renderCoreFamily == matchCore) &&                                             \
-        (NEO::maxProductEnumValue == matchProduct || ::productFamily == matchProduct)) { \
-        expr;                                                                            \
-    }
-
 #define GENTEST_F(gfx_core, test_fixture, test_name)                 \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
@@ -70,21 +59,13 @@ constexpr bool ignoreInvalidTestExcludes = false;
         void testBodyHw();                                                                                                                  \
                                                                                                                                             \
         void TestBody() override {                                                                                                          \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
-                CALL_IF_MATCH(match_core, match_product,                                                                                    \
-                              testBodyHw<typename NEO::GfxFamilyMapper<match_core>::GfxFamily>())                                           \
-            }                                                                                                                               \
+            testBodyHw<typename NEO::GfxFamilyMapper<match_core>::GfxFamily>();                                                             \
         }                                                                                                                                   \
         void SetUp() override {                                                                                                             \
-            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                             \
-                GTEST_SKIP();                                                                                                               \
-            }                                                                                                                               \
-            CALL_IF_MATCH(match_core, match_product, parent_class::SetUp())                                                                 \
+            parent_class::SetUp();                                                                                                          \
         }                                                                                                                                   \
         void TearDown() override {                                                                                                          \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
-                CALL_IF_MATCH(match_core, match_product, parent_class::TearDown())                                                          \
-            }                                                                                                                               \
+            parent_class::TearDown();                                                                                                       \
         }                                                                                                                                   \
         static ::testing::TestInfo *const test_info_;                                                                                       \
     };                                                                                                                                      \
@@ -127,21 +108,13 @@ constexpr bool ignoreInvalidTestExcludes = false;
         void testBodyHw();                                                                                                                                \
                                                                                                                                                           \
         void TestBody() override {                                                                                                                        \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
-                CALL_IF_MATCH(match_core, match_product,                                                                                                  \
-                              testBodyHw<typename NEO::GfxFamilyMapper<match_core>::GfxFamily>())                                                         \
-            }                                                                                                                                             \
+            testBodyHw<typename NEO::GfxFamilyMapper<match_core>::GfxFamily>();                                                                           \
         }                                                                                                                                                 \
         void SetUp() override {                                                                                                                           \
-            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                           \
-                GTEST_SKIP();                                                                                                                             \
-            }                                                                                                                                             \
-            CALL_IF_MATCH(match_core, match_product, test_suite_name::SetUp())                                                                            \
+            test_suite_name::SetUp();                                                                                                                     \
         }                                                                                                                                                 \
         void TearDown() override {                                                                                                                        \
-            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
-                CALL_IF_MATCH(match_core, match_product, test_suite_name::TearDown())                                                                     \
-            }                                                                                                                                             \
+            test_suite_name::TearDown();                                                                                                                  \
         }                                                                                                                                                 \
                                                                                                                                                           \
       private:                                                                                                                                            \

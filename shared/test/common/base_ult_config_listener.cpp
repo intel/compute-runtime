@@ -13,6 +13,8 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/test_macros/test_base.h"
+#include "shared/test/common/test_macros/test_matcher_registry.h"
 
 #include "aubstream/aubstream.h"
 
@@ -30,6 +32,11 @@ void BaseUltConfigListener::OnTestIterationStart(const ::testing::UnitTest &, in
 }
 
 void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
+    testExcluded = !NEO::TestMatcherRegistry::willRunForCurrentProduct(testInfo, ::productFamily);
+    if (testExcluded) {
+        GTEST_SKIP();
+    }
+
     lastTest = std::string(testInfo.test_suite_name()) + "." + testInfo.name();
     WaitUtils::waitpkgUse = WaitUtils::WaitpkgUse::uninitialized;
     WaitUtils::waitPkgThresholdInMicroSeconds = WaitUtils::defaultWaitPkgThresholdInMicroSeconds;
@@ -50,6 +57,10 @@ void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
 }
 
 void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
+    if (testExcluded) {
+        return;
+    }
+
     auto testEnd = std::chrono::steady_clock::now();
 
     if (enableAlarm) {

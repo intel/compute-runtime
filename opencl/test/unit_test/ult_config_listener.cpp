@@ -11,17 +11,15 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/test_base.h"
-#include "shared/test/common/test_macros/test_matcher_registry.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
-    if (!NEO::TestMatcherRegistry::willRunForCurrentProduct(testInfo, ::productFamily)) {
+    BaseUltConfigListener::OnTestStart(testInfo);
+    if (testExcluded) {
         return;
     }
-    BaseUltConfigListener::OnTestStart(testInfo);
 
     auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -31,7 +29,8 @@ void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
 }
 
 void NEO::UltConfigListener::OnTestEnd(const ::testing::TestInfo &testInfo) {
-    if (!NEO::TestMatcherRegistry::willRunForCurrentProduct(testInfo, ::productFamily)) {
+    if (testExcluded) {
+        BaseUltConfigListener::OnTestEnd(testInfo);
         return;
     }
 
