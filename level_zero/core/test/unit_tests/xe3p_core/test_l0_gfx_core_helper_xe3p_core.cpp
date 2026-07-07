@@ -49,6 +49,11 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, givenL0GfxCoreHelperWhenAskingForImageC
     EXPECT_FALSE(l0GfxCoreHelper.imageCompressionSupported(hwInfo));
 }
 
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, givenXe3pWhenAskingForOutOfOrderImmediateCopyOffloadSupportThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.isCopyOffloadForOutOfOrderImmediateCmdListSupported());
+}
+
 XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, whenAlwaysAllocateEventInLocalMemCalledThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.alwaysAllocateEventInLocalMem());

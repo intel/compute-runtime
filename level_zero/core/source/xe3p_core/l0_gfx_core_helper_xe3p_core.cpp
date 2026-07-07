@@ -69,5 +69,10 @@ bool L0GfxCoreHelperHw<Family>::isThreadControlStoppedSupported() const {
     return false;
 }
 
+template <>
+bool L0GfxCoreHelperHw<Family>::isCopyOffloadForOutOfOrderImmediateCmdListSupported() const {
+    return true;
+}
+
 template class L0GfxCoreHelperHw<Family>;
 } // namespace L0

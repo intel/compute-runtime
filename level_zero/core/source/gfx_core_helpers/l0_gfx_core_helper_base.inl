@@ -112,6 +112,11 @@ bool L0GfxCoreHelperHw<Family>::isDefaultCmdListWithCopyOffloadSupported(bool ad
 }
 
 template <typename Family>
+bool L0GfxCoreHelperHw<Family>::isCopyOffloadForOutOfOrderImmediateCmdListSupported() const {
+    return false;
+}
+
+template <typename Family>
 bool L0GfxCoreHelperHw<Family>::bcsSplitAggregatedModeEnabled() const {
     return false;
 }

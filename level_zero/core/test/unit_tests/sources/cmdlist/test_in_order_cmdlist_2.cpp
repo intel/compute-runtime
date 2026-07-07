@@ -341,6 +341,104 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenCopyEngineNotRe
     EXPECT_EQ(20u, copyCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderImmediateCmdListWithCopyOffloadHintWhenCreatingThenEnableCopyOffload, IsAtLeastXe3pCore) {
+    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(-1);
+
+    ASSERT_TRUE(device->getL0GfxCoreHelper().isCopyOffloadForOutOfOrderImmediateCmdListSupported());
+
+    ze_command_list_handle_t cmdListHandle;
+
+    zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffloadDesc = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES};
+    copyOffloadDesc.copyOffloadEnabled = true;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    cmdQueueDesc.flags = 0;
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    cmdQueueDesc.pNext = &copyOffloadDesc;
+
+    auto crossEngineCacheFlushRequired = device->getGfxCoreHelper().crossEngineCacheFlushRequired();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+    auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+
+    EXPECT_FALSE(cmdList->isInOrderExecutionEnabled());
+
+    if (crossEngineCacheFlushRequired) {
+        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+    } else if (device->getProductHelper().useAdditionalBlitProperties()) {
+        EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+    } else {
+        EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
+        EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+        EXPECT_TRUE(copyQueue->peekIsCopyOnlyCommandQueue());
+        EXPECT_TRUE(NEO::EngineHelpers::isBcs(copyQueue->getCsr()->getOsContext().getEngineType()));
+    }
+
+    zeCommandListDestroy(cmdListHandle);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppendingCopyThenUseCopyQueue, IsAtLeastXe3pCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    EXPECT_FALSE(immCmdList->isInOrderExecutionEnabled());
+
+    if (!device->getProductHelper().blitEnqueuePreferred(false)) {
+        GTEST_SKIP();
+    }
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    auto mainTaskCount = mainCsr->taskCount.load();
+    auto copyTaskCount = copyCsr->taskCount.load();
+
+    auto usmDevice = allocDeviceMem(1);
+    immCmdList->appendMemoryCopy(usmDevice, &copyData2, 1, nullptr, 0, nullptr, copyParams);
+
+    EXPECT_EQ(mainTaskCount, mainCsr->taskCount.load());
+    EXPECT_EQ(copyTaskCount + 1, copyCsr->taskCount.load());
+
+    context->freeMem(usmDevice);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenHostSynchronizeThenWaitOnBothCsrTaskCountsEvenWhenLastFlushWasCompute, IsAtLeastXe3pCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    mainCsr->callBaseWaitForCompletionWithTimeout = false;
+    copyCsr->callBaseWaitForCompletionWithTimeout = false;
+    mainCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+    copyCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+
+    immCmdList->cmdQImmediate->setTaskCount(10u);
+    immCmdList->cmdQImmediateCopyOffload->setTaskCount(20u);
+    immCmdList->latestFlushIsDualCopyOffload = false;
+
+    mainCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
+    copyCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, false));
+
+    EXPECT_EQ(1u, mainCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, copyCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+    EXPECT_EQ(10u, mainCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(20u, copyCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenLatestFlushIsDualCopyOffloadButCopyOffloadNotInDualStreamModeWhenHostSynchronizeThenWaitOnMainQueueWithoutDereferencingCopyOffloadCsr, IsAtLeastXeCore) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     immCmdList->forceDisableInOrderWaits();
@@ -551,8 +649,17 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        if (crossEngineCacheFlushRequired || !device->getL0GfxCoreHelper().isCopyOffloadForOutOfOrderImmediateCmdListSupported()) {
+            EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        } else if (device->getProductHelper().useAdditionalBlitProperties()) {
+            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        } else {
+            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+        }
 
         zeCommandListDestroy(cmdListHandle);
 

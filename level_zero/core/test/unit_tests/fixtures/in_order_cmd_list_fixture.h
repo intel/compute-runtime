@@ -215,13 +215,13 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     }
 
     template <GFXCORE_FAMILY gfxCoreFamily, typename CmdListT>
-    DestroyableZeUniquePtr<CmdListT> createImmCmdListImpl(bool copyOffloadEnabled) {
+    DestroyableZeUniquePtr<CmdListT> createImmCmdListImpl(bool copyOffloadEnabled, bool inOrderExecution = true) {
         auto cmdList = makeZeUniquePtr<CmdListT>();
 
         auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
         ze_command_queue_desc_t desc = {};
-        desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+        desc.flags = inOrderExecution ? ZE_COMMAND_QUEUE_FLAG_IN_ORDER : 0;
 
         mockCmdQs.emplace_back(std::make_unique<Mock<CommandQueue>>(device, csr, &desc));
 
@@ -229,14 +229,18 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
         cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);
-        cmdList->enableInOrderExecution();
+        if (inOrderExecution) {
+            cmdList->enableInOrderExecution();
+        }
 
         if (copyOffloadEnabled) {
             cmdList->enableCopyOperationOffload();
             cmdList->copyOperationFenceSupported = device->getProductHelper().isDeviceToHostCopySignalingFenceRequired();
         }
 
-        completeHostAddress<gfxCoreFamily>(cmdList.get());
+        if (inOrderExecution) {
+            completeHostAddress<gfxCoreFamily>(cmdList.get());
+        }
 
         createdCmdLists++;
 
@@ -563,6 +567,11 @@ struct CopyOffloadInOrderFixture : public InOrderCmdListFixture {
     template <GFXCORE_FAMILY gfxCoreFamily>
     DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdListWithOffload() {
         return createImmCmdListImpl<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(true);
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createOutOfOrderImmCmdListWithOffload() {
+        return createImmCmdListImpl<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(true, false);
     }
 
     template <GFXCORE_FAMILY gfxCoreFamily>

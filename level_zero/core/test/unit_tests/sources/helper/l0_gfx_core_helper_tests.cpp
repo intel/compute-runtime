@@ -1353,5 +1353,21 @@ HWTEST2_F(L0GfxCoreHelperTest, GivenL0GfxCoreHelperWhenGettingSupportedCustomOpe
     EXPECT_EQ(0u, l0GfxCoreHelper.getSupportedCustomOperations2());
 }
 
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperBeforeXe3pWhenAskingForOutOfOrderImmediateCopyOffloadSupportThenReturnFalse, IsAtMostXe3Core) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_FALSE(l0GfxCoreHelper.isCopyOffloadForOutOfOrderImmediateCmdListSupported());
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperFromXe3pWhenAskingForOutOfOrderImmediateCopyOffloadSupportThenReturnTrue, IsAtLeastXe3pCore) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_TRUE(l0GfxCoreHelper.isCopyOffloadForOutOfOrderImmediateCmdListSupported());
+}
+
 } // namespace ult
 } // namespace L0

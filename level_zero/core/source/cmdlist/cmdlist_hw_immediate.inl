@@ -1281,7 +1281,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
         auto waitStatus = NEO::WaitStatus::notReady;
 
-        if (dualStreamCopyOffload && this->latestFlushIsDualCopyOffload) {
+        const bool waitOnBothQueues = dualStreamCopyOffload && (this->latestFlushIsDualCopyOffload || !isInOrderExecutionEnabled());
+
+        if (waitOnBothQueues) {
             uint64_t remainingTimeoutNs = timeout;
             const auto startTime = std::chrono::steady_clock::now();
             mainQueueCsr->flushTagUpdateIfRequired(mainQueueTaskCount);
