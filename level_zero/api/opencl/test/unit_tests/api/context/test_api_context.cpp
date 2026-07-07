@@ -7,7 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/context/context.h"
+#include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 
 #include "CL/cl.h"

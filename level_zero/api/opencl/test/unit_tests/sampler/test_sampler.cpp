@@ -7,7 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/sampler/sampler.h"
+#include "level_zero/api/opencl/source/sampler/leo_sampler.h"
 
 #include "CL/cl.h"
 

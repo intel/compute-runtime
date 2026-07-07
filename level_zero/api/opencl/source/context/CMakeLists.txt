@@ -6,8 +6,8 @@
 
 set(LEO_CONTEXT_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/context.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_context.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_context.h
 )
 
 target_sources(${L0_STATIC_LIB_NAME} PRIVATE ${LEO_CONTEXT_SRCS})

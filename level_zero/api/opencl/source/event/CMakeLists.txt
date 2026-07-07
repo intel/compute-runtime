@@ -6,8 +6,8 @@
 
 set(LEO_EVENT_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/event.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/event.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_event.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/regular_events_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/regular_events_manager.h
 )

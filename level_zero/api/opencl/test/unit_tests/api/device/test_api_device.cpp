@@ -7,8 +7,8 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/cl_device/cl_device.h"
-#include "level_zero/api/opencl/source/platform/platform.h"
+#include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 
 #include "CL/cl.h"

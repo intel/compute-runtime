@@ -7,7 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/mem_obj/map_operations_handler.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_map_operations_handler.h"
 
 #include "CL/cl.h"
 

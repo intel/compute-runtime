@@ -7,7 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/command_queue/command_queue.h"
+#include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 
 #include "CL/cl.h"
 

@@ -8,12 +8,12 @@
 #include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/api/api.h"
-#include "level_zero/api/opencl/source/command_queue/command_queue.h"
-#include "level_zero/api/opencl/source/context/context.h"
-#include "level_zero/api/opencl/source/kernel/kernel.h"
-#include "level_zero/api/opencl/source/platform/platform.h"
-#include "level_zero/api/opencl/source/program/program.h"
+#include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
+#include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/kernel/leo_kernel.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
+#include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 

@@ -9,8 +9,8 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/cl_device/cl_device.h"
-#include "level_zero/api/opencl/source/context/context.h"
+#include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
+#include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 

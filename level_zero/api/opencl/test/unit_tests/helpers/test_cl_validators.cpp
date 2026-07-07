@@ -7,7 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/helpers/cl_validators.h"
+#include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 
 #include "CL/cl.h"

@@ -7,7 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/mem_obj/mem_obj.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
 
 #include "CL/cl.h"
 

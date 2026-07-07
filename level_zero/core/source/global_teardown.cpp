@@ -11,8 +11,8 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 
-#include "level_zero/api/opencl/source/platform/platform.h"
-#include "level_zero/api/opencl/source/sharings/sharing_factory.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
+#include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/ddi/ze_ddi_tables.h"

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/api/opencl/source/platform/platform.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 namespace NEO {

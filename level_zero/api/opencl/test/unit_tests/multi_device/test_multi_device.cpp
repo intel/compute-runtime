@@ -7,10 +7,10 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/cl_device/cl_device.h"
-#include "level_zero/api/opencl/source/context/context.h"
-#include "level_zero/api/opencl/source/helpers/base_object.h"
-#include "level_zero/api/opencl/source/platform/platform.h"
+#include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
+#include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/helpers/leo_base_object.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 #include "CL/cl.h"

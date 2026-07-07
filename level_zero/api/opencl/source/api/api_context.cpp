@@ -7,14 +7,14 @@
 
 #include "shared/source/helpers/get_info.h"
 
-#include "level_zero/api/opencl/source/api/api.h"
-#include "level_zero/api/opencl/source/context/context.h"
-#include "level_zero/api/opencl/source/gtpin/gtpin_notify.h"
-#include "level_zero/api/opencl/source/helpers/base_object.h"
+#include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/gtpin/leo_gtpin_notify.h"
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"
-#include "level_zero/api/opencl/source/helpers/cl_validators.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
-#include "level_zero/api/opencl/source/tracing/tracing_notify.h"
+#include "level_zero/api/opencl/source/helpers/leo_base_object.h"
+#include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>

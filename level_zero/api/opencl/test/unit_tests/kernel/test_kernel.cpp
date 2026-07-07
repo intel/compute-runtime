@@ -8,7 +8,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
-#include "level_zero/api/opencl/source/kernel/kernel.h"
+#include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 #include <level_zero/ze_api.h>
 
 #include <CL/cl_ext.h>

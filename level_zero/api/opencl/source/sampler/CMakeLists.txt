@@ -6,8 +6,8 @@
 
 set(LEO_SAMPLER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/sampler.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/sampler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_sampler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_sampler.h
 )
 add_subdirectories()
 target_sources(${L0_STATIC_LIB_NAME} PRIVATE ${LEO_SAMPLER_SRCS})

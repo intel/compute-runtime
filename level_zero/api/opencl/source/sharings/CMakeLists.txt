@@ -16,11 +16,11 @@ if(UNIX AND NOT DISABLE_WDDM_LINUX)
 endif()
 
 set(LEO_SHARINGS_SRCS
-    ${CMAKE_CURRENT_SOURCE_DIR}/sharing.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/sharing.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/sharing_factory.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/sharing_factory.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/sharing_factory.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_sharing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_sharing.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_sharing_factory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_sharing_factory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_sharing_factory.inl
 )
 target_sources(${L0_STATIC_LIB_NAME} PRIVATE ${LEO_SHARINGS_SRCS})
 set_property(GLOBAL PROPERTY LEO_SHARINGS_SRCS ${LEO_SHARINGS_SRCS})

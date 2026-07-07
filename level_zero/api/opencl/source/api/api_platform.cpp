@@ -8,15 +8,15 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/product_helper.h"
 
-#include "level_zero/api/opencl/source/api/additional_extensions.h"
-#include "level_zero/api/opencl/source/api/api.h"
-#include "level_zero/api/opencl/source/helpers/base_object.h"
-#include "level_zero/api/opencl/source/helpers/cl_validators.h"
+#include "level_zero/api/opencl/source/api/leo_additional_extensions.h"
+#include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
-#include "level_zero/api/opencl/source/platform/platform.h"
-#include "level_zero/api/opencl/source/sharings/sharing_factory.h"
-#include "level_zero/api/opencl/source/tracing/tracing_api.h"
-#include "level_zero/api/opencl/source/tracing/tracing_notify.h"
+#include "level_zero/api/opencl/source/helpers/leo_base_object.h"
+#include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
+#include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
+#include "level_zero/api/opencl/source/tracing/leo_tracing_api.h"
+#include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"

@@ -8,9 +8,9 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/event/event.h"
-#include "level_zero/api/opencl/source/helpers/base_object.h"
-#include "level_zero/api/opencl/source/mem_obj/buffer.h"
+#include "level_zero/api/opencl/source/event/leo_event.h"
+#include "level_zero/api/opencl/source/helpers/leo_base_object.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/test/common/fixtures/leo_capture_fixture.h"
 
 #include "CL/cl.h"

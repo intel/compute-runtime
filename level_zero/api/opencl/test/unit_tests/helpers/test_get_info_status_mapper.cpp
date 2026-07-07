@@ -8,7 +8,7 @@
 #include "shared/source/helpers/get_info_status.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/helpers/get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 
 namespace NEO {
 namespace LEO {

@@ -7,7 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/event/event.h"
+#include "level_zero/api/opencl/source/event/leo_event.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 
 #include "CL/cl.h"

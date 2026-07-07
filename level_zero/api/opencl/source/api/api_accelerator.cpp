@@ -5,8 +5,8 @@
  *
  */
 
-#include "level_zero/api/opencl/source/api/api.h"
-#include "level_zero/api/opencl/source/tracing/tracing_notify.h"
+#include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 
 #include "CL/cl.h"
 

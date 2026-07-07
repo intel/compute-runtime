@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "level_zero/api/opencl/source/cl_device/cl_device.h"
+#include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"

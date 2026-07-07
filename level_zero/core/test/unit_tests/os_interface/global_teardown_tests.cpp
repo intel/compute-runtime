@@ -15,8 +15,8 @@
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/platform/platform.h"
-#include "level_zero/api/opencl/source/sharings/sharing_factory.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
+#include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/global_teardown.h"

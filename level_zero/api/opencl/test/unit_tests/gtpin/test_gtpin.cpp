@@ -11,8 +11,8 @@
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/gtpin/gtpin_notify.h"
-#include "level_zero/api/opencl/source/platform/platform.h"
+#include "level_zero/api/opencl/source/gtpin/leo_gtpin_notify.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 
 #include <memory>

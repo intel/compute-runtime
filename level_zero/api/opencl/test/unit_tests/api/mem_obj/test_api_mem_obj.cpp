@@ -7,11 +7,11 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/api/api.h"
-#include "level_zero/api/opencl/source/context/context.h"
-#include "level_zero/api/opencl/source/helpers/cl_memory_properties_helpers.h"
-#include "level_zero/api/opencl/source/mem_obj/mem_obj_helper.h"
-#include "level_zero/api/opencl/source/platform/platform.h"
+#include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_mem_obj_helper.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 
 #include "CL/cl.h"

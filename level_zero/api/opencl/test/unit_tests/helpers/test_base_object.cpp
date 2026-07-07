@@ -7,9 +7,9 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/helpers/base_object.h"
-#include "level_zero/api/opencl/source/helpers/error_mappers.h"
-#include "level_zero/api/opencl/source/platform/platform.h"
+#include "level_zero/api/opencl/source/helpers/leo_base_object.h"
+#include "level_zero/api/opencl/source/helpers/leo_error_mappers.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 
 namespace NEO {

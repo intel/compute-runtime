@@ -9,10 +9,10 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/api/opencl/source/command_queue/command_queue.h"
-#include "level_zero/api/opencl/source/context/context.h"
-#include "level_zero/api/opencl/source/helpers/base_object.h"
-#include "level_zero/api/opencl/source/platform/platform.h"
+#include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
+#include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/helpers/leo_base_object.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
 
 namespace NEO {
 namespace LEO {

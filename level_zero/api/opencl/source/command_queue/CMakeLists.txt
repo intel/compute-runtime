@@ -6,7 +6,7 @@
 
 set(LEO_COMMAND_QUEUE_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_command_queue.cpp
 )
 
 target_sources(${L0_STATIC_LIB_NAME} PRIVATE ${LEO_COMMAND_QUEUE_SRCS})
