@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,102 +20,6 @@
 #include "per_product_test_definitions.h"
 
 using namespace NEO;
-
-class SystemMemFenceViaMiMemFence : public AUBFixture,
-                                    public ::testing::Test {
-  public:
-    void SetUp() override {
-        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
-        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-        AUBFixture::setUp(defaultHwInfo.get());
-    }
-    void TearDown() override {
-        AUBFixture::tearDown();
-    }
-
-    DebugManagerStateRestore debugRestorer;
-    cl_int retVal = CL_SUCCESS;
-};
-
-using SystemMemFenceViaMiMemFenceXe3pCore = SystemMemFenceViaMiMemFence;
-
-XE3P_CORETEST_F(SystemMemFenceViaMiMemFenceXe3pCore, WhenGeneratedAsMiMemFenceCommandInCommandStreamThenWritesToSystemMemoryAreGloballyObservable) {
-    const size_t bufferSize = MemoryConstants::kiloByte;
-    std::vector<char> buffer(bufferSize, 0x11);
-
-    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device, nullptr, bufferSize, 0, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, deviceMemAlloc);
-
-    retVal = clEnqueueMemcpyINTEL(this->pCmdQ, true, deviceMemAlloc, buffer.data(), bufferSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    expectMemory<FamilyType>(deviceMemAlloc, buffer.data(), bufferSize);
-
-    auto hostMemAlloc = clHostMemAllocINTEL(this->context, nullptr, bufferSize, 0, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, hostMemAlloc);
-
-    retVal = clEnqueueMemcpyINTEL(this->pCmdQ, true, hostMemAlloc, deviceMemAlloc, bufferSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    expectMemory<FamilyType>(hostMemAlloc, buffer.data(), bufferSize);
-
-    retVal = clMemFreeINTEL(this->context, deviceMemAlloc);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clMemFreeINTEL(this->context, hostMemAlloc);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
-class SystemMemFenceViaComputeWalker : public AUBFixture,
-                                       public ::testing::Test {
-  public:
-    void SetUp() override {
-        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
-        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-        AUBFixture::setUp(defaultHwInfo.get());
-    }
-    void TearDown() override {
-        AUBFixture::tearDown();
-    }
-
-    DebugManagerStateRestore debugRestorer;
-    cl_int retVal = CL_SUCCESS;
-};
-
-using SystemMemFenceViaComputeWalkerXe3pCore = SystemMemFenceViaComputeWalker;
-
-XE3P_CORETEST_F(SystemMemFenceViaComputeWalkerXe3pCore, WhenGeneratedAsPostSyncOperationInWalkerThenWritesToSystemMemoryAreGloballyObservable) {
-    const size_t bufferSize = MemoryConstants::kiloByte;
-    std::vector<char> buffer(bufferSize, 0x11);
-
-    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device, nullptr, bufferSize, 0, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, deviceMemAlloc);
-
-    retVal = clEnqueueMemcpyINTEL(this->pCmdQ, true, deviceMemAlloc, buffer.data(), bufferSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    expectMemory<FamilyType>(deviceMemAlloc, buffer.data(), bufferSize);
-
-    auto hostMemAlloc = clHostMemAllocINTEL(this->context, nullptr, bufferSize, 0, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, hostMemAlloc);
-
-    retVal = clEnqueueMemcpyINTEL(this->pCmdQ, true, hostMemAlloc, deviceMemAlloc, bufferSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    expectMemory<FamilyType>(hostMemAlloc, buffer.data(), bufferSize);
-
-    retVal = clMemFreeINTEL(this->context, deviceMemAlloc);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clMemFreeINTEL(this->context, hostMemAlloc);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
 
 class SystemMemFenceWithBlitterXe3pCore : public MulticontextOclAubFixture,
                                           public ::testing::Test {

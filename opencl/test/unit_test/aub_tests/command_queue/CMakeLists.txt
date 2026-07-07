@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -26,6 +26,7 @@ target_sources(igdrcl_aub_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_copy_read_buffer_aub_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_copy_read_buffer_aub_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_image_aub_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/system_memfence_aub_tests.cpp
 )
 if(TESTS_XEHP_AND_LATER)
   target_sources(igdrcl_aub_tests PRIVATE
