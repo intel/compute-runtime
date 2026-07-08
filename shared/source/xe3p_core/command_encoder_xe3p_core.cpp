@@ -291,6 +291,12 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
         }
         localCmd.setSemaphoreInterrupt(semaphoreInterrupt);
 
+        bool fastModePoll = false;
+        if (debugManager.flags.OverrideFastModePoll.get() != -1) {
+            fastModePoll = debugManager.flags.OverrideFastModePoll.get() == 1;
+        }
+        localCmd.setFastModePoll(fastModePoll);
+
         if (switchOnUnsuccessful) {
             localCmd.setQueueSwitchMode(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
         }
