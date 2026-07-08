@@ -75,6 +75,37 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingIsInitializedThenRe
     EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(reinterpret_cast<void *>(0x1), true));
 }
 
+TEST_F(UnifiedMemoryPoolingTest, givenUsmPoolChunkAllocatorSizeThresholdSetWhenInitializingThenHeapAllocatorUsesGivenThreshold) {
+    struct HeapAllocatorThresholdReader : HeapAllocator {
+        using HeapAllocator::sizeThreshold;
+    };
+
+    DebugManagerStateRestore restorer;
+    const size_t maxServicedSize = 1 * MemoryConstants::megaByte;
+    const size_t overrideThreshold = 64 * MemoryConstants::kiloByte;
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M, rootDeviceIndices, deviceBitfields);
+
+    {
+        MockUsmMemAllocPool defaultPool;
+        ASSERT_TRUE(defaultPool.initialize(svmManager.get(), unifiedMemoryProperties, 2 * MemoryConstants::megaByte, 0u, maxServicedSize));
+        EXPECT_EQ(maxServicedSize / 2, defaultPool.chunkAllocator.get()->*(&HeapAllocatorThresholdReader::sizeThreshold));
+        defaultPool.cleanup();
+    }
+
+    debugManager.flags.UsmPoolChunkAllocatorSizeThreshold.set(static_cast<int32_t>(overrideThreshold));
+
+    {
+        MockUsmMemAllocPool overriddenPool;
+        ASSERT_TRUE(overriddenPool.initialize(svmManager.get(), unifiedMemoryProperties, 2 * MemoryConstants::megaByte, 0u, maxServicedSize));
+        EXPECT_EQ(overrideThreshold, overriddenPool.chunkAllocator.get()->*(&HeapAllocatorThresholdReader::sizeThreshold));
+        overriddenPool.cleanup();
+    }
+}
+
 TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperationsThenTrackResidencyCounts) {
     MockUsmMemAllocPool usmMemAllocPool;
     const auto poolBase = addrToPtr(0xFF00u);

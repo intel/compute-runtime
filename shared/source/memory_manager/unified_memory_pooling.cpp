@@ -42,10 +42,14 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, void *ptr, 
     this->svmMemoryManager = svmMemoryManager;
     this->allocationData = svmData;
     this->poolEnd = ptrOffset(this->pool, svmData->size);
+    size_t chunkAllocatorSizeThreshold = maxServicedSize / 2;
+    if (debugManager.flags.UsmPoolChunkAllocatorSizeThreshold.get() != -1) {
+        chunkAllocatorSizeThreshold = static_cast<size_t>(debugManager.flags.UsmPoolChunkAllocatorSizeThreshold.get());
+    }
     this->chunkAllocator.reset(new HeapAllocator(castToUint64(this->pool),
                                                  svmData->size,
                                                  chunkAlignment,
-                                                 maxServicedSize / 2));
+                                                 chunkAllocatorSizeThreshold));
     this->poolMemoryType = svmData->memoryType;
     this->poolInfo.minServicedSize = minServicedSize;
     this->poolInfo.maxServicedSize = maxServicedSize;
