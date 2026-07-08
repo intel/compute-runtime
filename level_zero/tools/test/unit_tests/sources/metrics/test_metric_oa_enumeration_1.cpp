@@ -3533,10 +3533,17 @@ TEST_F(MetricEnumerationTest, givenNonExistingMdapiEntryTypeWhenCreatingMetricTh
     MockMetricSource mockMetricSource{};
     zet_metric_properties_t properties = {};
     uint32_t mdapiMetricType = 0xFFFFFFFF;
-    auto oaMetric = static_cast<OaMetricImp *>(OaMetricImp::create(mockMetricSource, &mdapiMetricType, properties, true));
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    scopeProperties.iD = 1;
+    MockMetricScope *mockMetricScope1 = new MockMetricScope(scopeProperties, false, 0);
+    std::vector<MetricScopeImp *> mockMetricScopes = {mockMetricScope1};
+    auto oaMetric = static_cast<OaMetricImp *>(OaMetricImp::create(mockMetricSource, mockMetricScopes, &mdapiMetricType, properties, true));
     EXPECT_EQ(oaMetric->getMdapiMetric(), nullptr);
     EXPECT_EQ(oaMetric->getMdapiInformation(), nullptr);
     delete oaMetric;
+    delete mockMetricScope1;
 }
 
 TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsTrue) {

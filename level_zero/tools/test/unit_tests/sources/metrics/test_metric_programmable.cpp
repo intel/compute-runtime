@@ -58,6 +58,7 @@ void OaMetricProgrammableFixture::SetUp() {
     scopeProperties.pNext = nullptr;
     mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
     mockMetricScopes.push_back(mockMetricScope);
+    deviceContext->addMetricScope("Dummy Metric Scope", "Description of dummy metric scope", 0);
 }
 
 void OaMetricProgrammableFixture::disableProgrammableMetricsSupport() {

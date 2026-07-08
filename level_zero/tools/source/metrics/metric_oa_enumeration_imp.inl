@@ -11,10 +11,10 @@ namespace L0 {
 
 template <typename MdapiEntryType>
 Metric *OaMetricImp::create(MetricSource &metricSource,
+                            std::vector<MetricScopeImp *> &metricScopes,
                             MdapiEntryType *mdapiObject,
                             zet_metric_properties_t &properties,
                             bool isPredefined) {
-    std::vector<MetricScopeImp *> metricScopes{};
     auto pMetric = new OaMetricImp(metricSource, metricScopes);
     UNRECOVERABLE_IF(pMetric == nullptr);
     pMetric->initialize(properties);

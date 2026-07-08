@@ -486,12 +486,19 @@ ze_result_t OaMetricGroupUserDefined::close() {
     auto defaultMetricCount = metricSetParams->MetricsCount - metrics.size();
     OaMetricSourceImp *metricSource = getMetricSource();
 
+    const auto &deviceMetricScopes = metricSource->getMetricDeviceContext().getMetricScopes();
+    std::vector<MetricScopeImp *> metricScopes{};
+    metricScopes.reserve(deviceMetricScopes.size());
+    for (const auto &metricScope : deviceMetricScopes) {
+        metricScopes.push_back(metricScope.get());
+    }
+
     // Create and add default metrics
     for (int32_t i = static_cast<int32_t>(defaultMetricCount - 1); i >= 0; i--) {
         MetricsDiscovery::IMetric_1_0 *mdapiMetric = metricSet->GetMetric(static_cast<uint32_t>(i));
         zet_metric_properties_t properties = {};
         getL0MetricPropertiesFromMdapiMetric(properties, mdapiMetric);
-        auto pMetric = OaMetricImp::create(*metricSource, mdapiMetric, properties, true);
+        auto pMetric = OaMetricImp::create(*metricSource, metricScopes, mdapiMetric, properties, true);
         UNRECOVERABLE_IF(pMetric == nullptr);
         static_cast<OaMetricImp *>(pMetric)->setMetricGroup(this);
 
@@ -504,7 +511,7 @@ ze_result_t OaMetricGroupUserDefined::close() {
         MetricsDiscovery::IInformation_1_0 *mdapiInformation = metricSet->GetInformation(i);
         zet_metric_properties_t properties = {};
         getL0MetricPropertiesFromMdapiInformation(properties, mdapiInformation);
-        auto pMetric = OaMetricImp::create(*metricSource, mdapiInformation, properties, true);
+        auto pMetric = OaMetricImp::create(*metricSource, metricScopes, mdapiInformation, properties, true);
         UNRECOVERABLE_IF(pMetric == nullptr);
         static_cast<OaMetricImp *>(pMetric)->setMetricGroup(this);
 

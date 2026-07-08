@@ -282,7 +282,7 @@ struct OaMetricImp : public MetricImp {
     ze_result_t initialize(const zet_metric_properties_t &sourceProperties);
 
     template <typename MdapiEntryType>
-    static Metric *create(MetricSource &metricSource, MdapiEntryType *mdapiEntry, zet_metric_properties_t &properties, bool isPredefined);
+    static Metric *create(MetricSource &metricSource, std::vector<MetricScopeImp *> &metricScopes, MdapiEntryType *mdapiEntry, zet_metric_properties_t &properties, bool isPredefined);
 
     MetricsDiscovery::IMetric_1_0 *getMdapiMetric() const {
         return mdapiMetric;
