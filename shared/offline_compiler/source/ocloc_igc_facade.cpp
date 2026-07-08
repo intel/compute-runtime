@@ -81,14 +81,11 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     const char *revision = igcDeviceCtx->GetIGCRevision();
     strncpy_s(igcRevision.data(), 41, revision, 40);
 
-    auto igcDeviceCtx6 = igcMain->CreateInterface<IGC::IgcOclDeviceCtx<6>>();
-    if (igcDeviceCtx6) {
-        auto igcRegKeysBuffer = igcMain->CreateBuiltin<CIF::Builtins::BufferLatest>();
-        if (igcRegKeysBuffer) {
-            igcDeviceCtx6->GetIGCRegKeys(igcRegKeysBuffer.get());
-            if (igcRegKeysBuffer->GetSizeRaw() > 0) {
-                igcRegKeys.assign(igcRegKeysBuffer->GetMemory<char>(), igcRegKeysBuffer->GetSizeRaw());
-            }
+    auto igcRegKeysBuffer = igcMain->CreateBuiltin<CIF::Builtins::BufferLatest>();
+    if (igcRegKeysBuffer) {
+        igcDeviceCtx->GetIGCRegKeys(igcRegKeysBuffer.get());
+        if (igcRegKeysBuffer->GetSizeRaw() > 0) {
+            igcRegKeys.assign(igcRegKeysBuffer->GetMemory<char>(), igcRegKeysBuffer->GetSizeRaw());
         }
     }
 

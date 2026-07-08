@@ -430,16 +430,13 @@ bool CompilerInterface::loadIgcBasedCompiler(CompilerLibraryEntry &entry, const 
         entry.libSize = NEO::getFileSize(libPath);
         entry.libMTime = NEO::getFileModificationTime(libPath);
 
-        auto igcDeviceCtx3 = entry.entryPoint->CreateInterface<IGC::IgcOclDeviceCtx<3>>();
-        if (igcDeviceCtx3) {
-            entry.revision = igcDeviceCtx3->GetIGCRevision();
-        }
+        auto igcDeviceCtx = entry.entryPoint->CreateInterface<NEO::IgcOclDeviceCtxTag>();
+        if (igcDeviceCtx) {
+            entry.revision = igcDeviceCtx->GetIGCRevision();
 
-        auto igcDeviceCtx6 = entry.entryPoint->CreateInterface<IGC::IgcOclDeviceCtx<6>>();
-        if (igcDeviceCtx6) {
             auto igcRegKeysBuffer = entry.entryPoint->CreateBuiltin<CIF::Builtins::BufferLatest>();
             if (igcRegKeysBuffer) {
-                igcDeviceCtx6->GetIGCRegKeys(igcRegKeysBuffer.get());
+                igcDeviceCtx->GetIGCRegKeys(igcRegKeysBuffer.get());
                 if (igcRegKeysBuffer->GetSizeRaw() > 0) {
                     entry.igcRegKeys.assign(igcRegKeysBuffer->GetMemory<char>(), igcRegKeysBuffer->GetSizeRaw());
                 }
