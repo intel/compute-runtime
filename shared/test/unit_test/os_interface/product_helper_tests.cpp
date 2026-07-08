@@ -462,9 +462,27 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupported
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfVmBindResourceDecompressionSupportedThenReturnFalse, IsNotBMG) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfVmBindDecompressionProbeAllowedThenReturnFalse, IsAtMostXeCore) {
 
-    EXPECT_FALSE(productHelper->isVmBindResourceDecompressionSupported());
+    EXPECT_FALSE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfVmBindDecompressionProbeAllowedThenReturnCorrectValue, IsAtLeastXe2HpgCore) {
+    pInHwInfo.featureTable.flags.ftrLocalMemory = true;
+    pInHwInfo.featureTable.flags.ftrFlatPhysCCS = true;
+    EXPECT_TRUE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
+
+    pInHwInfo.featureTable.flags.ftrLocalMemory = false;
+    pInHwInfo.featureTable.flags.ftrFlatPhysCCS = true;
+    EXPECT_FALSE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
+
+    pInHwInfo.featureTable.flags.ftrLocalMemory = true;
+    pInHwInfo.featureTable.flags.ftrFlatPhysCCS = false;
+    EXPECT_FALSE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
+
+    pInHwInfo.featureTable.flags.ftrLocalMemory = false;
+    pInHwInfo.featureTable.flags.ftrFlatPhysCCS = false;
+    EXPECT_FALSE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnFalse, IsNotBMG) {

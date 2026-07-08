@@ -41,6 +41,12 @@ bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwI
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isVmBindDecompressionProbeAllowed(const HardwareInfo &hwInfo) const {
+    return hwInfo.featureTable.flags.ftrLocalMemory &&
+           hwInfo.featureTable.flags.ftrFlatPhysCCS;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isResourceUncachedForCS(AllocationType allocationType) const {
     return GraphicsAllocation::isAccessedFromCommandStreamer(allocationType);
 }

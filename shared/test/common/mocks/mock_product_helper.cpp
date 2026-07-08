@@ -305,6 +305,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isVmBindPatIndexProgrammingSupported() const
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isVmBindDecompressionProbeAllowed(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
 void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const {
 }
 

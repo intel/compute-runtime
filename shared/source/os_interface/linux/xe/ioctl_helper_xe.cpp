@@ -1699,7 +1699,8 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
 
     auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
-    if (productHelper.isVmBindResourceDecompressionSupported()) {
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    if (productHelper.isVmBindDecompressionProbeAllowed(*hwInfo)) {
         auto ret = isVmBindDecompressAvailable(drmVmId);
         rootDeviceEnvironment.executionEnvironment.setResourceDecompressionEnabled(ret);
     }

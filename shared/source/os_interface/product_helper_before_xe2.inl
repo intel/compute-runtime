@@ -67,4 +67,9 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isVmBindDecompressionProbeAllowed(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO
