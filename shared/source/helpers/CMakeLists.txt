@@ -67,6 +67,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/event_profiling_helpers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/event_profiling_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum.h
     ${CMAKE_CURRENT_SOURCE_DIR}/fence_type.h
     ${CMAKE_CURRENT_SOURCE_DIR}/file_io_load.cpp
@@ -131,6 +133,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/populate_factory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/profiling_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.h

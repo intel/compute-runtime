@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/profiling_info.h"
+
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
@@ -65,11 +67,7 @@ class Event : public BaseObject<_cl_event> {
   public:
     static const cl_ulong objectMagic = 0x80134213A43C981ALL;
 
-    struct ProfilingInfo {
-        uint64_t cpuTimeInNs;
-        uint64_t gpuTimeInNs;
-        uint64_t gpuTimeStamp;
-    };
+    using ProfilingInfo = NEO::ProfilingInfo;
 
     struct ClUserData {
         cl_event event = nullptr;
@@ -107,6 +105,7 @@ class Event : public BaseObject<_cl_event> {
     MOCKABLE_VIRTUAL ze_result_t wait();
     ze_result_t signal();
     cl_int queryAndUpdateEventStatus();
+    MOCKABLE_VIRTUAL ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t &result);
 
     void updateCommandType(cl_command_type newType) { this->commandType = newType; };
     cl_command_type getCommandType() const { return this->commandType; };
@@ -134,6 +133,10 @@ class Event : public BaseObject<_cl_event> {
 
     ProfilingInfo queueTimeStamp{};
     ProfilingInfo submitTimeStamp{};
+    ProfilingInfo startTimeStamp{};
+    ProfilingInfo endTimeStamp{};
+    ProfilingInfo completeTimeStamp{};
+    bool dataCalculated = false;
 
     cl_command_type commandType = 0;
     cl_int eventStatus = CL_SUBMITTED;

@@ -13,6 +13,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/event_profiling_helpers.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -259,20 +260,7 @@ cl_ulong Event::getDelta(cl_ulong startTime,
 
     auto &hwInfo = cmdQueue->getDevice().getHardwareInfo();
 
-    cl_ulong max = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
-    cl_ulong delta = 0;
-
-    startTime &= max;
-    endTime &= max;
-
-    if (startTime > endTime) {
-        delta = max - startTime;
-        delta += endTime;
-    } else {
-        delta = endTime - startTime;
-    }
-
-    return delta;
+    return wrapAwareDelta(startTime, endTime, hwInfo.capabilityTable.kernelTimestampValidBits);
 }
 
 void Event::setupRelativeProfilingInfo(ProfilingInfo &profilingInfo) {
@@ -371,94 +359,15 @@ bool Event::calcProfilingData() {
     return dataCalculated;
 }
 
-void Event::updateTimestamp(ProfilingInfo &timestamp, uint64_t newGpuTimestamp) const {
-    auto &device = this->cmdQueue->getDevice();
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
-    auto resolution = device.getDeviceInfo().profilingTimerResolution;
-    timestamp.gpuTimeStamp = newGpuTimestamp;
-    timestamp.gpuTimeInNs = gfxCoreHelper.getGpuTimeStampInNS(timestamp.gpuTimeStamp, resolution);
-    timestamp.cpuTimeInNs = timestamp.gpuTimeInNs;
-}
-
-/**
- * @brief Timestamp returned from GPU is initially 32 bits. This method performs XOR with
- * other timestamp that tracks overflows, so passed timestamp will have correct overflow bits
- *
- * @param[out] timestamp Overflow bits will be added to this timestamp
- * @param[in] timestampWithOverflow Timestamp that tracks overflows in remaining 32 most significant bits
- *
- */
-void Event::addOverflowToTimestamp(uint64_t &timestamp, uint64_t timestampWithOverflow) const {
-    auto &device = this->cmdQueue->getDevice();
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
-    timestamp |= timestampWithOverflow & (maxNBitValue(64) - maxNBitValue(gfxCoreHelper.getGlobalTimeStampBits()));
-}
-
 void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) {
     auto &device = this->cmdQueue->getDevice();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto resolution = device.getDeviceInfo().profilingTimerResolution;
+    auto kernelTimestampValidBits = device.getHardwareInfo().capabilityTable.kernelTimestampValidBits;
 
-    // Calculate startTimestamp only if it was not already set on CPU
-    if (startTimeStamp.cpuTimeInNs == 0) {
-        startTimeStamp.gpuTimeStamp = globalStartTS;
-        addOverflowToTimestamp(startTimeStamp.gpuTimeStamp, submitTimeStamp.gpuTimeStamp);
-        if (startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp) {
-            auto diff = submitTimeStamp.gpuTimeStamp - startTimeStamp.gpuTimeStamp;
-            auto diffInNS = gfxCoreHelper.getGpuTimeStampInNS(diff, resolution);
-            auto osTime = device.getOSTime();
-            if (diffInNS < osTime->getTimestampRefreshTimeout()) {
-                auto alignedSubmitTimestamp = startTimeStamp.gpuTimeStamp - 1;
-                auto alignedQueueTimestamp = startTimeStamp.gpuTimeStamp - 2;
-                if (startTimeStamp.gpuTimeStamp <= 2) {
-                    alignedSubmitTimestamp = 0;
-                    alignedQueueTimestamp = 0;
-                }
-                updateTimestamp(submitTimeStamp, alignedSubmitTimestamp);
-                updateTimestamp(queueTimeStamp, alignedQueueTimestamp);
-                osTime->setRefreshTimestampsFlag();
-            } else {
-                startTimeStamp.gpuTimeStamp += static_cast<uint64_t>(1ULL << gfxCoreHelper.getGlobalTimeStampBits());
-            }
-        }
-    }
-
-    UNRECOVERABLE_IF(startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp);
-    auto gpuTicksDiff = startTimeStamp.gpuTimeStamp - submitTimeStamp.gpuTimeStamp;
-    auto timeDiff = static_cast<uint64_t>(gpuTicksDiff * resolution);
-    startTimeStamp.cpuTimeInNs = submitTimeStamp.cpuTimeInNs + timeDiff;
-    startTimeStamp.gpuTimeInNs = gfxCoreHelper.getGpuTimeStampInNS(startTimeStamp.gpuTimeStamp, resolution);
-
-    // If device enqueue has not updated complete timestamp, assign end timestamp
-    uint64_t gpuDuration = 0;
-    uint64_t cpuDuration = 0;
-
-    uint64_t gpuCompleteDuration = 0;
-    uint64_t cpuCompleteDuration = 0;
-
-    gpuDuration = getDelta(contextStartTS, contextEndTS);
-    if (*contextCompleteTS == 0) {
-        *contextCompleteTS = contextEndTS;
-        gpuCompleteDuration = gpuDuration;
-    } else {
-        gpuCompleteDuration = getDelta(contextStartTS, *contextCompleteTS);
-    }
-    cpuDuration = static_cast<uint64_t>(gpuDuration * resolution);
-    cpuCompleteDuration = static_cast<uint64_t>(gpuCompleteDuration * resolution);
-
-    endTimeStamp.cpuTimeInNs = startTimeStamp.cpuTimeInNs + cpuDuration;
-    endTimeStamp.gpuTimeInNs = startTimeStamp.gpuTimeInNs + cpuDuration;
-    endTimeStamp.gpuTimeStamp = startTimeStamp.gpuTimeStamp + gpuDuration;
-
-    completeTimeStamp.cpuTimeInNs = startTimeStamp.cpuTimeInNs + cpuCompleteDuration;
-    completeTimeStamp.gpuTimeInNs = startTimeStamp.gpuTimeInNs + cpuCompleteDuration;
-    completeTimeStamp.gpuTimeStamp = startTimeStamp.gpuTimeStamp + gpuCompleteDuration;
-
-    if (debugManager.flags.ReturnRawGpuTimestamps.get()) {
-        startTimeStamp.gpuTimeStamp = contextStartTS;
-        endTimeStamp.gpuTimeStamp = contextEndTS;
-        completeTimeStamp.gpuTimeStamp = *contextCompleteTS;
-    }
+    NEO::calculateProfilingData(gfxCoreHelper, *device.getOSTime(), resolution, kernelTimestampValidBits,
+                                queueTimeStamp, submitTimeStamp, startTimeStamp, endTimeStamp, completeTimeStamp,
+                                contextStartTS, contextEndTS, contextCompleteTS, globalStartTS);
 
     dataCalculated = true;
 }

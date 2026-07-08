@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -151,6 +152,84 @@ TEST_F(QueryAndUpdateEventStatusTests, givenReadyEventWithNonEmptyPrintfContaine
     EXPECT_EQ(CL_COMPLETE, status);
     EXPECT_EQ(1u, mockCmdList.handlePostSyncPrintfAndAssertCalled);
     EXPECT_TRUE(mockCmdList.lastHangDetected);
+}
+
+struct MockEventForProfilingWiring : public NEO::LEO::Event {
+    using NEO::LEO::Event::completeTimeStamp;
+    using NEO::LEO::Event::dataCalculated;
+    using NEO::LEO::Event::endTimeStamp;
+    using NEO::LEO::Event::Event;
+    using NEO::LEO::Event::queueTimeStamp;
+    using NEO::LEO::Event::setQueueTimeStamp;
+    using NEO::LEO::Event::setSubmitTimeStamp;
+    using NEO::LEO::Event::startTimeStamp;
+    using NEO::LEO::Event::submitTimeStamp;
+
+    ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t &result) override {
+        queryKernelTimestampCalled++;
+        result.global.kernelStart = injectedKernelStart;
+        result.global.kernelEnd = injectedKernelEnd;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    uint64_t injectedKernelStart = 0;
+    uint64_t injectedKernelEnd = 0;
+    uint32_t queryKernelTimestampCalled = 0;
+};
+
+using ProfilingInfoWiringTests = Test<QueryAndUpdateEventStatusFixture>;
+
+TEST_F(ProfilingInfoWiringTests, givenProfilingEventWhenGettingProfilingInfoThenPacketIsRebasedAndTimestampsAreMonotonic) {
+    MockEventForProfilingWiring event{CL_COMMAND_NDRANGE_KERNEL, commandQueue};
+    event.setQueueTimeStamp();
+    event.setSubmitTimeStamp();
+
+    // Start at/after submit so the rebased ordering is deterministic; end trails start.
+    event.injectedKernelStart = event.submitTimeStamp.gpuTimeStamp + 0x1000;
+    event.injectedKernelEnd = event.injectedKernelStart + 0x500;
+
+    auto query = [&](cl_profiling_info paramName) {
+        cl_ulong value = 0;
+        EXPECT_EQ(CL_SUCCESS, event.getProfilingInfo(paramName, sizeof(value), &value, nullptr));
+        return value;
+    };
+
+    const auto queued = query(CL_PROFILING_COMMAND_QUEUED);
+    const auto submit = query(CL_PROFILING_COMMAND_SUBMIT);
+    const auto start = query(CL_PROFILING_COMMAND_START);
+    const auto end = query(CL_PROFILING_COMMAND_END);
+    const auto complete = query(CL_PROFILING_COMMAND_COMPLETE);
+
+    EXPECT_LE(queued, submit);
+    EXPECT_LE(submit, start);
+    EXPECT_LE(start, end);
+    EXPECT_LE(end, complete);
+    EXPECT_TRUE(event.dataCalculated);
+    EXPECT_NE(0u, event.queryKernelTimestampCalled);
+
+    // Exact wiring (resolution-independent): start == kernelStart (idempotent restore here), end == kernelEnd, complete == end.
+    EXPECT_EQ(event.injectedKernelStart, event.startTimeStamp.gpuTimeStamp);
+    EXPECT_EQ(event.injectedKernelEnd, event.endTimeStamp.gpuTimeStamp);
+    EXPECT_EQ(event.endTimeStamp.gpuTimeStamp, event.completeTimeStamp.gpuTimeStamp);
+}
+
+TEST_F(ProfilingInfoWiringTests, givenProfilingInfoAlreadyCalculatedWhenQueriedAgainThenStartIsStable) {
+    MockEventForProfilingWiring event{CL_COMMAND_NDRANGE_KERNEL, commandQueue};
+    event.setQueueTimeStamp();
+    event.setSubmitTimeStamp();
+    event.injectedKernelStart = event.submitTimeStamp.gpuTimeStamp + 0x1000;
+    event.injectedKernelEnd = event.injectedKernelStart + 0x500;
+
+    cl_ulong first = 0;
+    EXPECT_EQ(CL_SUCCESS, event.getProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(first), &first, nullptr));
+    ASSERT_TRUE(event.dataCalculated);
+
+    // Change the injected packet after the memoized computation; START must not move.
+    event.injectedKernelStart = event.submitTimeStamp.gpuTimeStamp + 0x9000;
+    cl_ulong second = 0;
+    EXPECT_EQ(CL_SUCCESS, event.getProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(second), &second, nullptr));
+
+    EXPECT_EQ(first, second);
 }
 
 } // namespace ult

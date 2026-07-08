@@ -9,8 +9,12 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/event_profiling_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -111,13 +115,26 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
     uint64_t timestamp = 0;
 
     ze_kernel_timestamp_result_t ts{};
-    auto queryResult = zeEventQueryKernelTimestamp(eventHandle, &ts);
+    auto queryResult = this->queryKernelTimestamp(ts);
     if (queryResult != ZE_RESULT_SUCCESS) {
         return L0ToClResultMapper(queryResult);
     }
 
     auto device = getL0Object()->getDevice();
-    auto resolution = device->getNEODevice()->getOSTime()->getDynamicDeviceTimerResolution();
+    auto neoDevice = device->getNEODevice();
+    auto resolution = neoDevice->getDeviceInfo().profilingTimerResolution;
+
+    // Rebase raw packet start/end onto the submit epoch, restoring high bits a narrow packet drops.
+    // Computed once: the derivation may adjust the submit/queue anchors.
+    if (!dataCalculated) {
+        auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+        const uint32_t kernelTimestampValidBits = neoDevice->getHardwareInfo().capabilityTable.kernelTimestampValidBits;
+        uint64_t contextCompleteTS = 0; // no separate device-enqueue completion writeback -> complete == end
+        NEO::calculateProfilingData(gfxCoreHelper, *neoDevice->getOSTime(), resolution, kernelTimestampValidBits,
+                                    queueTimeStamp, submitTimeStamp, startTimeStamp, endTimeStamp, completeTimeStamp,
+                                    ts.global.kernelStart, ts.global.kernelEnd, &contextCompleteTS, ts.global.kernelStart);
+        dataCalculated = true;
+    }
 
     switch (paramName) {
     case CL_PROFILING_COMMAND_QUEUED:
@@ -129,12 +146,12 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
         break;
 
     case CL_PROFILING_COMMAND_START:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(ts.global.kernelStart, resolution);
+        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(startTimeStamp.gpuTimeStamp, resolution);
         break;
 
     case CL_PROFILING_COMMAND_END:
     case CL_PROFILING_COMMAND_COMPLETE:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(ts.global.kernelEnd, resolution);
+        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(endTimeStamp.gpuTimeStamp, resolution);
         break;
 
     case CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL:
@@ -164,6 +181,10 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
     GetInfo::setParamValueReturnSize(paramValueSizeRet, srcSize, getInfoStatus);
 
     return retVal;
+}
+
+ze_result_t Event::queryKernelTimestamp(ze_kernel_timestamp_result_t &result) {
+    return zeEventQueryKernelTimestamp(eventHandle, &result);
 }
 
 cl_int Event::getEventInfo(cl_event_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) {

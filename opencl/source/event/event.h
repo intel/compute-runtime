@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/profiling_info.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
@@ -80,11 +81,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     };
     static_assert(NEO::NonCopyableAndNonMovable<IFList<Callback, true, true>>);
 
-    struct ProfilingInfo {
-        uint64_t cpuTimeInNs;
-        uint64_t gpuTimeInNs;
-        uint64_t gpuTimeStamp;
-    };
+    using ProfilingInfo = NEO::ProfilingInfo;
 
     static const cl_ulong objectMagic = 0x80134213A43C981ALL;
     static constexpr cl_int executionAbortedDueToGpuHang = -777;
@@ -368,9 +365,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     bool isWaitForTimestampsEnabled() const;
     bool areTimestampsCompleted();
-
-    void updateTimestamp(ProfilingInfo &timestamp, uint64_t newGpuTimestamp) const;
-    void addOverflowToTimestamp(uint64_t &timestamp, uint64_t timestampWithOverflow) const;
 
     bool currentCmdQVirtualEvent = false;
     std::atomic<Command *> cmdToSubmit{nullptr};
