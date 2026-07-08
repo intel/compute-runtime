@@ -96,7 +96,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::flags;
     using BaseClass::forceStateless;
     using BaseClass::frontEndStateTracking;
-    using BaseClass::getAlignedAllocationData;
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
@@ -136,6 +135,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::resetBcsSplitEvents;
+    using BaseClass::resolveAlignedAllocation;
     using BaseClass::scratchAddressPatchingEnabled;
     using BaseClass::setAdditionalBlitProperties;
     using BaseClass::setupTimestampEventForMultiTile;
@@ -763,8 +763,8 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
               (ze_event_handle_t hEvent, bool relaxedOrderingDispatch),
               (hEvent, relaxedOrderingDispatch));
 
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload, const L0::MemAllocInfo *bufferAllocInfo) override {
-        return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload, bufferAllocInfo);
+    AlignedAllocationData resolveAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, const L0::MemAllocInfo *bufferAllocInfo, const L0::ResolveAlignedAllocationFlags &flags) override {
+        return L0::CommandListCoreFamily<gfxCoreFamily>::resolveAlignedAllocation(device, buffer, bufferSize, bufferAllocInfo, flags);
     }
 
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,

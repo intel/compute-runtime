@@ -43,12 +43,30 @@ struct EventData {
 static_assert(sizeof(EventData) == (3 * sizeof(uint64_t)),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
+struct ResolveAlignedAllocationFlags {
+    bool sharedSystemEnabled = false;
+    bool hostCopyAllowed = false;
+    bool copyOffload = false;
+};
+
 struct AlignedAllocationData {
     NEO::SvmAllocationData *svmAllocData = nullptr;
     uintptr_t alignedAllocationPtr = 0u;
     size_t offset = 0u;
     NEO::GraphicsAllocation *alloc = nullptr;
     bool needsFlush = false;
+
+    static AlignedAllocationData invalid() {
+        return {};
+    }
+
+    static AlignedAllocationData forSystemPointer(const void *ptr) {
+        return {nullptr, reinterpret_cast<uintptr_t>(ptr), 0u, nullptr, true};
+    }
+
+    static AlignedAllocationData fromAllocation(NEO::SvmAllocationData *svmAllocData, uintptr_t alignedAllocationPtr, size_t offset, NEO::GraphicsAllocation *alloc, bool needsFlush) {
+        return {svmAllocData, alignedAllocationPtr, offset, alloc, needsFlush};
+    }
 };
 
 struct CmdListFillKernelArguments {
@@ -395,7 +413,11 @@ struct CommandListCoreFamily : public CommandList {
     void appendDispatchOffsetRegister(bool workloadPartitionEvent, bool beforeProfilingCmds);
     size_t estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint32_t bufferRowPitch, uint64_t bufferSlicePitch, const ze_image_region_t *region, size_t pixelSize);
-    MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocationData(Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload, const MemAllocInfo *bufferAllocInfo);
+    MOCKABLE_VIRTUAL AlignedAllocationData resolveAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, const MemAllocInfo *bufferAllocInfo, const ResolveAlignedAllocationFlags &flags);
+    AlignedAllocationData alignSvmAllocationData(Device *device, NEO::SvmAllocationData *svmAlloc, const void *buffer, uintptr_t sourcePtr, size_t sshAlignmentOffset);
+    AlignedAllocationData alignImportedHostAllocationData(NEO::GraphicsAllocation *importedHostAlloc, void *ptr);
+    AlignedAllocationData alignCachedHostAllocationData(NEO::GraphicsAllocation *cachedHostAlloc, uintptr_t sourcePtr, size_t sshAlignmentOffset);
+    void addVirtualReservationToResidency(NEO::SvmAllocationData *svmAlloc, const void *buffer);
     size_t getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation);
     uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);
     void handlePostSubmissionState();

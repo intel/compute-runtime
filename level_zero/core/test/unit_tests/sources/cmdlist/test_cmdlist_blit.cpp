@@ -46,8 +46,8 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
 
     using BaseClass::getAllocationOffsetForAppendBlitFill;
 
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload, const L0::MemAllocInfo *bufferAllocInfo) override {
-        auto allocationData = BaseClass::getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload, bufferAllocInfo);
+    AlignedAllocationData resolveAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, const L0::MemAllocInfo *bufferAllocInfo, const L0::ResolveAlignedAllocationFlags &flags) override {
+        auto allocationData = BaseClass::resolveAlignedAllocation(device, buffer, bufferSize, bufferAllocInfo, flags);
         if (allocationData.alloc) {
             return allocationData;
         }

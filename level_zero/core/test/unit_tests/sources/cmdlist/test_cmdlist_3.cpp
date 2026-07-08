@@ -213,7 +213,7 @@ class DeviceHostPtrFailMock : public MockDeviceImp {
     }
 };
 
-HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationCalledWithInvalidPtrThenNullptrReturned) {
+HWTEST_F(CommandListCreateTests, givenInvalidPtrWhenResolveAlignedAllocationCalledThenNullptrReturned) {
     auto failDevice = std::make_unique<DeviceHostPtrFailMock>(device->getNEODevice());
     failDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
@@ -222,8 +222,22 @@ HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationCalledWithInvalidPtrTh
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
     void *cmdListHostBuffer = reinterpret_cast<void *>(0x1234);
     AlignedAllocationData outData = {};
-    outData = commandList->getAlignedAllocationData(device, false, cmdListHostBuffer, cmdListHostPtrSize, false, false, nullptr);
+    outData = commandList->resolveAlignedAllocation(device, cmdListHostBuffer, cmdListHostPtrSize, nullptr, {});
     EXPECT_EQ(nullptr, outData.alloc);
+}
+
+HWTEST_F(CommandListCreateTests, givenZeroBufferSizeWhenResolveAlignedAllocationCalledForUnregisteredPointerThenSystemPointerDataReturned) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    void *systemPtr = reinterpret_cast<void *>(0x1234);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, systemPtr, 0u, nullptr, {});
+
+    EXPECT_EQ(nullptr, outData.svmAllocData);
+    EXPECT_EQ(nullptr, outData.alloc);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(systemPtr), outData.alignedAllocationPtr);
+    EXPECT_EQ(0u, outData.offset);
+    EXPECT_TRUE(outData.needsFlush);
 }
 
 HWTEST_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsInMapThenAllocationReturned) {
@@ -277,7 +291,7 @@ HWTEST_F(CommandListCreateTests, givenHostAllocInMapWhenPtrLowerThanAnyInMapThen
     commandList->hostPtrMap.clear();
 }
 
-HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenGettingAlignedAllocationThenRetrieveProperOffsetAndAddress) {
+HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenResolveAlignedAllocationCalledThenRetrieveProperOffsetAndAddress) {
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -287,7 +301,7 @@ HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenGettingAlignedAl
     void *baseAddress = alignDown(startMemory, MemoryConstants::pageSize);
     size_t expectedOffset = ptrDiff(startMemory, baseAddress);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, startMemory, cmdListHostPtrSize, false, false, nullptr);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, startMemory, cmdListHostPtrSize, nullptr, {});
     ASSERT_NE(nullptr, outData.alloc);
     auto firstAlloc = outData.alloc;
     auto expectedGpuAddress = static_cast<uintptr_t>(alignDown(outData.alloc->getGpuAddress(), MemoryConstants::pageSize));
@@ -302,7 +316,7 @@ HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenGettingAlignedAl
     expectedGpuAddress = ptrOffset(expectedGpuAddress, alignedOffset);
     EXPECT_EQ(outData.offset + offset, expectedOffset);
 
-    outData = commandList->getAlignedAllocationData(device, false, offsetMemory, 4u, false, false, nullptr);
+    outData = commandList->resolveAlignedAllocation(device, offsetMemory, 4u, nullptr, {});
     ASSERT_NE(nullptr, outData.alloc);
     EXPECT_EQ(firstAlloc, outData.alloc);
     EXPECT_EQ(startMemory, outData.alloc->getUnderlyingBuffer());
@@ -328,7 +342,7 @@ HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenRemoveHostPtrAll
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
     void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, cmdListHostBuffer, cmdListHostPtrSize, false, false, nullptr);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, cmdListHostBuffer, cmdListHostPtrSize, nullptr, {});
     ASSERT_NE(nullptr, outData.alloc);
 
     for (const auto &engine : engines) {
@@ -1324,29 +1338,29 @@ HWTEST_F(CommandListCreateWithBcs, givenHostPtrAllocAndImmediateCmdListWhenExter
     EXPECT_EQ(1u, commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->getHostPtrTaskCountAssignment());
 }
 
-HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationWhenInternalMemWithinDifferentAllocThenReturnNewAlloc) {
+HWTEST_F(CommandListCreateTests, givenInternalMemWithinDifferentAllocWhenResolveAlignedAllocationCalledThenReturnNewAlloc) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::internalHostMemory>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    auto outData1 = commandList->getAlignedAllocationData(device, false, buffer.get(), 0x100, true, false, nullptr);
-    auto outData2 = commandList->getAlignedAllocationData(device, false, &buffer.get()[5], 0x1, true, false, nullptr);
+    auto outData1 = commandList->resolveAlignedAllocation(device, buffer.get(), 0x100, nullptr, {.hostCopyAllowed = true});
+    auto outData2 = commandList->resolveAlignedAllocation(device, &buffer.get()[5], 0x1, nullptr, {.hostCopyAllowed = true});
     EXPECT_NE(outData1.alloc, outData2.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData2.alloc);
     commandList->commandContainer.getDeallocationContainer().clear();
 }
-HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationWhenExternalMemWithinDifferentAllocThenReturnPreviouslyAllocatedMem) {
+HWTEST_F(CommandListCreateTests, givenExternalMemWithinDifferentAllocWhenResolveAlignedAllocationCalledThenReturnPreviouslyAllocatedMem) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    auto outData1 = commandList->getAlignedAllocationData(device, false, buffer.get(), 0x100, true, false, nullptr);
-    auto outData2 = commandList->getAlignedAllocationData(device, false, &buffer.get()[5], 0x1, true, false, nullptr);
+    auto outData1 = commandList->resolveAlignedAllocation(device, buffer.get(), 0x100, nullptr, {.hostCopyAllowed = true});
+    auto outData2 = commandList->resolveAlignedAllocation(device, &buffer.get()[5], 0x1, nullptr, {.hostCopyAllowed = true});
     EXPECT_EQ(outData1.alloc, outData2.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     commandList->hostPtrMap.clear();

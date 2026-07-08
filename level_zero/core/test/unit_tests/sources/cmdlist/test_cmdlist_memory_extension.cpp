@@ -87,7 +87,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
     MockCommandListExtensionHw() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
     MockCommandListExtensionHw(bool failOnFirst) : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>(), failOnFirstCopy(failOnFirst) {}
 
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload, const L0::MemAllocInfo *bufferAllocInfo) override {
+    AlignedAllocationData resolveAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, const L0::MemAllocInfo *bufferAllocInfo, const L0::ResolveAlignedAllocationFlags &flags) override {
         getAlignedAllocationCalledTimes++;
         if (buffer) {
             return {nullptr, 0, 0, &alignedAlloc, true};
@@ -736,7 +736,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMem
     void *baseAddress = alignDown(startMemory, MemoryConstants::pageSize);
     size_t expectedOffset = ptrDiff(startMemory, baseAddress);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, startMemory, cmdListHostPtrSize, false, false, nullptr);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, startMemory, cmdListHostPtrSize, nullptr, {});
     ASSERT_NE(nullptr, outData.alloc);
     auto expectedGpuAddress = static_cast<uintptr_t>(alignDown(outData.alloc->getGpuAddress(), MemoryConstants::pageSize));
     EXPECT_EQ(startMemory, outData.alloc->getUnderlyingBuffer());
@@ -938,7 +938,7 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeCont
     void *baseAddress = alignDown(startMemory, MemoryConstants::pageSize);
     size_t expectedOffset = ptrDiff(startMemory, baseAddress);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, startMemory, cmdListHostPtrSize, false, false, nullptr);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, startMemory, cmdListHostPtrSize, nullptr, {});
     ASSERT_NE(nullptr, outData.alloc);
     auto expectedGpuAddress = static_cast<uintptr_t>(alignDown(outData.alloc->getGpuAddress(), MemoryConstants::pageSize));
     EXPECT_EQ(startMemory, outData.alloc->getUnderlyingBuffer());

@@ -20,7 +20,7 @@ struct SvmAllocationData;
 namespace L0 {
 
 // Caches allocations found during obtainAllocData
-// to avoid redundant lookups in getAlignedAllocationData
+// to avoid redundant lookups in resolveAlignedAllocation
 struct MemAllocInfo {
     NEO::SvmAllocationData *svmAlloc{nullptr};
     NEO::GraphicsAllocation *importedHostAlloc{nullptr};

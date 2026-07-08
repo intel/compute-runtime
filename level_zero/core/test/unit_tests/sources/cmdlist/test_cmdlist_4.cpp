@@ -782,7 +782,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenImportedHostPointerAndCopyEngin
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingAlignedAllocationThenRetrieveProperOffsetAndAddress) {
+HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenResolveAlignedAllocationCalledThenRetrieveProperOffsetAndAddress) {
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -800,7 +800,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingA
     size_t offsetSize = 20;
     void *offsetPointer = ptrOffset(importPointer, allocOffset);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, importPointer, importSize, false, false, nullptr);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, importPointer, importSize, nullptr, {});
     auto gpuBaseAddress = static_cast<size_t>(hostAllocation->getGpuAddress());
     auto expectedAlignedAddress = alignDown(gpuBaseAddress, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
     size_t expectedOffset = gpuBaseAddress - expectedAlignedAddress;
@@ -809,7 +809,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingA
     EXPECT_EQ(hostAllocation, outData.alloc);
     EXPECT_EQ(expectedOffset, outData.offset);
 
-    outData = commandList->getAlignedAllocationData(device, false, offsetPointer, offsetSize, false, false, nullptr);
+    outData = commandList->resolveAlignedAllocation(device, offsetPointer, offsetSize, nullptr, {});
     expectedOffset += allocOffset;
     EXPECT_EQ(importPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
@@ -820,7 +820,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingA
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingPointerFromAnotherPageThenRetrieveBaseAddressAndProperOffset) {
+HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenResolveAlignedAllocationCalledThenRetrieveBaseAddressAndProperOffset) {
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -834,7 +834,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenHostPointerImportedWhenGettingP
     auto hostAllocation = hostDriverHandle->findHostPointerAllocation(offsetPointer, pointerSize, device->getRootDeviceIndex());
     ASSERT_NE(nullptr, hostAllocation);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, false, offsetPointer, pointerSize, false, false, nullptr);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, offsetPointer, pointerSize, nullptr, {});
     auto expectedAlignedAddress = static_cast<uintptr_t>(hostAllocation->getGpuAddress());
     EXPECT_EQ(heapPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
