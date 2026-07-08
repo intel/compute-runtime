@@ -3445,6 +3445,31 @@ NEO::GraphicsAllocation *CommandListCoreFamily<gfxCoreFamily>::getDeviceCounterA
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isResolveIoqDependencyWithBarrier(bool implicitDependency, bool copyOnlyWait, bool dualStreamCopyOffloadOperation) const {
+    const bool crossEngineDependency = (this->latestFlushIsDualCopyOffload != dualStreamCopyOffloadOperation);
+    const bool sameEngineImplicitDependency = !crossEngineDependency && !copyOnlyWait && implicitDependency;
+    if (!sameEngineImplicitDependency) {
+        return false;
+    }
+
+    const bool heapfulProfilingEvent = !this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling;
+    auto resolveIoqDependencyWithBarrier = (this->dcFlushSupport || heapfulProfilingEvent);
+    const auto isBarrierRequired = (this->isPostSyncSkippedOnLatestInOrderOperation || heapfulProfilingEvent);
+    if (this->isImmediateType() && resolveIoqDependencyWithBarrier && !isBarrierRequired) {
+        // Use semaphore to avoid serialization if different cmd list submitted workload between previous and current submission.
+        // Semaphore is not allowed if previous submission used HP event or post sync was skipped.
+        const bool noInterleavingSinceLastSubmit = (this->cmdQImmediate->getTaskCount() == this->getCsr(false)->peekTaskCount());
+        resolveIoqDependencyWithBarrier = noInterleavingSinceLastSubmit;
+    }
+    DEBUG_BREAK_IF(!resolveIoqDependencyWithBarrier && isBarrierRequired);
+
+    if (NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        resolveIoqDependencyWithBarrier = NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get();
+    }
+    return resolveIoqDependencyWithBarrier;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *deviceCounterAlloc, uint64_t deviceBaseCounterGpuVa, uint32_t deviceCounterPartitionCount, CommandToPatchContainer *outListCommands,
                                                                          uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency, bool skipAddingWaitEventsToResidency,
                                                                          bool noopDispatch, bool dualStreamCopyOffloadOperation) {
@@ -3468,14 +3493,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                                                                                                    isQwordInOrderCounter(), copyOnlyWait);
 
         } else {
-            bool crossEngineDependency = (latestFlushIsDualCopyOffload != dualStreamCopyOffloadOperation);
-            auto resolveDependenciesViaPipeControls = !crossEngineDependency && !copyOnlyWait && implicitDependency && (this->dcFlushSupport || (!this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling));
-
-            if (NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
-                resolveDependenciesViaPipeControls = NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get();
-            }
-
-            if (resolveDependenciesViaPipeControls) {
+            const bool resolveIoqDependencyWithBarrier = isResolveIoqDependencyWithBarrier(implicitDependency, copyOnlyWait, dualStreamCopyOffloadOperation);
+            if (resolveIoqDependencyWithBarrier) {
                 NEO::PipeControlArgs args;
                 if (this->consumeTextureCacheFlushPending()) {
                     args.textureCacheInvalidationEnable = true;

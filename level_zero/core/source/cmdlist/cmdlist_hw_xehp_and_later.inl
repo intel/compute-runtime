@@ -300,6 +300,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     uint64_t inOrderIncrementGpuAddress = 0;
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
 
+    const bool multipleCsrClients = this->isImmediateType() && (this->getCsr(false)->getNumClients() >= 2u);
+    const bool skipWalkerPostSync = this->isWalkerPostSyncSkipEnabled && !event && !launchParams.isKernelSplitOperation && !multipleCsrClients;
+
     if (!launchParams.makeKernelCommandView) {
         inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
         inOrderNonWalkerSignalling = launchParams.inOrderNonWalkerSignalingRequired;
@@ -310,7 +313,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     dispatchEventPostSyncOperation(event, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
                 }
             } else {
-                if (!this->isWalkerPostSyncSkipEnabled || event) {
+                if (!skipWalkerPostSync) {
                     inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
                     inOrderExecInfo = this->inOrderExecInfo.get();
                 }
@@ -481,7 +484,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
         }
     }
-    if (this->isWalkerPostSyncSkipEnabled && !event && !launchParams.isKernelSplitOperation) {
+    if (skipWalkerPostSync) {
         this->isPostSyncSkippedOnLatestInOrderOperation = true;
     }
 
