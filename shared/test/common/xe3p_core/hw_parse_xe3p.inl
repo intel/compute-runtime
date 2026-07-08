@@ -21,7 +21,6 @@ void NEO::HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
     using STATE_BASE_ADDRESS = typename GenGfxFamily::STATE_BASE_ADDRESS;
     using MI_BATCH_BUFFER_START = typename GenGfxFamily::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_IMM = typename GenGfxFamily::MI_LOAD_REGISTER_IMM;
-    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GenGfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     itorWalker = NEO::UnitTestHelper<GenGfxFamily>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
 
@@ -72,11 +71,6 @@ void NEO::HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
             dynamicStateHeap = reinterpret_cast<uint64_t>(dsh->getCpuBase());
             ASSERT_NE(0u, dynamicStateHeap);
         }
-    }
-
-    itorBindingTableBaseAddress = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(cmdList.begin(), itorWalker);
-    if (itorBindingTableBaseAddress != itorWalker) {
-        cmdBindingTableBaseAddress = *itorBindingTableBaseAddress;
     }
 }
 template <>

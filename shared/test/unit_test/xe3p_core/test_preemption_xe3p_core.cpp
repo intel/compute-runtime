@@ -68,11 +68,11 @@ XE3P_CORETEST_F(Xe3pPreemptionTests, givenDebuggerInitializedAndMidThreadPreempt
     EXPECT_EQ(sizeExpected, withDebugging);
 }
 
-XE3P_CORETEST_F(Xe3pPreemptionTests, givenXe3pInterfaceDescriptorDataWhenPreemptionModeIsMidThreadThenThreadPreemptionBitIsEnabled) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+XE3P_CORETEST_F(Xe3pPreemptionTests, givenXe3pInterfaceDescriptorData2WhenPreemptionModeIsMidThreadThenThreadPreemptionBitIsEnabled) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
 
     INTERFACE_DESCRIPTOR_DATA iddArg;
-    iddArg = FamilyType::cmdInitInterfaceDescriptorData;
+    iddArg = FamilyType::cmdInitInterfaceDescriptorData2;
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::Disabled);
     EXPECT_FALSE(iddArg.getThreadPreemption());

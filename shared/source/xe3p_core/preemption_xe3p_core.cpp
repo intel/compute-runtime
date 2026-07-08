@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,15 +12,6 @@
 namespace NEO {
 
 using GfxFamily = Xe3pCoreFamily;
-
-template <>
-void PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode) {
-    if (preemptionMode == PreemptionMode::MidThread) {
-        idd->setThreadPreemption(true);
-    } else {
-        idd->setThreadPreemption(false);
-    }
-}
 
 template <>
 void PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(GfxFamily::INTERFACE_DESCRIPTOR_DATA_2 *idd, PreemptionMode preemptionMode) {

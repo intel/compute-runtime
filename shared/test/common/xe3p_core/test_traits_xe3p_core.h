@@ -27,5 +27,5 @@ struct TestTraits<IGFX_XE3P_CORE> {
     static constexpr bool isPipeControlExtendedPriorToNonPipelinedStateCommandSupported = false;
     static constexpr bool largeGrfModeInStateComputeModeSupported = false;
     static constexpr bool heaplessRequired = true;
-    static constexpr bool bindingTableStateSupported = true;
+    static constexpr bool bindingTableStateSupported = false;
 };

@@ -28,8 +28,6 @@ struct PipeControlArgs;
 namespace WalkerPartition {
 
 template <typename GfxFamily>
-using POSTSYNC_DATA = typename GfxFamily::POSTSYNC_DATA;
-template <typename GfxFamily>
 using BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 template <typename GfxFamily>
 using BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;

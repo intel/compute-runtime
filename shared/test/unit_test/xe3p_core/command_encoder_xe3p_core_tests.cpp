@@ -222,36 +222,6 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTests, whenEncodeDispatchKernelThenCorrect
 
 using CommandEncodeStatesXe3pTest = Test<CommandEncodeStatesFixture>;
 
-XE3P_CORETEST_F(CommandEncodeStatesXe3pTest, givenHeapSharingEnabledWhenRetrievingNotInitializedSshThenExpectCorrectSbaCommand) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
-
-    cmdContainer->enableHeapSharing();
-    cmdContainer->setHeapDirty(NEO::HeapType::surfaceState);
-
-    auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);
-
-    STATE_BASE_ADDRESS sba;
-    EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(cmdContainer.get(), sba, statelessMocsIndex);
-
-    EncodeStateBaseAddress<FamilyType>::encode(args);
-
-    GenCmdList commands;
-    CmdParse<FamilyType>::parseCommandBuffer(commands,
-                                             cmdContainer->getCommandStream()->getCpuBase(),
-                                             cmdContainer->getCommandStream()->getUsed());
-
-    auto itorCmd = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
-    ASSERT_NE(commands.end(), itorCmd);
-    auto sbaCmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
-
-    EXPECT_EQ(0u, sbaCmd->getSurfaceStateBaseAddress());
-
-    itorCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(commands.begin(), commands.end());
-    EXPECT_EQ(commands.end(), itorCmd);
-}
-
 XE3P_CORETEST_F(CommandEncodeStatesXe3pTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetInHeaplessModeThenReturnWalker2InlineOffset) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 

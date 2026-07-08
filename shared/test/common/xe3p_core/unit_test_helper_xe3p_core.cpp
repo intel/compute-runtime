@@ -32,7 +32,7 @@ uint32_t UnitTestHelper<Family>::getInlineDataSize(bool isHeaplessEnabled) {
 
 template <>
 uint32_t UnitTestHelper<Family>::getProgrammedGrfValue(CommandStreamReceiver &csr, LinearStream &linearStream) {
-    using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA_2;
     using REGISTERS_PER_THREAD = typename INTERFACE_DESCRIPTOR_DATA::REGISTERS_PER_THREAD;
 
     HardwareParse hwParser;
@@ -109,7 +109,6 @@ uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress(WalkerType *walk
 }
 
 template struct UnitTestHelper<Family>;
-template struct UnitTestHelperWithHeap<Family>;
 
 template uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress<Family::COMPUTE_WALKER_2>(Family::COMPUTE_WALKER_2 *walkerCmd);
 } // namespace NEO

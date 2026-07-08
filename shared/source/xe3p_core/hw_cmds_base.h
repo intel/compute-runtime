@@ -120,7 +120,6 @@ struct Xe3pCoreFamily : public Xe3pCore {
     using GfxFamily = Xe3pCoreFamily;
     using DefaultWalkerType = COMPUTE_WALKER_2;
     using PorWalkerType = COMPUTE_WALKER_2;
-    using FrontEndStateCommand = CFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::MEM_COPY;
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
@@ -130,20 +129,16 @@ struct Xe3pCoreFamily : public Xe3pCore {
     using MI_SEMAPHORE_WAIT_LEGACY = MI_SEMAPHORE_WAIT;
     using MI_SEMAPHORE_WAIT = MI_SEMAPHORE_WAIT_64;
     static const COMPUTE_WALKER_2 cmdInitGpgpuWalker2;
-    static const COMPUTE_WALKER cmdInitGpgpuWalker;
-    static const CFE_STATE cmdInitCfeState;
-    static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const INTERFACE_DESCRIPTOR_DATA_2 cmdInitInterfaceDescriptorData2;
     static const MI_BATCH_BUFFER_END cmdInitBatchBufferEnd;
     static const MI_BATCH_BUFFER_START cmdInitBatchBufferStart;
     static const PIPE_CONTROL cmdInitPipeControl;
     static const RESOURCE_BARRIER cmdInitResourceBarrier;
     static const STATE_COMPUTE_MODE cmdInitStateComputeMode;
-    static const _3DSTATE_BINDING_TABLE_POOL_ALLOC cmdInitStateBindingTablePoolAlloc;
     static const MI_SEMAPHORE_WAIT cmdInitMiSemaphoreWait;
     static const MI_SEMAPHORE_WAIT_LEGACY cmdInitMiSemaphoreWaitLegacy;
     static const RENDER_SURFACE_STATE cmdInitRenderSurfaceState;
-    static const POSTSYNC_DATA cmdInitPostSyncData;
+    static const POSTSYNC_DATA_2 cmdInitPostSyncData;
     static const MI_SET_PREDICATE cmdInitSetPredicate;
     static const MI_LOAD_REGISTER_IMM cmdInitLoadRegisterImm;
     static const MI_LOAD_REGISTER_REG cmdInitLoadRegisterReg;
@@ -158,7 +153,6 @@ struct Xe3pCoreFamily : public Xe3pCore {
     static const STATE_BASE_ADDRESS cmdInitStateBaseAddress;
     static const MEDIA_SURFACE_STATE cmdInitMediaSurfaceState;
     static const SAMPLER_STATE cmdInitSamplerState;
-    static const BINDING_TABLE_STATE cmdInitBindingTableState;
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
     static const MI_CONDITIONAL_BATCH_BUFFER_END cmdInitConditionalBatchBufferEnd;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
@@ -184,38 +178,22 @@ struct Xe3pCoreFamily : public Xe3pCore {
 
     template <typename WalkerType = DefaultWalkerType>
     static constexpr size_t getInterfaceDescriptorSize() {
-        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER_2>) {
-            return sizeof(INTERFACE_DESCRIPTOR_DATA_2);
-        } else {
-            return sizeof(INTERFACE_DESCRIPTOR_DATA);
-        }
+        return sizeof(INTERFACE_DESCRIPTOR_DATA_2);
     }
 
     template <typename WalkerType = DefaultWalkerType>
     static WalkerType getInitGpuWalker() {
-        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER_2>) {
-            return cmdInitGpgpuWalker2;
-        } else {
-            return cmdInitGpgpuWalker;
-        }
+        return cmdInitGpgpuWalker2;
     }
 
     template <typename InterfaceDescriptorType>
     static InterfaceDescriptorType getInitInterfaceDescriptor() {
-        if constexpr (std::is_same_v<InterfaceDescriptorType, INTERFACE_DESCRIPTOR_DATA_2>) {
-            return cmdInitInterfaceDescriptorData2;
-        } else {
-            return cmdInitInterfaceDescriptorData;
-        }
+        return cmdInitInterfaceDescriptorData2;
     }
 
     template <typename WalkerType>
     static constexpr bool isHeaplessMode() {
-        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER_2>) {
-            return true;
-        } else {
-            return false;
-        }
+        return true;
     }
 
     static constexpr bool isHeaplessRequired() {
@@ -224,19 +202,12 @@ struct Xe3pCoreFamily : public Xe3pCore {
 
     template <typename InterfaceDescriptorType>
     static constexpr bool isInterfaceDescriptorHeaplessMode() {
-        if constexpr (std::is_same_v<InterfaceDescriptorType, INTERFACE_DESCRIPTOR_DATA_2>) {
-            return true;
-        } else {
-            return false;
-        }
+        return true;
     }
 
     template <typename WalkerType>
     static constexpr auto getPostSyncType() {
-        return std::decay_t<std::conditional_t<
-            std::is_same_v<WalkerType, COMPUTE_WALKER_2>,
-            POSTSYNC_DATA_2,
-            POSTSYNC_DATA>>{};
+        return POSTSYNC_DATA_2{};
     }
 };
 
