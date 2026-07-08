@@ -561,7 +561,16 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
         unsetInOrderExecInfo();
     }
     for (auto &csr : csrs) {
-        csr->getInternalAllocationStorage()->cleanAllocationList(*csr->getTagAddress(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+        // Prefer this event's own completed task count, captured on the signaling CSR at signal
+        // time. Reading *csr->getTagAddress() directly can sample the tag before the GPU's write
+        // is visible, under-reporting completion and leaving still-referenced temporary
+        // allocations on the reuse list. Fall back to the tag for events with no recorded signal
+        // on this CSR (e.g. host-signaled events).
+        TaskCountType cleanupTaskCount = 0;
+        if (!this->getCleanupTaskCount(csr, cleanupTaskCount)) {
+            cleanupTaskCount = csr->getTagAddress() ? *csr->getTagAddress() : 0;
+        }
+        csr->getInternalAllocationStorage()->cleanAllocationList(cleanupTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
 
     inOrderExecHelper.releaseNotUsedTempTimestampNodes();
@@ -1116,6 +1125,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
         this->counterBasedMode = CounterBasedMode::initiallyDisabled;
         this->counterBasedFlags = 0;
     }
+    this->clearCleanupTaskCounts();
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();

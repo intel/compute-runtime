@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
@@ -24,6 +25,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <utility>
 #include <vector>
 
 struct _ze_event_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_EVENT> {};
@@ -267,6 +269,21 @@ struct Event : _ze_event_handle_t {
         }
         csrs.push_back(additionalCsr);
     }
+    void setCleanupTaskCount(NEO::CommandStreamReceiver *csr, TaskCountType taskCount) {
+        this->cleanupCsr = csr;
+        this->cleanupTaskCount = taskCount;
+    }
+    bool getCleanupTaskCount(NEO::CommandStreamReceiver *csr, TaskCountType &taskCount) const {
+        if (csr == this->cleanupCsr) {
+            taskCount = this->cleanupTaskCount;
+            return true;
+        }
+        return false;
+    }
+    void clearCleanupTaskCounts() {
+        this->cleanupCsr = nullptr;
+        this->cleanupTaskCount = 0;
+    }
     void setCsrForCacheFlush(NEO::CommandStreamReceiver *csr) {
         this->csrForCacheFlush = csr;
     }
@@ -479,6 +496,11 @@ struct Event : _ze_event_handle_t {
     NEO::TagNodeBase *perfCounterNode = nullptr;
     NEO::MultiGraphicsAllocation *eventPoolAllocation = nullptr;
     StackVec<NEO::CommandStreamReceiver *, 1> csrs;
+    // Per-signaling-CSR task count of the operation that signaled this event, captured at signal
+    // time. Used to clean the CSR's temporary allocation list up to this event's own completion
+    // rather than a live (and possibly stale) tag read. See handleSuccessfulHostSynchronization.
+    NEO::CommandStreamReceiver *cleanupCsr = nullptr;
+    TaskCountType cleanupTaskCount = 0;
     NEO::CommandStreamReceiver *csrForCacheFlush = nullptr;
     StackVec<uint64_t, 3> exportedIpcServerHandles;
     void *hostAddressFromPool = nullptr;

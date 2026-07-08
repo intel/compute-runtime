@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/wait_util.h"
@@ -16,6 +17,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -6767,6 +6769,57 @@ TEST_F(CounterBasedEventTests, givenEventCreatedWithCounterBasedEventPoolAndCall
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     constexpr uint32_t counterBasedEventPoolFlag = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE;
     EXPECT_EQ(counterBasedEventPoolFlag, counterBasedEventFlags);
+}
+
+using EventTemporaryAllocationCleanupTest = Test<DeviceFixture>;
+
+HWTEST_F(EventTemporaryAllocationCleanupTest,
+         givenRecordedCleanupTaskCountWhenHandleSuccessfulHostSynchronizationThenTemporaryAllocationsUpToEventCompletionAreFreedAndLaterOnesAreKept) {
+    struct MockCleanupEvent : public L0::EventImp<uint32_t> {
+        MockCleanupEvent(int index, L0::Device *device) : EventImp(index, device, false) {}
+        using L0::EventImp<uint32_t>::handleSuccessfulHostSynchronization;
+    };
+
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    const auto contextId = csr->getOsContext().getContextId();
+    auto memoryManager = neoDevice->getMemoryManager();
+
+    constexpr TaskCountType eventTaskCount = 10u;
+
+    auto mockEvent = std::make_unique<MockCleanupEvent>(0, device);
+    mockEvent->setCsr(csr, true);
+    mockEvent->setCleanupTaskCount(csr, eventTaskCount);
+
+    // Simulate a CSR tag that lags the event's real completion. The fix must clean based on the
+    // recorded event completion, not this stale live value, so a stale tag must not affect the result.
+    *csr->getTagAddress() = eventTaskCount - 1u;
+
+    auto &temporaryAllocations = memoryManager->getTemporaryAllocationsList();
+
+    // Pin whose work is covered by the synchronized event (task count == event's) -> must be freed.
+    auto completedAllocation = memoryManager->allocateGraphicsMemoryWithProperties(
+        NEO::MockAllocationProperties{neoDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    completedAllocation->setHostPtrTaskCountAssignment(0);
+    completedAllocation->updateTaskCount(eventTaskCount, contextId);
+    csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(
+        std::unique_ptr<NEO::GraphicsAllocation>(completedAllocation), NEO::AllocationUsage::TEMPORARY_ALLOCATION, eventTaskCount);
+
+    // Later, still in-flight pin (task count beyond the event's completion) -> must be kept.
+    auto laterAllocation = memoryManager->allocateGraphicsMemoryWithProperties(
+        NEO::MockAllocationProperties{neoDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    laterAllocation->setHostPtrTaskCountAssignment(0);
+    laterAllocation->updateTaskCount(eventTaskCount + 2u, contextId);
+    csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(
+        std::unique_ptr<NEO::GraphicsAllocation>(laterAllocation), NEO::AllocationUsage::TEMPORARY_ALLOCATION, eventTaskCount + 2u);
+
+    ASSERT_EQ(2u, temporaryAllocations.peekHead()->countThisAndAllConnected());
+
+    mockEvent->handleSuccessfulHostSynchronization();
+
+    ASSERT_EQ(1u, temporaryAllocations.peekHead()->countThisAndAllConnected());
+    EXPECT_EQ(laterAllocation, temporaryAllocations.peekHead());
+
+    csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
 }
 
 } // namespace ult

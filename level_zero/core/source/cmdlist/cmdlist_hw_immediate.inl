@@ -1407,6 +1407,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
         }
         inputRet = executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, copyOffloadSubmission, requireTaskCountUpdate,
                                                             outerLock, outerLockForIndirect);
+        if (signalEvent && inputRet == ZE_RESULT_SUCCESS) {
+            // Record this operation's completed task count on the signaling CSR so that a later
+            // host synchronization on the event cleans temporary allocations up to this event's
+            // own completion, instead of a live (possibly stale) tag read that can under-clean.
+            signalEvent->setCleanupTaskCount(queue->getCsr(), queue->getTaskCount());
+        }
     }
 
     return inputRet;
