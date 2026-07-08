@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/utilities/stackvec.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 namespace NEO {
@@ -20,6 +21,6 @@ struct ResidencyData {
     uint64_t getFenceValueForContextId(uint32_t contextId);
 
   protected:
-    StackVec<uint64_t, 32> lastFenceValues;
+    std::vector<uint64_t> lastFenceValues;
 };
 } // namespace NEO
