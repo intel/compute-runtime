@@ -468,13 +468,13 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
     case ZES_POWER_DOMAIN_CARD:
         // bits [32:47] - INSTANTANEOUS_PSYSGPU_POWER
         *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 32) & 0xFFFF) * milliFactor);
-        // bits [32:47] - SUSTAINED_PACKAGE_POWER
+        // bits [32:47] - SUSTAINED_CARD_POWER
         *pAveragePower = static_cast<uint32_t>(convertU13p3((averagePowerValue >> 32) & 0xFFFF) * milliFactor);
         break;
     case ZES_POWER_DOMAIN_PACKAGE:
         // bits [0:15] - INSTANTANEOUS_PACKAGE_POWER
         *pInstantPower = static_cast<uint32_t>(convertU13p3(instantaneousPowerValue & 0xFFFF) * milliFactor);
-        // bits [0:15] - SUSTAINED_CARD_POWER
+        // bits [0:15] - SUSTAINED_PACKAGE_POWER
         *pAveragePower = static_cast<uint32_t>(convertU13p3(averagePowerValue & 0xFFFF) * milliFactor);
         break;
     case ZES_POWER_DOMAIN_MEMORY: {

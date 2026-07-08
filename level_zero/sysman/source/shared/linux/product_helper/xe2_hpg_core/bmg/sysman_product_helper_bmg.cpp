@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
 
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu.h"
@@ -12,8 +13,10 @@
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 
 #include <bit>
+#include <chrono>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace L0 {
 namespace Sysman {
@@ -31,6 +34,7 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
     {"0x1e2f8200", // BMG PUNIT rev 1
      {{"XTAL_CLK_FREQUENCY", 4},
       {"VRAM_BANDWIDTH", 56},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -39,6 +43,7 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -47,6 +52,7 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -567,6 +573,7 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -575,6 +582,7 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -1697,81 +1705,64 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSy
     return ZE_RESULT_SUCCESS;
 }
 
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subdeviceId) {
+static bool isPowerDomainSupported(zes_power_domain_t powerDomain) {
+    const std::unordered_set<zes_power_domain_t> supportedPowerDomains = {
+        ZES_POWER_DOMAIN_PACKAGE,
+        ZES_POWER_DOMAIN_CARD,
+        ZES_POWER_DOMAIN_MEMORY,
+        ZES_POWER_DOMAIN_GPU};
+    return supportedPowerDomains.find(powerDomain) != supportedPowerDomains.end();
+}
 
+static ze_result_t readEnergyCounter(const std::map<std::string, uint64_t> &keyOffsetMap,
+                                     std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                     zes_power_domain_t powerDomain,
+                                     uint32_t &rawEnergyCounter) {
     const std::unordered_map<zes_power_domain_t, std::vector<std::string>> powerDomainToKeyMap = {
         {ZES_POWER_DOMAIN_PACKAGE, {"ACCUM_PACKAGE_ENERGY", "PACKAGE_ENERGY_STATUS_SKU_0_0_0_PCU"}},
         {ZES_POWER_DOMAIN_CARD, {"ACCUM_PSYS_ENERGY", "PLATFORM_ENERGY_STATUS"}},
         {ZES_POWER_DOMAIN_MEMORY, {"VCCDDR_ENERGY_ACCUMULATOR"}},
         {ZES_POWER_DOMAIN_GPU, {"VCCGT_ENERGY_ACCUMULATOR"}}};
 
-    auto powerDomainToKeyMapIter = powerDomainToKeyMap.find(powerDomain);
-    if (powerDomainToKeyMapIter == powerDomainToKeyMap.end()) {
+    ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    for (const auto &key : powerDomainToKeyMap.at(powerDomain)) {
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, rawEnergyCounter);
+        if (result == ZE_RESULT_SUCCESS) {
+            break;
+        }
+    }
+    return result;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subdeviceId) {
+    if (!isPowerDomainSupported(powerDomain)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unsupported power domain, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<uint32_t, std::string> telemNodes = {};
-    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
-    if (telemNodes.empty()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
 
-    std::map<std::string, uint64_t> keyOffsetMap = {};
-    std::unordered_map<std::string, std::string> keyTelemInfoMap = {};
-
-    // Iterate through all the TelemNodes to find both OOBMSM and PUNIT guids along with their keyOffsetMap
-    for (const auto &telemNode : telemNodes) {
-        std::string telemNodeDir = telemNode.second;
-
-        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-        int errorNum = 0;
-        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString, errorNum)) {
-            continue;
-        }
-
-        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
-        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
-            continue;
-        }
-
-        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
-        for (auto it = tempKeyOffsetMap.begin(); it != tempKeyOffsetMap.end(); it++) {
-            keyOffsetMap[it->first] = it->second;
-            keyTelemInfoMap[it->first] = telemNodeDir;
-        }
-    }
-
-    if (keyOffsetMap.empty()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
     }
 
     // Energy Counter calculation
     uint32_t energyCounter = 0;
-    bool isReadValueSuccess = false;
-    for (const auto &key : powerDomainToKeyMapIter->second) {
-        if (PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter) == ZE_RESULT_SUCCESS) {
-            isReadValueSuccess = true;
-            break;
-        }
+    result = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounter);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
-
-    if (!isReadValueSuccess) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    // Energy counter is in U(18.14) format. Need to convert it into uint64_t and then in MicroJoule
-    const uint32_t energyIntegerPart = static_cast<uint32_t>(energyCounter >> 14);
-    const uint32_t energyDecimalBits = static_cast<uint32_t>((energyCounter & 0x3FFF));
-    const double energyDecimalPart = static_cast<double>(energyDecimalBits) / (1 << 14);
-    const double energyInJoules = static_cast<double>(energyIntegerPart + energyDecimalPart);
-    pEnergy->energy = static_cast<uint64_t>((energyInJoules * convertJouleToMicroJoule));
+    pEnergy->energy = static_cast<uint64_t>(convertU18p14(energyCounter) * convertJouleToMicroJoule);
 
     // Timestamp calculation
     uint64_t timestamp64 = 0;
     std::string key = "XTAL_COUNT";
-    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestamp64);
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestamp64);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -1786,6 +1777,76 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     // 0x3 masks the 2-bit XTAL_CLK_FREQUENCY field (register bits [1:0]).
     double timestamp = timestamp64 / indexToXtalClockFrequencyMap[frequency & 0x3];
     pEnergy->timestamp = static_cast<uint64_t>(timestamp);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    if (!isPowerDomainSupported(powerDomain)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unsupported power domain, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    // Average power calculation based on energy counter samples with 100ms sampling interval
+    // averagePower (W) = convertU18p14(energyCounterSample2 - energyCounterSample1) / sampleIntervalSeconds
+    // averagePower (mW) = averagePower (W) * milliFactor
+
+    // Read first energy counter sample
+    uint32_t energyCounterSample1 = 0;
+    ze_result_t energyResult = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounterSample1);
+    if (energyResult != ZE_RESULT_SUCCESS) {
+        return energyResult;
+    }
+
+    // Sampling interval (100ms)
+    constexpr uint32_t sampleIntervalMilliSeconds = 100;
+    constexpr double sampleIntervalSeconds = sampleIntervalMilliSeconds / 1000.0;
+    NEO::sleep(std::chrono::milliseconds(sampleIntervalMilliSeconds));
+
+    // Read second energy counter sample
+    uint32_t energyCounterSample2 = 0;
+    energyResult = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounterSample2);
+    if (energyResult != ZE_RESULT_SUCCESS) {
+        return energyResult;
+    }
+
+    // Unsigned subtraction handles counter rollover correctly for a single wrap of the uint32_t counter.
+    *pAveragePower = static_cast<uint32_t>((convertU18p14(energyCounterSample2 - energyCounterSample1) / sampleIntervalSeconds) * milliFactor);
+
+    // Instantaneous power calculation
+    uint64_t instantaneousPowerValue = 0;
+    std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    // Instantaneous power values are in U13.3 format (13 integer bits + 3 fractional bits = 16 bits) and in Watts
+    if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+        // bits [0:15] - PACKAGE_POWER (instantaneous)
+        *pInstantPower = static_cast<uint32_t>(convertU13p3(instantaneousPowerValue & 0xFFFF) * milliFactor);
+    } else if (powerDomain == ZES_POWER_DOMAIN_CARD) {
+        // bits [32:47] - PSYSGPU_POWER (instantaneous)
+        *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 32) & 0xFFFF) * milliFactor);
+    } else if (powerDomain == ZES_POWER_DOMAIN_MEMORY) {
+        // bits [16:31] - VRAM_POWER (instantaneous)
+        *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 16) & 0xFFFF) * milliFactor);
+    } else {
+        // ZES_POWER_DOMAIN_GPU: instantaneous power is not available in INSTANTANEOUS_POWER_CONTAINER
+        *pInstantPower = 0;
+    }
 
     return ZE_RESULT_SUCCESS;
 }
