@@ -10,8 +10,10 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
+#include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 
 #include "CL/cl.h"
@@ -131,6 +133,74 @@ TEST_F(ClSvmAllocTest, givenValidArgumentsWhenClSvmAllocThenForwardsToSharedAllo
     EXPECT_EQ(1u, l0Context->allocSharedMemCallCount);
     EXPECT_EQ(validSize, l0Context->capturedSize);
     EXPECT_EQ(8u, l0Context->capturedAlignment);
+}
+
+struct ClEnqueueSvmMapTest : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+
+        auto &clDevices = platform->getDevices();
+        ASSERT_FALSE(clDevices.empty());
+        clDevice = clDevices[0].get();
+
+        cl_int errcode = CL_SUCCESS;
+        cl_device_id clDeviceId = clDevice;
+        clContext = clCreateContext(nullptr, 1, &clDeviceId, nullptr, nullptr, &errcode);
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        ASSERT_NE(nullptr, clContext);
+
+        context = castToObject<Context>(clContext);
+        ASSERT_NE(nullptr, context);
+
+        // Inject a mock immediate command list so queue synchronization is observable.
+        commandQueue = new CommandQueue(context, clDevice, nullptr, mockCmdList.toHandle());
+    }
+
+    void TearDown() override {
+        commandQueue->decRefApi();
+        clReleaseContext(clContext);
+        Test<OclFixture>::TearDown();
+    }
+
+    ClDevice *clDevice = nullptr;
+    cl_context clContext = nullptr;
+    Context *context = nullptr;
+    CommandQueue *commandQueue = nullptr;
+    L0::ult::Mock<L0::ult::CommandList> mockCmdList{};
+    uint64_t svmStorage = 0u;
+};
+
+TEST_F(ClEnqueueSvmMapTest, givenBlockingMapWhenClEnqueueSVMMapThenQueueIsSynchronized) {
+    auto retVal = clEnqueueSVMMap(commandQueue, CL_TRUE, CL_MAP_READ, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
+    EXPECT_EQ(1u, mockCmdList.hostSynchronizeCalled);
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenNonBlockingMapWhenClEnqueueSVMMapThenQueueIsNotSynchronized) {
+    auto retVal = clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_READ, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
+    EXPECT_EQ(0u, mockCmdList.hostSynchronizeCalled);
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenBlockingMapWhenHostSynchronizeFailsThenErrorIsReturned) {
+    mockCmdList.hostSynchronizeResult = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    auto retVal = clEnqueueSVMMap(commandQueue, CL_TRUE, CL_MAP_READ, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr);
+
+    EXPECT_EQ(CL_DEVICE_NOT_AVAILABLE, retVal);
+    EXPECT_EQ(1u, mockCmdList.hostSynchronizeCalled);
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenClEnqueueSVMUnmapThenQueueIsNotSynchronized) {
+    auto retVal = clEnqueueSVMUnmap(commandQueue, &svmStorage, 0, nullptr, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
+    EXPECT_EQ(0u, mockCmdList.hostSynchronizeCalled);
 }
 
 } // namespace ult

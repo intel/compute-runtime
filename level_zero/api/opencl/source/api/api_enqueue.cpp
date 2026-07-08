@@ -1590,6 +1590,9 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
     if (event) {
         NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_MAP);
     }
+    if (blockingMap && ret == CL_SUCCESS) {
+        ret = clFinish(commandQueue);
+    }
     TRACING_EXIT(ClEnqueueSvmMap, &ret);
     return ret;
 }
