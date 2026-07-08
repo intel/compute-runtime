@@ -14,21 +14,18 @@
 
 namespace NEO {
 
-template <size_t width>
-bool areBuffersAlignedTo(const void *dst, const void *src) {
-    return isAligned<width>(dst) && isAligned<width>(src);
-}
-
 void streamCopy(void *dst, const void *src, size_t bytes) noexcept {
     const auto &cpuInfo = CpuInfo::getInstance();
 
-    if (cpuInfo.isFeatureSupported(CpuInfo::featureAvX512) && areBuffersAlignedTo<streamCopyAvx512Width>(dst, src)) {
-        streamCopyImpl<true>(dst, src, bytes);
-        return;
-    }
-    if (cpuInfo.isFeatureSupported(CpuInfo::featureAvX2) && areBuffersAlignedTo<streamCopyAvx2Width>(dst, src)) {
-        streamCopyImpl<false>(dst, src, bytes);
-        return;
+    if (isAligned<streamCopySseWidth>(src)) {
+        if (cpuInfo.isFeatureSupported(CpuInfo::featureAvX512)) {
+            streamCopyImpl<true>(dst, src, bytes);
+            return;
+        }
+        if (cpuInfo.isFeatureSupported(CpuInfo::featureAvX2)) {
+            streamCopyImpl<false>(dst, src, bytes);
+            return;
+        }
     }
 
     memcpy_s(dst, bytes, src, bytes);

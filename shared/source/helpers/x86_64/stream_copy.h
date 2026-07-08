@@ -13,6 +13,6 @@ inline constexpr size_t streamCopyAvx512Width = 64;
 inline constexpr size_t streamCopyAvx2Width = 32;
 inline constexpr size_t streamCopySseWidth = 16;
 
-template <bool withAvx512>
+template <bool withAvx512, bool destinationCanBeWriteCombined = true>
 void streamCopyImpl(void *dst, const void *src, size_t bytes) noexcept;
 } // namespace NEO

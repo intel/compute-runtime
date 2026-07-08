@@ -9,6 +9,7 @@
 #include "shared/source/helpers/x86_64/stream_copy.inl"
 
 namespace NEO {
-template void streamCopyImpl<false>(void *dst, const void *src, size_t bytes) noexcept;
+template void streamCopyImpl<false, true>(void *dst, const void *src, size_t bytes) noexcept;
+template void streamCopyImpl<false, false>(void *dst, const void *src, size_t bytes) noexcept;
 } // namespace NEO
 #endif

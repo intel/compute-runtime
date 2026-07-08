@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/x86_64/stream_copy.h"
 
@@ -15,36 +16,38 @@
 
 namespace NEO {
 
-template <bool withAvx512>
+template <bool withAvx512, bool destinationCanBeWriteCombined>
 void streamCopyImpl(void *dst, const void *src, size_t bytes) noexcept {
-    constexpr size_t minBytesRequiringFence = streamCopySseWidth;
-
     auto *dstBytes = static_cast<uint8_t *>(dst);
     auto *srcBytes = static_cast<const uint8_t *>(src);
     size_t remainingBytes = bytes;
 
 #if defined(__AVX512F__)
     if constexpr (withAvx512) {
-        while (remainingBytes >= streamCopyAvx512Width) {
-            _mm512_stream_si512(reinterpret_cast<__m512i *>(dstBytes),
-                                _mm512_stream_load_si512(reinterpret_cast<__m512i *>(const_cast<uint8_t *>(srcBytes))));
-            dstBytes += streamCopyAvx512Width;
-            srcBytes += streamCopyAvx512Width;
-            remainingBytes -= streamCopyAvx512Width;
+        if (isAligned<streamCopyAvx512Width>(srcBytes)) {
+            while (remainingBytes >= streamCopyAvx512Width) {
+                _mm512_storeu_si512(reinterpret_cast<__m512i *>(dstBytes),
+                                    _mm512_stream_load_si512(reinterpret_cast<__m512i *>(const_cast<uint8_t *>(srcBytes))));
+                dstBytes += streamCopyAvx512Width;
+                srcBytes += streamCopyAvx512Width;
+                remainingBytes -= streamCopyAvx512Width;
+            }
         }
     }
 #endif
 
-    while (remainingBytes >= streamCopyAvx2Width) {
-        _mm256_stream_si256(reinterpret_cast<__m256i *>(dstBytes),
-                            _mm256_stream_load_si256(reinterpret_cast<const __m256i *>(srcBytes)));
-        dstBytes += streamCopyAvx2Width;
-        srcBytes += streamCopyAvx2Width;
-        remainingBytes -= streamCopyAvx2Width;
+    if (isAligned<streamCopyAvx2Width>(srcBytes)) {
+        while (remainingBytes >= streamCopyAvx2Width) {
+            _mm256_storeu_si256(reinterpret_cast<__m256i *>(dstBytes),
+                                _mm256_stream_load_si256(reinterpret_cast<const __m256i *>(srcBytes)));
+            dstBytes += streamCopyAvx2Width;
+            srcBytes += streamCopyAvx2Width;
+            remainingBytes -= streamCopyAvx2Width;
+        }
     }
 
-    if (remainingBytes >= streamCopySseWidth) {
-        _mm_stream_si128(reinterpret_cast<__m128i *>(dstBytes),
+    while (remainingBytes >= streamCopySseWidth) {
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(dstBytes),
                          _mm_stream_load_si128(reinterpret_cast<__m128i *>(const_cast<uint8_t *>(srcBytes))));
         dstBytes += streamCopySseWidth;
         srcBytes += streamCopySseWidth;
@@ -70,7 +73,7 @@ void streamCopyImpl(void *dst, const void *src, size_t bytes) noexcept {
         *dstBytes = *srcBytes;
     }
 
-    if (bytes >= minBytesRequiringFence) {
+    if (destinationCanBeWriteCombined) {
         _mm_sfence();
     }
 }

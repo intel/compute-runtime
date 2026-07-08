@@ -38,11 +38,6 @@ struct HwPath {
     bool (*hwSupported)();
 };
 
-struct DispatchPath {
-    uint64_t feature;
-    bool (*hwSupported)();
-};
-
 namespace {
 
 #if !defined(_MSC_VER) && (defined(__GNUC__) || defined(__clang__))
@@ -112,24 +107,37 @@ bool hwSupportsAvx512() {
 #endif
 }
 
+bool hwSupportsFeature(uint64_t feature) {
+    if (feature == NEO::CpuInfo::featureAvX512) {
+        return hwSupportsAvx512();
+    }
+    if (feature == NEO::CpuInfo::featureAvX2) {
+        return hwSupportsAvx2();
+    }
+    return true;
+}
+
+constexpr size_t bufferGuardSize = NEO::streamCopyAvx512Width;
+constexpr uint8_t bufferGuardValue = 0xDEu;
+
 constexpr size_t tailSizes[] = {
-    0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u,
-    8u, 9u, 10u, 11u, 12u, 13u, 14u, 15u};
+    0u, 7u, 8u, 15u};
 
 constexpr size_t streamingSizes[] = {
-    16u, 17u, 31u, 32u, 33u, 63u, 64u, 65u,
-    127u, 128u, 129u, 255u, 256u, 512u, 1024u, 4096u};
+    63u, 127u, 128u, 256u};
 
-constexpr size_t allSizes[] = {
-    0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u,
-    8u, 9u, 10u, 11u, 12u, 13u, 14u, 15u,
-    16u, 17u, 31u, 32u, 33u, 63u, 64u, 65u,
-    127u, 128u, 129u, 255u, 256u, 512u, 1024u, 4096u};
+constexpr size_t dispatchSizes[] = {
+    0u, 127u, 4096u};
 
-constexpr AlignmentCase misalignedCases[] = {
-    {1u, 0u}, {0u, 1u}};
+constexpr AlignmentCase streamingAlignmentCases[] = {
+    {0u, 0u},
+    {NEO::streamCopySseWidth, 0u},
+    {NEO::streamCopyAvx2Width, 0u},
+    {0u, 1u},
+    {NEO::streamCopySseWidth, 3u},
+    {NEO::streamCopyAvx2Width, 7u}};
 
-constexpr uint64_t forcedFeatures[] = {
+constexpr uint64_t possibleFeatures[] = {
     NEO::CpuInfo::featureAvX2,
     NEO::CpuInfo::featureAvX512,
     NEO::CpuInfo::featureNone};
@@ -138,34 +146,62 @@ constexpr HwPath hwPaths[] = {
     {&NEO::streamCopyImpl<false>, &hwSupportsAvx2},
     {&NEO::streamCopyImpl<true>, &hwSupportsAvx512}};
 
-constexpr DispatchPath dispatchPaths[] = {
-    {NEO::CpuInfo::featureAvX2, &hwSupportsAvx2},
-    {NEO::CpuInfo::featureAvX512, &hwSupportsAvx512}};
+constexpr HwPath writeCombinedPaths[] = {
+    {&NEO::streamCopyImpl<false, true>, &hwSupportsAvx2},
+    {&NEO::streamCopyImpl<false, false>, &hwSupportsAvx2},
+    {&NEO::streamCopyImpl<true, true>, &hwSupportsAvx512},
+    {&NEO::streamCopyImpl<true, false>, &hwSupportsAvx512}};
 
-void runCopyTest(StreamCopyFn copyFn, size_t dataSize, AlignmentCase align) {
-    constexpr size_t guardSize = 64u;
-    constexpr uint8_t guardValue = 0xDEu;
+struct GuardedBuffer {
+    decltype(allocateAlignedMemory(0u, 0u)) allocation;
+    uint8_t *data;
+};
 
-    auto srcMem = allocateAlignedMemory(dataSize + guardSize, 64u);
-    const size_t dstSpan = guardSize + dataSize + guardSize;
-    auto dstMem = allocateAlignedMemory(dstSpan + guardSize, 64u);
+GuardedBuffer allocateGuardedBuffer(size_t dataSize, size_t offset) {
+    const size_t totalSize = bufferGuardSize + offset + dataSize + bufferGuardSize;
+    auto allocation = allocateAlignedMemory(totalSize, bufferGuardSize);
+    std::memset(allocation.get(), bufferGuardValue, totalSize);
+    auto *data = static_cast<uint8_t *>(allocation.get()) + bufferGuardSize + offset;
+    return {std::move(allocation), data};
+}
 
-    auto *src = static_cast<uint8_t *>(srcMem.get()) + align.srcOffset;
-    auto *dstStart = static_cast<uint8_t *>(dstMem.get()) + align.dstOffset;
-    auto *dst = dstStart + guardSize;
+void runCopyTest(StreamCopyFn copyFn, size_t dataSize, AlignmentCase alignment) {
+    auto source = allocateGuardedBuffer(dataSize, alignment.srcOffset);
+    auto destination = allocateGuardedBuffer(dataSize, alignment.dstOffset);
 
     for (size_t i = 0; i < dataSize; ++i) {
-        src[i] = static_cast<uint8_t>(i);
+        source.data[i] = static_cast<uint8_t>(i);
     }
-    std::memset(dstStart, guardValue, dstSpan);
 
-    copyFn(dst, src, dataSize);
+    copyFn(destination.data, source.data, dataSize);
 
-    EXPECT_EQ(0, std::memcmp(dst, src, dataSize)) << "data mismatch for size " << dataSize;
+    EXPECT_EQ(0, std::memcmp(destination.data, source.data, dataSize))
+        << "data mismatch, size=" << dataSize
+        << ", srcOffset=" << alignment.srcOffset
+        << ", dstOffset=" << alignment.dstOffset;
 
-    for (size_t i = 0; i < guardSize; ++i) {
-        EXPECT_EQ(guardValue, dstStart[i]) << "underflow at byte " << i;
-        EXPECT_EQ(guardValue, dst[dataSize + i]) << "overflow at byte " << i;
+    for (size_t i = 0; i < dataSize; ++i) {
+        EXPECT_EQ(static_cast<uint8_t>(i), source.data[i]) << "source modified at byte " << i;
+    }
+
+    const size_t srcLeadingSize = bufferGuardSize + alignment.srcOffset;
+    const uint8_t *srcLeadingGuard = source.data - srcLeadingSize;
+    const uint8_t *srcTrailingGuard = source.data + dataSize;
+    for (size_t i = 0; i < srcLeadingSize; ++i) {
+        EXPECT_EQ(bufferGuardValue, srcLeadingGuard[i]) << "source modified at byte " << i;
+    }
+    for (size_t i = 0; i < bufferGuardSize; ++i) {
+        EXPECT_EQ(bufferGuardValue, srcTrailingGuard[i]) << "source modified at byte " << i;
+    }
+
+    const size_t dstLeadingSize = bufferGuardSize + alignment.dstOffset;
+    const uint8_t *dstLeadingGuard = destination.data - dstLeadingSize;
+    const uint8_t *dstTrailingGuard = destination.data + dataSize;
+    for (size_t i = 0; i < dstLeadingSize; ++i) {
+        EXPECT_EQ(bufferGuardValue, dstLeadingGuard[i]) << "destination underflow at byte " << i;
+    }
+    for (size_t i = 0; i < bufferGuardSize; ++i) {
+        EXPECT_EQ(bufferGuardValue, dstTrailingGuard[i]) << "destination overflow at byte " << i;
     }
 }
 
@@ -189,50 +225,72 @@ struct StreamCopyDispatchFixture {
     std::unique_ptr<VariableBackup<bool>> detectedBackup;
 };
 
-struct StreamCopyMisalignedTest : public ::testing::TestWithParam<std::tuple<uint64_t, size_t, AlignmentCase>>,
-                                  public StreamCopyDispatchFixture {
+using StreamCopyStreamingPathTest = ::testing::TestWithParam<std::tuple<HwPath, size_t, AlignmentCase>>;
+
+TEST_P(StreamCopyStreamingPathTest, givenAlignedSourceThenDataCopiedCorrectly) {
+    const auto &[path, size, alignment] = GetParam();
+    if (!path.hwSupported()) {
+        GTEST_SKIP() << "AVX feature not supported by this CPU/OS";
+    }
+    runCopyTest(path.copyFn, size, alignment);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamCopy,
+    StreamCopyStreamingPathTest,
+    ::testing::Combine(::testing::ValuesIn(hwPaths),
+                       ::testing::ValuesIn(streamingSizes),
+                       ::testing::ValuesIn(streamingAlignmentCases)));
+
+using StreamCopyTailTest = ::testing::TestWithParam<std::tuple<HwPath, size_t>>;
+
+TEST_P(StreamCopyTailTest, givenStreamingPathAndSubBlockSizeThenDataCopiedCorrectly) {
+    const auto &[path, size] = GetParam();
+    if (!path.hwSupported()) {
+        GTEST_SKIP() << "AVX feature not supported by this CPU/OS";
+    }
+    runCopyTest(path.copyFn, size, {0u, 0u});
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamCopy,
+    StreamCopyTailTest,
+    ::testing::Combine(::testing::ValuesIn(hwPaths),
+                       ::testing::ValuesIn(tailSizes)));
+
+struct StreamCopyDispatchTest : public ::testing::TestWithParam<std::tuple<uint64_t, size_t>>,
+                                public StreamCopyDispatchFixture {
     void SetUp() override { StreamCopyDispatchFixture::setUp(); }
     void TearDown() override { StreamCopyDispatchFixture::tearDown(); }
 };
 
-TEST_P(StreamCopyMisalignedTest, givenForcedFeatureAndMisalignedBuffersThenDataCopiedCorrectly) {
-    const auto &[feature, size, align] = GetParam();
+TEST_P(StreamCopyDispatchTest, givenAlignedSourceThenDataCopiedCorrectly) {
+    const auto &[feature, size] = GetParam();
+    if (!hwSupportsFeature(feature)) {
+        GTEST_SKIP() << "AVX feature not supported by this CPU/OS";
+    }
     forceFeatures(feature);
-    runCopyTest(&NEO::streamCopy, size, align);
+    runCopyTest(&NEO::streamCopy, size, {0u, 3u});
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    StreamCopy,
-    StreamCopyMisalignedTest,
-    ::testing::Combine(::testing::ValuesIn(forcedFeatures),
-                       ::testing::ValuesIn(allSizes),
-                       ::testing::ValuesIn(misalignedCases)));
-
-using StreamCopyDispatchSimdTest = ::testing::TestWithParam<std::tuple<DispatchPath, size_t>>;
-
-struct StreamCopyDispatchSimdTestFixture : public StreamCopyDispatchSimdTest,
-                                           public StreamCopyDispatchFixture {
-    void SetUp() override { StreamCopyDispatchFixture::setUp(); }
-    void TearDown() override { StreamCopyDispatchFixture::tearDown(); }
-};
-
-TEST_P(StreamCopyDispatchSimdTestFixture, givenForcedFeatureAndAlignedBuffersThenDataCopiedCorrectly) {
-    const auto &[path, size] = GetParam();
-    if (!path.hwSupported()) {
+TEST_P(StreamCopyDispatchTest, givenUnalignedSourceThenDataCopiedViaMemcpy) {
+    const auto &[feature, size] = GetParam();
+    if (!hwSupportsFeature(feature)) {
         GTEST_SKIP() << "AVX feature not supported by this CPU/OS";
     }
-    forceFeatures(path.feature);
-    runCopyTest(&NEO::streamCopy, size, {0u, 0u});
+    forceFeatures(feature);
+    runCopyTest(&NEO::streamCopy, size, {1u, 0u});
 }
 
 INSTANTIATE_TEST_SUITE_P(
     StreamCopy,
-    StreamCopyDispatchSimdTestFixture,
-    ::testing::Combine(::testing::ValuesIn(dispatchPaths), ::testing::ValuesIn(streamingSizes)));
+    StreamCopyDispatchTest,
+    ::testing::Combine(::testing::ValuesIn(possibleFeatures),
+                       ::testing::ValuesIn(dispatchSizes)));
 
-using StreamCopyAlignedStreamingTest = ::testing::TestWithParam<std::tuple<HwPath, size_t>>;
+using StreamCopyWriteCombinedTest = ::testing::TestWithParam<std::tuple<HwPath, size_t>>;
 
-TEST_P(StreamCopyAlignedStreamingTest, givenSimdPathAndStreamingSizeThenDataCopiedCorrectly) {
+TEST_P(StreamCopyWriteCombinedTest, givenDestinationCanBeWriteCombinedFlagThenDataCopiedCorrectly) {
     const auto &[path, size] = GetParam();
     if (!path.hwSupported()) {
         GTEST_SKIP() << "AVX feature not supported by this CPU/OS";
@@ -242,20 +300,6 @@ TEST_P(StreamCopyAlignedStreamingTest, givenSimdPathAndStreamingSizeThenDataCopi
 
 INSTANTIATE_TEST_SUITE_P(
     StreamCopy,
-    StreamCopyAlignedStreamingTest,
-    ::testing::Combine(::testing::ValuesIn(hwPaths), ::testing::ValuesIn(streamingSizes)));
-
-using StreamCopyAlignedTailTest = ::testing::TestWithParam<std::tuple<HwPath, size_t>>;
-
-TEST_P(StreamCopyAlignedTailTest, givenSimdPathAndTailSizeThenDataCopiedCorrectly) {
-    const auto &[path, size] = GetParam();
-    if (!path.hwSupported()) {
-        GTEST_SKIP() << "AVX feature not supported by this CPU/OS";
-    }
-    runCopyTest(path.copyFn, size, {0u, 0u});
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    StreamCopy,
-    StreamCopyAlignedTailTest,
-    ::testing::Combine(::testing::ValuesIn(hwPaths), ::testing::ValuesIn(tailSizes)));
+    StreamCopyWriteCombinedTest,
+    ::testing::Combine(::testing::ValuesIn(writeCombinedPaths),
+                       ::testing::ValuesIn(streamingSizes)));
