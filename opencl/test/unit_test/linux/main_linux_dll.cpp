@@ -684,7 +684,7 @@ TEST_F(UnifiedMemoryPoolingManagerTest, whenGetPoolInfosCalledThenCorrectInfoIsR
 
     ASSERT_EQ(64 * MemoryConstants::kiloByte + 1, poolInfo64KbTo2MbExtended.minServicedSize);
     ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo64KbTo2MbExtended.maxServicedSize);
-    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo64KbTo2MbExtended.poolSize);
+    ASSERT_EQ(16 * MemoryConstants::megaByte, poolInfo64KbTo2MbExtended.poolSize);
 }
 
 TEST(HeapTest, whenGetDefaultHeapSizeThenReturnCorrectValue) {

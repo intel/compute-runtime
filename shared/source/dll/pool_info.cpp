@@ -22,7 +22,7 @@ const std::array<const PoolInfo, 3> PoolInfo::poolInfos = {
 const std::array<const PoolInfo, 3> PoolInfo::extendedPoolInfos = {
     PoolInfo{ 0,           4 * KB,  2 * MB},
     PoolInfo{ 4 * KB + 1, 64 * KB,  2 * MB},
-    PoolInfo{64 * KB + 1,  2 * MB,  2 * MB}};
+    PoolInfo{64 * KB + 1,  2 * MB, 16 * MB}};
 // clang-format on
 
 const std::array<const PoolInfo, 3> PoolInfo::getPoolInfos(const GfxCoreHelper &gfxCoreHelper) {
