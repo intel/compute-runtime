@@ -186,6 +186,9 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
                                                     size_t *pSize);
     MOCKABLE_VIRTUAL ze_result_t closeIpcMemHandle(const void *ptr);
     MOCKABLE_VIRTUAL ze_result_t putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle);
+    MOCKABLE_VIRTUAL ze_result_t putIpcEventPoolHandle(ze_ipc_event_pool_handle_t ipcEventPoolHandle);
+    void trackIpcEventPoolHandle(uint64_t handle, NEO::GraphicsAllocation *alloc);
+    void releaseIpcEventPoolHandle(uint64_t handle);
     MOCKABLE_VIRTUAL ze_result_t getIpcMemHandle(const void *ptr,
                                                  void *pNext,
                                                  ze_ipc_mem_handle_t *pIpcHandle);

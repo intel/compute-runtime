@@ -133,7 +133,7 @@ ze_result_t ZE_APICALL zeEventQueryKernelTimestampsExt(
 ze_result_t ZE_APICALL zeEventPoolPutIpcHandle(
     ze_context_handle_t hContext,
     ze_ipc_event_pool_handle_t hIpc) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Context::fromHandle(hContext)->putIpcEventPoolHandle(hIpc);
 }
 
 ze_result_t ZE_APICALL zeEventPoolGetContextHandle(

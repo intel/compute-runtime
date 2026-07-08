@@ -502,6 +502,31 @@ class MemoryManagerEventPoolIpcMock : public NEO::MockMemoryManager {
     bool callParentAllocateGraphicsMemoryWithProperties = true;
 };
 
+class MemoryManagerEventPoolIpcReleaseMock : public MemoryManagerEventPoolIpcMock {
+  public:
+    using MemoryManagerEventPoolIpcMock::MemoryManagerEventPoolIpcMock;
+
+    void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override {
+        closeInternalHandleCalled++;
+        lastClosedHandle = handle;
+        lastHandleId = handleId;
+        lastGraphicsAllocation = graphicsAllocation;
+    }
+
+    uint32_t closeInternalHandleCalled = 0;
+    uint64_t lastClosedHandle = 0;
+    uint32_t lastHandleId = 0;
+    GraphicsAllocation *lastGraphicsAllocation = nullptr;
+};
+
+class ContextWhiteboxForEventPoolIpcTesting : public ::L0::Context {
+  public:
+    ContextWhiteboxForEventPoolIpcTesting(L0::DriverHandle *driverHandle) : ::L0::Context(driverHandle) {}
+
+    using ::L0::Context::releaseIpcEventPoolHandle;
+    using ::L0::Context::trackIpcEventPoolHandle;
+};
+
 using EventPoolIPCHandleTests = Test<DeviceFixture>;
 
 TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNumberOfEventsAreReturnedInHandle) {
@@ -534,6 +559,369 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNum
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     delete mockMemoryManager;
     driverHandle->setMemoryManager(curMemoryManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, givenTrackedIpcEventPoolHandleWhenTrackingSameHandleTwiceThenRefCountIsIncremented) {
+    ContextWhiteboxForEventPoolIpcTesting contextWhitebox(driverHandle.get());
+    NEO::MockGraphicsAllocation mockAllocation;
+    constexpr uint64_t handle = 0x12345;
+
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+
+    contextWhitebox.trackIpcEventPoolHandle(handle, &mockAllocation);
+
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    ASSERT_EQ(1u, ipcHandleMap.size());
+    auto handleIterator = ipcHandleMap.find(handle);
+    ASSERT_NE(handleIterator, ipcHandleMap.end());
+    EXPECT_EQ(1u, handleIterator->second->refcnt);
+    EXPECT_EQ(&mockAllocation, handleIterator->second->alloc);
+    EXPECT_EQ(handle, handleIterator->second->handle);
+
+    contextWhitebox.trackIpcEventPoolHandle(handle, &mockAllocation);
+
+    EXPECT_EQ(1u, ipcHandleMap.size());
+    handleIterator = ipcHandleMap.find(handle);
+    ASSERT_NE(handleIterator, ipcHandleMap.end());
+    EXPECT_EQ(2u, handleIterator->second->refcnt);
+    EXPECT_EQ(&mockAllocation, handleIterator->second->alloc);
+    EXPECT_EQ(handle, handleIterator->second->handle);
+
+    delete handleIterator->second;
+    ipcHandleMap.clear();
+}
+
+TEST_F(EventPoolIPCHandleTests, givenTrackedIpcEventPoolHandleWhenReleasedToZeroThenHandleIsClosedRemovedAndMissingReleaseIsNoOp) {
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    auto *mockMemoryManager = new MemoryManagerEventPoolIpcReleaseMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+
+    ContextWhiteboxForEventPoolIpcTesting contextWhitebox(driverHandle.get());
+    NEO::MockGraphicsAllocation mockAllocation;
+    constexpr uint64_t handle = 0xABCDE;
+
+    contextWhitebox.trackIpcEventPoolHandle(handle, &mockAllocation);
+    contextWhitebox.trackIpcEventPoolHandle(handle, &mockAllocation);
+
+    EXPECT_EQ(0u, mockMemoryManager->closeInternalHandleCalled);
+
+    contextWhitebox.releaseIpcEventPoolHandle(handle);
+
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    ASSERT_EQ(1u, ipcHandleMap.size());
+    auto handleIterator = ipcHandleMap.find(handle);
+    ASSERT_NE(handleIterator, ipcHandleMap.end());
+    EXPECT_EQ(1u, handleIterator->second->refcnt);
+    EXPECT_EQ(0u, mockMemoryManager->closeInternalHandleCalled);
+
+    contextWhitebox.releaseIpcEventPoolHandle(handle);
+
+    EXPECT_TRUE(ipcHandleMap.empty());
+    EXPECT_EQ(1u, mockMemoryManager->closeInternalHandleCalled);
+    EXPECT_EQ(handle, mockMemoryManager->lastClosedHandle);
+    EXPECT_EQ(0u, mockMemoryManager->lastHandleId);
+    EXPECT_EQ(&mockAllocation, mockMemoryManager->lastGraphicsAllocation);
+
+    contextWhitebox.releaseIpcEventPoolHandle(handle);
+    EXPECT_TRUE(ipcHandleMap.empty());
+    EXPECT_EQ(1u, mockMemoryManager->closeInternalHandleCalled);
+
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, givenGetIpcHandleInNonOpaqueModeWhenPuttingIpcHandleThenHandleIsReleasedFromMap) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, driverHandle->getIPCHandleMap().size());
+
+    res = context->putIpcEventPoolHandle(ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    context->settings.useOpaqueHandle = useOpaque;
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, givenGetIpcHandleInOpaqueFdModeWhenPuttingIpcHandleThenHandleIsReleasedFromMap) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    IpcHandleType handleType = context->settings.handleType;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, driverHandle->getIPCHandleMap().size());
+
+    res = context->putIpcEventPoolHandle(ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    context->settings.useOpaqueHandle = useOpaque;
+    context->settings.handleType = handleType;
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, givenGetIpcHandleInOpaqueSocketsModeWithoutFdWhenPuttingIpcHandleThenHandleIsReleasedFromMap) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    IpcHandleType handleType = context->settings.handleType;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::ntHandle;
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, driverHandle->getIPCHandleMap().size());
+
+    res = context->putIpcEventPoolHandle(ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    context->settings.useOpaqueHandle = useOpaque;
+    context->settings.handleType = handleType;
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, givenMultipleGetIpcHandleCallsWhenPuttingIpcHandleThenHandleIsReleasedOnLastPut) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->getIpcHandle(&ipcHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->getIpcHandle(&ipcHandle));
+    EXPECT_EQ(1u, driverHandle->getIPCHandleMap().size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->putIpcEventPoolHandle(ipcHandle));
+    EXPECT_EQ(1u, driverHandle->getIPCHandleMap().size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->putIpcEventPoolHandle(ipcHandle));
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    context->settings.useOpaqueHandle = useOpaque;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->destroy());
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, givenUnknownIpcHandleWhenPuttingIpcHandleThenSuccessIsReturned) {
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    ipcHandleData.handle = 0xdeadbeef;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->putIpcEventPoolHandle(ipcHandle));
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    context->settings.useOpaqueHandle = useOpaque;
+}
+
+TEST_F(EventPoolIPCHandleTests, givenGetIpcHandleWhenDestroyingEventPoolWithoutPutThenHandleIsReleasedFromMap) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->getIpcHandle(&ipcHandle));
+    EXPECT_EQ(1u, driverHandle->getIPCHandleMap().size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->destroy());
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, givenOpaqueSocketsFdModeWhenReleasingIpcEventPoolHandleThenHandleIsReleasedFromMap) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    IpcHandleType handleType = context->settings.handleType;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::fdHandle;
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->getIpcHandle(&ipcHandle));
+    EXPECT_EQ(1u, driverHandle->getIPCHandleMap().size());
+
+    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    context->releaseIpcEventPoolHandle(ipcHandleData.handle.val);
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    context->settings.useOpaqueHandle = useOpaque;
+    context->settings.handleType = handleType;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->destroy());
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, givenOpaqueSocketsModeWithoutFdWhenReleasingIpcEventPoolHandleThenHandleIsReleasedFromMap) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    uint8_t useOpaque = context->settings.useOpaqueHandle;
+    IpcHandleType handleType = context->settings.handleType;
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    context->settings.handleType = IpcHandleType::ntHandle;
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->getIpcHandle(&ipcHandle));
+    EXPECT_EQ(1u, driverHandle->getIPCHandleMap().size());
+
+    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    context->releaseIpcEventPoolHandle(ipcHandleData.handle.val);
+    EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
+
+    context->settings.useOpaqueHandle = useOpaque;
+    context->settings.handleType = handleType;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->destroy());
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, givenExportedIpcHandleAndNullContextWhenDestroyingEventPoolThenNoReleaseIsAttempted) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = whiteboxCast(EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->hasExportedIpcHandle = true;
+    eventPool->exportedIpcHandle = 0x1234;
+    eventPool->context = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->destroy());
 }
 
 TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndIsHostVisibleAreReturnedInHandle) {

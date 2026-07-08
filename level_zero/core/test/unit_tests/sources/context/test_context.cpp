@@ -5499,6 +5499,46 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithExistingHandleInMapThenRefCou
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, whenTrackingIpcEventPoolHandleWithNullAllocationThenHandleTrackingContainsZeroPtr) {
+    constexpr uint64_t testHandle = 0x1010;
+
+    context->trackIpcEventPoolHandle(testHandle, nullptr);
+
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    ASSERT_EQ(1u, ipcHandleMap.size());
+    auto handleIterator = ipcHandleMap.find(testHandle);
+    ASSERT_NE(handleIterator, ipcHandleMap.end());
+
+    EXPECT_EQ(1u, handleIterator->second->refcnt);
+    EXPECT_EQ(nullptr, handleIterator->second->alloc);
+    EXPECT_EQ(0u, handleIterator->second->ptr);
+    EXPECT_EQ(testHandle, handleIterator->second->handle);
+
+    delete handleIterator->second;
+    ipcHandleMap.clear();
+}
+
+TEST_F(ContextTest, whenTrackingIpcEventPoolHandleWithExistingHandleThenRefCountIsIncrementedAndAllocationStaysUnchanged) {
+    constexpr uint64_t testHandle = 0x2020;
+    NEO::MockGraphicsAllocation initialAllocation;
+    NEO::MockGraphicsAllocation secondAllocation;
+
+    context->trackIpcEventPoolHandle(testHandle, &initialAllocation);
+
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    ASSERT_EQ(1u, ipcHandleMap.size());
+
+    context->trackIpcEventPoolHandle(testHandle, &secondAllocation);
+
+    auto handleIterator = ipcHandleMap.find(testHandle);
+    ASSERT_NE(handleIterator, ipcHandleMap.end());
+    EXPECT_EQ(2u, handleIterator->second->refcnt);
+    EXPECT_EQ(&initialAllocation, handleIterator->second->alloc);
+
+    delete handleIterator->second;
+    ipcHandleMap.clear();
+}
+
 TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNonNullUsmPoolAndRefCountGreaterThanZeroThenHandleIsNotRemoved) {
     DebugManagerStateRestore restorer;
     // Enable USM pooling to create allocations with usmPool

@@ -872,6 +872,67 @@ ze_result_t Context::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
     return ZE_RESULT_SUCCESS;
 }
 
+void Context::trackIpcEventPoolHandle(uint64_t handle, NEO::GraphicsAllocation *alloc) {
+    auto lock = driverHandle->lockIPCHandleMap();
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    auto ipcIter = ipcMap.find(handle);
+    if (ipcIter != ipcMap.end()) {
+        ipcIter->second->refcnt += 1;
+    } else {
+        IpcHandleTracking *handleTracking = new IpcHandleTracking;
+        handleTracking->alloc = alloc;
+        handleTracking->refcnt = 1;
+        handleTracking->handle = handle;
+        handleTracking->ptr = alloc ? alloc->getGpuAddress() : 0u;
+        ipcMap.emplace(handle, handleTracking);
+    }
+}
+
+void Context::releaseIpcEventPoolHandle(uint64_t handle) {
+    auto lock = driverHandle->lockIPCHandleMap();
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    auto ipcIter = ipcMap.find(handle);
+    if (ipcIter != ipcMap.end()) {
+        IpcHandleTracking *trackIPC = ipcIter->second;
+        trackIPC->refcnt -= 1;
+        if (trackIPC->refcnt == 0) {
+            driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
+            if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
+                this->driverHandle->unregisterIpcHandleWithServer(handle);
+            }
+            delete trackIPC;
+            ipcMap.erase(handle);
+        }
+    }
+}
+
+ze_result_t Context::putIpcEventPoolHandle(ze_ipc_event_pool_handle_t ipcEventPoolHandle) {
+    uint64_t handle = 0;
+    if (settings.useOpaqueHandle) {
+        IpcOpaqueEventPoolData &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
+        handle = ipcData.handle.val;
+    } else {
+        IpcEventPoolData &ipcData = *reinterpret_cast<IpcEventPoolData *>(ipcEventPoolHandle.data);
+        handle = ipcData.handle;
+    }
+    auto lock = driverHandle->lockIPCHandleMap();
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    auto ipcIter = ipcMap.find(handle);
+    if (ipcIter != ipcMap.end()) {
+        IpcHandleTracking *trackIPC = ipcIter->second;
+        trackIPC->refcnt -= 1;
+        if (trackIPC->refcnt == 0) {
+            driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
+            if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
+                this->driverHandle->unregisterIpcHandleWithServer(handle);
+            }
+            delete trackIPC;
+            ipcMap.erase(handle);
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t Context::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) {
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lock = driverHandle->lockIPCHandleMap();

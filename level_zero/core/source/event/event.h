@@ -633,6 +633,9 @@ struct EventPool : _ze_event_pool_handle_t {
 
     ze_event_pool_flags_t eventPoolFlags{};
 
+    uint64_t exportedIpcHandle = 0;
+
+    bool hasExportedIpcHandle = false;
     bool isDeviceEventPoolAllocation = false;
     bool isHostVisibleEventPoolAllocation = false;
     bool isImportedIpcPool = false;

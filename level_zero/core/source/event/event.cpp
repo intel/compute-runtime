@@ -169,6 +169,11 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
 }
 
 EventPool::~EventPool() {
+    // Release any IPC handle exported via getIpcHandle that was not released with zeEventPoolPutIpcHandle.
+    if (this->hasExportedIpcHandle && context) {
+        context->releaseIpcEventPoolHandle(this->exportedIpcHandle);
+        this->hasExportedIpcHandle = false;
+    }
     if (eventPoolAllocations) {
         auto graphicsAllocations = eventPoolAllocations->getGraphicsAllocations();
         auto memoryManager = devices[0]->getDriverHandle()->getMemoryManager();
@@ -714,6 +719,11 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
     memoryManager->registerIpcExportedAllocation(allocation);
+
+    // Track the exported handle so that zeEventPoolPutIpcHandle can release it (mirrors IPC memory).
+    context->trackIpcEventPoolHandle(handle, allocation);
+    this->exportedIpcHandle = handle;
+    this->hasExportedIpcHandle = true;
 
     IpcOpaqueEventPoolData &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle->data);
     ipcData = {};
