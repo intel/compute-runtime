@@ -299,17 +299,17 @@ HWTEST_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCou
         CmdListMemoryCopyParams copyParams = {};
         immCmdList0->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, copyParams);
 
-        auto expectedLatestTaskCount = immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasHeapfullCbEventWithProfiling) ? 1u : 2u;
+        auto expectedLatestTaskCount = !immCmdList0->latestFlushIsHostVisible || (!heapless && immCmdList0->latestOperationHasHeapfullCbEventWithProfiling) ? 1u : 2u;
         expectedLatestTaskCount += (heapless ? 1u : 0u);
         EXPECT_EQ(expectedLatestTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
-        EXPECT_EQ(immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasHeapfullCbEventWithProfiling) ? 3u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(!immCmdList0->latestFlushIsHostVisible || (!heapless && immCmdList0->latestOperationHasHeapfullCbEventWithProfiling) ? 3u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         immCmdList1->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, copyParams);
 
         expectedLatestTaskCount = 2u;
         expectedLatestTaskCount += (heapless ? 1u : 0u);
         EXPECT_EQ(expectedLatestTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
-        EXPECT_EQ(immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasHeapfullCbEventWithProfiling) ? 4u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(!immCmdList0->latestFlushIsHostVisible || (!heapless && immCmdList0->latestOperationHasHeapfullCbEventWithProfiling) ? 4u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         context->freeMem(deviceAlloc);
     }
@@ -1087,7 +1087,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenResolveDependenciesViaPip
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenSubmittingThenProgramPipeControlOrSemaphoreInBetweenDispatches) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenSubmittingThenProgramBarrierInBetweenDispatches) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);
 
@@ -1111,18 +1111,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfil
         ptrOffset(cmdStream->getCpuBase(), offset),
         cmdStream->getUsed() - offset));
 
-    if (immCmdList->dcFlushSupport || !immCmdList->isHeaplessModeEnabled()) {
-        auto itor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), itor);
-    } else {
-        auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), itor);
-    }
+    auto itor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderCmdListWhenSubmittingThenProgramPipeControlOrSemaphoreInBetweenDispatches) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderCmdListWhenSubmittingThenProgramBarrierInBetweenDispatches) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);
 
@@ -1146,13 +1141,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderCmdListWhenSubmitt
         ptrOffset(cmdStream->getCpuBase(), offset),
         cmdStream->getUsed() - offset));
 
-    if (immCmdList->dcFlushSupport) {
-        auto itor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), itor);
-    } else {
-        auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), itor);
-    }
+    auto itor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
@@ -3225,14 +3215,14 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
     EXPECT_FALSE(immCmdList->latestFlushIsHostVisible);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    EXPECT_EQ(immCmdList->dcFlushSupport ? false : true, immCmdList->latestFlushIsHostVisible);
+    EXPECT_FALSE(immCmdList->latestFlushIsHostVisible);
 
     EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
     EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 
     immCmdList->hostSynchronize(0, false);
 
-    if (immCmdList->dcFlushSupport || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasHeapfullCbEventWithProfiling)) {
+    if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasHeapfullCbEventWithProfiling)) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3246,19 +3236,16 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
 
     events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    EXPECT_EQ(!immCmdList->dcFlushSupport || immCmdList->isHeaplessModeEnabled(), immCmdList->latestFlushIsHostVisible);
+    EXPECT_EQ(events[0]->isFlushRequiredForSignal() || (immCmdList->isHeaplessModeEnabled() && events[0]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)), immCmdList->latestFlushIsHostVisible);
 
     immCmdList->hostSynchronize(0, false);
 
     if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasHeapfullCbEventWithProfiling)) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(3u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    } else if (immCmdList->dcFlushSupport) {
+    } else {
         EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    } else {
-        EXPECT_EQ(2u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     }
 
     // handle post sync operations
@@ -3267,12 +3254,9 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
     if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasHeapfullCbEventWithProfiling)) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(4u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    } else if (immCmdList->dcFlushSupport) {
+    } else {
         EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(3u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    } else {
-        EXPECT_EQ(2u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     }
 }
 
@@ -3289,7 +3273,7 @@ HWTEST_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchro
     events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    EXPECT_EQ(!immCmdList->dcFlushSupport || immCmdList->isHeaplessModeEnabled(), immCmdList->latestFlushIsHostVisible);
+    EXPECT_EQ(events[0]->isFlushRequiredForSignal() || (immCmdList->isHeaplessModeEnabled() && events[0]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)), immCmdList->latestFlushIsHostVisible);
     EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
     EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 

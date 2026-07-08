@@ -323,7 +323,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->isPostImageWriteFlushRequired = releaseHelper.isPostImageWriteFlushRequired();
     this->isPreImageReadFlushRequired = releaseHelper.isPreImageReadFlushRequired();
     this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
-    this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->dcFlushSupport);
+    this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(true);
     this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();
     this->defaultBuiltInMode = compilerProductHelper.getDefaultBuiltInAddressingMode(
         NEO::ApiSpecificConfig::getBindlessMode(*neoDevice));
@@ -3470,8 +3470,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::isResolveIoqDependencyWithBarrier(boo
         return false;
     }
 
+    auto resolveIoqDependencyWithBarrier = true;
     const bool heapfulProfilingEvent = !this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling;
-    auto resolveIoqDependencyWithBarrier = (this->dcFlushSupport || heapfulProfilingEvent);
     const auto isBarrierRequired = (this->isPostSyncSkippedOnLatestInOrderOperation || heapfulProfilingEvent);
     if (this->isImmediateType() && resolveIoqDependencyWithBarrier && !isBarrierRequired) {
         // Use semaphore to avoid serialization if different cmd list submitted workload between previous and current submission.

@@ -1831,12 +1831,14 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOperationWithHostVisibleEventThenMar
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, hostVisibleEvent.get(), 0, nullptr, launchParams);
 
-    EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
+    EXPECT_EQ(hostVisibleEvent->isFlushRequiredForSignal() || (immCmdList->isHeaplessModeEnabled() && hostVisibleEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)), immCmdList->latestFlushIsHostVisible);
     auto usmHost = allocHostMem(1);
     auto usmDevice = allocDeviceMem(1);
     immCmdList->appendMemoryCopy(usmDevice, usmHost, 1, hostVisibleEvent.get(), 0, nullptr, copyParams);
 
-    EXPECT_EQ(!immCmdList->dcFlushSupport, immCmdList->latestFlushIsHostVisible);
+    const bool expectedHostVisibleAfterCopy = !immCmdList->latestFlushIsDualCopyOffload &&
+                                              (hostVisibleEvent->isFlushRequiredForSignal() || (immCmdList->isHeaplessModeEnabled() && hostVisibleEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)));
+    EXPECT_EQ(expectedHostVisibleAfterCopy, immCmdList->latestFlushIsHostVisible);
     context->freeMem(usmHost);
     context->freeMem(usmDevice);
 }
@@ -1975,7 +1977,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
 
     immCmdList->hostSynchronize(0, false);
 
-    if (immCmdList->dcFlushSupport) {
+    if (!immCmdList->latestFlushIsHostVisible) {
         EXPECT_EQ(1u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
         EXPECT_EQ(1u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     } else {
