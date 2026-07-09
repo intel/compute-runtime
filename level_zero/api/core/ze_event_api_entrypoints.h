@@ -409,4 +409,10 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeEventCounterBasedCloseIpcHandle(
     ze_event_handle_t hEvent) {
     return L0::zeEventCounterBasedCloseIpcHandle(hEvent);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventGetCounterBasedFlags(
+    ze_event_handle_t hEvent,
+    ze_event_counter_based_flags_t *pFlags) {
+    return L0::zeEventGetCounterBasedFlags(hEvent, pFlags);
+}
 }

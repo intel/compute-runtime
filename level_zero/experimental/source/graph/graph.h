@@ -25,11 +25,11 @@
 typedef struct _ze_graph_handle_t *ze_graph_handle_t;
 typedef struct _ze_executable_graph_handle_t *ze_executable_graph_handle_t;
 
-struct _ze_graph_handle_t {
-};
+struct _ze_graph_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_graph_handle_t>);
 
-struct _ze_executable_graph_handle_t {
-};
+struct _ze_executable_graph_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_executable_graph_handle_t>);
 
 typedef void(ZE_CALLBACK *zex_mem_graph_free_callback_fn_t)(void *pUserData);
 

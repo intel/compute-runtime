@@ -148,6 +148,65 @@ TEST(zeGetExecutableGraphProcAddrTableTest,
     EXPECT_NE(nullptr, pDdiTable.pfnDestroyExt);
 }
 
+TEST(zeGetDeviceProcAddrTableTest,
+     whenCallingZeGetDeviceProcAddrTableForVersion1_17ThenCounterBasedEventMaxValueIsPopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_17;
+    ze_device_dditable_t pDdiTable = {};
+
+    ze_result_t result = zeGetDeviceProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetCounterBasedEventMaxValue);
+}
+
+TEST(zeGetCommandQueueProcAddrTableTest,
+     whenCallingZeGetCommandQueueProcAddrTableForVersion1_17ThenModeAndPriorityFunctionsArePopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_17;
+    ze_command_queue_dditable_t pDdiTable = {};
+
+    ze_result_t result = zeGetCommandQueueProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetMode);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetPriority);
+}
+
+TEST(zeGetCommandListProcAddrTableTest,
+     whenCallingZeGetCommandListProcAddrTableForVersion1_17ThenImmediateAndHostFunctionApisArePopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_17;
+    ze_command_list_dditable_t pDdiTable = {};
+
+    ze_result_t result = zeGetCommandListProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnImmediateGetFlags);
+    EXPECT_NE(nullptr, pDdiTable.pfnImmediateGetMode);
+    EXPECT_NE(nullptr, pDdiTable.pfnImmediateGetPriority);
+    EXPECT_NE(nullptr, pDdiTable.pfnAppendHostFunction);
+}
+
+TEST(zeGetCommandListExpProcAddrTableTest,
+     whenCallingZeGetCommandListExpProcAddrTableForVersion1_17ThenIsMutableExpIsPopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_17;
+    ze_command_list_exp_dditable_t pDdiTable = {};
+
+    ze_result_t result = zeGetCommandListExpProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnIsMutableExp);
+}
+
+TEST(zeGetEventProcAddrTableTest,
+     whenCallingZeGetEventProcAddrTableForVersion1_17ThenGetCounterBasedFlagsIsPopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_17;
+    ze_event_dditable_t pDdiTable = {};
+
+    ze_result_t result = zeGetEventProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetCounterBasedFlags);
+}
+
 TEST(zeGetFenceProcAddrTableTest,
      whenCallingZeGetFenceProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 

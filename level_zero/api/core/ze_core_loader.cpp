@@ -185,6 +185,7 @@ zeGetDeviceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetRuntimeRequirements, L0::globalDriverDispatch.coreDevice.pfnGetRuntimeRequirements, version, ZE_API_VERSION_1_16);
     fillDdiEntry(pDdiTable->pfnGetRuntimeRequirementsKey, L0::globalDriverDispatch.coreDevice.pfnGetRuntimeRequirementsKey, version, ZE_API_VERSION_1_16);
     fillDdiEntry(pDdiTable->pfnValidateRuntimeRequirements, L0::globalDriverDispatch.coreDevice.pfnValidateRuntimeRequirements, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnGetCounterBasedEventMaxValue, L0::globalDriverDispatch.coreDevice.pfnGetCounterBasedEventMaxValue, version, ZE_API_VERSION_1_17);
     return result;
 }
 
@@ -222,6 +223,8 @@ zeGetCommandQueueProcAddrTable(
     fillDdiEntry(pDdiTable->pfnSynchronize, L0::globalDriverDispatch.coreCommandQueue.pfnSynchronize, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetOrdinal, L0::globalDriverDispatch.coreCommandQueue.pfnGetOrdinal, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetIndex, L0::globalDriverDispatch.coreCommandQueue.pfnGetIndex, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnGetMode, L0::globalDriverDispatch.coreCommandQueue.pfnGetMode, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnGetPriority, L0::globalDriverDispatch.coreCommandQueue.pfnGetPriority, version, ZE_API_VERSION_1_17);
 
     return result;
 }
@@ -285,6 +288,10 @@ zeGetCommandListProcAddrTable(
     fillDdiEntry(pDdiTable->pfnEndGraphCaptureExt, L0::globalDriverDispatch.coreCommandList.pfnEndGraphCaptureExt, version, ZE_API_VERSION_1_17);
     fillDdiEntry(pDdiTable->pfnGetGraphExt, L0::globalDriverDispatch.coreCommandList.pfnGetGraphExt, version, ZE_API_VERSION_1_17);
     fillDdiEntry(pDdiTable->pfnAppendGraphExt, L0::globalDriverDispatch.coreCommandList.pfnAppendGraphExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnImmediateGetFlags, L0::globalDriverDispatch.coreCommandList.pfnImmediateGetFlags, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnImmediateGetMode, L0::globalDriverDispatch.coreCommandList.pfnImmediateGetMode, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnImmediateGetPriority, L0::globalDriverDispatch.coreCommandList.pfnImmediateGetPriority, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnAppendHostFunction, L0::globalDriverDispatch.coreCommandList.pfnAppendHostFunction, version, ZE_API_VERSION_1_17);
     return result;
 }
 
@@ -308,6 +315,7 @@ zeGetCommandListExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnUpdateMutableCommandWaitEventsExp, L0::globalDriverDispatch.coreCommandListExp.pfnUpdateMutableCommandWaitEventsExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetNextCommandIdWithKernelsExp, L0::globalDriverDispatch.coreCommandListExp.pfnGetNextCommandIdWithKernelsExp, version, ZE_API_VERSION_1_10);
     fillDdiEntry(pDdiTable->pfnUpdateMutableCommandKernelsExp, L0::globalDriverDispatch.coreCommandListExp.pfnUpdateMutableCommandKernelsExp, version, ZE_API_VERSION_1_10);
+    fillDdiEntry(pDdiTable->pfnIsMutableExp, L0::globalDriverDispatch.coreCommandListExp.pfnIsMutableExp, version, ZE_API_VERSION_1_17);
     return result;
 }
 
@@ -421,6 +429,7 @@ zeGetEventProcAddrTable(
     fillDdiEntry(pDdiTable->pfnCounterBasedGetIpcHandle, L0::globalDriverDispatch.coreEvent.pfnCounterBasedGetIpcHandle, version, ZE_API_VERSION_1_15);
     fillDdiEntry(pDdiTable->pfnCounterBasedOpenIpcHandle, L0::globalDriverDispatch.coreEvent.pfnCounterBasedOpenIpcHandle, version, ZE_API_VERSION_1_15);
     fillDdiEntry(pDdiTable->pfnCounterBasedCloseIpcHandle, L0::globalDriverDispatch.coreEvent.pfnCounterBasedCloseIpcHandle, version, ZE_API_VERSION_1_15);
+    fillDdiEntry(pDdiTable->pfnGetCounterBasedFlags, L0::globalDriverDispatch.coreEvent.pfnGetCounterBasedFlags, version, ZE_API_VERSION_1_17);
     return result;
 }
 
