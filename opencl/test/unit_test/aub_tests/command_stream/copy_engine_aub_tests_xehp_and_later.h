@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -43,7 +44,7 @@ struct CopyEngineXeHPAndLater : public MulticontextOclAubFixture, public ::testi
         if (!productHelper.obtainBlitterPreference(*defaultHwInfo.get())) {
             GTEST_SKIP();
         }
-        bcsEngineType = productHelper.getDefaultCopyEngine();
+        bcsEngineType = getBcsEngineTypeToUse(productHelper);
 
         if (useLocalMemory) {
             if (!defaultHwInfo->featureTable.flags.ftrLocalMemory) {
@@ -80,7 +81,15 @@ struct CopyEngineXeHPAndLater : public MulticontextOclAubFixture, public ::testi
 
     virtual bool compressionSupported() const {
         auto &ftrTable = rootDevice->getHardwareInfo().featureTable;
-        return (ftrTable.flags.ftrLocalMemory && ftrTable.flags.ftrFlatPhysCCS);
+        if constexpr (useLocalMemory) {
+            return (ftrTable.flags.ftrLocalMemory && ftrTable.flags.ftrFlatPhysCCS);
+        } else {
+            return (!ftrTable.flags.ftrLocalMemory && ftrTable.flags.ftrFlatPhysCCS && ftrTable.flags.ftrXe2Compression);
+        }
+    }
+
+    virtual aub_stream::EngineType getBcsEngineTypeToUse(const ProductHelper &productHelper) const {
+        return productHelper.getDefaultCopyEngine();
     }
 
     ReleaseableObjectPtr<Buffer> createBuffer(bool compressed, bool inLocalMemory, void *srcHostPtr) {
@@ -408,8 +417,11 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenSrcCompressedBuffer
 template <uint32_t numTiles, bool testLocalMemory>
 template <typename FamilyType>
 void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCompressedBufferWhenAuxTranslationCalledThenResolveAndCompressImpl() {
-    if ((this->context->getDevice(0u)->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities > 0) || !compressionSupported()) {
-        // no support for scenarios where stateless is mixed with blitter compression
+    auto hwInfo = this->context->getDevice(0u)->getRootDeviceEnvironment().getMutableHardwareInfo();
+    if ((hwInfo->capabilityTable.sharedSystemMemCapabilities > 0) || !compressionSupported() ||
+        (GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(*hwInfo) != AuxTranslationMode::blit)) {
+        // no support for scenarios where stateless is mixed with blitter compression, or where
+        // this platform doesn't actually use blit-based aux translation in production
         GTEST_SKIP();
     }
 

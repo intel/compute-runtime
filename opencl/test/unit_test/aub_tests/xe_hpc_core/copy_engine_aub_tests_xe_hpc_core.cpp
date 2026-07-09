@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,17 +12,14 @@
 
 using namespace NEO;
 
-template <uint32_t numTiles, typename FamilyType, bool useLocalMemory = true>
+template <uint32_t numTiles, bool useLocalMemory = true>
 struct CopyEnginesXeHpcFixture : public CopyEngineXeHPAndLater<numTiles, useLocalMemory>, public ::testing::WithParamInterface<uint32_t /* EngineType */> {
-    using MEM_COPY = typename FamilyType::MEM_COPY;
-
-    void SetUp() override {
-        this->bcsEngineType = static_cast<aub_stream::EngineType>(GetParam());
-        CopyEngineXeHPAndLater<numTiles, useLocalMemory>::SetUp();
+    aub_stream::EngineType getBcsEngineTypeToUse(const ProductHelper &productHelper) const override {
+        return static_cast<aub_stream::EngineType>(this->GetParam());
     }
 };
+
 constexpr uint32_t allSupportedCopyEngines[] = {
-    aub_stream::EngineType::ENGINE_BCS,
     aub_stream::EngineType::ENGINE_BCS1,
     aub_stream::EngineType::ENGINE_BCS2,
     aub_stream::EngineType::ENGINE_BCS3,
@@ -33,7 +30,7 @@ constexpr uint32_t allSupportedCopyEngines[] = {
     aub_stream::EngineType::ENGINE_BCS8,
 };
 
-using OneTileXeHpcTests = CopyEnginesXeHpcFixture<1, XeHpcCoreFamily>;
+using OneTileXeHpcTests = CopyEnginesXeHpcFixture<1>;
 
 INSTANTIATE_TEST_SUITE_P(
     MemCopyBcsCmd,
@@ -84,7 +81,7 @@ XE_HPC_CORETEST_P(OneTileXeHpcTests, givenCopyBufferRectWithBigSizesWhenHostPtrB
     givenCopyBufferRectWithBigSizesWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
 }
 
-using OneTileSystemMemoryXeHpcTests = CopyEnginesXeHpcFixture<1, XeHpcCoreFamily, false>;
+using OneTileSystemMemoryXeHpcTests = CopyEnginesXeHpcFixture<1, false>;
 
 INSTANTIATE_TEST_SUITE_P(
     MemCopyBcsCmd,
