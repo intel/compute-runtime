@@ -216,22 +216,14 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MetricEnumeration::testOpeningMetricsAdapter() {
-    const ze_result_t result = openMetricsDiscovery();
-    if (result == ZE_RESULT_SUCCESS) {
-        closeMetricsAdapter();
-    }
-    return result;
-}
-
-void MetricEnumeration::closeMetricsAdapter() {
+ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
     if (pAdapter) {
 
         auto &device = metricSource.getDevice();
         if (metricSource.isImplicitScalingCapable()) {
 
             for (size_t i = 0; i < device.numSubDevices; i++) {
-                device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().closeMetricsAdapter();
+                device.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().cleanupMetricsDiscovery();
             }
         }
 
@@ -241,18 +233,7 @@ void MetricEnumeration::closeMetricsAdapter() {
             pAdapter->CloseMetricsDevice(pMetricsDevice);
             pMetricsDevice = nullptr;
         }
-
-        pAdapter = nullptr;
     }
-
-    if (hMetricsDiscovery != nullptr && pAdapterGroup != nullptr) {
-        pAdapterGroup->Close();
-        pAdapterGroup = nullptr;
-    }
-}
-
-ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
-    closeMetricsAdapter();
 
     for (size_t i = 0; i < metricGroups.size(); ++i) {
         delete metricGroups[i];
@@ -261,6 +242,9 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
     cleanupExtendedMetricInformation();
 
     if (hMetricsDiscovery != nullptr) {
+        if (pAdapterGroup != nullptr) {
+            pAdapterGroup->Close();
+        }
         pAdapterGroup = nullptr;
         openAdapterGroup = nullptr;
         hMetricsDiscovery.reset();
