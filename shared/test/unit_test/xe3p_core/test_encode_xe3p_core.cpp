@@ -260,6 +260,46 @@ XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenLinearStreamWhenSingleBarrierIsP
     linearStream.replaceBuffer(buffer, sizeof(buffer));
 }
 
+XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenStallingBarrierWhenProgrammedThenQueueDrainModeIsEnabledByDefaultAndControlledWithDebugKey) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    uint32_t buffer[2 * sizeof(RESOURCE_BARRIER)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    auto resourceBarrier = reinterpret_cast<RESOURCE_BARRIER *>(buffer);
+
+    PipeControlArgs args{};
+    args.csStallOnly = true;
+
+    NEO::MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_TRUE(resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    NEO::MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_TRUE(resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.PcQueueDrainMode.set(0);
+
+    NEO::MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_FALSE(resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    NEO::MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_FALSE(resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    debugManager.flags.PcQueueDrainMode.set(1);
+
+    NEO::MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_TRUE(resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    NEO::MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_TRUE(resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+}
+
 using EncodeKernelXe3pCoreTest = Test<CommandEncodeStatesFixture>;
 
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchRequiredWhenEncodeComputeWalker2ThenInlineDataContainCorrectScratchAddress) {
