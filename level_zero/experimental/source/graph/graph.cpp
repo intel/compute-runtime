@@ -1194,9 +1194,17 @@ ExecutableGraph::~ExecutableGraph() {
     }
 }
 
-L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode() {
+uint32_t getRecordedCommandsCountWithSubgraphs(const Graph &graph) {
+    auto estimatedNumberOfCommands = static_cast<uint32_t>(graph.getCapturedCommands().size());
+    for (const auto *subgraph : graph.getSubgraphs()) {
+        estimatedNumberOfCommands += getRecordedCommandsCountWithSubgraphs(*subgraph);
+    }
+    return estimatedNumberOfCommands;
+}
+
+L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode(uint32_t estimatedNumberOfCommands) {
     ze_command_list_handle_t newCmdListHandle = nullptr;
-    src->getContext()->createCommandList(src->getCaptureTargetDesc().hDevice, &src->getCaptureTargetDesc().desc, &newCmdListHandle);
+    src->getContext()->createCommandList(src->getCaptureTargetDesc().hDevice, &src->getCaptureTargetDesc().desc, &newCmdListHandle, estimatedNumberOfCommands);
     L0::CommandList *newCmdList = L0::CommandList::fromHandle(newCmdListHandle);
     UNRECOVERABLE_IF(nullptr == newCmdList);
     newCmdList->disableFlatCapture();
@@ -1350,12 +1358,15 @@ ze_result_t ExecutableGraph::instantiateFrom(const OrderedCommandsSegment &segme
                 if (settings.forkPolicy == GraphInstatiateSettings::ForkPolicyFlat) {
                     segmentBuilder.currCmdList = builder.getFlatCommandList();
                     if (nullptr == segmentBuilder.currCmdList) {
-                        segmentBuilder.currCmdList = this->allocateAndAddCommandListSubmissionNode();
+                        segmentBuilder.currCmdList = this->allocateAndAddCommandListSubmissionNode(getRecordedCommandsCountWithSubgraphs(builder.getRootSrc()));
                         this->myOrderedSegments[segment.begin] = segmentBuilder.currCmdList;
                         builder.setFlatCommandList(segmentBuilder.currCmdList);
                     }
                 } else {
-                    segmentBuilder.currCmdList = this->allocateAndAddCommandListSubmissionNode();
+                    auto estimatedNumberOfCommands = (settings.forkPolicy == GraphInstatiateSettings::ForkPolicySplitLevels)
+                                                         ? segment.numCommands
+                                                         : static_cast<uint32_t>(src->getCapturedCommands().size());
+                    segmentBuilder.currCmdList = this->allocateAndAddCommandListSubmissionNode(estimatedNumberOfCommands);
                     this->myOrderedSegments[segment.begin] = segmentBuilder.currCmdList;
                 }
             }

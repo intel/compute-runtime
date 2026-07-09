@@ -168,6 +168,33 @@ TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIs
     commandList->destroy();
 }
 
+TEST_F(ContextCommandListCreate, givenEstimatedNumberOfCommandsWhenCreatingCommandListFromContextThenEstimateIsPropagatedToCommandContainer) {
+    ze_command_list_desc_t desc = {};
+    ze_command_list_handle_t hCommandList = {};
+
+    constexpr uint32_t estimatedNumberOfCommands = 8u;
+    ze_result_t result = context->createCommandList(device, &desc, &hCommandList, estimatedNumberOfCommands);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
+    EXPECT_EQ(estimatedNumberOfCommands, commandList->getCmdContainer().getEstimatedNumberOfCommands());
+
+    commandList->destroy();
+}
+
+TEST_F(ContextCommandListCreate, givenNoEstimatedNumberOfCommandsWhenCreatingCommandListFromContextThenCommandContainerUsesLegacyDefault) {
+    ze_command_list_desc_t desc = {};
+    ze_command_list_handle_t hCommandList = {};
+
+    ze_result_t result = context->createCommandList(device, &desc, &hCommandList);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
+    EXPECT_EQ(0u, commandList->getCmdContainer().getEstimatedNumberOfCommands());
+
+    commandList->destroy();
+}
+
 TEST_F(ContextCommandListCreate, givenInvalidDescWhenCreatingCommandListFromContextThenErrorIsReturned) {
     ze_command_list_desc_t desc = {};
     desc.commandQueueGroupOrdinal = 0xffff;

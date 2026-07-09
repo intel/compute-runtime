@@ -530,6 +530,10 @@ struct ExecGraphBuilder final {
         flatCommandList = newFlatCommandList;
     }
 
+    Graph &getRootSrc() {
+        return rootSrc;
+    }
+
     ExecSubGraphBuilder &getSubGraphBuilder(const Graph *src) {
         auto it = subgraphs.find(src);
         UNRECOVERABLE_IF(it == subgraphs.end());
@@ -618,7 +622,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
   protected:
     ze_result_t instantiateFrom(const OrderedCommandsSegment &segment, ExecGraphBuilder &builder, const GraphInstatiateSettings &settings);
 
-    L0::CommandList *allocateAndAddCommandListSubmissionNode();
+    L0::CommandList *allocateAndAddCommandListSubmissionNode(uint32_t estimatedNumberOfCommands);
 
     Graph *src = nullptr;
     L0::CommandList *executionTarget = nullptr;

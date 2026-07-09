@@ -50,14 +50,16 @@ struct MockGraphCmdListWithContext : Mock<CommandList> {
 
 struct MockGraphContextReturningSpecificCmdList : ContextStubMock {
     std::vector<Mock<CommandList> *> cmdListsToReturn;
+    std::vector<uint32_t> estimatedNumberOfCommandsPerCreate;
     DriverHandle *driverHandleToReturn = nullptr;
 
     DriverHandle *getDriverHandle() override {
         return driverHandleToReturn;
     }
 
-    ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
+    ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList, uint32_t estimatedNumberOfCommands) override {
         UNRECOVERABLE_IF(cmdListsToReturn.empty());
+        estimatedNumberOfCommandsPerCreate.push_back(estimatedNumberOfCommands);
         *commandList = cmdListsToReturn.front();
         cmdListsToReturn.erase(cmdListsToReturn.begin());
         return ZE_RESULT_SUCCESS;
@@ -82,7 +84,7 @@ struct MockGraphContextReturningNewCmdList : ContextStubMock {
         return driverHandleToReturn;
     }
 
-    ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
+    ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList, uint32_t estimatedNumberOfCommands) override {
         *commandList = new Mock<CommandList>;
         return ZE_RESULT_SUCCESS;
     }

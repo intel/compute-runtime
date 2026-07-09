@@ -74,6 +74,8 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     static constexpr size_t cmdBufferReservedSize = MemoryConstants::cacheLineSize +
                                                     CSRequirements::csOverfetchSize;
     static constexpr size_t totalCmdBufferSize = defaultListCmdBufferSize + cmdBufferReservedSize;
+    static constexpr size_t estimatedCmdBufferSizePerCommand = MemoryConstants::kiloByte; // rough estimate of max command size (1KB is more than enough for a COMPUTE_WALKER + WAs), used to estimate total command buffer size
+                                                                                          // based on number of commands in graphs. defaultListCmdBufferSize would fit 1024 commands
     static constexpr size_t startingResidencyContainerSize = 128;
     static constexpr size_t defaultCmdBufferAllocationAlignment = MemoryConstants::pageSize64k;
     static constexpr size_t defaultHeapAllocationAlignment = MemoryConstants::pageSize64k;
@@ -140,6 +142,12 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     void setNumIddPerBlock(uint32_t value) { numIddsPerBlock = value; }
     void setReservedSshSize(size_t reserveSize) {
         reservedSshSize = reserveSize;
+    }
+    void setEstimatedNumberOfCommands(uint32_t estimatedNumberOfCommands) {
+        this->estimatedNumberOfCommands = estimatedNumberOfCommands;
+    }
+    uint32_t getEstimatedNumberOfCommands() const {
+        return this->estimatedNumberOfCommands;
     }
 
     bool getFlushTaskUsedForImmediate() const { return isFlushTaskUsedForImmediate; }
@@ -279,6 +287,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
 
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
+    uint32_t estimatedNumberOfCommands = 0;
     HeapAddressModel heapAddressModel = HeapAddressModel::privateHeaps;
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
     uint32_t nextIddInBlock = 0;

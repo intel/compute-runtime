@@ -85,8 +85,13 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     }
 
     MOCKABLE_VIRTUAL ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value);
+    ze_result_t createCommandList(const ze_command_list_desc_t *desc,
+                                  ze_command_list_handle_t *commandList) {
+        return createCommandList(desc, commandList, 0u);
+    }
     MOCKABLE_VIRTUAL ze_result_t createCommandList(const ze_command_list_desc_t *desc,
-                                                   ze_command_list_handle_t *commandList);
+                                                   ze_command_list_handle_t *commandList,
+                                                   uint32_t estimatedNumberOfCommands);
     MOCKABLE_VIRTUAL ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
                                                            ze_command_list_handle_t *commandList);
     ze_result_t createCommandListImmediate(const ze_command_queue_desc_t *desc,
@@ -231,7 +236,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
     NEO::HostFunctionAllocator *getHostFunctionAllocator(NEO::CommandStreamReceiver *csr);
 
-    using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool);
+    using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool, uint32_t);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_base_desc_t *desc);
     void getAdditionalExtProperties(ze_base_properties_t *extendedProperties);
 

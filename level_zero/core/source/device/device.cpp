@@ -115,7 +115,8 @@ ze_result_t Device::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *val
 }
 
 ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
-                                      ze_command_list_handle_t *commandList) {
+                                      ze_command_list_handle_t *commandList,
+                                      uint32_t estimatedNumberOfCommands) {
     if (!this->isQueueGroupOrdinalValid(desc->commandQueueGroupOrdinal)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -153,7 +154,7 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
         pNext = reinterpret_cast<const ze_base_desc_t *>(pNext->pNext);
     }
 
-    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, false);
+    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, false, estimatedNumberOfCommands);
 
     if (returnValue != ZE_RESULT_SUCCESS) {
         return returnValue;
