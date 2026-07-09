@@ -49,7 +49,7 @@ struct ContextStubMock : public ::L0::Context {
     ADDMETHOD_NOBASE(createModule, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_module_desc_t *desc, ze_module_handle_t *phModule, ze_module_build_log_handle_t *phBuildLog));
     ADDMETHOD_NOBASE(createSampler, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler));
     ADDMETHOD_NOBASE(createCommandQueue, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_queue_desc_t *desc, ze_command_queue_handle_t *commandQueue));
-    ADDMETHOD_NOBASE(createCommandList, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList));
+    ADDMETHOD_NOBASE(createCommandList, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList, uint32_t estimatedNumberOfCommands));
     ADDMETHOD_NOBASE(createCommandListImmediate, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_queue_desc_t *desc, ze_command_list_handle_t *commandList));
     ADDMETHOD_NOBASE(activateMetricGroups, ze_result_t, ZE_RESULT_SUCCESS, (zet_device_handle_t hDevice, uint32_t count, zet_metric_group_handle_t *phMetricGroups));
     ADDMETHOD_NOBASE(reserveVirtualMem, ze_result_t, ZE_RESULT_SUCCESS, (const void *pStart, size_t size, void **pptr));
@@ -116,7 +116,7 @@ struct Mock<Context> : public Context {
     ADDMETHOD(createModule, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_module_desc_t *desc, ze_module_handle_t *phModule, ze_module_build_log_handle_t *phBuildLog), (hDevice, desc, phModule, phBuildLog));
     ADDMETHOD(createSampler, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler), (hDevice, pDesc, phSampler));
     ADDMETHOD(createCommandQueue, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_queue_desc_t *desc, ze_command_queue_handle_t *commandQueue), (hDevice, desc, commandQueue));
-    ADDMETHOD(createCommandList, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList), (hDevice, desc, commandList));
+    ADDMETHOD(createCommandList, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList, uint32_t estimatedNumberOfCommands), (hDevice, desc, commandList, estimatedNumberOfCommands));
     ADDMETHOD(createCommandListImmediate, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_command_queue_desc_t *desc, ze_command_list_handle_t *commandList), (hDevice, desc, commandList));
     ADDMETHOD(activateMetricGroups, ze_result_t, false, ZE_RESULT_SUCCESS, (zet_device_handle_t hDevice, uint32_t count, zet_metric_group_handle_t *phMetricGroups), (hDevice, count, phMetricGroups));
     ADDMETHOD(reserveVirtualMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *pStart, size_t size, void **pptr), (pStart, size, pptr));

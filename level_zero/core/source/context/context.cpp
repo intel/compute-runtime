@@ -1449,8 +1449,9 @@ ze_result_t Context::createCommandQueue(ze_device_handle_t hDevice,
 
 ze_result_t Context::createCommandList(ze_device_handle_t hDevice,
                                        const ze_command_list_desc_t *desc,
-                                       ze_command_list_handle_t *commandList) {
-    auto ret = L0::Device::fromHandle(hDevice)->createCommandList(desc, commandList);
+                                       ze_command_list_handle_t *commandList,
+                                       uint32_t estimatedNumberOfCommands) {
+    auto ret = L0::Device::fromHandle(hDevice)->createCommandList(desc, commandList, estimatedNumberOfCommands);
     if (*commandList) {
         L0::CommandList::fromHandle(*commandList)->setCmdListContext(this->toHandle());
     }

@@ -15,6 +15,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -281,12 +282,14 @@ void CommandContainer::reset() {
 }
 
 size_t CommandContainer::getAlignedCmdBufferSize() const {
-    auto totalCommandBufferSize = totalCmdBufferSize;
-    if (debugManager.flags.OverrideCmdListCmdBufferSizeInKb.get() > 0) {
-        totalCommandBufferSize = static_cast<size_t>(debugManager.flags.OverrideCmdListCmdBufferSizeInKb.get()) * MemoryConstants::kiloByte;
-        totalCommandBufferSize += cmdBufferReservedSize;
+    auto finalTotalCommandBufferSize = CommandContainer::totalCmdBufferSize;
+    if (this->estimatedNumberOfCommands > 0) {
+        finalTotalCommandBufferSize = static_cast<size_t>(Math::nextPowerOfTwo(this->estimatedNumberOfCommands * estimatedCmdBufferSizePerCommand + cmdBufferReservedSize));
     }
-    return alignUp<size_t>(totalCommandBufferSize, defaultCmdBufferAllocationAlignment);
+    if (debugManager.flags.OverrideCmdListCmdBufferSizeInKb.get() > 0) {
+        finalTotalCommandBufferSize = static_cast<size_t>(debugManager.flags.OverrideCmdListCmdBufferSizeInKb.get()) * MemoryConstants::kiloByte + cmdBufferReservedSize;
+    }
+    return alignUp<size_t>(finalTotalCommandBufferSize, defaultCmdBufferAllocationAlignment);
 }
 
 void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,

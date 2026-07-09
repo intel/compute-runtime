@@ -98,7 +98,11 @@ struct MutableCommandList {
     };
 
     static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
-                               ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType);
+                               ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType) {
+        return create(productFamily, device, engineGroupType, flags, resultValue, useInternalEngineType, 0u);
+    }
+    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+                               ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType, uint32_t estimatedNumberOfCommands);
     virtual ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) = 0;
     virtual ~MutableCommandList() = 0;
 

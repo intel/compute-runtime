@@ -8,6 +8,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -40,6 +41,7 @@ class MyMockCommandContainer : public CommandContainer {
     using CommandContainer::cmdBufferAllocations;
     using CommandContainer::defaultSshSize;
     using CommandContainer::dirtyHeaps;
+    using CommandContainer::estimatedNumberOfCommands;
     using CommandContainer::getAlignedCmdBufferSize;
     using CommandContainer::immediateReusableAllocationList;
     using CommandContainer::secondaryCommandStreamForImmediateCmdList;
@@ -970,6 +972,53 @@ TEST_F(CommandContainerTest, GivenCmdContainerAndDebugFlagWhenContainerIsInitial
     cmdContainer2.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     alignedSize = alignUp<size_t>(cmdContainer.getAlignedCmdBufferSize(), MemoryConstants::pageSize64k);
     EXPECT_EQ(cmdContainer2.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyMockCommandContainer::cmdBufferReservedSize);
+}
+
+TEST_F(CommandContainerTest, givenEstimatedNumberOfCommandsSetWhenContainerIsInitializedThenCommandBufferIsAllocatedWithEstimatedSize) {
+    MyMockCommandContainer cmdContainer;
+    cmdContainer.setEstimatedNumberOfCommands(8);
+
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    const size_t estimatedSize = 8u * MyMockCommandContainer::estimatedCmdBufferSizePerCommand;
+    auto expectedAlignedSize = alignUp<size_t>(Math::nextPowerOfTwo(estimatedSize + MyMockCommandContainer::cmdBufferReservedSize),
+                                               MemoryConstants::pageSize64k);
+    EXPECT_EQ(expectedAlignedSize, cmdContainer.getAlignedCmdBufferSize());
+    EXPECT_EQ(expectedAlignedSize - MyMockCommandContainer::cmdBufferReservedSize, cmdContainer.getCommandStream()->getMaxAvailableSpace());
+    EXPECT_LT(cmdContainer.getCommandStream()->getMaxAvailableSpace(), MyMockCommandContainer::defaultListCmdBufferSize);
+}
+
+TEST_F(CommandContainerTest, givenNoEstimatedNumberOfCommandsWhenGettingAlignedCmdBufferSizeThenLegacyDefaultSizeIsUsed) {
+    MyMockCommandContainer cmdContainer;
+
+    EXPECT_EQ(0u, cmdContainer.estimatedNumberOfCommands);
+    EXPECT_EQ(alignUp<size_t>(CommandContainer::totalCmdBufferSize, MemoryConstants::pageSize64k), cmdContainer.getAlignedCmdBufferSize());
+}
+
+TEST_F(CommandContainerTest, givenEstimatedNumberOfCommandsWhenGettingAlignedCmdBufferSizeThenSizeIsEstimatedAndRoundedUpToPowerOfTwo) {
+    MyMockCommandContainer cmdContainer;
+
+    cmdContainer.setEstimatedNumberOfCommands(100);
+    const size_t estimatedSize = 100u * CommandContainer::estimatedCmdBufferSizePerCommand;
+    auto expectedSize = alignUp<size_t>(Math::nextPowerOfTwo(estimatedSize + CommandContainer::cmdBufferReservedSize), MemoryConstants::pageSize64k);
+    EXPECT_EQ(expectedSize, cmdContainer.getAlignedCmdBufferSize());
+
+    cmdContainer.setEstimatedNumberOfCommands(4);
+    EXPECT_LT(cmdContainer.getAlignedCmdBufferSize(), alignUp<size_t>(CommandContainer::totalCmdBufferSize, MemoryConstants::pageSize64k));
+}
+
+TEST_F(CommandContainerTest, givenEstimatedNumberOfCommandsAndOverrideFlagWhenGettingAlignedCmdBufferSizeThenOverrideTakesPrecedence) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(512);
+
+    auto expectedSize = alignUp<size_t>(512 * MemoryConstants::kiloByte + CommandContainer::cmdBufferReservedSize, MemoryConstants::pageSize64k);
+
+    MyMockCommandContainer cmdContainerWithEstimate;
+    cmdContainerWithEstimate.setEstimatedNumberOfCommands(1);
+    EXPECT_EQ(expectedSize, cmdContainerWithEstimate.getAlignedCmdBufferSize());
+
+    MyMockCommandContainer cmdContainerWithoutEstimate;
+    EXPECT_EQ(expectedSize, cmdContainerWithoutEstimate.getAlignedCmdBufferSize());
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingNextCmdBufferThenStreamSizeEqualAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {

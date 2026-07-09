@@ -39,6 +39,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenEstimatedNumberOfCommandsWhenCreatingCommandListThenEstimateIsPropagatedToCommandContainer) {
+    ze_result_t returnValue;
+
+    constexpr uint32_t estimatedNumberOfCommands = 8u;
+    auto mcl = MutableCommandList::create(productFamily, device, this->engineGroupType, 0, returnValue, false, estimatedNumberOfCommands);
+    ASSERT_NE(nullptr, mcl);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_EQ(estimatedNumberOfCommands, mcl->getCmdContainer().getEstimatedNumberOfCommands());
+
+    mcl->destroy();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenMutableCommandListWhenCallingIsMutableExpThenTrueIsReturned) {
     ze_bool_t isMutable = false;
 

@@ -121,7 +121,7 @@ struct DriverBackedGraphContextReturningSpecificCmdList : Mock<Context> {
         return driverHandleToReturn;
     }
 
-    ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
+    ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList, uint32_t estimatedNumberOfCommands) override {
         UNRECOVERABLE_IF(cmdListsToReturn.empty());
         *commandList = cmdListsToReturn.front();
         cmdListsToReturn.erase(cmdListsToReturn.begin());
@@ -243,7 +243,7 @@ TEST_F(GraphExecution, GivenExecutableGraphSubmissionNodeWhenAllocatedThenFlatCa
     ExposedExecutableGraph execGraph;
     execGraph.src = &srcGraph;
 
-    auto *allocatedCmdList = execGraph.allocateAndAddCommandListSubmissionNode();
+    auto *allocatedCmdList = execGraph.allocateAndAddCommandListSubmissionNode(0);
 
     EXPECT_EQ(submissionCmdList, allocatedCmdList);
     EXPECT_EQ(nullptr, submissionCmdList->flatCapture);
@@ -1241,6 +1241,191 @@ TEST_F(GraphInstantiation, GivenFlatPolicyWhenInstantiatingForkedGraphThenShared
 
     EXPECT_EQ(1U, execMultiGraph.myOrderedSegments.size());
     EXPECT_EQ(1U, sharedFlatCmdList->closeCalled);
+}
+
+TEST_F(GraphInstantiation, GivenFlatPolicyWhenInstantiatingForkedGraphThenCommandBufferSizeEstimateCoversWholeTree) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    Mock<Event> joinEvent;
+    ze_event_handle_t forkEventHandle = forkEvent.toHandle();
+    ze_event_handle_t joinEventHandle = joinEvent.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, &joinEvent, 1U, &forkEventHandle);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 1U, &joinEventHandle);
+
+    srcGraph.stopCapturing();
+    srcGraph.captureTargetDesc.hDevice = device->toHandle();
+    for (auto &srcSubgraph : srcGraph.getSubgraphs()) {
+        static_cast<MockGraph *>(srcSubgraph)->captureTargetDesc.hDevice = device->toHandle();
+    }
+
+    uint32_t expectedEstimate = static_cast<uint32_t>(srcGraph.getCapturedCommands().size());
+    for (auto *srcSubgraph : srcGraph.getSubgraphs()) {
+        expectedEstimate += static_cast<uint32_t>(srcSubgraph->getCapturedCommands().size());
+    }
+    EXPECT_LT(srcGraph.getCapturedCommands().size(), expectedEstimate);
+
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+
+    GraphInstatiateSettings instantiateAsFlat(nullptr, false);
+    ASSERT_EQ(GraphInstatiateSettings::ForkPolicyFlat, instantiateAsFlat.forkPolicy);
+
+    MockExecutableGraph execMultiGraph;
+    execMultiGraph.instantiateFrom(srcGraph, instantiateAsFlat);
+
+    ASSERT_EQ(1U, ctx.estimatedNumberOfCommandsPerCreate.size());
+    EXPECT_EQ(expectedEstimate, ctx.estimatedNumberOfCommandsPerCreate[0]);
+}
+
+TEST_F(GraphInstantiation, GivenMonolithicPolicyWhenInstantiatingForkedGraphThenEachCommandListEstimateMatchesItsSubgraphCommandCount) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    Mock<Event> joinEvent;
+    ze_event_handle_t forkEventHandle = forkEvent.toHandle();
+    ze_event_handle_t joinEventHandle = joinEvent.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, &joinEvent, 1U, &forkEventHandle);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 1U, &joinEventHandle);
+
+    srcGraph.stopCapturing();
+    srcGraph.captureTargetDesc.hDevice = device->toHandle();
+    for (auto &srcSubgraph : srcGraph.getSubgraphs()) {
+        static_cast<MockGraph *>(srcSubgraph)->captureTargetDesc.hDevice = device->toHandle();
+    }
+
+    ASSERT_EQ(1U, srcGraph.getSubgraphs().size());
+    auto parentCommands = static_cast<uint32_t>(srcGraph.getCapturedCommands().size());
+    auto childCommands = static_cast<uint32_t>(srcGraph.getSubgraphs()[0]->getCapturedCommands().size());
+    ASSERT_LT(childCommands, parentCommands);
+
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+
+    GraphInstatiateSettings instantiateAsMonolithic(nullptr, true);
+    ASSERT_EQ(GraphInstatiateSettings::ForkPolicyMonolythicLevels, instantiateAsMonolithic.forkPolicy);
+
+    MockExecutableGraph execMultiGraph;
+    execMultiGraph.instantiateFrom(srcGraph, instantiateAsMonolithic);
+
+    ASSERT_EQ(2U, ctx.estimatedNumberOfCommandsPerCreate.size());
+    EXPECT_EQ(parentCommands, ctx.estimatedNumberOfCommandsPerCreate[0]);
+    EXPECT_EQ(childCommands, ctx.estimatedNumberOfCommandsPerCreate[1]);
+}
+
+TEST_F(GraphInstantiation, GivenSplitPolicyWhenInstantiatingForkedGraphThenPerSegmentEstimatesSumToTheWholeTree) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    Mock<Event> joinEvent;
+    ze_event_handle_t forkEventHandle = forkEvent.toHandle();
+    ze_event_handle_t joinEventHandle = joinEvent.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, &joinEvent, 1U, &forkEventHandle);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 1U, &joinEventHandle);
+
+    srcGraph.stopCapturing();
+    srcGraph.captureTargetDesc.hDevice = device->toHandle();
+    for (auto &srcSubgraph : srcGraph.getSubgraphs()) {
+        static_cast<MockGraph *>(srcSubgraph)->captureTargetDesc.hDevice = device->toHandle();
+    }
+
+    uint32_t parentCommands = static_cast<uint32_t>(srcGraph.getCapturedCommands().size());
+    uint32_t totalTreeCommands = parentCommands;
+    for (auto *srcSubgraph : srcGraph.getSubgraphs()) {
+        totalTreeCommands += static_cast<uint32_t>(srcSubgraph->getCapturedCommands().size());
+    }
+
+    for (uint32_t i = 0; i < totalTreeCommands; i++) {
+        ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+    }
+
+    GraphInstatiateSettings instantiateAsSplit(nullptr, false);
+    instantiateAsSplit.forkPolicy = GraphInstatiateSettings::ForkPolicySplitLevels;
+
+    MockExecutableGraph execMultiGraph;
+    execMultiGraph.instantiateFrom(srcGraph, instantiateAsSplit);
+
+    ASSERT_GT(ctx.estimatedNumberOfCommandsPerCreate.size(), 1u);
+    uint32_t sumOfEstimates = 0;
+    for (auto estimate : ctx.estimatedNumberOfCommandsPerCreate) {
+        sumOfEstimates += estimate;
+        EXPECT_LT(estimate, parentCommands);
+    }
+    EXPECT_EQ(totalTreeCommands, sumOfEstimates);
+}
+
+TEST_F(GraphInstantiation, GivenSingleLevelGraphWhenInstantiatingWithAnyForkPolicyThenCommandBufferEstimateMatchesRecordedCommandCount) {
+    GraphsCleanupGuard graphCleanup;
+
+    Mock<Event> signalEvent;
+    uint64_t memA[16] = {};
+    uint64_t memB[16] = {};
+
+    GraphInstatiateSettings::ForkPolicy policies[] = {
+        GraphInstatiateSettings::ForkPolicyMonolythicLevels,
+        GraphInstatiateSettings::ForkPolicySplitLevels,
+        GraphInstatiateSettings::ForkPolicyFlat};
+
+    for (auto policy : policies) {
+        MockGraphContextReturningSpecificCmdList ctx;
+        MockGraphCmdListWithContext cmdlist{&ctx};
+        cmdlist.device = this->device;
+        auto cmdListHandle = cmdlist.toHandle();
+
+        MockGraph srcGraph(&ctx, true);
+        srcGraph.captureTargetDesc.hDevice = device->toHandle();
+        cmdlist.setGraphCaptureTarget(&srcGraph);
+        srcGraph.startCapturingFrom(cmdlist, false);
+        cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, signalEvent.toHandle(), 0U, nullptr);
+        cmdlist.capture<CaptureApi::zeCommandListAppendMemoryCopy>(cmdListHandle, memA, memB, sizeof(memA), nullptr, 0U, nullptr);
+        srcGraph.stopCapturing();
+
+        ASSERT_EQ(2U, srcGraph.getCapturedCommands().size());
+        ASSERT_TRUE(srcGraph.getSubgraphs().empty());
+
+        ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+
+        GraphInstatiateSettings settings;
+        settings.forkPolicy = policy;
+
+        MockExecutableGraph execGraph;
+        execGraph.instantiateFrom(srcGraph, settings);
+
+        ASSERT_EQ(1U, ctx.estimatedNumberOfCommandsPerCreate.size());
+        EXPECT_EQ(2U, ctx.estimatedNumberOfCommandsPerCreate[0]);
+    }
 }
 
 TEST_F(GraphInstantiationValidation, WhenGraphIsStillCapturingThenItIsNotValidForInstantiation) {

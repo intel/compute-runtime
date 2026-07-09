@@ -89,7 +89,7 @@ MutableCommandList *MutableCommandList::fromHandle(ze_command_list_handle_t hand
 }
 
 CommandList *MutableCommandList::create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
-                                        ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType) {
+                                        ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType, uint32_t estimatedNumberOfCommands) {
     MutableCommandListAllocFn allocator = nullptr;
     if (productFamily < NEO::maxProductEnumValue) {
         allocator = mutableCommandListFactory[productFamily];
@@ -103,6 +103,7 @@ CommandList *MutableCommandList::create(uint32_t productFamily, Device *device, 
     resultValue = ZE_RESULT_ERROR_UNINITIALIZED;
 
     commandList = reinterpret_cast<MutableCommandListImp *>((*allocator)(CommandList::defaultNumIddsPerBlock));
+    commandList->getBase()->setEstimatedNumberOfCommands(estimatedNumberOfCommands);
     resultValue = commandList->initialize(device, engineGroupType, flags);
     if (resultValue != ZE_RESULT_SUCCESS) {
         commandList->getBase()->destroy();

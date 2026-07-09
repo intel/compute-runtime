@@ -353,6 +353,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     commandContainer.setReservedSshSize(getReserveSshSize());
+    commandContainer.setEstimatedNumberOfCommands(this->estimatedNumberOfCommands);
 
     auto createSecondaryCmdBufferInHostMem = isImmediateType() &&
                                              !device->isImplicitScalingCapable() &&

@@ -228,9 +228,15 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t createCommandQueue(ze_device_handle_t hDevice,
                                                     const ze_command_queue_desc_t *desc,
                                                     ze_command_queue_handle_t *commandQueue);
+    ze_result_t createCommandList(ze_device_handle_t hDevice,
+                                  const ze_command_list_desc_t *desc,
+                                  ze_command_list_handle_t *commandList) {
+        return createCommandList(hDevice, desc, commandList, 0u);
+    }
     MOCKABLE_VIRTUAL ze_result_t createCommandList(ze_device_handle_t hDevice,
                                                    const ze_command_list_desc_t *desc,
-                                                   ze_command_list_handle_t *commandList);
+                                                   ze_command_list_handle_t *commandList,
+                                                   uint32_t estimatedNumberOfCommands);
     MOCKABLE_VIRTUAL ze_result_t createCommandListImmediate(ze_device_handle_t hDevice,
                                                             const ze_command_queue_desc_t *desc,
                                                             ze_command_list_handle_t *commandList);

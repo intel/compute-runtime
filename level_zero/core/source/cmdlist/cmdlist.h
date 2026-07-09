@@ -269,7 +269,12 @@ struct CommandList : _ze_command_list_handle_t {
 
     static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue,
-                               bool internalUsage);
+                               bool internalUsage) {
+        return create(productFamily, device, engineGroupType, flags, resultValue, internalUsage, 0u);
+    }
+    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+                               ze_command_list_flags_t flags, ze_result_t &resultValue,
+                               bool internalUsage, uint32_t estimatedNumberOfCommands);
     static CommandList *createImmediate(uint32_t productFamily, Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,
@@ -465,6 +470,10 @@ struct CommandList : _ze_command_list_handle_t {
 
     NEO::CommandContainer &getCmdContainer() {
         return this->commandContainer;
+    }
+
+    void setEstimatedNumberOfCommands(uint32_t estimatedNumberOfCommands) {
+        this->estimatedNumberOfCommands = estimatedNumberOfCommands;
     }
 
     NEO::CommandStreamReceiver *getCsr(bool copyOffload) const;
@@ -790,6 +799,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t hostFunctionWithMemorySynchronizationCount = 0;
     uint32_t hostFunctionWithoutMemorySynchronizationCount = 0;
     uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();
+    uint32_t estimatedNumberOfCommands = 0;
 
     bool isSyncModeQueue = false;
     bool isTbxMode = false;

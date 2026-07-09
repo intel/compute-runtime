@@ -400,7 +400,7 @@ ze_result_t CommandList::appendMetricQueryEnd(zet_metric_query_handle_t hMetricQ
 
 CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
                                  ze_command_list_flags_t flags, ze_result_t &returnValue,
-                                 bool internalUsage) {
+                                 bool internalUsage, uint32_t estimatedNumberOfCommands) {
     CommandListAllocatorFn allocator = nullptr;
     if (productFamily < NEO::maxProductEnumValue) {
         allocator = commandListFactory[productFamily];
@@ -412,6 +412,7 @@ CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::En
     if (allocator) {
         commandList = (*allocator)(CommandList::defaultNumIddsPerBlock);
         commandList->internalUsage = internalUsage;
+        commandList->setEstimatedNumberOfCommands(estimatedNumberOfCommands);
         returnValue = commandList->initialize(device, engineGroupType, flags);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
