@@ -41,7 +41,6 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t canReadResult = ZE_RESULT_SUCCESS;
     ze_result_t scanDirEntriesResult = ZE_RESULT_SUCCESS;
     ze_bool_t isNullDirEntries = false;
-    std::string mockFdoModeValue = "disabled";
     std::string mockSurvivabilityModeValue = "";
 
     ze_result_t read(const std::string file, std::string &val) override {
@@ -57,9 +56,6 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
             val = mockLateBindingVersion;
         }
 
-        if (!file.compare("survivability_info/fdo_mode")) {
-            val = mockFdoModeValue;
-        }
         if (!file.compare("survivability_mode")) {
             val = mockSurvivabilityModeValue;
         }
@@ -102,6 +98,7 @@ struct MockFirmwareProcfsAccess : public L0::Sysman::ProcFsAccessInterface {
 struct MockFirmwareFsAccess : public L0::Sysman::FsAccessInterface {
 
     ze_result_t readResult = ZE_RESULT_SUCCESS;
+    std::string mockFdoValue = "disabled";
 
     // Test control flags
     enum class MtdRegionMode {
@@ -207,6 +204,19 @@ struct MockFirmwareFsAccess : public L0::Sysman::FsAccessInterface {
         }
 
         return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t read(const std::string file, std::string &val) override {
+        if (readResult != ZE_RESULT_SUCCESS) {
+            return readResult;
+        }
+
+        if (file.find("/survivability_info/fdo_mode") != std::string::npos) {
+            val = mockFdoValue;
+            return readResult;
+        }
+
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     MockFirmwareFsAccess() = default;

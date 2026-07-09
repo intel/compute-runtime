@@ -13,22 +13,27 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-struct MockFdoSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
+struct MockFdoFsAccessInterface : public L0::Sysman::FsAccessInterface {
     ze_result_t readResult = ZE_RESULT_SUCCESS;
     std::string mockFdoValue = "enabled";
 
     ze_result_t read(const std::string file, std::string &val) override {
-
         if (readResult != ZE_RESULT_SUCCESS) {
             return readResult;
         }
 
-        if (!file.compare("survivability_info/fdo_mode")) {
+        if (file.find("/survivability_info/fdo_mode") != std::string::npos) {
             val = mockFdoValue;
         }
+
         return ZE_RESULT_SUCCESS;
     }
 
+    MockFdoFsAccessInterface() = default;
+    ~MockFdoFsAccessInterface() override = default;
+};
+
+struct MockFdoSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     MockFdoSysFsAccessInterface() = default;
     ~MockFdoSysFsAccessInterface() override = default;
 };

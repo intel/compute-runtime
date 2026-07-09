@@ -220,7 +220,7 @@ class SysmanFirmwareBlockingFdoFixtureXe : public SysmanFirmwareFdoFixtureXe {
     void SetUp() override {
         SysmanFirmwareFdoFixtureXe::SetUp();
         // Manually create all 4 firmware handles (GSC, OptionROM, PSC, Flash_Override)
-        pMockSysfsAccess->mockFdoModeValue = "disabled";
+        pMockFsAccess->mockFdoValue = "disabled";
 
         // Create firmware handles for all types
         std::vector<std::string> fwTypes = {"GSC", "OptionROM", "PSC", "Flash_Override"};
@@ -235,7 +235,7 @@ TEST_F(SysmanFirmwareBlockingFdoFixtureXe, GivenDeviceInFdoModeWhenFlashingUsing
 
     EXPECT_EQ(4u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
 
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
 
     uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
     memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
@@ -259,7 +259,7 @@ TEST_F(SysmanFirmwareBlockingFdoFixtureXe, GivenDeviceInFdoModeWhenFlashingUsing
 
 TEST_F(SysmanFirmwareBlockingFdoFixtureXe, GivenDeviceInFdoModeWhenGettingFirmwareFlashProgressThenNotAvailableIsReturned) {
     EXPECT_EQ(4u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
 
     for (auto *pFirmwareHandle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         auto handle = pFirmwareHandle->toHandle();
@@ -270,7 +270,7 @@ TEST_F(SysmanFirmwareBlockingFdoFixtureXe, GivenDeviceInFdoModeWhenGettingFirmwa
 }
 
 TEST_F(SysmanFirmwareBlockingFdoFixtureXe, GivenDeviceInNormalConditionsWhenGettingFlashProgressWithFlashOverrideHandleThenNotAvailableIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "disabled";
+    pMockFsAccess->mockFdoValue = "disabled";
 
     for (auto *pFirmwareHandle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         zes_firmware_properties_t properties = {};
@@ -286,7 +286,7 @@ TEST_F(SysmanFirmwareBlockingFdoFixtureXe, GivenDeviceInNormalConditionsWhenGett
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenDeviceInFdoModeWhenGettingFirmwarePropertiesThenCorrectVersionIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -297,7 +297,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenDeviceInFdoModeWhenGettingFirmwareProper
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenValidParametersWhenFlashingExtendedFirmwareThenSuccessIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -326,7 +326,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenValidParametersWhenFlashingExtendedFirmw
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenInvalidPciBdfInfoWhenFlashingExtendedFirmwareThenErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -342,7 +342,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenInvalidPciBdfInfoWhenFlashingExtendedFir
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenProcMtdReadFailsWhenFlashingExtendedFirmwareThenErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -360,7 +360,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenProcMtdReadFailsWhenFlashingExtendedFirm
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenEmptyMtdLinesWhenFlashingExtendedFirmwareThenErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -378,7 +378,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenEmptyMtdLinesWhenFlashingExtendedFirmwar
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenEmptyMtdFileWhenFlashingExtendedFirmwareThenCoversEmptyCondition) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -397,7 +397,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenEmptyMtdFileWhenFlashingExtendedFirmware
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenNoMatchingMtdEntriesWhenFlashingExtendedFirmwareThenErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -415,7 +415,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenNoMatchingMtdEntriesWhenFlashingExtended
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenNoDescriptorDeviceWhenFlashingExtendedFirmwareThenErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -441,7 +441,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenNoDescriptorDeviceWhenFlashingExtendedFi
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenMtdDeviceCreateFailsWhenFlashingExtendedFirmwareThenErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -467,7 +467,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMtdDeviceCreateFailsWhenFlashingExtended
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenGetDeviceInfoSkipsRegionsWhenFlashingExtendedFirmwareThenSuccessIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -493,7 +493,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenGetDeviceInfoSkipsRegionsWhenFlashingExt
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenEraseFailsWhenFlashingExtendedFirmwareThenErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -524,7 +524,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenEraseFailsWhenFlashingExtendedFirmwareTh
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenWriteFailsWhenFlashingExtendedFirmwareThenErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -553,7 +553,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenWriteFailsWhenFlashingExtendedFirmwareTh
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenMultipleRegionsWhenFlashingExtendedFirmwareThenSuccessIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -583,7 +583,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMultipleRegionsWhenFlashingExtendedFirmw
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenInsufficientFirmwareDataWhenFlashingExtendedFirmwareThenInvalidSizeErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -606,7 +606,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenInsufficientFirmwareDataWhenFlashingExte
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenInsufficientDataForLaterRegionsWhenFlashingThenInvalidSizeErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -631,7 +631,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenInsufficientDataForLaterRegionsWhenFlash
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenRegionOffsetExceedsImageSizeWhenFlashingThenInvalidSizeErrorIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -684,7 +684,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenRegionOffsetExceedsImageSizeWhenFlashing
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenMtdNumberWithoutColonWhenFlashingExtendedFirmwareThenCoversNoColonCondition) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -709,7 +709,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMtdNumberWithoutColonWhenFlashingExtende
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenShortDeviceNameWhenFlashingExtendedFirmwareThenNoDescriptorFoundAndErrorReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -730,7 +730,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenShortDeviceNameWhenFlashingExtendedFirmw
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenMalformedQuotesInMtdNamesWhenFlashingExtendedFirmwareThenCoversBothQuoteConditions) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -756,7 +756,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMalformedQuotesInMtdNamesWhenFlashingExt
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenMalformedMtdLinesWhenFlashingExtendedFirmwareThenCoversParsingFailureCondition) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
@@ -777,7 +777,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMalformedMtdLinesWhenFlashingExtendedFir
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenDeviceInFdoModeWhenFlashingFdoFirmwareThenSuccessIsReturned) {
-    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    pMockFsAccess->mockFdoValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);

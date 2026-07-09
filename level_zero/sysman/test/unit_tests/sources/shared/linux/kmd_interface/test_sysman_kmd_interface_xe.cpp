@@ -500,12 +500,15 @@ class SysmanKmdInterfaceFdoFixtureXe : public SysmanDeviceFixture {
   protected:
     MockSysmanKmdInterfaceXe *pMockSysmanKmdInterface = nullptr;
     MockFdoSysFsAccessInterface *pMockSysFsAccess = nullptr;
+    MockFdoFsAccessInterface *pMockFsAccess = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         pMockSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
         pMockSysFsAccess = new MockFdoSysFsAccessInterface();
+        pMockFsAccess = new MockFdoFsAccessInterface();
         pMockSysmanKmdInterface->pSysfsAccess.reset(pMockSysFsAccess);
+        pMockSysmanKmdInterface->pFsAccess.reset(pMockFsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pMockSysmanKmdInterface);
     }
 
@@ -518,7 +521,7 @@ TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityF
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
     // Mock file not available
-    pMockSysFsAccess->readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pMockFsAccess->readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     EXPECT_FALSE(pSysmanKmdInterface->isDeviceInFdoMode());
 }
@@ -526,8 +529,8 @@ TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityF
 TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityFdoModeFileExistsWithDisabledValueThenIsDeviceInFdoModeReturnsFalse) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
-    pMockSysFsAccess->readResult = ZE_RESULT_SUCCESS;
-    pMockSysFsAccess->mockFdoValue = "disabled";
+    pMockFsAccess->readResult = ZE_RESULT_SUCCESS;
+    pMockFsAccess->mockFdoValue = "disabled";
 
     EXPECT_FALSE(pSysmanKmdInterface->isDeviceInFdoMode());
 }
@@ -535,8 +538,8 @@ TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityF
 TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityFdoModeFileExistsWithEnabledValueThenIsDeviceInFdoModeReturnsTrue) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
-    pMockSysFsAccess->readResult = ZE_RESULT_SUCCESS;
-    pMockSysFsAccess->mockFdoValue = "enabled";
+    pMockFsAccess->readResult = ZE_RESULT_SUCCESS;
+    pMockFsAccess->mockFdoValue = "enabled";
 
     EXPECT_TRUE(pSysmanKmdInterface->isDeviceInFdoMode());
 }

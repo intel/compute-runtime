@@ -135,6 +135,7 @@ class SysFsAccessInterface : protected FsAccessInterface {
     bool directoryExists(const std::string path) override;
     bool isRootUser() override;
     std::string getDevicePciBdf();
+    std::string getDevicePciPath();
     void clearFdCache() override;
 
   protected:
@@ -145,6 +146,7 @@ class SysFsAccessInterface : protected FsAccessInterface {
   private:
     std::string fullPath(const std::string &file);
     std::string dirname;
+    std::string devicePciBdf;
     static const std::string drmPath;
     static const std::string devicesPath;
     static const std::string primaryDevName;

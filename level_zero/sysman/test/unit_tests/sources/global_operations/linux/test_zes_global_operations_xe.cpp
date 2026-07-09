@@ -106,7 +106,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe,
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInFdoModeWhenCallingDeviceGetStateWithExtensionThenAllFlagsAreSet) {
     // Set device in FDO mode via sysfs mock - this is sufficient to set all three flags
-    pSysfsAccess->mockFdoModeValue = "enabled";
+    pFsAccess->mockFdoModeValue = "enabled";
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
@@ -123,8 +123,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInFdoModeWhenCallingDeviceGet
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInSurvivabilityModeButNotFdoWhenCallingDeviceGetStateWithExtensionThenWedgedAndSurvivabilityFlagsAreSet) {
-    pSysfsAccess->mockFdoModeValue = "disabled";
-    pSysfsAccess->mockSurvivabilityModeValue = "Runtime";
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "Runtime";
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
@@ -142,8 +142,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInSurvivabilityModeButNotFdoW
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceOnlyWedgedWhenCallingDeviceGetStateWithExtensionThenOnlyWedgedFlagIsSet) {
-    pSysfsAccess->mockFdoModeValue = "disabled";
-    pSysfsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "";
     pLinuxSysmanImp->isDeviceInWedgedState = true;
 
     zes_device_state_t deviceState = {};
@@ -162,8 +162,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceOnlyWedgedWhenCallingDeviceGe
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInNormalStateWhenCallingDeviceGetStateWithExtensionThenNoFlagsAreSet) {
-    pSysfsAccess->mockFdoModeValue = "disabled";
-    pSysfsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "";
     pLinuxSysmanImp->isDeviceInWedgedState = false;
 
     zes_device_state_t deviceState = {};
@@ -181,8 +181,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInNormalStateWhenCallingDevic
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenNullExtensionPointerWhenCallingDeviceGetStateThenSuccessIsReturned) {
-    pSysfsAccess->mockFdoModeValue = "disabled";
-    pSysfsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "";
     pLinuxSysmanImp->isDeviceInWedgedState = false;
 
     zes_device_state_t deviceState = {};
@@ -194,7 +194,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenNullExtensionPointerWhenCallingDevi
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenExtensionInPNextChainWhenCallingDeviceGetStateThenExtensionIsPopulated) {
-    pSysfsAccess->mockFdoModeValue = "enabled";
+    pFsAccess->mockFdoModeValue = "enabled";
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
@@ -214,7 +214,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenExtensionInPNextChainWhenCallingDev
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenNonMatchingExtensionInPNextChainWhenCallingDeviceGetStateThenExtensionIsSkipped) {
-    pSysfsAccess->mockFdoModeValue = "enabled";
+    pFsAccess->mockFdoModeValue = "enabled";
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
@@ -232,19 +232,19 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenNonMatchingExtensionInPNextChainWhe
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenSurvivabilityModeStringIsBootWhenCallingIsDeviceInSurvivabilityModeThenTrueIsReturned) {
-    pSysfsAccess->mockSurvivabilityModeValue = "Boot";
+    pFsAccess->mockSurvivabilityModeValue = "Boot";
     bool result = pSysmanKmdInterface->isDeviceInSurvivabilityMode();
     EXPECT_TRUE(result);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenSurvivabilityModeStringIsEmptyWhenCallingIsDeviceInSurvivabilityModeThenFalseIsReturned) {
-    pSysfsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockSurvivabilityModeValue = "";
     bool result = pSysmanKmdInterface->isDeviceInSurvivabilityMode();
     EXPECT_FALSE(result);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenSysfsReadFailsWhenCallingIsDeviceInSurvivabilityModeThenFalseIsReturned) {
-    pSysfsAccess->mockReadError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pFsAccess->mockReadError = ZE_RESULT_ERROR_NOT_AVAILABLE;
     bool result = pSysmanKmdInterface->isDeviceInSurvivabilityMode();
     EXPECT_FALSE(result);
 }

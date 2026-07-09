@@ -24,7 +24,7 @@ class ZesSysmanProductHelperFirmwareFixtureXe : public SysmanDeviceFixture {
     MockFirmwareSysfsAccess *pSysfsAccess = nullptr;
     MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
     L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
-    std::unique_ptr<MockFirmwareFsAccess> pFsAccess;
+    MockFirmwareFsAccess *pFsAccess = nullptr;
     L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
     L0::Sysman::SysFsAccessInterface *pSysFsAccessOriginal = nullptr;
     std::unique_ptr<MockFirmwareSysfsAccess> pMockSysfsAccess;
@@ -33,13 +33,14 @@ class ZesSysmanProductHelperFirmwareFixtureXe : public SysmanDeviceFixture {
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pFsAccess = std::make_unique<MockFirmwareFsAccess>();
-        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        pFsAccess = new MockFirmwareFsAccess();
+        pLinuxSysmanImp->pFsAccess = pFsAccess;
 
         pSysFsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
         pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
         pSysmanKmdInterface->pSysfsAccess = std::make_unique<MockFirmwareSysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->pSysfsAccess.get();
+        pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
         pSysfsAccess = static_cast<MockFirmwareSysfsAccess *>(pSysmanKmdInterface->pSysfsAccess.get());
 

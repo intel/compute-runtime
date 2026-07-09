@@ -122,8 +122,6 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
     bool mockFileWithInvalidStatus = false;
     bool mockFileWithInvalidMaxPageEntry = false;
     bool mockFileWithMaxPagesNoValue = false;
-    std::string mockFdoModeValue = "disabled";
-    std::string mockSurvivabilityModeValue = "";
     std::string mockGpuHealthVal = "ok";
     std::string mockGpuHealthWrittenVal;
 
@@ -158,10 +156,6 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
             val = mockReadVal[static_cast<int>(Index::mockVendor)];
         } else if (file.compare("clients/8/pid") == 0) {
             val = bPid4;
-        } else if (file.compare("survivability_info/fdo_mode") == 0) {
-            val = mockFdoModeValue;
-        } else if (file.compare("survivability_mode") == 0) {
-            val = mockSurvivabilityModeValue;
         } else if (file.compare("device/gpu_health") == 0) {
             val = mockGpuHealthVal;
         } else {
@@ -550,14 +544,27 @@ struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcFsAccessInterfa
 
 struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t mockReadError = ZE_RESULT_SUCCESS;
-    ze_result_t readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    ze_result_t readResult = ZE_RESULT_SUCCESS;
     std::string mockReadVal = "";
     std::string mockFlrValue = "";
     std::string mockColdResetValue = "unknown";
     std::string mockWarmResetValue = "unknown";
+    std::string mockFdoModeValue = "disabled";
+    std::string mockSurvivabilityModeValue = "";
+
     ze_result_t read(const std::string file, std::string &val) override {
         if (mockReadError != ZE_RESULT_SUCCESS) {
             return mockReadError;
+        }
+
+        if (file.find("/survivability_info/fdo_mode") != std::string::npos) {
+            val = mockFdoModeValue;
+            return readResult;
+        }
+
+        if (file.find("/survivability_mode") != std::string::npos) {
+            val = mockSurvivabilityModeValue;
+            return readResult;
         }
 
         if (file.compare(mockSlotPathAddress) == 0) {
@@ -580,7 +587,7 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
         } else {
             readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
-        return readResult;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     ze_result_t read(std::string file, std::vector<std::string> &val) override {

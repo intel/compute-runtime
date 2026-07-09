@@ -474,6 +474,7 @@ std::unique_ptr<SysFsAccessInterface> SysFsAccessInterface::create(const std::st
 std::unique_ptr<SysFsAccessInterface> SysFsAccessInterface::createForSurvivability(std::string_view sysfsPath) {
     auto pSysfsInterface = std::unique_ptr<SysFsAccessInterface>(new SysFsAccessInterface());
     pSysfsInterface->dirname = std::string(sysfsPath) + "/";
+    pSysfsInterface->devicePciBdf = sysfsPath.substr(sysfsPath.find_last_of('/') + 1);
     return pSysfsInterface;
 }
 
@@ -601,8 +602,14 @@ bool SysFsAccessInterface::isRootUser() {
 }
 
 std::string SysFsAccessInterface::getDevicePciBdf() {
+
+    if (!devicePciBdf.empty()) {
+        return devicePciBdf;
+    }
+
     // dirname is something like /sys/class/drm/card1/
     // We need to resolve the symlink to get the real path
+
     std::string realPath;
     ze_result_t result = getRealPath("device", realPath);
     if (result != ZE_RESULT_SUCCESS) {
@@ -619,7 +626,13 @@ std::string SysFsAccessInterface::getDevicePciBdf() {
         return "";
     }
 
-    return realPath.substr(lastSlash + 1);
+    devicePciBdf = realPath.substr(lastSlash + 1);
+    return devicePciBdf;
+}
+
+std::string SysFsAccessInterface::getDevicePciPath() {
+    const std::string basePciDevicePath = "/sys/bus/pci/devices/";
+    return basePciDevicePath + getDevicePciBdf();
 }
 
 void SysFsAccessInterface::clearFdCache() {

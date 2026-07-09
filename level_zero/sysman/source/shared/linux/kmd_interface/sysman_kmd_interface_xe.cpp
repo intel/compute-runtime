@@ -515,9 +515,9 @@ bool SysmanKmdInterfaceXe::isLateBindingVersionAvailable(std::string fwType, std
 }
 
 bool SysmanKmdInterfaceXe::isDeviceInFdoMode() {
-    const std::string survivabilitySysFsNodeName = "survivability_info/fdo_mode";
+    const std::string survivabilitySysFsNodeName = pSysfsAccess->getDevicePciPath() + "/survivability_info/fdo_mode";
     std::string survivabilityFdoNodeVal = {};
-    ze_result_t result = pSysfsAccess->read(survivabilitySysFsNodeName, survivabilityFdoNodeVal);
+    ze_result_t result = pFsAccess->read(survivabilitySysFsNodeName, survivabilityFdoNodeVal);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, survivabilitySysFsNodeName.c_str(), result);
         return false;
@@ -526,9 +526,9 @@ bool SysmanKmdInterfaceXe::isDeviceInFdoMode() {
 }
 
 bool SysmanKmdInterfaceXe::isDeviceInSurvivabilityMode() {
-    const std::string survivabilityModeSysFsNodeName = "survivability_mode";
+    const std::string survivabilityModeSysFsNodeName = pSysfsAccess->getDevicePciPath() + "/survivability_mode";
     std::string survivabilityModeVal = {};
-    ze_result_t result = pSysfsAccess->read(survivabilityModeSysFsNodeName, survivabilityModeVal);
+    ze_result_t result = pFsAccess->read(survivabilityModeSysFsNodeName, survivabilityModeVal);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, survivabilityModeSysFsNodeName.c_str(), result);
         return false;
