@@ -15,6 +15,15 @@
 #include <level_zero/ze_api.h>
 
 namespace L0 {
+ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
+    ze_command_list_handle_t hCommandList,
+    ze_host_function_callback_t pHostFunction,
+    void *pUserData,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents);
+
 ze_result_t ZE_APICALL zeCommandListCreate(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
@@ -500,5 +509,35 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     ze_event_handle_t *phWaitEvents) {
     return L0::zeCommandListAppendMemoryFillWithParameters(
         hCommandList, ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetFlags(
+    ze_command_list_handle_t hCommandList,
+    ze_command_queue_flags_t *pFlags) {
+    return L0::zeCommandListImmediateGetFlags(hCommandList, pFlags);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetMode(
+    ze_command_list_handle_t hCommandList,
+    ze_command_queue_mode_t *pMode) {
+    return L0::zeCommandListImmediateGetMode(hCommandList, pMode);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetPriority(
+    ze_command_list_handle_t hCommandList,
+    ze_command_queue_priority_t *pPriority) {
+    return L0::zeCommandListImmediateGetPriority(hCommandList, pPriority);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
+    ze_command_list_handle_t hCommandList,
+    ze_host_function_callback_t pfnHostFunction,
+    void *pUserData,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListAppendHostFunction(
+        hCommandList, pfnHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 } // extern "C"

@@ -194,6 +194,12 @@ ze_result_t ZE_APICALL zeDeviceValidateRuntimeRequirements(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t ZE_APICALL zeDeviceGetCounterBasedEventMaxValue(
+    ze_device_handle_t hDevice,
+    uint64_t *maxValue) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -407,5 +413,11 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceValidateRuntimeRequirements(
     const char *pRequirements,
     ze_validate_runtime_requirements_output_t *pOut) {
     return L0::zeDeviceValidateRuntimeRequirements(hDevice, pRequirements, pOut);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetCounterBasedEventMaxValue(
+    ze_device_handle_t hDevice,
+    uint64_t *maxValue) {
+    return L0::zeDeviceGetCounterBasedEventMaxValue(hDevice, maxValue);
 }
 }
