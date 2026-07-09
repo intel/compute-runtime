@@ -2057,7 +2057,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
 
     immCmdList->hostSynchronize(0, false);
 
-    if (immCmdList->dcFlushSupport) {
+    if (!immCmdList->latestFlushIsHostVisible) {
         EXPECT_EQ(1u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
         EXPECT_EQ(1u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     } else {
