@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/utilities/stackvec.h"
 
-#include <cstddef>
-#include <cstdint>
 #include <vector>
 
 namespace NEO {
@@ -21,6 +20,6 @@ struct ResidencyData {
     uint64_t getFenceValueForContextId(uint32_t contextId);
 
   protected:
-    std::vector<uint64_t> lastFenceValues;
+    StackVec<uint64_t, 32> lastFenceValues;
 };
 } // namespace NEO
