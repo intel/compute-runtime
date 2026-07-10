@@ -52,7 +52,7 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
-    return false;
+    return true;
 }
 
 template class ProductHelperHw<gfxProduct>;
