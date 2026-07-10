@@ -108,6 +108,8 @@ class Program : public BaseObject<_cl_program> {
     // (clBuildProgram/clCompileProgram/clLinkProgram each have a distinct one); other L0 errors map
     // through the generic L0ToClResultMapper.
     cl_int buildModulesForContextDevices(ze_module_desc_t &moduleDescription, cl_int buildFailureCode);
+    // Builds the OpenCL-C contract options carried in ze_module_ocl_extensions_exp_desc_t.
+    std::string computeOclExtensionsInternalOptions(const std::string &buildOptions) const;
     static cl_int mapModuleBuildResult(ze_result_t ret, cl_int buildFailureCode);
     cl_int populateIrBinaryFromModule(bool isSpirv);
     // Reads the per-device program binary (native gen binary for EXECUTABLE, IR otherwise).

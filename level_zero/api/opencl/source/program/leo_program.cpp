@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/get_info.h"
 
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"
@@ -304,11 +305,21 @@ bool Program::populateModuleConstants(ze_module_constants_t &moduleConstants,
     return true;
 }
 
+std::string Program::computeOclExtensionsInternalOptions(const std::string &buildOptions) const {
+    std::string internalOptions;
+    NEO::appendExtensionsToInternalOptions(this->context->getClDevice()->getHardwareInfo(), buildOptions, internalOptions);
+    return internalOptions;
+}
+
 /**
  * @brief Use l0 api to link spirv to gen binary.
  */
 cl_int Program::buildFromIL(const char *options) {
-    ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, nullptr, ZE_MODULE_FORMAT_IL_SPIRV, this->irBinarySize, reinterpret_cast<uint8_t *>(this->irBinary.get()), options, nullptr};
+    const std::string oclExtensionsInternalOptions = computeOclExtensionsInternalOptions(options ? options : "");
+    L0::ze_module_ocl_extensions_exp_desc_t oclExtensionsDesc;
+    oclExtensionsDesc.pInternalBuildOptions = oclExtensionsInternalOptions.c_str();
+
+    ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, &oclExtensionsDesc, ZE_MODULE_FORMAT_IL_SPIRV, this->irBinarySize, reinterpret_cast<uint8_t *>(this->irBinary.get()), options, nullptr};
 
     // constantsIds / constantsValuesPtrs back the descriptor and must outlive the build call;
     // the lock is held across the build so the values they point at stay valid.
@@ -424,6 +435,12 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
         llvmBcDesc.count = static_cast<uint32_t>(llvmbcBinaries.size());
         moduleProgDesc.pNext = &llvmBcDesc;
     }
+
+    const std::string oclExtensionsInternalOptions = computeOclExtensionsInternalOptions(options ? options : "");
+    L0::ze_module_ocl_extensions_exp_desc_t oclExtensionsDesc;
+    oclExtensionsDesc.pInternalBuildOptions = oclExtensionsInternalOptions.c_str();
+    oclExtensionsDesc.pNext = moduleDesc.pNext;
+    moduleDesc.pNext = &oclExtensionsDesc;
 
     // buildModulesForContextDevices runs the per-device zeModuleCreate loop and captures build logs;
     // this function owns the binary type (LIBRARY for -create_library, otherwise EXECUTABLE, below).

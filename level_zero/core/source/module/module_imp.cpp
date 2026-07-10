@@ -931,6 +931,11 @@ ze_result_t ModuleImp::buildFromSpirVProgramExt(const ze_module_desc_t *desc, co
     if (type == ModuleType::user && NEO::debugManager.flags.EnableDivergentBarrierHandling.get()) {
         NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::enableDivergentBarriers);
     }
+    // LEO link: apply the OpenCL-C contract options carried on the module desc.
+    auto oclExtensionsExt = L0::PNextRange(desc->pNext).get<ze_module_ocl_extensions_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_OCL_EXTENSIONS_EXT_DESC);
+    if (oclExtensionsExt != nullptr && oclExtensionsExt->pInternalBuildOptions != nullptr) {
+        NEO::CompilerOptions::concatenateAppend(internalBuildOptions, oclExtensionsExt->pInternalBuildOptions);
+    }
     // precompiled is left at its default false here: every dispatch below recompiles from IR.
     if (inputLlvmBcs.size() > 0) {
         // internal path for linking with llvm bcs
@@ -964,13 +969,16 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
     auto extensions = L0::PNextRange(desc->pNext);
     auto moduleProgExt = extensions.get<ze_module_program_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
     auto headersProgExt = extensions.get<ze_module_program_headers_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_HEADERS_EXT_DESC);
+    auto oclExtensionsExt = extensions.get<ze_module_ocl_extensions_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_OCL_EXTENSIONS_EXT_DESC);
     for (auto &ext : extensions) {
         if (ext.stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC &&
             ext.stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_LLVMBC_EXT_DESC &&
-            ext.stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_HEADERS_EXT_DESC) {
+            ext.stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_HEADERS_EXT_DESC &&
+            ext.stype != ZE_STRUCTURE_TYPE_MODULE_OCL_EXTENSIONS_EXT_DESC) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     }
+    const char *oclExtensionsInternalOptions = (oclExtensionsExt != nullptr) ? oclExtensionsExt->pInternalBuildOptions : nullptr;
     if (moduleProgExt && (desc->format == ZE_MODULE_FORMAT_IL_SPIRV)) {
         return this->buildFromSpirVProgramExt(desc, moduleProgExt);
     } else {
@@ -1005,6 +1013,9 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
             return this->translationUnit->createFromNativeBinary(reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize, internalBuildOptions.c_str());
         } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
             this->builtFromSpirv = true;
+            if (oclExtensionsInternalOptions != nullptr) {
+                NEO::CompilerOptions::concatenateAppend(internalBuildOptions, oclExtensionsInternalOptions);
+            }
             return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
                                                          static_cast<uint32_t>(desc->inputSize),
                                                          buildOptions.c_str(),

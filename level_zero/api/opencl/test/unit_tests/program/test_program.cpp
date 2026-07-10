@@ -11,6 +11,7 @@
 #include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/module/module.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "CL/cl.h"
 
@@ -87,6 +88,53 @@ cl_context createOclContext(Platform *platform, cl_device_id &clDeviceId) {
     EXPECT_EQ(CL_SUCCESS, errcode);
     EXPECT_NE(nullptr, clContext);
     return clContext;
+}
+
+TEST_F(ClProgramCompileLinkTests, givenSpirvIlProgramWhenBuildProgramThenOclVersionAndExtensionsReachCompiler) {
+    auto *mockCompiler = new L0::ult::MockCompilerInterface();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    auto program = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    // Build fails (mock emits no binary) but the compiler still captured the options.
+    clBuildProgram(program, 1, &clDeviceId, nullptr, nullptr, nullptr);
+    EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-ocl-version=300"));
+    EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-cl-ext="));
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenSpirvIlProgramsWhenLinkProgramThenOclVersionAndExtensionsReachCompiler) {
+    auto *mockCompiler = new L0::ult::MockCompilerInterface();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    auto program1 = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    auto program2 = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    cl_program inputPrograms[] = {program1, program2};
+    // Failed link still returns a program object; release it.
+    auto linkedProgram = clLinkProgram(clContext, 1, &clDeviceId, nullptr, 2, inputPrograms, nullptr, nullptr, &errcode);
+    EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-ocl-version=300"));
+    EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-cl-ext="));
+
+    if (linkedProgram != nullptr) {
+        clReleaseProgram(linkedProgram);
+    }
+    clReleaseProgram(program1);
+    clReleaseProgram(program2);
+    clReleaseContext(clContext);
 }
 
 TEST_F(ClProgramCompileLinkTests, givenSpirvIlProgramWhenCompileProgramThenNoModuleIsBuiltAndStaysCompiledObject) {

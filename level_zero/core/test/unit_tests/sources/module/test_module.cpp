@@ -1352,6 +1352,32 @@ TEST_F(ModuleStaticLinkTests, givenEnabledDivergentBarrierWhenStaticLinkingSpirV
     module->destroy();
 }
 
+TEST_F(ModuleStaticLinkTests, GivenOclExtensionsDescWhenStaticLinkingSpirVModulesThenCallerInternalOptionsAreAppended) {
+    MockCompilerInterface *compilerInterface = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(compilerInterface);
+    mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
+
+    loadModules(testMultiple);
+    setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV, testMultiple);
+
+    const std::string callerInternalOptions = "-ocl-version=300 -cl-ext=+test_marker_ext";
+    L0::ze_module_ocl_extensions_exp_desc_t oclExtensionsDesc;
+    oclExtensionsDesc.pInternalBuildOptions = callerInternalOptions.c_str();
+    oclExtensionsDesc.pNext = combinedModuleDesc.pNext;
+    combinedModuleDesc.pNext = &oclExtensionsDesc;
+
+    auto module = new Module(device, nullptr, ModuleType::user);
+    module->translationUnit.reset(mockTranslationUnit);
+    ze_result_t result = module->initialize(&combinedModuleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(ModuleTranslationUnit::CompilationMode::staticLink, mockTranslationUnit->passedCompilationMode);
+    EXPECT_NE(std::string::npos, compilerInterface->inputInternalOptions.find("-ocl-version=300"));
+    EXPECT_NE(std::string::npos, compilerInterface->inputInternalOptions.find("+test_marker_ext"));
+    module->destroy();
+}
+
 struct ModuleLlvmBcStaticLinkFixture : public ModuleStaticLinkFixture {
     void setUp() {
         ModuleStaticLinkFixture::setUp();
@@ -3913,6 +3939,45 @@ HWTEST_F(ModuleTranslationUnitTest, GivenNativeBinaryWhenRebuildingFromIntermedi
 
     // make sure internal options are matching those from buildFromSpirv
     EXPECT_EQ(internalOptions, pMockCompilerInterface->inputInternalOptions);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenOclExtensionsDescWhenBuildingModuleFromSpirVThenCallerInternalOptionsAreAppended) {
+    auto *pMockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
+
+    uint8_t binary[10]{};
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = sizeof(binary);
+
+    // No descriptor: native L0 contract, no -ocl-version.
+    {
+        Module module(device, nullptr, ModuleType::user);
+        auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+        mockTranslationUnit->processUnpackedBinaryCallBase = false;
+        module.translationUnit.reset(mockTranslationUnit);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, module.initialize(&moduleDesc, neoDevice));
+        EXPECT_EQ(std::string::npos, pMockCompilerInterface->inputInternalOptions.find("-ocl-version"));
+    }
+
+    // With descriptor: caller options are appended to the compiler internal options.
+    {
+        pMockCompilerInterface->inputInternalOptions.clear();
+        const std::string callerInternalOptions = "-ocl-version=300 -cl-ext=+test_marker_ext";
+        L0::ze_module_ocl_extensions_exp_desc_t oclExtensionsDesc;
+        oclExtensionsDesc.pInternalBuildOptions = callerInternalOptions.c_str();
+        moduleDesc.pNext = &oclExtensionsDesc;
+
+        Module module(device, nullptr, ModuleType::user);
+        auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+        mockTranslationUnit->processUnpackedBinaryCallBase = false;
+        module.translationUnit.reset(mockTranslationUnit);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, module.initialize(&moduleDesc, neoDevice));
+        EXPECT_NE(std::string::npos, pMockCompilerInterface->inputInternalOptions.find("-ocl-version=300"));
+        EXPECT_NE(std::string::npos, pMockCompilerInterface->inputInternalOptions.find("+test_marker_ext"));
+    }
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNativeBinaryAndWarningSuppressionIsPresentThenModuleRecompilationWarningIsNotIssued) {
