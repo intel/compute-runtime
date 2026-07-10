@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,13 +12,11 @@ using STATE_CONTEXT_DATA_BASE_ADDRESS = GenStruct::STATE_CONTEXT_DATA_BASE_ADDRE
 
 template <>
 STATE_CONTEXT_DATA_BASE_ADDRESS *genCmdCast<STATE_CONTEXT_DATA_BASE_ADDRESS *>(void *buffer) {
-    auto pCmd = reinterpret_cast<STATE_CONTEXT_DATA_BASE_ADDRESS *>(buffer);
-
-    return (0x1 == pCmd->TheStructure.Common.DwordLength &&
-            0xb == pCmd->TheStructure.Common._3DCommandSubOpcode &&
-            0x1 == pCmd->TheStructure.Common._3DCommandOpcode &&
-            0x0 == pCmd->TheStructure.Common.CommandSubtype &&
-            0x3 == pCmd->TheStructure.Common.CommandType)
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<STATE_CONTEXT_DATA_BASE_ADDRESS>(buffer, [](const STATE_CONTEXT_DATA_BASE_ADDRESS &header) {
+        return 0x1 == header.TheStructure.Common.DwordLength &&
+               0xb == header.TheStructure.Common._3DCommandSubOpcode &&
+               0x1 == header.TheStructure.Common._3DCommandOpcode &&
+               0x0 == header.TheStructure.Common.CommandSubtype &&
+               0x3 == header.TheStructure.Common.CommandType;
+    });
 }

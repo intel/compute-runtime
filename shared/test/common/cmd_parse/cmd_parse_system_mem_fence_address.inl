@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,13 +12,11 @@ using STATE_SYSTEM_MEM_FENCE_ADDRESS = GenStruct::STATE_SYSTEM_MEM_FENCE_ADDRESS
 
 template <>
 STATE_SYSTEM_MEM_FENCE_ADDRESS *genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(void *buffer) {
-    auto pCmd = reinterpret_cast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(buffer);
-
-    return (0x1 == pCmd->TheStructure.Common.DwordLength &&
-            0x9 == pCmd->TheStructure.Common._3DCommandSubOpcode &&
-            0x1 == pCmd->TheStructure.Common._3DCommandOpcode &&
-            0x0 == pCmd->TheStructure.Common.CommandSubtype &&
-            0x3 == pCmd->TheStructure.Common.CommandType)
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<STATE_SYSTEM_MEM_FENCE_ADDRESS>(buffer, [](const STATE_SYSTEM_MEM_FENCE_ADDRESS &header) {
+        return 0x1 == header.TheStructure.Common.DwordLength &&
+               0x9 == header.TheStructure.Common._3DCommandSubOpcode &&
+               0x1 == header.TheStructure.Common._3DCommandOpcode &&
+               0x0 == header.TheStructure.Common.CommandSubtype &&
+               0x3 == header.TheStructure.Common.CommandType;
+    });
 }

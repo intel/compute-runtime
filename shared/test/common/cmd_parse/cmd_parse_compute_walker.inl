@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,40 +16,34 @@ using _3DSTATE_BINDING_TABLE_POOL_ALLOC = GenStruct::_3DSTATE_BINDING_TABLE_POOL
 
 template <>
 COMPUTE_WALKER *genCmdCast<COMPUTE_WALKER *>(void *buffer) {
-    auto pCmd = reinterpret_cast<COMPUTE_WALKER *>(buffer);
-
-    return COMPUTE_WALKER::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   COMPUTE_WALKER::PIPELINE_COMPUTE == pCmd->TheStructure.Common.Pipeline &&
-                   COMPUTE_WALKER::COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND == pCmd->TheStructure.Common.ComputeCommandOpcode &&
-                   COMPUTE_WALKER::CFE_SUBOPCODE_COMPUTE_WALKER == pCmd->TheStructure.Common.CfeSubopcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<COMPUTE_WALKER>(buffer, [](const COMPUTE_WALKER &header) {
+        return COMPUTE_WALKER::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
+               COMPUTE_WALKER::PIPELINE_COMPUTE == header.TheStructure.Common.Pipeline &&
+               COMPUTE_WALKER::COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND == header.TheStructure.Common.ComputeCommandOpcode &&
+               COMPUTE_WALKER::CFE_SUBOPCODE_COMPUTE_WALKER == header.TheStructure.Common.CfeSubopcode;
+    });
 }
 
 template <>
 CFE_STATE *genCmdCast<CFE_STATE *>(void *buffer) {
-    auto pCmd = reinterpret_cast<CFE_STATE *>(buffer);
-
-    return CFE_STATE::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   CFE_STATE::PIPELINE_COMPUTE == pCmd->TheStructure.Common.Pipeline &&
-                   CFE_STATE::COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND == pCmd->TheStructure.Common.ComputeCommandOpcode &&
-                   CFE_STATE::CFE_SUBOPCODE_CFE_STATE == pCmd->TheStructure.Common.CfeSubopcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<CFE_STATE>(buffer, [](const CFE_STATE &header) {
+        return CFE_STATE::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
+               CFE_STATE::PIPELINE_COMPUTE == header.TheStructure.Common.Pipeline &&
+               CFE_STATE::COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND == header.TheStructure.Common.ComputeCommandOpcode &&
+               CFE_STATE::CFE_SUBOPCODE_CFE_STATE == header.TheStructure.Common.CfeSubopcode;
+    });
 }
 
 template <>
 _3DSTATE_BINDING_TABLE_POOL_ALLOC *genCmdCast<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(void *buffer) {
-    auto pCmd = reinterpret_cast<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(buffer);
-
-    return _3DSTATE_BINDING_TABLE_POOL_ALLOC::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   _3DSTATE_BINDING_TABLE_POOL_ALLOC::COMMAND_SUBTYPE_GFXPIPE_3D == pCmd->TheStructure.Common.CommandSubtype &&
-                   _3DSTATE_BINDING_TABLE_POOL_ALLOC::_3D_COMMAND_OPCODE_3DSTATE_NONPIPELINED ==
-                       pCmd->TheStructure.Common._3DCommandOpcode &&
-                   _3DSTATE_BINDING_TABLE_POOL_ALLOC::_3D_COMMAND_SUB_OPCODE_3DSTATE_BINDING_TABLE_POOL_ALLOC ==
-                       pCmd->TheStructure.Common._3DCommandSubOpcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<_3DSTATE_BINDING_TABLE_POOL_ALLOC>(buffer, [](const _3DSTATE_BINDING_TABLE_POOL_ALLOC &header) {
+        return _3DSTATE_BINDING_TABLE_POOL_ALLOC::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
+               _3DSTATE_BINDING_TABLE_POOL_ALLOC::COMMAND_SUBTYPE_GFXPIPE_3D == header.TheStructure.Common.CommandSubtype &&
+               _3DSTATE_BINDING_TABLE_POOL_ALLOC::_3D_COMMAND_OPCODE_3DSTATE_NONPIPELINED ==
+                   header.TheStructure.Common._3DCommandOpcode &&
+               _3DSTATE_BINDING_TABLE_POOL_ALLOC::_3D_COMMAND_SUB_OPCODE_3DSTATE_BINDING_TABLE_POOL_ALLOC ==
+                   header.TheStructure.Common._3DCommandSubOpcode;
+    });
 }
 
 template <>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,13 +12,11 @@ using STATE_PREFETCH = GenStruct::STATE_PREFETCH;
 
 template <>
 STATE_PREFETCH *genCmdCast<STATE_PREFETCH *>(void *buffer) {
-    auto pCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
-
-    return (0x2 == pCmd->TheStructure.Common.DwordLength &&
-            0x3 == pCmd->TheStructure.Common._3DCommandSubOpcode &&
-            0x0 == pCmd->TheStructure.Common._3DCommandOpcode &&
-            0x0 == pCmd->TheStructure.Common.CommandSubtype &&
-            0x3 == pCmd->TheStructure.Common.CommandType)
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<STATE_PREFETCH>(buffer, [](const STATE_PREFETCH &header) {
+        return 0x2 == header.TheStructure.Common.DwordLength &&
+               0x3 == header.TheStructure.Common._3DCommandSubOpcode &&
+               0x0 == header.TheStructure.Common._3DCommandOpcode &&
+               0x0 == header.TheStructure.Common.CommandSubtype &&
+               0x3 == header.TheStructure.Common.CommandType;
+    });
 }

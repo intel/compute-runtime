@@ -32,24 +32,20 @@ using MI_SEMAPHORE_WAIT = GenGfxFamily::MI_SEMAPHORE_WAIT;
 
 template <>
 COMPUTE_WALKER_2 *genCmdCast<COMPUTE_WALKER_2 *>(void *buffer) {
-    auto pCmd = reinterpret_cast<COMPUTE_WALKER_2 *>(buffer);
-
-    return COMPUTE_WALKER_2::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   COMPUTE_WALKER_2::PIPELINE_COMPUTE == pCmd->TheStructure.Common.Pipeline &&
-                   COMPUTE_WALKER_2::COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND == pCmd->TheStructure.Common.ComputeCommandOpcode &&
-                   COMPUTE_WALKER_2::CFE_SUBOPCODE_COMPUTE_WALKER_2 == pCmd->TheStructure.Common.CfeSubopcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<COMPUTE_WALKER_2>(buffer, [](const COMPUTE_WALKER_2 &header) {
+        return COMPUTE_WALKER_2::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
+               COMPUTE_WALKER_2::PIPELINE_COMPUTE == header.TheStructure.Common.Pipeline &&
+               COMPUTE_WALKER_2::COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND == header.TheStructure.Common.ComputeCommandOpcode &&
+               COMPUTE_WALKER_2::CFE_SUBOPCODE_COMPUTE_WALKER_2 == header.TheStructure.Common.CfeSubopcode;
+    });
 }
 
 template <>
 MI_SEMAPHORE_WAIT_LEGACY *genCmdCast<MI_SEMAPHORE_WAIT_LEGACY *>(void *buffer) {
-    auto pCmd = reinterpret_cast<MI_SEMAPHORE_WAIT_LEGACY *>(buffer);
-
-    return MI_SEMAPHORE_WAIT_LEGACY::COMMAND_TYPE_MI_COMMAND == pCmd->TheStructure.Common.CommandType &&
-                   MI_SEMAPHORE_WAIT_LEGACY::MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT == pCmd->TheStructure.Common.MiCommandOpcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<MI_SEMAPHORE_WAIT_LEGACY>(buffer, [](const MI_SEMAPHORE_WAIT_LEGACY &header) {
+        return MI_SEMAPHORE_WAIT_LEGACY::COMMAND_TYPE_MI_COMMAND == header.TheStructure.Common.CommandType &&
+               MI_SEMAPHORE_WAIT_LEGACY::MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT == header.TheStructure.Common.MiCommandOpcode;
+    });
 }
 
 template <>

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/string.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -16,6 +18,20 @@ typedef std::list<void *> GenCmdList;
 
 template <typename Type>
 Type genCmdCast(void *cmd);
+
+template <typename CommandT, typename Predicate>
+inline CommandT *matchCommandHeader(void *buffer, Predicate &&isMatch) {
+    if (buffer == nullptr) {
+        return nullptr;
+    }
+
+    auto pCmd = reinterpret_cast<CommandT *>(buffer);
+
+    CommandT header{};
+    memcpy_s(&header, sizeof(header), buffer, sizeof(uint32_t));
+
+    return isMatch(header) ? pCmd : nullptr;
+}
 
 template <typename Type>
 static inline GenCmdList::iterator find(GenCmdList::iterator itorStart, GenCmdList::const_iterator itorEnd) {

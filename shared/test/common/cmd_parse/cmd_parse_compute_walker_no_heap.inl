@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,12 +12,10 @@ using MI_SET_PREDICATE                  = GenStruct::MI_SET_PREDICATE;
 
 template <>
 MI_SET_PREDICATE *genCmdCast<MI_SET_PREDICATE *>(void *buffer) {
-    auto pCmd = reinterpret_cast<MI_SET_PREDICATE *>(buffer);
-
-    return MI_SET_PREDICATE::COMMAND_TYPE_MI_COMMAND == pCmd->TheStructure.Common.CommandType &&
-                   MI_SET_PREDICATE::MI_COMMAND_OPCODE_MI_SET_PREDICATE == pCmd->TheStructure.Common.MiCommandOpcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<MI_SET_PREDICATE>(buffer, [](const MI_SET_PREDICATE &header) {
+        return MI_SET_PREDICATE::COMMAND_TYPE_MI_COMMAND == header.TheStructure.Common.CommandType &&
+               MI_SET_PREDICATE::MI_COMMAND_OPCODE_MI_SET_PREDICATE == header.TheStructure.Common.MiCommandOpcode;
+    });
 }
 
 template <class T>

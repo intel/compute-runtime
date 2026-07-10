@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,50 +16,42 @@ using MEDIA_VFE_STATE                 = GenStruct::MEDIA_VFE_STATE;
 
 template <>
 GPGPU_WALKER *genCmdCast<GPGPU_WALKER *>(void *buffer) {
-    auto pCmd = reinterpret_cast<GPGPU_WALKER *>(buffer);
-
-    return GPGPU_WALKER::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   GPGPU_WALKER::PIPELINE_MEDIA == pCmd->TheStructure.Common.Pipeline &&
-                   GPGPU_WALKER::MEDIA_COMMAND_OPCODE_GPGPU_WALKER == pCmd->TheStructure.Common.MediaCommandOpcode &&
-                   GPGPU_WALKER::SUBOPCODE_GPGPU_WALKER_SUBOP == pCmd->TheStructure.Common.Subopcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<GPGPU_WALKER>(buffer, [](const GPGPU_WALKER &header) {
+        return GPGPU_WALKER::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
+               GPGPU_WALKER::PIPELINE_MEDIA == header.TheStructure.Common.Pipeline &&
+               GPGPU_WALKER::MEDIA_COMMAND_OPCODE_GPGPU_WALKER == header.TheStructure.Common.MediaCommandOpcode &&
+               GPGPU_WALKER::SUBOPCODE_GPGPU_WALKER_SUBOP == header.TheStructure.Common.Subopcode;
+    });
 }
 
 template <>
 MEDIA_INTERFACE_DESCRIPTOR_LOAD *genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(void *buffer) {
-    auto pCmd = reinterpret_cast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(buffer);
-
-    return MEDIA_INTERFACE_DESCRIPTOR_LOAD::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   MEDIA_INTERFACE_DESCRIPTOR_LOAD::PIPELINE_MEDIA == pCmd->TheStructure.Common.Pipeline &&
-                   MEDIA_INTERFACE_DESCRIPTOR_LOAD::MEDIA_COMMAND_OPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD == pCmd->TheStructure.Common.MediaCommandOpcode &&
-                   MEDIA_INTERFACE_DESCRIPTOR_LOAD::SUBOPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD_SUBOP == pCmd->TheStructure.Common.Subopcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<MEDIA_INTERFACE_DESCRIPTOR_LOAD>(buffer, [](const MEDIA_INTERFACE_DESCRIPTOR_LOAD &header) {
+        return MEDIA_INTERFACE_DESCRIPTOR_LOAD::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
+               MEDIA_INTERFACE_DESCRIPTOR_LOAD::PIPELINE_MEDIA == header.TheStructure.Common.Pipeline &&
+               MEDIA_INTERFACE_DESCRIPTOR_LOAD::MEDIA_COMMAND_OPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD == header.TheStructure.Common.MediaCommandOpcode &&
+               MEDIA_INTERFACE_DESCRIPTOR_LOAD::SUBOPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD_SUBOP == header.TheStructure.Common.Subopcode;
+    });
 }
 
 template <>
 MEDIA_VFE_STATE *genCmdCast<MEDIA_VFE_STATE *>(void *buffer) {
-    auto pCmd = reinterpret_cast<MEDIA_VFE_STATE *>(buffer);
-
-    return MEDIA_VFE_STATE::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   MEDIA_VFE_STATE::PIPELINE_MEDIA == pCmd->TheStructure.Common.Pipeline &&
-                   MEDIA_VFE_STATE::MEDIA_COMMAND_OPCODE_MEDIA_VFE_STATE == pCmd->TheStructure.Common.MediaCommandOpcode &&
-                   MEDIA_VFE_STATE::SUBOPCODE_MEDIA_VFE_STATE_SUBOP == pCmd->TheStructure.Common.Subopcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<MEDIA_VFE_STATE>(buffer, [](const MEDIA_VFE_STATE &header) {
+        return MEDIA_VFE_STATE::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
+               MEDIA_VFE_STATE::PIPELINE_MEDIA == header.TheStructure.Common.Pipeline &&
+               MEDIA_VFE_STATE::MEDIA_COMMAND_OPCODE_MEDIA_VFE_STATE == header.TheStructure.Common.MediaCommandOpcode &&
+               MEDIA_VFE_STATE::SUBOPCODE_MEDIA_VFE_STATE_SUBOP == header.TheStructure.Common.Subopcode;
+    });
 }
 
 template <>
 MEDIA_STATE_FLUSH *genCmdCast<MEDIA_STATE_FLUSH *>(void *buffer) {
-    auto pCmd = reinterpret_cast<MEDIA_STATE_FLUSH *>(buffer);
-
-    return MEDIA_STATE_FLUSH::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   MEDIA_STATE_FLUSH::PIPELINE_MEDIA == pCmd->TheStructure.Common.Pipeline &&
-                   MEDIA_STATE_FLUSH::MEDIA_COMMAND_OPCODE_MEDIA_STATE_FLUSH == pCmd->TheStructure.Common.MediaCommandOpcode &&
-                   MEDIA_STATE_FLUSH::SUBOPCODE_MEDIA_STATE_FLUSH_SUBOP == pCmd->TheStructure.Common.Subopcode
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<MEDIA_STATE_FLUSH>(buffer, [](const MEDIA_STATE_FLUSH &header) {
+        return MEDIA_STATE_FLUSH::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
+               MEDIA_STATE_FLUSH::PIPELINE_MEDIA == header.TheStructure.Common.Pipeline &&
+               MEDIA_STATE_FLUSH::MEDIA_COMMAND_OPCODE_MEDIA_STATE_FLUSH == header.TheStructure.Common.MediaCommandOpcode &&
+               MEDIA_STATE_FLUSH::SUBOPCODE_MEDIA_STATE_FLUSH_SUBOP == header.TheStructure.Common.Subopcode;
+    });
 }
 
 template <class T>

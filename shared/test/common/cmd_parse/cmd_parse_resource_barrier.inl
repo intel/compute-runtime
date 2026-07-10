@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,11 +12,9 @@ using RESOURCE_BARRIER = GenStruct::RESOURCE_BARRIER;
 
 template <>
 RESOURCE_BARRIER *genCmdCast<RESOURCE_BARRIER *>(void *buffer) {
-    auto pCmd = reinterpret_cast<RESOURCE_BARRIER *>(buffer);
-
-    return (0x3 == pCmd->TheStructure.Common.DwordLength &&
-            0x3 == pCmd->TheStructure.Common.Opcode &&
-            0x5 == pCmd->TheStructure.Common.CommandType)
-               ? pCmd
-               : nullptr;
+    return matchCommandHeader<RESOURCE_BARRIER>(buffer, [](const RESOURCE_BARRIER &header) {
+        return 0x3 == header.TheStructure.Common.DwordLength &&
+               0x3 == header.TheStructure.Common.Opcode &&
+               0x5 == header.TheStructure.Common.CommandType;
+    });
 }
