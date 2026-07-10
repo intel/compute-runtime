@@ -956,10 +956,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCalli
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         uint32_t limit = 0u;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerGetLimitsExp(handle, &limit));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt2(handle, &limit));
 
         uint32_t testLimit = 100u;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerSetLimitsExp(handle, testLimit));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt2(handle, testLimit));
     }
 }
 
@@ -1163,10 +1163,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenPowerHandlesWhenGetAndSetLimitsEx
 
         if (extProperties.domain == ZES_POWER_DOMAIN_GPU || extProperties.domain == ZES_POWER_DOMAIN_MEMORY) {
             uint32_t testLimit = 0;
-            EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesIntelPowerGetLimitsExp(handle, &testLimit));
+            EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesPowerGetLimitsExt2(handle, &testLimit));
 
             testLimit = 100u;
-            EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesIntelPowerSetLimitsExp(handle, testLimit));
+            EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesPowerSetLimitsExt2(handle, testLimit));
         }
     }
 }
@@ -1201,7 +1201,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
 
         uint32_t instantPower = 0u;
         uint32_t averagePower = 0u;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetPowerUsageExp(handle, &instantPower, &averagePower));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetUsage(handle, &instantPower, &averagePower));
     }
 }
 

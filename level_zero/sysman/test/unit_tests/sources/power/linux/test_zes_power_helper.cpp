@@ -215,7 +215,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
     }
 }
 
-TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenCallingGetLimitsExpForSubdevicesThenUnsupportedFeatureErrorIsReturned) {
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenCallingGetLimitsExt2ForSubdevicesThenUnsupportedFeatureErrorIsReturned) {
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
 
     for (auto handle : handles) {
@@ -223,12 +223,12 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenCalli
         zes_power_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         if (properties.onSubdevice) {
-            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerGetLimitsExp(handle, &getLimit));
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt2(handle, &getLimit));
         }
     }
 }
 
-TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenCallingSetLimitsExpForSubdevicesThenUnsupportedFeatureErrorIsReturned) {
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenCallingSetLimitsExt2ForSubdevicesThenUnsupportedFeatureErrorIsReturned) {
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
 
     for (auto handle : handles) {
@@ -236,7 +236,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenCalli
         zes_power_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         if (properties.onSubdevice) {
-            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerSetLimitsExp(handle, setLimit));
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt2(handle, setLimit));
         }
     }
 }

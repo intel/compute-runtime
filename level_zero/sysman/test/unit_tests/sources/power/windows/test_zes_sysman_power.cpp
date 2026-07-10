@@ -645,34 +645,34 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetPowerLimitsE
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetPowerLimitsExpThenUnsupportedFeatureErrorIsReturned) {
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetPowerLimitsExt2ThenUnsupportedFeatureErrorIsReturned) {
     init(false); // Disable Set calls
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         uint32_t limit = 0u;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerGetLimitsExp(handle, &limit));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt2(handle, &limit));
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingSetPowerLimitsExpThenUnsupportedFeatureErrorIsReturned) {
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingSetPowerLimitsExt2ThenUnsupportedFeatureErrorIsReturned) {
     init(true); // Enable Set calls
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         uint32_t limit = 100u;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelPowerSetLimitsExp(handle, limit));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt2(handle, limit));
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetPowerUsageExpThenUnsupportedFeatureErrorIsReturned) {
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetPowerUsageThenUnsupportedFeatureErrorIsReturned) {
     init(false); // Disable Set calls
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         uint32_t instantPower = 0u;
         uint32_t averagePower = 0u;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetPowerUsageExp(handle, &instantPower, &averagePower));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetUsage(handle, &instantPower, &averagePower));
     }
 }
 

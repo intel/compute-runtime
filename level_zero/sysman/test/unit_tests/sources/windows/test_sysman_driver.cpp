@@ -69,14 +69,7 @@ bool verifyExtensionDefinition(std::vector<zes_driver_extension_properties_t> &e
         {ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME, ZES_INTEL_MEM_PAGE_OFFLINE_PROPERTIES_EXP_VERSION_CURRENT},
         {ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTY_NAME, ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES_VERSION_CURRENT},
         {ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME, ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_VERSION_CURRENT},
-        {ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME, ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_VERSION_CURRENT},
-        {ZES_INTEL_POWER_LIMITS_EXP_NAME, ZES_INTEL_POWER_LIMITS_EXP_VERSION_CURRENT},
-        {ZES_INTEL_POWER_USAGE_EXP_NAME, ZES_INTEL_POWER_USAGE_EXP_VERSION_CURRENT},
-        {ZES_INTEL_RAS_ERROR_THRESHOLD_MANAGEMENT_EXTENSION_NAME, ZES_INTEL_RAS_CONFIG_EXP_VERSION_CURRENT},
-        {ZES_INTEL_RAS_GET_CONFIG_EXP_NAME, ZES_INTEL_RAS_GET_CONFIG_EXP_VERSION_CURRENT},
-        {ZES_INTEL_RAS_GET_SUPPORTED_CATEGORIES_EXP_NAME, ZES_INTEL_RAS_GET_SUPPORTED_CATEGORIES_EXP_VERSION_CURRENT},
-        {ZES_INTEL_RAS_GET_STATE_EXP2_NAME, ZES_INTEL_RAS_GET_STATE_EXP2_VERSION_CURRENT},
-        {ZES_INTEL_RAS_SET_CONFIG_EXP_NAME, ZES_INTEL_RAS_SET_CONFIG_EXP_VERSION_CURRENT}};
+        {ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME, ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_VERSION_CURRENT}};
     for (uint32_t i = 0; i < count; i++) {
         if (extensionsReturned[i].name != supportedExtensions[i].first) {
             return false;
@@ -142,27 +135,6 @@ TEST_F(SysmanDriverHandleTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDeviceMemoryGetPageOfflineStateExp", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelRasGetSupportedCategoriesExp", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelRasGetConfigExp", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelRasSetConfigExp", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelRasGetStateExp2", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelPowerGetLimitsExp", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelPowerSetLimitsExp", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDeviceGetPowerUsageExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDeviceGetHealthExp", &funPtr);
