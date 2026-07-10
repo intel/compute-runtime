@@ -497,6 +497,7 @@ uint32_t CommandListCoreFamily<gfxCoreFamily>::getIohSizeForPrefetch(const Kerne
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 std::pair<NEO::GraphicsAllocation *, size_t> CommandListCoreFamily<gfxCoreFamily>::getIohAllocationAndOffsetForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace, bool isThreadDataMapAllowed) {
+    auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(kernel, reserveExtraSpace), GfxFamily::indirectDataAlignment);
     if (isThreadDataMapAllowed) {
         uint32_t inlineDataProgrammingOffset = 0u;
         if (NEO::EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelDescriptor())) {
@@ -511,7 +512,6 @@ std::pair<NEO::GraphicsAllocation *, size_t> CommandListCoreFamily<gfxCoreFamily
             return {cacheStorage->getGraphicsAllocation(), static_cast<size_t>(*cachedIohOffset - cacheStorage->getHeapGpuStartOffset())};
         }
     }
-    auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(kernel, reserveExtraSpace), GfxFamily::indirectDataAlignment);
     return {ioh->getGraphicsAllocation(), ioh->getUsed()};
 }
 

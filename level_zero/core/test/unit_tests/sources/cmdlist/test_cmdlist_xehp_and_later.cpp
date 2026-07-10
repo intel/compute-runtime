@@ -3231,6 +3231,42 @@ HWTEST2_F(IOHCacheCommandListTest,
 }
 
 HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledAndCurrentHeapFullWhenGetIohAllocationAndOffsetForPrefetchCalledThenCommonThreadDataExtractedAndCacheHitReturnsThreadDataMapStorageAllocation,
+          IsAtLeastXeCore) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    // Register the kernel's thread data so it becomes the most common thread data in the tracker,
+    // but do not extract it yet - extraction is expected to happen automatically once the heap fills up.
+    const std::span<const uint8_t> crossThreadSpan(kernel.getCrossThreadData(), kernel.getCrossThreadDataSize());
+    const std::span<const uint8_t> perThreadSpan(kernel.getPerThreadData(), kernel.getPerThreadDataSizeForWholeThreadGroup());
+    const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan);
+
+    // Fill the current indirect object heap so the next required allocation forces a new heap.
+    // Allocating a new heap extracts the common thread data into the thread data map, and - thanks to
+    // requesting the heap before probing the cache - that freshly extracted data is available for reuse
+    // within this same call.
+    auto originalIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+    ASSERT_NE(nullptr, originalIoh);
+    originalIoh->getSpace(originalIoh->getAvailableSpace());
+    ASSERT_LT(originalIoh->getAvailableSpace(), kernel.getIndirectSize());
+
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+
+    auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
+    ASSERT_NE(nullptr, cacheStorage);
+    EXPECT_EQ(cacheStorage->getGraphicsAllocation(), iohAllocation);
+    EXPECT_NE(commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation(), iohAllocation);
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
           givenIOHCacheEnabledWhenAppendLaunchKernelThenKernelPatchedBeforeAppendLaunchKernelWithParams,
           IsAtLeastXeHpcCore) {
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
