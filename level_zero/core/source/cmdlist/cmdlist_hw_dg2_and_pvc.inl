@@ -18,7 +18,4 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds,
                                                                       bool workloadPartition, bool copyOperation, bool globalTimestamp) {}
 
-template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled() const { return NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1; }
-
 } // namespace L0

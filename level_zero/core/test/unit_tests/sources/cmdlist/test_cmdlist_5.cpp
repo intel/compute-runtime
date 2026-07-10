@@ -3420,12 +3420,8 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
         prefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->getIndirectSize(), device->getNEODevice()->getRootDeviceEnvironment()) +
                        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->getImmutableData()->getIsaSize(), device->getNEODevice()->getRootDeviceEnvironment());
     }
-    EXPECT_EQ(usedBefore + prefetchSize, cmdListStream.getUsed());
-}
 
-HWTEST2_F(CommandListCreate, givenCmdListWhenCheckingPrefetchEnabledThenReturnTrue, IsAtLeastXe2HpgCore) {
-    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
-    EXPECT_TRUE(commandList.kernelMemoryPrefetchEnabled());
+    EXPECT_EQ(usedBefore + prefetchSize, cmdListStream.getUsed());
 }
 
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndNoSignalEventThenSuccessIsReturned) {
