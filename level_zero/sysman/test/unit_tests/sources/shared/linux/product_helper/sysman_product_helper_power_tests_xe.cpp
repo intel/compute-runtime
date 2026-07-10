@@ -335,7 +335,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
         const uint64_t expectedEnergyCounter = static_cast<uint64_t>(convertU18p14(mockEnergyCounter) * microFactor);
         EXPECT_EQ(expectedEnergyCounter, energyCounter.energy);
 
-        const double timestamp = mockTimestamp / indexToXtalClockFrequencyMap[mockXtalFrequency & 0x2];
+        const double timestamp = mockTimestamp / indexToXtalClockFrequencyMap[mockXtalFrequency & 0x3];
         const uint64_t expectedTimestamp = static_cast<uint64_t>(timestamp);
         EXPECT_EQ(expectedTimestamp, energyCounter.timestamp);
     }
@@ -440,7 +440,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
 
         EXPECT_EQ(expectedEnergyCounter, energyCounter.energy);
 
-        const double timestamp = mockTimestamp / indexToXtalClockFrequencyMap[mockXtalFrequency & 0x2];
+        const double timestamp = mockTimestamp / indexToXtalClockFrequencyMap[mockXtalFrequency & 0x3];
         const uint64_t expectedTimestamp = static_cast<uint64_t>(timestamp);
         EXPECT_EQ(expectedTimestamp, energyCounter.timestamp);
     }

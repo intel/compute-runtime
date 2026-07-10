@@ -1783,7 +1783,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
         return result;
     }
 
-    double timestamp = timestamp64 / indexToXtalClockFrequencyMap[frequency & 0x2];
+    // 0x3 masks the 2-bit XTAL_CLK_FREQUENCY field (register bits [1:0]).
+    double timestamp = timestamp64 / indexToXtalClockFrequencyMap[frequency & 0x3];
     pEnergy->timestamp = static_cast<uint64_t>(timestamp);
 
     return ZE_RESULT_SUCCESS;
