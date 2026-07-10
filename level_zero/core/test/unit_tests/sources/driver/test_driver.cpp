@@ -1384,6 +1384,45 @@ TEST_F(DriverHandleGetIPCPropertiesTest, givenEnableIpcHandleSharingExplicitlyEn
               ipcProperties.flags);
 }
 
+struct MockFabricAccessDriverHandle : public L0::ult::DriverHandle {
+    bool fabricSupported = false;
+    bool isFabricAccessSupported() override { return fabricSupported; }
+    ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) override {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+};
+
+TEST(DriverHandleFabricAccessIPCPropertiesTest, givenNoFabricSupportWhenGetIPCPropertiesCalledThenFabricAccessibleFlagNotSet) {
+    MockFabricAccessDriverHandle driverHandle;
+    driverHandle.enableIpcHandleSharing = true;
+
+    ze_driver_ipc_properties_t ipcProperties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle.getIPCProperties(&ipcProperties));
+    EXPECT_EQ(0u, ipcProperties.flags & ZE_IPC_PROPERTY_FLAG_FABRIC_ACCESSIBLE);
+    EXPECT_EQ(static_cast<uint32_t>(ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL),
+              ipcProperties.flags);
+}
+
+TEST(DriverHandleFabricAccessIPCPropertiesTest, givenFabricSupportWhenGetIPCPropertiesCalledThenFabricAccessibleFlagSet) {
+    MockFabricAccessDriverHandle driverHandle;
+    driverHandle.enableIpcHandleSharing = true;
+    driverHandle.fabricSupported = true;
+
+    ze_driver_ipc_properties_t ipcProperties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle.getIPCProperties(&ipcProperties));
+    EXPECT_NE(0u, ipcProperties.flags & ZE_IPC_PROPERTY_FLAG_FABRIC_ACCESSIBLE);
+}
+
+TEST(DriverHandleFabricAccessIPCPropertiesTest, givenFabricSupportButIpcHandleSharingDisabledWhenGetIPCPropertiesCalledThenFlagsAreZero) {
+    MockFabricAccessDriverHandle driverHandle;
+    driverHandle.enableIpcHandleSharing = false;
+    driverHandle.fabricSupported = true;
+
+    ze_driver_ipc_properties_t ipcProperties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle.getIPCProperties(&ipcProperties));
+    EXPECT_EQ(0u, ipcProperties.flags);
+}
+
 TEST_F(DriverHandleGetIPCPropertiesTest, givenMultipleContextsCreatedWhenGetIPCPropertiesCalledThenFlagsRemainConsistent) {
     // Test that creating multiple contexts doesn't change the IPC properties
     // Since Context::isIPCHandleSharingSupported() is static (platform capability),

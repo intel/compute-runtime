@@ -19,6 +19,10 @@ void IpcSocketServerDeleter::operator()(IpcSocketServer *ptr) const {
 
 namespace L0 {
 
+bool DriverHandle::isFabricAccessSupported() {
+    return false;
+}
+
 bool DriverHandle::initializeIpcSocketServer() {
     return false;
 }

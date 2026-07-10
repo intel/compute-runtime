@@ -114,6 +114,8 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
                                                bool decompressP2PAllocation);
     bool peerRequiresReservedHandleData(Device *srcDevice, Device *peerDevice);
 
+    MOCKABLE_VIRTUAL bool isFabricAccessSupported();
+
     NEO::GraphicsAllocation *getCounterPeerAllocation(Device *device, NEO::GraphicsAllocation &graphicsAllocation);
     void initializeVertexes();
     MOCKABLE_VIRTUAL ze_result_t fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phDevices);

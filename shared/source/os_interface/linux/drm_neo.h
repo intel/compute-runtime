@@ -219,6 +219,9 @@ class Drm : public DriverModel {
         return drmFabric.get();
     }
 
+    MOCKABLE_VIRTUAL bool isFabricAccessSupported();
+    MOCKABLE_VIRTUAL bool isIafFabricAccessSupported();
+
     const RootDeviceEnvironment &getRootDeviceEnvironment() const {
         return rootDeviceEnvironment;
     }

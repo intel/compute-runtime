@@ -1285,6 +1285,20 @@ void Drm::setupDrmFabric() {
     }
 }
 
+bool Drm::isIafFabricAccessSupported() {
+    // Fabric exposed through IAF (XeLink)
+    constexpr const char *iafDirectory = "i915.iaf.";
+    constexpr const char *iafDirectoryLegacy = "iaf.";
+    const auto entries = Directory::getFiles(getSysFsPciPath() + "/device");
+    for (const auto &entry : entries) {
+        if (entry.find(iafDirectory) != std::string::npos ||
+            entry.find(iafDirectoryLegacy) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Drm::queryTopology(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData) {
     UNRECOVERABLE_IF(!systemInfoQueried);
     UNRECOVERABLE_IF(!engineInfoQueried);

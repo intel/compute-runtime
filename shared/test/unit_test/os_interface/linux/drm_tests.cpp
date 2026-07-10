@@ -2964,6 +2964,59 @@ TEST(DrmTest, givenDrmWhenSetupDrmFabricCalledTwiceThenDoesNotRecreate) {
     EXPECT_EQ(firstFabric, secondFabric);
 }
 
+TEST(DrmTest, givenIafDirectoryEntryWhenIsIafFabricAccessSupportedThenReturnsTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.mockSysFsPciPath = "/sys/class/drm/cardIaf";
+
+    NEO::directoryFilesMap["/sys/class/drm/cardIaf/device"] = {
+        "/sys/class/drm/cardIaf/device/unknown",
+        "/sys/class/drm/cardIaf/device/i915.iaf.0"};
+
+    EXPECT_TRUE(drm.isIafFabricAccessSupported());
+
+    NEO::directoryFilesMap.clear();
+}
+
+TEST(DrmTest, givenLegacyIafDirectoryEntryWhenIsIafFabricAccessSupportedThenReturnsTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.mockSysFsPciPath = "/sys/class/drm/cardIaf";
+
+    NEO::directoryFilesMap["/sys/class/drm/cardIaf/device"] = {
+        "/sys/class/drm/cardIaf/device/iaf.0"};
+
+    EXPECT_TRUE(drm.isIafFabricAccessSupported());
+
+    NEO::directoryFilesMap.clear();
+}
+
+TEST(DrmTest, givenNoIafDirectoryEntryWhenIsIafFabricAccessSupportedThenReturnsFalse) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.mockSysFsPciPath = "/sys/class/drm/cardIaf";
+
+    NEO::directoryFilesMap["/sys/class/drm/cardIaf/device"] = {
+        "/sys/class/drm/cardIaf/device/unknown",
+        "/sys/class/drm/cardIaf/device/config"};
+
+    EXPECT_FALSE(drm.isIafFabricAccessSupported());
+
+    NEO::directoryFilesMap.clear();
+}
+
+TEST(DrmTest, givenNoDeviceDirectoryEntriesWhenIsIafFabricAccessSupportedThenReturnsFalse) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.mockSysFsPciPath = "/sys/class/drm/cardIaf";
+
+    NEO::directoryFilesMap["/sys/class/drm/cardIaf/device"] = {};
+
+    EXPECT_FALSE(drm.isIafFabricAccessSupported());
+
+    NEO::directoryFilesMap.clear();
+}
+
 TEST(DrmTest, givenCallToCheckNoVmOvercommitFlagThenNothingDone) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);

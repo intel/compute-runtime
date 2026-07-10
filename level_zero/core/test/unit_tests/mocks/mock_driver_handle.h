@@ -52,6 +52,7 @@ struct Mock<DriverHandle> : public DriverHandle {
         return getIPCPropertiesResult;
     }
 
+    ADDMETHOD_NOBASE(isFabricAccessSupported, bool, false, ())
     ADDMETHOD_NOBASE(importExternalPointer, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr, size_t size))
     ADDMETHOD_NOBASE(releaseImportedPointer, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr))
     ADDMETHOD_NOBASE(getHostPointerBaseAddress, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr, void **baseAddress))

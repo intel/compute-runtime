@@ -8,8 +8,13 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/driver_model_type.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ipc_socket_server.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/os_interface.h"
+
+#include "level_zero/core/source/device/device.h"
 
 namespace NEO {
 
@@ -20,6 +25,20 @@ void IpcSocketServerDeleter::operator()(IpcSocketServer *ptr) const {
 } // namespace NEO
 
 namespace L0 {
+
+bool DriverHandle::isFabricAccessSupported() {
+    if (this->devices.empty() || this->devices.front() == nullptr) {
+        return false;
+    }
+
+    auto *osInterface = this->devices.front()->getOsInterface();
+    if (osInterface == nullptr ||
+        osInterface->getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
+        return false;
+    }
+
+    return osInterface->getDriverModel()->as<NEO::Drm>()->isFabricAccessSupported();
+}
 
 bool DriverHandle::initializeIpcSocketServer() {
     std::lock_guard<std::mutex> lock(ipcSocketServerMutex);

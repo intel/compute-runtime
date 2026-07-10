@@ -14,6 +14,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
@@ -445,6 +446,101 @@ TEST_F(DriverQueryPeerTestFail, whenQueryingPeerStatsWithFabricAndIoctlFailsThen
 
     delete driverHandle;
 
+    NEO::directoryFilesMap.clear();
+}
+
+using DriverHandleFabricAccessTest = DriverQueryPeerTest;
+
+TEST(DriverHandleFabricAccessStandaloneTest, givenDriverHandleWithoutDevicesWhenIsFabricAccessSupportedThenReturnsFalse) {
+    DriverHandle driverHandle;
+
+    EXPECT_FALSE(driverHandle.isFabricAccessSupported());
+}
+
+TEST_F(DriverHandleFabricAccessTest, givenDrmDeviceWithIafFabricWhenIsFabricAccessSupportedThenReturnsTrue) {
+    NEO::directoryFilesMap.insert({"/sys/class/drm/card1/device", {"i915.iaf.0"}});
+
+    DriverHandle *driverHandle = new DriverHandle;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    EXPECT_TRUE(driverHandle->isFabricAccessSupported());
+
+    delete driverHandle;
+    NEO::directoryFilesMap.clear();
+}
+
+TEST_F(DriverHandleFabricAccessTest, givenDrmDeviceWithoutFabricWhenIsFabricAccessSupportedThenReturnsFalse) {
+    NEO::directoryFilesMap.insert({"/sys/class/drm/card1/device", {"unknown"}});
+
+    DriverHandle *driverHandle = new DriverHandle;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    EXPECT_FALSE(driverHandle->isFabricAccessSupported());
+
+    delete driverHandle;
+    NEO::directoryFilesMap.clear();
+}
+
+TEST_F(DriverHandleFabricAccessTest, givenDeviceWithoutOsInterfaceWhenIsFabricAccessSupportedThenReturnsFalse) {
+    DriverHandle *driverHandle = new DriverHandle;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    std::vector<std::unique_ptr<NEO::OSInterface>> savedOsInterfaces;
+    for (auto *device : driverHandle->devices) {
+        auto rootDeviceIndex = device->getRootDeviceIndex();
+        auto &osInterfaceRef = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->osInterface;
+        savedOsInterfaces.push_back(std::move(osInterfaceRef));
+    }
+
+    EXPECT_FALSE(driverHandle->isFabricAccessSupported());
+
+    size_t i = 0;
+    for (auto *device : driverHandle->devices) {
+        auto rootDeviceIndex = device->getRootDeviceIndex();
+        device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::move(savedOsInterfaces[i++]);
+    }
+
+    delete driverHandle;
+}
+
+TEST_F(DriverHandleFabricAccessTest, givenFirstDeviceIsNullWhenIsFabricAccessSupportedThenReturnsFalse) {
+    DriverHandle *driverHandle = new DriverHandle;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    auto savedFirstDevice = driverHandle->devices.front();
+    driverHandle->devices.front() = nullptr;
+
+    EXPECT_FALSE(driverHandle->isFabricAccessSupported());
+
+    driverHandle->devices.front() = savedFirstDevice;
+
+    delete driverHandle;
+}
+
+TEST_F(DriverHandleFabricAccessTest, givenNonDrmDriverModelWhenIsFabricAccessSupportedThenReturnsFalse) {
+    NEO::directoryFilesMap.insert({"/sys/class/drm/card1/device", {"i915.iaf.0"}});
+
+    DriverHandle *driverHandle = new DriverHandle;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    std::vector<std::unique_ptr<NEO::OSInterface>> savedOsInterfaces;
+    for (auto *device : driverHandle->devices) {
+        auto rootDeviceIndex = device->getRootDeviceIndex();
+        auto &osInterfaceRef = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->osInterface;
+        savedOsInterfaces.push_back(std::move(osInterfaceRef));
+        osInterfaceRef = std::make_unique<NEO::OSInterface>();
+        osInterfaceRef->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    }
+
+    EXPECT_FALSE(driverHandle->isFabricAccessSupported());
+
+    size_t i = 0;
+    for (auto *device : driverHandle->devices) {
+        auto rootDeviceIndex = device->getRootDeviceIndex();
+        device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::move(savedOsInterfaces[i++]);
+    }
+
+    delete driverHandle;
     NEO::directoryFilesMap.clear();
 }
 

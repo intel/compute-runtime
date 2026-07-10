@@ -16,6 +16,11 @@
 
 #include <algorithm>
 
+TEST_F(ProductConfigHelperTests, givenAotPlatformsWhenGettingCompatibilityMappingAndRtlIdAcronymsThenGlobalContainersAreReturned) {
+    EXPECT_EQ(&AOT::compatibilityMapping, &AOT::getCompatibilityMapping());
+    EXPECT_EQ(&AOT::rtlIdAcronyms, &AOT::getRtlIdAcronyms());
+}
+
 TEST_F(ProductConfigHelperTests, givenFamilyEnumWhenHelperSearchForAMatchThenCorrespondingAcronymIsReturned) {
     for (const auto &[acronym, value] : AOT::familyAcronyms) {
         EXPECT_EQ(ProductConfigHelper::getAcronymFromAFamily(value), acronym);
