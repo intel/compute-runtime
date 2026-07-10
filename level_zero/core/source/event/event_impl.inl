@@ -142,6 +142,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         .importedIpcPool = eventPool->getImportedIpcPool(),
         .ipcPool = eventPool->isIpcPoolFlagSet(),
         .externalEvent = false,
+        .hostVisibleEventPoolAllocation = !eventPool->isEventPoolDeviceAllocationFlagSet(),
     };
 
     if (eventPool->getCounterBasedFlags() != 0) {
@@ -434,8 +435,9 @@ NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t t
     }
 
     constexpr auto eventPacketWidth = sizeof(TagSizeT) == sizeof(uint64_t) ? NEO::UserFenceValueWidth::u64 : NEO::UserFenceValueWidth::u32;
-    constexpr auto infiniteTimeout = int64_t{-1};
     const bool packetUserFenceWaitSupported = (csr->getActivePartitions() == 1u);
+
+    const int64_t packetWaitTimeout = NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWaitTimeoutNanoseconds.get();
 
     auto waitForPacket = [&](const void *queryAddress) -> bool {
         auto typedAddress = static_cast<const TagSizeT *>(queryAddress);
@@ -445,7 +447,7 @@ NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t t
         }
 
         return csr->waitUserFence(NEO::UserFenceWaitOperation::notEqual, static_cast<uint64_t>(clearedValue), castToUint64(typedAddress), eventPacketWidth,
-                                  infiniteTimeout, false, this->externalInterruptId, getAllocation(this->device), nullptr);
+                                  packetWaitTimeout, true, this->externalInterruptId, getAllocation(this->device), nullptr);
     };
 
     if (this->heapfullCbEventWithProfiling && inOrderExecHelper.hasTimestampNodes()) {
@@ -486,7 +488,7 @@ NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t t
 
         auto waitAddress = castToUint64(ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset));
         auto *hostAlloc = inOrderExecHelper.isHostStorageDuplicated() ? inOrderExecHelper.getHostCounterAllocation() : inOrderExecHelper.getDeviceCounterAllocation();
-        if (!csr->waitUserFence(static_cast<TaskCountType>(getInOrderExecBaseSignalValue()), waitAddress, infiniteTimeout, false, this->externalInterruptId, hostAlloc, nullptr)) {
+        if (!csr->waitUserFence(static_cast<TaskCountType>(getInOrderExecBaseSignalValue()), waitAddress, packetWaitTimeout, true, this->externalInterruptId, hostAlloc, nullptr)) {
             return NEO::WaitStatus::notReady;
         }
 
@@ -971,7 +973,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                                           NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get() &&
                                           (timeout == std::numeric_limits<uint64_t>::max()) &&
                                           EventHostSynchronize::isDrm(*csrs[0]) &&
-                                          csrs[0]->waitUserFenceSupported(nullptr);
+                                          csrs[0]->waitUserFenceSupported(nullptr) &&
+                                          this->isSignalWithUserInterrupt() &&
+                                          (this->metricNotification == nullptr);
     const auto kmdWaitInitialPollUs = std::max<int64_t>(NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get(), 0);
     TaskCountType taskCountToWaitForCacheFlush = 0;
     bool taskCountWaitedForCacheFlush = false;

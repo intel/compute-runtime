@@ -49,6 +49,47 @@ HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenM
     EXPECT_EQ(baseAddr, cmd->getAddress());
 }
 
+HWTEST_F(CommandListAppendSignalEvent, GivenSignalWithUserInterruptEnabledWhenAppendingSignalEventThenMiUserInterruptIsGenerated) {
+    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+    auto result = commandList->appendSignalEvent(event->toHandle(), false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore),
+            commandList->getCmdContainer().getCommandStream()->getUsed() - usedSpaceBefore));
+        EXPECT_EQ(cmdList.end(), find<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end()));
+    }
+
+    // The generic interrupt mode should not cause a standalone MI_USER_INTERRUPT on this
+    // path - only the dedicated Linux KMD-wait flag does.
+    event->enableInterruptMode();
+    usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+    result = commandList->appendSignalEvent(event->toHandle(), false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore),
+            commandList->getCmdContainer().getCommandStream()->getUsed() - usedSpaceBefore));
+        EXPECT_EQ(cmdList.end(), find<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end()));
+    }
+
+    event->setSignalWithUserInterrupt(true);
+    usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+    result = commandList->appendSignalEvent(event->toHandle(), false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore),
+            commandList->getCmdContainer().getCommandStream()->getUsed() - usedSpaceBefore));
+        EXPECT_NE(cmdList.end(), find<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end()));
+    }
+}
+
 HWTEST_F(CommandListAppendSignalEvent, givenCmdlistWhenAppendingSignalEventThenEventPoolGraphicsAllocationIsAddedToResidencyContainer) {
     auto result = commandList->appendSignalEvent(event->toHandle(), false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

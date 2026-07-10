@@ -1255,6 +1255,13 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
         enableInterruptMode();
     }
 
+    const bool userFenceNotEqualSupported = !csrs.empty() && csrs[0]->isWaitUserFenceNotEqualSupported();
+    const bool hostVisibleForInterrupt = eventDescriptor.hostVisibleEventPoolAllocation ||
+                                         (this->isCounterBased() && this->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+    setSignalWithUserInterrupt(NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get() &&
+                               hostVisibleForInterrupt &&
+                               userFenceNotEqualSupported);
+
     if (externalInterruptWait || (interruptMode && kmdWaitMode)) {
         enableKmdWaitMode();
     }

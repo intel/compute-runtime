@@ -42,6 +42,14 @@ TEST_F(IoctlHelperXeTest, whenGettingIfImmediateVmBindIsRequiredThenTrueIsReturn
     EXPECT_TRUE(ioctlHelper.isImmediateVmBindRequired());
 }
 
+TEST_F(IoctlHelperXeTest, whenGettingIfWaitUserFenceNotEqualSupportedThenTrueIsReturned) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    IoctlHelperXe ioctlHelper{*drm};
+
+    EXPECT_TRUE(ioctlHelper.isWaitUserFenceNotEqualSupported());
+}
+
 TEST_F(IoctlHelperXeTest, whenGettingIfSmallBarConfigIsAllowedThenFalseIsReturned) {
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};

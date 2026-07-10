@@ -116,6 +116,57 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAll
     ASSERT_FALSE(commandList->hasIndirectAllocationsAllowed());
 }
 
+HWTEST_F(CommandListAppendLaunchKernel, GivenSignalWithUserInterruptEventWhenAppendingLaunchKernelThenMiUserInterruptIsGenerated) {
+    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+    createKernel();
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    ze_event_pool_desc_t eventPoolDesc{};
+    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    auto eventPool = std::unique_ptr<::L0::EventPool>(::L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_event_desc_t eventDesc{};
+    eventDesc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    auto event = std::unique_ptr<::L0::Event>(::L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_group_count_t groupCount{1, 1, 1};
+
+    auto countUserInterrupts = [&](L0::CommandList *cmdList) {
+        auto &commandContainer = cmdList->getCmdContainer();
+        GenCmdList parsedCmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            parsedCmdList, commandContainer.getCommandStream()->getCpuBase(), commandContainer.getCommandStream()->getUsed()));
+        return findAll<MI_USER_INTERRUPT *>(parsedCmdList.begin(), parsedCmdList.end()).size();
+    };
+
+    {
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        CmdListKernelLaunchParams launchParams = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));
+        // Without the dedicated flag no standalone MI_USER_INTERRUPT must be generated.
+        EXPECT_EQ(0u, countUserInterrupts(commandList.get()));
+    }
+
+    event->setSignalWithUserInterrupt(true);
+
+    {
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        CmdListKernelLaunchParams launchParams = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));
+        // A signal-with-user-interrupt event must emit exactly one standalone MI_USER_INTERRUPT to wake the KMD wait.
+        EXPECT_EQ(1u, countUserInterrupts(commandList.get()));
+    }
+}
+
 using IsSbaRequiredAndAtLeastXe3Core = IsSbaRequiredAnd<IsAtLeastXe3Core>;
 HWTEST2_F(CommandListAppendLaunchKernel, GivenModuleWithL1CachePolicyOverrideWhenAppendingKernelThenStateBaseAddressIsProgrammedWithModulePolicy, IsSbaRequiredAndAtLeastXe3Core) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

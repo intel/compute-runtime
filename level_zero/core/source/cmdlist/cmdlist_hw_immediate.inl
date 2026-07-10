@@ -2031,7 +2031,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
 
         if (isLastTransfer && !isSingleTransfer) {
             this->appendEventForProfiling(event, nullptr, false, false, false, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
-            if (event && event->isInterruptModeEnabled()) {
+            if (event && (event->isInterruptModeEnabled() || event->isSignalWithUserInterrupt())) {
                 NEO::EncodeUserInterrupt<GfxFamily>::encode(*this->commandContainer.getCommandStream());
             }
             if (Event::isAggregatedEvent(event)) {

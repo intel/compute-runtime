@@ -459,7 +459,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                 syncCmdBuffer = &patch.pDestination;
             }
             appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, launchParams.outListCommands, false, true, launchParams.omitAddingEventResidency, false);
-            if (compactEvent->isInterruptModeEnabled()) {
+            if (compactEvent->isInterruptModeEnabled() || (compactEvent->isSignalWithUserInterrupt() && !compactEvent->getAllocation(this->device))) {
                 NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
             }
         } else if (event) {
@@ -467,6 +467,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
             if (!launchParams.isKernelSplitOperation) {
                 dispatchEventRemainingPacketsPostSyncOperation(event, false);
+            }
+            if (event->isSignalWithUserInterrupt() && !launchParams.isKernelSplitOperation) {
+                NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
             }
         }
     }

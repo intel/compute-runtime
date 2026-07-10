@@ -55,6 +55,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     SubmissionStatus printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
 
     bool waitUserFenceSupported(SyncFence *syncFence) override { return isUserFenceWaitActive(); }
+    bool isWaitUserFenceNotEqualSupported() override;
     bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *fence) override;
     bool waitUserFence(UserFenceWaitOperation operation, uint64_t waitValue, uint64_t hostAddress, UserFenceValueWidth dataWidth, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *fence) override;
 

@@ -140,6 +140,7 @@ class IoctlHelper {
         }
         return waitUserFence(ctxId, address, value, dataWidth, timeout, flags, userInterrupt, externalInterruptId, allocForInterruptWait);
     }
+    virtual bool isWaitUserFenceNotEqualSupported() const { return false; }
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getAtomicAccess(AtomicAccessMode mode) = 0;
     virtual uint64_t getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp, const std::vector<MemoryRegion> &memoryInfo) = 0;

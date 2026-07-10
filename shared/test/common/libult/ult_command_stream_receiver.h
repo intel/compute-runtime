@@ -637,6 +637,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
 
     bool waitUserFenceSupported(SyncFence *syncFence) override { return isUserFenceWaitSupported; }
 
+    bool isWaitUserFenceNotEqualSupported() override { return isWaitUserFenceNotEqualSupportedValue; }
+
     bool getAcLineConnected(bool updateStatus) const override {
         getAcLineConnectedCalled++;
         getAcLineConnectedLastUpdateStatus = updateStatus;
@@ -791,6 +793,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool stopDirectSubmissionCalled = false;
     bool stopDirectSubmissionCalledBlocking = false;
     bool isUserFenceWaitSupported = false;
+    bool isWaitUserFenceNotEqualSupportedValue = false;
     bool getAcLineConnectedCallBase = true;
     mutable uint32_t getAcLineConnectedCalled = 0u;
     mutable bool getAcLineConnectedLastUpdateStatus = false;

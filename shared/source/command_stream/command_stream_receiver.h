@@ -574,6 +574,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool isRecyclingTagForHeapStorageRequired() const { return heapStorageRequiresRecyclingTag; }
 
     virtual bool waitUserFenceSupported(SyncFence *syncFence) { return false; }
+    virtual bool isWaitUserFenceNotEqualSupported() { return false; }
     virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *userFence) { return false; }
     virtual bool waitUserFence(UserFenceWaitOperation operation, uint64_t waitValue, uint64_t hostAddress, UserFenceValueWidth dataWidth, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *userFence) { return false; }
     virtual void allocateUserFence(std::unique_ptr<SyncFence> &mf) {}

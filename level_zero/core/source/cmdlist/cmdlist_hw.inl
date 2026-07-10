@@ -1768,6 +1768,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
         NEO::BlitCommandsHelper<GfxFamily>::dispatchPostBlitWaCommands(*commandContainer.getCommandStream(), *this->dummyBlitWa.rootDeviceEnvironment);
     }
     dummyBlitWa.isWaRequired = true;
+    if (useAdditionalBlitProperties && signalEvent && signalEvent->isSignalWithUserInterrupt()) {
+        NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1846,6 +1849,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
 
     if (!useAdditionalBlitProperties || (copySize.x == 0)) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
+    } else if (signalEvent && signalEvent->isSignalWithUserInterrupt()) {
+        NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -1912,6 +1917,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
         if (this->isInOrderExecutionEnabled()) {
             appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
         }
+    } else if (signalEvent && signalEvent->isSignalWithUserInterrupt()) {
+        NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -3158,6 +3165,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         dummyBlitWa.isWaRequired = true;
         if (isCopyOnlySignaling) {
             appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
+        } else if (useAdditionalBlitProperties && signalEvent && signalEvent->isSignalWithUserInterrupt()) {
+            NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
         }
 
         if (isInOrderExecutionEnabled() && isCopyOnlySignaling) {
@@ -3183,6 +3192,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
 
         event->setPacketsInUse(copyOperation ? 1 : this->partitionCount);
         dispatchEventPostSyncOperation(event, syncCmdBuffer, nullptr, Event::STATE_SIGNALED, false, false, !copyOperation, false, copyOperation);
+    }
+    if (event->isSignalWithUserInterrupt()) {
+        NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
     }
 }
 
@@ -3433,6 +3445,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     event->setPacketsInUse(this->partitionCount);
     bool appendPipeControlWithPostSync = (!isCopyOnly(false)) && (event->isSignalScope() || event->isEventTimestampFlagSet());
     dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false, isCopyOnly(false));
+
+    if (event->isSignalWithUserInterrupt()) {
+        NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+    }
 
     if (!event->getAllocation(this->device) && appendPipeControlWithPostSync && getDcFlushRequired(true)) {
         NEO::PipeControlArgs pipeControlArgs;
@@ -3765,7 +3781,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
         appendSignalAggregatedEventAtomic(*signalEvent, copyOffloadOperation);
     }
 
-    if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1 || isCopyOnly(copyOffloadOperation)) && signalEvent && signalEvent->isInterruptModeEnabled()) {
+    const bool interruptModeEmit = (NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1 || isCopyOnly(copyOffloadOperation)) && signalEvent && signalEvent->isInterruptModeEnabled();
+    const bool counterBasedUserInterruptEmit = signalEvent && signalEvent->isCounterBased() && signalEvent->isSignalWithUserInterrupt() && !signalEvent->getAllocation(this->device);
+    if (interruptModeEmit || counterBasedUserInterruptEmit) {
         NEO::EncodeUserInterrupt<GfxFamily>::encode(*cmdStream);
     }
 }
@@ -4472,6 +4490,10 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
     }
 
     auto signalEvent = Event::fromHandle(hSignalEvent);
+
+    if (signalEvent && signalEvent->isSignalWithUserInterrupt()) {
+        return false;
+    }
 
     if (signalEvent && this->latestOperationHasHeapfullCbEventWithProfiling) {
         return false;
@@ -5302,6 +5324,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
                         programEventL3Flush(event);
                     }
                     dispatchEventRemainingPacketsPostSyncOperation(event, copyOperation);
+                    if (event->isSignalWithUserInterrupt()) {
+                        NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+                    }
                 }
             }
         }

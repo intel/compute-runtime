@@ -144,6 +144,7 @@ struct EventDescriptor {
     bool importedIpcPool = false;
     bool ipcPool = false;
     bool externalEvent = false;
+    bool hostVisibleEventPoolAllocation = false;
 };
 
 struct Event : _ze_event_handle_t {
@@ -389,6 +390,8 @@ struct Event : _ze_event_handle_t {
     void enableInterruptMode() { interruptMode = true; }
     bool isKmdWaitModeEnabled() const { return kmdWaitMode; }
     bool isInterruptModeEnabled() const { return interruptMode; }
+    void setSignalWithUserInterrupt(bool value) { signalWithUserInterrupt = value; }
+    bool isSignalWithUserInterrupt() const { return signalWithUserInterrupt; }
     void unsetInOrderExecInfo();
     uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
 
@@ -531,6 +534,7 @@ struct Event : _ze_event_handle_t {
     bool isFromIpcPool = false;
     bool kmdWaitMode = false;
     bool interruptMode = false;
+    bool signalWithUserInterrupt = false;
     bool isSharableCounterBased = false;
     bool reportEmptyCbEventAsReady = true;
     bool heapfullCbEventWithProfiling = false;

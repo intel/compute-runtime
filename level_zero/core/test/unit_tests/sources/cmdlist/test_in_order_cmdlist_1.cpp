@@ -363,6 +363,108 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingMemcpyThenMarkCmdChai
     context->freeMem(deviceAlloc);
 }
 
+HWTEST2_F(InOrderCmdListTests, GivenCounterBasedEventWithSignalWithUserInterruptWhenSignalingViaAnyPathThenExactlyOneUserInterruptIsEmitted, IsAtLeastXeCore) {
+    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto *event = events[0].get();
+    event->setSignalWithUserInterrupt(true);
+
+    auto *cmdStream = cmdList->getCmdContainer().getCommandStream();
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 256, 256, &deviceAlloc));
+    uint32_t hostData = 0;
+    CmdListMemoryCopyParams copyParams = {};
+
+    auto countInterrupts = [&](std::function<void()> appendOp) -> size_t {
+        auto offset = cmdStream->getUsed();
+        appendOp();
+        GenCmdList genCmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+        return findAll<MI_USER_INTERRUPT *>(genCmdList.begin(), genCmdList.end()).size();
+    };
+
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendBarrier(event->toHandle(), 0, nullptr, false); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendSignalEvent(event->toHandle(), false); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryFill(deviceAlloc, &hostData, sizeof(hostData), sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryCopy(deviceAlloc, &hostData, sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
+
+    context->freeMem(deviceAlloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, GivenTimestampCounterBasedEventWithSignalWithUserInterruptWhenSignalingViaAnyPathThenExactlyOneUserInterruptIsEmitted, IsAtLeastXeCore) {
+    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto *event = events[0].get();
+    event->setSignalWithUserInterrupt(true);
+
+    auto *cmdStream = cmdList->getCmdContainer().getCommandStream();
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 256, 256, &deviceAlloc));
+    uint32_t hostData = 0;
+    CmdListMemoryCopyParams copyParams = {};
+
+    auto countInterrupts = [&](std::function<void()> appendOp) -> size_t {
+        auto offset = cmdStream->getUsed();
+        appendOp();
+        GenCmdList genCmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+        return findAll<MI_USER_INTERRUPT *>(genCmdList.begin(), genCmdList.end()).size();
+    };
+
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendBarrier(event->toHandle(), 0, nullptr, false); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendSignalEvent(event->toHandle(), false); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryFill(deviceAlloc, &hostData, sizeof(hostData), sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryCopy(deviceAlloc, &hostData, sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
+
+    context->freeMem(deviceAlloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, GivenCompactedCounterBasedEventWithSignalWithUserInterruptWhenSignalingViaAnyPathThenExactlyOneUserInterruptIsEmitted, IsAtLeastXeCore) {
+    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.CompactL3FlushEventPacket.set(1);
+
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto *event = events[0].get();
+    event->setSignalWithUserInterrupt(true);
+
+    auto *cmdStream = cmdList->getCmdContainer().getCommandStream();
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 256, 256, &deviceAlloc));
+    uint32_t hostData = 0;
+    CmdListMemoryCopyParams copyParams = {};
+
+    auto countInterrupts = [&](std::function<void()> appendOp) -> size_t {
+        auto offset = cmdStream->getUsed();
+        appendOp();
+        GenCmdList genCmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+        return findAll<MI_USER_INTERRUPT *>(genCmdList.begin(), genCmdList.end()).size();
+    };
+
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendBarrier(event->toHandle(), 0, nullptr, false); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendSignalEvent(event->toHandle(), false); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryFill(deviceAlloc, &hostData, sizeof(hostData), sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
+    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryCopy(deviceAlloc, &hostData, sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
+
+    context->freeMem(deviceAlloc);
+}
+
 HWTEST_F(InOrderCmdListTests, givenCounterBasedEventsWhenHostWaitsAreCalledThenLatestWaitIsRecorded) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto eventPool = createEvents<FamilyType>(2, false);
