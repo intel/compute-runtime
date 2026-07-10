@@ -25,6 +25,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/program_initialization.h"
 #include "shared/source/utilities/arrayref.h"
@@ -638,6 +639,45 @@ TEST_F(ProgramFromBinaryTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenProgramIsBei
 
     EXPECT_EQ(1u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
     EXPECT_EQ(1u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
+}
+
+TEST_F(ProgramFromBinaryTest, GivenExportedGlobalsAllocatedAsSvmWhenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreedViaSvmManager) {
+    auto svmAllocsManager = this->pContext->getSVMAllocsManager();
+    ASSERT_NE(nullptr, svmAllocsManager);
+
+    pProgram->build(pProgram->getDevices(), nullptr);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
+
+    auto mockProductHelper = new MockProductHelper;
+    pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+
+    std::vector<unsigned char> initData(1024, 0x5B);
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.exportsGlobalConstants = true;
+    linkerInput.traits.exportsGlobalVariables = true;
+
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.reset(allocateGlobalsSurface(svmAllocsManager, pClDevice->getDevice(), initData.size(), 0u, true, &linkerInput, initData.data()));
+    auto &constantSurface = pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface;
+    ASSERT_NE(nullptr, constantSurface);
+    EXPECT_FALSE(constantSurface->isFromPool());
+    auto constantGpuAddress = reinterpret_cast<void *>(constantSurface->getGpuAddress());
+    EXPECT_NE(nullptr, svmAllocsManager->getSVMAlloc(constantGpuAddress));
+
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.reset(allocateGlobalsSurface(svmAllocsManager, pClDevice->getDevice(), initData.size(), 0u, false, &linkerInput, initData.data()));
+    auto &globalSurface = pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface;
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_FALSE(globalSurface->isFromPool());
+    auto globalGpuAddress = reinterpret_cast<void *>(globalSurface->getGpuAddress());
+    EXPECT_NE(nullptr, svmAllocsManager->getSVMAlloc(globalGpuAddress));
+
+    pProgram->processGenBinary(*pClDevice);
+
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
+    EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(constantGpuAddress));
+    EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(globalGpuAddress));
 }
 
 TEST_F(ProgramFromBinaryTest, GivenGenericPoolAnd2MBAlignmentEnabledWhenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreedFromGenericPool) {

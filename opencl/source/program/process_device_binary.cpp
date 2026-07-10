@@ -211,6 +211,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
 
     cleanCurrentKernelInfo(rootDeviceIndex);
     auto &buildInfo = buildInfos[rootDeviceIndex];
+    auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
 
     if (buildInfo.constantSurface) {
         auto gpuAddress = reinterpret_cast<void *>(buildInfo.constantSurface->getGpuAddress());
@@ -221,6 +222,8 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
         } else if (auto &pool = clDevice.getDevice().getConstantSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.constantSurface->getGraphicsAllocation())) {
             pool.free(buildInfo.constantSurface.release());
+        } else if (svmAllocsManager && svmAllocsManager->getSVMAlloc(gpuAddress)) {
+            svmAllocsManager->freeSVMAlloc(gpuAddress, false);
         } else {
             clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface->getGraphicsAllocation());
         }
@@ -235,6 +238,8 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
         } else if (auto &pool = clDevice.getDevice().getGlobalSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.globalSurface->getGraphicsAllocation())) {
             pool.free(buildInfo.globalSurface.release());
+        } else if (svmAllocsManager && svmAllocsManager->getSVMAlloc(gpuAddress)) {
+            svmAllocsManager->freeSVMAlloc(gpuAddress, false);
         } else {
             clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface->getGraphicsAllocation());
         }
