@@ -287,11 +287,10 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
             l0imageDesc.pNext = &imageFromBuffer;
         }
 
-        const size_t effectiveRowPitch = NEO::LEO::Image::getRowPitchForImageFromBuffer(flags, imageFormat, imageDesc);
-
         ze_custom_pitch_exp_desc_t customPitchDesc{ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC};
-        if (imageDesc->mem_object && (effectiveRowPitch != 0 || imageDesc->image_slice_pitch != 0)) {
-            customPitchDesc.rowPitch = effectiveRowPitch;
+        if (imageDesc->mem_object && (imageDesc->image_row_pitch != 0 || imageDesc->image_slice_pitch != 0) &&
+            imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+            customPitchDesc.rowPitch = imageDesc->image_row_pitch;
             customPitchDesc.slicePitch = imageDesc->image_slice_pitch;
             customPitchDesc.pNext = l0imageDesc.pNext;
             l0imageDesc.pNext = &customPitchDesc;

@@ -270,19 +270,6 @@ const ClSurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, 
     return nullptr;
 }
 
-size_t Image::getRowPitchForImageFromBuffer(cl_mem_flags flags, const cl_image_format *imageFormat, const cl_image_desc *imageDesc) {
-    // Per the OpenCL spec, when image_row_pitch is 0 it is calculated as
-    // image_width * size of element in bytes.
-    if (imageDesc->mem_object == nullptr || imageDesc->image_row_pitch != 0) {
-        return imageDesc->image_row_pitch;
-    }
-    auto surfaceFormat = getSurfaceFormatFromTable(flags, imageFormat);
-    if (surfaceFormat == nullptr) {
-        return imageDesc->image_row_pitch;
-    }
-    return imageDesc->image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
-}
-
 cl_int Image::getImageInfo(cl_image_info paramName,
                            size_t paramValueSize,
                            void *paramValue,
