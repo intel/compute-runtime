@@ -83,6 +83,10 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         if (kernelAttributes.slmAllocationMode == KernelDescriptor::SlmAllocationMode::compilerResolved) {
             return totalSlmSizePerThreadGroup + kernelAttributes.slmInlineSize;
         }
+        const bool noDynamicSlm = (0 == totalSlmSizePerThreadGroup);
+        if (noDynamicSlm) {
+            return kernelAttributes.slmInlineSize;
+        }
         return totalSlmSizePerThreadGroup;
     }
 

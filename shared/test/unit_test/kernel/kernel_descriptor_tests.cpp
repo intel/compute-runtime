@@ -342,12 +342,19 @@ TEST(KernelDescriptor, GivenCompilerResolvedSlmAllocationModeWhenGettingTotalSlm
     EXPECT_EQ(1024u + 2048u, desc.getTotalSlmSizePerThreadGroup(2048u));
 }
 
-TEST(KernelDescriptor, GivenRuntimeAdjustedSlmAllocationModeWhenGettingTotalSlmSizePerThreadGroupThenInlineSlmSizeIsNotAdded) {
+TEST(KernelDescriptor, GivenRuntimeAdjustedSlmAllocationModeAndSlmSizeNotSetWhenGettingTotalSlmSizePerThreadGroupThenInlineSlmSizeIsReturned) {
     NEO::KernelDescriptor desc{};
     desc.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
     desc.kernelAttributes.slmInlineSize = 1024u;
 
-    EXPECT_EQ(0u, desc.getTotalSlmSizePerThreadGroup(0u));
+    EXPECT_EQ(1024u, desc.getTotalSlmSizePerThreadGroup(0u));
+}
+
+TEST(KernelDescriptor, GivenRuntimeAdjustedSlmAllocationModeAndSlmSizeSetWhenGettingTotalSlmSizePerThreadGroupThenProvidedSlmSizeIsReturned) {
+    NEO::KernelDescriptor desc{};
+    desc.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+    desc.kernelAttributes.slmInlineSize = 1024u;
+
     EXPECT_EQ(2048u, desc.getTotalSlmSizePerThreadGroup(2048u));
 }
 

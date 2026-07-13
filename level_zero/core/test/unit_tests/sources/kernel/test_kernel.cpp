@@ -3792,6 +3792,31 @@ HWTEST_F(SetKernelArg, givenRuntimeAdjustedSlmAllocationModeWhenSettingLocalArgs
     EXPECT_EQ(320u, slmArgOffsetValues[1]);
 }
 
+HWTEST_F(SetKernelArg, givenRuntimeAdjustedSlmAllocationModeWithInlineSlmAndNoLocalArgsWhenGettingSlmTotalSizePerThreadGroupThenInlineSlmSizeIsReturned) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
+    mockKernel.setModule(module.get());
+    mockKernel.initialize(&desc);
+
+    constexpr uint32_t slmInlineSize = 256u;
+
+    auto &descriptor = mockKernel.getDescriptor();
+    descriptor.kernelAttributes.slmInlineSize = slmInlineSize;
+    descriptor.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+    ASSERT_EQ(NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted, descriptor.kernelAttributes.slmAllocationMode);
+
+    // inline Slm
+    for (auto &arg : descriptor.payloadMappings.explicitArgs) {
+        arg.getTraits().addressQualifier = static_cast<uint8_t>(NEO::KernelArgMetadata::AddrGlobal);
+    }
+
+    descriptor.patchOffsetInSlmIfRequired(mockKernel.getCrossThreadDataSpan());
+    ASSERT_EQ(0u, mockKernel.privateState.slmArgsTotalSize);
+
+    EXPECT_EQ(slmInlineSize, mockKernel.getSlmTotalSizePerThreadGroup());
+}
+
 HWTEST2_F(SetKernelArg, givenImageAndBindfulKernelWhenSetArgImageThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
     createKernel();
 
