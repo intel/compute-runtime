@@ -23,7 +23,7 @@ Image::~Image() {
         UNRECOVERABLE_IF(zeImageDestroy(this->imageHandle) != ZE_RESULT_SUCCESS);
     }
     for (auto &[rootDeviceIndex, handle] : this->perDeviceImageHandles) {
-        zeImageDestroy(handle);
+        UNRECOVERABLE_IF(zeImageDestroy(handle) != ZE_RESULT_SUCCESS);
     }
     if (this->baseImageHandle) {
         UNRECOVERABLE_IF(zeImageDestroy(this->baseImageHandle) != ZE_RESULT_SUCCESS);
