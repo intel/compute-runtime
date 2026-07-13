@@ -12,6 +12,11 @@
 #include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/experimental/source/graph/graph_export.h"
 
+// for backwards compatibility with the old extension header
+#define ZE_RESULT_QUERY_TRUE_EXP EXTENDED_ENUM(ze_result_t, 0x7fff0000)
+#define ZE_RESULT_QUERY_FALSE_EXP EXTENDED_ENUM(ze_result_t, 0x7fff0001)
+#define ZE_RESULT_ERROR_INVALID_GRAPH_EXP EXTENDED_ENUM(ze_result_t, 0x7fff0002)
+
 namespace L0 {
 
 ze_result_t ZE_APICALL zeGraphCreateExt(ze_context_handle_t hContext, const void *pNext, ze_graph_handle_t *phGraph) {
@@ -377,11 +382,31 @@ ze_result_t ZE_APICALL zeExecutableGraphDestroyExp(ze_executable_graph_handle_t 
 }
 
 ze_result_t ZE_APICALL zeCommandListIsGraphCaptureEnabledExp(ze_command_list_handle_t hCommandList) {
-    return L0::zeCommandListIsGraphCaptureEnabledExt(hCommandList);
+    auto ret = L0::zeCommandListIsGraphCaptureEnabledExt(hCommandList);
+    switch (ret) {
+    case ZE_RESULT_QUERY_TRUE:
+        return ZE_RESULT_QUERY_TRUE_EXP;
+    case ZE_RESULT_QUERY_FALSE:
+        return ZE_RESULT_QUERY_FALSE_EXP;
+    case ZE_RESULT_ERROR_INVALID_GRAPH:
+        return ZE_RESULT_ERROR_INVALID_GRAPH_EXP;
+    default:
+        return ret;
+    }
 }
 
 ze_result_t ZE_APICALL zeGraphIsEmptyExp(ze_graph_handle_t hGraph) {
-    return L0::zeGraphIsEmptyExt(hGraph);
+    auto ret = L0::zeGraphIsEmptyExt(hGraph);
+    switch (ret) {
+    case ZE_RESULT_QUERY_TRUE:
+        return ZE_RESULT_QUERY_TRUE_EXP;
+    case ZE_RESULT_QUERY_FALSE:
+        return ZE_RESULT_QUERY_FALSE_EXP;
+    case ZE_RESULT_ERROR_INVALID_GRAPH:
+        return ZE_RESULT_ERROR_INVALID_GRAPH_EXP;
+    default:
+        return ret;
+    }
 }
 
 ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const char *filePath, void *pNext) {

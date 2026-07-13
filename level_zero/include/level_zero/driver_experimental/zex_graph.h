@@ -55,9 +55,9 @@ typedef struct _ze_record_replay_graph_exp_dump_desc_t {
     ze_record_replay_graph_exp_dump_mode_t mode; ///< [in] graph dump mode
 } ze_record_replay_graph_exp_dump_desc_t;
 
-#define ZE_RESULT_QUERY_TRUE EXTENDED_ENUM(ze_result_t, 0x7fff0000)
-#define ZE_RESULT_QUERY_FALSE EXTENDED_ENUM(ze_result_t, 0x7fff0001)
-#define ZE_RESULT_ERROR_INVALID_GRAPH EXTENDED_ENUM(ze_result_t, 0x7fff0002)
+#define ZE_RESULT_QUERY_TRUE_EXP EXTENDED_ENUM(ze_result_t, 0x7fff0000)
+#define ZE_RESULT_QUERY_FALSE_EXP EXTENDED_ENUM(ze_result_t, 0x7fff0001)
+#define ZE_RESULT_ERROR_INVALID_GRAPH_EXP EXTENDED_ENUM(ze_result_t, 0x7fff0002)
 
 #if defined(__cplusplus)
 extern "C" {

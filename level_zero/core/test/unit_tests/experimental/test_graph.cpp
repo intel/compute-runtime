@@ -20,6 +20,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_graph.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/ze_api.h"
 
 #include <unordered_set>
@@ -560,7 +561,8 @@ TEST_F(GraphTestDebugApis, GivenCommandListWithoutCaptureEnabledWhenIsGraphCaptu
     ContextStubMock ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
     auto cmdListHandle = cmdlist.toHandle();
-    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, L0::zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE_EXP, L0::zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, L0::zeCommandListIsGraphCaptureEnabledExt(cmdListHandle));
 }
 
 TEST_F(GraphTestDebugApis, GivenCommandListWithCaptureEnabledWhenIsGraphCaptureEnabledIsCalledThenReturnTrue) {
@@ -574,14 +576,16 @@ TEST_F(GraphTestDebugApis, GivenCommandListWithCaptureEnabledWhenIsGraphCaptureE
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
 
-    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, L0::zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_TRUE_EXP, L0::zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, L0::zeCommandListIsGraphCaptureEnabledExt(cmdListHandle));
 
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 0U, nullptr);
 
     srcGraph.stopCapturing();
     cmdlist.setGraphCaptureTarget(nullptr);
 
-    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, L0::zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE_EXP, L0::zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, L0::zeCommandListIsGraphCaptureEnabledExt(cmdListHandle));
 }
 
 TEST_F(GraphTestDebugApis, GivenNullGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
@@ -613,7 +617,8 @@ TEST_F(GraphTestDebugApis, GivenInvalidGraphWhenGraphIsEmptyIsCalledThenErrorIsR
     srcGraph.stopCapturing();
     cmdlist.setGraphCaptureTarget(nullptr);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GRAPH, L0::zeGraphIsEmptyExp(srcGraphHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GRAPH_EXP, L0::zeGraphIsEmptyExp(srcGraphHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GRAPH, L0::zeGraphIsEmptyExt(srcGraphHandle));
 }
 
 TEST_F(GraphTestDebugApis, GivenEmptyGraphWhenGraphIsEmptyIsCalledThenTrue) {
@@ -622,7 +627,8 @@ TEST_F(GraphTestDebugApis, GivenEmptyGraphWhenGraphIsEmptyIsCalledThenTrue) {
     Graph srcGraph(&ctx, true);
     auto srcGraphHandle = srcGraph.toHandle();
 
-    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, L0::zeGraphIsEmptyExp(srcGraphHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_TRUE_EXP, L0::zeGraphIsEmptyExp(srcGraphHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, L0::zeGraphIsEmptyExt(srcGraphHandle));
 }
 
 TEST_F(GraphTestDebugApis, GivenNonEmptyGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
@@ -642,7 +648,8 @@ TEST_F(GraphTestDebugApis, GivenNonEmptyGraphWhenGraphIsEmptyIsCalledThenErrorIs
     srcGraph.stopCapturing();
     cmdlist.setGraphCaptureTarget(nullptr);
 
-    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, L0::zeGraphIsEmptyExp(srcGraphHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE_EXP, L0::zeGraphIsEmptyExp(srcGraphHandle));
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, L0::zeGraphIsEmptyExt(srcGraphHandle));
 }
 
 TEST_F(GraphTestApiSubmit, GivenNonNullPNextThenGraphAppendReturnsError) {
