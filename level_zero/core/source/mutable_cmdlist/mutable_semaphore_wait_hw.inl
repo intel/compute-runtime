@@ -15,11 +15,22 @@
 namespace L0::MCL {
 
 template <typename GfxFamily>
+MutableSemaphoreWaitHw<GfxFamily>::~MutableSemaphoreWaitHw() {
+    if (this->commandView) {
+        NEO::EncodeSemaphore<GfxFamily>::deallocateSemaphoreWaitCommand(this->commandView, this->useSemaphore64bCmd);
+    }
+}
+
+template <typename GfxFamily>
 GpuAddress MutableSemaphoreWaitHw<GfxFamily>::commandAddressRange = maxNBitValue(64);
 
 template <typename GfxFamily>
 void MutableSemaphoreWaitHw<GfxFamily>::noop() {
-    memset(semWait, 0, sizeof(SemaphoreWait));
+    if (this->commandView) {
+        memset(this->commandView, 0, sizeof(SemaphoreWait));
+    } else {
+        memset(this->semWait, 0, sizeof(SemaphoreWait));
+    }
 }
 
 template <typename GfxFamily>
@@ -29,15 +40,17 @@ void MutableSemaphoreWaitHw<GfxFamily>::restoreWithSemaphoreAddress(GpuAddress s
     semaphoreAddress &= MutableSemaphoreWaitHw<GfxFamily>::commandAddressRange;
     semaphoreAddress += this->offset;
 
+    void *targetPointer = this->commandView ? this->commandView : this->semWait;
+
     if (type == Type::regularEventWait || type == Type::cbEventTimestampSyncWait) {
-        NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<SemaphoreWait *>(semWait),
+        NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<SemaphoreWait *>(targetPointer),
                                                                 semaphoreAddress,
                                                                 Event::STATE_CLEARED,
                                                                 CompareOperation::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
                                                                 false, true, false, false, true, this->useSemaphore64bCmd);
     } else if (type == Type::cbEventWait) {
         bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->qwordData, this->useSemaphore64bCmd);
-        NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<SemaphoreWait *>(semWait),
+        NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<SemaphoreWait *>(targetPointer),
                                                                 semaphoreAddress,
                                                                 0,
                                                                 CompareOperation::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,

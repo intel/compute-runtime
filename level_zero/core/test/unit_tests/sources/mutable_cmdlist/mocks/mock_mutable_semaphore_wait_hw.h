@@ -20,6 +20,10 @@ struct WhiteBox<::L0::MCL::MutableSemaphoreWaitHw<GfxFamily>>
     : public ::L0::MCL::MutableSemaphoreWaitHw<GfxFamily> {
 
     using BaseClass = ::L0::MCL::MutableSemaphoreWaitHw<GfxFamily>;
+
+    using BaseClass::commandSize;
+    using BaseClass::commandView;
+    using BaseClass::gpuDestinationAddress;
     using BaseClass::offset;
     using BaseClass::qwordData;
     using BaseClass::semWait;

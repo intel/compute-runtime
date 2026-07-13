@@ -42,7 +42,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     memset(noopSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
 
     // initialize command and mutable object
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, nullptr, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
 
     mutableSemaphoreWait.noop();
 
@@ -72,7 +72,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, nullptr, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
 
     mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
 
@@ -102,7 +102,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, nullptr, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
 
     mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
 
@@ -133,7 +133,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, nullptr, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
 
     mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
 
@@ -164,8 +164,178 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ((semaphoreAddress + offset), semWaitCommand->getSemaphoreGraphicsAddress());
     EXPECT_EQ(data, semWaitCommand->getSemaphoreDataDword());
 
-    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, nullptr, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
 
+    semaphoreAddress = 0x428000;
+    mutableSemaphoreWait.setSemaphoreAddress(semaphoreAddress);
+
+    EXPECT_EQ((semaphoreAddress + offset), semWaitCommand->getSemaphoreGraphicsAddress());
+
+    data = Event::STATE_SIGNALED;
+    mutableSemaphoreWait.setSemaphoreValue(data);
+    EXPECT_EQ(data, semWaitCommand->getSemaphoreDataDword());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableSemaphoreWaitTest,
+            givenMutableSemaphoreWaitRegularEventCommandWhenUsingCommandViewAndCommandIsNoopedThenBufferSpaceIsZeroed) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    auto type = L0::MCL::MutableSemaphoreWait::Type::regularEventWait;
+    size_t offset = 0x10;
+    uint64_t semaphoreAddress = 0x26000;
+    uint64_t data = Event::STATE_CLEARED;
+    bool qwordData = false;
+    bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
+
+    void *cmdView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(useSemaphore64bCmd);
+
+    NEO::EncodeSemaphore<FamilyType>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(cmdView),
+                                                             semaphoreAddress,
+                                                             data,
+                                                             COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                             false, true, false, false, false, useSemaphore64bCmd);
+
+    // prepare noop buffer for comparison
+    alignas(uint32_t) uint8_t noopSpace[sizeof(MI_SEMAPHORE_WAIT)];
+    memset(noopSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
+
+    // initialize command and mutable object
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0x1000, cmdView, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
+    EXPECT_EQ(0x1000u, mutableSemaphoreWait.getGpuDestinationAddress());
+    EXPECT_EQ(cmdView, mutableSemaphoreWait.getCommandView());
+    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), mutableSemaphoreWait.getCommandSize());
+
+    mutableSemaphoreWait.noop();
+
+    EXPECT_EQ(0, memcmp(noopSpace, cmdView, sizeof(MI_SEMAPHORE_WAIT)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableSemaphoreWaitTest,
+            givenMutableSemaphoreWaitRegularEventCommandWhenUsingCommandViewAndCommandIsRestoredThenCommandIsProgrammed) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    auto type = L0::MCL::MutableSemaphoreWait::Type::regularEventWait;
+    size_t offset = 0x10;
+    uint64_t semaphoreAddress = 0x26000;
+    uint64_t data = Event::STATE_CLEARED;
+    bool qwordData = false;
+    bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
+
+    void *cmdView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(useSemaphore64bCmd);
+
+    // prepare buffer for comparison
+    MI_SEMAPHORE_WAIT cmdSemaphore;
+    NEO::EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&cmdSemaphore,
+                                                             semaphoreAddress + offset,
+                                                             data,
+                                                             COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                             false, true, false, false, true, useSemaphore64bCmd);
+
+    // noop command buffer and create mutable object
+    memset(this->cmdBufferGpuPtr, 0, sizeof(MI_SEMAPHORE_WAIT));
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, cmdView, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
+
+    mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
+
+    EXPECT_EQ(0, memcmp(&cmdSemaphore, cmdView, sizeof(MI_SEMAPHORE_WAIT)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableSemaphoreWaitTest,
+            givenMutableSemaphoreWaitCbEventTimestampSyncCommandWhenUsingCommandViewAndCommandIsRestoredThenCommandIsProgrammed) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    auto type = L0::MCL::MutableSemaphoreWait::Type::cbEventTimestampSyncWait;
+    size_t offset = 0x10;
+    uint64_t semaphoreAddress = 0x26000;
+    uint64_t data = Event::STATE_CLEARED;
+    bool qwordData = false;
+    bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
+
+    void *cmdView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(useSemaphore64bCmd);
+
+    // prepare buffer for comparison
+    MI_SEMAPHORE_WAIT cmdSemaphore;
+    NEO::EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&cmdSemaphore,
+                                                             semaphoreAddress + offset,
+                                                             data,
+                                                             COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                             false, true, false, false, true, useSemaphore64bCmd);
+
+    // noop command buffer and create mutable object
+    memset(cmdView, 0, sizeof(MI_SEMAPHORE_WAIT));
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, cmdView, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
+
+    mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
+
+    EXPECT_EQ(0, memcmp(&cmdSemaphore, cmdView, sizeof(MI_SEMAPHORE_WAIT)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableSemaphoreWaitTest,
+            givenMutableSemaphoreWaitCbEventCommandWhenUsingCommandViewAndCommandIsRestoredThenCommandIsProgrammed) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    auto type = L0::MCL::MutableSemaphoreWait::Type::cbEventWait;
+    size_t offset = 0x10;
+    uint64_t semaphoreAddress = 0x26000;
+    uint64_t data = 0;
+    bool qwordData = false;
+    bool indirectMode = false;
+    bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
+
+    void *cmdView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(useSemaphore64bCmd);
+
+    // prepare buffer for comparison
+    MI_SEMAPHORE_WAIT cmdSemaphore;
+    NEO::EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&cmdSemaphore,
+                                                             semaphoreAddress + offset,
+                                                             data,
+                                                             COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
+                                                             false, true, qwordData, indirectMode, true, useSemaphore64bCmd);
+
+    // noop command buffer and create mutable object
+    memset(cmdView, 0, sizeof(MI_SEMAPHORE_WAIT));
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, cmdView, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
+
+    mutableSemaphoreWait.restoreWithSemaphoreAddress(semaphoreAddress);
+
+    EXPECT_EQ(0, memcmp(&cmdSemaphore, cmdView, sizeof(MI_SEMAPHORE_WAIT)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableSemaphoreWaitTest,
+            givenMutableSemaphoreWaitCommandWhenUsingCommandViewAndCommandValueOrAddressIsSetThenCommandValueIsChanged) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    auto type = L0::MCL::MutableSemaphoreWait::Type::regularEventWait;
+    size_t offset = 0x10;
+    uint64_t semaphoreAddress = 0x26000;
+    uint64_t data = Event::STATE_CLEARED;
+    bool qwordData = false;
+    bool useSemaphore64bCmd = HasSemaphore64bCmd<FamilyType>;
+
+    void *cmdView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(useSemaphore64bCmd);
+
+    // prepare buffer for comparison
+    NEO::EncodeSemaphore<FamilyType>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(cmdView),
+                                                             semaphoreAddress + offset,
+                                                             data,
+                                                             COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                             false, true, false, false, false, useSemaphore64bCmd);
+
+    auto semWaitCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(cmdView);
+    EXPECT_EQ((semaphoreAddress + offset), semWaitCommand->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(data, semWaitCommand->getSemaphoreDataDword());
+
+    L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, cmdView, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
     semaphoreAddress = 0x428000;
     mutableSemaphoreWait.setSemaphoreAddress(semaphoreAddress);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,10 @@ struct WhiteBox<::L0::MCL::MutableLoadRegisterImmHw<GfxFamily>>
     : public ::L0::MCL::MutableLoadRegisterImmHw<GfxFamily> {
 
     using BaseClass = ::L0::MCL::MutableLoadRegisterImmHw<GfxFamily>;
+
+    using BaseClass::commandSize;
+    using BaseClass::commandView;
+    using BaseClass::gpuDestinationAddress;
     using BaseClass::loadRegImm;
     using BaseClass::registerAddress;
 };

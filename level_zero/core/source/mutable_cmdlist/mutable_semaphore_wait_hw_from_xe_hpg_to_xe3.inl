@@ -18,13 +18,17 @@ void MutableSemaphoreWaitHw<GfxFamily>::setSemaphoreAddress(GpuAddress semaphore
     semaphoreAddress += this->offset;
     semaphoreAddress = (semaphoreAddress >> SemaphoreAddress::SEMAPHOREADDRESS_BIT_SHIFT << SemaphoreAddress::SEMAPHOREADDRESS_BIT_SHIFT);
 
-    auto semWaitCmd = reinterpret_cast<SemaphoreWait *>(semWait);
+    void *targetPointer = this->commandView ? this->commandView : this->semWait;
+
+    auto semWaitCmd = reinterpret_cast<SemaphoreWait *>(targetPointer);
     memcpy_s(&semWaitCmd->getRawData(semaphoreAddressIndex), sizeof(GpuAddress), &semaphoreAddress, sizeof(GpuAddress));
 }
 
 template <typename GfxFamily>
 void MutableSemaphoreWaitHw<GfxFamily>::setSemaphoreValue(uint64_t value) {
-    auto semWaitCmd = reinterpret_cast<SemaphoreWait *>(semWait);
+    void *targetPointer = this->commandView ? this->commandView : this->semWait;
+
+    auto semWaitCmd = reinterpret_cast<SemaphoreWait *>(targetPointer);
     semWaitCmd->setSemaphoreDataDword(static_cast<uint32_t>(value));
 }
 

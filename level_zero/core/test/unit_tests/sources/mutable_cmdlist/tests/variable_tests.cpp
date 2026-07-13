@@ -1403,7 +1403,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto event = this->createTestEvent(false, false, false, false);
     ASSERT_NE(nullptr, event);
     size_t offset = 0x10;
-    createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false);
+    createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false, false);
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);
@@ -1439,7 +1439,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto event = this->createTestEvent(false, false, false, false);
     ASSERT_NE(nullptr, event);
     size_t offset = 0x10;
-    createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false);
+    createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false, false);
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);

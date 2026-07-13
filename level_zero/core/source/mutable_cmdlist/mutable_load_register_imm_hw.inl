@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 
@@ -13,21 +14,41 @@
 namespace L0::MCL {
 
 template <typename GfxFamily>
+MutableLoadRegisterImmHw<GfxFamily>::~MutableLoadRegisterImmHw() {
+    if (this->commandView) {
+        NEO::EncodeSetMMIO<GfxFamily>::deallocateLoadRegisterImmCommand(this->commandView);
+    }
+}
+
+template <typename GfxFamily>
 void MutableLoadRegisterImmHw<GfxFamily>::noop() {
-    memset(loadRegImm, 0, sizeof(LoadRegisterImm));
+    if (this->commandView) {
+        memset(this->commandView, 0, sizeof(LoadRegisterImm));
+    } else {
+        memset(this->loadRegImm, 0, sizeof(LoadRegisterImm));
+    }
 }
 
 template <typename GfxFamily>
 void MutableLoadRegisterImmHw<GfxFamily>::restore() {
-    NEO::LriHelper<GfxFamily>::program(reinterpret_cast<LoadRegisterImm *>(this->loadRegImm), this->registerAddress, 0, true, false);
+    if (this->commandView) {
+        NEO::LriHelper<GfxFamily>::program(reinterpret_cast<LoadRegisterImm *>(this->commandView), this->registerAddress, 0, true, false);
+    } else {
+        NEO::LriHelper<GfxFamily>::program(reinterpret_cast<LoadRegisterImm *>(this->loadRegImm), this->registerAddress, 0, true, false);
+    }
 }
 
 template <typename GfxFamily>
 void MutableLoadRegisterImmHw<GfxFamily>::setValue(uint32_t value) {
     constexpr uint32_t dataDwordIndex = 2;
 
-    auto loadRegImmCmd = reinterpret_cast<LoadRegisterImm *>(this->loadRegImm);
-    loadRegImmCmd->getRawData(dataDwordIndex) = value;
+    if (this->commandView) {
+        auto loadRegImmCmd = reinterpret_cast<LoadRegisterImm *>(this->commandView);
+        loadRegImmCmd->setDataDword(value);
+    } else {
+        auto loadRegImmCmd = reinterpret_cast<LoadRegisterImm *>(this->loadRegImm);
+        loadRegImmCmd->getRawData(dataDwordIndex) = value;
+    }
 }
 
 } // namespace L0::MCL

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/test/common/test_macros/header/common_matchers.h"
@@ -105,26 +106,42 @@ struct VariableFixture : public MutableCommandListFixtureInit {
     }
 
     template <typename FamilyType>
-    void createMutableLoadRegisterImm(uint32_t registerAddress) {
+    void createMutableLoadRegisterImm(uint32_t registerAddress, bool allocateCommanView) {
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
         auto loadRegisterImmBuffer = this->cmdBuffer->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
         *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(loadRegisterImmBuffer) = FamilyType::cmdInitLoadRegisterImm;
 
+        void *commandView = nullptr;
+        if (allocateCommanView) {
+            commandView = NEO::EncodeSetMMIO<FamilyType>::allocateLoadRegisterImmCommand();
+        }
+
         this->loadRegisterImmBuffers.push_back(loadRegisterImmBuffer);
-        this->mutableLoadRegisterImms.push_back(std::make_unique<L0::MCL::MutableLoadRegisterImmHw<FamilyType>>(loadRegisterImmBuffer, registerAddress));
+        this->mutableLoadRegisterImms.push_back(std::make_unique<L0::MCL::MutableLoadRegisterImmHw<FamilyType>>(this->gpuDestAddress, commandView, loadRegisterImmBuffer, registerAddress));
+
+        this->gpuDestAddress += sizeof(MI_LOAD_REGISTER_IMM);
     }
 
     template <typename FamilyType>
-    void createMutableSemaphoreWait(size_t offset, L0::MCL::MutableSemaphoreWait::Type type, bool qwordData) {
+    void createMutableSemaphoreWait(size_t offset, L0::MCL::MutableSemaphoreWait::Type type, bool qwordData, bool allocateCommanView) {
         using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         this->semaphoreWaitBuffer = this->cmdBuffer->getSpace(sizeof(MI_SEMAPHORE_WAIT));
         *reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer) = FamilyType::cmdInitMiSemaphoreWait;
 
-        this->mutableSemaphoreWait = std::make_unique<L0::MCL::MutableSemaphoreWaitHw<FamilyType>>(this->semaphoreWaitBuffer,
+        void *commandView = nullptr;
+        if (allocateCommanView) {
+            commandView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(HasSemaphore64bCmd<FamilyType>);
+        }
+
+        this->mutableSemaphoreWait = std::make_unique<L0::MCL::MutableSemaphoreWaitHw<FamilyType>>(this->gpuDestAddress,
+                                                                                                   commandView,
+                                                                                                   this->semaphoreWaitBuffer,
                                                                                                    offset,
                                                                                                    type,
                                                                                                    qwordData,
                                                                                                    HasSemaphore64bCmd<FamilyType>);
+
+        this->gpuDestAddress += sizeof(MI_SEMAPHORE_WAIT);
     }
 
     template <typename FamilyType>
@@ -184,6 +201,8 @@ struct VariableFixture : public MutableCommandListFixtureInit {
     std::unique_ptr<L0::MCL::MutableStoreDataImm> mutableStoreDataImm;
     std::unique_ptr<L0::MCL::MutableStoreRegisterMem> mutableStoreRegisterMem;
 
+    uint64_t gpuDestAddress = 0xABC1000;
+
     NEO::LinearStream *cmdBuffer = nullptr;
     NEO::IndirectHeap *ioh = nullptr;
 
@@ -232,11 +251,11 @@ struct VariableInOrderFixture : public VariableFixture {
     template <typename FamilyType>
     void prepareInOrderWaitCommands() {
         if (this->qwordIndirect) {
-            createMutableLoadRegisterImm<FamilyType>(0x2600);
-            createMutableLoadRegisterImm<FamilyType>(0x2604);
+            createMutableLoadRegisterImm<FamilyType>(0x2600, false);
+            createMutableLoadRegisterImm<FamilyType>(0x2604, false);
         }
 
-        createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, L0::MCL::MutableSemaphoreWait::Type::cbEventWait, this->qwordIndirect);
+        createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, L0::MCL::MutableSemaphoreWait::Type::cbEventWait, this->qwordIndirect, false);
     }
 
     uint64_t cmdListInOrderCounterValue = 0;
