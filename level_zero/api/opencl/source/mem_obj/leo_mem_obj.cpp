@@ -26,7 +26,8 @@ MemObj::MemObj(Context *context, MemoryProperties &properties, cl_mem_flags flag
 
 MemObj::~MemObj() {
     if (cpuPtr && !properties.flags.useHostPtr && !this->isSubBuffer()) {
-        zeMemFree(context->getL0ContextHandle(), cpuPtr);
+        ze_memory_free_ext_desc_t freeDesc{ZE_STRUCTURE_TYPE_MEMORY_FREE_EXT_DESC, nullptr, ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE};
+        zeMemFreeExt(context->getL0ContextHandle(), &freeDesc, cpuPtr);
     }
     for (auto callback : std::ranges::reverse_view(callbacks)) {
         callback.first(this, callback.second);
