@@ -439,6 +439,88 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenHostS
     EXPECT_EQ(20u, copyCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppendBarrierThenComputeEngineWaitsForCopyOffload, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
+
+    if (!device->getProductHelper().blitEnqueuePreferred(false)) {
+        GTEST_SKIP();
+    }
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    auto usmDevice = allocDeviceMem(1);
+    immCmdList->appendMemoryCopy(usmDevice, &copyData2, 1, nullptr, 0, nullptr, copyParams);
+
+    const auto mainTaskCount = mainCsr->taskCount.load();
+    const auto copyTaskCount = copyCsr->taskCount.load();
+    ASSERT_GT(copyTaskCount, 0u);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    const auto offset = cmdStream->getUsed();
+
+    immCmdList->appendBarrier(nullptr, 0, nullptr, false);
+
+    EXPECT_GT(mainCsr->taskCount.load(), mainTaskCount);
+
+    GenCmdList cmds;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmds, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+    auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmds.begin(), cmds.end());
+
+    const auto mainTagAddress = mainCsr->getTagAllocation()->getGpuAddress();
+    const auto copyTagAddress = copyCsr->getTagAllocation()->getGpuAddress();
+
+    bool waitsOnComputeEngine = false;
+    bool waitsOnCopyEngine = false;
+    for (auto &semaphore : semaphores) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+        if (semaphoreCmd->getSemaphoreGraphicsAddress() == mainTagAddress) {
+            waitsOnComputeEngine = true;
+        }
+        if (semaphoreCmd->getSemaphoreGraphicsAddress() == copyTagAddress) {
+            waitsOnCopyEngine = true;
+        }
+    }
+
+    EXPECT_TRUE(waitsOnCopyEngine);
+    EXPECT_FALSE(waitsOnComputeEngine);
+
+    context->freeMem(usmDevice);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWithoutPriorCopyWhenAppendBarrierThenNoCrossEngineWaitIsProgrammed, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
+
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    const auto offset = cmdStream->getUsed();
+
+    immCmdList->appendBarrier(nullptr, 0, nullptr, false);
+
+    GenCmdList cmds;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmds, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+    auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmds.begin(), cmds.end());
+
+    const auto copyTagAddress = copyCsr->getTagAllocation()->getGpuAddress();
+    for (auto &semaphore : semaphores) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+        EXPECT_NE(copyTagAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+    }
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenLatestFlushIsDualCopyOffloadButCopyOffloadNotInDualStreamModeWhenHostSynchronizeThenWaitOnMainQueueWithoutDereferencingCopyOffloadCsr, IsAtLeastXeCore) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     immCmdList->forceDisableInOrderWaits();

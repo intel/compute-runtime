@@ -666,9 +666,47 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
         isStallingOperation = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
     }
 
+    if (!isInOrderExecutionEnabled() && isDualStreamCopyOffloadOperation(true) && this->cmdQImmediateCopyOffload != nullptr) {
+        return appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch, isStallingOperation);
+    }
+
     checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
 
     ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+
+    this->dependenciesPresent = true;
+    return flushImmediate(ret, true, isStallingOperation, relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::programCrossEngineTaskCountWait(NEO::CommandStreamReceiver *waitedCsr, TaskCountType taskCountToWait) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    waitedCsr->flushTagUpdateIfRequired(taskCountToWait);
+
+    this->commandContainer.addToResidencyContainer(waitedCsr->getTagAllocation());
+
+    const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
+    NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*this->commandContainer.getCommandStream(),
+                                                               waitedCsr->getTagAllocation()->getGpuAddress(),
+                                                               taskCountToWait,
+                                                               COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
+                                                               false, false, false, false, useSemaphore64bCmd, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrierWithCopyOffloadSynchronization(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                                                                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool isStallingOperation) {
+    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
+
+    auto copyOffloadCsr = getCsr(true);
+    const auto copyOffloadTaskCount = this->cmdQImmediateCopyOffload->getTaskCount();
+
+    if (copyOffloadTaskCount > 0) {
+        programCrossEngineTaskCountWait(copyOffloadCsr, copyOffloadTaskCount);
+    }
+
+    const auto ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
 
     this->dependenciesPresent = true;
     return flushImmediate(ret, true, isStallingOperation, relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);

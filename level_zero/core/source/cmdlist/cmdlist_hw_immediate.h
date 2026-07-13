@@ -234,6 +234,10 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                                 MutexLock *outerLock,
                                                 std::unique_lock<std::mutex> *outerLockForIndirect);
 
+    ze_result_t appendBarrierWithCopyOffloadSynchronization(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                            bool relaxedOrderingDispatch, bool isStallingOperation);
+    void programCrossEngineTaskCountWait(NEO::CommandStreamReceiver *waitedCsr, TaskCountType taskCountToWait);
+
     bool preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     bool isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc);
     bool isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc);
