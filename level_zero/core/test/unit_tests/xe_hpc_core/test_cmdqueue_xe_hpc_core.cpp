@@ -1802,7 +1802,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     auto result = commandList0->appendPageFaultCopy(testL0Device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(dstPtr)->gpuAllocations.getDefaultGraphicsAllocation(),
                                                     testL0Device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(srcPtr)->gpuAllocations.getDefaultGraphicsAllocation(),
                                                     size,
-                                                    false);
+                                                    false, 0);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);

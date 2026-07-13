@@ -178,7 +178,7 @@ struct CommandList : _ze_command_list_handle_t {
                                                        const void *pNext,
                                                        ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                                        ze_event_handle_t *phWaitEvents) = 0;
-    virtual ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr, size_t size, bool flushHost) = 0;
+    virtual ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr, size_t size, bool flushHost, size_t offset) = 0;
     virtual ze_result_t appendMemoryCopyRegion(void *dstPtr,
                                                const ze_copy_region_t *dstRegion,
                                                uint32_t dstPitch,

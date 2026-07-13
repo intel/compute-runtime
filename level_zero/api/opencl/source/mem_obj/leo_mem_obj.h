@@ -68,6 +68,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     void storeProperties(const cl_mem_properties *properties);
     void setUsesSvm(bool usesSvm) { this->usesSvm = usesSvm; }
+    bool getUsesSvm() const { return this->usesSvm; }
     void addCallback(CallbackT callback, void *userData) {
         this->callbacks.emplace_back(callback, userData);
     }

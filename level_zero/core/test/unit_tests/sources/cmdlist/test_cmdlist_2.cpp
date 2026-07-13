@@ -435,7 +435,7 @@ HWTEST_F(CommandListCreateTests, givenCommandListWhenPageFaultCopyCalledThenappe
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
 
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 1u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired() ? 1u : 0u);
@@ -469,7 +469,7 @@ HWTEST_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngin
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 1u);
 }
 
@@ -501,7 +501,7 @@ HWTEST_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledThenappendPag
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 2u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired() ? 2u : 0u);
 }
@@ -534,7 +534,7 @@ HWTEST_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledAndErrorOnMid
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 1u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired() ? 1u : 0u);
 }
@@ -564,7 +564,7 @@ HWTEST_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngin
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 1u);
 }
 
@@ -593,7 +593,7 @@ HWTEST_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngin
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 1u);
 }
 
@@ -622,7 +622,7 @@ HWTEST_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPag
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 1u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 1u);
 }
@@ -652,7 +652,7 @@ HWTEST_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPag
                                                   MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
-    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 2u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 2u);
 }

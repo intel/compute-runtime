@@ -1928,7 +1928,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
                                                                       NEO::GraphicsAllocation *srcAllocation,
-                                                                      size_t size, bool flushHost) {
+                                                                      size_t size, bool flushHost, size_t offset) {
 
     size_t middleElSize = sizeof(uint32_t) * 4;
     uintptr_t rightSize = size % middleElSize;
@@ -1940,17 +1940,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
     ze_result_t ret = ZE_RESULT_ERROR_UNKNOWN;
     if (isCopyOnly(false)) {
         CmdListMemoryCopyParams memoryCopyParams{};
-        return appendMemoryCopyBlit(dstAddress, dstAllocation, 0u,
-                                    srcAddress, srcAllocation, 0u,
+        return appendMemoryCopyBlit(dstAddress, dstAllocation, offset,
+                                    srcAddress, srcAllocation, offset,
                                     size, nullptr, memoryCopyParams);
     } else {
         CmdListKernelLaunchParams launchParams = {};
         launchParams.isKernelSplitOperation = rightSize > 0;
         launchParams.numKernelsInSplitLaunch = 2;
-        ret = appendMemoryCopyKernelWithGA(reinterpret_cast<uintptr_t>(&dstAddress),
-                                           dstAllocation, 0,
-                                           reinterpret_cast<uintptr_t>(&srcAddress),
-                                           srcAllocation, 0,
+        ret = appendMemoryCopyKernelWithGA(dstAddress,
+                                           dstAllocation, offset,
+                                           srcAddress,
+                                           srcAllocation, offset,
                                            size - rightSize,
                                            middleElSize,
                                            BufferBuiltIn::copyBufferToBufferMiddle,
@@ -1959,10 +1959,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                            launchParams);
         launchParams.numKernelsExecutedInSplitLaunch++;
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
-            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<uintptr_t>(&dstAddress),
-                                               dstAllocation, size - rightSize,
-                                               reinterpret_cast<uintptr_t>(&srcAddress),
-                                               srcAllocation, size - rightSize,
+            ret = appendMemoryCopyKernelWithGA(dstAddress,
+                                               dstAllocation, offset + size - rightSize,
+                                               srcAddress,
+                                               srcAllocation, offset + size - rightSize,
                                                rightSize, 1UL,
                                                BufferBuiltIn::copyBufferToBufferSide,
                                                builtInMode,
@@ -1977,6 +1977,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                 args.dcFlushEnable = true;
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
             }
+        }
+
+        if (this->isInOrderExecutionEnabled()) {
+            if (launchParams.isKernelSplitOperation) {
+                dispatchInOrderPostOperationBarrier(nullptr, false, false);
+                appendSignalInOrderDependencyCounter(nullptr, false, false, false, false);
+            }
+            handleInOrderDependencyCounter(nullptr, false, false);
         }
     }
     return ret;

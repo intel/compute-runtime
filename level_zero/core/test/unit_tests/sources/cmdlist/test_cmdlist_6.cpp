@@ -3743,7 +3743,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     NEO::MockGraphicsAllocation mockSrcAllocation(buffer, gpuAddress, size);
     NEO::MockGraphicsAllocation mockDstAllocation(buffer, gpuAddress, size);
 
-    auto result = commandList->appendPageFaultCopy(&mockDstAllocation, &mockSrcAllocation, size, false);
+    auto result = commandList->appendPageFaultCopy(&mockDstAllocation, &mockSrcAllocation, size, false, 0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
