@@ -167,6 +167,7 @@ TEST(zeGetCommandQueueProcAddrTableTest,
 
     ze_result_t result = zeGetCommandQueueProcAddrTable(version, &pDdiTable);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetFlags);
     EXPECT_NE(nullptr, pDdiTable.pfnGetMode);
     EXPECT_NE(nullptr, pDdiTable.pfnGetPriority);
 }
@@ -179,6 +180,7 @@ TEST(zeGetCommandListProcAddrTableTest,
 
     ze_result_t result = zeGetCommandListProcAddrTable(version, &pDdiTable);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetFlags);
     EXPECT_NE(nullptr, pDdiTable.pfnImmediateGetFlags);
     EXPECT_NE(nullptr, pDdiTable.pfnImmediateGetMode);
     EXPECT_NE(nullptr, pDdiTable.pfnImmediateGetPriority);
