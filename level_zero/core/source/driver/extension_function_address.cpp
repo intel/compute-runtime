@@ -128,7 +128,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMIStoreRegMem);
     RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMIMath);
 
-    // graphs
+    // graphs exp extension for backward compatibility
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphCreateExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListBeginGraphCaptureExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListBeginCaptureIntoGraphExp);
@@ -142,12 +142,16 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphDumpContentsExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetGraphExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphSetDestructionCallbackExp);
+
+    // core ext graphs to use on loader < 1.17
     RETURN_L0_FUNC_PTR_IF_EXIST(zeExecutableGraphGetSourceGraphExt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphGetPrimaryCommandListExt);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphVisitExt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphPauseCaptureExt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphResumeCaptureExt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphGetIdExt);
+
+    // visit extension for graphs
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphVisitExt);
 
     // Metrics
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceEnableMetricsExp);
