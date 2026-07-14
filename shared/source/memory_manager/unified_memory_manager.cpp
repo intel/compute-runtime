@@ -474,10 +474,10 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     if (this->usmHostAllocationsCache) {
         void *allocationFromCache = this->usmHostAllocationsCache->get(size, memoryProperties);
         if (allocationFromCache) {
-            if (memoryProperties.fabricAccessibleIpcHandleRequested) {
+            if (memoryProperties.ipcHandleTypeFlags & NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible) {
                 auto svmData = getSVMAlloc(allocationFromCache);
                 if (svmData) {
-                    svmData->fabricAccessibleIpcHandleRequested = true;
+                    svmData->ipcHandleTypeFlags |= NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible;
                 }
             }
             return allocationFromCache;
@@ -506,7 +506,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     allocData.device = nullptr;
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(++this->allocationsCounter);
-    allocData.fabricAccessibleIpcHandleRequested = memoryProperties.fabricAccessibleIpcHandleRequested;
+    allocData.ipcHandleTypeFlags = memoryProperties.ipcHandleTypeFlags;
 
     insertSVMAlloc(usmPtr, allocData);
 
@@ -546,7 +546,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.alignment = alignUpNonZero<size_t>(memoryProperties.alignment, pageSizeForAlignment);
     unifiedMemoryProperties.flags.isHostInaccessibleAllocation = false;
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
-    unifiedMemoryProperties.flags.shareableWithoutNTHandle = memoryProperties.allocationFlags.flags.shareableWithoutNTHandle;
+    unifiedMemoryProperties.flags.ipcSupportedAllocationByDefault = memoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
     unifiedMemoryProperties.flags.uncacheable = memoryProperties.allocationFlags.flags.locallyUncachedResource;
     unifiedMemoryProperties.flags.preferCompressed = compressionEnabled || memoryProperties.allocationFlags.flags.compressedHint;
@@ -554,7 +554,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.preferCompressed &= preferCompressed;
     unifiedMemoryProperties.flags.resource48Bit = memoryProperties.allocationFlags.flags.resource48Bit;
     unifiedMemoryProperties.flags.readOnly = memoryProperties.allocationFlags.flags.readOnly;
-    unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = memoryProperties.fabricAccessibleIpcHandleRequested;
+    unifiedMemoryProperties.ipcHandleTypeFlags = memoryProperties.ipcHandleTypeFlags;
 
     if (memoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {
         unifiedMemoryProperties.flags.isHostInaccessibleAllocation = true;
@@ -562,10 +562,10 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
             false == memoryProperties.isInternalAllocation) {
             void *allocationFromCache = this->usmDeviceAllocationsCache->get(size, memoryProperties);
             if (allocationFromCache) {
-                if (memoryProperties.fabricAccessibleIpcHandleRequested) {
+                if (memoryProperties.ipcHandleTypeFlags & NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible) {
                     auto svmData = getSVMAlloc(allocationFromCache);
                     if (svmData) {
-                        svmData->fabricAccessibleIpcHandleRequested = true;
+                        svmData->ipcHandleTypeFlags |= NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible;
                     }
                 }
                 return allocationFromCache;
@@ -602,7 +602,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.device = memoryProperties.device;
     allocData.setAllocId(++this->allocationsCounter);
     allocData.isInternalAllocation = memoryProperties.isInternalAllocation;
-    allocData.fabricAccessibleIpcHandleRequested = memoryProperties.fabricAccessibleIpcHandleRequested;
+    allocData.ipcHandleTypeFlags = memoryProperties.ipcHandleTypeFlags;
 
     auto retPtr = reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
     insertSVMAlloc(retPtr, allocData);
@@ -723,7 +723,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     allocData.size = size;
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(++this->allocationsCounter);
-    allocData.fabricAccessibleIpcHandleRequested = unifiedMemoryProperties.fabricAccessibleIpcHandleRequested;
+    allocData.ipcHandleTypeFlags = unifiedMemoryProperties.ipcHandleTypeFlags;
 
     auto retPtr = allocationGpu->getUnderlyingBuffer();
     insertSVMAlloc(retPtr, allocData);
@@ -1043,7 +1043,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     allocData.pageSizeForAlignment = effectiveSvmCpuAlignment;
     allocData.size = size;
     allocData.setAllocId(++this->allocationsCounter);
-    allocData.fabricAccessibleIpcHandleRequested = unifiedMemoryProperties.fabricAccessibleIpcHandleRequested;
+    allocData.ipcHandleTypeFlags = unifiedMemoryProperties.ipcHandleTypeFlags;
 
     insertSVMAlloc(svmPtr, allocData);
     return svmPtr;

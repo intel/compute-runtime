@@ -26,7 +26,7 @@ using MemoryIpcHandlePropertiesTest = MemoryExportImportTest;
 TEST_F(MemoryIpcHandlePropertiesTest,
        givenFabricAccessibleHandleTypeWhenGettingIpcMemHandleThenIpcMemHandleReturnsSuccess) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(true);
+    NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.set(true);
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -82,7 +82,7 @@ TEST_F(MemoryIpcHandlePropertiesTest,
 TEST_F(MemoryIpcHandlePropertiesTest,
        givenNonFabricAccessibleHandleTypeWhenGettingIpcMemHandleThenReservedHandleDataIsNotUsed) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(true);
+    NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.set(true);
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;

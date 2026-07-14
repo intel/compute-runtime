@@ -1715,7 +1715,7 @@ TEST_F(GetMemHandlePtrTest, givenWddmDriverWhenCloseExternalHandleCalledThenFdIs
 using ContextStaticIpcTest = Test<DeviceFixture>;
 TEST_F(ContextStaticIpcTest, givenNullContextWhenCallingStaticIsIPCHandleSharingSupportedThenReturnsTrue) {
     // Test that the static function can be called without a Context instance
-    bool ipcSupported = Context::isIPCHandleSharingSupported();
+    bool ipcSupported = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_TRUE(ipcSupported);
 }
 
@@ -1723,7 +1723,7 @@ TEST_F(ContextStaticIpcTest, givenDriverHandleWhenCallingStaticIsIPCHandleSharin
     // Test that driver can query IPC support before creating any context
     // This proves the static function resolves the issue mentioned in review:
     // "driver can report different IPC capabilities whenever L0 context was created or not"
-    bool ipcSupportedBeforeContext = Context::isIPCHandleSharingSupported();
+    bool ipcSupportedBeforeContext = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_TRUE(ipcSupportedBeforeContext);
 
     // Now create a context and verify it returns the same value
@@ -1732,7 +1732,7 @@ TEST_F(ContextStaticIpcTest, givenDriverHandleWhenCallingStaticIsIPCHandleSharin
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    bool ipcSupportedAfterContext = Context::isIPCHandleSharingSupported();
+    bool ipcSupportedAfterContext = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_TRUE(ipcSupportedAfterContext);
 
     // Verify both calls return the same value (platform capability, not instance-specific)

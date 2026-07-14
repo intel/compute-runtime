@@ -64,29 +64,29 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullp
 using ContextStaticIpcTest = Test<DeviceFixture>;
 TEST_F(ContextStaticIpcTest, givenNullContextWhenCallingStaticIsIPCHandleSharingSupportedWithoutDebugFlagThenReturnsFalse) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableShareableWithoutNTHandle.set(0);
+    debugManager.flags.EnableipcSupportedAllocationByDefault.set(0);
 
     // Test that the static function can be called without a Context instance
-    bool ipcSupported = Context::isIPCHandleSharingSupported();
+    bool ipcSupported = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_FALSE(ipcSupported);
 }
 
 TEST_F(ContextStaticIpcTest, givenNullContextWhenCallingStaticIsIPCHandleSharingSupportedWithDebugFlagThenReturnsTrue) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableShareableWithoutNTHandle.set(1);
+    debugManager.flags.EnableipcSupportedAllocationByDefault.set(1);
 
     // Test that the static function can be called without a Context instance
-    bool ipcSupported = Context::isIPCHandleSharingSupported();
+    bool ipcSupported = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_TRUE(ipcSupported);
 }
 
 TEST_F(ContextStaticIpcTest, givenDriverHandleWhenCallingStaticIsIPCHandleSharingSupportedThenDriverCanQueryBeforeContextCreation) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableShareableWithoutNTHandle.set(1);
+    debugManager.flags.EnableipcSupportedAllocationByDefault.set(1);
 
     // Test that driver can query IPC support before creating any context on WDDM
     // This proves the static function allows the driver to report capabilities consistently
-    bool ipcSupportedBeforeContext = Context::isIPCHandleSharingSupported();
+    bool ipcSupportedBeforeContext = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_TRUE(ipcSupportedBeforeContext);
 
     // Now create a context and verify it returns the same value
@@ -95,7 +95,7 @@ TEST_F(ContextStaticIpcTest, givenDriverHandleWhenCallingStaticIsIPCHandleSharin
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    bool ipcSupportedAfterContext = Context::isIPCHandleSharingSupported();
+    bool ipcSupportedAfterContext = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_TRUE(ipcSupportedAfterContext);
 
     // Verify both calls return the same value (platform capability, not instance-specific)

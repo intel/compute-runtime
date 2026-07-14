@@ -249,14 +249,14 @@ TEST_F(ContextSystemBarrierTest, givenDiscreteDeviceWhenCallingSystemBarrierThen
 
 TEST_F(ContextIsShareable, givenNullContextWhenCallingStaticIsIPCHandleSharingSupportedThenReturnsTrueOnLinux) {
     // Test that the static function can be called without a Context instance
-    bool ipcSupported = Context::isIPCHandleSharingSupported();
+    bool ipcSupported = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_TRUE(ipcSupported);
 }
 
 TEST_F(ContextIsShareable, givenDriverHandleWhenCallingStaticIsIPCHandleSharingSupportedThenReturnsTrueBeforeContextCreation) {
     // Test that driver can query IPC support before creating any context
     // This proves the static function resolves the chicken-and-egg problem
-    bool ipcSupportedBeforeContext = Context::isIPCHandleSharingSupported();
+    bool ipcSupportedBeforeContext = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_TRUE(ipcSupportedBeforeContext);
 
     // Now create a context and verify it still returns the same
@@ -265,7 +265,7 @@ TEST_F(ContextIsShareable, givenDriverHandleWhenCallingStaticIsIPCHandleSharingS
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    bool ipcSupportedAfterContext = Context::isIPCHandleSharingSupported();
+    bool ipcSupportedAfterContext = Context::isIPCHandleSharingSupportedByDefault();
     EXPECT_TRUE(ipcSupportedAfterContext);
     EXPECT_EQ(ipcSupportedBeforeContext, ipcSupportedAfterContext);
 

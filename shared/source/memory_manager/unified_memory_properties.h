@@ -17,6 +17,8 @@
 
 namespace NEO {
 
+inline constexpr uint32_t unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible = 0x2;
+
 struct UnifiedMemoryProperties {
     UnifiedMemoryProperties(InternalMemoryType memoryType,
                             size_t alignment,
@@ -34,7 +36,7 @@ struct UnifiedMemoryProperties {
     const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields;
     AllocationType requestedAllocationType = AllocationType::unknown;
     bool isInternalAllocation = false;
-    bool fabricAccessibleIpcHandleRequested = false;
+    uint32_t ipcHandleTypeFlags = 0;
 };
 
 } // namespace NEO

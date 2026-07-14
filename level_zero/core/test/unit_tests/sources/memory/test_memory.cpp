@@ -2398,9 +2398,9 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithHostInitialPlacementBiasFlagThe
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableShareableWithoutNTHandleFlagOnNonDG1ThenShareableWithoutNTHandleIsSet, IsNotDG1) {
+HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableipcSupportedAllocationByDefaultFlagOnNonDG1ThenipcSupportedAllocationByDefaultIsSet, IsNotDG1) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(1);
+    NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.set(1);
 
     size_t size = 10;
     size_t alignment = 1u;
@@ -2415,15 +2415,15 @@ HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableShareableWithoutNTHand
 
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(nullptr, allocData);
-    EXPECT_EQ(allocData->allocationFlagsProperty.flags.shareableWithoutNTHandle, 1u);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.ipcSupportedAllocationByDefault, 1u);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableShareableWithoutNTHandleFlagOnDG1ThenShareableWithoutNTHandleIsNotSet, IsDG1) {
+HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableipcSupportedAllocationByDefaultFlagOnDG1ThenipcSupportedAllocationByDefaultIsNotSet, IsDG1) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(1);
+    NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.set(1);
 
     size_t size = 10;
     size_t alignment = 1u;
@@ -2438,7 +2438,7 @@ HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableShareableWithoutNTHand
 
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(nullptr, allocData);
-    EXPECT_EQ(allocData->allocationFlagsProperty.flags.shareableWithoutNTHandle, 0u);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.ipcSupportedAllocationByDefault, 0u);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -5515,7 +5515,7 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
 
         context = std::make_unique<Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->settings.enableIpcHandleSharing = true;
+        context->settings.enableIpcHandleSharingByDefault = true;
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
@@ -5554,7 +5554,7 @@ struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
 
         context = std::make_unique<Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->settings.enableIpcHandleSharing = true;
+        context->settings.enableIpcHandleSharingByDefault = true;
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
@@ -6331,7 +6331,7 @@ struct ContextMultiDeviceMock : public L0::Context {
         alignedFree(const_cast<void *>(ptr));
         return ZE_RESULT_SUCCESS;
     }
-    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override {
+    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice, bool ipcSupportedAllocationByDefault) override {
         return true;
     }
 };

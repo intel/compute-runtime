@@ -30,7 +30,7 @@ using MemoryIPCTests = MemoryExportImportWinHandleTest;
 TEST_F(MemoryIPCTests,
        givenCallToGetIpcHandleWithDisabledIpcHandleSharingThenUnsupportedFeatureIsReturned) {
     // Temporarily disable IPC handle sharing for this test
-    context->settings.enableIpcHandleSharing = false;
+    context->settings.enableIpcHandleSharingByDefault = false;
 
     size_t size = 10;
     size_t alignment = 1u;
@@ -49,18 +49,6 @@ TEST_F(MemoryIPCTests,
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryIPCTests,
-       givenCallToOpenIpcHandleWithDisabledIpcHandleSharingThenUnsupportedFeatureIsReturned) {
-    // Temporarily disable IPC handle sharing for this test
-    context->settings.enableIpcHandleSharing = false;
-
-    ze_ipc_mem_handle_t ipcHandle = {};
-    ze_ipc_memory_flags_t flags = {};
-    void *ipcPtr = nullptr;
-    ze_result_t result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
 TEST_F(MemoryIPCTests,

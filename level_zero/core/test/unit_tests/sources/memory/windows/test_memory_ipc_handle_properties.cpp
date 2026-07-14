@@ -31,7 +31,7 @@ TEST_F(MemoryIpcHandlePropertiesTest,
        givenFabricAccessibleHandleTypeWhenGettingIpcMemHandleThenApiSucceeds) {
 
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(true);
+    NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.set(true);
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;

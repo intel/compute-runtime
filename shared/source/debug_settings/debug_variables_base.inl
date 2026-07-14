@@ -78,7 +78,7 @@ DECLARE_DEBUG_VARIABLE(bool, DisableForceToStateless, false, "Do not force state
 DECLARE_DEBUG_VARIABLE(bool, ForceTheoreticalMaxWorkGroupCount, false, "Do not apply any limitation to max cooperative/concurrent work-group count queries")
 DECLARE_DEBUG_VARIABLE(bool, AppendMemoryPrefetchForKmdMigratedSharedAllocations, true, "Allow prefetching shared memory to the device associated with the specified command list")
 DECLARE_DEBUG_VARIABLE(bool, ForceMemoryPrefetchForKmdMigratedSharedAllocations, false, "Force prefetch of shared memory in command queue execute command lists")
-DECLARE_DEBUG_VARIABLE(bool, EnableShareableWithoutNTHandle, false, "Enable creating shareable allocations without NT handle on Windows for IPC Support")
+DECLARE_DEBUG_VARIABLE(bool, EnableipcSupportedAllocationByDefault, false, "Enable creating shareable allocations without NT handle on Windows for IPC Support By Default")
 DECLARE_DEBUG_VARIABLE(bool, ForceIpcSocketFallback, false, "Force using Unix socket fallback for IPC instead of pidfd_getfd")
 DECLARE_DEBUG_VARIABLE(bool, EnableIpcSocketFallback, true, "Enable Unix socket fallback for IPC when pidfd_getfd fails")
 DECLARE_DEBUG_VARIABLE(int32_t, IpcFdPreallocationCount, -1, "Override FD preallocation count for IPC opaque handles (default -1: use 10 percent of ulimit, valid range: 1 to ulimit)")

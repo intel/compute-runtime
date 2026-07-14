@@ -223,7 +223,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     bool enableSysman = false;
     bool enablePciIdDeviceOrder = false;
     bool lazyInitUsmPools = false;
-    bool enableIpcHandleSharing = true;
+    bool enableIpcHandleSharingByDefault = true;
     std::once_flag hostUsmPoolOnceFlag;
     std::once_flag deviceUsmPoolOnceFlag;
 

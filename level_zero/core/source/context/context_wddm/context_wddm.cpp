@@ -14,19 +14,19 @@ uint8_t Context::isOpaqueHandleSupported(IpcHandleType *handleType) {
     return isWddmOpaqueHandleSupported(handleType);
 }
 
-bool Context::isIPCHandleSharingSupported() {
-    if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
+bool Context::isIPCHandleSharingSupportedByDefault() {
+    if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
         return true;
     }
     return false;
 }
 
-bool Context::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) {
+bool Context::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool ipcSupportedAllocationByDefault) {
     if (exportableMemory) {
         return true;
     }
 
-    if (shareableWithoutNTHandle) {
+    if (ipcSupportedAllocationByDefault) {
         return true;
     }
 

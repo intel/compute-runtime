@@ -800,14 +800,14 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenR
     svmManager->freeSVMAlloc(cachedPtr);
     ASSERT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
 
-    unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
+    unifiedMemoryProperties.ipcHandleTypeFlags = NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible;
     auto ptr = svmManager->createHostUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
     ASSERT_NE(nullptr, ptr);
     EXPECT_EQ(cachedPtr, ptr);
 
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
-    EXPECT_TRUE(svmData->fabricAccessibleIpcHandleRequested);
+    EXPECT_TRUE(svmData->ipcHandleTypeFlags & NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible);
 
     svmManager->freeSVMAlloc(ptr);
     svmManager->cleanupUSMAllocCaches();
@@ -835,7 +835,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenC
     void *unmappedPtr = reinterpret_cast<void *>(uintptr_t(1));
     svmManager->usmHostAllocationsCache->allocations[0].allocation = unmappedPtr;
 
-    unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
+    unifiedMemoryProperties.ipcHandleTypeFlags = NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible;
     auto ptr = svmManager->createHostUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
     EXPECT_EQ(unmappedPtr, ptr);
     EXPECT_EQ(nullptr, svmManager->getSVMAlloc(unmappedPtr));
@@ -863,14 +863,14 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenR
     svmManager->freeSVMAlloc(cachedPtr);
     ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
 
-    unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
+    unifiedMemoryProperties.ipcHandleTypeFlags = NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible;
     auto ptr = svmManager->createUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
     ASSERT_NE(nullptr, ptr);
     EXPECT_EQ(cachedPtr, ptr);
 
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
-    EXPECT_TRUE(svmData->fabricAccessibleIpcHandleRequested);
+    EXPECT_TRUE(svmData->ipcHandleTypeFlags & NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible);
 
     svmManager->freeSVMAlloc(ptr);
     svmManager->cleanupUSMAllocCaches();

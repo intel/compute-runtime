@@ -88,7 +88,7 @@ Context::Context(DriverHandle *driverHandle) {
     // avoid clang-tidy warning.
     settings.useOpaqueHandle = Context::isOpaqueHandleSupported(&settings.handleType);
     // Inherit IPC handle sharing setting from driver handle
-    settings.enableIpcHandleSharing = driverHandle->enableIpcHandleSharing;
+    settings.enableIpcHandleSharingByDefault = driverHandle->enableIpcHandleSharingByDefault;
 }
 
 Context::~Context() {
@@ -178,9 +178,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
     }
 
-    if (lookupTable.ipcHandleTypeFabric) {
-        unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
-    }
+    unifiedMemoryProperties.ipcHandleTypeFlags = lookupTable.ipcHandleTypeFlags;
 
     if (lookupTable.isExternalMemmapSystem) {
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(lookupTable.externalMemmapSystem.systemMemory);
@@ -327,12 +325,12 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
     NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, this->driverHandle->rootDeviceIndices, deviceBitfields);
-    unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle = 0;
+    unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = 0;
     auto &productHelper = neoDevice->getProductHelper();
-    if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
-        unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle = productHelper.canShareMemoryWithoutNTHandle();
+    if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
+        unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = productHelper.canShareMemoryWithoutNTHandle();
     }
-    unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice, unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle);
+    unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice, unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault);
     unifiedMemoryProperties.device = neoDevice;
     unifiedMemoryProperties.allocationFlags.flags.compressedHint = isAllocationSuitableForCompression(lookupTable, *device, size);
 
@@ -349,9 +347,7 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
         unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined = 1;
     }
 
-    if (lookupTable.ipcHandleTypeFabric) {
-        unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
-    }
+    unifiedMemoryProperties.ipcHandleTypeFlags = lookupTable.ipcHandleTypeFlags;
 
     if (false == lookupTable.exportMemory) {
         if (size <= NEO::PoolInfo::getMaxPoolableSize(neoDevice->getGfxCoreHelper())) {
@@ -986,14 +982,13 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
                                           uint32_t *numIpcHandles,
                                           ze_ipc_mem_handle_t *pIpcHandles) {
 
-    if (!settings.enableIpcHandleSharing) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
     NEO::UsmMemAllocPool *usmPool = nullptr;
     InternalMemoryType type = InternalMemoryType::notSpecified;
     NEO::GraphicsAllocation *alloc = nullptr;
-    NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     bool fabricAccessibleHandle = false;
+    bool allocSupportsIpc = false;
+
+    NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (!allocData) {
         auto lock = this->driverHandle->getMemoryManager()->lockPhysicalMemoryAllocationMap();
         auto it = this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(const_cast<void *>(ptr));
@@ -1007,7 +1002,8 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
         } else {
             type = InternalMemoryType::reservedHostMemory;
         }
-        fabricAccessibleHandle = allocationNode->fabricAccessibleIpcHandleRequested;
+        fabricAccessibleHandle = allocationNode->ipcHandleTypeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
+        allocSupportsIpc = allocationNode->ipcHandleTypeFlags != 0;
     } else {
         type = allocData->memoryType;
 
@@ -1018,7 +1014,12 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
-        fabricAccessibleHandle = allocData->fabricAccessibleIpcHandleRequested;
+        fabricAccessibleHandle = allocData->ipcHandleTypeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
+        allocSupportsIpc = allocData->ipcHandleTypeFlags != 0;
+    }
+
+    if (!allocSupportsIpc && !settings.enableIpcHandleSharingByDefault) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     auto memoryManager = this->driverHandle->getMemoryManager();
 
@@ -1130,11 +1131,6 @@ ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,
     uint64_t cacheID;
     bool compressedMemory = false;
     void *reservedHandleData = nullptr;
-
-    if (!settings.enableIpcHandleSharing) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     bool isOpaqueHandle = false;
     getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory, isOpaqueHandle);
 
@@ -1787,9 +1783,7 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
     NEO::PhysicalMemoryAllocation *physicalMemoryAllocation = new NEO::PhysicalMemoryAllocation;
     physicalMemoryAllocation->allocation = allocation;
     physicalMemoryAllocation->device = neoDevice;
-    if (lookupTable.ipcHandleTypeFabric) {
-        physicalMemoryAllocation->fabricAccessibleIpcHandleRequested = true;
-    }
+    physicalMemoryAllocation->ipcHandleTypeFlags = lookupTable.ipcHandleTypeFlags;
     auto lock = this->driverHandle->getMemoryManager()->lockPhysicalMemoryAllocationMap();
     this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().emplace(reinterpret_cast<void *>(allocation), physicalMemoryAllocation);
     *phPhysicalMemory = reinterpret_cast<ze_physical_mem_handle_t>(allocation);
@@ -1939,7 +1933,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         allocData.setAllocId(++this->driverHandle->svmAllocsManager->allocationsCounter);
         allocData.memoryType = InternalMemoryType::reservedDeviceMemory;
         allocData.virtualReservationData = virtualMemoryReservation;
-        allocData.fabricAccessibleIpcHandleRequested = allocationNode->fabricAccessibleIpcHandleRequested;
+        allocData.ipcHandleTypeFlags = allocationNode->ipcHandleTypeFlags;
         NEO::MemoryMappedRange *mappedRange = new NEO::MemoryMappedRange;
         mappedRange->ptr = ptr;
         mappedRange->size = size;
@@ -1965,7 +1959,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         allocData.setAllocId(++this->driverHandle->svmAllocsManager->allocationsCounter);
         allocData.memoryType = InternalMemoryType::reservedHostMemory;
         allocData.virtualReservationData = virtualMemoryReservation;
-        allocData.fabricAccessibleIpcHandleRequested = allocationNode->fabricAccessibleIpcHandleRequested;
+        allocData.ipcHandleTypeFlags = allocationNode->ipcHandleTypeFlags;
         NEO::MemoryMappedRange *mappedRange = new NEO::MemoryMappedRange;
         mappedRange->ptr = ptr;
         mappedRange->size = size;

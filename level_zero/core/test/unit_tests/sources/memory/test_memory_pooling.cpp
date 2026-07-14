@@ -74,7 +74,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
         ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         context = Context::fromHandle(hContext);
-        context->settings.enableIpcHandleSharing = true;
+        context->settings.enableIpcHandleSharingByDefault = true;
     }
 
     void TearDown() override {

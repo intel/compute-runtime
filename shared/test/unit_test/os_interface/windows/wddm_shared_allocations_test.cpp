@@ -78,7 +78,7 @@ TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationAndGetNTHandleFailedThenAllo
     EXPECT_EQ(resourceHandle, 0u);
 }
 
-TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationWithShareableWithoutNTHandleFlagThenNTHandleIsNotCreated) {
+TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationWithipcSupportedAllocationByDefaultFlagThenNTHandleIsNotCreated) {
     init();
 
     D3DKMT_HANDLE handle = 32u;
@@ -89,7 +89,7 @@ TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationWithShareableWithoutNTHandle
     gmmRequirements.preferCompressed = true;
     Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
 
-    // Test with createNTHandle = false (shareableWithoutNTHandle = true)
+    // Test with createNTHandle = false (ipcSupportedAllocationByDefault = true)
     EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocation(nullptr, &gmm, handle, resourceHandle, &ntHandle, false));
     EXPECT_NE(handle, 0u);
     EXPECT_NE(resourceHandle, 0u);
@@ -108,7 +108,7 @@ TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationWithNormalShareableFlagThenN
     gmmRequirements.preferCompressed = true;
     Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
 
-    // Test with createNTHandle = true (shareableWithoutNTHandle = false)
+    // Test with createNTHandle = true (ipcSupportedAllocationByDefault = false)
     EXPECT_NE(STATUS_SUCCESS, wddm->createAllocation(nullptr, &gmm, handle, resourceHandle, &ntHandle, true));
     EXPECT_EQ(wddm->destroyAllocationResult.called, 2u); // Should be called because NT handle creation failed
     EXPECT_EQ(handle, 0u);

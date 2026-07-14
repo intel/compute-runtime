@@ -5909,7 +5909,7 @@ TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithSocketsAndFdHandleTh
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
-    contextImp->settings.enableIpcHandleSharing = true;
+    contextImp->settings.enableIpcHandleSharingByDefault = true;
 
     size_t size = 4096;
     size_t alignment = 4096;
@@ -5953,7 +5953,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsButNtHandleThenServerR
     // Set conditions to make line 300 condition FALSE (sockets but not fdHandle)
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
     contextImp->settings.handleType = IpcHandleType::ntHandle;
-    contextImp->settings.enableIpcHandleSharing = true;
+    contextImp->settings.enableIpcHandleSharingByDefault = true;
 
     size_t size = 4096;
     size_t alignment = 4096;
@@ -6540,7 +6540,7 @@ TEST_F(ContextTest, givenFabricAccessibleIpcHandleTypeInHostMemAllocDescWhenGett
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, allocData);
-    EXPECT_TRUE(allocData->fabricAccessibleIpcHandleRequested);
+    EXPECT_TRUE(allocData->ipcHandleTypeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE);
 
     ze_ipc_mem_handle_t ipcHandle = {};
     result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
@@ -6568,7 +6568,7 @@ TEST_F(ContextTest, givenFabricAccessibleIpcHandleTypeInDeviceMemAllocDescWhenGe
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, allocData);
-    EXPECT_TRUE(allocData->fabricAccessibleIpcHandleRequested);
+    EXPECT_TRUE(allocData->ipcHandleTypeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE);
 
     ze_ipc_mem_handle_t ipcHandle = {};
     result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
@@ -6584,7 +6584,7 @@ TEST_F(ContextTest, givenFabricAccessibleIpcHandleTypeInPhysicalMemDescWhenMappe
     ze_result_t res = driverHandle->createContext(&contextDesc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
-    contextImp->settings.enableIpcHandleSharing = true;
+    contextImp->settings.enableIpcHandleSharingByDefault = true;
 
     size_t pagesize = 0u;
     res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
@@ -6615,7 +6615,7 @@ TEST_F(ContextTest, givenFabricAccessibleIpcHandleTypeInPhysicalMemDescWhenMappe
 
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, allocData);
-    EXPECT_TRUE(allocData->fabricAccessibleIpcHandleRequested);
+    EXPECT_TRUE(allocData->ipcHandleTypeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE);
 
     ze_ipc_mem_handle_t ipcHandle = {};
     res = contextImp->getIpcMemHandle(ptr, nullptr, &ipcHandle);
@@ -6646,7 +6646,7 @@ TEST_F(ContextTest, whenCallingGetIpcMemHandleWithDevicePhysicalMemoryHandleThen
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
-    contextImp->settings.enableIpcHandleSharing = true;
+    contextImp->settings.enableIpcHandleSharingByDefault = true;
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
 
     size_t size = 1024;
@@ -6703,7 +6703,7 @@ TEST_F(ContextTest, whenCallingGetIpcMemHandleWithHostPhysicalMemoryHandleThenSu
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
-    contextImp->settings.enableIpcHandleSharing = true;
+    contextImp->settings.enableIpcHandleSharingByDefault = true;
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
 
     size_t size = 1024;

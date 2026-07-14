@@ -55,7 +55,7 @@ class WddmAllocation : public GraphicsAllocation {
           physicalMemoryReservation(parent->physicalMemoryReservation),
           mappedPhysicalMemoryReservation(parent->mappedPhysicalMemoryReservation),
           makeResidentBeforeLockRequired(parent->makeResidentBeforeLockRequired),
-          shareableWithoutNTHandle(parent->shareableWithoutNTHandle) {
+          ipcSupportedAllocationByDefault(parent->ipcSupportedAllocationByDefault) {
     }
 
   public:
@@ -110,8 +110,8 @@ class WddmAllocation : public GraphicsAllocation {
     bool isAllocInFrontWindowPool() const { return allocInFrontWindowPool; }
     void setAllocInFrontWindowPool(bool allocInFrontWindowPool) { this->allocInFrontWindowPool = allocInFrontWindowPool; }
     bool isShareable() const { return shareable; }
-    bool isShareableWithoutNTHandle() const { return shareableWithoutNTHandle; }
-    void setShareableWithoutNTHandle(bool shareableWithoutNTHandle) { this->shareableWithoutNTHandle = shareableWithoutNTHandle; }
+    bool isipcSupportedAllocationByDefault() const { return ipcSupportedAllocationByDefault; }
+    void setipcSupportedAllocationByDefault(bool ipcSupportedAllocationByDefault) { this->ipcSupportedAllocationByDefault = ipcSupportedAllocationByDefault; }
     bool isPhysicalMemoryReservation() const { return physicalMemoryReservation; }
     void setPhysicalMemoryReservation(bool physicalMemoryReservation) { this->physicalMemoryReservation = physicalMemoryReservation; }
     bool isMappedPhysicalMemoryReservation() const { return mappedPhysicalMemoryReservation; }
@@ -147,6 +147,6 @@ class WddmAllocation : public GraphicsAllocation {
     bool physicalMemoryReservation = false;
     bool mappedPhysicalMemoryReservation = false;
     bool makeResidentBeforeLockRequired = false;
-    bool shareableWithoutNTHandle = false;
+    bool ipcSupportedAllocationByDefault = false;
 };
 } // namespace NEO

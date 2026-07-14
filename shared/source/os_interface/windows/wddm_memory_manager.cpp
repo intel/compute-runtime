@@ -148,7 +148,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const Alloca
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
                                                        MemoryPool::systemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
-    allocation->setShareableWithoutNTHandle(allocationData.flags.shareableWithoutNTHandle);
+    allocation->setipcSupportedAllocationByDefault(allocationData.flags.ipcSupportedAllocationByDefault);
     allocation->setDefaultGmm(gmm.get());
     allocation->storageInfo = allocationData.storageInfo;
     if (!createPhysicalAllocation(allocation.get())) {
@@ -176,7 +176,7 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
                                                        MemoryPool::systemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
-    allocation->setShareableWithoutNTHandle(allocationData.flags.shareableWithoutNTHandle);
+    allocation->setipcSupportedAllocationByDefault(allocationData.flags.ipcSupportedAllocationByDefault);
     allocation->setDefaultGmm(gmm.get());
     allocation->storageInfo = allocationData.storageInfo;
     void *requiredGpuVa = nullptr;
@@ -1163,7 +1163,7 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
 bool WddmMemoryManager::createGpuAllocationsWithRetry(WddmAllocation *allocation) {
     for (auto handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
         auto gmm = allocation->getGmm(handleId);
-        bool createNTHandle = allocation->isShareable() && !allocation->isShareableWithoutNTHandle();
+        bool createNTHandle = allocation->isShareable() && !allocation->isipcSupportedAllocationByDefault();
         auto status = getWddm(allocation->getRootDeviceIndex()).createAllocation(allocation->getUnderlyingBuffer(), gmm, allocation->getHandleToModify(handleId), allocation->getResourceHandleToModify(), allocation->getSharedHandleToModify(), createNTHandle);
         if (status == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
             deferredDeleter->drain(true, false);
@@ -1429,7 +1429,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, singleBankAllocation ? numGmms : numBanks,
                                                            allocationData.type, nullptr, 0, sizeAligned, nullptr, MemoryPool::localMemory, allocationData.flags.shareable, maxOsContextCount);
-    wddmAllocation->setShareableWithoutNTHandle(allocationData.flags.shareableWithoutNTHandle);
+    wddmAllocation->setipcSupportedAllocationByDefault(allocationData.flags.ipcSupportedAllocationByDefault);
     if (singleBankAllocation) {
         if (numGmms > 1) {
             splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo), allocationData.flags.preferCompressed);
@@ -1528,7 +1528,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, singleBankAllocation ? numGmms : numBanks,
                                                            allocationData.type, nullptr, 0, sizeAligned, nullptr, MemoryPool::localMemory, allocationData.flags.shareable, maxOsContextCount);
-    wddmAllocation->setShareableWithoutNTHandle(allocationData.flags.shareableWithoutNTHandle);
+    wddmAllocation->setipcSupportedAllocationByDefault(allocationData.flags.ipcSupportedAllocationByDefault);
     if (singleBankAllocation) {
         if (numGmms > 1) {
             splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo), allocationData.flags.preferCompressed);

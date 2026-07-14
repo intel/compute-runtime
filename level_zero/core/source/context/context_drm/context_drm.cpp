@@ -29,11 +29,11 @@ uint8_t Context::isOpaqueHandleSupported(IpcHandleType *handleType) {
     return isDrmOpaqueHandleSupported(handleType);
 }
 
-bool Context::isIPCHandleSharingSupported() {
+bool Context::isIPCHandleSharingSupportedByDefault() {
     return true;
 }
 
-bool Context::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) {
+bool Context::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool ipcSupportedAllocationByDefault) {
     if (exportableMemory) {
         return true;
     }

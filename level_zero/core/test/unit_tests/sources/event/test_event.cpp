@@ -1211,9 +1211,9 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleThenEventPool
     driverHandle->setMemoryManager(curMemManager);
 }
 
-TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleWithShareableWithoutNTHandleEnabledThenEventPoolIsCreatedAndProcessIDsAreTheSame) {
+TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleWithipcSupportedAllocationByDefaultEnabledThenEventPoolIsCreatedAndProcessIDsAreTheSame) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(true);
+    NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.set(true);
 
     uint32_t numEvents = 4;
     ze_event_pool_desc_t poolDesc = {

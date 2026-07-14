@@ -796,7 +796,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
             importHandle = importResult.importHandle;
         }
 
-        if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
+        if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
             auto &productHelper = neoDevice->getProductHelper();
             shareWithNoNTHandle = productHelper.canShareMemoryWithoutNTHandle();
         }
@@ -835,7 +835,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
                                                       allocationType,
                                                       NEO::systemMemoryBitfield};
 
-    unifiedMemoryProperties.flags.shareableWithoutNTHandle = shareWithNoNTHandle;
+    unifiedMemoryProperties.flags.ipcSupportedAllocationByDefault = shareWithNoNTHandle;
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     auto memoryManager = driver->getMemoryManager();
     NEO::GraphicsAllocation *alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData,

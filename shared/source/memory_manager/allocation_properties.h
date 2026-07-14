@@ -30,7 +30,7 @@ struct AllocationProperties {
             uint32_t preferCompressed : 1;
             uint32_t cantBeReadOnly : 1;
             uint32_t readOnly : 1;
-            uint32_t shareableWithoutNTHandle : 1;
+            uint32_t ipcSupportedAllocationByDefault : 1;
             uint32_t reserved : 16;
         } flags;
         uint32_t allFlags = 0;
@@ -54,7 +54,7 @@ struct AllocationProperties {
     uint32_t cacheRegion = 0;
     bool makeDeviceBufferLockable = false;
     bool isaPaddingIncluded = false;
-    bool fabricAccessibleIpcHandleRequested = false;
+    uint32_t ipcHandleTypeFlags = 0;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          AllocationType allocationType, DeviceBitfield subDevicesBitfieldParam)
@@ -116,7 +116,7 @@ struct AllocationData {
             uint32_t isHostInaccessibleAllocation : 1;
             uint32_t zeroMemory : 1;
             uint32_t cantBeReadOnly : 1;
-            uint32_t shareableWithoutNTHandle : 1;
+            uint32_t ipcSupportedAllocationByDefault : 1;
             uint32_t reserved : 14;
         } flags;
         uint32_t allFlags = 0;
