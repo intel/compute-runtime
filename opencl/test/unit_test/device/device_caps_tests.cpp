@@ -165,7 +165,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(caps.spirvExtendedInstructionSets.size(), 0u);
     EXPECT_EQ(caps.spirvExtensions.size(), 0u);
     EXPECT_EQ(caps.spirvCapabilities.size(), 0u);
-    EXPECT_STREQ("v2025-04-14-00", caps.latestConformanceVersionPassed);
+    EXPECT_STREQ("v2026-04-28-00", caps.latestConformanceVersionPassed);
 
     EXPECT_NE(nullptr, caps.spirVersions);
     EXPECT_NE(nullptr, caps.deviceExtensions);

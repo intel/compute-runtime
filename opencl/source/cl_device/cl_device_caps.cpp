@@ -34,7 +34,7 @@ namespace NEO {
 static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "";
-const char *latestConformanceVersionPassed = "v2025-04-14-00";
+const char *latestConformanceVersionPassed = "v2026-04-28-00";
 static std::string driverVersion = NEO_OCL_DRIVER_VERSION;
 
 static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_config>(CL_FP_ROUND_TO_NEAREST |
