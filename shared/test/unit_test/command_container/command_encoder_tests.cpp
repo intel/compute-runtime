@@ -14,6 +14,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -787,6 +788,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenLocalWorkgroupSizeGreater
 
     lws = {32, 32, 4};
 
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+}
+
+using IsWithinXeHpCoreAndXe3pCore = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE3P_CORE>;
+HWTEST2_F(CommandEncoderTests, givenSingleActiveChannelWhenLocalSizeIsNotPowerOfTwoThenRuntimeGenerationOfLocalIdsIsRequired, IsWithinXeHpCoreAndXe3pCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    uint32_t workDim = 1;
+    uint32_t simd = 32;
+    std::array<uint8_t, 3> walkOrder = {{0, 1, 2}};
+    uint32_t requiredWalkOrder = 77u;
+
+    // power-of-two size: HW generation with linear walk order
+    std::array<size_t, 3> lws = {256, 1, 1};
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+    EXPECT_EQ(HwWalkOrderHelper::linearWalkIndex, requiredWalkOrder);
+
+    // non-power-of-two size: runtime generation required
+    lws = {400, 1, 1};
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+
+    lws = {15, 1, 1};
     EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
 }

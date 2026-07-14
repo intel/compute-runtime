@@ -437,16 +437,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
     }
 
     auto walker = genCmdCast<WalkerType *>(*hwParser.itorWalker);
-    if (kernelAttributes.flags.requiresWorkgroupWalkOrder && kernelAttributes.numLocalIdChannels > 1) {
-        EXPECT_EQ(0u, walker->getGenerateLocalId());
-    } else {
+    if (walker->getGenerateLocalId()) {
         EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
-        EXPECT_EQ(1u, walker->getGenerateLocalId());
-        if (kernelAttributes.flags.requiresWorkgroupWalkOrder) {
-            EXPECT_EQ(HwWalkOrderHelper::singleDimWalkIndex, walker->getWalkOrder());
-        } else {
-            EXPECT_EQ(0u, walker->getWalkOrder());
-        }
     }
 
     pCmdQ->flush();

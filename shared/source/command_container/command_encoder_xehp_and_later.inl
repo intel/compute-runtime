@@ -607,9 +607,8 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
                 return false;
             }
             // If single channel is active but its size is not power of 2,
-            // place that dimension as last in walk order
-            requiredWalkOrder = HwWalkOrderHelper::singleDimWalkIndex;
-            return false;
+            // there is no valid HW local-ID generation config - use runtime generation
+            return true;
         }
 
         if (requireInputWalkOrder && activeChannels == 3) {
