@@ -418,6 +418,7 @@ TEST_F(CalcOperationFixture, WhenGettingMetricsInReportAndExcludedMetricsThenThe
     std::vector<MetricImp *> mockExcludedMetrics{};
     MockMetric mockExcludedMetric(mockMetricSource, mockMetricScopes);
     mockExcludedMetrics.push_back(&mockExcludedMetric);
+    mockExcludedMetrics.push_back(&mockExcludedMetric);
 
     std::vector<MetricScopeImp *> mockMetricScopes{mockMetricScope};
 

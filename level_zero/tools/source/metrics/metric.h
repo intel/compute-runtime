@@ -536,6 +536,8 @@ struct MetricScopeImp : public MetricScope {
     uint32_t computeSubDevIndex = 0; // valid for compute metricScopes when aggregated is false
 };
 
+std::vector<MetricImp *> removeDuplicatesPreserveOrder(const std::vector<MetricImp *> &input);
+
 struct MetricCalcOp : _zet_intel_metric_calculation_operation_exp_handle_t {
     virtual ~MetricCalcOp() = default;
     MetricCalcOp() {}
@@ -562,7 +564,7 @@ struct MetricCalcOpImp : public MetricCalcOp {
         : isMultiDevice(multiDevice),
           metricScopesInReport(metricScopesInReport),
           metricsInReport(metricsInReport),
-          excludedMetrics(excludedMetrics) {}
+          excludedMetrics(removeDuplicatesPreserveOrder(excludedMetrics)) {}
 
     bool isRootDevice() { return isMultiDevice; }
     ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics, zet_intel_metric_scope_exp_handle_t *phMetricScopes) override;

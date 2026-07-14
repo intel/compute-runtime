@@ -685,6 +685,19 @@ std::vector<HandleType> removeDuplicates(HandleType *inputArray, uint32_t count)
     return std::vector<HandleType>(uniqueHandles.begin(), uniqueHandles.end());
 }
 
+std::vector<MetricImp *> removeDuplicatesPreserveOrder(const std::vector<MetricImp *> &input) {
+    std::unordered_set<MetricImp *> seen;
+    std::vector<MetricImp *> result;
+    result.reserve(input.size());
+    for (auto *m : input) {
+        if (seen.find(m) == seen.end()) {
+            seen.insert(m);
+            result.push_back(m);
+        }
+    }
+    return result;
+}
+
 ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hContext,
                                                      zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                                      zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
