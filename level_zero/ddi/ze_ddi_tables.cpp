@@ -182,6 +182,7 @@ DriverDispatch::DriverDispatch() {
     this->coreCommandQueue.pfnGetIndex = L0::zeCommandQueueGetIndex;
     this->coreCommandQueue.pfnGetMode = L0::zeCommandQueueGetMode;
     this->coreCommandQueue.pfnGetPriority = L0::zeCommandQueueGetPriority;
+    this->coreCommandQueue.pfnGetFlags = L0::zeCommandQueueGetFlags;
     this->coreCommandList.pfnCreate = L0::zeCommandListCreate;
     this->coreCommandList.pfnCreateImmediate = L0::zeCommandListCreateImmediate;
     this->coreCommandList.pfnDestroy = L0::zeCommandListDestroy;
@@ -214,6 +215,7 @@ DriverDispatch::DriverDispatch() {
     this->coreCommandList.pfnGetDeviceHandle = L0::zeCommandListGetDeviceHandle;
     this->coreCommandList.pfnGetContextHandle = L0::zeCommandListGetContextHandle;
     this->coreCommandList.pfnGetOrdinal = L0::zeCommandListGetOrdinal;
+    this->coreCommandList.pfnGetFlags = L0::zeCommandListGetFlags;
     this->coreCommandList.pfnImmediateGetIndex = L0::zeCommandListImmediateGetIndex;
     this->coreCommandList.pfnIsImmediate = L0::zeCommandListIsImmediate;
     this->coreCommandList.pfnAppendSignalExternalSemaphoreExt = L0::zeCommandListAppendSignalExternalSemaphoreExt;
