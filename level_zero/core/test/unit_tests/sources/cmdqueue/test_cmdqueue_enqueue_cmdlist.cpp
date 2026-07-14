@@ -32,9 +32,9 @@
 namespace L0 {
 namespace ult {
 
-struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
-    void setUp() {
-        debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+struct CommandQueueExecuteCommandListsFixtureInit : DeviceFixture {
+    void setUp(int32_t dispatchCmdListCmdBufferPrimary) {
+        debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(dispatchCmdListCmdBufferPrimary);
 
         DeviceFixture::setUp();
 
@@ -68,6 +68,8 @@ struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
 
     template <typename FamilyType>
     void twoCommandListCommandPreemptionTest(bool preemptionCmdProgramming);
+    template <typename FamilyType>
+    void testPatchPreambleAsyncPatchList(bool copyEngine);
 
     DebugManagerStateRestore restorer;
 
@@ -76,7 +78,17 @@ struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
     bool heaplessModeEnabled = false;
 };
 
-using CommandQueueExecuteCommandLists = Test<CommandQueueExecuteCommandListsFixture>;
+template <int32_t dispatchCmdListCmdBufferPrimary>
+struct CommandQueueExecuteCommandListsFixture : CommandQueueExecuteCommandListsFixtureInit {
+    void setUp() {
+        CommandQueueExecuteCommandListsFixtureInit::setUp(dispatchCmdListCmdBufferPrimary);
+    }
+    void tearDown() {
+        CommandQueueExecuteCommandListsFixtureInit::tearDown();
+    }
+};
+
+using CommandQueueExecuteCommandLists = Test<CommandQueueExecuteCommandListsFixture<0>>;
 
 struct MultiDeviceCommandQueueExecuteCommandListsFixture : public MultiDeviceFixture {
     void setUp() {
@@ -595,7 +607,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
 }
 
 template <typename FamilyType>
-void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest(bool preemptionCmdProgramming) {
+void CommandQueueExecuteCommandListsFixtureInit::twoCommandListCommandPreemptionTest(bool preemptionCmdProgramming) {
     ze_command_queue_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -1347,6 +1359,98 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
 
     fence->destroy();
     commandQueue->destroy();
+}
+
+template <typename FamilyType>
+void CommandQueueExecuteCommandListsFixtureInit::testPatchPreambleAsyncPatchList(bool copyEngine) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                                                 device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 copyEngine,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto engineType = copyEngine ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
+
+    auto commandList = CommandList::create(productFamily, device, engineType, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    commandList->close();
+
+    alignas(4) uint8_t patchSource1[4] = {0xFA, 0xFB, 0xFC, 0xFD};
+    constexpr uint64_t gpuDest1 = 0x1000;
+
+    alignas(4) uint8_t patchSource2[12] = {0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5};
+    constexpr uint64_t gpuDest2 = 0x2000;
+
+    auto &asyncPatchListContainer = commandList->getAsyncPatchContainer();
+
+    asyncPatchListContainer.push_back({gpuDest1, patchSource1, sizeof(patchSource1)});
+    asyncPatchListContainer.push_back({gpuDest2, patchSource2, sizeof(patchSource2)});
+
+    ze_command_list_handle_t commandListHandle = commandList->toHandle();
+
+    commandQueue->setPatchingPreamble(true);
+
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(0u, sdiCmds.size());
+
+    uint64_t expectedDestinations[] = {gpuDest1, gpuDest2, gpuDest2 + 8};
+    uint32_t expectedDwords[] = {0xFDFCFBFA, 0x00000000, 0xEDECEBEA, 0xA1A0EFEE, 0xA5A4A3A2, 0x00000000};
+
+    uint32_t foundPatchingSdi = 0;
+
+    for (auto &sdiCmd : sdiCmds) {
+        auto sdi = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmd);
+        auto it = std::find(std::begin(expectedDestinations), std::end(expectedDestinations), sdi->getAddress());
+        if (it != std::end(expectedDestinations)) {
+            foundPatchingSdi++;
+            auto index = std::distance(std::begin(expectedDestinations), it);
+            EXPECT_EQ(expectedDwords[2 * index], sdi->getDataDword0());
+            EXPECT_EQ(expectedDwords[2 * index + 1], sdi->getDataDword1());
+        }
+    }
+    EXPECT_EQ(3u, foundPatchingSdi);
+
+    EXPECT_EQ(0u, asyncPatchListContainer.size());
+
+    commandList->destroy();
+    commandQueue->destroy();
+}
+
+using CommandQueueExecuteDefaultCommandLists = Test<CommandQueueExecuteCommandListsFixture<-1>>;
+
+HWTEST_F(CommandQueueExecuteDefaultCommandLists,
+         givenPatchPreambleSetToComputeQueueWhenExecutingCommandListWithAsyncPatchListThenSdiCommandWithContentDispatched) {
+    testPatchPreambleAsyncPatchList<FamilyType>(false);
+}
+
+HWTEST_F(CommandQueueExecuteDefaultCommandLists,
+         givenPatchPreambleSetToCopyQueueWhenExecutingCommandListWithAsyncPatchListThenSdiCommandWithContentDispatched) {
+    testPatchPreambleAsyncPatchList<FamilyType>(true);
 }
 
 } // namespace ult

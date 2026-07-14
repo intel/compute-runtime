@@ -673,6 +673,10 @@ struct CommandList : _ze_command_list_handle_t {
 
     virtual void handlePostSyncPrintfAndAssert(bool hangDetected) {};
 
+    AsyncPatchContainer &getAsyncPatchContainer() {
+        return asyncPatchContainer;
+    }
+
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
@@ -759,6 +763,7 @@ struct CommandList : _ze_command_list_handle_t {
     AppendedMemAdviseOperations memAdviseOperations;
     NEO::L1CachePolicy l1CachePolicyData{};
     NEO::EncodeDummyBlitWaArgs dummyBlitWa{};
+    AsyncPatchContainer asyncPatchContainer{};
 
     int64_t currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;

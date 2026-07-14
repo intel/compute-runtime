@@ -207,4 +207,12 @@ struct CommandToPatchContainer {
     bool makeCommandView = false;
 };
 
+struct AsyncPatchElement {
+    uint64_t gpuDestinationAddress = 0;
+    void *hostSourceAddress = nullptr;
+    size_t size = 0;
+};
+
+using AsyncPatchContainer = std::vector<AsyncPatchElement>;
+
 } // namespace L0
