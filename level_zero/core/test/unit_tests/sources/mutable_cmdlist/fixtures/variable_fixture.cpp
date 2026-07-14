@@ -95,6 +95,7 @@ void VariableFixture::createVariable(L0::MCL::VariableType varType, bool baseVar
     variable->isType(varType);
     variable->desc.immediateValueChunks = immediateValueChunks;
     variable->desc.isStageCommit = this->stageCommitMode && variableSupportsStageCommit;
+    variable->desc.asyncMutation = this->asyncMutation;
 
     L0::MCL::IndirectObjectHeapOffset relativeIohOffset = 0;
     L0::MCL::CommandBufferOffset relativeWalkerOffset = 0;

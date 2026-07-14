@@ -176,6 +176,7 @@ struct MutableCommandList {
     virtual void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset, uint64_t &gpuAddress) = 0;
     virtual void disableAddressNoopPatch(size_t noopPatchIndex) = 0;
     virtual void addVariableToCommitList(Variable *variable) = 0;
+    virtual void addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size) = 0;
 
     virtual void toggleCommandListUpdated() = 0;
 };

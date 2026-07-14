@@ -55,6 +55,7 @@ Variable *Variable::create(ze_command_list_handle_t hCmdList, const InterfaceVar
 
     desc.isStageCommit = ifaceVarDesc->isStageCommit;
     desc.immediateValueChunks = ifaceVarDesc->immediateValueChunks;
+    desc.asyncMutation = ifaceVarDesc->asyncMutation;
 
     var->setDescExperimentalValues(ifaceVarDesc);
 
@@ -734,6 +735,15 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
             }
         } else {
             this->desc.eventValue.noopState = false;
+        }
+    }
+
+    if (desc.asyncMutation) {
+        for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
+            this->cmdList->addAsyncMutationElement(mutableSemWait->getGpuDestinationAddress(), mutableSemWait->getCommandView(), mutableSemWait->getCommandSize());
+        }
+        for (auto &mutableLri : this->desc.eventValue.loadRegImmCmds) {
+            this->cmdList->addAsyncMutationElement(mutableLri->getGpuDestinationAddress(), mutableLri->getCommandView(), mutableLri->getCommandSize());
         }
     }
 

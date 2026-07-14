@@ -41,5 +41,11 @@ HWTEST2_F(VariableInOrderTest, givenCbSignalExternalEventWhenMutatingEventThenPo
     EXPECT_EQ(reinterpret_cast<uint64_t>(this->externalEventDeviceAddress), walkerCmdCpu->getPostSync().getDestinationAddress());
 }
 
+HWTEST2_F(VariableInOrderTest,
+          givenCounterBasedWaitWithIndirectOnEventWhenNoopAndRestoreThenCommandViewUpdatedAndAsyncPatchlistFilled,
+          IsAtLeastXe3pCore) {
+    testAsyncMutationWaitEventTest<FamilyType>(true);
+}
+
 } // namespace ult
 } // namespace L0

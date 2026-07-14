@@ -11,9 +11,11 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_load_register_imm_hw.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_pipe_control_hw.h"
@@ -1761,6 +1763,125 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenAsyncMutationAndKernelWithWaitRegularEventWhenMutateIntoOtherEventThenDataIsUpdatedAndAsyncPatchlistDispatched) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    constexpr size_t semWaitSize = sizeof(MI_SEMAPHORE_WAIT);
+    alignas(uint32_t) uint8_t semWaitData[semWaitSize] = {0};
+    uint32_t *semWaitPtr = reinterpret_cast<uint32_t *>(semWaitData);
+
+    auto event = createTestEvent(false, false, false, false);
+    auto eventHandle = event->toHandle();
+    auto newEvent = createTestEvent(false, false, false, false);
+    auto newEventHandle = newEvent->toHandle();
+
+    mutableCommandList->getBase()->setupPatchPreambleEnabled(true);
+
+    // mutation point
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event 1 as wait event and signal event 0
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+    EXPECT_TRUE(waitEventVar->getDesc().asyncMutation);
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto expectedAsyncPatchListGpuDst = mutableSemWait->getGpuDestinationAddress();
+    auto expectedAsyncPatchListHostSrc = mutableSemWait->getCommandView();
+
+    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(expectedAsyncPatchListHostSrc);
+    auto waitAddress = event->getCompletionFieldGpuAddress(this->device);
+    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
+    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+
+    auto &asyncPatchContainer = mutableCommandList->getBase()->getAsyncPatchContainer();
+    ASSERT_EQ(1u, asyncPatchContainer.size());
+    EXPECT_EQ(expectedAsyncPatchListGpuDst, asyncPatchContainer[0].gpuDestinationAddress);
+    EXPECT_EQ(expectedAsyncPatchListHostSrc, asyncPatchContainer[0].hostSourceAddress);
+
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                                                 device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto mutableCommandListHandle = mutableCommandList->toHandle();
+
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    L0::CommandListExecutionInternalOptions internalOptions = {};
+    result = commandQueue->executeCommandLists(1, &mutableCommandListHandle, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(0u, sdiCmds.size());
+
+    size_t patchedSize = 0;
+    for (auto &sdiCmds : sdiCmds) {
+        auto sdiCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds);
+        if (sdiCmd->getAddress() == expectedAsyncPatchListGpuDst) {
+            if (sdiCmd->getStoreQword()) {
+                expectedAsyncPatchListGpuDst += sizeof(uint64_t);
+                patchedSize += sizeof(uint64_t);
+                *semWaitPtr = sdiCmd->getDataDword0();
+                semWaitPtr++;
+                *semWaitPtr = sdiCmd->getDataDword1();
+                semWaitPtr++;
+            } else {
+                expectedAsyncPatchListGpuDst += sizeof(uint32_t);
+                patchedSize += sizeof(uint32_t);
+                *semWaitPtr = sdiCmd->getDataDword0();
+                semWaitPtr++;
+            }
+            if (patchedSize >= semWaitSize) {
+                break;
+            }
+        }
+    }
+    semWaitPtr = reinterpret_cast<uint32_t *>(semWaitData);
+    semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(semWaitPtr);
+    ASSERT_NE(nullptr, semWaitCmd);
+    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+
+    commandQueue->destroy();
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

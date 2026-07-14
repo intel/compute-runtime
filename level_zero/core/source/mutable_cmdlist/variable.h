@@ -47,6 +47,7 @@ struct InterfaceVariableDescriptor {
     bool isStageCommit = false;
     bool immediateValueChunks = false;
     bool api = false;
+    bool asyncMutation = false;
 };
 
 enum VariableType : uint8_t {
@@ -140,6 +141,7 @@ struct VariableDescriptor {
     bool commitRequired = false;
     bool immediateValueChunks = false;
     bool apiVariable = false;
+    bool asyncMutation = false;
 };
 
 struct Variable : public VariableHandle {

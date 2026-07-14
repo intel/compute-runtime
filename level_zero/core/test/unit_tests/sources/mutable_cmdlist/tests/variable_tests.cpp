@@ -1433,7 +1433,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableTest,
             givenWaitEventRegularNoCounterBasedWhenNoopingAndRestoringVariableThenWaitCommandIsNoopedAndRestored) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    alignas(sizeof(uint32_t)) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    alignas(uint32_t) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
     memset(noopSemaphoreSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
 
     auto event = this->createTestEvent(false, false, false, false);
@@ -1754,9 +1754,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
-            givenExternalCounterBasedWaitEventWhenWhenNoopingAndRestoringEventThenWaitIsNoopedAndRestored) {
+            givenExternalCounterBasedWaitEventWhenNoopingAndRestoringEventThenWaitIsNoopedAndRestored) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    alignas(sizeof(uint32_t)) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    alignas(uint32_t) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
     memset(noopSemaphoreSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
 
     auto event = this->createTestEvent(true, false, false, true);
@@ -1793,6 +1793,110 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
     auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
+}
+
+template <typename FamilyType>
+void VariableInOrderFixture::testAsyncMutationWaitEventTest(bool indirect) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    this->mutableCommandList->semaphore64bCmdSupported = !indirect;
+    this->qwordIndirect = indirect;
+    this->asyncMutation = true;
+
+    alignas(uint32_t) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    memset(noopSemaphoreSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
+    alignas(uint32_t) uint8_t noopLriSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {};
+    memset(noopLriSpace, 0, sizeof(MI_LOAD_REGISTER_IMM));
+
+    auto event = this->createTestEvent(true, false, false, true);
+    ASSERT_NE(nullptr, event);
+
+    uint64_t gpuDstExpected[3] = {0x0, 0x0, 0x0};
+    if (this->qwordIndirect) {
+        gpuDstExpected[0] = this->gpuDestAddress + 2 * sizeof(MI_LOAD_REGISTER_IMM);
+        gpuDstExpected[1] = this->gpuDestAddress;
+        gpuDstExpected[2] = this->gpuDestAddress + sizeof(MI_LOAD_REGISTER_IMM);
+    } else {
+        gpuDstExpected[0] = this->gpuDestAddress;
+    }
+
+    prepareInOrderWaitCommands<FamilyType>();
+
+    void *hostSrcExpected[3] = {nullptr, nullptr, nullptr};
+    if (this->qwordIndirect) {
+        hostSrcExpected[0] = this->mutableSemaphoreWait->getCommandView();
+        hostSrcExpected[1] = this->mutableLoadRegisterImms[0]->getCommandView();
+        hostSrcExpected[2] = this->mutableLoadRegisterImms[1]->getCommandView();
+    } else {
+        hostSrcExpected[0] = this->mutableSemaphoreWait->getCommandView();
+    }
+
+    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
+    auto ret = this->variable->setAsWaitEvent(event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    if (this->qwordIndirect) {
+        this->mutableLoadRegisterImms[0]->restore();
+        this->mutableLoadRegisterImms[1]->restore();
+
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
+    }
+
+    this->mutableSemaphoreWait->restoreWithSemaphoreAddress(event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset());
+    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
+
+    auto expectedWaitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset() + this->semWaitOffset;
+
+    ze_event_handle_t newEvent = nullptr;
+    ret = this->variable->setValue(0, 0, newEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_TRUE(this->variable->desc.eventValue.noopState);
+
+    EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->mutableSemaphoreWait->getCommandView(), sizeof(MI_SEMAPHORE_WAIT)));
+    if (this->qwordIndirect) {
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->mutableLoadRegisterImms[0]->getCommandView(), sizeof(MI_LOAD_REGISTER_IMM)));
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->mutableLoadRegisterImms[1]->getCommandView(), sizeof(MI_LOAD_REGISTER_IMM)));
+    }
+
+    auto &asyncPatchContainer = this->mutableCommandList->getBase()->getAsyncPatchContainer();
+    size_t expectedPatchCount = 1u + (this->qwordIndirect ? 2u : 0u);
+    EXPECT_EQ(expectedPatchCount, asyncPatchContainer.size());
+
+    for (uint32_t i = 0; i < asyncPatchContainer.size(); i++) {
+        EXPECT_EQ(gpuDstExpected[i], asyncPatchContainer[i].gpuDestinationAddress);
+        EXPECT_EQ(hostSrcExpected[i], asyncPatchContainer[i].hostSourceAddress);
+    }
+    asyncPatchContainer.clear();
+
+    ret = this->variable->setValue(0, 0, event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_FALSE(this->variable->desc.eventValue.noopState);
+
+    auto semWait = genCmdCast<MI_SEMAPHORE_WAIT *>(this->mutableSemaphoreWait->getCommandView());
+    EXPECT_NE(nullptr, semWait);
+    auto testWaitAddress = semWait->getSemaphoreGraphicsAddress();
+    EXPECT_EQ(expectedWaitAddress, testWaitAddress);
+
+    if (this->qwordIndirect) {
+        auto lri0 = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->mutableLoadRegisterImms[0]->getCommandView());
+        EXPECT_NE(nullptr, lri0);
+        auto lri1 = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->mutableLoadRegisterImms[1]->getCommandView());
+        EXPECT_NE(nullptr, lri1);
+    }
+
+    EXPECT_EQ(expectedPatchCount, asyncPatchContainer.size());
+
+    for (uint32_t i = 0; i < asyncPatchContainer.size(); i++) {
+        EXPECT_EQ(gpuDstExpected[i], asyncPatchContainer[i].gpuDestinationAddress);
+        EXPECT_EQ(hostSrcExpected[i], asyncPatchContainer[i].hostSourceAddress);
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderTest,
+            givenCounterBasedWaitWithIndirectOffEventWhenNoopAndRestoreThenCommandViewUpdatedAndAsyncPatchlistFilled) {
+    testAsyncMutationWaitEventTest<FamilyType>(false);
 }
 
 } // namespace ult

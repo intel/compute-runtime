@@ -239,6 +239,7 @@ struct VariableFixture : public MutableCommandListFixtureInit {
     bool stageCommitMode = true;
     bool qwordIndirect = false;
     bool inOrder = false;
+    bool asyncMutation = false;
 };
 
 struct VariableInOrderFixture : public VariableFixture {
@@ -251,12 +252,15 @@ struct VariableInOrderFixture : public VariableFixture {
     template <typename FamilyType>
     void prepareInOrderWaitCommands() {
         if (this->qwordIndirect) {
-            createMutableLoadRegisterImm<FamilyType>(0x2600, false);
-            createMutableLoadRegisterImm<FamilyType>(0x2604, false);
+            createMutableLoadRegisterImm<FamilyType>(0x2600, this->asyncMutation);
+            createMutableLoadRegisterImm<FamilyType>(0x2604, this->asyncMutation);
         }
 
-        createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, L0::MCL::MutableSemaphoreWait::Type::cbEventWait, this->qwordIndirect, false);
+        createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, L0::MCL::MutableSemaphoreWait::Type::cbEventWait, this->qwordIndirect, this->asyncMutation);
     }
+
+    template <typename FamilyType>
+    void testAsyncMutationWaitEventTest(bool indirect);
 
     uint64_t cmdListInOrderCounterValue = 0;
 

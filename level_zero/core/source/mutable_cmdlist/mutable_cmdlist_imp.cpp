@@ -671,5 +671,9 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
     return ZE_RESULT_SUCCESS;
 }
 
+void MutableCommandListImp::addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size) {
+    base->getAsyncPatchContainer().push_back({gpuDestination, hostSource, size});
+}
+
 } // namespace MCL
 } // namespace L0

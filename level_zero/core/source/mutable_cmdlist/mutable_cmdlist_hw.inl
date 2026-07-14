@@ -142,6 +142,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
     if (this->nextAppendKernelMutable) {
         if (kernelInstructionMutationEnabled(this->nextMutationFlags) && CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled()) {
+            this->appendCmdsToPatch.makeCommandView = CommandListCoreFamily<gfxCoreFamily>::isPatchPreambleEnabled();
             launchParams.outListCommands = &this->appendCmdsToPatch;
         }
 
@@ -160,6 +161,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
                     Variable *variable = nullptr;
                     InterfaceVariableDescriptor varDesc = {};
+                    varDesc.asyncMutation = CommandListCoreFamily<gfxCoreFamily>::isPatchPreambleEnabled();
                     getVariable(&varDesc, &variable);
 
                     variable->setAsWaitEvent(event);
@@ -187,6 +189,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                     }
                 }
                 launchParams.omitAddingWaitEventsResidency = omitWaitEventResidency;
+                this->appendCmdsToPatch.makeCommandView = CommandListCoreFamily<gfxCoreFamily>::isPatchPreambleEnabled();
                 launchParams.outListCommands = &this->appendCmdsToPatch;
             }
         }
@@ -804,6 +807,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeSignalEventVariable(Mutab
                 if (CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(event)) {
                     // this command is internally sync by clean StoreDataImm and sync SemWait
                     if (launchParams.outListCommands == nullptr) {
+                        this->appendCmdsToPatch.makeCommandView = CommandListCoreFamily<gfxCoreFamily>::isPatchPreambleEnabled();
                         launchParams.outListCommands = &this->appendCmdsToPatch;
                     }
                     if (event->isEventTimestampFlagSet()) {
@@ -831,6 +835,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeSignalEventVariable(Mutab
                     launchParams.outSyncCommand = &mutableEventParams.signalCmd;
                 } else if (mutableEventParams.l3FlushEventTimestampSyncCmds) {
                     if (launchParams.outListCommands == nullptr) {
+                        this->appendCmdsToPatch.makeCommandView = CommandListCoreFamily<gfxCoreFamily>::isPatchPreambleEnabled();
                         launchParams.outListCommands = &this->appendCmdsToPatch;
                     }
                 }

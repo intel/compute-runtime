@@ -627,7 +627,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool isBcsSplitEnabled() const { return (bcsSplitMode != BcsSplitParams::BcsSplitMode::disabled); }
     void setForSubCopyBcsSplit();
     bool isPatchPreambleEnabled() const { return patchPreambleEnabled; }
-    void setupPatchPreambleEnabled();
+    void setupPatchPreambleEnabled(bool initValue);
 
     virtual void appendMultiPartitionPrologue(uint32_t partitionDataSize) = 0;
     virtual void appendMultiPartitionEpilogue() = 0;

@@ -151,6 +151,8 @@ struct MutableCommandListImp : public MutableCommandList {
         return ((flags & ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION) == ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION);
     }
 
+    void addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size) override;
+
   protected:
     ze_result_t parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
                                       size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,

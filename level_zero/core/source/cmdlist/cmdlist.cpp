@@ -328,7 +328,8 @@ void CommandList::setPatchingPreamble(bool patching) {
     }
 }
 
-void CommandList::setupPatchPreambleEnabled() {
+void CommandList::setupPatchPreambleEnabled(bool initValue) {
+    this->patchPreambleEnabled = initValue;
     int32_t enableRegularCmdListPatchPreamble = NEO::debugManager.flags.ForceEnableRegularCmdListPatchPreamble.get();
     if (enableRegularCmdListPatchPreamble != -1) {
         this->patchPreambleEnabled = !!(enableRegularCmdListPatchPreamble);
