@@ -335,10 +335,10 @@ TEST_F(MetricEnumerationTest, givenOaMetricSourceWhenQueryingSourceIdThenCorrect
     EXPECT_EQ(metricGroupCount, 1u);
     EXPECT_NE(metricGroupHandle, nullptr);
 
-    zet_intel_metric_source_id_exp_t metricGroupSourceId{};
+    zet_metric_source_id_exp_t metricGroupSourceId{};
     metricGroupSourceId.sourceId = 0xFFFFFFFF;
     metricGroupSourceId.pNext = nullptr;
-    metricGroupSourceId.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP;
+    metricGroupSourceId.stype = ZET_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP;
 
     metricGroupProperties.pNext = &metricGroupSourceId;
 

@@ -172,10 +172,10 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
 
     for (auto device : rootOneSubDev) {
         zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
-        zet_intel_metric_source_id_exp_t metricGroupSourceId{};
+        zet_metric_source_id_exp_t metricGroupSourceId{};
         metricGroupSourceId.sourceId = 0xFFFFFFFF;
         metricGroupSourceId.pNext = nullptr;
-        metricGroupSourceId.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP;
+        metricGroupSourceId.stype = ZET_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP;
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, &metricGroupSourceId};
         EXPECT_EQ(zetMetricGroupGetProperties(hMetricGroup, &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(metricGroupSourceId.sourceId, MetricSource::metricSourceTypeIpSampling);
@@ -185,8 +185,8 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
 using DriverExtensionsTest = Test<ExtensionFixture>;
 
 TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnCorrectVersions) {
-    verifyExtensionDefinition(ZET_INTEL_METRIC_SOURCE_ID_EXP_NAME, ZET_INTEL_METRIC_SOURCE_ID_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZET_INTEL_METRIC_CALCULATION_EXP_NAME, ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_CURRENT);
+    verifyExtensionDefinition(ZET_METRIC_GROUP_MARKER_EXP_NAME, ZET_METRIC_GROUP_MARKER_EXP_VERSION_CURRENT);
 }
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenCorrectMetricsAreReturned, HasIPSamplingSupport) {

@@ -286,7 +286,7 @@ ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_m
     while (pNext) {
         auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);
 
-        if (static_cast<uint32_t>(extendedProperties->stype) == ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP) {
+        if (extendedProperties->stype == ZET_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP) {
 
             getMetricGroupSourceIdProperty(extendedProperties);
             retVal = ZE_RESULT_SUCCESS;

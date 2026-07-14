@@ -28,7 +28,7 @@ namespace L0 {
 
 void MetricSource::getMetricGroupSourceIdProperty(zet_base_properties_t *property) {
 
-    zet_intel_metric_source_id_exp_t *groupProperty = reinterpret_cast<zet_intel_metric_source_id_exp_t *>(property);
+    zet_metric_source_id_exp_t *groupProperty = reinterpret_cast<zet_metric_source_id_exp_t *>(property);
     groupProperty->sourceId = type;
 }
 
