@@ -44,7 +44,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     std::unique_ptr<MockImmutableData> prepareKernelImmData(uint32_t isaSize);
     std::unique_ptr<MockModule> prepareModule(MockImmutableData *immData);
     std::unique_ptr<MutableCommandList> createMutableCmdList();
-    Event *createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool external);
+    Event *createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool externalMemory, bool externalFlag);
     void *allocateUsm(size_t size);
     NEO::GraphicsAllocation *getUsmAllocation(void *usm);
     void resizeKernelArg(uint32_t resize);

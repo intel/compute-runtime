@@ -157,12 +157,12 @@ NEO::GraphicsAllocation *MutableCommandListFixtureInit::getUsmAllocation(void *u
     return nullptr;
 }
 
-Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool external) {
+Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool externalMemory, bool externalFlag) {
     Event *event = nullptr;
     if (cbEvent) {
         zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
         zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
-        if (external) {
+        if (externalMemory) {
             void *externalStorage = nullptr;
             ze_device_mem_alloc_desc_t deviceDesc = {};
             context->allocDeviceMem(device->toHandle(), &deviceDesc, sizeof(uint64_t), 4096u, &externalStorage);
@@ -179,6 +179,9 @@ Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalS
         counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
         if (timestamp) {
             counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+        }
+        if (externalFlag) {
+            counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
         }
         if (signalScope) {
             counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;

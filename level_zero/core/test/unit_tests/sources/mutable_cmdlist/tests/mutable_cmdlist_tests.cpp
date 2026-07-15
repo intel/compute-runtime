@@ -1366,10 +1366,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto originalEvent = createTestEvent(false, false, false, false);
+    auto originalEvent = createTestEvent(false, false, false, false, false);
     auto originalEventAddress = originalEvent->getGpuAddress(this->device);
 
-    auto mutatedEvent = createTestEvent(false, false, false, false);
+    auto mutatedEvent = createTestEvent(false, false, false, false, false);
     auto newEventAddress = mutatedEvent->getGpuAddress(this->device);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
@@ -1412,8 +1412,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
             givenMutableCommandListAndNoSignalEventFlagSelectedWhenAppendingKernelAndMutatingSignalEventThenErrorIsReturned) {
-    auto originalEvent = createTestEvent(false, false, false, false);
-    auto mutatedEvent = createTestEvent(false, false, false, false);
+    auto originalEvent = createTestEvent(false, false, false, false, false);
+    auto mutatedEvent = createTestEvent(false, false, false, false, false);
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
 
@@ -1445,10 +1445,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto originalEvent = createTestEvent(false, true, false, false);
+    auto originalEvent = createTestEvent(false, true, false, false, false);
     auto originalEventAddress = originalEvent->getGpuAddress(this->device);
 
-    auto mutatedEvent = createTestEvent(false, true, false, false);
+    auto mutatedEvent = createTestEvent(false, true, false, false, false);
     auto newEventAddress = mutatedEvent->getGpuAddress(this->device);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
@@ -1494,10 +1494,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto originalEvent = createTestEvent(false, true, true, false);
+    auto originalEvent = createTestEvent(false, true, true, false, false);
     auto originalEventAddress = originalEvent->getGpuAddress(this->device);
 
-    auto mutatedEvent = createTestEvent(false, true, true, false);
+    auto mutatedEvent = createTestEvent(false, true, true, false, false);
     auto newEventAddress = mutatedEvent->getGpuAddress(this->device);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
@@ -1539,11 +1539,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenKernelWithWaitRegularEventWhenMutateIntoEventThenDataIsUpdatedAndCommandChanged) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto signalEvent = createTestEvent(false, false, false, false);
+    auto signalEvent = createTestEvent(false, false, false, false, false);
     auto signalEventHandle = signalEvent->toHandle();
-    auto event = createTestEvent(false, false, false, false);
+    auto event = createTestEvent(false, false, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(false, false, false, false);
+    auto newEvent = createTestEvent(false, false, false, false, false);
     auto newEventHandle = newEvent->toHandle();
 
     // mutation point
@@ -1602,9 +1602,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenKernelWithWaitRegularTimestampEventWhenMutateIntoEventThenDataIsUpdatedAndCommandChanged) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto event = createTestEvent(false, false, true, false);
+    auto event = createTestEvent(false, false, true, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(false, false, true, false);
+    auto newEvent = createTestEvent(false, false, true, false, false);
     auto newEventHandle = newEvent->toHandle();
 
     // mutation point
@@ -1648,9 +1648,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     debugManager.flags.EnableMemoryPrefetch.set(1);
 
-    auto event = createTestEvent(false, false, false, false);
+    auto event = createTestEvent(false, false, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(false, false, false, false);
+    auto newEvent = createTestEvent(false, false, false, false, false);
     auto newEventHandle = newEvent->toHandle();
 
     // mutation point
@@ -1693,9 +1693,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     alignas(uint32_t) uint8_t semWaitNoop[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto event = createTestEvent(false, false, false, false);
+    auto event = createTestEvent(false, false, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(false, false, false, false);
+    auto newEvent = createTestEvent(false, false, false, false, false);
     auto newEventHandle = newEvent->toHandle();
     ze_event_handle_t noopEventHandle = nullptr;
 
@@ -1775,9 +1775,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     alignas(uint32_t) uint8_t semWaitData[semWaitSize] = {0};
     uint32_t *semWaitPtr = reinterpret_cast<uint32_t *>(semWaitData);
 
-    auto event = createTestEvent(false, false, false, false);
+    auto event = createTestEvent(false, false, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(false, false, false, false);
+    auto newEvent = createTestEvent(false, false, false, false, false);
     auto newEventHandle = newEvent->toHandle();
 
     mutableCommandList->getBase()->setupPatchPreambleEnabled(true);
@@ -1891,11 +1891,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     alignas(uint32_t) uint8_t semWaitNoop[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto event = createTestEvent(false, false, true, false);
+    auto event = createTestEvent(false, false, true, false, false);
     auto eventHandle = event->toHandle();
-    auto event2 = createTestEvent(false, false, true, false);
+    auto event2 = createTestEvent(false, false, true, false, false);
     auto eventHandle2 = event2->toHandle();
-    auto newEvent = createTestEvent(false, false, true, false);
+    auto newEvent = createTestEvent(false, false, true, false, false);
     auto newEventHandle = newEvent->toHandle();
     ze_event_handle_t noopEventHandle = nullptr;
 
@@ -1992,9 +1992,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
             givenMutableCommandListAndNoWaitEventFlagSelectedWhenAppendingKernelAndMutatingWaitEventThenErrorIsReturned) {
-    auto originalEvent = createTestEvent(false, false, false, false);
+    auto originalEvent = createTestEvent(false, false, false, false, false);
     auto originalHandle = originalEvent->toHandle();
-    auto mutatedEvent = createTestEvent(false, false, false, false);
+    auto mutatedEvent = createTestEvent(false, false, false, false, false);
     auto mutatedHandle = mutatedEvent->toHandle();
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
@@ -2066,7 +2066,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    createTestEvent(true, false, false, false);
+    createTestEvent(true, false, false, false, false);
     ze_event_handle_t hEvent = this->eventHandles[0];
 
     MockGraphicsAllocation counterDeviceAlloc(this->device->getRootDeviceIndex(), nullptr, 0x1);
@@ -2092,7 +2092,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    createTestEvent(true, false, false, false);
+    createTestEvent(true, false, false, false, false);
     ze_event_handle_t hEvent = this->eventHandles[0];
 
     uint32_t peerDeviceIndex = this->device->getRootDeviceIndex() + 1;
@@ -2119,8 +2119,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    createTestEvent(true, false, false, false);
-    auto newEvent = createTestEvent(true, false, false, false);
+    createTestEvent(true, false, false, false, false);
+    auto newEvent = createTestEvent(true, false, false, false, false);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2152,8 +2152,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto event = createTestEvent(true, false, true, false);
-    auto newEvent = createTestEvent(true, false, true, false);
+    auto event = createTestEvent(true, false, true, false, false);
+    auto newEvent = createTestEvent(true, false, true, false, false);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2214,8 +2214,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto event = createTestEvent(true, true, true, false);
-    auto newEvent = createTestEvent(true, true, true, false);
+    auto event = createTestEvent(true, true, true, false, false);
+    auto newEvent = createTestEvent(true, true, true, false, false);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2274,8 +2274,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto event = createTestEvent(true, true, false, false);
-    auto newEvent = createTestEvent(true, true, false, false);
+    auto event = createTestEvent(true, true, false, false, false);
+    auto newEvent = createTestEvent(true, true, false, false, false);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2304,8 +2304,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto event = createTestEvent(false, false, false, false);
-    auto newEvent = createTestEvent(false, false, false, false);
+    auto event = createTestEvent(false, false, false, false, false);
+    auto newEvent = createTestEvent(false, false, false, false, false);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2388,8 +2388,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto event = createTestEvent(false, false, true, false);
-    auto newEvent = createTestEvent(false, false, true, false);
+    auto event = createTestEvent(false, false, true, false, false);
+    auto newEvent = createTestEvent(false, false, true, false, false);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2477,8 +2477,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto event = createTestEvent(false, true, false, false);
-    auto newEvent = createTestEvent(false, true, false, false);
+    auto event = createTestEvent(false, true, false, false, false);
+    auto newEvent = createTestEvent(false, true, false, false, false);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2566,8 +2566,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto event = createTestEvent(false, true, true, false);
-    auto newEvent = createTestEvent(false, true, true, false);
+    auto event = createTestEvent(false, true, true, false, false);
+    auto newEvent = createTestEvent(false, true, true, false, false);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2656,11 +2656,11 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto signalEvent = this->createTestEvent(false, false, false, false);
+    auto signalEvent = this->createTestEvent(false, false, false, false, false);
     auto signalEventHandle = signalEvent->toHandle();
-    auto event = this->createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = this->createTestEvent(true, false, false, false);
+    auto newEvent = this->createTestEvent(true, false, false, false, false);
     auto newEventHandle = newEvent->toHandle();
 
     auto externalCmdList = this->createMutableCmdList();
@@ -2755,9 +2755,9 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto event = this->createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = this->createTestEvent(true, false, false, false);
+    auto newEvent = this->createTestEvent(true, false, false, false, false);
     auto newEventHandle = newEvent->toHandle();
 
     // attach events 1 & 2 to the command list
@@ -2841,9 +2841,9 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto event = this->createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = this->createTestEvent(true, false, false, false);
+    auto newEvent = this->createTestEvent(true, false, false, false, false);
     auto newEventHandle = newEvent->toHandle();
 
     auto externalCmdList = this->createMutableCmdList();
@@ -2933,9 +2933,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenKernelWithWaitCbTimestampEventBelongingToDifferentCmdListWhenMutateIntoDifferentEventThenDataIsUpdated) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto event = createTestEvent(true, false, true, false);
+    auto event = createTestEvent(true, false, true, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(true, false, true, false);
+    auto newEvent = createTestEvent(true, false, true, false, false);
     auto newEventHandle = newEvent->toHandle();
 
     auto externalCmdList = createMutableCmdList();
@@ -3001,9 +3001,9 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto event = this->createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = this->createTestEvent(true, false, false, false);
+    auto newEvent = this->createTestEvent(true, false, false, false, false);
     auto newEventHandle = newEvent->toHandle();
     ze_event_handle_t noopHandle = nullptr;
 
@@ -3114,10 +3114,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListInOrderTest,
-            givenKernelWithWaitCbEventBelongingToDifferentCmdListWhenAssigningCbEventToThirdCmdListAndMutateWaitEventThenPerformMutationCorrectly) {
+            givenKernelWithWaitCbEventExternalBelongingToDifferentCmdListWhenAssigningCbEventToThirdCmdListAndMutateWaitEventThenPerformMutationCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto event = createTestEvent(true, false, false, false);
+    constexpr bool isExternalFlag = true;
+    auto event = createTestEvent(true, false, false, false, isExternalFlag);
     auto eventHandle = event->toHandle();
 
     auto externalCmdList = createMutableCmdList();
@@ -3176,9 +3177,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
-    auto event = createTestEvent(false, false, false, false);
+    auto event = createTestEvent(false, false, false, false, false);
     auto eventHandle = event->toHandle();
-    auto newEvent = createTestEvent(false, false, false, false);
+    auto newEvent = createTestEvent(false, false, false, false, false);
     auto newEventHandle = newEvent->toHandle();
     ze_event_handle_t noopHandle = nullptr;
 

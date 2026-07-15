@@ -120,7 +120,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto kernel2IsaAddress = kernelIsaAddress + 0x20000;
     static_cast<NEO::MockGraphicsAllocation *>(kernel2->getIsaAllocation())->gpuAddress = kernel2IsaAddress;
 
-    auto event = createTestEvent(false, false, false, false);
+    auto event = createTestEvent(false, false, false, false, false);
     auto eventAddress = event->getGpuAddress(this->device);
 
     mutableCommandIdDesc.flags = kernelIsaMutationFlags | ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
@@ -182,7 +182,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenTwoKernelsWithSignalCbEventWhenFirstAppendedAndSecondMutatedThenMutableWalkerPostSyncPreserved) {
     using WalkerType = typename FamilyType::PorWalkerType;
 
-    auto event = createTestEvent(true, false, false, false);
+    auto event = createTestEvent(true, false, false, false, false);
 
     mutableCommandIdDesc.flags = kernelIsaMutationFlags | ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
 
@@ -843,7 +843,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     debugManager.flags.LimitIsaPrefetchSize.set(static_cast<uint32_t>(256 * MemoryConstants::kiloByte));
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
-    auto event = createTestEvent(false, false, false, false);
+    auto event = createTestEvent(false, false, false, false, false);
     auto eventHandle = event->toHandle();
 
     prepareBigIsaKernel();
@@ -921,7 +921,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     debugManager.flags.EnableMemoryPrefetch.set(0);
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
 
-    auto event = createTestEvent(false, false, false, false);
+    auto event = createTestEvent(false, false, false, false, false);
     auto eventHandle = event->toHandle();
 
     ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};

@@ -93,6 +93,7 @@ struct EventValueProperties {
     bool noopState = false;
     bool isCbEventBoundToCmdList = false;
     bool hasStandaloneProfilingNode = false;
+    bool isExternalFlag = false;
 };
 
 struct SlmValueProperties {

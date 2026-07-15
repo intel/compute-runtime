@@ -19,7 +19,7 @@ HWTEST2_F(VariableInOrderTest, givenCbSignalExternalEventWhenMutatingEventThenPo
     using WalkerType = typename FamilyType::PorWalkerType;
     createMutableComputeWalker<FamilyType, WalkerType>(0x1000);
 
-    auto event = this->createTestEvent(true, false, false, true);
+    auto event = this->createTestEvent(true, false, false, true, false);
     ASSERT_NE(nullptr, event);
 
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
@@ -28,7 +28,7 @@ HWTEST2_F(VariableInOrderTest, givenCbSignalExternalEventWhenMutatingEventThenPo
     EXPECT_EQ(this->variable->desc.eventValue.event, event);
     EXPECT_EQ(this->externalEventCounterValue, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
 
-    auto newEvent = this->createTestEvent(true, false, false, true);
+    auto newEvent = this->createTestEvent(true, false, false, true, false);
     ASSERT_NE(nullptr, newEvent);
 
     ret = this->variable->setValue(0, 0, newEvent);

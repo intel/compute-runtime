@@ -1316,7 +1316,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenSignalEventRegularNoCounterBasedNoSignalScopeNoTimestampWhenMutatingVariableThenNewPostSyncAddressSet) {
     using WalkerType = typename FamilyType::PorWalkerType;
 
-    auto event = this->createTestEvent(false, false, false, false);
+    auto event = this->createTestEvent(false, false, false, false, false);
     ASSERT_NE(nullptr, event);
     auto postSyncAddress = event->getGpuAddress(device);
     createMutableComputeWalker<FamilyType, WalkerType>(postSyncAddress);
@@ -1326,7 +1326,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(this->variable->desc.eventValue.event, event);
 
-    auto newEvent = this->createTestEvent(false, false, false, false);
+    auto newEvent = this->createTestEvent(false, false, false, false, false);
     ASSERT_NE(nullptr, newEvent);
     auto newPostSyncAddress = newEvent->getGpuAddress(device);
 
@@ -1344,7 +1344,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenSignalEventRegularNoCounterBasedSignalScopeNoTimestampWhenMutatingVariableThenNewPostSyncAddressSet) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto event = this->createTestEvent(false, true, false, false);
+    auto event = this->createTestEvent(false, true, false, false, false);
     ASSERT_NE(nullptr, event);
     createMutablePipeControl<FamilyType>();
 
@@ -1353,7 +1353,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(this->variable->desc.eventValue.event, event);
 
-    auto newEvent = this->createTestEvent(false, true, false, false);
+    auto newEvent = this->createTestEvent(false, true, false, false, false);
     ASSERT_NE(nullptr, newEvent);
     auto newPostSyncAddress = newEvent->getGpuAddress(device);
 
@@ -1371,7 +1371,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenSignalEventRegularNoCounterBasedSignalScopeTimestampWhenMutatingVariableThenNewPostSyncAddressSet) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
-    auto event = this->createTestEvent(false, true, true, false);
+    auto event = this->createTestEvent(false, true, true, false, false);
     ASSERT_NE(nullptr, event);
     size_t offset = 0x10;
     createMutableStoreRegisterMem<FamilyType>(offset);
@@ -1382,7 +1382,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(this->variable->desc.eventValue.event, event);
     this->variable->getStoreRegMemList().push_back(this->mutableStoreRegisterMem.get());
 
-    auto newEvent = this->createTestEvent(false, true, true, false);
+    auto newEvent = this->createTestEvent(false, true, true, false, false);
     ASSERT_NE(nullptr, newEvent);
     auto expectedPostSyncAddress = newEvent->getGpuAddress(device) + offset;
 
@@ -1400,7 +1400,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenWaitEventRegularNoCounterBasedWhenMutatingVariableThenNewWaitAddressSet) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto event = this->createTestEvent(false, false, false, false);
+    auto event = this->createTestEvent(false, false, false, false, false);
     ASSERT_NE(nullptr, event);
     size_t offset = 0x10;
     createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false, false);
@@ -1412,7 +1412,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
     EXPECT_FALSE(this->variable->desc.eventValue.counterBasedEvent);
 
-    auto newEvent = this->createTestEvent(false, false, false, false);
+    auto newEvent = this->createTestEvent(false, false, false, false, false);
     ASSERT_NE(nullptr, newEvent);
     auto expectedWaitAddress = newEvent->getGpuAddress(device) + offset;
 
@@ -1436,7 +1436,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     alignas(uint32_t) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
     memset(noopSemaphoreSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
 
-    auto event = this->createTestEvent(false, false, false, false);
+    auto event = this->createTestEvent(false, false, false, false, false);
     ASSERT_NE(nullptr, event);
     size_t offset = 0x10;
     createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false, false);
@@ -1471,7 +1471,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableTest,
             givenWaitEventVariableWhenSavingDeviceCounterAllocationThenPeerCounterAllocIsSaved) {
-    auto event = this->createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false, false);
     ASSERT_NE(nullptr, event);
 
     uint32_t peerDeviceIndex = this->device->getRootDeviceIndex() + 1;
@@ -1547,7 +1547,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableTest,
             givenBufferVariableWhenSetAsWaitEventThenErrorIsReturned) {
-    auto event = this->createTestEvent(false, false, false, false);
+    auto event = this->createTestEvent(false, false, false, false, false);
     ASSERT_NE(nullptr, event);
 
     createVariable(L0::MCL::VariableType::buffer, true, -1, -1);
@@ -1559,7 +1559,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableTest,
             givenBufferVariableWhenSetAsSignalEventThenErrorIsReturned) {
-    auto event = this->createTestEvent(false, false, false, false);
+    auto event = this->createTestEvent(false, false, false, false, false);
     ASSERT_NE(nullptr, event);
 
     createVariable(L0::MCL::VariableType::buffer, true, -1, -1);
@@ -1591,7 +1591,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenSignalEventRegularNoCounterBasedSignalScopeTimestampWhenMutatingVariableThenNewPostSyncAddressSet) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    auto event = this->createTestEvent(false, true, true, false);
+    auto event = this->createTestEvent(false, true, true, false, false);
     size_t offset = 0x10;
     createMutableStoreDataImm<FamilyType>(offset, false);
 
@@ -1601,7 +1601,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(this->variable->desc.eventValue.event, event);
     this->variable->getStoreDataImmList().push_back(this->mutableStoreDataImm.get());
 
-    auto newEvent = this->createTestEvent(false, true, true, false);
+    auto newEvent = this->createTestEvent(false, true, true, false, false);
     ASSERT_NE(nullptr, newEvent);
     auto expectedPostSyncAddress = newEvent->getGpuAddress(device) + offset;
 
@@ -1621,7 +1621,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenCbSignalEventWhenMutatingEventThenDataIsUpdated) {
-    auto event = this->createTestEvent(true, false, false, false);
+    auto event = this->createTestEvent(true, false, false, false, false);
     ASSERT_NE(nullptr, event);
 
     this->attachCbEvent(event);
@@ -1633,7 +1633,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(this->cmdListInOrderAllocationOffset, this->variable->desc.eventValue.inOrderAllocationOffset);
     EXPECT_EQ(this->cmdListInOrderCounterValue, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
 
-    auto newEvent = this->createTestEvent(true, false, false, false);
+    auto newEvent = this->createTestEvent(true, false, false, false, false);
     ASSERT_NE(nullptr, newEvent);
 
     ret = this->variable->setValue(0, 0, newEvent);
@@ -1646,7 +1646,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenCbSignalTimestampEventWhenMutatingEventThenDataIsUpdatedAndTimestampPropertySet) {
-    auto event = this->createTestEvent(true, false, true, false);
+    auto event = this->createTestEvent(true, false, true, false, false);
     ASSERT_NE(nullptr, event);
 
     this->attachCbEvent(event);
@@ -1659,7 +1659,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(this->cmdListInOrderCounterValue, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
     EXPECT_TRUE(this->variable->desc.eventValue.hasStandaloneProfilingNode);
 
-    auto newEvent = this->createTestEvent(true, false, true, false);
+    auto newEvent = this->createTestEvent(true, false, true, false, false);
     ASSERT_NE(nullptr, newEvent);
 
     ret = this->variable->setValue(0, 0, newEvent);
@@ -1673,7 +1673,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenCbSignalTimestampEventWhenMutatingSignalEventThenHeapfullProfilingFlagMatchesPlatform) {
-    auto event = this->createTestEvent(true, false, true, false);
+    auto event = this->createTestEvent(true, false, true, false, false);
     ASSERT_NE(nullptr, event);
 
     this->attachCbEvent(event);
@@ -1683,7 +1683,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_TRUE(this->variable->desc.eventValue.hasStandaloneProfilingNode);
 
-    auto newEvent = this->createTestEvent(true, false, true, false);
+    auto newEvent = this->createTestEvent(true, false, true, false, false);
     ASSERT_NE(nullptr, newEvent);
     EXPECT_FALSE(static_cast<HeapfullProfilingEventAccessor *>(newEvent)->heapfullCbEventWithProfiling);
 
@@ -1698,7 +1698,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenCbSignalExternalEventWhenMutatingEventThenDataIsUpdatedAndExternalPropertySet) {
-    auto event = this->createTestEvent(true, false, false, true);
+    auto event = this->createTestEvent(true, false, false, true, false);
     ASSERT_NE(nullptr, event);
 
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
@@ -1707,7 +1707,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(this->variable->desc.eventValue.event, event);
     EXPECT_EQ(this->externalEventCounterValue, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
 
-    auto newEvent = this->createTestEvent(true, false, false, true);
+    auto newEvent = this->createTestEvent(true, false, false, true, false);
     ASSERT_NE(nullptr, newEvent);
 
     ret = this->variable->setValue(0, 0, newEvent);
@@ -1722,7 +1722,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenExternalCounterBasedWaitEventWhenMutatingIntoOtherExternalCounterBasedEventThenWaitIsUpdated) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto event = this->createTestEvent(true, false, false, true);
+    auto event = this->createTestEvent(true, false, false, true, false);
     ASSERT_NE(nullptr, event);
 
     prepareInOrderWaitCommands<FamilyType>();
@@ -1735,7 +1735,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     }
     this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
 
-    auto newEvent = this->createTestEvent(true, false, false, true);
+    auto newEvent = this->createTestEvent(true, false, false, true, false);
     ASSERT_NE(nullptr, newEvent);
 
     ret = this->variable->setValue(0, 0, newEvent);
@@ -1759,7 +1759,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     alignas(uint32_t) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
     memset(noopSemaphoreSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
 
-    auto event = this->createTestEvent(true, false, false, true);
+    auto event = this->createTestEvent(true, false, false, true, false);
     ASSERT_NE(nullptr, event);
 
     prepareInOrderWaitCommands<FamilyType>();
@@ -1809,7 +1809,7 @@ void VariableInOrderFixture::testAsyncMutationWaitEventTest(bool indirect) {
     alignas(uint32_t) uint8_t noopLriSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {};
     memset(noopLriSpace, 0, sizeof(MI_LOAD_REGISTER_IMM));
 
-    auto event = this->createTestEvent(true, false, false, true);
+    auto event = this->createTestEvent(true, false, false, true, false);
     ASSERT_NE(nullptr, event);
 
     uint64_t gpuDstExpected[3] = {0x0, 0x0, 0x0};

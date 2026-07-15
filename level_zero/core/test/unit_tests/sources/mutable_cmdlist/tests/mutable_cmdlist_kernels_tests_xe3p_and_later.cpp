@@ -28,8 +28,8 @@ HWTEST2_F(MutableCommandListInOrderTest,
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
-    auto event = createTestEvent(true, false, false, true);
-    auto newEvent = createTestEvent(true, false, false, true);
+    auto event = createTestEvent(true, false, false, true, false);
+    auto newEvent = createTestEvent(true, false, false, true, false);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
