@@ -405,20 +405,6 @@ void ClDevice::initializeILsWithVersion() {
 }
 
 void ClDevice::initializeSpirvQueries() {
-    if (getDevice().initializeSpirvQueriesFromIGC()) {
-        const auto &sharedDeviceInfo = getSharedDeviceInfo();
-        deviceInfo.spirvExtendedInstructionSets.push_back("OpenCL.std");
-        deviceInfo.spirvExtensions.reserve(sharedDeviceInfo.spirvExtensions.size());
-        for (const auto &ext : sharedDeviceInfo.spirvExtensions) {
-            deviceInfo.spirvExtensions.push_back(ext.c_str());
-        }
-        deviceInfo.spirvCapabilities.reserve(sharedDeviceInfo.spirvCapabilities.size());
-        for (const auto &cap : sharedDeviceInfo.spirvCapabilities) {
-            deviceInfo.spirvCapabilities.push_back(cap);
-        }
-        return;
-    }
-
     std::stringstream extStringStream{deviceExtensions};
     std::vector<std::string> extVector{
         std::istream_iterator<std::string>{extStringStream}, std::istream_iterator<std::string>{}};

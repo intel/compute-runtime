@@ -16,12 +16,10 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
-#include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -37,7 +35,6 @@
 #include "driver_version.h"
 #include "gtest/gtest.h"
 
-#include <algorithm>
 #include <memory>
 
 using namespace NEO;
@@ -482,72 +479,6 @@ TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsClIntelSpirvExtensi
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_queries")));
     }
-}
-
-TEST_F(DeviceGetCapsTest, GivenIgcProvidesSpirvYamlWhenQueryingSpirvInfoThenIgcDataIsReported) {
-    auto *mockDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
-    auto *mockCompilerInterface = new MockCompilerInterface();
-    mockCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
-    mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[mockDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompilerInterface);
-    auto device = std::make_unique<MockClDevice>(mockDevice);
-
-    size_t extSize = 0;
-    EXPECT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, 0, nullptr, &extSize));
-    EXPECT_EQ(1u, mockCompilerInterface->getSpirvExtensionsYAMLCalled);
-    EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, extSize / sizeof(const char *));
-
-    std::vector<const char *> extensions(extSize / sizeof(const char *));
-    EXPECT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, extSize, extensions.data(), nullptr));
-    auto hasExtension = [&extensions](const char *name) {
-        return std::any_of(extensions.begin(), extensions.end(), [name](const char *e) { return std::string(name) == e; });
-    };
-    EXPECT_TRUE(hasExtension("SPV_INTEL_subgroup_buffer_prefetch"));
-    EXPECT_TRUE(hasExtension("SPV_KHR_shader_clock"));
-
-    size_t capsSize = 0;
-    EXPECT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_CAPABILITIES_KHR, 0, nullptr, &capsSize));
-    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount, capsSize / sizeof(cl_uint));
-
-    size_t extInstSize = 0;
-    EXPECT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR, 0, nullptr, &extInstSize));
-    std::vector<const char *> extInstSets(extInstSize / sizeof(const char *));
-    EXPECT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR, extInstSize, extInstSets.data(), nullptr));
-    EXPECT_TRUE(std::any_of(extInstSets.begin(), extInstSets.end(), [](const char *e) { return std::string("OpenCL.std") == e; }));
-}
-
-TEST_F(DeviceGetCapsTest, GivenIgcReturnsEmptySpirvYamlWhenQueryingSpirvExtensionsThenLegacyFallbackIsUsed) {
-    auto buildExtensions = [](bool injectEmptyIgc, uint32_t &yamlCalls) {
-        auto *mockDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
-        MockCompilerInterface *mockCompilerInterface = nullptr;
-        if (injectEmptyIgc) {
-            mockCompilerInterface = new MockCompilerInterface();
-            mockCompilerInterface->spirvExtensionsYAMLOverride = std::string("");
-            mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[mockDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompilerInterface);
-        }
-        auto device = std::make_unique<MockClDevice>(mockDevice);
-
-        size_t extSize = 0;
-        device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, 0, nullptr, &extSize);
-        std::vector<const char *> extensions(extSize / sizeof(const char *));
-        device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, extSize, extensions.data(), nullptr);
-        yamlCalls = mockCompilerInterface ? mockCompilerInterface->getSpirvExtensionsYAMLCalled : 0u;
-
-        std::vector<std::string> result;
-        result.reserve(extensions.size());
-        for (const auto *e : extensions) {
-            result.emplace_back(e);
-        }
-        return result;
-    };
-
-    uint32_t yamlCalls = 0;
-    uint32_t ignored = 0;
-    auto fallbackExtensions = buildExtensions(true, yamlCalls);
-    auto controlExtensions = buildExtensions(false, ignored);
-
-    EXPECT_EQ(1u, yamlCalls);
-    EXPECT_FALSE(fallbackExtensions.empty());
-    EXPECT_EQ(controlExtensions, fallbackExtensions);
 }
 
 TEST_F(DeviceGetCapsTest, givenEnableNV12setToTrueAndSupportImagesWhenCapsAreCreatedThenDeviceReportsNV12Extension) {

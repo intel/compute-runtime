@@ -140,8 +140,6 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
 
-    MOCKABLE_VIRTUAL std::string getSpirvExtensionsYAML(const NEO::Device &device);
-
   protected:
     struct CompilerLibraryEntry {
         std::string revision;

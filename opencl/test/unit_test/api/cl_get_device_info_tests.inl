@@ -7,16 +7,12 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
-#include "shared/test/common/mocks/mock_compiler_interface.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 
 #include "cl_api_tests.h"
 
-#include <algorithm>
 #include <cstring>
-#include <vector>
 
 using namespace NEO;
 
@@ -397,58 +393,6 @@ TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvCapabilitiesReturnsSpirvCapabilit
         }
     }
     EXPECT_TRUE(found);
-}
-
-TEST_F(clGetDeviceInfoTests, GivenMockedIgcYamlWhenQueryingSpirvInfoThroughApiThenIgcSourcedExtensionsAndCapabilitiesAreReturned) {
-    auto *mockCompilerInterface = new MockCompilerInterface();
-    mockCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
-    executionEnvironment->rootDeviceEnvironments[testedRootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
-
-    // Extensions through the real clGetDeviceInfo entry point (two-call convention).
-    size_t extRetSize = 0;
-    cl_int retVal = clGetDeviceInfo(
-        testedClDevice,
-        CL_DEVICE_SPIRV_EXTENSIONS_KHR,
-        0,
-        nullptr,
-        &extRetSize);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, mockCompilerInterface->getSpirvExtensionsYAMLCalled);
-    EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, extRetSize / sizeof(const char *));
-
-    std::vector<const char *> spirvExtensions(extRetSize / sizeof(const char *));
-    retVal = clGetDeviceInfo(
-        testedClDevice,
-        CL_DEVICE_SPIRV_EXTENSIONS_KHR,
-        extRetSize,
-        spirvExtensions.data(),
-        nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(std::any_of(spirvExtensions.begin(), spirvExtensions.end(),
-                            [](const char *extension) { return std::strcmp(extension, "SPV_KHR_shader_clock") == 0; }));
-
-    // Capabilities through the real entry point: numeric SPIR-V IDs sourced from IGC YAML.
-    size_t capRetSize = 0;
-    retVal = clGetDeviceInfo(
-        testedClDevice,
-        CL_DEVICE_SPIRV_CAPABILITIES_KHR,
-        0,
-        nullptr,
-        &capRetSize);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount, capRetSize / sizeof(cl_uint));
-
-    std::vector<cl_uint> spirvCapabilities(capRetSize / sizeof(cl_uint));
-    retVal = clGetDeviceInfo(
-        testedClDevice,
-        CL_DEVICE_SPIRV_CAPABILITIES_KHR,
-        capRetSize,
-        spirvCapabilities.data(),
-        nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    constexpr cl_uint spirvCapabilityShaderClockKHR = 5055;
-    EXPECT_TRUE(std::any_of(spirvCapabilities.begin(), spirvCapabilities.end(),
-                            [](cl_uint cap) { return cap == spirvCapabilityShaderClockKHR; }));
 }
 
 using matcherAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;

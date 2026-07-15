@@ -13,7 +13,6 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
-#include "shared/source/compiler_interface/spirv_capabilities_parser.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -417,14 +416,6 @@ TranslationErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, 
 
 CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> CompilerInterface::getIgcFeaturesAndWorkarounds(NEO::Device const &device) {
     return getIgcDeviceCtx(device)->GetIgcFeaturesAndWorkaroundsHandle<NEO::IgcFeaturesAndWorkaroundsTag>();
-}
-
-std::string CompilerInterface::getSpirvExtensionsYAML(const NEO::Device &device) {
-    auto *igc = getIgc(&device);
-    if (igc == nullptr) {
-        return "";
-    }
-    return SpirvCapabilitiesParser::getSpirvExtensionsYAMLFromDeviceCtx(getIgcDeviceCtx(device), igc->entryPoint.get());
 }
 
 bool CompilerInterface::loadFcl() {

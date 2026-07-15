@@ -8,7 +8,6 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
-#include "shared/source/compiler_interface/spirv_capabilities_parser.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -23,6 +22,8 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
+
+#include <iomanip>
 
 namespace NEO {
 
@@ -168,43 +169,6 @@ void Device::initializeCaps() {
     }
 
     deviceInfo.semaphore64bCmdSupport = releaseHelper.isAvailableSemaphore64(hwInfo);
-}
-
-bool Device::initializeSpirvQueriesFromIGC() {
-    auto *compilerInterface = getCompilerInterface();
-    if (!compilerInterface) {
-        return false;
-    }
-
-    if (!deviceInfo.spirvExtensions.empty() || !deviceInfo.spirvCapabilities.empty()) {
-        return true;
-    }
-
-    auto yamlStr = compilerInterface->getSpirvExtensionsYAML(*this);
-    if (yamlStr.empty()) {
-        return false;
-    }
-
-    std::vector<NEO::SpirvExtensionInfo> extensions;
-    std::string errReason, warning;
-    if (!NEO::SpirvCapabilitiesParser::parseSpirvExtensionsYAML(yamlStr, extensions, errReason, warning)) {
-        return false;
-    }
-
-    deviceInfo.spirvCapabilities.reserve(64);
-    deviceInfo.spirvExtensions.reserve(extensions.size());
-
-    for (const auto &ext : extensions) {
-        deviceInfo.spirvExtensions.push_back(ext.name);
-
-        for (const auto &capInfo : ext.supportedCapabilities) {
-            if (capInfo.id != 0) {
-                deviceInfo.spirvCapabilities.push_back(capInfo.id);
-            }
-        }
-    }
-
-    return true;
 }
 
 } // namespace NEO
