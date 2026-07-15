@@ -1605,6 +1605,9 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                             will compile for each of these targets and will
                                             create a fatbinary archive that contains all of
                                             device binaries produced this way.
+                                            Device acronyms may use '-' or '_' as a separator
+                                            interchangeably (e.g. acm-g10 or acm_g10), including
+                                            for each entry of a comma-separated list.
                                             Supported -device patterns examples:
                                             -device 0x4905        ; will compile 1 target (dg1)
                                             -device 12.10.0       ; will compile 1 target (dg1)

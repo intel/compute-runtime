@@ -447,10 +447,10 @@ std::vector<ConstStringRef> getProductForSpecificTarget(const CompilerOptions::T
         return false;
     };
 
-    auto getProductConfigWithFallback = [&](const ConstStringRef &target) -> bool {
-        auto product = prodHelper.getProductConfigFromAcronym(target.str());
+    auto getProductConfigWithFallback = [&](const ConstStringRef &target, const std::string &adjustedTarget) -> bool {
+        auto product = prodHelper.getProductConfigFromAcronym(adjustedTarget);
         if (product == AOT::UNKNOWN_ISA) {
-            product = formerProdHelper.getProductConfigFromDeviceName(target.str());
+            product = formerProdHelper.getProductConfigFromDeviceName(adjustedTarget);
         }
         if (product != AOT::UNKNOWN_ISA) {
             mergeProducts(requestedConfigs, std::vector<ConstStringRef>{target});
@@ -469,7 +469,7 @@ std::vector<ConstStringRef> getProductForSpecificTarget(const CompilerOptions::T
         if (getProductsAcronymsForReleaseWithFallback(targetStr)) {
             continue;
         }
-        if (getProductConfigWithFallback(target)) {
+        if (getProductConfigWithFallback(target, targetStr)) {
             continue;
         }
         if (getHwInfoForDeprecatedAcronym(targetStr) != nullptr) {

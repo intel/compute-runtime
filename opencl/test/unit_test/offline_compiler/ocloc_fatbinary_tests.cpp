@@ -97,6 +97,14 @@ void appendAcronymWithoutDashes(std::vector<std::string> &out, ConstStringRef ac
     }
 }
 
+void appendAcronymWithUnderscore(std::vector<std::string> &out, ConstStringRef acronym) {
+    if (acronym.contains("-")) {
+        auto acronymCopy = acronym.str();
+        std::replace(acronymCopy.begin(), acronymCopy.end(), '-', '_');
+        out.push_back(acronymCopy);
+    }
+}
+
 std::vector<std::string> prepareProductsWithoutDashes(OclocArgHelper *argHelper) {
     auto enabledProductsAcronyms = argHelper->productConfigHelper->getRepresentativeProductAcronyms();
     if (enabledProductsAcronyms.size() < 2) {
@@ -105,6 +113,21 @@ std::vector<std::string> prepareProductsWithoutDashes(OclocArgHelper *argHelper)
     std::vector<std::string> acronyms{};
     for (const auto &acronym : enabledProductsAcronyms) {
         appendAcronymWithoutDashes(acronyms, acronym);
+        if (acronyms.size() > 1) {
+            break;
+        }
+    }
+    return acronyms;
+}
+
+std::vector<std::string> prepareProductsWithUnderscores(OclocArgHelper *argHelper) {
+    auto enabledProductsAcronyms = argHelper->productConfigHelper->getRepresentativeProductAcronyms();
+    if (enabledProductsAcronyms.size() < 2) {
+        return {};
+    }
+    std::vector<std::string> acronyms{};
+    for (const auto &acronym : enabledProductsAcronyms) {
+        appendAcronymWithUnderscore(acronyms, acronym);
         if (acronyms.size() > 1) {
             break;
         }
@@ -453,6 +476,40 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoVersionsOfProductConfigsWhenF
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsAcronymsWithoutDashesWhenBuildFatBinaryThenSuccessIsReturned) {
     auto acronyms = prepareProductsWithoutDashes(oclocArgHelperWithoutInput.get());
+    if (acronyms.size() < 2) {
+        GTEST_SKIP();
+    }
+
+    std::string acronymsTarget = acronyms[0] + "," + acronyms[1];
+    std::vector<ConstStringRef> expected{ConstStringRef(acronyms[0]), ConstStringRef(acronyms[1])};
+
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+    std::stringstream resString;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        acronymsTarget};
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+    auto output = capture.getCapturedStdout();
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+    for (const auto &product : expected) {
+        resString << "Build succeeded for : " << product.str() + ".\n";
+    }
+
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsAcronymsWithUnderscoresInListWhenBuildFatBinaryThenSuccessIsReturned) {
+    auto acronyms = prepareProductsWithUnderscores(oclocArgHelperWithoutInput.get());
     if (acronyms.size() < 2) {
         GTEST_SKIP();
     }
