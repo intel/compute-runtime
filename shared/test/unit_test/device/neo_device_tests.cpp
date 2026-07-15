@@ -21,6 +21,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -392,6 +393,36 @@ TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledTh
     mockIgcFtrWa.maxOCLParamSize = 1u;
     pDevice->initializeCaps();
     EXPECT_EQ(1u, pDevice->getDeviceInfo().maxParameterSize);
+}
+
+TEST_F(DeviceGetCapsTest, givenIgcSpirvYamlWhenInitializeSpirvQueriesFromIgcThenSharedDeviceInfoIsPopulated) {
+    auto pCompilerInterface = new MockCompilerInterface;
+    pCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+
+    EXPECT_TRUE(pDevice->initializeSpirvQueriesFromIGC());
+    EXPECT_EQ(1u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
+
+    const auto &deviceInfo = pDevice->getDeviceInfo();
+    EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, deviceInfo.spirvExtensions.size());
+    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount, deviceInfo.spirvCapabilities.size());
+    EXPECT_TRUE(std::any_of(deviceInfo.spirvExtensions.begin(), deviceInfo.spirvExtensions.end(),
+                            [](const std::string &e) { return e == "SPV_KHR_shader_clock"; }));
+
+    // Re-running must self-clear, not accumulate.
+    EXPECT_TRUE(pDevice->initializeSpirvQueriesFromIGC());
+    EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, pDevice->getDeviceInfo().spirvExtensions.size());
+}
+
+TEST_F(DeviceGetCapsTest, givenEmptyIgcSpirvYamlWhenInitializeSpirvQueriesFromIgcThenReturnsFalseAndLeavesSharedDeviceInfoEmpty) {
+    auto pCompilerInterface = new MockCompilerInterface;
+    pCompilerInterface->spirvExtensionsYAMLOverride = std::string("");
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+
+    EXPECT_FALSE(pDevice->initializeSpirvQueriesFromIGC());
+    EXPECT_EQ(1u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
+    EXPECT_TRUE(pDevice->getDeviceInfo().spirvExtensions.empty());
+    EXPECT_TRUE(pDevice->getDeviceInfo().spirvCapabilities.empty());
 }
 
 TEST_F(DeviceGetCapsTest,

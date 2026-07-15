@@ -301,6 +301,8 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         peerDevice->crossAccessEnabledDevices[this->getRootDeviceIndex()] = value;
     }
 
+    MOCKABLE_VIRTUAL bool initializeSpirvQueriesFromIGC();
+
   protected:
     Device() = delete;
     Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex);

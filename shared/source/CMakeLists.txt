@@ -39,6 +39,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
                              ${IGC_OCL_ADAPTOR_DIR}
                              ${NEO__IGC_INCLUDE_DIR}
                              ${KHRONOS_HEADERS_DIR}
+                             ${KHRONOS_SPIRV_HEADERS_DIR}
                              ${VISA_INCLUDE_DIR}
                              ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/create_command_stream_receiver_${DRIVER_MODEL}
                              ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission/create_direct_submission_${DRIVER_MODEL}

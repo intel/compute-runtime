@@ -397,6 +397,24 @@ void ClDevice::initializeILsWithVersion() {
 }
 
 void ClDevice::initializeSpirvQueries() {
+    deviceInfo.spirvExtendedInstructionSets.push_back("OpenCL.std");
+
+    // Prefer dynamic SPIR-V capabilities/extensions reported by the compiler.
+    // When available they are authoritative and replace the static
+    // list computed below; the static path is the fallback for older IGC.
+    if (device.initializeSpirvQueriesFromIGC()) {
+        const auto &sharedDeviceInfo = device.getDeviceInfo();
+        deviceInfo.spirvExtensions.reserve(sharedDeviceInfo.spirvExtensions.size());
+        for (const auto &ext : sharedDeviceInfo.spirvExtensions) {
+            deviceInfo.spirvExtensions.push_back(ext.c_str());
+        }
+        deviceInfo.spirvCapabilities.reserve(sharedDeviceInfo.spirvCapabilities.size());
+        for (const auto &cap : sharedDeviceInfo.spirvCapabilities) {
+            deviceInfo.spirvCapabilities.push_back(cap);
+        }
+        return;
+    }
+
     std::stringstream extStringStream{deviceExtensions};
     std::vector<std::string> extVector{
         std::istream_iterator<std::string>{extStringStream}, std::istream_iterator<std::string>{}};
@@ -406,8 +424,6 @@ void ClDevice::initializeSpirvQueries() {
         std::istream_iterator<std::string>{ilsStringStream}, std::istream_iterator<std::string>{}};
 
     deviceInfo.spirvCapabilities.reserve(64);
-
-    deviceInfo.spirvExtendedInstructionSets.push_back("OpenCL.std");
 
     deviceInfo.spirvCapabilities.push_back(spv::CapabilityAddresses);
     deviceInfo.spirvCapabilities.push_back(spv::CapabilityFloat16Buffer);
