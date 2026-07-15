@@ -126,3 +126,67 @@ HWTEST_F(IOQWithTwoWalkers, GivenStateCacheInvalidationWaIsRequiredWhenTwoKernel
 
     EXPECT_FALSE(foundStateCacheInvalidation);
 }
+
+HWTEST_F(IOQWithTwoWalkers, GivenStateCacheInvalidationWaIsRequiredWhenTwoKernelsUsingImagesAreEnqueuedThenPipeControlWithStateCacheInvalidationAndCsStallIsInsertedBetweenWalkers) {
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(pKernel->getDescriptor());
+    kernelDescriptor.kernelAttributes.flags.usesImages = true;
+    NEO::ArgDescriptor imageArg(NEO::ArgDescriptor::argTImage);
+    imageArg.as<NEO::ArgDescImage>().bindful = 0x0;
+    auto &explicitArgs = kernelDescriptor.payloadMappings.explicitArgs;
+    explicitArgs.clear();
+    explicitArgs.push_back(imageArg);
+
+    enqueueTwoKernels<FamilyType>();
+
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
+
+    auto walkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, walkers.size());
+
+    auto itorPC = findAll<PIPE_CONTROL *>(walkers[0], walkers[1]);
+
+    PIPE_CONTROL *stateCacheInvalidationPipeControl = nullptr;
+    for (auto it : itorPC) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pcCmd->getStateCacheInvalidationEnable()) {
+            stateCacheInvalidationPipeControl = pcCmd;
+            break;
+        }
+    }
+
+    const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    if (releaseHelper.isStateCacheInvalidationWaRequired(true, true)) {
+        ASSERT_NE(nullptr, stateCacheInvalidationPipeControl);
+        EXPECT_TRUE(stateCacheInvalidationPipeControl->getCommandStreamerStallEnable());
+    } else {
+        EXPECT_EQ(nullptr, stateCacheInvalidationPipeControl);
+    }
+}
+
+HWTEST_F(IOQWithTwoWalkers, GivenStateCacheInvalidationWaIsRequiredWhenTwoImageKernelsWithoutStatefulAccessAreEnqueuedThenPipeControlWithStateCacheInvalidationIsNotInsertedBetweenWalkers) {
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(pKernel->getDescriptor());
+    kernelDescriptor.kernelAttributes.flags.usesImages = true;
+    kernelDescriptor.payloadMappings.explicitArgs.clear();
+
+    enqueueTwoKernels<FamilyType>();
+
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
+
+    auto walkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, walkers.size());
+
+    auto itorPC = findAll<PIPE_CONTROL *>(walkers[0], walkers[1]);
+
+    bool foundStateCacheInvalidation = false;
+    for (auto it : itorPC) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pcCmd->getStateCacheInvalidationEnable()) {
+            foundStateCacheInvalidation = true;
+            break;
+        }
+    }
+
+    EXPECT_FALSE(foundStateCacheInvalidation);
+}

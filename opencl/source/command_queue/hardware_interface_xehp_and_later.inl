@@ -42,7 +42,8 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
     Kernel &kernel,
     const bool &enable) {
     bool containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(kernel.getDescriptor());
-    bool stateCacheInvalidationWaRequired = commandQueue.getDevice().getReleaseHelper().isStateCacheInvalidationWaRequired(false, false) && containsStatefulAccess;
+    bool kernelUseImageOrSampler = kernel.getDescriptor().kernelAttributes.usesImageOrSamplerState();
+    bool stateCacheInvalidationWaRequired = commandQueue.getDevice().getReleaseHelper().isStateCacheInvalidationWaRequired(true, kernelUseImageOrSampler) && containsStatefulAccess;
     if (!enable && stateCacheInvalidationWaRequired) {
         PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;
