@@ -626,6 +626,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
     }
 
     handleSuccessfulHostSynchronization();
+    this->statusQueryAssignedCompletionData = true;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1163,19 +1164,24 @@ void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
         timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
     } while (!isTimestampPopulated() && (timeDiff < getCompletionTimeout()));
     DEBUG_BREAK_IF(!isTimestampPopulated());
+
+    this->statusQueryAssignedCompletionData = true;
 }
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) {
     ze_kernel_timestamp_result_t &result = *dstptr;
 
+    this->statusQueryAssignedCompletionData = false;
     if (!this->isCounterBased() || !inOrderExecHelper.hasTimestampNodes()) {
         if (queryStatus(0) != ZE_RESULT_SUCCESS) {
             return ZE_RESULT_NOT_READY;
         }
     }
 
-    assignKernelEventCompletionData(getHostAddress());
+    if (!this->statusQueryAssignedCompletionData) {
+        assignKernelEventCompletionData(getHostAddress());
+    }
     calculateProfilingData();
 
     if (!isTimestampPopulated()) {

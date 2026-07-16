@@ -62,6 +62,8 @@ struct EventImp : public Event {
     const bool isDcFlushAllowed = false;
     const bool isNonCoherentTimestampsModeEnabled = false;
 
+    bool statusQueryAssignedCompletionData = false;
+
   protected:
     ze_result_t waitForUserFence(uint64_t timeout, int64_t timeSinceWait);
     void downloadAllTbxAllocations();

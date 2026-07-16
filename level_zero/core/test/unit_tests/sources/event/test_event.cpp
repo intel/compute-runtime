@@ -6073,6 +6073,7 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
     using BaseClass::hostAddressFromPool;
     using BaseClass::maxPacketCount;
     using BaseClass::signalAllEventPackets;
+    using BaseClass::statusQueryAssignedCompletionData;
 
     MockEventCompletion(MultiGraphicsAllocation *alloc, uint32_t eventSize, uint32_t maxKernelCount, uint32_t maxPacketsCount, int index, L0::Device *device) : BaseClass::EventImp(index, device, false) {
         auto neoDevice = device->getNEODevice();
@@ -6283,6 +6284,53 @@ TEST_F(EventTests, WhenQueryingStatusThenAccessMemoryOnce) {
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
     EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
+}
+
+TEST_F(EventTests, WhenQueryingStatusThenStatusQueryRecordsCompletionDataAssigned) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    EXPECT_FALSE(event->statusQueryAssignedCompletionData);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(event->statusQueryAssignedCompletionData);
+}
+
+TEST_F(EventTests, GivenStatusQueryAssignedCompletionDataWhenQueryingKernelTimestampThenCompletionDataNotAssignedAgain) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    ze_kernel_timestamp_result_t result = {};
+    EXPECT_EQ(event->queryKernelTimestamp(&result), ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(event->statusQueryAssignedCompletionData);
+    EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
+}
+
+TEST_F(EventTests, GivenHostSignaledWhenQueryingKernelTimestampThenStatusQueryRecordsCompletionDataNotAssigned) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    EXPECT_EQ(event->hostSignal(false), ZE_RESULT_SUCCESS);
+    ze_kernel_timestamp_result_t result = {};
+    EXPECT_EQ(event->queryKernelTimestamp(&result), ZE_RESULT_SUCCESS);
+    EXPECT_FALSE(event->statusQueryAssignedCompletionData);
+    EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
+}
+
+TEST_F(EventTests, GivenNotReadyPacketsWhenQueryingStatusThenNotReadyReturnedAndCompletionDataAssignmentNotRecorded) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    const uint32_t clearedPacket[4] = {static_cast<uint32_t>(Event::STATE_CLEARED), static_cast<uint32_t>(Event::STATE_CLEARED),
+                                       static_cast<uint32_t>(Event::STATE_CLEARED), static_cast<uint32_t>(Event::STATE_CLEARED)};
+    event->kernelEventCompletionData[0].assignDataToAllTimestamps(0u, clearedPacket);
+
+    EXPECT_FALSE(event->statusQueryAssignedCompletionData);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_NOT_READY);
+    EXPECT_FALSE(event->statusQueryAssignedCompletionData);
+}
+
+TEST_F(EventTests, GivenNotReadyPacketsWhenQueryingKernelTimestampThenNotReadyReturnedAndCompletionDataAssignmentNotRecorded) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    const uint32_t clearedPacket[4] = {static_cast<uint32_t>(Event::STATE_CLEARED), static_cast<uint32_t>(Event::STATE_CLEARED),
+                                       static_cast<uint32_t>(Event::STATE_CLEARED), static_cast<uint32_t>(Event::STATE_CLEARED)};
+    event->kernelEventCompletionData[0].assignDataToAllTimestamps(0u, clearedPacket);
+
+    ze_kernel_timestamp_result_t result = {};
+    EXPECT_EQ(event->queryKernelTimestamp(&result), ZE_RESULT_NOT_READY);
+    EXPECT_FALSE(event->statusQueryAssignedCompletionData);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
 }
 
