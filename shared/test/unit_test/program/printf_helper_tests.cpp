@@ -109,6 +109,31 @@ class PrintFormatterTest : public testing::Test {
     }
 };
 
+TEST_F(PrintFormatterTest, GivenInlineFormatStringWhenPrintingThenBytesFromBufferAreUsed) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    std::string fmt = "answer %d\n";
+    uint32_t byteLength = static_cast<uint32_t>(fmt.size() + 1);
+
+    storeData<uint64_t>(PrintFormatter::inlineStringFormatFlag | byteLength);
+    memcpy_s(underlyingBuffer + offset, sizeof(underlyingBuffer) - offset, fmt.c_str(), byteLength);
+    offset += static_cast<uint32_t>(alignUp(byteLength, sizeof(uint32_t)));
+    *reinterpret_cast<uint32_t *>(underlyingBuffer) = offset;
+
+    injectValue(static_cast<int32_t>(42));
+
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    snprintf(referenceOutput, sizeof(referenceOutput), fmt.c_str(), 42);
+
+    EXPECT_STREQ(referenceOutput, actualOutput);
+}
+
 // for tests printing a single value
 template <class T>
 struct SingleValueTestParam {

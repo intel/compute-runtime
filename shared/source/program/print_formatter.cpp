@@ -40,8 +40,20 @@ void PrintFormatter::printKernelOutput(const std::function<void(char *)> &print)
         if (formatString == reinterpret_cast<char *>(static_cast<uintptr_t>(0xffffffff))) {
             break;
         }
-        if (formatString != nullptr) {
-            printString(formatString, print);
+        const char *stringToPrint = formatString;
+        if constexpr (sizeof(uintptr_t) == sizeof(uint64_t)) {
+            if (reinterpret_cast<uintptr_t>(formatString) & inlineStringFormatFlag) {
+                uint32_t byteLength = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(formatString) & ~inlineStringFormatFlag);
+                uint32_t alignedLength = static_cast<uint32_t>(alignUp(byteLength, sizeof(uint32_t)));
+                if (byteLength == 0 || currentOffset + alignedLength > printfOutputBufferSize) {
+                    break;
+                }
+                stringToPrint = reinterpret_cast<const char *>(printfOutputBuffer + currentOffset);
+                currentOffset += alignedLength;
+            }
+        }
+        if (stringToPrint != nullptr) {
+            printString(stringToPrint, print);
         }
     }
 }

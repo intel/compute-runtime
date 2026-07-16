@@ -53,6 +53,8 @@ class PrintFormatter {
     }
     constexpr static size_t maxSinglePrintStringLength = 16 * MemoryConstants::kiloByte;
 
+    constexpr static uint64_t inlineStringFormatFlag = 0x8000000000000000ull;
+
   protected:
     void printString(const char *formatString, const std::function<void(char *)> &print);
     size_t printToken(char *output, size_t size, const char *formatString);
