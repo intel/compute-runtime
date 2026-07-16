@@ -156,16 +156,16 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
         // Use local struct definitions to work across all Xe mock variants (XeDrm, XeDrmPrelim)
         struct VmFault {
             __u64 address;
-            __u32 address_precision;
-            __u8 access_type;
-            __u8 fault_type;
-            __u8 fault_level;
+            __u32 addressPrecision;
+            __u8 accessType;
+            __u8 faultType;
+            __u8 faultLevel;
             __u8 pad;
             __u64 reserved[4];
         };
         struct VmGetProperty {
             __u64 extensions;
-            __u32 vm_id;
+            __u32 vmId;
             __u32 property;
             __u32 size;
             __u32 pad;
@@ -183,10 +183,10 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
                     auto *faultData = reinterpret_cast<VmFault *>(vmProperty->data);
                     for (size_t i = 0; i < mockVmFaults.size(); i++) {
                         faultData[i].address = mockVmFaults[i].address;
-                        faultData[i].address_precision = mockVmFaults[i].addressPrecision;
-                        faultData[i].access_type = mockVmFaults[i].accessType;
-                        faultData[i].fault_type = mockVmFaults[i].faultType;
-                        faultData[i].fault_level = mockVmFaults[i].faultLevel;
+                        faultData[i].addressPrecision = mockVmFaults[i].addressPrecision;
+                        faultData[i].accessType = mockVmFaults[i].accessType;
+                        faultData[i].faultType = mockVmFaults[i].faultType;
+                        faultData[i].faultLevel = mockVmFaults[i].faultLevel;
                         faultData[i].pad = 0;
                         memset(faultData[i].reserved, 0, sizeof(faultData[i].reserved));
                     }
