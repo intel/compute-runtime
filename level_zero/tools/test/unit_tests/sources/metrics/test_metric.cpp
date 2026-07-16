@@ -332,30 +332,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMultipleTimeOrEventBasedMetri
     }
 }
 
-TEST_F(CalcOperationFixture, WhenCreatingCalcSubDeviceOnlyAcceptsOneScope) {
-
-    std::vector<zet_intel_metric_scope_exp_handle_t> mockMetricScopes{hMetricScope, hMetricScope};
-
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,                 // pNext
-        1,                       // metricGroupCount
-        &hMetricGroup,           // phMetricGroups
-        0,                       // metricCount
-        nullptr,                 // phMetrics
-        0,                       // timeWindowsCount
-        nullptr,                 // pCalculationTimeWindows
-        1000,                    // timeAggregationWindow
-        2,                       // metricScopesCount
-        mockMetricScopes.data(), // phMetricScopes
-    };
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
-                                                                                            device->toHandle(), &calculationDesc,
-                                                                                            &hCalculationOperation));
-}
-
 TEST_F(CalcOperationFixture, WhenCreatingCalcOpUseTheSourceFromMetricGroupOrMetricWhenAvailable) {
 
     MockMetricGroup mockMetricGroup2(mockMetricSource);
@@ -909,6 +885,39 @@ HWTEST_F(MetricScopesMultiDeviceFixture, GivenPlatformSupportsAggregationOrNotCo
 
     rootDevice->getNEODevice()->getRootDeviceEnvironmentRef().apiGfxCoreHelper.swap(l0GfxCoreHelperBackup2);
     l0GfxCoreHelperBackup2.release();
+}
+
+TEST_F(MetricScopesMultiDeviceFixture, WhenCreatingCalcSubDeviceOnlyAcceptsOneScope) {
+
+    MockMetricGroup mockMetricGroup(*mockSubMetricSource);
+    zet_metric_group_handle_t hMetricGroup = mockMetricGroup.toHandle();
+
+    zet_intel_metric_scope_exp_handle_t hMetricScope;
+    uint32_t metricScopesCount = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            subDevice->toHandle(),
+                                                            &metricScopesCount,
+                                                            &hMetricScope));
+
+    std::vector<zet_intel_metric_scope_exp_handle_t> mockMetricScopes{hMetricScope, hMetricScope};
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
+        nullptr,                 // pNext
+        1,                       // metricGroupCount
+        &hMetricGroup,           // phMetricGroups
+        0,                       // metricCount
+        nullptr,                 // phMetrics
+        0,                       // timeWindowsCount
+        nullptr,                 // pCalculationTimeWindows
+        1000,                    // timeAggregationWindow
+        2,                       // metricScopesCount
+        mockMetricScopes.data(), // phMetricScopes
+    };
+
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                            subDevice->toHandle(), &calculationDesc,
+                                                                                            &hCalculationOperation));
 }
 
 using MetricGroupTest = Test<DeviceFixture>;
