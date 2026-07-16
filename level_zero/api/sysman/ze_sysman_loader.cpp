@@ -133,7 +133,7 @@ zesGetEngineProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.sysmanEngine.pfnGetProperties, version, ZE_API_VERSION_1_0);
-    fillDdiEntry(pDdiTable->pfnGetActivity, L0::globalDriverDispatch.sysmanEngine.pfnGetActivity, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetActivity, L0::globalDriverDispatch.sysmanEngine.pfnGetActivity, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnGetActivityExt, L0::globalDriverDispatch.sysmanEngine.pfnGetActivityExt, version, ZE_API_VERSION_1_7);
 
     return result;
@@ -315,8 +315,11 @@ zesGetPowerProcAddrTable(
     fillDdiEntry(pDdiTable->pfnSetLimits, L0::globalDriverDispatch.sysmanPower.pfnSetLimits, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetEnergyThreshold, L0::globalDriverDispatch.sysmanPower.pfnGetEnergyThreshold, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnSetEnergyThreshold, L0::globalDriverDispatch.sysmanPower.pfnSetEnergyThreshold, version, ZE_API_VERSION_1_0);
-    fillDdiEntry(pDdiTable->pfnGetLimitsExt, L0::globalDriverDispatch.sysmanPower.pfnGetLimitsExt, version, ZE_API_VERSION_1_4);
-    fillDdiEntry(pDdiTable->pfnSetLimitsExt, L0::globalDriverDispatch.sysmanPower.pfnSetLimitsExt, version, ZE_API_VERSION_1_4);
+    fillDdiEntry(pDdiTable->pfnGetLimitsExt, L0::globalDriverDispatch.sysmanPower.pfnGetLimitsExt, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnSetLimitsExt, L0::globalDriverDispatch.sysmanPower.pfnSetLimitsExt, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetUsage, L0::globalDriverDispatch.sysmanPower.pfnGetUsage, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnGetLimitsExt2, L0::globalDriverDispatch.sysmanPower.pfnGetLimitsExt2, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnSetLimitsExt2, L0::globalDriverDispatch.sysmanPower.pfnSetLimitsExt2, version, ZE_API_VERSION_1_16);
 
     return result;
 }
@@ -373,6 +376,10 @@ zesGetRasExpProcAddrTable(
 
     fillDdiEntry(pDdiTable->pfnGetStateExp, L0::globalDriverDispatch.sysmanRasExp.pfnGetStateExp, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnClearStateExp, L0::globalDriverDispatch.sysmanRasExp.pfnClearStateExp, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnGetSupportedCategoriesExp, L0::globalDriverDispatch.sysmanRasExp.pfnGetSupportedCategoriesExp, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnGetStateExp2, L0::globalDriverDispatch.sysmanRasExp.pfnGetStateExp2, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnGetConfigExp, L0::globalDriverDispatch.sysmanRasExp.pfnGetConfigExp, version, ZE_API_VERSION_1_16);
+    fillDdiEntry(pDdiTable->pfnSetConfigExp, L0::globalDriverDispatch.sysmanRasExp.pfnSetConfigExp, version, ZE_API_VERSION_1_16);
 
     return result;
 }
@@ -405,7 +412,7 @@ ZE_DLLEXPORT ze_result_t ZE_APICALL zesGetDeviceExpProcAddrTable(
 
     fillDdiEntry(pDdiTable->pfnGetSubDevicePropertiesExp, L0::globalDriverDispatch.sysmanDeviceExp.pfnGetSubDevicePropertiesExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnEnumActiveVFExp, L0::globalDriverDispatch.sysmanDeviceExp.pfnEnumActiveVFExp, version, ZE_API_VERSION_1_9);
-    fillDdiEntry(pDdiTable->pfnEnumEnabledVFExp, L0::globalDriverDispatch.sysmanDeviceExp.pfnEnumEnabledVFExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnEnumEnabledVFExp, L0::globalDriverDispatch.sysmanDeviceExp.pfnEnumEnabledVFExp, version, ZE_API_VERSION_1_10);
 
     return result;
 }
@@ -427,9 +434,9 @@ zesGetVFManagementExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetVFEngineUtilizationExp, L0::globalDriverDispatch.sysmanVFManagementExp.pfnGetVFEngineUtilizationExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnSetVFTelemetryModeExp, L0::globalDriverDispatch.sysmanVFManagementExp.pfnSetVFTelemetryModeExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnSetVFTelemetrySamplingIntervalExp, L0::globalDriverDispatch.sysmanVFManagementExp.pfnSetVFTelemetrySamplingIntervalExp, version, ZE_API_VERSION_1_9);
-    fillDdiEntry(pDdiTable->pfnGetVFCapabilitiesExp, L0::globalDriverDispatch.sysmanVFManagementExp.pfnGetVFCapabilitiesExp, version, ZE_API_VERSION_1_11);
-    fillDdiEntry(pDdiTable->pfnGetVFMemoryUtilizationExp2, L0::globalDriverDispatch.sysmanVFManagementExp.pfnGetVFMemoryUtilizationExp2, version, ZE_API_VERSION_1_11);
-    fillDdiEntry(pDdiTable->pfnGetVFEngineUtilizationExp2, L0::globalDriverDispatch.sysmanVFManagementExp.pfnGetVFEngineUtilizationExp2, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnGetVFCapabilitiesExp, L0::globalDriverDispatch.sysmanVFManagementExp.pfnGetVFCapabilitiesExp, version, ZE_API_VERSION_1_10);
+    fillDdiEntry(pDdiTable->pfnGetVFMemoryUtilizationExp2, L0::globalDriverDispatch.sysmanVFManagementExp.pfnGetVFMemoryUtilizationExp2, version, ZE_API_VERSION_1_10);
+    fillDdiEntry(pDdiTable->pfnGetVFEngineUtilizationExp2, L0::globalDriverDispatch.sysmanVFManagementExp.pfnGetVFEngineUtilizationExp2, version, ZE_API_VERSION_1_10);
     fillDdiEntry(pDdiTable->pfnGetVFCapabilitiesExp2, L0::globalDriverDispatch.sysmanVFManagementExp.pfnGetVFCapabilitiesExp2, version, ZE_API_VERSION_1_12);
 
     return result;
