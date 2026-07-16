@@ -100,7 +100,7 @@ endif()
 
 # Level-Zero package version
 set(NEO_L0_VERSION_MAJOR 1)
-set(NEO_L0_VERSION_MINOR 15)
+set(NEO_L0_VERSION_MINOR 17)
 
 # Remove leading zeros
 string(REGEX REPLACE "^0+([0-9]+)" "\\1" NEO_VERSION_BUILD "${NEO_VERSION_BUILD}")
