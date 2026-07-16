@@ -459,9 +459,9 @@ OsFrequency *OsFrequency::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uin
 
 std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    auto areImagesSupported = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.supportsImages;
     std::vector<zes_freq_domain_t> freqDomains = {};
-    if (areImagesSupported) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    if (pSysmanProductHelper->isMediaDomainSupported(pLinuxSysmanImp)) {
         auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
         auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
         auto baseDir = pSysmanKmdInterface->getFreqMediaDomainBasePath();
@@ -471,7 +471,6 @@ std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSy
     }
     freqDomains.push_back(ZES_FREQ_DOMAIN_GPU);
 
-    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     if (pSysmanProductHelper->isMemoryDomainSupported()) {
         freqDomains.push_back(ZES_FREQ_DOMAIN_MEMORY);
     }

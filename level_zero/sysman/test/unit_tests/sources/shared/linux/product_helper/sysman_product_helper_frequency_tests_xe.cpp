@@ -257,11 +257,28 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonReadFailsWhenC
     EXPECT_EQ(0u, throttleReason & ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT);
 }
 
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstanceWhenQueryingMediaDomainSupportThenCapabilityTableImageSupportIsReturned, IsNotCRI) {
+    auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
+
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
+    EXPECT_FALSE(pSysmanProductHelper->isMediaDomainSupported(pLinuxSysmanImp));
+
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = true;
+    EXPECT_TRUE(pSysmanProductHelper->isMediaDomainSupported(pLinuxSysmanImp));
+}
+
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenCriProductHelperInstanceWhenQueryingMediaDomainSupportThenMediaDomainIsSupportedWithoutImageSupport, IsCRI) {
+    auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
+
+    EXPECT_TRUE(pSysmanProductHelper->isMediaDomainSupported(pLinuxSysmanImp));
+}
+
 HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstanceWhenQueryingMemoryDomainSupportThenMemoryDomainIsSupported, IsCRI) {
     EXPECT_TRUE(pSysmanProductHelper->isMemoryDomainSupported());
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnumeratingFrequencyDomainsWithNoImageSupportThenMemoryDomainIsIncluded, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnumeratingFrequencyDomainsWithNoImageSupportThenMediaDomainIsAlsoEnumerated, IsCRI) {
     auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
 
@@ -272,13 +289,14 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnu
 
     uint32_t count = 0U;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(pSysmanDevice->toHandle(), &count, nullptr));
-    EXPECT_EQ(2u, count);
+    EXPECT_EQ(3u, count);
 
     auto handles = getFreqHandles(count);
-    EXPECT_EQ(2u, handles.size());
+    EXPECT_EQ(3u, handles.size());
 
     bool hasGpuDomain = false;
     bool hasMemoryDomain = false;
+    bool hasMediaDomain = false;
 
     for (auto handle : handles) {
         EXPECT_NE(handle, nullptr);
@@ -289,11 +307,14 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnu
             hasGpuDomain = true;
         } else if (properties.type == ZES_FREQ_DOMAIN_MEMORY) {
             hasMemoryDomain = true;
+        } else if (properties.type == ZES_FREQ_DOMAIN_MEDIA) {
+            hasMediaDomain = true;
         }
     }
 
     EXPECT_TRUE(hasGpuDomain);
     EXPECT_TRUE(hasMemoryDomain);
+    EXPECT_TRUE(hasMediaDomain);
 }
 
 HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnumeratingFrequencyDomainsWithImageSupportAndNoMediaDirectoryThenMemoryDomainIsIncluded, IsCRI) {

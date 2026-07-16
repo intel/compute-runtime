@@ -30,6 +30,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenActualComponentCountTwoWhenTryingToGet
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetPropertiesThenSuccessIsReturned) {
     MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
     pMockSysmanProductHelper->isFrequencySetRangeSupportedResult = true;
+    pMockSysmanProductHelper->isMediaDomainSupportedResult = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().getHardwareInfo()->capabilityTable.supportsImages;
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
@@ -49,7 +50,9 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingZesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndFrequenceSetRangeIsUnsupportedWhenCallingZesFrequencyGetPropertiesThenVerifyCanControlIsSetToFalse) {
-    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    auto pMockSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    pMockSysmanProductHelper->isMediaDomainSupportedResult = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().getHardwareInfo()->capabilityTable.supportsImages;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::move(pMockSysmanProductHelper);
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
     auto handles = getFreqHandles(handleComponentCount);
@@ -89,7 +92,9 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingZesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenFrequencySetRangeNotSupportedWhenCallingZesFrequencySetRangeThenVerifyCallFails) {
-    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    auto pMockSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    pMockSysmanProductHelper->isMediaDomainSupportedResult = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().getHardwareInfo()->capabilityTable.supportsImages;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::move(pMockSysmanProductHelper);
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
     auto handles = getFreqHandles(handleComponentCount);
@@ -230,6 +235,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivengetMinValFunctionReturnsErrorWhenValid
 TEST_F(SysmanDeviceFrequencyFixture, GivenOnSubdeviceSetWhenValidatingAnyFrequencyAPIThenSuccessIsReturned) {
     MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
     pMockSysmanProductHelper->isFrequencySetRangeSupportedResult = true;
+    pMockSysmanProductHelper->isMediaDomainSupportedResult = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().getHardwareInfo()->capabilityTable.supportsImages;
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
