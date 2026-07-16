@@ -28,6 +28,7 @@ cl_int forwardClGetCLObjectInfoINTEL(cl_mem memObj, void *pResourceInfo);
 cl_int forwardClGetCLEventInfoINTEL(cl_event event, void **pSyncInfoHandleRet, cl_context *pClContextRet);
 cl_int forwardClReleaseGlSharedEventINTEL(cl_event event);
 
+using pfnClIcdGetPlatformIDsKHR = CL_API_ENTRY cl_int(CL_API_CALL *)(cl_uint, cl_platform_id *, cl_uint *);
 using pfnClEnqueueMarkerWithSyncObjectINTEL = cl_int(CL_API_CALL *)(cl_command_queue, cl_event *, cl_context *);
 using pfnClGetCLObjectInfoINTEL = cl_int(CL_API_CALL *)(cl_mem, void *);
 using pfnClGetCLEventInfoINTEL = cl_int(CL_API_CALL *)(cl_event, void **, cl_context *);
@@ -38,7 +39,7 @@ struct L0ForwardingState {
     bool loaded = false;
     bool hasPlatforms = false;
     std::unique_ptr<OsLibrary> library;
-    decltype(&clGetPlatformIDs) clGetPlatformIDsFunc = nullptr;
+    pfnClIcdGetPlatformIDsKHR clGetPlatformIDsFunc = nullptr;
     decltype(&clGetPlatformInfo) clGetPlatformInfoFunc = nullptr;
     decltype(&clGetDeviceIDs) clGetDeviceIDsFunc = nullptr;
     decltype(&clGetExtensionFunctionAddress) clGetExtensionFunctionAddressFunc = nullptr;

@@ -9,7 +9,6 @@ EXPORTS
 
 ; OpenCL API entries queried by LEO forwarding
 clIcdGetPlatformIDsKHR
-clGetPlatformIDs
 clGetPlatformInfo
 clGetExtensionFunctionAddress
 clGetDeviceIDs
