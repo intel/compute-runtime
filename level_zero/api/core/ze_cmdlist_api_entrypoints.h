@@ -8,13 +8,10 @@
 #pragma once
 
 #include "level_zero/api/core/ze_mutable_cmdlist_api_entrypoints.h"
-#include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
-#include "level_zero/core/source/context/context.h"
-#include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include <level_zero/ze_api.h>
 
 namespace L0 {
+
 ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,
     ze_host_function_callback_t pHostFunction,
@@ -28,47 +25,29 @@ ze_result_t ZE_APICALL zeCommandListCreate(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     const ze_command_list_desc_t *desc,
-    ze_command_list_handle_t *phCommandList) {
-    return L0::Context::fromHandle(hContext)->createCommandList(hDevice, desc, phCommandList);
-}
+    ze_command_list_handle_t *phCommandList);
 
 ze_result_t ZE_APICALL zeCommandListCreateImmediate(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     const ze_command_queue_desc_t *altdesc,
-    ze_command_list_handle_t *phCommandList) {
-    return L0::Context::fromHandle(hContext)->createCommandListImmediate(hDevice, altdesc, phCommandList);
-}
+    ze_command_list_handle_t *phCommandList);
 
 ze_result_t ZE_APICALL zeCommandListDestroy(
-    ze_command_list_handle_t hCommandList) {
-    return L0::CommandList::fromHandle(hCommandList)->destroy();
-}
+    ze_command_list_handle_t hCommandList);
 
 ze_result_t ZE_APICALL zeCommandListClose(
-    ze_command_list_handle_t hCommandList) {
-    return L0::CommandList::fromHandle(hCommandList)->close();
-}
+    ze_command_list_handle_t hCommandList);
 
 ze_result_t ZE_APICALL zeCommandListReset(
-    ze_command_list_handle_t hCommandList) {
-    return L0::CommandList::fromHandle(hCommandList)->reset();
-}
+    ze_command_list_handle_t hCommandList);
 
 ze_result_t ZE_APICALL zeCommandListAppendWriteGlobalTimestamp(
     ze_command_list_handle_t hCommandList,
     uint64_t *dstptr,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(hCommandList, dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(
     ze_command_list_handle_t hCommandList,
@@ -78,76 +57,47 @@ ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(
     const size_t *pOffsets,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendQueryKernelTimestamps>(hCommandList, numEvents, phEvents, dstptr, pOffsets, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendQueryKernelTimestamps(numEvents, phEvents, dstptr, pOffsets, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListGetDeviceHandle(
     ze_command_list_handle_t hCommandList,
-    ze_device_handle_t *phDevice) {
-    return L0::CommandList::fromHandle(hCommandList)->getDeviceHandle(phDevice);
-}
+    ze_device_handle_t *phDevice);
 
 ze_result_t ZE_APICALL zeCommandListGetContextHandle(
     ze_command_list_handle_t hCommandList,
-    ze_context_handle_t *phContext) {
-    return L0::CommandList::fromHandle(hCommandList)->getContextHandle(phContext);
-}
+    ze_context_handle_t *phContext);
 
 ze_result_t ZE_APICALL zeCommandListGetOrdinal(
     ze_command_list_handle_t hCommandList,
-    uint32_t *pOrdinal) {
-    *pOrdinal = L0::CommandList::fromHandle(hCommandList)->getOrdinal();
-    return ZE_RESULT_SUCCESS;
-}
+    uint32_t *pOrdinal);
 
 ze_result_t ZE_APICALL zeCommandListGetFlags(
     ze_command_list_handle_t hCommandList,
-    ze_command_list_flags_t *pFlags) {
-    return L0::CommandList::fromHandle(hCommandList)->getFlags(pFlags);
-}
+    ze_command_list_flags_t *pFlags);
 
 ze_result_t ZE_APICALL zeCommandListImmediateGetIndex(
     ze_command_list_handle_t hCommandListImmediate,
-    uint32_t *pIndex) {
-    return L0::CommandList::fromHandle(hCommandListImmediate)->getImmediateIndex(pIndex);
-}
+    uint32_t *pIndex);
 
 ze_result_t ZE_APICALL zeCommandListImmediateGetFlags(
     ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_flags_t *pFlags) {
-    return L0::CommandList::fromHandle(hCommandListImmediate)->getImmediateFlags(pFlags);
-}
+    ze_command_queue_flags_t *pFlags);
 
 ze_result_t ZE_APICALL zeCommandListImmediateGetMode(
     ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_mode_t *pMode) {
-    return L0::CommandList::fromHandle(hCommandListImmediate)->getImmediateMode(pMode);
-}
+    ze_command_queue_mode_t *pMode);
 
 ze_result_t ZE_APICALL zeCommandListImmediateGetPriority(
     ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_priority_t *pPriority) {
-    return L0::CommandList::fromHandle(hCommandListImmediate)->getImmediatePriority(pPriority);
-}
+    ze_command_queue_priority_t *pPriority);
 
 ze_result_t ZE_APICALL zeCommandListIsImmediate(
     ze_command_list_handle_t hCommandList,
-    ze_bool_t *pIsImmediate) {
-    return L0::CommandList::fromHandle(hCommandList)->isImmediate(pIsImmediate);
-}
+    ze_bool_t *pIsImmediate);
 
 ze_result_t ZE_APICALL zeCommandListCreateCloneExp(
     ze_command_list_handle_t hCommandList,
-    ze_command_list_handle_t *phClonedCommandList) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
+    ze_command_list_handle_t *phClonedCommandList);
 
 ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsExp(
     ze_command_list_handle_t hCommandListImmediate,
@@ -155,10 +105,7 @@ ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsExp(
     ze_command_list_handle_t *phCommandLists,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    CommandListExecutionInternalOptions internalOptions = {};
-    return L0::CommandList::fromHandle(hCommandListImmediate)->appendCommandLists(numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents, internalOptions);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListAppendSignalExternalSemaphoreExt(
     ze_command_list_handle_t hCommandList,
@@ -167,15 +114,7 @@ ze_result_t ZE_APICALL zeCommandListAppendSignalExternalSemaphoreExt(
     ze_external_semaphore_signal_params_ext_t *signalParams,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt>(hCommandList, numSemaphores, phSemaphores, signalParams, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendSignalExternalSemaphores(numSemaphores, phSemaphores, signalParams, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListAppendWaitExternalSemaphoreExt(
     ze_command_list_handle_t hCommandList,
@@ -184,15 +123,7 @@ ze_result_t ZE_APICALL zeCommandListAppendWaitExternalSemaphoreExt(
     ze_external_semaphore_wait_params_ext_t *waitParams,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt>(hCommandList, numSemaphores, phSemaphores, waitParams, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendWaitExternalSemaphores(numSemaphores, phSemaphores, waitParams, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
     ze_command_list_handle_t hCommandList,
@@ -203,17 +134,7 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    if (!hCommandList) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(hCommandList, hKernel, groupCounts, groupSizes, pArguments, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelWithArguments(hKernel, groupCounts, groupSizes, pArguments, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameters(
     ze_command_list_handle_t hCommandList,
@@ -222,18 +143,7 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameters(
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    if (!hCommandList) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(hCommandList, hKernel, pGroupCounts, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendLaunchKernelWithParameters(hKernel, pGroupCounts, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsWithParameters(
     ze_command_list_handle_t hCommandListImmediate,
@@ -242,10 +152,7 @@ ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsWithParameters(
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    CommandListExecutionInternalOptions internalOptions = {};
-    return L0::CommandList::fromHandle(hCommandListImmediate)->appendCommandLists(numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents, internalOptions);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyWithParameters(
     ze_command_list_handle_t hCommandList,
@@ -255,15 +162,7 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyWithParameters(
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryCopyWithParameters>(hCommandList, dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     ze_command_list_handle_t hCommandList,
@@ -274,73 +173,39 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryFillWithParameters>(hCommandList, ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
+    ze_event_handle_t *phWaitEvents);
 
-    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
 } // namespace L0
 
 extern "C" {
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListCreate(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     const ze_command_list_desc_t *desc,
-    ze_command_list_handle_t *phCommandList) {
-    return L0::zeCommandListCreate(
-        hContext,
-        hDevice,
-        desc,
-        phCommandList);
-}
+    ze_command_list_handle_t *phCommandList);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListCreateImmediate(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     const ze_command_queue_desc_t *altdesc,
-    ze_command_list_handle_t *phCommandList) {
-    return L0::zeCommandListCreateImmediate(
-        hContext,
-        hDevice,
-        altdesc,
-        phCommandList);
-}
+    ze_command_list_handle_t *phCommandList);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListDestroy(
-    ze_command_list_handle_t hCommandList) {
-    return L0::zeCommandListDestroy(
-        hCommandList);
-}
+    ze_command_list_handle_t hCommandList);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListClose(
-    ze_command_list_handle_t hCommandList) {
-    return L0::zeCommandListClose(
-        hCommandList);
-}
+    ze_command_list_handle_t hCommandList);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListReset(
-    ze_command_list_handle_t hCommandList) {
-    return L0::zeCommandListReset(
-        hCommandList);
-}
+    ze_command_list_handle_t hCommandList);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWriteGlobalTimestamp(
     ze_command_list_handle_t hCommandList,
     uint64_t *dstptr,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListAppendWriteGlobalTimestamp(
-        hCommandList,
-        dstptr,
-        hSignalEvent,
-        numWaitEvents,
-        phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(
     ze_command_list_handle_t hCommandList,
@@ -350,57 +215,27 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(
     const size_t *pOffsets,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListAppendQueryKernelTimestamps(
-        hCommandList,
-        numEvents,
-        phEvents,
-        dstptr,
-        pOffsets,
-        hSignalEvent,
-        numWaitEvents,
-        phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetDeviceHandle(
     ze_command_list_handle_t hCommandList,
-    ze_device_handle_t *phDevice) {
-    return L0::zeCommandListGetDeviceHandle(
-        hCommandList,
-        phDevice);
-}
+    ze_device_handle_t *phDevice);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetContextHandle(
     ze_command_list_handle_t hCommandList,
-    ze_context_handle_t *phContext) {
-    return L0::zeCommandListGetContextHandle(
-        hCommandList,
-        phContext);
-}
+    ze_context_handle_t *phContext);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetOrdinal(
     ze_command_list_handle_t hCommandList,
-    uint32_t *pOrdinal) {
-    return L0::zeCommandListGetOrdinal(
-        hCommandList,
-        pOrdinal);
-}
+    uint32_t *pOrdinal);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetIndex(
     ze_command_list_handle_t hCommandListImmediate,
-    uint32_t *pIndex) {
-    return L0::zeCommandListImmediateGetIndex(
-        hCommandListImmediate,
-        pIndex);
-}
+    uint32_t *pIndex);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsImmediate(
     ze_command_list_handle_t hCommandList,
-    ze_bool_t *pIsImmediate) {
-    return L0::zeCommandListIsImmediate(
-        hCommandList,
-        pIsImmediate);
-}
+    ze_bool_t *pIsImmediate);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsWithParameters(
     ze_command_list_handle_t hCommandListImmediate,
@@ -409,16 +244,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsWith
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListImmediateAppendCommandListsWithParameters(
-        hCommandListImmediate,
-        numCommandLists,
-        phCommandLists,
-        pNext,
-        hSignalEvent,
-        numWaitEvents,
-        phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsExp(
     ze_command_list_handle_t hCommandListImmediate,
@@ -426,15 +252,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsExp(
     ze_command_list_handle_t *phCommandLists,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListImmediateAppendCommandListsExp(
-        hCommandListImmediate,
-        numCommandLists,
-        phCommandLists,
-        hSignalEvent,
-        numWaitEvents,
-        phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendSignalExternalSemaphoreExt(
     ze_command_list_handle_t hCommandList,
@@ -443,9 +261,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendSignalExternalSemaphoreEx
     ze_external_semaphore_signal_params_ext_t *signalParams,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListAppendSignalExternalSemaphoreExt(hCommandList, numSemaphores, phSemaphores, signalParams, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitExternalSemaphoreExt(
     ze_command_list_handle_t hCommandList,
@@ -454,9 +270,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitExternalSemaphoreExt(
     ze_external_semaphore_wait_params_ext_t *waitParams,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListAppendWaitExternalSemaphoreExt(hCommandList, numSemaphores, phSemaphores, waitParams, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
     ze_command_list_handle_t hCommandList,
@@ -467,9 +281,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListAppendLaunchKernelWithArguments(hCommandList, hKernel, groupCounts, groupSizes, pArguments, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameters(
     ze_command_list_handle_t hCommandList,
@@ -478,11 +290,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameter
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-
-    return L0::zeCommandListAppendLaunchKernelWithParameters(
-        hCommandList, hKernel, pGroupCounts, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyWithParameters(
     ze_command_list_handle_t hCommandList,
@@ -492,10 +300,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyWithParameters(
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListAppendMemoryCopyWithParameters(
-        hCommandList, dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     ze_command_list_handle_t hCommandList,
@@ -506,28 +311,19 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListAppendMemoryFillWithParameters(
-        hCommandList, ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetFlags(
     ze_command_list_handle_t hCommandList,
-    ze_command_queue_flags_t *pFlags) {
-    return L0::zeCommandListImmediateGetFlags(hCommandList, pFlags);
-}
+    ze_command_queue_flags_t *pFlags);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetMode(
     ze_command_list_handle_t hCommandList,
-    ze_command_queue_mode_t *pMode) {
-    return L0::zeCommandListImmediateGetMode(hCommandList, pMode);
-}
+    ze_command_queue_mode_t *pMode);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetPriority(
     ze_command_list_handle_t hCommandList,
-    ze_command_queue_priority_t *pPriority) {
-    return L0::zeCommandListImmediateGetPriority(hCommandList, pPriority);
-}
+    ze_command_queue_priority_t *pPriority);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,
@@ -536,8 +332,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
     const void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListAppendHostFunction(
-        hCommandList, pfnHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
+
 } // extern "C"

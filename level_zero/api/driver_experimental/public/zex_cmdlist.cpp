@@ -8,7 +8,6 @@
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
@@ -74,26 +73,6 @@ zexCommandListAppendWriteToMemory(
     } catch (std::exception &) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-}
-
-ze_result_t ZE_APICALL
-zeCommandListAppendHostFunction(
-    ze_command_list_handle_t hCommandList,
-    ze_host_function_callback_t pHostFunction,
-    void *pUserData,
-    const void *pNext,
-    ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-
-    CmdListHostFunctionParameters parameters{};
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendHostFunction>(hCommandList, pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
 }
 
 ze_result_t ZE_APICALL

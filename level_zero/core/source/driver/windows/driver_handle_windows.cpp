@@ -5,9 +5,9 @@
  *
  */
 
-#include "level_zero/core/source/driver/driver_handle.h"
-
 #include "shared/source/helpers/debug_helpers.h"
+
+#include "level_zero/core/source/driver/driver_handle.h"
 
 namespace NEO {
 

@@ -7,140 +7,74 @@
 
 #pragma once
 
-#include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/event/event.h"
-#include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include <level_zero/ze_api.h>
 
-#include <vector>
-
 namespace L0 {
+
 ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_command_id_exp_desc_t *desc,
-    uint64_t *pCommandId) {
-    hCommandList = toInternalType(hCommandList);
-    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, 0, nullptr, pCommandId);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
-
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto captureResult = cmdList->capture<CaptureApi::zeCommandListGetNextCommandIdExp>(hCommandList, desc, pCommandId);
-    if ((captureResult != ZE_RESULT_SUCCESS) && (captureResult != ZE_RESULT_ERROR_NOT_AVAILABLE)) {
-        return captureResult;
-    }
-
-    return result;
-}
+    uint64_t *pCommandId);
 
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExp(
     ze_command_list_handle_t hCommandList,
-    const ze_mutable_commands_exp_desc_t *desc) {
-    hCommandList = toInternalType(hCommandList);
-    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandsExp(desc);
-}
+    const ze_mutable_commands_exp_desc_t *desc);
 
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandSignalEventExp(
     ze_command_list_handle_t hCommandList,
     uint64_t commandId,
-    ze_event_handle_t hSignalEvent) {
-    hCommandList = toInternalType(hCommandList);
-    hSignalEvent = toInternalType(hSignalEvent);
-    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandSignalEventExp(commandId, hSignalEvent);
-}
+    ze_event_handle_t hSignalEvent);
 
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandWaitEventsExp(
     ze_command_list_handle_t hCommandList,
     uint64_t commandId,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    hCommandList = toInternalType(hCommandList);
-    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandWaitEventsExp(commandId, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_command_id_exp_desc_t *desc,
     uint32_t numKernels,
     ze_kernel_handle_t *phKernels,
-    uint64_t *pCommandId) {
-    hCommandList = toInternalType(hCommandList);
-    StackVec<ze_kernel_handle_t, 16> translatedKernels{};
-    translatedKernels.reserve(numKernels);
-    if (phKernels != nullptr) {
-        for (auto i = 0u; i < numKernels; i++) {
-            translatedKernels.push_back(toInternalType(phKernels[i]));
-        }
-    }
-    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, numKernels, translatedKernels.data(), pCommandId);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
-
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto kernelsForCapture = translatedKernels.empty() ? nullptr : translatedKernels.data();
-    auto captureResult = cmdList->capture<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(hCommandList, desc, numKernels, kernelsForCapture, pCommandId);
-    if ((captureResult != ZE_RESULT_SUCCESS) && (captureResult != ZE_RESULT_ERROR_NOT_AVAILABLE)) {
-        return captureResult;
-    }
-
-    return result;
-}
+    uint64_t *pCommandId);
 
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
     ze_command_list_handle_t hCommandList,
     uint32_t numKernels,
     uint64_t *pCommandId,
-    ze_kernel_handle_t *phKernels) {
-    hCommandList = toInternalType(hCommandList);
-    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandKernelsExp(numKernels, pCommandId, phKernels);
-}
+    ze_kernel_handle_t *phKernels);
 
 ze_result_t ZE_APICALL zeCommandListIsMutableExp(
     ze_command_list_handle_t hCommandList,
-    ze_bool_t *pIsMutable) {
-    hCommandList = toInternalType(hCommandList);
-    return L0::CommandList::fromHandle(hCommandList)->isMutableExp(pIsMutable);
-}
+    ze_bool_t *pIsMutable);
 
 } // namespace L0
 
-#if defined(__cplusplus)
 extern "C" {
-#endif
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListGetNextCommandIdExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_command_id_exp_desc_t *desc,
-    uint64_t *pCommandId) {
-    return L0::zeCommandListGetNextCommandIdExp(hCommandList, desc, pCommandId);
-}
+    uint64_t *pCommandId);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListUpdateMutableCommandsExp(
     ze_command_list_handle_t hCommandList,
-    const ze_mutable_commands_exp_desc_t *desc) {
-    return L0::zeCommandListUpdateMutableCommandsExp(hCommandList, desc);
-}
+    const ze_mutable_commands_exp_desc_t *desc);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListUpdateMutableCommandSignalEventExp(
     ze_command_list_handle_t hCommandList,
     uint64_t commandId,
-    ze_event_handle_t hSignalEvent) {
-    return L0::zeCommandListUpdateMutableCommandSignalEventExp(hCommandList, commandId, hSignalEvent);
-}
+    ze_event_handle_t hSignalEvent);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListUpdateMutableCommandWaitEventsExp(
     ze_command_list_handle_t hCommandList,
     uint64_t commandId,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::zeCommandListUpdateMutableCommandWaitEventsExp(hCommandList, commandId, numWaitEvents, phWaitEvents);
-}
+    ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListGetNextCommandIdWithKernelsExp(
@@ -148,24 +82,16 @@ zeCommandListGetNextCommandIdWithKernelsExp(
     const ze_mutable_command_id_exp_desc_t *desc,
     uint32_t numKernels,
     ze_kernel_handle_t *phKernels,
-    uint64_t *pCommandId) {
-    return L0::zeCommandListGetNextCommandIdWithKernelsExp(hCommandList, desc, numKernels, phKernels, pCommandId);
-}
+    uint64_t *pCommandId);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
     ze_command_list_handle_t hCommandList,
     uint32_t numKernels,
     uint64_t *pCommandId,
-    ze_kernel_handle_t *phKernels) {
-    return L0::zeCommandListUpdateMutableCommandKernelsExp(hCommandList, numKernels, pCommandId, phKernels);
-}
+    ze_kernel_handle_t *phKernels);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExp(
     ze_command_list_handle_t hCommandList,
-    ze_bool_t *pIsMutable) {
-    return L0::zeCommandListIsMutableExp(hCommandList, pIsMutable);
-}
+    ze_bool_t *pIsMutable);
 
-#if defined(__cplusplus)
 } // extern "C"
-#endif
