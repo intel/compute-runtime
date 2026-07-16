@@ -744,7 +744,8 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     // with bindful addressing (handled correctly by the hardware). The translation unit is recreated so the
     // discarded bindless build's decoded program info is not accumulated.
     if (result == ZE_RESULT_SUCCESS && !this->forceBindfulForMsaaImages && !this->precompiled &&
-        NEO::ApiSpecificConfig::getBindlessMode(*neoDevice) && this->usesMsaaImage()) {
+        NEO::ApiSpecificConfig::getBindlessMode(*neoDevice) && this->usesMsaaImage() &&
+        !this->device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(this->device->getHwInfo())) {
         this->forceBindfulForMsaaImages = true;
         this->translationUnit = std::make_unique<ModuleTranslationUnit>(this->device);
         result = this->initializeTranslationUnit(desc, neoDevice);

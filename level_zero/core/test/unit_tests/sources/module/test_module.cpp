@@ -5174,6 +5174,10 @@ TEST_F(ModuleTest, givenProgramInfoWithMultisampleImageArgWhenUsesMsaaImageThenT
 }
 
 TEST_F(ModuleTest, givenBindlessModeAndMultisampleImageWhenInitializeThenTranslationUnitIsRebuiltBindful) {
+    if (device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore restorer;
     debugManager.flags.UseBindlessMode.set(1);
 

@@ -90,7 +90,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         l0imageDesc.width = (texInfo.textureBufferWidth != 0) ? texInfo.textureBufferWidth : 1u;
         l0imageDesc.height = 1u;
         l0imageDesc.depth = 1u;
-        l0imageDesc.arraylevels = 1u;
+        l0imageDesc.arraylevels = 0u;
     }
 
     cl_image_format imgFormat{};
