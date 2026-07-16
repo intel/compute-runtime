@@ -1452,7 +1452,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenReleaseWhichHasNoDeviceAcronymWh
 
     for (auto &aotInfo : aotInfos) {
         auto hasDeviceAcronym = std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(aotInfo.release));
-        if (!hasDeviceAcronym) {
+        if (!hasDeviceAcronym && !aotInfo.rtlIdAcronyms.empty()) {
             deviceInfo = &aotInfo;
             break;
         }
