@@ -74,7 +74,7 @@ CRITEST_F(CriProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIn
 }
 
 CRITEST_F(CriProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
-    EXPECT_TRUE(productHelper->useSharedSystemUsm());
+    EXPECT_FALSE(productHelper->useSharedSystemUsm());
 }
 
 using CriHwInfoLinux = ::testing::Test;
