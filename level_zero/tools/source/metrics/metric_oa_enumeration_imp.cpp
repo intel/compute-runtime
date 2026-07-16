@@ -1196,8 +1196,12 @@ ze_result_t OaMetricImp::getProperties(zet_metric_properties_t *pProperties) {
         auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);
         if (extendedProperties->stype == ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULABLE_PROPERTIES_EXP) {
             auto calculableProperties = reinterpret_cast<zet_intel_metric_calculable_properties_exp_t *>(extendedProperties);
-            // All MDAPI metrics and informations are calculable.
-            calculableProperties->isCalculable = true;
+            // MDAPI metrics and informations are calculable, except those belonging to a
+            // marker metric group: a marker records an application-supplied value and carries
+            // no aggregatable meaning, so it must be reported as not calculable.
+            const bool isMarkerMetric = metricGroup != nullptr &&
+                                        (metricGroup->getMetricGroupType() & ZET_METRIC_GROUP_TYPE_EXP_FLAG_MARKER) != 0;
+            calculableProperties->isCalculable = !isMarkerMetric;
         }
         pNext = extendedProperties->pNext;
     }

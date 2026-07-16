@@ -3779,6 +3779,130 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupProperties
     EXPECT_TRUE(isFlagTypeMarkerSet);
 }
 
+TEST_F(MetricEnumerationTest, GivenMarkerMetricGroupWhenGettingMetricCalculablePropertyThenItIsNotCalculable) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioEquationElement.ImmediateUInt64 = 0;
+
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    // Metrics Discovery:: metric set. IOSTREAM api mask makes the group time-based,
+    // which is what marks it as a marker metric group in OaMetricGroupImp::create.
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.InformationCount = 1;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+
+    // Metrics Discovery:: information.
+    Mock<MetricsDiscovery::IInformation_1_0> information;
+    MetricsDiscovery::TInformationParams_1_0 sourceInformationParams = {};
+    sourceInformationParams.SymbolName = "Info symbol name";
+    sourceInformationParams.LongName = "Info long name";
+    sourceInformationParams.GroupName = "Info group name";
+    sourceInformationParams.InfoUnits = "Info Units";
+    sourceInformationParams.InfoType = MetricsDiscovery::INFORMATION_TYPE_VALUE;
+
+    // One api: metric group handle.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetInformationResult = &information;
+
+    information.GetParamsResult = &sourceInformationParams;
+
+    // Metric group handle.
+    uint32_t metricGroupCount = 1;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // Obtain metrics (backed by the information entry).
+    uint32_t metricCount = 0;
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_NE(metricCount, 0u);
+    std::vector<zet_metric_handle_t> metricHandles(metricCount);
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, metricHandles.data()), ZE_RESULT_SUCCESS);
+
+    zet_metric_properties_t metricProperties = {};
+    metricProperties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
+
+    zet_intel_metric_calculable_properties_exp_t calculableProperties{};
+    calculableProperties.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULABLE_PROPERTIES_EXP;
+    calculableProperties.pNext = nullptr;
+    metricProperties.pNext = &calculableProperties;
+
+    // Every metric belonging to a marker metric group must report not calculable.
+    for (auto &metricHandle : metricHandles) {
+        calculableProperties.isCalculable = true;
+        EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
+        EXPECT_FALSE(calculableProperties.isCalculable);
+    }
+}
+
+TEST_F(MetricEnumerationTest, GivenMetricWithoutMetricGroupWhenGettingMetricCalculablePropertyThenItIsCalculable) {
+    // A metric that is not associated with a metric group cannot belong to a
+    // marker group, so it must be reported as calculable (the metricGroup ==
+    // nullptr guard short-circuits the marker check).
+    MockMetricSource mockMetricSource{};
+    zet_metric_properties_t sourceProperties = {};
+    uint32_t mdapiMetricType = 0xFFFFFFFF;
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    scopeProperties.iD = 1;
+    MockMetricScope *mockMetricScope1 = new MockMetricScope(scopeProperties, false, 0);
+    std::vector<MetricScopeImp *> mockMetricScopes = {mockMetricScope1};
+    auto oaMetric = static_cast<OaMetricImp *>(OaMetricImp::create(mockMetricSource, mockMetricScopes, &mdapiMetricType, sourceProperties, true));
+    EXPECT_EQ(oaMetric->getMetricGroup(), nullptr);
+
+    zet_metric_properties_t metricProperties = {};
+    metricProperties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
+
+    zet_intel_metric_calculable_properties_exp_t calculableProperties{};
+    calculableProperties.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULABLE_PROPERTIES_EXP;
+    calculableProperties.pNext = nullptr;
+    metricProperties.pNext = &calculableProperties;
+
+    calculableProperties.isCalculable = false;
+    EXPECT_EQ(oaMetric->getProperties(&metricProperties), ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(calculableProperties.isCalculable);
+
+    delete oaMetric;
+    delete mockMetricScope1;
+}
+
 TEST_F(MetricEnumerationTest, givenValidArgumentsWhenAppendMarkerIsCalledThenReturnSuccess) {
 
     // Metrics Discovery device.
