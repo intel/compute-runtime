@@ -158,6 +158,18 @@ if(TESTS_XE2_AND_LATER)
   )
 endif()
 
+if(TESTS_XE3_AND_BEFORE)
+  list(APPEND neo_libult_common_SRCS_LIB_ULT
+       ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_from_gen12lp_to_xe3_core.inl
+  )
+endif()
+
+if(TESTS_XE3P_AND_LATER)
+  list(APPEND neo_libult_common_SRCS_LIB_ULT
+       ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_xe3p_core_and_later.inl
+  )
+endif()
+
 append_sources_from_properties(neo_libult_common_SRCS_LIB_ULT NEO_CORE_ENABLE_RELEASE_HELPER)
 
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT ${neo_libult_common_SRCS_LIB_ULT})

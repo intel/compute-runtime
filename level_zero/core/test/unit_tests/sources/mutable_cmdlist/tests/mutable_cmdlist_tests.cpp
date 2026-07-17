@@ -2645,13 +2645,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(baseGpuVa, srmBaseCmd->getMemoryAddress());
 }
 
-template <bool createInOrderT, int32_t useSemaphore64>
 template <typename FamilyType>
-void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelongToCurrentMutateToDifferent() {
+void MutableCommandListFixtureInit::waitCbEventBelongToCurrentMutateToDifferent() {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     bool qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
+    bool sem64bSupport = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
 
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
@@ -2690,7 +2690,7 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
-    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, this->device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, sem64bSupport);
     const size_t expectedLriSize = lriRequired ? 2 : 0;
 
     ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
@@ -2721,7 +2721,7 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
-    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd, sem64bSupport));
 
     if (expectedLriSize > 0) {
         constexpr uint32_t firstRegister = 0x2600;
@@ -2744,13 +2744,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     waitCbEventBelongToCurrentMutateToDifferent<FamilyType>();
 }
 
-template <bool createInOrderT, int32_t useSemaphore64>
 template <typename FamilyType>
-void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelongToCurrentMutateToCurrent() {
+void MutableCommandListFixtureInit::waitCbEventBelongToCurrentMutateToCurrent() {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     bool qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
+    bool sem64bSupport = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
 
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
@@ -2782,7 +2782,7 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
-    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, sem64bSupport);
     const size_t expectedLriSize = lriRequired ? 2 : 0;
     ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
 
@@ -2830,13 +2830,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     waitCbEventBelongToCurrentMutateToCurrent<FamilyType>();
 }
 
-template <bool createInOrderT, int32_t useSemaphore64>
 template <typename FamilyType>
-void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelongToDifferentMutateToCurrent() {
+void MutableCommandListFixtureInit::waitCbEventBelongToDifferentMutateToCurrent() {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     bool qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
+    bool sem64bSupport = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
 
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
@@ -2873,7 +2873,7 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
-    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, sem64bSupport);
     const size_t expectedLriSize = lriRequired ? 2 : 0;
     ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
 
@@ -2881,7 +2881,7 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
     auto waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
-    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd, sem64bSupport));
 
     MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
     MI_LOAD_REGISTER_IMM *lriUpperCmd = nullptr;
@@ -2990,13 +2990,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
 }
 
-template <bool createInOrderT, int32_t useSemaphore64>
 template <typename FamilyType>
-void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelongToDifferentNoopMutateBack() {
+void MutableCommandListFixtureInit::waitCbEventBelongToDifferentNoopMutateBack() {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     bool qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
+    bool sem64bSupport = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
 
     alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
     alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
@@ -3032,7 +3032,7 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     ASSERT_EQ(1u, waitEvents.size());
     auto waitEventVar = waitEvents[0];
     ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
-    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, sem64bSupport);
     const size_t expectedLriSize = lriRequired ? 2 : 0;
     ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
 
@@ -3040,7 +3040,7 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
     auto waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
-    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd, sem64bSupport));
 
     MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
     MI_LOAD_REGISTER_IMM *lriUpperCmd = nullptr;
@@ -3079,7 +3079,7 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
     result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd, sem64bSupport));
     if (expectedLriSize > 0) {
         EXPECT_EQ(firstRegister, lriCmd->getRegisterOffset());
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
@@ -3093,7 +3093,7 @@ void MutableCommandListFixture<createInOrderT, useSemaphore64>::waitCbEventBelon
 
     waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
 
-    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd, sem64bSupport));
     if (expectedLriSize > 0) {
         EXPECT_EQ(firstRegister, lriCmd->getRegisterOffset());
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
@@ -3246,6 +3246,107 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+}
+
+template <typename FamilyType>
+void MutableCommandListFixtureInit::waitCbEventBelongToDifferentMutateToDifferent() {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    bool qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
+    bool sem64bSupport = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+
+    auto event = this->createTestEvent(true, false, false, false, false);
+    auto eventHandle = event->toHandle();
+    auto newEvent = this->createTestEvent(true, false, false, false, false);
+    auto newEventHandle = newEvent->toHandle();
+
+    auto externalCmdList = this->createMutableCmdList();
+    // attach both events to the external command list
+    auto result = externalCmdList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = externalCmdList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = externalCmdList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // mutation point
+    this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = this->mutableCommandList->getNextCommandId(&this->mutableCommandIdDesc, 0, nullptr, &this->commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event 1 as wait event
+    result = this->mutableCommandList->appendLaunchKernel(this->kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = this->mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = this->getVariableList(this->commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, sem64bSupport);
+    const size_t expectedLriSize = lriRequired ? 2 : 0;
+    ASSERT_EQ(expectedLriSize, waitEventVar->getLoadRegImmList().size());
+
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+    auto waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd, sem64bSupport));
+
+    auto waitValue = static_cast<uint32_t>(event->getInOrderExecEventHelper().getEventData()->counterValue);
+
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+    MI_LOAD_REGISTER_IMM *lriUpperCmd = nullptr;
+
+    if (expectedLriSize > 0) {
+        constexpr uint32_t firstRegister = 0x2600;
+        constexpr uint32_t secondRegister = 0x2604;
+
+        auto mutableLri = waitEventVar->getLoadRegImmList()[0];
+        auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+        lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+        EXPECT_EQ(getLowPart(waitValue), lriCmd->getDataDword());
+
+        mutableLri = waitEventVar->getLoadRegImmList()[1];
+        mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+        lriUpperCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+
+        EXPECT_EQ(firstRegister, lriCmd->getRegisterOffset());
+        EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
+    } else {
+        EXPECT_EQ(waitValue, static_cast<uint32_t>(semWaitCmd->getSemaphoreDataDword()));
+    }
+
+    // mutate to event 2
+    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = this->mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd, sem64bSupport));
+
+    waitValue = static_cast<uint32_t>(newEvent->getInOrderExecEventHelper().getEventData()->counterValue);
+
+    if (expectedLriSize > 0) {
+        EXPECT_EQ(getLowPart(waitValue), lriCmd->getDataDword());
+    } else {
+        EXPECT_EQ(waitValue, static_cast<uint32_t>(semWaitCmd->getSemaphoreDataDword()));
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderNoSem64Test,
+            givenSemaphore64OffAndKernelWithWaitCbEventBelongingToDifferentCmdListWhenMutatedIntoCbEventBelongingToDifferentThenUpdateAddressAndValue) {
+    waitCbEventBelongToDifferentMutateToDifferent<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderSem64Test,
+            givenSemaphore64OnAndKernelWithWaitCbEventBelongingToDifferentCmdListWhenMutatedIntoCbEventBelongingToDifferentThenUpdateAddressAndValue) {
+    waitCbEventBelongToDifferentMutateToDifferent<FamilyType>();
 }
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/xe3_core/hw_cmds_base.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"
+#include "shared/test/common/helpers/unit_test_helper_from_gen12lp_to_xe3_core.inl"
 #include "shared/test/common/helpers/unit_test_helper_xe2_and_later.inl"
 #include "shared/test/common/helpers/unit_test_helper_xe_hpc_and_later.inl"
 #include "shared/test/common/helpers/unit_test_helper_xehp_and_later.inl"

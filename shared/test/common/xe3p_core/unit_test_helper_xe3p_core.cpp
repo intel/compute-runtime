@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"
 #include "shared/test/common/helpers/unit_test_helper_xe2_and_later.inl"
+#include "shared/test/common/helpers/unit_test_helper_xe3p_core_and_later.inl"
 #include "shared/test/common/helpers/unit_test_helper_xe_hpc_and_later.inl"
 #include "shared/test/common/helpers/unit_test_helper_xehp_and_later.inl"
 

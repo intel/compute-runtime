@@ -28,6 +28,10 @@ void MutableCommandListFixtureInit::setUp(bool createInOrder, int32_t useSemapho
     this->createInOrder = createInOrder;
     ModuleImmutableDataFixture::setUp();
 
+    if (useSemaphore64 != -1) {
+        neoDevice->deviceInfo.semaphore64bCmdSupport = !!useSemaphore64;
+    }
+
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
     this->engineGroupType = gfxCoreHelper.getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(), neoDevice->getDefaultEngine().getEngineUsage(), device->getHwInfo());
 

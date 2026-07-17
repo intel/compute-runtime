@@ -56,6 +56,27 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     bool isAllocationInMutableResidency(MutableCommandList *mcl, NEO::GraphicsAllocation *allocation) const;
     void prepareBigIsaKernel();
 
+    void fillOffsets(CrossThreadDataOffset offsets[3], uint32_t srcOffset, size_t num) {
+        for (size_t i = 0; i < num; ++i) {
+            offsets[i] = srcOffset + static_cast<decltype(srcOffset)>(i * sizeof(srcOffset));
+        }
+    };
+
+    template <typename FamilyType>
+    void waitCbEventBelongToCurrentMutateToDifferent();
+
+    template <typename FamilyType>
+    void waitCbEventBelongToCurrentMutateToCurrent();
+
+    template <typename FamilyType>
+    void waitCbEventBelongToDifferentMutateToCurrent();
+
+    template <typename FamilyType>
+    void waitCbEventBelongToDifferentNoopMutateBack();
+
+    template <typename FamilyType>
+    void waitCbEventBelongToDifferentMutateToDifferent();
+
     ze_mutable_command_id_exp_desc_t mutableCommandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
     ze_mutable_commands_exp_desc_t mutableCommandsDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
 
@@ -107,24 +128,6 @@ struct MutableCommandListFixture : public MutableCommandListFixtureInit {
     void setUp() {
         MutableCommandListFixtureInit::setUp(createInOrderT, useSemaphore64);
     }
-
-    void fillOffsets(CrossThreadDataOffset offsets[3], uint32_t srcOffset, size_t num) {
-        for (size_t i = 0; i < num; ++i) {
-            offsets[i] = srcOffset + static_cast<decltype(srcOffset)>(i * sizeof(srcOffset));
-        }
-    };
-
-    template <typename FamilyType>
-    void waitCbEventBelongToCurrentMutateToDifferent();
-
-    template <typename FamilyType>
-    void waitCbEventBelongToCurrentMutateToCurrent();
-
-    template <typename FamilyType>
-    void waitCbEventBelongToDifferentMutateToCurrent();
-
-    template <typename FamilyType>
-    void waitCbEventBelongToDifferentNoopMutateBack();
 };
 
 struct WhiteBoxMutableResidencyAllocations : public ::L0::MCL::MutableResidencyAllocations {

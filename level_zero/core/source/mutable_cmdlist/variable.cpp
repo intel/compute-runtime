@@ -772,7 +772,7 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
             mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
         }
 
-        if (!qwordIndirect && eventInOrderHelper && eventInOrderHelper->isFromExternalMemory()) {
+        if (!qwordIndirect && eventInOrderHelper) {
             if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
                 mutableSemWait->setSemaphoreValue(eventInOrderHelper->getEventData()->counterValue);
             }
@@ -787,7 +787,7 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                 mutableLoadRegImm->restore();
             }
 
-            if (eventInOrderHelper && eventInOrderHelper->isFromExternalMemory()) {
+            if (eventInOrderHelper) {
                 if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
                     uint32_t waitValue = cmdIndex == 0 ? getLowPart(eventInOrderHelper->getEventData()->counterValue) : getHighPart(eventInOrderHelper->getEventData()->counterValue);
                     mutableLoadRegImm->setValue(waitValue);
