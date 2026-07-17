@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 

@@ -17,7 +17,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include <cstdint>

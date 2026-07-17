@@ -33,7 +33,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
 #include "shared/source/os_interface/debug_env_reader.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include "neo_aot_platforms.h"

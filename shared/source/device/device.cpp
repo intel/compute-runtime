@@ -35,7 +35,7 @@
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/query_peer_access.h"
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/utilities/isa_pool_allocator.h"

@@ -18,7 +18,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/kernel/grf_config.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_base.h"
 
 using Family = NEO::Xe2HpgCoreFamily;

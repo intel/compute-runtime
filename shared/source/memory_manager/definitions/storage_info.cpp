@@ -17,7 +17,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include <bitset>
 

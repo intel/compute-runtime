@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {

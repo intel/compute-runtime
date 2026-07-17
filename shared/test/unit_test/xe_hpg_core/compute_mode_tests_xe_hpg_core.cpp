@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

@@ -8,7 +8,7 @@
 #pragma once
 
 #include "shared/source/os_interface/product_helper_hw.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp.h"

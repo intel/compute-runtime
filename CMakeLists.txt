@@ -952,7 +952,7 @@ else()
   endif()
 endif()
 include_directories(${NEO_SHARED_DIRECTORY}/helpers/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SHARED_DIRECTORY}/release_helper/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SHARED_DIRECTORY}/release_helpers/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX})
 
 macro(macro_for_each_platform)
@@ -1008,7 +1008,7 @@ if(MSVC)
   endif()
 endif()
 
-add_subdirectory_unique(shared/source/release_helper)
+add_subdirectory_unique(shared/source/release_helpers)
 add_subdirectory_unique(${OCLOC_DIRECTORY} ${NEO_BUILD_DIR}/offline_compiler)
 target_compile_definitions(ocloc_lib
                            PRIVATE MOCKABLE_VIRTUAL=

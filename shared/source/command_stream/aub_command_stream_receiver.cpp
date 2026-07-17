@@ -19,7 +19,7 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include <algorithm>
 #include <cstring>

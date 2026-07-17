@@ -20,7 +20,7 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe3_core/hw_cmds_base.h"
 
 using Family = NEO::Xe3CoreFamily;

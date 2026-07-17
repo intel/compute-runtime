@@ -11,7 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"

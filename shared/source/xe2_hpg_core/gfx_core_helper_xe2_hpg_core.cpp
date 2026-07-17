@@ -22,7 +22,7 @@ using Family = NEO::Xe2HpgCoreFamily;
 #include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/simd_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {
 

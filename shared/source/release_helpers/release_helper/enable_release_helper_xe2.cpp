@@ -1,0 +1,21 @@
+/*
+ * Copyright (C) 2024-2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/release_helpers/release_helper/release_helper.h"
+
+#include "release_definitions.h"
+
+namespace NEO {
+
+inline constexpr uint32_t maxReleaseXe2 = 5;
+inline createReleaseHelperFunctionType releaseHelperFactoryXe2[maxReleaseXe2]{};
+
+EnableReleaseHelperArchitecture<20> enableReleaseHelperArchitecture20(releaseHelperFactoryXe2);
+EnableReleaseHelper<ReleaseType::release2001> enablerReleaseHelperBmgG21{releaseHelperFactoryXe2[1]};
+EnableReleaseHelper<ReleaseType::release2002> enablerReleaseHelperBmgG31{releaseHelperFactoryXe2[2]};
+EnableReleaseHelper<ReleaseType::release2004> enablerReleaseHelperLnl{releaseHelperFactoryXe2[4]};
+} // namespace NEO

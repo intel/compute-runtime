@@ -24,7 +24,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"

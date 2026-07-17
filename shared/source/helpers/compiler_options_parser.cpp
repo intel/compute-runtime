@@ -12,7 +12,7 @@
 #include "shared/source/helpers/cache_policy_option_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include <cstdint>
 #include <cstring>
