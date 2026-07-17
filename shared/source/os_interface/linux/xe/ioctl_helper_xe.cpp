@@ -497,6 +497,11 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
             UNRECOVERABLE_IF(regionIndex >= regionTilesMask.size());
             if (auto tilesMask = regionTilesMask[regionIndex]; tilesMask.any()) {
                 regionsContainer.push_back(createMemoryRegionFromXeMemRegion(xeMemRegion, tilesMask));
+                const auto tileId = static_cast<uint16_t>(Math::log2(static_cast<uint64_t>(tilesMask.to_ulong())));
+                if (tileIdToRegionArrayIdx.size() < tileId + 1u) {
+                    tileIdToRegionArrayIdx.resize(tileId + 1, invalidIndex);
+                }
+                tileIdToRegionArrayIdx[tileId] = static_cast<int>(i);
             }
         }
     }
@@ -516,6 +521,34 @@ size_t IoctlHelperXe::getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, ui
         }
     }
     return size;
+}
+
+bool IoctlHelperXe::hasEnoughDeviceMemory(size_t size, uint32_t memoryBanks) {
+    if (tileIdToRegionArrayIdx.empty()) {
+        return true;
+    }
+
+    auto memUsageData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_MEM_REGIONS);
+    if (memUsageData.empty()) {
+        return true;
+    }
+
+    auto *regionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
+    for (auto tileId = 0u; (memoryBanks >> tileId) != 0; tileId++) {
+        if (!(memoryBanks & (1u << tileId))) {
+            continue;
+        }
+        if (tileId >= tileIdToRegionArrayIdx.size() || tileIdToRegionArrayIdx[tileId] == invalidIndex) {
+            continue;
+        }
+        const auto &region = regionsData->mem_regions[static_cast<uint32_t>(tileIdToRegionArrayIdx[tileId])];
+        const auto available = (region.used <= region.total_size) ? (region.total_size - region.used) : 0u;
+        if (available < size) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 uint32_t IoctlHelperXe::queryHwIpVersion(PRODUCT_FAMILY productFamily) {

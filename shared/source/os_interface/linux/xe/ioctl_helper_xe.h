@@ -126,6 +126,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
     size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const override;
+    bool hasEnoughDeviceMemory(size_t size, uint32_t memoryBanks) override;
 
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
@@ -229,6 +230,7 @@ class IoctlHelperXe : public IoctlHelper {
     constexpr static int invalidIndex = -1;
     std::map<uint16_t, uint16_t> gtIdToTileId;
     GtIdContainer tileIdToGtId;
+    GtIdContainer tileIdToRegionArrayIdx;
     std::map<uint16_t, uint16_t> mediaGtIdToTileId;
     GtIdContainer tileIdToMediaGtId;
     XeDrm::drm_xe_query_gt_list *xeGtListData = nullptr;

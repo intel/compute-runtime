@@ -226,6 +226,7 @@ class IoctlHelper {
     uint32_t getFlagsForPrimeHandleToFd() const;
     virtual std::unique_ptr<MemoryInfo> createMemoryInfo() = 0;
     virtual size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const = 0;
+    virtual bool hasEnoughDeviceMemory(size_t size, uint32_t memoryBanks) { return true; }
     virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) = 0;
     virtual bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) = 0;
     virtual bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) = 0;

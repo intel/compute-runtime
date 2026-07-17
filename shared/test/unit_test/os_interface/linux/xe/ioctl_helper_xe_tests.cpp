@@ -4613,3 +4613,36 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenIoctlFailureWhenCallingSetContex
     EXPECT_FALSE(result);
     EXPECT_EQ(1u, mockIoctlHelper->getSetContextGroupPriorityCallCount());
 }
+
+TEST_F(IoctlHelperXeTest, givenNoRegionDataWhenHasEnoughDeviceMemoryCalledThenReturnsTrueWithoutQuery) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    EXPECT_TRUE(xeIoctlHelper->hasEnoughDeviceMemory(100 * MemoryConstants::gigaByte, 0b01u));
+}
+
+TEST_F(IoctlHelperXeTest, givenMemoryAvailableWhenHasEnoughDeviceMemoryCalledThenReturnsTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    xeIoctlHelper->createMemoryInfo();
+
+    EXPECT_TRUE(xeIoctlHelper->hasEnoughDeviceMemory(MemoryConstants::gigaByte, 0b01u));
+}
+
+TEST_F(IoctlHelperXeTest, givenNoMemoryAvailableWhenHasEnoughDeviceMemoryCalledThenReturnsFalse) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    xeIoctlHelper->createMemoryInfo();
+
+    auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm->queryMemUsage);
+    auto &vramRegionTile1 = xeQueryMemUsage->mem_regions[0];
+    vramRegionTile1.used = vramRegionTile1.total_size;
+
+    EXPECT_FALSE(xeIoctlHelper->hasEnoughDeviceMemory(1u, 0b10u));
+}

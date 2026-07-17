@@ -2504,6 +2504,13 @@ inline std::unique_ptr<DrmAllocation> DrmMemoryManager::makeDrmAllocation(const 
 GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
 
     size_t sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+
+    auto memoryBanks = static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong());
+    if (!getDrm(allocationData.rootDeviceIndex).getIoctlHelper()->hasEnoughDeviceMemory(sizeAligned, memoryBanks)) {
+        status = AllocationStatus::Error;
+        return nullptr;
+    }
+
     auto gmm = this->makeGmmIfSingleHandle(allocationData, sizeAligned);
 
     auto allocation = this->makeDrmAllocation(allocationData, std::move(gmm), 0u, sizeAligned);
