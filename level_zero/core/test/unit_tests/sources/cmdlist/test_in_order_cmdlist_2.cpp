@@ -2598,17 +2598,9 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSig
         GenCmdList hwCmdList;
         EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(hwCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-        auto itor = find<PIPE_CONTROL *>(hwCmdList.begin(), hwCmdList.end());
-
-        if (cmdList->getDcFlushRequired(true)) {
-            ASSERT_NE(hwCmdList.end(), itor);
-            auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itor);
-            ASSERT_NE(nullptr, pipeControl);
-            EXPECT_TRUE(pipeControl->getDcFlushEnable());
-            EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pipeControl->getPostSyncOperation());
-        } else {
-            EXPECT_EQ(hwCmdList.end(), itor);
-        }
+        auto pipeControl = findInOrderCounterSignalPipeControl<FamilyType>(hwCmdList, cmdList->inOrderExecInfo->getBaseDeviceAddress());
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_EQ(cmdList->getDcFlushRequired(events[0]->isSignalScope()), pipeControl->getDcFlushEnable());
     }
 }
 

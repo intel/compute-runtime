@@ -1537,19 +1537,21 @@ HWTEST_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenPr
 
         auto itor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
 
-        ASSERT_NE(cmdList.end(), itor);
+        if (itor != cmdList.end()) {
+            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
+            ASSERT_NE(nullptr, sdiCmd);
 
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
-        ASSERT_NE(nullptr, sdiCmd);
+            if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
+                EXPECT_EQ(reinterpret_cast<uint64_t>(immCmdList->inOrderExecInfo->getBaseHostAddress()), sdiCmd->getAddress());
+            } else {
+                EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+            }
 
-        if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
-            EXPECT_EQ(reinterpret_cast<uint64_t>(immCmdList->inOrderExecInfo->getBaseHostAddress()), sdiCmd->getAddress());
+            auto userInterruptCmd = genCmdCast<MI_USER_INTERRUPT *>(*(++itor));
+            ASSERT_EQ(interruptExpected, nullptr != userInterruptCmd);
         } else {
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+            EXPECT_NE(nullptr, findInOrderCounterSignalPipeControl<FamilyType>(cmdList, immCmdList->inOrderExecInfo->getBaseDeviceAddress()));
         }
-
-        auto userInterruptCmd = genCmdCast<MI_USER_INTERRUPT *>(*(++itor));
-        ASSERT_EQ(interruptExpected, nullptr != userInterruptCmd);
 
         auto allCmds = findAll<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(interruptExpected ? 1u : 0u, allCmds.size());
@@ -3617,8 +3619,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgramm
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendSignalEventThenSignalSyncAllocation) {
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -3632,14 +3632,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     immCmdList->appendSignalEvent(events[0]->toHandle(), false);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t sdiSyncVa = 0;
-
-    if (inOrderExecInfo->isHostStorageDuplicated()) {
-        sdiSyncVa = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress());
-    } else {
-        sdiSyncVa = inOrderExecInfo->getBaseDeviceAddress();
-    }
-
     auto inOrderSyncVa = inOrderExecInfo->getBaseDeviceAddress();
 
     GenCmdList cmdList;
@@ -3652,23 +3644,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, expectedDependencyValue, inOrderSyncVa, immCmdList->isQwordInOrderCounter(), false));
 
     {
+        const uint64_t expectedSignalValue = immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u;
 
-        auto rbeginItor = cmdList.rbegin();
+        auto pcCmd = findInOrderCounterSignalPipeControl<FamilyType>(cmdList, inOrderSyncVa);
+        ASSERT_NE(nullptr, pcCmd);
 
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rbeginItor);
-        while (sdiCmd == nullptr) {
-            sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++rbeginItor));
-            if (rbeginItor == cmdList.rend()) {
-                break;
-            }
-        }
-
-        ASSERT_NE(nullptr, sdiCmd);
-
-        EXPECT_EQ(sdiSyncVa, sdiCmd->getAddress());
-        EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-        EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, sdiCmd->getDataDword0());
-        EXPECT_EQ(0u, sdiCmd->getDataDword1());
+        EXPECT_EQ(expectedSignalValue, pcCmd->getImmediateData());
+        EXPECT_EQ(immCmdList->getDcFlushRequired(events[0]->isSignalScope()), pcCmd->getDcFlushEnable());
     }
 }
 
@@ -5007,8 +4989,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAndTimestampEventThenSignalSyncAllocation) {
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -5030,24 +5010,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
                                                       ptrOffset(cmdStream->getCpuBase(), offset),
                                                       (cmdStream->getUsed() - offset)));
 
-    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), sdiItor);
-
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
-    EXPECT_EQ(syncVa, sdiCmd->getAddress());
-    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, sdiCmd->getDataDword0());
-    EXPECT_EQ(0u, sdiCmd->getDataDword1());
+    auto pcCmd = findInOrderCounterSignalPipeControl<FamilyType>(cmdList, inOrderExecInfo->getBaseDeviceAddress());
+    ASSERT_NE(nullptr, pcCmd);
+
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, pcCmd->getImmediateData());
+    EXPECT_EQ(immCmdList->getDcFlushRequired(events[0]->isSignalScope()), pcCmd->getDcFlushEnable());
 }
 
 HWTEST_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAndRegularEventThenSignalSyncAllocation) {
-    using MI_NOOP = typename FamilyType::MI_NOOP;
-    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -5070,32 +5041,66 @@ HWTEST_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithou
                                                       ptrOffset(cmdStream->getCpuBase(), offset),
                                                       (cmdStream->getUsed() - offset)));
 
-    auto cmd = cmdList.rbegin();
-    MI_STORE_DATA_IMM *sdiCmd = nullptr;
+    auto inOrderExecInfo = immCmdList->inOrderExecInfo;
+    auto pcCmd = findInOrderCounterSignalPipeControl<FamilyType>(cmdList, inOrderExecInfo->getBaseDeviceAddress());
+    ASSERT_NE(nullptr, pcCmd);
 
-    while (cmd != cmdList.rend()) {
-        sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*cmd);
-        if (sdiCmd) {
-            break;
-        }
+    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, pcCmd->getImmediateData());
+    EXPECT_EQ(immCmdList->getDcFlushRequired(events[0]->isSignalScope()), pcCmd->getDcFlushEnable());
+}
 
-        if (genCmdCast<MI_NOOP *>(*cmd) || genCmdCast<MI_BATCH_BUFFER_END *>(*cmd)) {
-            cmd++;
-            continue;
-        }
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithHostVisibleEventThenSignalCounterWithStallingPipeControl) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-        ASSERT_TRUE(false);
-    }
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    ASSERT_NE(nullptr, sdiCmd);
+    auto eventPool = createEvents<FamilyType>(2, false);
+
+    events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
+    events[1]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
+
+    events[1]->signalScope = 0;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    const uint64_t deviceSyncVa = inOrderExecInfo->getBaseDeviceAddress();
 
-    EXPECT_EQ(syncVa, sdiCmd->getAddress());
-    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-    EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, sdiCmd->getDataDword0());
-    EXPECT_EQ(0u, sdiCmd->getDataDword1());
+    {
+        auto offset = cmdStream->getUsed();
+        immCmdList->appendBarrier(events[0]->toHandle(), 0, nullptr, false);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto pcCmd = findInOrderCounterSignalPipeControl<FamilyType>(cmdList, deviceSyncVa);
+        ASSERT_NE(nullptr, pcCmd);
+
+        EXPECT_TRUE(pcCmd->getCommandStreamerStallEnable());
+        EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, pcCmd->getImmediateData());
+        EXPECT_EQ(immCmdList->getDcFlushRequired(events[0]->isSignalScope()), pcCmd->getDcFlushEnable());
+
+        auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        for (auto &it : sdiCmds) {
+            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*it);
+            EXPECT_NE(deviceSyncVa, sdiCmd->getAddress());
+        }
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+        immCmdList->appendBarrier(events[1]->toHandle(), 0, nullptr, false);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        EXPECT_EQ(nullptr, findInOrderCounterSignalPipeControl<FamilyType>(cmdList, deviceSyncVa));
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompletion) {

@@ -3744,8 +3744,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
         encodeMiFlush(0, 0, args);
     }
 
-    if (stall) {
+    if (stall && !copyOffloadOperation) {
         NEO::PipeControlArgs args;
+        args.dcFlushEnable = signalEvent ? getDcFlushRequired(signalEvent->isSignalScope()) : false;
         args.workloadPartitionOffset = partitionCount > 1;
         args.textureCacheInvalidationEnable = textureFlushRequired;
         args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
@@ -4572,7 +4573,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, skipPipeControl, false, isCopyOnly(false));
 
     if (isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, hostVisibleEvent, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 

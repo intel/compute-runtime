@@ -320,6 +320,9 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     template <typename GfxFamily>
     bool verifyInOrderDependency(GenCmdList::iterator &cmd, uint64_t counter, uint64_t syncVa, bool qwordCounter, bool isBcs);
 
+    template <typename GfxFamily>
+    typename GfxFamily::PIPE_CONTROL *findInOrderCounterSignalPipeControl(GenCmdList &cmdList, uint64_t deviceSyncVa);
+
     DebugManagerStateRestore restorer;
     std::unique_ptr<NEO::MockOsContext> mockCopyOsContext;
 
@@ -389,6 +392,29 @@ bool InOrderCmdListFixture::verifyInOrderDependency(GenCmdList::iterator &cmd, u
 
     cmd++;
     return true;
+}
+
+template <typename GfxFamily>
+typename GfxFamily::PIPE_CONTROL *InOrderCmdListFixture::findInOrderCounterSignalPipeControl(GenCmdList &cmdList, uint64_t deviceSyncVa) {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    for (auto &it : pipeControls) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pcCmd == nullptr || pcCmd->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE) {
+            continue;
+        }
+
+        uint64_t address = pcCmd->getAddressHigh();
+        address <<= 32;
+        address |= pcCmd->getAddress();
+
+        if (address == deviceSyncVa) {
+            return pcCmd;
+        }
+    }
+
+    return nullptr;
 }
 
 struct MultiTileInOrderCmdListFixture : public InOrderCmdListFixture {
