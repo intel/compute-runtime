@@ -157,17 +157,20 @@ ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t catego
 }
 
 ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) {
-    // For each requested category, look up the corresponding DRM error name via categoryToErrorNameMap,
-    // then find the matching error counter in the cached error list and call getErrorThreshold on the
-    // DRM netlink interface to populate pConfig[i].threshold.
+    // Retrieve the cached Netlink error counters associated with this RAS node.
+    // These counters are used to map a Level Zero RAS category to the
+    // corresponding Netlink error ID required for threshold queries.
     auto errListIt = rasErrorList.find(rasNodeId);
     if (errListIt == rasErrorList.end()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
+
     const auto &errorList = errListIt->second;
 
     for (uint32_t i = 0; i < count; i++) {
+        // Translate the requested RAS category into its corresponding Netlink error name.
+        // Categories not supported by the netlink backend are skipped.
         auto categoryIt = categoryToErrorNameMap.find(pConfig[i].category);
         if (categoryIt == categoryToErrorNameMap.end()) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Debug@ %s(): RAS category 0x%x not supported by Netlink, skipping \n", __FUNCTION__, pConfig[i].category);
@@ -182,21 +185,37 @@ ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_ras_config
             continue;
         }
 
+        // Uncorrectable errors are reported with a fixed threshold of 1
+        // and do not require a Netlink Get threshold query.
+        if (rasErrorType == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
+            pConfig[i].threshold = 1u;
+            continue;
+        }
+
+        // Query the current threshold configured for the corresponding Netlink error counter
         DrmErrorThreshold threshold = {};
         ze_result_t result = drmNl->getErrorThreshold(rasNodeId, errIt->errorId, threshold);
         if (result != ZE_RESULT_SUCCESS) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getErrorThreshold failed and returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
+
         pConfig[i].threshold = static_cast<uint64_t>(threshold.threshold);
     }
+
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) {
-    // For each requested category, look up the corresponding DRM error name via categoryToErrorNameMap,
+    // Threshold functionality is only supported for correctable errors.
+    // Setting a threshold for uncorrectable errors is not supported.
+    if (rasErrorType == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    // For each requested category, look up the corresponding Netlink error name via categoryToErrorNameMap,
     // then find the matching error counter in the cached error list and call setErrorThreshold on the
-    // DRM netlink interface.
+    // Netlink interface.
     auto errListIt = rasErrorList.find(rasNodeId);
     if (errListIt == rasErrorList.end()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);

@@ -1095,23 +1095,23 @@ void testSysmanRasExp(ze_device_handle_t &device, bool doSet = false, uint64_t s
                         std::cout << "    " << getRasErrorCategoryExp(setConfig[i].category) << "  threshold=" << setConfig[i].threshold << std::endl;
                     }
                     std::cout << std::endl;
-                }
 
-                // Step 3: Verify the set threshold using get
-                VALIDATECALL(result = zesRasGetConfigExp(handle, supportedCategoryCount, verifyConfig.data()));
-                if (result == ZE_RESULT_SUCCESS) {
-                    std::cout << "  zesRasGetConfigExp (verify):" << std::endl;
-                    bool allMatch = true;
-                    for (uint32_t i = 0; i < supportedCategoryCount; i++) {
-                        bool match = (verifyConfig[i].threshold == thresholdValue);
-                        std::cout << "    " << getRasErrorCategoryExp(verifyConfig[i].category)
-                                  << "  threshold=" << verifyConfig[i].threshold
-                                  << (match ? "  [OK]" : "  [MISMATCH]") << std::endl;
-                        if (!match) {
-                            allMatch = false;
+                    // Step 3: Verify the set threshold using get
+                    VALIDATECALL(result = zesRasGetConfigExp(handle, supportedCategoryCount, verifyConfig.data()));
+                    if (result == ZE_RESULT_SUCCESS) {
+                        std::cout << "  zesRasGetConfigExp (verify):" << std::endl;
+                        bool allMatch = true;
+                        for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+                            bool match = (verifyConfig[i].threshold == thresholdValue);
+                            std::cout << "    " << getRasErrorCategoryExp(verifyConfig[i].category)
+                                      << "  threshold=" << verifyConfig[i].threshold
+                                      << (match ? "  [OK]" : "  [MISMATCH]") << std::endl;
+                            if (!match) {
+                                allMatch = false;
+                            }
                         }
+                        std::cout << "  " << (allMatch ? "All thresholds verified successfully." : ("ERROR: One or more thresholds did not match expected value of " + std::to_string(thresholdValue) + ".")) << std::endl;
                     }
-                    std::cout << "  " << (allMatch ? "All thresholds verified successfully." : ("ERROR: One or more thresholds did not match expected value of " + std::to_string(thresholdValue) + ".")) << std::endl;
                 }
                 std::cout << std::endl;
             }
