@@ -42,6 +42,19 @@ struct ze_external_gl_texture_ext_desc_t {
     bool hasUnifiedMcsSurface = false; // MCS lives inside the main allocation (unified aux)
 };
 
+constexpr ze_structure_type_t ZE_STRUCTURE_TYPE_EXTERNAL_D3D_TEXTURE_EXT_DESC = static_cast<ze_structure_type_t>(0x00050007);
+
+// Carries the D3D subresource / array-slice index of an externally imported
+// D3D11/D3D10 texture.  A D3D texture array (or a planar NV12/P010/P016 texture,
+// whose planes are exposed as consecutive array slices) is shared through a single
+// NT handle that backs several allocations; this index selects which one to open
+// and drives the GMM render-offset calculation.
+struct ze_external_d3d_texture_ext_desc_t {
+    ze_structure_type_t stype = ZE_STRUCTURE_TYPE_EXTERNAL_D3D_TEXTURE_EXT_DESC;
+    const void *pNext = nullptr;
+    uint32_t arrayIndex = 0; // D3D subresource array-slice index within the shared resource
+};
+
 // Extended image region that carries a mip-level index.  Inherits from
 // ze_image_region_t so a pointer to this struct is implicitly convertible to
 // const ze_image_region_t* and can be passed directly to any L0 image-copy

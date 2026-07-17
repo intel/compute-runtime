@@ -104,6 +104,11 @@ struct StructuresLookupTable {
         uint64_t rowPitch;
     } imageTilingOverride;
 
+    struct D3DTextureExt {
+        uint32_t arrayIndex;
+        bool present;
+    } d3dTextureExt;
+
     bool isDepthStencilFormat;
     ze_depth_stencil_format_t depthStencilFormat;
 
@@ -246,6 +251,10 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             lookupTable.glTextureExt.pGmmResInfoMcs = glDesc->pGmmResInfoMcs;
             lookupTable.glTextureExt.hasUnifiedMcsSurface = glDesc->hasUnifiedMcsSurface;
             lookupTable.glTextureExt.present = true;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_D3D_TEXTURE_EXT_DESC) {
+            const ze_external_d3d_texture_ext_desc_t *d3dDesc = reinterpret_cast<const ze_external_d3d_texture_ext_desc_t *>(extendedDesc);
+            lookupTable.d3dTextureExt.arrayIndex = d3dDesc->arrayIndex;
+            lookupTable.d3dTextureExt.present = true;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_DEPTH_STENCIL_FORMAT_EXT_DESC) {
             const ze_depth_stencil_format_ext_desc_t *dsDesc = reinterpret_cast<const ze_depth_stencil_format_ext_desc_t *>(extendedDesc);
             lookupTable.isDepthStencilFormat = true;

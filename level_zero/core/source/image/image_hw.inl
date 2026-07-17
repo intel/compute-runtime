@@ -145,7 +145,10 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
                 device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
             } else if (lookupTable.sharedHandleType.isNTHandle) {
-                NEO::MemoryManager::OsHandleData osHandleData{lookupTable.sharedHandleType.ntHandle};
+                const uint32_t importArrayIndex = lookupTable.d3dTextureExt.present
+                                                      ? lookupTable.d3dTextureExt.arrayIndex
+                                                      : 0u;
+                NEO::MemoryManager::OsHandleData osHandleData{lookupTable.sharedHandleType.ntHandle, importArrayIndex};
                 NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
                 if (allocation != nullptr && lookupTable.glTextureExt.present) {
@@ -240,7 +243,10 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 yuvPlaneType = NEO::ImagePlane::planeUV;
             }
         }
-        gmm->updateImgInfoAndDesc(imgInfo, 0u, yuvPlaneType);
+        const uint32_t gmmArrayIndex = lookupTable.d3dTextureExt.present
+                                           ? lookupTable.d3dTextureExt.arrayIndex
+                                           : 0u;
+        gmm->updateImgInfoAndDesc(imgInfo, gmmArrayIndex, yuvPlaneType);
 
         if (lookupTable.isSharedHandle && lookupTable.glTextureExt.present) {
             imgInfo.offset = 0;

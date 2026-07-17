@@ -380,5 +380,42 @@ TEST(L0StructuresLookupTableTests, givenNoImageTilingExtDescWhenPrepareLookupTab
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(l0LookupTable.imageTilingOverride.present);
 }
+
+TEST(L0StructuresLookupTableTests, givenExternalD3DTextureExtDescWhenPrepareLookupTableThenArrayIndexFieldsAreSet) {
+    ze_image_desc_t imageDesc = {};
+    imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+
+    ze_external_d3d_texture_ext_desc_t d3dTextureDesc = {};
+    d3dTextureDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_D3D_TEXTURE_EXT_DESC;
+    d3dTextureDesc.arrayIndex = 3u;
+
+    imageDesc.pNext = &d3dTextureDesc;
+    d3dTextureDesc.pNext = &importNTHandle;
+
+    StructuresLookupTable l0LookupTable = {};
+    auto result = prepareL0StructuresLookupTable(l0LookupTable, &imageDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(l0LookupTable.d3dTextureExt.present);
+    EXPECT_EQ(3u, l0LookupTable.d3dTextureExt.arrayIndex);
+    EXPECT_TRUE(l0LookupTable.isSharedHandle);
+    EXPECT_TRUE(l0LookupTable.sharedHandleType.isNTHandle);
+}
+
+TEST(L0StructuresLookupTableTests, givenNoExternalD3DTextureExtDescWhenPrepareLookupTableThenD3DTextureExtNotPresent) {
+    ze_image_desc_t imageDesc = {};
+    imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    StructuresLookupTable l0LookupTable = {};
+    auto result = prepareL0StructuresLookupTable(l0LookupTable, &imageDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(l0LookupTable.d3dTextureExt.present);
+    EXPECT_EQ(0u, l0LookupTable.d3dTextureExt.arrayIndex);
+}
 } // namespace ult
 } // namespace L0

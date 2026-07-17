@@ -24,12 +24,13 @@
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/leo_gmm_types_converter.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
+#include "level_zero/core/source/image/internal_core_image_ext.h"
 
 namespace NEO {
 namespace LEO {
 
 std::pair<cl_channel_order, cl_channel_type>
-dxgiToOpenCLImageFormat(DXGI_FORMAT dxgiFormat) {
+dxgiToOpenCLImageFormat(DXGI_FORMAT dxgiFormat, ImagePlane plane) {
     switch (dxgiFormat) {
     case DXGI_FORMAT_R8_UNORM:
         return {CL_R, CL_UNORM_INT8};
@@ -117,6 +118,13 @@ dxgiToOpenCLImageFormat(DXGI_FORMAT dxgiFormat) {
     case DXGI_FORMAT_R32G32B32A32_SINT:
         return {CL_RGBA, CL_SIGNED_INT32};
 
+    case DXGI_FORMAT_P010:
+        return {plane == ImagePlane::planeY ? CL_R : CL_RG, CL_UNORM_INT16};
+    case DXGI_FORMAT_P016:
+        return {plane == ImagePlane::planeY ? CL_R : CL_RG, CL_UNORM_INT16};
+    case DXGI_FORMAT_NV12:
+        return {plane == ImagePlane::planeY ? CL_R : CL_RG, CL_UNORM_INT8};
+
     default:
         return {0, 0};
     }
@@ -171,14 +179,18 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     l0imageHandleDesc.handle = sharedHandle;
     l0imageHandleDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
 
+    L0::ze_external_d3d_texture_ext_desc_t l0d3dTextureExtDesc{};
+    l0d3dTextureExtDesc.pNext = &l0imageHandleDesc;
+    l0d3dTextureExtDesc.arrayIndex = arrayIndex;
+
     ze_image_desc_t l0imageDesc{ZE_STRUCTURE_TYPE_IMAGE_DESC};
     l0imageDesc.miplevels = textureDesc.MipLevels;
-    l0imageDesc.pNext = &l0imageHandleDesc;
+    l0imageDesc.pNext = &l0d3dTextureExtDesc;
     l0imageDesc.type = ze_image_type_t::ZE_IMAGE_TYPE_2D;
     l0imageDesc.width = textureDesc.Width;
     l0imageDesc.height = textureDesc.Height;
     l0imageDesc.depth = 1;
-    l0imageDesc.arraylevels = arrayIndex;
+    l0imageDesc.arraylevels = 0;
 
     if (needsView) {
         switch (textureDesc.Format) {
@@ -213,10 +225,12 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         }
 
         l0imagePlannarDesc.planeIndex = static_cast<int>(GmmTypesConverter::convertPlane(imagePlane)) - 1;
+        l0d3dTextureExtDesc.pNext = nullptr;
+        l0imagePlannarDesc.pNext = &l0d3dTextureExtDesc;
         l0imageDesc.pNext = &l0imagePlannarDesc;
     }
 
-    auto [clChannelOrder, clChannelType] = dxgiToOpenCLImageFormat(textureDesc.Format);
+    auto [clChannelOrder, clChannelType] = dxgiToOpenCLImageFormat(textureDesc.Format, imagePlane);
     Image::clToL0ImageFormat(l0imageDesc.format, clChannelOrder, clChannelType);
 
     ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, Image::isSRGB(clChannelOrder)};
@@ -257,7 +271,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     D3DTexture3dDesc textureDesc = {};
     sharingFcns->getTexture3dDesc(&textureDesc, d3dTexture);
 
-    cl_int formatSupportError = sharingFcns->validateFormatSupport(textureDesc.Format, CL_MEM_OBJECT_IMAGE2D);
+    cl_int formatSupportError = sharingFcns->validateFormatSupport(textureDesc.Format, CL_MEM_OBJECT_IMAGE3D);
     if (formatSupportError != CL_SUCCESS) {
         err.set(formatSupportError);
         return nullptr;
@@ -294,7 +308,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     l0imageDesc.depth = textureDesc.Depth;
     l0imageDesc.arraylevels = 0;
 
-    auto [clChannelOrder, clChannelType] = dxgiToOpenCLImageFormat(textureDesc.Format);
+    auto [clChannelOrder, clChannelType] = dxgiToOpenCLImageFormat(textureDesc.Format, ImagePlane::noPlane);
     Image::clToL0ImageFormat(l0imageDesc.format, clChannelOrder, clChannelType);
 
     ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, Image::isSRGB(clChannelOrder)};
