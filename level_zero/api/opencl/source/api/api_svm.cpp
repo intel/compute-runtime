@@ -9,7 +9,6 @@
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/api/leo_api.h"
@@ -21,7 +20,6 @@
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
-#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/memory/internal_mem_alloc_ext.h"
 #include <level_zero/ze_api.h>
 
@@ -89,13 +87,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
         }
     }
 
-    auto svmManager = pContext->getL0Object()->getDriverHandle()->getSvmAllocsManager();
-
-    NEO::SVMAllocsManager::SvmAllocationProperties svmProperties{};
-    svmProperties.coherent = (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) != 0;
-    svmProperties.readOnly = (flags & CL_MEM_READ_ONLY) != 0;
-
-    ptr = svmManager->createSVMAlloc(size, svmProperties, pContext->getRootDeviceIndices(), pContext->getDeviceBitfields());
+    ptr = clSharedMemAllocINTEL(context, nullptr, nullptr, size, alignment, nullptr);
     TRACING_EXIT(ClSvmAlloc, &ptr);
     return ptr;
 }

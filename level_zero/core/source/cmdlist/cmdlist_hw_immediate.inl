@@ -896,7 +896,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
                                                                                NEO::GraphicsAllocation *srcAllocation,
-                                                                               size_t size, bool flushHost, size_t offset) {
+                                                                               size_t size, bool flushHost) {
 
     checkAvailableSpace(0, false, commonImmediateCommandSize, false);
 
@@ -908,8 +908,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
     CmdListMemoryCopyParams bcsSplitMemoryCopyParams{};
 
     if (isSplitNeeded) {
-        auto dstAddress = reinterpret_cast<void *>(dstAllocation->getGpuAddress() + offset);
-        auto srcAddress = reinterpret_cast<const void *>(srcAllocation->getGpuAddress() + offset);
+        auto dstAddress = reinterpret_cast<void *>(dstAllocation->getGpuAddress());
+        auto srcAddress = reinterpret_cast<const void *>(srcAllocation->getGpuAddress());
         bool hasStallingCmds = false;
         bool copyOffloadFlush = false;
 
@@ -924,7 +924,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
         BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstAddress, srcAddress};
         ret = this->device->bcsSplit->template appendImmediateSplitCall<gfxCoreFamily>(this, copyParams, size, nullptr, 0u, nullptr, false, bcsSplitMemoryCopyParams.relaxedOrderingDispatch, direction, commonImmediateCommandSize, splitCall);
     } else {
-        ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost, offset);
+        ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
     }
     return flushImmediate(ret, false, false, bcsSplitMemoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, nullptr, isSplitNeeded, nullptr, nullptr);
 }

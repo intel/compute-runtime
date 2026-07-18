@@ -489,7 +489,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandListA
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
                                    MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto result = commandList->appendPageFaultCopy(&dstPtr, &srcPtr, 0x100, false, 0);
+    auto result = commandList->appendPageFaultCopy(&dstPtr, &srcPtr, 0x100, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandList->destroy();

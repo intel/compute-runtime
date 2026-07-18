@@ -1631,7 +1631,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     verifyFlags(commandList->appendSignalEvent(event, false), true, true);
 
-    verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0), false, false);
+    verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false, false);
 
     verifyFlags(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), true, true);
 
@@ -2041,7 +2041,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
         verifyFlags(commandList->appendSignalEvent(event, false), false, false);
 
-        verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0),
+        verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false),
                     false, false);
 
         verifyFlags(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), false, false);
@@ -2455,7 +2455,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     verifyWalkerWithProfilingEnqueued(commandList->appendSignalEvent(event, false), false);
 
-    verifyWalkerWithProfilingEnqueued(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false);
 
     verifyWalkerWithProfilingEnqueued(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), false);
 
@@ -2562,7 +2562,7 @@ HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfiling
 
     verifyFlag(commandList->appendSignalEvent(event, false), false);
 
-    verifyFlag(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0), false);
+    verifyFlag(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false);
 
     verifyFlag(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), false);
 

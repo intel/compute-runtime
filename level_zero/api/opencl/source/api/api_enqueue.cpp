@@ -10,8 +10,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
@@ -28,7 +26,6 @@
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include <level_zero/ze_api.h>
@@ -784,7 +781,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
-    if (pBuffer->getCpuPtr() != pBuffer->getUsmPtr() || pBuffer->getUsesSvm()) {
+    if (pBuffer->getCpuPtr() != pBuffer->getUsmPtr()) {
         if (!pBuffer->getCpuPtr()) {
             errcodeHelper.set(pBuffer->createMapAllocation());
             if (errcodeHelper.localErrcode != CL_SUCCESS) {
@@ -795,8 +792,6 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
         }
         if (NEO::isValueSet(mapFlags, CL_MAP_WRITE_INVALIDATE_REGION)) {
             errcodeHelper.set(clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event));
-        } else if (pBuffer->getUsesSvm()) {
-            errcodeHelper.set(clEnqueueSVMMap(commandQueue, false, mapFlags, ptrOffset(pBuffer->getCpuPtr(), offset), cb, numEventsInWaitList, eventWaitList, event));
         } else {
             auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MAP_BUFFER, pCommandQueue);
 
@@ -1040,18 +1035,12 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
             return tracingRetVal;
         }
 
-        if ((pBuffer->getCpuPtr() != pBuffer->getUsmPtr() || pBuffer->getUsesSvm()) && !mapInfo.readOnly) {
-            if (pBuffer->getUsesSvm()) {
-                cl_int tracingRetVal = clEnqueueSVMUnmap(commandQueue, mappedPtr, numEventsInWaitList, eventWaitList, event);
-                TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-                return tracingRetVal;
-            } else {
-                auto mappedOffset = mapInfo.offset[0];
-                auto mappedSize = mapInfo.ptrLength;
-                cl_int tracingRetVal = clEnqueueWriteBuffer(commandQueue, memObj, false, mappedOffset, mappedSize, mappedPtr, numEventsInWaitList, eventWaitList, event);
-                TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-                return tracingRetVal;
-            }
+        if (pBuffer->getCpuPtr() != pBuffer->getUsmPtr() && !mapInfo.readOnly) {
+            auto mappedOffset = mapInfo.offset[0];
+            auto mappedSize = mapInfo.ptrLength;
+            cl_int tracingRetVal = clEnqueueWriteBuffer(commandQueue, memObj, false, mappedOffset, mappedSize, mappedPtr, numEventsInWaitList, eventWaitList, event);
+            TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
+            return tracingRetVal;
         } else {
             cl_int tracingRetVal = clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
             TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
@@ -1597,55 +1586,15 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
                                    const cl_event *eventWaitList,
                                    cl_event *event) {
     TRACING_ENTER(ClEnqueueSvmMap, &commandQueue, &blockingMap, &mapFlags, &svmPtr, &size, &numEventsInWaitList, &eventWaitList, &event);
-    auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
-    if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueSvmMap, &retVal);
-        return retVal;
-    }
-
-    auto svmAllocsManager = pCommandQueue->getContext()->getL0Object()->getDriverHandle()->getSvmAllocsManager();
-    auto svmData = svmAllocsManager->getSVMAlloc(svmPtr);
-    const bool deviceStorage = svmData && svmData->cpuAllocation &&
-                               (svmData->gpuAllocations.getAllocationType() != NEO::AllocationType::svmZeroCopy);
-
-    auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_SVM_MAP, pCommandQueue);
-
-    auto lock = pCommandQueue->takeOwnership();
-    auto cmdListHandle = pCommandQueue->getL0Handle();
-    ze_result_t ret = ZE_RESULT_SUCCESS;
-
-    if (deviceStorage) {
-        auto svmBasePtr = svmData->cpuAllocation->getUnderlyingBuffer();
-        const size_t svmOffset = ptrDiff(svmPtr, svmBasePtr);
-        if (svmAllocsManager->getSvmMapOperation(svmPtr) == nullptr) {
-            if (waitEvents.size() > 0) {
-                zeCommandListAppendWaitOnEvents(cmdListHandle, waitEvents.size(), waitEvents.data());
-            }
-            auto rootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
-            ret = pCommandQueue->getL0Object()->appendPageFaultCopy(svmData->cpuAllocation,
-                                                                    svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex),
-                                                                    size, true, svmOffset);
-            zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, 0, nullptr);
-        } else {
-            ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
-        }
-        svmAllocsManager->insertSvmMapOperation(svmPtr, size, svmBasePtr, svmOffset, mapFlags == CL_MAP_READ);
-    } else {
-        ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
-    }
-
+    auto ret = clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
     if (event) {
         NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_MAP);
     }
-
-    if (blockingMap && ret == ZE_RESULT_SUCCESS) {
-        lock.unlock();
-        ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    if (blockingMap && ret == CL_SUCCESS) {
+        ret = clFinish(commandQueue);
     }
-
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueSvmMap, &tracingRetVal);
-    return tracingRetVal;
+    TRACING_EXIT(ClEnqueueSvmMap, &ret);
+    return ret;
 }
 
 cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
@@ -1654,51 +1603,12 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
                                      const cl_event *eventWaitList,
                                      cl_event *event) {
     TRACING_ENTER(ClEnqueueSvmUnmap, &commandQueue, &svmPtr, &numEventsInWaitList, &eventWaitList, &event);
-    auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
-    if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueSvmUnmap, &retVal);
-        return retVal;
-    }
-
-    auto svmAllocsManager = pCommandQueue->getContext()->getL0Object()->getDriverHandle()->getSvmAllocsManager();
-    auto svmData = svmAllocsManager->getSVMAlloc(svmPtr);
-    const bool deviceStorage = svmData && svmData->cpuAllocation &&
-                               (svmData->gpuAllocations.getAllocationType() != NEO::AllocationType::svmZeroCopy);
-
-    auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_SVM_UNMAP, pCommandQueue);
-
-    auto lock = pCommandQueue->takeOwnership();
-    auto cmdListHandle = pCommandQueue->getL0Handle();
-    ze_result_t ret = ZE_RESULT_SUCCESS;
-
-    if (deviceStorage) {
-        auto mapOperation = svmAllocsManager->getSvmMapOperation(svmPtr);
-        if (mapOperation && !mapOperation->readOnlyMap) {
-            if (waitEvents.size() > 0) {
-                zeCommandListAppendWaitOnEvents(cmdListHandle, waitEvents.size(), waitEvents.data());
-            }
-            auto rootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
-            ret = pCommandQueue->getL0Object()->appendPageFaultCopy(svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex),
-                                                                    svmData->cpuAllocation,
-                                                                    mapOperation->regionSize, false, mapOperation->offset);
-            zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, 0, nullptr);
-        } else {
-            ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
-        }
-        if (mapOperation) {
-            svmAllocsManager->removeSvmMapOperation(svmPtr);
-        }
-    } else {
-        ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
-    }
-
+    auto ret = clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
     if (event) {
         NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_UNMAP);
     }
-
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueSvmUnmap, &tracingRetVal);
-    return tracingRetVal;
+    TRACING_EXIT(ClEnqueueSvmUnmap, &ret);
+    return ret;
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(

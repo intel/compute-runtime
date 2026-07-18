@@ -271,7 +271,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
     result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = commandList->appendPageFaultCopy(dstAllocation, srcAllocation, size, false, 0);
+    result = commandList->appendPageFaultCopy(dstAllocation, srcAllocation, size, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);

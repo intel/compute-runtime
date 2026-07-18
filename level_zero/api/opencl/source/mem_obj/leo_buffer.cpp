@@ -195,7 +195,6 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     this->incRefInternal();
     subBuffer->associatedMemObject = this;
     subBuffer->offset = region->origin;
-    subBuffer->setUsesSvm(this->usesSvm);
     subBuffer->setParentSharingHandler(this->getSharingHandler());
     return subBuffer;
 }
