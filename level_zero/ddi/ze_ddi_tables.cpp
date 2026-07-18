@@ -55,7 +55,7 @@ DriverDispatch::DriverDispatch() {
     this->core.ExecutableGraph = &this->coreExecutableGraph;
 
     this->tools.isValidFlag = true;
-    this->tools.version = ZE_API_VERSION_1_17;
+    this->tools.version = ZE_API_VERSION_1_13;
     this->tools.MetricProgrammableExp = &this->toolsMetricProgrammableExp;
     this->tools.MetricTracerExp = &this->toolsMetricTracerExp;
     this->tools.MetricDecoderExp = &this->toolsMetricDecoderExp;
@@ -77,7 +77,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.Debug = &this->toolsDebug;
 
     this->sysman.isValidFlag = true;
-    this->sysman.version = ZE_API_VERSION_1_17;
+    this->sysman.version = ZE_API_VERSION_1_16;
     this->sysman.Global = &this->sysmanGlobal;
     this->sysman.Device = &this->sysmanDevice;
     this->sysman.DeviceExp = &this->sysmanDeviceExp;
@@ -104,7 +104,7 @@ DriverDispatch::DriverDispatch() {
     this->sysman.VFManagementExp = &this->sysmanVFManagementExp;
 
     this->runtime.isValidFlag = true;
-    this->runtime.version = ZE_API_VERSION_1_17;
+    this->runtime.version = ZE_API_VERSION_1_14;
     this->runtime.Global = &this->runtimeGlobal;
 
     this->coreRTASBuilder.pfnCreateExt = L0::zeRTASBuilderCreateExt;

@@ -1146,7 +1146,7 @@ TEST_F(DriverHandleZeInitTest, whenQueryingForApiVersionThenExpectedVersionIsRet
     ze_api_version_t version = {};
     ze_result_t result = driverHandle->getApiVersion(&version);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZE_API_VERSION_1_17, version);
+    EXPECT_EQ(ZE_API_VERSION_1_15, version);
 }
 
 TEST_F(DriverHandleZeInitTest, whenQueryingForDevicesWithCountGreaterThanZeroAndNullDevicePointerThenNullHandleIsReturned) {
