@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,6 +126,10 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     GLContext glHGLRCHandle = 0;
     GLContext glHGLRCHandleBkpCtx = 0;
     GLDisplay glHDCHandle = 0;
+
+    // Readiness
+    bool glXLoaded = false;
+    bool eglLoaded = false;
 
     // GL functions
     PFNglGetString glGetString = nullptr;

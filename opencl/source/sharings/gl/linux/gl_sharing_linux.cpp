@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,9 @@ bool GLSharingFunctionsLinux::isOpenGlExtensionSupported(const unsigned char *pE
 }
 
 bool GLSharingFunctionsLinux::isOpenGlSharingSupported() {
+    if (glGetString == nullptr) {
+        return false;
+    }
 
     std::basic_string<unsigned char> vendor = glGetString(GL_VENDOR);
     const unsigned char intelVendor[] = "Intel";
@@ -72,6 +75,20 @@ bool GLSharingFunctionsLinux::isOpenGlSharingSupported() {
         }
     }
 
+    switch (glHDCType) {
+    case CL_GLX_DISPLAY_KHR:
+        if (!glXLoaded)
+            return false;
+        break;
+    case CL_EGL_DISPLAY_KHR:
+        if (!eglLoaded)
+            return false;
+        break;
+    default:
+        if (!glXLoaded && !eglLoaded)
+            return false;
+    }
+
     return true;
 }
 
@@ -102,6 +119,9 @@ GLboolean GLSharingFunctionsLinux::initGLFunctions() {
         glXGLInteropQueryDeviceInfo = glXGetProc["glXGLInteropQueryDeviceInfoMESA"];
         glXGLInteropExportObject = glXGetProc["glXGLInteropExportObjectMESA"];
         glXGLInteropFlushObjects = glXGetProc["glXGLInteropFlushObjectsMESA"];
+        glXLoaded = ((glXGLInteropQueryDeviceInfo != nullptr) &&
+                     (glXGLInteropExportObject != nullptr) &&
+                     (glXGLInteropFlushObjects != nullptr));
     }
 
     GlFunctionHelper eglGetProc(dynLibrary.get(), "eglGetProcAddress");
@@ -109,6 +129,9 @@ GLboolean GLSharingFunctionsLinux::initGLFunctions() {
         eglGLInteropQueryDeviceInfo = eglGetProc["eglGLInteropQueryDeviceInfoMESA"];
         eglGLInteropExportObject = eglGetProc["eglGLInteropExportObjectMESA"];
         eglGLInteropFlushObjects = eglGetProc["eglGLInteropFlushObjectsMESA"];
+        eglLoaded = ((eglGLInteropQueryDeviceInfo != nullptr) &&
+                     (eglGLInteropExportObject != nullptr) &&
+                     (eglGLInteropFlushObjects != nullptr));
     }
 
     glGetString = (*dynLibrary)["glGetString"];
