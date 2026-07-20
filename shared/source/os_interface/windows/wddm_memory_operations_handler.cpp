@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
+#include "shared/source/utilities/stackvec.h"
 
 namespace NEO {
 
