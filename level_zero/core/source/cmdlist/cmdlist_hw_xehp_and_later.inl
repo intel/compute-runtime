@@ -98,7 +98,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (auto l1CachePolicyOverride = static_cast<const ModuleImp &>(kernelImp->getParentModule()).getL1CachePolicyOverride(); l1CachePolicyOverride.has_value()) {
         this->l1CachePolicyData.setCachingPolicy(l1CachePolicyOverride.value());
     } else {
-        this->l1CachePolicyData.init(this->device->getProductHelper());
+        this->l1CachePolicyData.resetCachingPolicy();
     }
 
     auto kernelInfo = kernelImmutableData->getKernelInfo();

@@ -10,6 +10,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace NEO {
 class GraphicsAllocation;
@@ -37,16 +38,23 @@ struct L1CachePolicy {
     }
     void init(const ProductHelper &helper);
     uint32_t getL1CacheValue(bool isDebuggerActive) {
+        if (overrideValue.has_value()) {
+            return overrideValue.value();
+        }
         return isDebuggerActive ? defaultDebuggerActive : defaultDebuggerInactive;
     }
     void setCachingPolicy(uint32_t value) {
-        defaultDebuggerActive = value;
-        defaultDebuggerInactive = value;
+        overrideValue = value;
+    }
+
+    void resetCachingPolicy() {
+        overrideValue.reset();
     }
 
   protected:
     uint32_t defaultDebuggerActive = 0;
     uint32_t defaultDebuggerInactive = 0;
+    std::optional<uint32_t> overrideValue;
 };
 
 } // namespace NEO
