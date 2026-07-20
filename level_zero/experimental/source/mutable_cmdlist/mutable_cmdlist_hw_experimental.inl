@@ -229,7 +229,15 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendSetPredica
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLaunchKernel(Kernel *kernel, Variable *groupCount, Event *signalEvent, uint32_t numWaitEvents, ze_event_handle_t *waitEvents) {
     bool relaxedOrderingDispatch = false;
-    ze_result_t ret = CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(numWaitEvents, waitEvents, nullptr, relaxedOrderingDispatch, true, true, false, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = relaxedOrderingDispatch,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    ze_result_t ret = CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(numWaitEvents, waitEvents, waitEventsParameters);
     if (ret) {
         return ret;
     }

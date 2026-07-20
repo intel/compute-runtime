@@ -379,8 +379,16 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(static_cast<Device *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
-
-    returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = commandList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
@@ -392,8 +400,15 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     returnValue = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
-
-    returnValue = commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr, waitEventsParametersForGlobalTs);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = commandList->appendEventReset(event);

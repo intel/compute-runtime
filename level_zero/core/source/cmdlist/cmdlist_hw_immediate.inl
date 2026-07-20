@@ -930,8 +930,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phWaitEvents, CommandToPatchContainer *outWaitCmds,
-                                                                              bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventParams) {
+
     bool allSignaled = true;
     for (auto i = 0u; i < numEvents; i++) {
         allSignaled &= (!this->dcFlushSupport && Event::fromHandle(phWaitEvents[i])->isAlreadyCompleted());
@@ -940,14 +940,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
         return ZE_RESULT_SUCCESS;
     }
 
-    if (!skipFlush) {
+    if (!waitEventParams.skipFlush) {
         checkAvailableSpace(numEvents, false, commonImmediateCommandSize, false);
     }
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents, outWaitCmds, relaxedOrderingAllowed, trackDependencies, apiRequest, skipAddingWaitEventsToResidency, false, copyOffloadOperation);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents, waitEventParams);
     this->dependenciesPresent = true;
 
-    if (skipFlush) {
+    if (waitEventParams.skipFlush) {
         return ret;
     }
 
@@ -957,11 +957,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteGlobalTimestamp(
     uint64_t *dstptr, ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+    CmdListWaitEventParameters &waitEventParams) {
 
     checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents, waitEventParams);
 
     return flushImmediate(ret, true, true, false, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
 }
@@ -1091,10 +1092,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBar
                                                                                      const void **pRanges,
                                                                                      ze_event_handle_t hSignalEvent,
                                                                                      uint32_t numWaitEvents,
-                                                                                     ze_event_handle_t *phWaitEvents) {
+                                                                                     ze_event_handle_t *phWaitEvents,
+                                                                                     CmdListWaitEventParameters &waitEventParams) {
     checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents, waitEventParams);
     return flushImmediate(ret, true, true, false, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
 }
 
@@ -1125,16 +1127,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendHostFunction(
 
     const bool copyOffload = false;
     const bool requestCommandBufferInLocalMem = false;
-    checkAvailableSpace(numWaitEvents, parameters.relaxedOrderingDispatch, commonImmediateCommandSize, requestCommandBufferInLocalMem);
 
-    parameters.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, copyOffload);
+    parameters.waitEventParams.relaxedOrderingAllowed = isRelaxedOrderingDispatchAllowed(numWaitEvents, copyOffload);
+    checkAvailableSpace(numWaitEvents, parameters.waitEventParams.relaxedOrderingAllowed, commonImmediateCommandSize, requestCommandBufferInLocalMem);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
 
     const bool performMigration = false;
     const bool requireTaskCountUpdate = false;
-    const bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, parameters.relaxedOrderingDispatch);
-    return flushImmediate(ret, performMigration, stallingCmdsForRelaxedOrdering, parameters.relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, copyOffload, hSignalEvent, requireTaskCountUpdate, nullptr, nullptr);
+    const bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, parameters.waitEventParams.relaxedOrderingAllowed);
+    return flushImmediate(ret, performMigration, stallingCmdsForRelaxedOrdering, parameters.waitEventParams.relaxedOrderingAllowed, NEO::AppendOperations::nonKernel, copyOffload, hSignalEvent, requireTaskCountUpdate, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1157,7 +1159,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
     auto ret = ZE_RESULT_SUCCESS;
 
     if (numWaitEvents) {
-        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, false, false, false, true, false);
+        CmdListWaitEventParameters waitEventsParameters{
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = false,
+            .waitForImplicitInOrderDependency = false,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+            .apiRequest = false,
+            .skipFlush = true};
+        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, waitEventsParameters);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
@@ -1174,7 +1185,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
             return ret;
         }
 
-        ret = this->appendWaitOnEvents(1u, &proxyWaitEvent, nullptr, false, false, false, false, true, false);
+        CmdListWaitEventParameters waitEventsParameters{
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = false,
+            .waitForImplicitInOrderDependency = false,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+            .apiRequest = false,
+            .skipFlush = true};
+        ret = this->appendWaitOnEvents(1u, &proxyWaitEvent, waitEventsParameters);
         auto event = Event::fromHandle(proxyWaitEvent);
         if (ret != ZE_RESULT_SUCCESS) {
             event->destroy();
@@ -1215,7 +1235,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
 
     auto ret = ZE_RESULT_SUCCESS;
     if (numWaitEvents) {
-        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, false, false, false, true, false);
+        CmdListWaitEventParameters waitEventsParameters{
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = false,
+            .waitForImplicitInOrderDependency = false,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+            .apiRequest = false,
+            .skipFlush = true};
+        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, waitEventsParameters);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
@@ -1940,13 +1969,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                         additionalSize + commonImmediateCommandSize,
                         this->dispatchCmdListBatchBufferAsPrimary);
 
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = relaxedOrderingDispatch,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = copyOffloadOperation,
+    };
     ret = CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(numWaitEvents, phWaitEvents,
-                                                                   nullptr,
-                                                                   relaxedOrderingDispatch,
-                                                                   false,
-                                                                   true,
-                                                                   false,
-                                                                   copyOffloadOperation);
+                                                                   waitEventsParameters);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }

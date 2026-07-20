@@ -707,7 +707,16 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     ze_event_handle_t events[] = {&event, &event2};
 
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    commandList->appendWaitOnEvents(2, events, waitEventsParameters);
     size_t endOffset = commandContainer.getCommandStream()->getUsed();
 
     size_t usedBufferSize = (endOffset - startOffset);
@@ -754,7 +763,16 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     ze_event_handle_t events[] = {&event, &event2};
 
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    commandList->appendWaitOnEvents(2, events, waitEventsParameters);
     size_t endOffset = commandContainer.getCommandStream()->getUsed();
 
     size_t usedBufferSize = (endOffset - startOffset);
@@ -793,7 +811,16 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
     ze_event_handle_t events[] = {&event, &event2};
 
     auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    commandList->appendWaitOnEvents(2, events, waitEventsParameters);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -827,7 +854,15 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListAndAlreadyCompletedEventWhe
     ze_event_handle_t events[] = {&event, &event2};
     event.isCompleted = Event::State::STATE_SIGNALED;
 
-    static_cast<CommandListCoreFamily<FamilyType::gfxCoreFamily> *>(commandList.get())->addEventsToCmdList(2, events, nullptr, false, false, true, false, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    static_cast<CommandListCoreFamily<FamilyType::gfxCoreFamily> *>(commandList.get())->addEventsToCmdList(2, events, waitEventsParameters);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -1125,7 +1160,16 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
     ze_event_handle_t events[] = {&event, &event2};
 
     auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    commandList->appendWaitOnEvents(2, events, waitEventsParameters);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1155,8 +1199,16 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndTbxCsrWithCopyOnlyImmediateComm
     event.waitScope = 0;
     event2.waitScope = 0;
     ze_event_handle_t events[] = {&event, &event2};
-
-    auto ret = commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    auto ret = commandList->appendWaitOnEvents(2, events, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 

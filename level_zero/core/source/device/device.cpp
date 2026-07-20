@@ -1148,8 +1148,15 @@ ze_result_t Device::getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, 
     // Get CPU time first here to be used for averaging later
     uint64_t hostTimestampForAvg = 0;
     bool cpuHostTimeRetVal = this->neoDevice->getOSTime()->getCpuTimeHost(&hostTimestampForAvg);
-
-    auto ret = L0::CommandList::fromHandle(this->globalTimestampCommandList)->appendWriteGlobalTimestamp((uint64_t *)this->globalTimestampAllocation, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto ret = L0::CommandList::fromHandle(this->globalTimestampCommandList)->appendWriteGlobalTimestamp((uint64_t *)this->globalTimestampAllocation, nullptr, 0, nullptr, waitEventsParameters);
     if (ret != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }

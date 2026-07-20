@@ -36,7 +36,16 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventThenSemaphoreWait
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     ze_event_handle_t hEventHandle = event->toHandle();
-    auto result = commandList->appendWaitOnEvents(1, &hEventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    auto result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -91,7 +100,15 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ultCsr->directSubmission.reset(directSubmission);
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    auto result = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(immCommandList.get())->addEventsToCmdList(1, &hEventHandle, nullptr, true, true, true, false, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = true,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(immCommandList.get())->addEventsToCmdList(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = immCommandList->getCmdContainer().getCommandStream()->getUsed();
@@ -261,13 +278,12 @@ class MockCommandListImmediateHwWithWaitEventFail : public WhiteBox<::L0::Comman
     using BaseClass::isTbxMode;
     using BaseClass::setupFillKernelArguments;
 
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override {
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventsParameters) override {
         if (forceWaitEventError) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         appendWaitEventCalled++;
-        return BaseClass::appendWaitOnEvents(numEvents, phEvent, outWaitCmds, relaxedOrderingAllowed, trackDependencies, apiRequest, skipAddingWaitEventsToResidency, skipFlush, copyOffloadOperation);
+        return BaseClass::appendWaitOnEvents(numEvents, phEvent, waitEventsParameters);
     };
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override {
@@ -406,8 +422,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 class MockAppendRegularCommandlistWithWaitOnEvents : public MockCommandListForAppendLaunchKernel<gfxCoreFamily> {
   public:
     MockAppendRegularCommandlistWithWaitOnEvents() : MockCommandListForAppendLaunchKernel<gfxCoreFamily>() {}
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override {
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventsParameters) override {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     };
 };
@@ -498,8 +513,16 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenTwoEventsWhenWaitOnEventsAppendedThe
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     ze_event_handle_t handles[2] = {event->toHandle(), event->toHandle()};
-
-    auto result = commandList->appendWaitOnEvents(2, handles, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    auto result = commandList->appendWaitOnEvents(2, handles, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -530,7 +553,16 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenTwoEventsWhenWaitOnEventsAppendedThe
 
 HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventsThenEventGraphicsAllocationIsAddedToResidencyContainer) {
     ze_event_handle_t hEventHandle = event->toHandle();
-    auto result = commandList->appendWaitOnEvents(1, &hEventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    auto result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
@@ -559,7 +591,16 @@ HWTEST_F(CommandListAppendWaitOnUsedPacketSignalEvent, WhenAppendingWaitOnTimest
 
     event->setPacketsInUse(3u);
     ze_event_handle_t hEventHandle = event->toHandle();
-    result = commandList->appendWaitOnEvents(1, &hEventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -622,7 +663,16 @@ HWTEST_F(CommandListAppendWaitOnUsedPacketSignalEvent, WhenAppendingWaitOnTimest
     ASSERT_EQ(9u, event->getPacketsInUse());
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    result = commandList->appendWaitOnEvents(1, &hEventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -668,8 +718,15 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTime
     commandContainer.clearResidencyContainer();
 
     ze_event_handle_t hEventHandle = event->toHandle();
-
-    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 1, &hEventHandle);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 1, &hEventHandle, waitEventsParameters);
 
     auto residencyContainer = commandContainer.getResidencyContainer();
     auto timestampAlloc = residencyContainer[1];
@@ -735,7 +792,16 @@ HWTEST_F(CommandListAppendWaitOnSecondaryBatchBufferEvent, givenCommandBufferIsE
     ze_event_handle_t hEventHandle = event->toHandle();
 
     auto oldCommandBuffer = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
-    result = commandList->appendWaitOnEvents(1, &hEventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -782,7 +848,16 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
     ze_event_handle_t eventHandle = event->toHandle();
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    auto result = commandList->appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    auto result = commandList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -824,7 +899,16 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOn
     ze_event_handle_t eventHandle = event->toHandle();
 
     EXPECT_FALSE(cmdList.dependenciesPresent);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false));
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
     EXPECT_TRUE(cmdList.dependenciesPresent);
 }
 
@@ -841,7 +925,16 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOn
     ze_event_handle_t eventHandle = event->toHandle();
 
     EXPECT_FALSE(cmdList.dependenciesPresent);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false));
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
     EXPECT_FALSE(cmdList.dependenciesPresent);
 }
 
@@ -927,7 +1020,16 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    commandListImmediate->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 }
@@ -937,7 +1039,15 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
 
     auto eventHandle = event->toHandle();
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(0x12345678555500);
-    commandListImmediate->appendWriteGlobalTimestamp(dstptr, nullptr, 1, &eventHandle);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandListImmediate->appendWriteGlobalTimestamp(dstptr, nullptr, 1, &eventHandle, waitEventsParameters);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 }
@@ -1035,7 +1145,15 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     const void **rangesMemory = reinterpret_cast<const void **>(&ranges[0]);
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendMemoryRangesBarrier(numRanges, &rangeSizes, rangesMemory, nullptr, 1, &eventHandle);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandListImmediate->appendMemoryRangesBarrier(numRanges, &rangeSizes, rangesMemory, nullptr, 1, &eventHandle, waitEventsParameters);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 }
@@ -1088,7 +1206,16 @@ HWTEST_F(CommandListAppendWaitOnEvent, GivenOutCmdListProvidedAndSkipResidencyFl
     auto usedSpaceBefore = cmdListStream->getUsed();
 
     bool skipResidency = true;
-    result = commandList->appendWaitOnEvents(eventCount, eventHandles.data(), &outSemaphoreWaitCmds, false, false, false, skipResidency, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = &outSemaphoreWaitCmds,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = skipResidency,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    result = commandList->appendWaitOnEvents(eventCount, eventHandles.data(), waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = cmdListStream->getUsed();
@@ -1123,7 +1250,8 @@ HWTEST_F(CommandListAppendWaitOnEvent, GivenOutCmdListProvidedAndSkipResidencyFl
     EXPECT_EQ(cmdListResidency.end(), eventResidencyIt);
 
     skipResidency = false;
-    result = commandList->appendWaitOnEvents(eventCount, eventHandles.data(), &outSemaphoreWaitCmds, false, false, false, skipResidency, false, false);
+    waitEventsParameters.skipAddingWaitEventsToResidency = skipResidency;
+    result = commandList->appendWaitOnEvents(eventCount, eventHandles.data(), waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     eventResidencyIt = std::find(cmdListResidency.begin(), cmdListResidency.end(), eventPoolAllocation);

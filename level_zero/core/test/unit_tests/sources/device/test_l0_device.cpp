@@ -1901,7 +1901,8 @@ TEST_F(DeviceTest, givenInvalidPciBusInfoWhenPciPropertiesIsCalledThenUninitiali
 }
 struct GetGlobalTimestampTest : public DeviceTest {
     struct MockCommandListAppendWriteGlobalTimestamp : public MockCommandList {
-        ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+        ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                               CmdListWaitEventParameters &waitEventParams) override {
             isAppendWriteGlobalTimestampCalled = true;
             *dstptr = 123456u; // dummy value
             return ZE_RESULT_SUCCESS;
@@ -1990,7 +1991,8 @@ TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithSubmissionThenSuccessIsRetu
 
 TEST_F(DeviceTest, givenAppendWriteGlobalTimestampFailsWhenGetGlobalTimestampsUsingSubmissionThenErrorIsReturned) {
     struct MockCommandListAppendWriteGlobalTimestampFail : public MockCommandList {
-        ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+        ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                               CmdListWaitEventParameters &waitEventParams) override {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     };
@@ -2011,8 +2013,15 @@ TEST_F(DeviceTest, givenAppendWriteGlobalTimestampFailsWhenGetGlobalTimestampsUs
     auto actualGlobalTimestampCommandList = device->globalTimestampCommandList;
     // Swap the command list with the mock command list.
     device->globalTimestampCommandList = mockCommandListHandle;
-
-    L0::CommandList::fromHandle(device->globalTimestampCommandList)->appendWriteGlobalTimestamp(nullptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    L0::CommandList::fromHandle(device->globalTimestampCommandList)->appendWriteGlobalTimestamp(nullptr, nullptr, 0, nullptr, waitEventsParameters);
 
     result = device->getGlobalTimestamps(&hostTs, &deviceTs);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);

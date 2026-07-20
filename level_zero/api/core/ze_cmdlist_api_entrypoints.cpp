@@ -76,8 +76,15 @@ ze_result_t ZE_APICALL zeCommandListAppendWriteGlobalTimestamp(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    return cmdList->appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(

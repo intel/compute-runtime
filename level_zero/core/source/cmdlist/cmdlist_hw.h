@@ -110,7 +110,8 @@ struct CommandListCoreFamily : public CommandList {
                                           const void **pRanges,
                                           ze_event_handle_t hSignalEvent,
                                           uint32_t numWaitEvents,
-                                          ze_event_handle_t *phWaitEvents) override;
+                                          ze_event_handle_t *phWaitEvents,
+                                          CmdListWaitEventParameters &waitEventParams) override;
     ze_result_t appendImageCopyFromMemory(ze_image_handle_t hDstImage, const void *srcptr,
                                           const ze_image_region_t *pDstRegion,
                                           ze_event_handle_t hEvent,
@@ -239,8 +240,7 @@ struct CommandListCoreFamily : public CommandList {
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override;
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override;
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) override;
     void appendWaitOnInOrderDependency(NEO::GraphicsAllocation *deviceCounterAlloc, uint64_t deviceBaseCounterGpuVa, uint32_t deviceCounterPartitionCount, CommandToPatchContainer *outListCommands,
                                        uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency,
                                        bool skipAddingWaitEventsToResidency, bool noopDispatch, bool dualStreamCopyOffloadOperation);
@@ -250,15 +250,15 @@ struct CommandListCoreFamily : public CommandList {
     void handleInOrderCounterOverflow(bool copyOffloadOperation);
 
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
-                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                           CmdListWaitEventParameters &waitEventParams) override;
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
                                             size_t size, ze_event_handle_t hSignalEvent,
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
     void appendMultiPartitionEpilogue() override;
     void appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency, bool copyOperation);
-    ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency, bool skipAddingWaitEventsToResidency, bool dualStreamCopyOffloadOperation);
+    ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters);
 
     MOCKABLE_VIRTUAL void appendSynchronizedDispatchInitializationSection();
     MOCKABLE_VIRTUAL void appendSynchronizedDispatchCleanupSection();

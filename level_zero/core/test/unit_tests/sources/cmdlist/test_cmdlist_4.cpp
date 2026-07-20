@@ -58,7 +58,15 @@ HWTEST_F(CommandListCreateTests, givenCopyOnlyCommandListWhenAppendWriteGlobalTi
     commandContainer.clearResidencyContainer();
 
     const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr, waitEventsParameters);
 
     auto residencyContainer = commandContainer.getResidencyContainer();
     auto timestampAlloc = residencyContainer[0];
@@ -96,7 +104,15 @@ HWTEST_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestampC
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
 
     const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr, waitEventsParameters);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -130,7 +146,15 @@ HWTEST_F(CommandListCreateTests, givenMovedDstptrWhenAppendWriteGlobalTimestampC
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress) + 1;
     uint64_t expectedTimestampAddress = timestampAddress + sizeof(uint64_t);
     const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr, waitEventsParameters);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -158,7 +182,15 @@ HWTEST_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestampC
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     uint64_t timestampAddress = 0x123456785500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
-    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr, waitEventsParameters);
 
     auto &commandContainer = commandList->getCmdContainer();
     auto &residencyContainer = commandContainer.getResidencyContainer();
@@ -187,7 +219,15 @@ HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenAppendWriteGlobalT
     uint64_t timestampAddress = 0x123456785500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
 
-    auto result = commandList0->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList0->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -508,7 +548,16 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    result = commandList->appendWaitOnEvents(1, &hEventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -666,8 +715,16 @@ HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEv
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     auto eventHandle = event->toHandle();
-
-    result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    result = commandList->appendWaitOnEvents(1u, &eventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 2u);
 
@@ -707,7 +764,16 @@ HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEv
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     auto eventHandle = event->toHandle();
 
-    result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, false, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    result = commandList->appendWaitOnEvents(1u, &eventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 1u);
 }

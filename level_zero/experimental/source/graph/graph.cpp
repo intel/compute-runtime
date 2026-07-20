@@ -1304,7 +1304,16 @@ void ExecGraphBuilder::finalize(const GraphInstatiateSettings &settings) {
             }
         }
         if (this->trailingEvents.size() > 0) {
-            this->subgraphs[&rootSrc].currCmdList->appendWaitOnEvents(static_cast<uint32_t>(this->trailingEvents.size()), this->trailingEvents.data(), nullptr, false, true, true, false, false, false);
+            CmdListWaitEventParameters waitEventsParameters{
+                .outWaitCmds = nullptr,
+                .relaxedOrderingAllowed = false,
+                .trackDependencies = true,
+                .waitForImplicitInOrderDependency = false,
+                .skipAddingWaitEventsToResidency = false,
+                .dualStreamCopyOffloadOperation = false,
+                .apiRequest = true,
+                .skipFlush = false};
+            this->subgraphs[&rootSrc].currCmdList->appendWaitOnEvents(static_cast<uint32_t>(this->trailingEvents.size()), this->trailingEvents.data(), waitEventsParameters);
             for (auto &ev : this->trailingEvents) {
                 this->subgraphs[&rootSrc].currCmdList->appendEventReset(ev);
             }

@@ -40,8 +40,15 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryRangesBarrier(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return L0::CommandList::fromHandle(hCommandList)->appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    return L0::CommandList::fromHandle(hCommandList)->appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 }
 
 ze_result_t ZE_APICALL zeDeviceSystemBarrier(

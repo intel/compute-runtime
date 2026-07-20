@@ -116,11 +116,11 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                     NEO::GraphicsAllocation *srcAllocation,
                                     size_t size, bool flushHost) override;
 
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override;
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) override;
 
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
-                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                           CmdListWaitEventParameters &waitEventParams) override;
 
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
                                             size_t size, ze_event_handle_t hSignalEvent,
@@ -176,7 +176,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                           const void **pRanges,
                                           ze_event_handle_t hSignalEvent,
                                           uint32_t numWaitEvents,
-                                          ze_event_handle_t *phWaitEvents) override;
+                                          ze_event_handle_t *phWaitEvents,
+                                          CmdListWaitEventParameters &waitEventParams) override;
 
     ze_result_t appendWaitOnMemory(void *desc, void *ptr, uint64_t data, ze_event_handle_t signalEventHandle, bool useQwordData) override;
 

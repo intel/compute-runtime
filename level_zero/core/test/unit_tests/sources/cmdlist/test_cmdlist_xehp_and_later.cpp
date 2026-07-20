@@ -1045,7 +1045,16 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         size_t sizeBefore = cmdStream->getUsed();
         auto eventHandle = event->toHandle();
-        result = commandList->appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false);
+        CmdListWaitEventParameters waitEventsParameters{
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = false,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+            .apiRequest = false,
+            .skipFlush = false};
+        result = commandList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -2393,7 +2402,15 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppend
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
 
     const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
-    returnValue = commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;

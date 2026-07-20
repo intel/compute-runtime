@@ -25,6 +25,7 @@
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
 #include "level_zero/core/source/device/bcs_split_params.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
@@ -112,7 +113,8 @@ struct CommandList : _ze_command_list_handle_t {
                                                   const void **pRanges,
                                                   ze_event_handle_t hSignalEvent,
                                                   uint32_t numWaitEvents,
-                                                  ze_event_handle_t *phWaitEvents) = 0;
+                                                  ze_event_handle_t *phWaitEvents,
+                                                  CmdListWaitEventParameters &waitEventParams) = 0;
     virtual ze_result_t appendImageCopyFromMemory(ze_image_handle_t hDstImage, const void *srcptr,
                                                   const ze_image_region_t *pDstRegion,
                                                   ze_event_handle_t hEvent, uint32_t numWaitEvents,
@@ -198,10 +200,10 @@ struct CommandList : _ze_command_list_handle_t {
                                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) = 0;
     virtual ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) = 0;
-    virtual ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                           bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) = 0;
+    virtual ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) = 0;
     virtual ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
-                                                   uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
+                                                   uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                   CmdListWaitEventParameters &waitEventParams) = 0;
     virtual ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc,
                                                     const void *srcptr, size_t size, ze_event_handle_t hSignalEvent,
                                                     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;

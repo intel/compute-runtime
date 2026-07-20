@@ -463,7 +463,8 @@ struct Mock<CommandList> : public CommandList {
                       const void **pRanges,
                       ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents));
+                      ze_event_handle_t *phWaitEvents,
+                      CmdListWaitEventParameters &waitEventsParameters));
 
     ADDMETHOD_NOBASE(appendImageCopyFromMemory, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_image_handle_t hDstImage,
@@ -591,14 +592,14 @@ struct Mock<CommandList> : public CommandList {
 
     ADDMETHOD_NOBASE(appendWaitOnEvents, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numEvents,
-                      ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                      bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation));
+                      ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventsParameters));
 
     ADDMETHOD_NOBASE(appendWriteGlobalTimestamp, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint64_t *dstptr,
                       ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents));
+                      ze_event_handle_t *phWaitEvents,
+                      CmdListWaitEventParameters &waitEventParams));
 
     ADDMETHOD_NOBASE(appendQueryKernelTimestamps, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numEvents,
@@ -755,9 +756,8 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                          (kernel, sizePerHwThread));
 
     ADDMETHOD(appendWaitOnEvents, ze_result_t, true, ZE_RESULT_SUCCESS,
-              (uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-               bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation),
-              (numEvents, phEvent, outWaitCmds, relaxedOrderingAllowed, trackDependencies, apiRequest, skipAddingWaitEventsToResidency, skipFlush, copyOffloadOperation));
+              (uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventsParameters),
+              (numEvents, phEvent, waitEventsParameters));
 
     ADDMETHOD(appendSignalEvent, ze_result_t, true, ZE_RESULT_SUCCESS,
               (ze_event_handle_t hEvent, bool relaxedOrderingDispatch),
@@ -1021,8 +1021,7 @@ struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFam
 
     MockCommandListImmediateExtSem() : WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>() {}
 
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override {
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventsParameters) override {
 
         appendWaitOnEventsCalledTimes++;
 

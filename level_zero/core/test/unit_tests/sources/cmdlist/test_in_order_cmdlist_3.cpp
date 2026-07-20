@@ -916,7 +916,16 @@ HWTEST_F(InOrderIpcTests, givenNon2WayIpcEventWhenQueryingStatusAndWaitingThenNo
     EXPECT_FALSE(helper.is2WayIpcImportRefreshNeeded());
 
     auto eventHandle = events[0]->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, waitCmdList->appendWaitOnEvents(1, &eventHandle, nullptr, false, true, true, false, false, false));
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, waitCmdList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
     EXPECT_FALSE(helper.is2WayIpcImportRefreshNeeded());
 
     EXPECT_EQ(importCallsBefore, mockMemoryManager->capturedIsHostIpcAllocation.size());
@@ -1106,7 +1115,16 @@ HWTEST_F(InOrderIpcTests, givenImportedEventWhenAppendWaitOnEventsThenImplicitly
     auto immCmdList3 = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     // appendWaitOnEvents triggers implicit refresh via event->refreshImported2WayIpcCbData()
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList3->appendWaitOnEvents(1, &importedEventHandle, nullptr, false, true, true, false, false, false));
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList3->appendWaitOnEvents(1, &importedEventHandle, waitEventsParameters));
 
     // verify refresh happened
     EXPECT_FALSE(importedHelper.is2WayIpcImportRefreshNeeded());
@@ -1312,7 +1330,16 @@ HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenExporterSignalsThenImpor
 
     // appendWaitOnEvents triggers implicit refresh via refreshImported2WayIpcCbData
     auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList2->appendWaitOnEvents(1, &importedEventHandle, nullptr, false, true, true, false, false, false));
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList2->appendWaitOnEvents(1, &importedEventHandle, waitEventsParameters));
 
     // verify refresh happened: allocs populated, hostStorageDuplicated correct
     EXPECT_FALSE(importedHelper.is2WayIpcImportRefreshNeeded());
@@ -1370,7 +1397,16 @@ HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenImporterSignalsThenExpor
     // appendWaitOnEvents on imported event triggers refresh
     auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto exporterEventHandle = events[0]->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList2->appendWaitOnEvents(1, &exporterEventHandle, nullptr, false, true, true, false, false, false));
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList2->appendWaitOnEvents(1, &exporterEventHandle, waitEventsParameters));
 
     // verify exporter refresh happened
     EXPECT_FALSE(exporterHelper.is2WayIpcImportRefreshNeeded());

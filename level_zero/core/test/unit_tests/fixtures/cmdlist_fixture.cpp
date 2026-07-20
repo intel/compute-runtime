@@ -374,13 +374,29 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::WaitOnEvents) {
         auto eventHandle = event->toHandle();
-        result = currentCmdList->appendWaitOnEvents(1, &eventHandle, nullptr, false, false, false, false, false, false);
+        CmdListWaitEventParameters waitEventsParameters{
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = false,
+            .waitForImplicitInOrderDependency = false,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+            .apiRequest = false,
+            .skipFlush = false};
+        result = currentCmdList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::WriteGlobalTimestamp) {
         uint64_t timestampAddress = 0xfffffffffff0L;
         uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
-
-        result = currentCmdList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        result = currentCmdList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr, waitEventsParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::MemoryRangesBarrier) {
         uint8_t dstPtr[64] = {};
@@ -388,7 +404,15 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L
 
         size_t rangeSizes = 1;
         const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
-        result = currentCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        result = currentCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr, waitEventsParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         driverHandle->releaseImportedPointer(dstPtr);

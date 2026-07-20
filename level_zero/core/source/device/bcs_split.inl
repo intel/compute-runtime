@@ -65,7 +65,15 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
 
         if (barrierRequired) {
             auto barrierEventHandle = this->events.getEventResources().barrier[markerEventIndex]->toHandle();
-            subCmdList->addEventsToCmdList(1u, &barrierEventHandle, nullptr, hasRelaxedOrderingDependencies, false, true, false, false);
+            CmdListWaitEventParameters waitEventsParameters = {
+                .outWaitCmds = nullptr,
+                .relaxedOrderingAllowed = hasRelaxedOrderingDependencies,
+                .trackDependencies = false,
+                .waitForImplicitInOrderDependency = true,
+                .skipAddingWaitEventsToResidency = false,
+                .dualStreamCopyOffloadOperation = false,
+            };
+            subCmdList->addEventsToCmdList(1u, &barrierEventHandle, waitEventsParameters);
         }
 
         auto copyEventIndex = aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
@@ -112,7 +120,15 @@ void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainC
     }
 
     if (!useSignalEventForSubCopy) {
-        mainCmdList->addEventsToCmdList(static_cast<uint32_t>(subCopyEvents.size()), subCopyEvents.data(), nullptr, hasRelaxedOrderingDependencies, false, true, false, dualStreamCopyOffload);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = hasRelaxedOrderingDependencies,
+            .trackDependencies = false,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = dualStreamCopyOffload,
+        };
+        mainCmdList->addEventsToCmdList(static_cast<uint32_t>(subCopyEvents.size()), subCopyEvents.data(), waitEventsParameters);
     }
 
     const auto isCopyCmdList = mainCmdList->isCopyOnly(dualStreamCopyOffload);
@@ -159,7 +175,15 @@ ze_result_t BcsSplit::appendSubSplitCommon(CommandListCoreFamily<gfxCoreFamily> 
                                                   nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), false, false, false, false, false);
     }
 
-    subCmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, false, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    subCmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, waitEventsParameters);
 
     if (!useSignalEventForSubcopy && signalEvent && appendStartProfiling) {
         subCmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, true, false, true);

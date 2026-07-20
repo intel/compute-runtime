@@ -80,7 +80,17 @@ ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
         return ret;
     }
 
-    return cmdList->appendWaitOnEvents(numEvents, phEvents, nullptr, false, true, true, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+
+    return cmdList->appendWaitOnEvents(numEvents, phEvents, waitEventsParameters);
 }
 
 ze_result_t ZE_APICALL zeEventHostSignal(

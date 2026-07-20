@@ -907,7 +907,16 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhe
     prodCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     auto event = events[0]->toHandle();
-    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;
@@ -929,7 +938,16 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenHighPriorityCommandListWhenA
 
     device->getNEODevice()->getDefaultEngine().osContext->overrideEngineUsage(NEO::EngineUsage::highPriority);
     auto event = events[0]->toHandle();
-    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;
@@ -951,7 +969,16 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorit
     prodCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     auto event = events[0]->toHandle();
-    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;
@@ -974,7 +1001,16 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndHighPriorityC
 
     device->getNEODevice()->getDefaultEngine().osContext->overrideEngineUsage(NEO::EngineUsage::highPriority);
     auto event = events[0]->toHandle();
-    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;

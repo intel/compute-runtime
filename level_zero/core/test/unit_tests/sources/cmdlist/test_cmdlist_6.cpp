@@ -367,10 +367,17 @@ HWTEST_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrier
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
     result = cmdList.appendMemoryRangesBarrier(numRanges, &rangeSizes,
                                                ranges, nullptr, 0,
-                                               nullptr);
+                                               nullptr, waitEventsParameters);
     EXPECT_EQ(1u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }

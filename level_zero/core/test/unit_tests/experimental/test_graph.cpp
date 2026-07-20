@@ -89,8 +89,7 @@ static ze_result_t VISITOR_CCONV launchKernelWithArgumentsVisitor(
 }
 
 struct CapturingInternalExecCmdList : Mock<CommandList> {
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override {
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventsParameters) override {
         appendWaitOnEventsCalled++;
         waitedEvents.clear();
         if ((numEvents > 0u) && (phEvent != nullptr)) {

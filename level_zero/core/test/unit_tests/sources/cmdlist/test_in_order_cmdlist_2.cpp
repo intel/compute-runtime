@@ -3208,7 +3208,15 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendi
     offset = cmdStream->getUsed();
     size_t rangeSizes = 1;
     const void **ranges = const_cast<const void **>(&alloc);
-    immCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_TRUE(verifyTokenCheck(1));
 
     offset = cmdStream->getUsed();
@@ -3227,7 +3235,15 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendi
     EXPECT_TRUE(verifyTokenCheck(1));
 
     offset = cmdStream->getUsed();
-    immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(alloc), nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(alloc), nullptr, 0, nullptr, waitEventsParametersForGlobalTs);
     EXPECT_TRUE(verifyTokenCheck(1));
 
     offset = cmdStream->getUsed();
@@ -3904,8 +3920,16 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignalli
     EXPECT_EQ(partitionCount, immCmdList->inOrderExecInfo->getCounterValue());
 
     size_t offset = cmdStream->getUsed();
-
-    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+    immCmdList->appendWaitOnEvents(1, &handle, waitEventsParameters);
 
     EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
 
@@ -3951,8 +3975,16 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSi
     EXPECT_EQ(partitionCount, immCmdList->inOrderExecInfo->getCounterValue());
 
     size_t offset = cmdStream->getUsed();
-
-    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+    immCmdList->appendWaitOnEvents(1, &handle, waitEventsParameters);
 
     EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
 
@@ -4006,8 +4038,16 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndWithoutA
     EXPECT_EQ(expectedCounter, immCmdList->inOrderExecInfo->getCounterValue());
 
     size_t offset = cmdStream->getUsed();
-
-    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+    immCmdList->appendWaitOnEvents(1, &handle, waitEventsParameters);
 
     expectedCounter += counterIncrement;
     EXPECT_EQ(expectedCounter, immCmdList->inOrderExecInfo->getCounterValue());

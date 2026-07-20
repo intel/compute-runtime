@@ -1254,7 +1254,16 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEv
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
     auto eventHandle = event->toHandle();
-    cmdList.appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    cmdList.appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
 
     EXPECT_TRUE(cmdList.dependenciesPresent);
 

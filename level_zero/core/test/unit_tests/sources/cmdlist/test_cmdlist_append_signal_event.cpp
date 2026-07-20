@@ -157,7 +157,15 @@ HWTEST_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTime
 
     commandContainer.clearResidencyContainer();
 
-    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr, waitEventsParameters);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -867,7 +875,15 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->setEventTimestampFlag(true);
     commandList->partitionCount = packets;
 
-    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr, waitEventsParameters);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
     auto residencyContainer = commandContainer.getResidencyContainer();

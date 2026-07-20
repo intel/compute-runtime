@@ -79,7 +79,8 @@ HWTEST_F(HostFunctionTests, givenInvalidWaitEventsHandleWhenAppendHostFunctionIs
     std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
-    CmdListHostFunctionParameters parameters{.relaxedOrderingDispatch = false};
+    CmdListHostFunctionParameters parameters;
+    parameters.waitEventParams.relaxedOrderingAllowed = false;
 
     uint32_t numWaitEvents = 1;
     ze_event_handle_t *phWaitEvents = nullptr;
@@ -151,7 +152,8 @@ HWTEST_F(HostFunctionTests, givenOOQCmdListAndCounterBasedEventThenAppendHostFun
     std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result, false)));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
-    CmdListHostFunctionParameters parameters{.relaxedOrderingDispatch = false};
+    CmdListHostFunctionParameters parameters;
+    parameters.waitEventParams.relaxedOrderingAllowed = false;
 
     ze_command_queue_desc_t queueDesc = {};
     std::unique_ptr<Mock<CommandQueue>> queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);

@@ -667,8 +667,16 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
     ASSERT_NE(nullptr, eventPool);
 
     eventPool->createEvent(&eventDesc, &hEvent);
-
-    auto result = commandList->appendWaitOnEvents(1, &hEvent, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    auto result = commandList->appendWaitOnEvents(1, &hEvent, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = cmdStream->getUsed();

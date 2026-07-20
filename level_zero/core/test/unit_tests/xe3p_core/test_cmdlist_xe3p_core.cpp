@@ -622,7 +622,15 @@ XE3P_CORETEST_F(MultiTileSynchronizedDispatchTestsXe3p, givenLimitedSyncDispatch
     offset = cmdStream->getUsed();
     size_t rangeSizes = 1;
     const void **ranges = const_cast<const void **>(&alloc);
-    immCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_TRUE(verifyTokenCheck(1, 0));
 
     offset = cmdStream->getUsed();
@@ -640,7 +648,15 @@ XE3P_CORETEST_F(MultiTileSynchronizedDispatchTestsXe3p, givenLimitedSyncDispatch
     EXPECT_TRUE(verifyTokenCheck(1, 0));
 
     offset = cmdStream->getUsed();
-    immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(alloc), nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(alloc), nullptr, 0, nullptr, waitEventsParametersForGlobalTs);
     EXPECT_TRUE(verifyTokenCheck(1, 0));
 
     offset = cmdStream->getUsed();

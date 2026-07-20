@@ -1632,10 +1632,25 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     verifyFlags(commandList->appendSignalEvent(event, false), true, true);
 
     verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false, false);
-
-    verifyFlags(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), true, true);
-
-    verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr), true, true);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    verifyFlags(commandList->appendWaitOnEvents(1, &event, waitEventsParameters), true, true);
+    CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr, waitEventsParametersForGlobalTs), true, true);
 
     if constexpr (FamilyType::supportsSampler) {
         auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
@@ -1664,7 +1679,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     size_t rangeSizes = 1;
     const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
-    verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr), true, true);
+    verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr, waitEventsParameters), true, true);
 
     const auto &productHelper = device->getProductHelper();
 
@@ -2043,10 +2058,25 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
         verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false),
                     false, false);
-
-        verifyFlags(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), false, false);
-
-        verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, numWaitlistEvents, waitlist),
+        CmdListWaitEventParameters waitEventsParameters{
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = false,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+            .apiRequest = false,
+            .skipFlush = false};
+        verifyFlags(commandList->appendWaitOnEvents(1, &event, waitEventsParameters), false, false);
+        CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, numWaitlistEvents, waitlist, waitEventsParametersForGlobalTs),
                     false, false);
 
         if constexpr (FamilyType::supportsSampler) {
@@ -2081,7 +2111,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
         size_t rangeSizes = 1;
         const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
-        verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, numWaitlistEvents, waitlist),
+        verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, numWaitlistEvents, waitlist, waitEventsParameters),
                     false, false);
     }
 
@@ -2457,9 +2487,25 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     verifyWalkerWithProfilingEnqueued(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false);
 
-    verifyWalkerWithProfilingEnqueued(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), false);
-
-    verifyWalkerWithProfilingEnqueued(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), event, 0, nullptr), false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    verifyWalkerWithProfilingEnqueued(commandList->appendWaitOnEvents(1, &event, waitEventsParameters), false);
+    CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    verifyWalkerWithProfilingEnqueued(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), event, 0, nullptr, waitEventsParametersForGlobalTs), false);
 
     if constexpr (FamilyType::supportsSampler) {
         auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
@@ -2488,7 +2534,8 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     size_t rangeSizes = 1;
     const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
-    verifyWalkerWithProfilingEnqueued(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, event, 0, nullptr), false);
+
+    verifyWalkerWithProfilingEnqueued(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, event, 0, nullptr, waitEventsParameters), false);
 
     CmdListKernelLaunchParams cooperativeParams = {};
     cooperativeParams.isCooperative = true;
@@ -2564,9 +2611,25 @@ HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfiling
 
     verifyFlag(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false);
 
-    verifyFlag(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), false);
-
-    verifyFlag(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), event, 0, nullptr), false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    verifyFlag(commandList->appendWaitOnEvents(1, &event, waitEventsParameters), false);
+    CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    verifyFlag(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), event, 0, nullptr, waitEventsParametersForGlobalTs), false);
 
     if constexpr (FamilyType::supportsSampler) {
         auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
@@ -2595,7 +2658,7 @@ HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfiling
 
     size_t rangeSizes = 1;
     const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
-    verifyFlag(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, event, 0, nullptr), false);
+    verifyFlag(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, event, 0, nullptr, waitEventsParameters), false);
 
     CmdListKernelLaunchParams cooperativeParams = {};
     cooperativeParams.isCooperative = true;
@@ -2688,8 +2751,16 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
     std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(static_cast<Device *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
-
-    returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = commandList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
@@ -2804,7 +2875,16 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(static_cast<Device *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = commandList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
@@ -2895,8 +2975,16 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWh
 
     const auto oldCsr = queue->csr;
     queue->csr = &mockCommandStreamReceiver;
-
-    returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = commandList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     queue->csr = oldCsr;
