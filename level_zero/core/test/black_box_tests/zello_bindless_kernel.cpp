@@ -370,35 +370,51 @@ void run(const ze_kernel_handle_t &copyKernel, const ze_kernel_handle_t &fillKer
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
 }
 
-bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId) {
+bool probeBindfulSupport(const std::string &deviceId, const std::string &revisionId) {
+    std::string buildLog;
+    auto bin = LevelZeroBlackBoxTests::compileToNative(source, deviceId, revisionId, "-cl-std=CL3.0", "", "bindful", buildLog);
+    return bin.size() != 0;
+}
+
+bool testSeparateBindlessBindfulKernels(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId, bool isBindfulSupported) {
     bool outputValidated = false;
 
     ze_module_handle_t module = nullptr;
     ze_module_handle_t module2 = nullptr;
     createModule(source, AddressingMode::bindless, context, device, deviceId, revisionId, module, "", false);
-    createModule(source, AddressingMode::bindful, context, device, deviceId, revisionId, module2, "", false);
 
-    ExecutionMode executionModes[] = {ExecutionMode::immSyncCmdList, ExecutionMode::commandQueue};
     ze_kernel_handle_t copyKernel = nullptr;
     ze_kernel_handle_t fillKernel = nullptr;
     createKernel(module, copyKernel, kernelName.c_str());
-    createKernel(module2, fillKernel, kernelName2.c_str());
+
+    if (isBindfulSupported) {
+        createModule(source, AddressingMode::bindful, context, device, deviceId, revisionId, module2, "", false);
+        createKernel(module2, fillKernel, kernelName2.c_str());
+    } else {
+        std::cout << "Bindful not supported. Skipping bindful fill kernel section.\n";
+    }
+
+    ExecutionMode executionModes[] = {ExecutionMode::immSyncCmdList, ExecutionMode::commandQueue};
 
     for (auto mode : executionModes) {
 
         run(copyKernel, fillKernel, context, device, 0, mode, outputValidated);
 
         if (!outputValidated) {
-            std::cout << "testBindlessBufferCopy with mode " << static_cast<uint32_t>(mode) << " failed.\n"
+            std::cout << "testSeparateBindlessBindfulKernels with mode " << static_cast<uint32_t>(mode) << " failed.\n"
                       << std::endl;
             break;
         }
     }
 
     SUCCESS_OR_TERMINATE(zeKernelDestroy(copyKernel));
-    SUCCESS_OR_TERMINATE(zeKernelDestroy(fillKernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
-    SUCCESS_OR_TERMINATE(zeModuleDestroy(module2));
+    if (fillKernel != nullptr) {
+        SUCCESS_OR_TERMINATE(zeKernelDestroy(fillKernel));
+    }
+    if (module2 != nullptr) {
+        SUCCESS_OR_TERMINATE(zeModuleDestroy(module2));
+    }
 
     return outputValidated;
 }
@@ -493,7 +509,7 @@ void runBindlessBindful(const ze_kernel_handle_t &firstKernel, const ze_kernel_h
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer3));
 }
 
-bool testBindlessBindfulKernel(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId) {
+bool testInterleavedBindlessBindfulKernels(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId) {
     bool outputValidated = false;
 
     ze_module_handle_t module = nullptr;
@@ -517,11 +533,11 @@ bool testBindlessBindfulKernel(ze_context_handle_t context, ze_device_handle_t d
             runBindlessBindful(std::get<0>(kernel), std::get<1>(kernel), context, device, mode, outputValidated);
 
             if (!outputValidated) {
-                std::cout << "testBindlessBindfulKernel with mode " << static_cast<uint32_t>(mode) << " failed.\n"
+                std::cout << "testInterleavedBindlessBindfulKernels with mode " << static_cast<uint32_t>(mode) << " failed.\n"
                           << std::endl;
                 break;
             } else {
-                std::cout << "testBindlessBindfulKernel with mode " << static_cast<uint32_t>(mode) << " " << std::get<2>(kernel) << " PASSED.\n"
+                std::cout << "testInterleavedBindlessBindfulKernels with mode " << static_cast<uint32_t>(mode) << " " << std::get<2>(kernel) << " PASSED.\n"
                           << std::endl;
             }
         }
@@ -654,7 +670,7 @@ bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, 
     return outputValidated;
 }
 
-bool testBindlessBindfulImageKernel(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId) {
+bool testInterleavedBindlessBindfulImageKernels(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId) {
 
     ExecutionMode executionModes[] = {ExecutionMode::commandQueue, ExecutionMode::immSyncCmdList};
 
@@ -669,11 +685,11 @@ bool testBindlessBindfulImageKernel(ze_context_handle_t context, ze_device_handl
             bool result2 = testBindlessImages(context, device, deviceId, revisionId, 0, std::get<1>(kernelMode), mode);
 
             if (!result1 || !result2) {
-                std::cout << "testBindlessBindfulImageKernel with mode " << static_cast<uint32_t>(mode) << " " << std::get<2>(kernelMode) << " FAILED.\n"
+                std::cout << "testInterleavedBindlessBindfulImageKernels with mode " << static_cast<uint32_t>(mode) << " " << std::get<2>(kernelMode) << " FAILED.\n"
                           << std::endl;
                 return false;
             } else {
-                std::cout << "testBindlessBindfulKernel with mode " << static_cast<uint32_t>(mode) << " " << std::get<2>(kernelMode) << " PASSED.\n"
+                std::cout << "testInterleavedBindlessBindfulImageKernels with mode " << static_cast<uint32_t>(mode) << " " << std::get<2>(kernelMode) << " PASSED.\n"
                           << std::endl;
             }
         }
@@ -1605,6 +1621,8 @@ int main(int argc, char *argv[]) {
     bool is3dImageSupported = LevelZeroBlackBoxTests::checkImageSupport(device, false, false, true, false);
     bool isImageArraySupported = LevelZeroBlackBoxTests::checkImageSupport(device, false, false, false, true);
 
+    bool isBindfulSupported = probeBindfulSupport(ss.str(), revisionId);
+
     for (int i = 0; i < numTests; i++) {
         if (testCase != -1) {
             i = testCase;
@@ -1613,9 +1631,9 @@ int main(int argc, char *argv[]) {
         switch (i) {
         default:
         case 0:
-            std::cout << "\ntest case: testBindlessBufferCopy\n"
+            std::cout << "\ntest case: testSeparateBindlessBindfulKernels\n"
                       << std::endl;
-            outputValidated &= testBindlessBufferCopy(context, device, ss.str(), revisionId);
+            outputValidated &= testSeparateBindlessBindfulKernels(context, device, ss.str(), revisionId, isBindfulSupported);
             break;
         case 1:
             std::cout << "\ntest case: testBindlessImages\n"
@@ -1720,20 +1738,26 @@ int main(int argc, char *argv[]) {
             }
             break;
         case 6:
-            std::cout << "\ntest case: testBindlessBindfulKernel\n"
+            std::cout << "\ntest case: testInterleavedBindlessBindfulKernels\n"
                       << std::endl;
 
-            outputValidated &= testBindlessBindfulKernel(context, device, ss.str(), revisionId);
+            if (isBindfulSupported) {
+                outputValidated &= testInterleavedBindlessBindfulKernels(context, device, ss.str(), revisionId);
+            } else {
+                std::cout << "Skipped. testInterleavedBindlessBindfulKernels case relies on bindful addressing, which is not supported\n";
+            }
             break;
         case 7:
 
-            if (is2dImageSupported) {
-                std::cout << "\ntest case: testBindlessBindfulImageKernel\n"
+            if (is2dImageSupported && isBindfulSupported) {
+                std::cout << "\ntest case: testInterleavedBindlessBindfulImageKernels\n"
                           << std::endl;
 
-                outputValidated &= testBindlessBindfulImageKernel(context, device, ss.str(), revisionId);
+                outputValidated &= testInterleavedBindlessBindfulImageKernels(context, device, ss.str(), revisionId);
+            } else if (!isBindfulSupported) {
+                std::cout << "Skipped. testInterleavedBindlessBindfulImageKernels case relies on bindful addressing, which is not supported\n";
             } else {
-                std::cout << "Skipped. testBindlessBindfulImageKernel case not supported\n";
+                std::cout << "Skipped. testInterleavedBindlessBindfulImageKernels case not supported\n";
             }
 
             break;
