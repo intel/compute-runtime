@@ -223,7 +223,6 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
     mock->ioctlExpected.gemClose = 2;
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.execbuffer2 = 1;
-    mock->ioctlExpected.getResetStats = 1;
 
     // builtins kernels
     mock->ioctlExpected.gemUserptr += 8;

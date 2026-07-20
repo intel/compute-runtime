@@ -41,7 +41,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
   public:
     DrmMockCustom *mock = nullptr;
     bool dontTestIoctlInTearDown = false;
-    bool validateResetStats = true;
     const uint32_t rootDeviceIndex = 1u;
     const uint32_t numRootDevices = 2u;
     TestedDrmMemoryManager *memoryManager = nullptr;
@@ -62,7 +61,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         executionEnvironment->incRefInternal();
         debugManager.flags.DeferOsContextInitialization.set(0);
         debugManager.flags.SetAmountOfReusableAllocations.set(0);
-        debugManager.flags.DisableGpuHangDetection.set(0);
 
         environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<GfxFamily>>();
         allocationData.rootDeviceIndex = rootDeviceIndex;
@@ -125,10 +123,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
             mock->ioctlExpected.gemWait += enginesCount;
         }
 
-        if (csr->isUpdateTagFromWaitEnabled() && csr->getTagAllocation() && validateResetStats) {
-            mock->ioctlExpected.getResetStats += enginesCount;
-        }
-
         auto &compilerProductHelper = device->getCompilerProductHelper();
         auto isHeapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
         if (isHeapless) {
@@ -143,7 +137,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         mock->ioctlExpected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();
         mock->ioctlExpected.gemClose += additionalDestroyDeviceIoctls.gemClose.load();
         delete device;
-        mock->ioctlExpected.getResetStats += additionalDestroyDeviceIoctls.getResetStats.load();
         if (dontTestIoctlInTearDown) {
             mock->reset();
         }

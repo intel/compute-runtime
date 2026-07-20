@@ -225,11 +225,6 @@ class Drm : public DriverModel {
     const RootDeviceEnvironment &getRootDeviceEnvironment() const {
         return rootDeviceEnvironment;
     }
-
-    const std::vector<uint32_t> &getVirtualMemoryIds() const {
-        return virtualMemoryIds;
-    }
-
     const HardwareInfo *getHardwareInfo() const override;
     static bool isDrmSupported(int fileDescriptor);
 

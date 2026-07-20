@@ -276,55 +276,39 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
     return ret;
 }
 
-void inline printFault(const ResetStatsFault &fault, const std::string &idLabel, uint32_t contextId, const std::string &engineName, bool banned) {
-    IoFunctions::fprintf(stderr, "Segmentation fault from GPU at 0x%llx, %s: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
-                         fault.addr,
-                         idLabel.c_str(),
-                         contextId,
-                         engineName.c_str(),
-                         fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
-                         fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
-                         fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
-                         banned);
-    IoFunctions::fprintf(stdout, "Segmentation fault from GPU at 0x%llx, %s: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
-                         fault.addr,
-                         idLabel.c_str(),
-                         contextId,
-                         engineName.c_str(),
-                         fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
-                         fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
-                         fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
-                         banned);
-}
-
 bool Drm::checkResetStatus(OsContext &osContext) {
-    const auto osContextLinux = osContext.asOsContextLinux();
-    if (!osContextLinux) {
-        return false;
-    }
+    const auto osContextLinux = static_cast<OsContextLinux *>(&osContext);
     const auto &drmContextIds = osContextLinux->getDrmContextIds();
 
     for (const auto drmContextId : drmContextIds) {
         ResetStats resetStats{};
         resetStats.contextId = drmContextId;
+        ResetStatsFault fault{};
         uint32_t status = 0;
-        std::vector<ResetFaultContext> faultsVector;
-        bool reportFaults = true;
-        const auto retVal{ioctlHelper->getResetStats(resetStats, &status, osContextLinux, faultsVector, reportFaults)};
-        if (retVal != 0) {
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "getResetStats failed with error %d for contextId %u, checking VM faults\n",
-                         retVal, drmContextId);
-        }
-
-        if (!reportFaults) {
-            return false;
-        }
-
-        if (!faultsVector.empty()) {
-            for (const auto &fault : faultsVector) {
-                printFault(fault.fault, fault.vmFault ? "vm_id" : "ctx_id", fault.id, EngineHelpers::engineTypeToString(osContext.getEngineType()), fault.banned);
+        const auto retVal{ioctlHelper->getResetStats(resetStats, &status, &fault)};
+        UNRECOVERABLE_IF(retVal != 0);
+        auto debuggingEnabled = rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled();
+        if (checkToDisableScratchPage() && ioctlHelper->validPageFault(fault.flags)) {
+            bool banned = ((status & ioctlHelper->getStatusForResetStats(true)) != 0);
+            if (!banned && debuggingEnabled) {
+                return false;
             }
+            IoFunctions::fprintf(stderr, "Segmentation fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                                 fault.addr,
+                                 resetStats.contextId,
+                                 EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
+                                 fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
+                                 fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
+                                 fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
+                                 banned);
+            IoFunctions::fprintf(stdout, "Segmentation fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                                 fault.addr,
+                                 resetStats.contextId,
+                                 EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
+                                 fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
+                                 fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
+                                 fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
+                                 banned);
             UNRECOVERABLE_IF(true);
         }
         if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
@@ -1901,10 +1885,9 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     }
 
     bool useVmBind = isVmBindAvailable();
-    bool disableScratch = checkToDisableScratchPage();
-    bool enablePageFault = (hasPageFaultSupport() && useVmBind) || disableScratch;
+    bool enablePageFault = hasPageFaultSupport() && useVmBind;
 
-    ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
+    ctl.flags = ioctlHelper->getFlagsForVmCreate(checkToDisableScratchPage(), enablePageFault, useVmBind);
 
     auto ret = ioctlHelper->ioctl(DrmIoctl::gemVmCreate, &ctl);
 

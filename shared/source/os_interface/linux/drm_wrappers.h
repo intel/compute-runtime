@@ -347,8 +347,7 @@ enum class DrmIoctl {
     perfDisable,
     perfQuery,
     primaryContextExport,
-    primaryContextImport,
-    vmGetProperty
+    primaryContextImport
 };
 
 enum class DrmParam {

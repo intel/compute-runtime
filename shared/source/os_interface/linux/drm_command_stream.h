@@ -49,7 +49,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
     bool isKmdWaitModeActive() override;
     bool isKmdWaitOnTaskCountAllowed() const override;
-    WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait) override;
 
     DrmMemoryManager *getMemoryManager() const;
 

@@ -36,19 +36,6 @@ TEST(OSContextLinux, givenReinitializeContextWhenContextIsInitThenContextIsStill
     EXPECT_NO_THROW(osContext.ensureContextInitialized());
 }
 
-TEST(OSContextLinux, givenOsContextLinuxWhenAsOsContextLinuxIsCalledThenPointerToSelfIsReturned) {
-    MockExecutionEnvironment executionEnvironment;
-    auto mock = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u, false);
-    OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-
-    EXPECT_EQ(&osContext, osContext.asOsContextLinux());
-
-    // Ensure the downcast resolves through a base OsContext reference via virtual dispatch
-    OsContext &baseContext = osContext;
-    EXPECT_EQ(&osContext, baseContext.asOsContextLinux());
-}
-
 TEST(OSContextLinux, givenInitializeContextWhenContextCreateIoctlFailsThenContextNotInitialized) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);

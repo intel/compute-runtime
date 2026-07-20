@@ -862,7 +862,6 @@ TEST_F(IoctlPrelimHelperTests, whenGetResetStatsIsCalledThenCorrectValueIsReturn
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
 
-    drm->disableScratch = true;
     uint32_t status = 1;
     ResetStatsFault fault{};
     fault.flags = 1;
@@ -873,89 +872,22 @@ TEST_F(IoctlPrelimHelperTests, whenGetResetStatsIsCalledThenCorrectValueIsReturn
 
     status = 0;
     fault.flags = 0;
-    std::vector<ResetFaultContext> faultsVector;
-    bool reportFaults = true;
 
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, nullptr, nullptr, faultsVector, reportFaults));
+    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, nullptr, nullptr));
     EXPECT_EQ(1u, mockIoctlHelper.resetStatsPrelimCalled);
     EXPECT_EQ(0u, mockIoctlHelper.resetStatsCalled);
 
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, nullptr, faultsVector, reportFaults));
+    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, nullptr));
     EXPECT_EQ(1u, status);
     EXPECT_EQ(2u, mockIoctlHelper.resetStatsPrelimCalled);
     EXPECT_EQ(0u, mockIoctlHelper.resetStatsCalled);
+
     status = 0;
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, nullptr, faultsVector, reportFaults));
+    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, &fault));
     EXPECT_EQ(1u, status);
-    EXPECT_EQ(1u, faultsVector.size());
-    EXPECT_EQ(1, faultsVector[0].fault.flags);
+    EXPECT_EQ(1, fault.flags);
     EXPECT_EQ(3u, mockIoctlHelper.resetStatsPrelimCalled);
     EXPECT_EQ(0u, mockIoctlHelper.resetStatsCalled);
-}
-
-TEST_F(IoctlPrelimHelperTests, givenDisableScratchIsFalseWhenGetResetStatsIsCalledThenNoFaultsReported) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
-
-    drm->disableScratch = false;
-    uint32_t status = 1;
-    ResetStatsFault fault{};
-    fault.flags = 1;
-
-    ResetStats resetStats{};
-    resetStats.contextId = 0;
-    mockIoctlHelper.overrideResetStatsPrelim = {resetStats, status, fault};
-
-    std::vector<ResetFaultContext> faultsVector;
-    bool reportFaults = true;
-
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, nullptr, faultsVector, reportFaults));
-    EXPECT_EQ(0u, faultsVector.size());
-}
-
-TEST_F(IoctlPrelimHelperTests, givenInvalidPageFaultWhenGetResetStatsIsCalledThenNoFaultsReported) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
-
-    drm->disableScratch = true;
-    uint32_t status = 1;
-    ResetStatsFault fault{};
-    fault.flags = 2; // valid bit not set
-
-    ResetStats resetStats{};
-    resetStats.contextId = 0;
-    mockIoctlHelper.overrideResetStatsPrelim = {resetStats, status, fault};
-
-    std::vector<ResetFaultContext> faultsVector;
-    bool reportFaults = true;
-
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, nullptr, faultsVector, reportFaults));
-    EXPECT_EQ(0u, faultsVector.size());
-}
-
-TEST_F(IoctlPrelimHelperTests, givenDebuggingEnabledWhenGetResetStatsIsCalledThenNoFaultsReported) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(DebuggingMode::online);
-    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
-
-    drm->disableScratch = true;
-    uint32_t status = 0;
-    ResetStatsFault fault{};
-    fault.flags = 1;
-
-    ResetStats resetStats{};
-    resetStats.contextId = 0;
-    mockIoctlHelper.overrideResetStatsPrelim = {resetStats, status, fault};
-
-    std::vector<ResetFaultContext> faultsVector;
-    bool reportFaults = true;
-
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, nullptr, faultsVector, reportFaults));
-    EXPECT_EQ(0u, faultsVector.size());
-    EXPECT_EQ(false, reportFaults);
 }
 
 TEST_F(IoctlPrelimHelperTests, givenNonZeroReturnValuewhenGetResetStatsIsCalledThenReturnsValueFromRegularResetStatsIoctl) {
@@ -974,37 +906,11 @@ TEST_F(IoctlPrelimHelperTests, givenNonZeroReturnValuewhenGetResetStatsIsCalledT
 
     status = 0;
     fault.flags = 0;
-    std::vector<ResetFaultContext> faultsVector;
-    bool reportFaults = true;
     mockIoctlHelper.overrideResetStatsPrelimReturnValue = -1;
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, nullptr, faultsVector, reportFaults));
+    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, &fault));
     EXPECT_EQ(1u, mockIoctlHelper.resetStatsPrelimCalled);
     EXPECT_EQ(1u, mockIoctlHelper.resetStatsCalled);
 }
-
-TEST_F(IoctlPrelimHelperTests, givenNonZeroReturnValueFromEachIoctlWhenGetResetStatsIsCalledThenNoFaultsReported) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
-
-    drm->disableScratch = true;
-    uint32_t status = 1;
-    ResetStatsFault fault{};
-    fault.flags = 1;
-
-    ResetStats resetStats{};
-    resetStats.contextId = 0;
-    mockIoctlHelper.overrideResetStatsPrelim = {resetStats, status, fault};
-    mockIoctlHelper.overrideResetStatsPrelimReturnValue = -1;
-    mockIoctlHelper.overrideResetStatsReturnValue = -1;
-
-    std::vector<ResetFaultContext> faultsVector;
-    bool reportFaults = true;
-
-    EXPECT_EQ(-1, mockIoctlHelper.getResetStats(resetStats, &status, nullptr, faultsVector, reportFaults));
-    EXPECT_EQ(0u, faultsVector.size());
-}
-
 TEST_F(IoctlPrelimHelperTests, whenCallingGetStatusAndFlagsForResetStatsThenExpectedValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
