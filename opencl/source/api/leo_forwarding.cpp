@@ -10,6 +10,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_library.h"
 
+#include <atomic>
+
 namespace NEO {
 
 static void loadL0Library();
@@ -19,11 +21,18 @@ bool isLEOEnabled() {
     if (flag == 0) {
         return false;
     }
-    loadL0Library();
     if (flag == 1) {
+        loadL0Library();
         return true;
     }
-    return l0ForwardingState && l0ForwardingState->hasPlatforms;
+    return l0ForwardingState && l0ForwardingState->forwardingActive.load(std::memory_order_acquire);
+}
+
+void activateLeoForwarding() {
+    loadL0Library();
+    if (l0ForwardingState) {
+        l0ForwardingState->forwardingActive.store(true, std::memory_order_release);
+    }
 }
 
 L0ForwardingState *l0ForwardingState = nullptr;
@@ -66,12 +75,6 @@ static void loadL0Library() {
         l0ForwardingState->clGetCLObjectInfoINTELFunc = reinterpret_cast<pfnClGetCLObjectInfoINTEL>(l0ForwardingState->library->getProcAddress("clGetCLObjectInfoINTEL"));
         l0ForwardingState->clGetCLEventInfoINTELFunc = reinterpret_cast<pfnClGetCLEventInfoINTEL>(l0ForwardingState->library->getProcAddress("clGetCLEventInfoINTEL"));
         l0ForwardingState->clReleaseGlSharedEventINTELFunc = reinterpret_cast<pfnClReleaseGlSharedEventINTEL>(l0ForwardingState->library->getProcAddress("clReleaseGlSharedEventINTEL"));
-
-        if (l0ForwardingState->clGetPlatformIDsFunc) {
-            cl_uint numPlatforms = 0u;
-            l0ForwardingState->clGetPlatformIDsFunc(0, nullptr, &numPlatforms);
-            l0ForwardingState->hasPlatforms = (numPlatforms > 0u);
-        }
     }
 }
 

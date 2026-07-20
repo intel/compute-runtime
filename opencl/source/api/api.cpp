@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 
 #include "opencl/source/api/additional_extensions.h"
@@ -89,6 +90,10 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
 
         static std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
+        if (isLEOEnabled()) {
+            retVal = forwardClGetPlatformIDs(numEntries, platforms, numPlatforms);
+            break;
+        }
         if (platformsImpl->empty()) {
             auto executionEnvironment = new ClExecutionEnvironment();
             executionEnvironment->incRefInternal();
@@ -105,8 +110,19 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             bool oneApiPvcWa = envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true);
             executionEnvironment->setOneApiPvcWaEnv(oneApiPvcWa);
 
-            auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
+            std::vector<std::unique_ptr<Device>> allDevices;
+            bool leoSupported = false;
+            try {
+                allDevices = DeviceFactory::createDevices(*executionEnvironment);
+            } catch (const LeoSupportedException &) {
+                leoSupported = true;
+            }
             executionEnvironment->decRefInternal();
+            if (leoSupported) {
+                activateLeoForwarding();
+                retVal = forwardClGetPlatformIDs(numEntries, platforms, numPlatforms);
+                break;
+            }
             if (allDevices.empty()) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
@@ -242,6 +258,10 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         } else {
             cl_uint numPlatforms = 0u;
             retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
+            if (isLEOEnabled()) {
+                retVal = forwardClGetDeviceIDs(platform, deviceType, numEntries, devices, numDevices);
+                break;
+            }
             if (numPlatforms == 0u) {
                 retVal = CL_DEVICE_NOT_FOUND;
                 break;

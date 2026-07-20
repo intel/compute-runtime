@@ -14,6 +14,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/device_caps_reader.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -21,6 +22,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
+#include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -63,6 +65,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         rootDeviceEnvironment.setHwInfo(hwInfoConst);
 
         rootDeviceEnvironment.initProductHelper();
+        quitOclInitIfLeoEnabled(rootDeviceEnvironment);
         rootDeviceEnvironment.initGfxCoreHelper();
         rootDeviceEnvironment.initApiGfxCoreHelper();
         rootDeviceEnvironment.initCompilerProductHelper();
@@ -266,6 +269,8 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
             continue;
         }
 
+        quitOclInitIfLeoEnabled(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+
         rootDeviceIndex++;
     }
 
@@ -321,6 +326,25 @@ std::unique_ptr<Device> DeviceFactory::createDevice(ExecutionEnvironment &execut
     device = createRootDeviceFunc(executionEnvironment, rootDeviceIndex);
 
     return device;
+}
+
+void quitOclInitIfLeoEnabled(RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (!isLeoDetectionEnabled()) {
+        return;
+    }
+
+    if (ApiSpecificConfig::getApiType() != ApiSpecificConfig::OCL) {
+        return;
+    }
+
+    const auto enableLeoFlag = debugManager.flags.EnableLEO.get();
+    if (enableLeoFlag == 0 || enableLeoFlag == 1) {
+        return;
+    }
+
+    if (rootDeviceEnvironment.getProductHelper().isLEOSupported()) {
+        throw LeoSupportedException{};
+    }
 }
 
 std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvironment &executionEnvironment) {

@@ -10,6 +10,7 @@
 #include "config.h"
 #include <CL/cl.h>
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 
@@ -18,6 +19,8 @@ namespace NEO {
 class OsLibrary;
 
 bool isLEOEnabled();
+
+void activateLeoForwarding();
 
 cl_int forwardClGetPlatformIDs(cl_uint numEntries, cl_platform_id *platforms, cl_uint *numPlatforms);
 cl_int forwardClGetPlatformInfo(cl_platform_id platform, cl_platform_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet);
@@ -37,7 +40,7 @@ using pfnClReleaseGlSharedEventINTEL = cl_int(CL_API_CALL *)(cl_event);
 struct L0ForwardingState {
     std::mutex mutex;
     bool loaded = false;
-    bool hasPlatforms = false;
+    std::atomic<bool> forwardingActive{false};
     std::unique_ptr<OsLibrary> library;
     pfnClIcdGetPlatformIDsKHR clGetPlatformIDsFunc = nullptr;
     decltype(&clGetPlatformInfo) clGetPlatformInfoFunc = nullptr;

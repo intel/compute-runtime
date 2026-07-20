@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -20,6 +21,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -302,6 +304,49 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
     for (auto iterator = 0u; iterator < 8; iterator++) {
         EXPECT_EQ(iterator, devices[iterator]->getRootDeviceIndex());
     }
+}
+
+struct DeviceFactoryLeoTest : public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.EnableLEO.set(-1);
+        ultHwConfig.leoDetectionEnabled = true;
+        DeviceFactory::createRootDeviceFunc = [](ExecutionEnvironment &, uint32_t) -> std::unique_ptr<Device> { return nullptr; };
+    }
+
+    MockExecutionEnvironment &prepareEnvWithLeoSupport(bool isLeoSupported) {
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
+        auto mockProductHelper = new MockProductHelper;
+        mockProductHelper->isLEOSupportedResult = isLeoSupported;
+        executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
+        return *executionEnvironment;
+    }
+
+    DebugManagerStateRestore restorer;
+    VariableBackup<UltHwConfig> ultHwConfigBackup{&ultHwConfig};
+    VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createRootDeviceFuncBackup{&DeviceFactory::createRootDeviceFunc};
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+};
+
+TEST_F(DeviceFactoryLeoTest, givenOpenClApiAndAutoEnableLeoWhenProductSupportsLeoThenCreateDevicesThrowsLeoSupportedException) {
+    auto &executionEnvironment = prepareEnvWithLeoSupport(true);
+    EXPECT_THROW(DeviceFactory::createDevices(executionEnvironment), LeoSupportedException);
+}
+
+TEST_F(DeviceFactoryLeoTest, givenOpenClApiAndAutoEnableLeoWhenProductDoesNotSupportLeoThenCreateDevicesDoesNotThrow) {
+    auto &executionEnvironment = prepareEnvWithLeoSupport(false);
+    EXPECT_NO_THROW(DeviceFactory::createDevices(executionEnvironment));
+}
+
+TEST_F(DeviceFactoryLeoTest, givenLeoForcedOffWhenProductSupportsLeoThenCreateDevicesDoesNotThrow) {
+    debugManager.flags.EnableLEO.set(0);
+    auto &executionEnvironment = prepareEnvWithLeoSupport(true);
+    EXPECT_NO_THROW(DeviceFactory::createDevices(executionEnvironment));
+}
+
+TEST_F(DeviceFactoryLeoTest, givenLeoForcedOnWhenProductSupportsLeoThenCreateDevicesDoesNotThrow) {
+    debugManager.flags.EnableLEO.set(1);
+    auto &executionEnvironment = prepareEnvWithLeoSupport(true);
+    EXPECT_NO_THROW(DeviceFactory::createDevices(executionEnvironment));
 }
 
 TEST(DeviceFactory, givenHwModeSelectedWhenIsHwModeSelectedIsCalledThenTrueIsReturned) {

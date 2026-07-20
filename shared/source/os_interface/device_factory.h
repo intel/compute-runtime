@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,12 @@ class ExecutionEnvironment;
 class Device;
 class ProductHelper;
 struct HardwareInfo;
+struct RootDeviceEnvironment;
 const HardwareInfo *getDefaultHwInfo();
 bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment);
 bool prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex);
+bool isLeoDetectionEnabled();
+void quitOclInitIfLeoEnabled(RootDeviceEnvironment &rootDeviceEnvironment);
 class DeviceFactory {
   public:
     static bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment);
