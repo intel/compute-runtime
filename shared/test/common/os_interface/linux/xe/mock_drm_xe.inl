@@ -49,6 +49,7 @@ struct DrmMockXe : public DrmMockCustom {
     uint64_t queryEngineCycles[5]{}; // 1 qword for eci and 4 qwords
     StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
     StackVec<drm_xe_vm_bind, 1> vmBindInputs;
+    StackVec<drm_xe_vm_bind_op, 2> vmBindOpsInputs;
     StackVec<drm_xe_sync, 1> syncInputs;
     StackVec<drm_xe_ext_set_property, 1> execQueueProperties;
     drm_xe_exec_queue_create latestExecQueueCreate = {};

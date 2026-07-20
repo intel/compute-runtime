@@ -190,6 +190,13 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
         auto vmBindInput = static_cast<drm_xe_vm_bind *>(arg);
         vmBindInputs.push_back(*vmBindInput);
 
+        if (vmBindInput->num_binds > 1) {
+            auto bindOps = reinterpret_cast<drm_xe_vm_bind_op *>(vmBindInput->vector_of_binds);
+            for (uint32_t i = 0; i < vmBindInput->num_binds; i++) {
+                vmBindOpsInputs.push_back(bindOps[i]);
+            }
+        }
+
         if (vmBindInput->num_syncs == 1) {
             auto &syncInput = reinterpret_cast<drm_xe_sync *>(vmBindInput->syncs)[0];
             syncInputs.push_back(syncInput);

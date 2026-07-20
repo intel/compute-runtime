@@ -2629,6 +2629,50 @@ TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemUsmEnabledThenTwoBin
     EXPECT_NE(std::string::npos, output.find(expectedOutput));
     EXPECT_EQ(drm->vmBindInputs[0].num_binds, 2u);
     EXPECT_NE(drm->vmBindInputs[0].vector_of_binds, 0u);
+    ASSERT_EQ(2u, drm->vmBindOpsInputs.size());
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_UNMAP), drm->vmBindOpsInputs[0].op);
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_MAP), drm->vmBindOpsInputs[1].op);
+    EXPECT_NE(0u, drm->vmBindOpsInputs[1].flags & DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR);
+    EXPECT_EQ(0u, drm->vmBindOpsInputs[1].obj);
+    EXPECT_EQ(0u, drm->vmBindOpsInputs[1].obj_offset);
+}
+
+TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemUsmEnabledWithNonZeroOffsetThenCpuAddrMirrorMapOpHasNoBackingObject) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = 0x1234;
+    vmBindParams.sharedSystemUsmEnabled = true;
+    vmBindParams.start = 0x0;
+    vmBindParams.length = 0x0;
+    vmBindParams.offset = 0x5000;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+
+    drm->vmBindInputs.clear();
+    drm->vmBindOpsInputs.clear();
+    drm->syncInputs.clear();
+    drm->waitUserFenceInputs.clear();
+
+    ASSERT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+
+    EXPECT_EQ(drm->vmBindInputs[0].num_binds, 2u);
+    ASSERT_EQ(2u, drm->vmBindOpsInputs.size());
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_UNMAP), drm->vmBindOpsInputs[0].op);
+    EXPECT_EQ(0x5000u, drm->vmBindOpsInputs[0].obj_offset);
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_MAP), drm->vmBindOpsInputs[1].op);
+    EXPECT_NE(0u, drm->vmBindOpsInputs[1].flags & DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR);
+    EXPECT_EQ(0u, drm->vmBindOpsInputs[1].obj);
+    EXPECT_EQ(0u, drm->vmBindOpsInputs[1].obj_offset);
 }
 
 TEST_F(IoctlHelperXeTest, whenCallingVmbBindWithMadviseAutoResetFlagThenVerifyXeLog) {
