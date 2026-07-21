@@ -27,3 +27,4 @@ ze_result_t res = zeDriverGetExtensionFunctionAddress(hDriver, "zexMemOpenIpcHan
 ### [Multiple IPC Handles](MULTIPLE_IPC_HANDLES.md)
 ### [Multi-CCS Modes](MULTI_CCS_MODES.md)
 ### [Local memory allocation mode](LOCAL_MEMORY_ALLOCATION_MODE.md)
+### [External Memory Mapping for System Memory](EXTERNAL_MEMMAP_SYSMEM.md)
