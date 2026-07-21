@@ -59,6 +59,54 @@ TEST(GetL0ImageRowPitchTests, givenNon1DArrayTypesWhenGetL0ImageRowPitchThenRowP
     }
 }
 
+TEST(ResolveHostPitchesForCustomPitchImageTests, givenCustomPitchImageAndZeroRowPitchWhenResolveThenTightRowPitchComputed) {
+    constexpr size_t elementSize = 4u;
+    const size_t region[3] = {329u, 349u, 1u};
+    size_t rowPitch = 0u;
+    size_t slicePitch = 0u;
+
+    resolveHostPitchesForCustomPitchImage(true, elementSize, region, rowPitch, slicePitch);
+
+    EXPECT_EQ(329u * elementSize, rowPitch);
+    EXPECT_EQ(349u * 329u * elementSize, slicePitch);
+}
+
+TEST(ResolveHostPitchesForCustomPitchImageTests, givenCustomPitchImageAndNonZeroRowPitchWhenResolveThenPitchesAreHonored) {
+    constexpr size_t elementSize = 4u;
+    const size_t region[3] = {329u, 349u, 1u};
+    size_t rowPitch = 1328u;
+    size_t slicePitch = 1328u * 349u;
+
+    resolveHostPitchesForCustomPitchImage(true, elementSize, region, rowPitch, slicePitch);
+
+    EXPECT_EQ(1328u, rowPitch);
+    EXPECT_EQ(1328u * 349u, slicePitch);
+}
+
+TEST(ResolveHostPitchesForCustomPitchImageTests, givenCustomPitchImageAndZeroSlicePitchOnlyWhenResolveThenSlicePitchDerivedFromProvidedRowPitch) {
+    constexpr size_t elementSize = 4u;
+    const size_t region[3] = {329u, 349u, 1u};
+    size_t rowPitch = 1328u;
+    size_t slicePitch = 0u;
+
+    resolveHostPitchesForCustomPitchImage(true, elementSize, region, rowPitch, slicePitch);
+
+    EXPECT_EQ(1328u, rowPitch);
+    EXPECT_EQ(1328u * 349u, slicePitch);
+}
+
+TEST(ResolveHostPitchesForCustomPitchImageTests, givenImageWithoutCustomPitchWhenResolveThenPitchesAreLeftUnchanged) {
+    constexpr size_t elementSize = 4u;
+    const size_t region[3] = {329u, 349u, 1u};
+    size_t rowPitch = 0u;
+    size_t slicePitch = 0u;
+
+    resolveHostPitchesForCustomPitchImage(false, elementSize, region, rowPitch, slicePitch);
+
+    EXPECT_EQ(0u, rowPitch);
+    EXPECT_EQ(0u, slicePitch);
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO

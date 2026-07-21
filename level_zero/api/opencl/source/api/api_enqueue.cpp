@@ -476,6 +476,8 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_READ_IMAGE, pCommandQueue);
 
     auto mipDesc = createZeImageRegionWithMipLevel(pImage, origin, region);
+    auto l0Image = pImage->getL0Object();
+    resolveHostPitchesForCustomPitchImage(l0Image->hasCustomPitch(), l0Image->getImageInfo().surfaceFormat->imageElementSizeInBytes, region, rowPitch, slicePitch);
 
     auto lock = pCommandQueue->takeOwnership();
     pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
@@ -527,6 +529,8 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_WRITE_IMAGE, pCommandQueue);
 
     auto mipDesc = createZeImageRegionWithMipLevel(pImage, origin, region);
+    auto l0Image = pImage->getL0Object();
+    resolveHostPitchesForCustomPitchImage(l0Image->hasCustomPitch(), l0Image->getImageInfo().surfaceFormat->imageElementSizeInBytes, region, inputRowPitch, inputSlicePitch);
 
     auto lock = pCommandQueue->takeOwnership();
     pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
