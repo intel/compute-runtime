@@ -5201,10 +5201,6 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             if (!isNonImmediateCounterBasedEvent && !acceptsRecordedImmediateEvent) {
                 return false;
             }
-
-            if (signalEvent->isKmdWaitModeEnabled()) {
-                this->interruptEvents.push_back(signalEvent);
-            }
         }
 
         if (signalEvent->isEventTimestampFlagSet()) {
@@ -5219,6 +5215,12 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             signalEvent->resetInOrderTimestampNode(tag, this->partitionCount);
             signalEvent->resetAdditionalTimestampNode(nullptr, this->partitionCount, false);
         }
+    }
+
+    const bool assignCsrOnSubmit = signalEvent->isSignalWithUserInterrupt() ||
+                                   (signalEvent->isCounterBased() && signalEvent->isKmdWaitModeEnabled());
+    if (!isImmediateType() && assignCsrOnSubmit) {
+        this->interruptEvents.push_back(signalEvent);
     }
 
     return true;

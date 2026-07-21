@@ -783,6 +783,64 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterruptableEventsWhenEx
     EXPECT_EQ(0u, cmdList->interruptEvents.size());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCommandListWithSignalWithUserInterruptPacketEventWhenExecutingOnSecondaryCsrThenAssignThatCsrToEvent) {
+    DebugManagerStateRestore restore;
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    auto cmdlistHandle = cmdList->toHandle();
+
+    auto defaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    defaultCsr->isWaitUserFenceNotEqualSupportedValue = true;
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 2;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(false);
+    auto eventWithoutKmdWait = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_FALSE(eventWithoutKmdWait->isSignalWithUserInterrupt());
+    auto eventWithoutKmdWaitWhiteBox = whiteboxCast(eventWithoutKmdWait.get());
+
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    eventDesc.index = 1;
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_FALSE(event->isCounterBased());
+    ASSERT_TRUE(event->isSignalWithUserInterrupt());
+    auto eventWhiteBox = whiteboxCast(event.get());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventWithoutKmdWait->toHandle(), 0, nullptr, launchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    ASSERT_EQ(1u, cmdList->interruptEvents.size());
+    EXPECT_EQ(event.get(), cmdList->interruptEvents[0]);
+
+    NEO::CommandStreamReceiver *secondaryCsr = nullptr;
+    for (auto &engine : device->getNEODevice()->getAllEngines()) {
+        if (engine.osContext->isLowPriority() && NEO::EngineHelpers::isComputeEngine(engine.osContext->getEngineType())) {
+            secondaryCsr = engine.commandStreamReceiver;
+            break;
+        }
+    }
+    ASSERT_NE(nullptr, secondaryCsr);
+    ASSERT_NE(defaultCsr, secondaryCsr);
+
+    ze_command_queue_desc_t desc = {};
+    auto queue = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, secondaryCsr, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, queue->initialize(false, false, false));
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, queue->executeCommandLists(1, &cmdlistHandle, nullptr, internalOptions));
+
+    ASSERT_EQ(1u, eventWhiteBox->csrs.size());
+    EXPECT_EQ(secondaryCsr, eventWhiteBox->csrs[0]);
+    ASSERT_EQ(1u, eventWithoutKmdWaitWhiteBox->csrs.size());
+    EXPECT_EQ(defaultCsr, eventWithoutKmdWaitWhiteBox->csrs[0]);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenWaitForUserFenceWithParams) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
