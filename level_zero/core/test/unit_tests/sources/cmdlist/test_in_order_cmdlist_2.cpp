@@ -464,8 +464,15 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     const auto offset = cmdStream->getUsed();
-
-    immCmdList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
 
     EXPECT_GT(mainCsr->taskCount.load(), mainTaskCount);
 
@@ -507,8 +514,15 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWithoutPr
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     const auto offset = cmdStream->getUsed();
-
-    immCmdList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
 
     GenCmdList cmds;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmds, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
@@ -2453,8 +2467,15 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     regularCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, copyParams);
 
     regularCmdList->appendSignalEvent(eventHandle, false);
-
-    regularCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    regularCmdList->appendBarrier(nullptr, 1, &eventHandle, waitEventsParameters);
 
     {
         GenCmdList cmdList;
@@ -3249,7 +3270,15 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendi
     offset = cmdStream->getUsed();
     auto handle = events[0]->toHandle();
     events[0]->unsetCmdQueue();
-    immCmdList->appendBarrier(nullptr, 1, &handle, false);
+    CmdListWaitEventParameters waitEventsParametersForBarrier = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendBarrier(nullptr, 1, &handle, waitEventsParametersForBarrier);
     EXPECT_TRUE(verifyTokenCheck(2));
 
     context->freeMem(alloc);

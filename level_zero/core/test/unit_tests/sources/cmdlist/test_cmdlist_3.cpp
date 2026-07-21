@@ -1024,15 +1024,22 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendBarri
     std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
-
-    commandList->appendBarrier(event, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(event, 0, nullptr, false);
+    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters);
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -1107,8 +1114,16 @@ TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateComma
             auto event2 = std::unique_ptr<L0::Event>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, returnValue));
             ze_event_handle_t events[] = {event1->toHandle(), event2->toHandle()};
 
-            commandList->appendBarrier(nullptr, 0, nullptr, false);
-            commandList->appendBarrier(event->toHandle(), 2, events, false);
+            CmdListWaitEventParameters waitEventsParameters = {
+                .outWaitCmds = nullptr,
+                .relaxedOrderingAllowed = false,
+                .trackDependencies = true,
+                .waitForImplicitInOrderDependency = true,
+                .skipAddingWaitEventsToResidency = false,
+                .dualStreamCopyOffloadOperation = false,
+            };
+            commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+            commandList->appendBarrier(event->toHandle(), 2, events, waitEventsParameters);
 
             auto result = event->hostSignal(false);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);

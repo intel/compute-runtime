@@ -364,7 +364,15 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L
     ze_result_t result;
 
     if (operation == NonKernelOperation::Barrier) {
-        result = currentCmdList->appendBarrier(nullptr, 0, nullptr, false);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        result = currentCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::SignalEvent) {
         result = currentCmdList->appendSignalEvent(event->toHandle(), false);

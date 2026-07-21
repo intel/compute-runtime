@@ -100,7 +100,7 @@ struct CommandListCoreFamily : public CommandList {
     ze_result_t close() override;
     ze_result_t appendEventReset(ze_event_handle_t hEvent) override;
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                              ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override;
     ze_result_t appendCustomOperation(const void *pNext,
                                       ze_event_handle_t hSignalEvent,
                                       uint32_t numWaitEvents,

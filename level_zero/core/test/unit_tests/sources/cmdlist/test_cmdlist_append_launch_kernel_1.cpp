@@ -1676,7 +1676,15 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
     usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(commandList->isTextureCacheFlushPending());
 

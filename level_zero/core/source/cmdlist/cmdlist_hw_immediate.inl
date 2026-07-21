@@ -651,7 +651,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelInd
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
     bool isStallingOperation = true;
@@ -662,20 +662,20 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
             return ZE_RESULT_SUCCESS;
         }
 
-        relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
-        isStallingOperation = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
+        waitEventsParameters.relaxedOrderingAllowed = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
+        isStallingOperation = hasStallingCmdsForRelaxedOrdering(numWaitEvents, waitEventsParameters.relaxedOrderingAllowed);
     }
 
     if (!isInOrderExecutionEnabled() && isDualStreamCopyOffloadOperation(true) && this->cmdQImmediateCopyOffload != nullptr) {
-        return appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch, isStallingOperation);
+        return appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters.relaxedOrderingAllowed, isStallingOperation);
     }
 
-    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
+    checkAvailableSpace(numWaitEvents, waitEventsParameters.relaxedOrderingAllowed, commonImmediateCommandSize, false);
 
-    ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+    ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 
     this->dependenciesPresent = true;
-    return flushImmediate(ret, true, isStallingOperation, relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
+    return flushImmediate(ret, true, isStallingOperation, waitEventsParameters.relaxedOrderingAllowed, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -706,7 +706,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrierWithCopy
         programCrossEngineTaskCountWait(copyOffloadCsr, copyOffloadTaskCount);
     }
 
-    const auto ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = relaxedOrderingDispatch,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    const auto ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 
     this->dependenciesPresent = true;
     return flushImmediate(ret, true, isStallingOperation, relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
@@ -873,7 +881,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
     if (signalEvent->isCounterBased()) {
-        return appendBarrier(hSignalEvent, 0, nullptr, relaxedOrderingDispatch);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = relaxedOrderingDispatch,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        return appendBarrier(hSignalEvent, 0, nullptr, waitEventsParameters);
     }
 
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(0, false);
@@ -1622,7 +1638,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         if (waitOnHost) {
             this->synchronizeEventList(numWaitEvents, phWaitEvents);
         } else {
-            this->appendBarrier(nullptr, numWaitEvents, phWaitEvents, false);
+            CmdListWaitEventParameters waitEventsParameters = {
+                .outWaitCmds = nullptr,
+                .relaxedOrderingAllowed = false,
+                .trackDependencies = true,
+                .waitForImplicitInOrderDependency = true,
+                .skipAddingWaitEventsToResidency = false,
+                .dualStreamCopyOffloadOperation = false,
+            };
+            this->appendBarrier(nullptr, numWaitEvents, phWaitEvents, waitEventsParameters);
         }
     }
 
@@ -2130,7 +2154,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         if (event->isCounterBased() && event->getInOrderIncrementValue(this->partitionCount) == 0) {
             this->assignInOrderExecInfoToEvent(event);
         } else if (!event->isCounterBased() && !event->isEventTimestampFlagSet()) {
-            ret = this->appendBarrier(hSignalEvent, 0, nullptr, relaxedOrdering);
+            CmdListWaitEventParameters waitEventsParameters = {
+                .outWaitCmds = nullptr,
+                .relaxedOrderingAllowed = relaxedOrdering,
+                .trackDependencies = true,
+                .waitForImplicitInOrderDependency = true,
+                .skipAddingWaitEventsToResidency = false,
+                .dualStreamCopyOffloadOperation = false,
+            };
+            ret = this->appendBarrier(hSignalEvent, 0, nullptr, waitEventsParameters);
         }
     }
     return ret;

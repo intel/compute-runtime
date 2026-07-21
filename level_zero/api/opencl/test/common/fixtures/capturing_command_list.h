@@ -105,10 +105,10 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
     }
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
-        auto result = BaseClass::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+                              ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters) override {
+        auto result = BaseClass::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
         return record(this->appendBarrierArgs, ApiId::appendBarrier,
-                      AppendBarrierArgs{hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch}, result);
+                      AppendBarrierArgs{hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters}, result);
     }
 
     ze_result_t hostSynchronize(uint64_t timeout) override {

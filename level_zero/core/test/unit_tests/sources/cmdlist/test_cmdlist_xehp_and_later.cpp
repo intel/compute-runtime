@@ -2193,7 +2193,15 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
         GTEST_SKIP();
     }
     size_t csrUsedBefore = csrStream.getUsed();
-    auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     size_t csrUsedAfter = csrStream.getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

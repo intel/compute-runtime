@@ -1407,7 +1407,15 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
     }
     UNRECOVERABLE_IF(nullptr == executionTarget);
     if (this->empty()) {
-        return executionTarget->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, false);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        return executionTarget->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
     } else {
         UNRECOVERABLE_IF(this->orderedCommands->empty());
 

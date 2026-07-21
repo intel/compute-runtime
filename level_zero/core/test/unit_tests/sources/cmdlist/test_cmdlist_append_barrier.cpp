@@ -30,8 +30,15 @@ using CommandListAppendBarrier = Test<CommandListFixture>;
 HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -54,7 +61,15 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     commandList->reset();
-    auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -70,7 +85,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
 
     commandList->reset();
     usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -249,8 +264,17 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
 
         size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
 
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+
         auto useSizeBefore = cmdListStream->getUsed();
-        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, false);
+        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters);
         auto useSizeAfter = cmdListStream->getUsed();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, event->getPacketsInUse());
@@ -362,7 +386,15 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         size_t stopRegisters = timestampRegisters + postBarrierSynchronization;
 
         auto useSizeBefore = cmdListStream->getUsed();
-        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, false);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters);
         auto useSizeAfter = cmdListStream->getUsed();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, eventTimeStamp->getPacketsInUse());
@@ -469,7 +501,15 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
     auto gpuStartAddress = gpuBaseAddress +
                            startOffset;
 
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -518,7 +558,15 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
                 sizeof(PIPE_CONTROL));
     cmdListStream->getSpace(useSize);
 
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto secondBatchBufferAllocation = cmdListStream->getGraphicsAllocation();
@@ -609,7 +657,15 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     uint64_t crossTileSyncGpuAddress = startGpuAddress +
                                        sizeBarrierCommands;
 
-    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     size_t usedAfterSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, estimatedSize);
@@ -690,7 +746,15 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 
     size_t usedBeforeSize = cmdStream->getUsed();
 
-    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     size_t usedAfterSize = cmdStream->getUsed();
 

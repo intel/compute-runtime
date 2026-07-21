@@ -23,8 +23,15 @@ ze_result_t ZE_APICALL zeCommandListAppendBarrier(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    return cmdList->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendMemoryRangesBarrier(

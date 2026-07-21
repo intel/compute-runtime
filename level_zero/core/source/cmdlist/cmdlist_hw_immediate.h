@@ -81,7 +81,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                               uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                              ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override;
 
     ze_result_t appendMemoryCopy(void *dstptr,
                                  const void *srcptr,

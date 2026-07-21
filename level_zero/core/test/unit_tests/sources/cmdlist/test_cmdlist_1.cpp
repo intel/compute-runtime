@@ -1547,14 +1547,21 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithSyncModeAndAppendBarrie
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendBarrier(nullptr, 1, &event, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendBarrier(nullptr, 1, &event, waitEventsParameters);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
-
-    commandList->appendBarrier(nullptr, 0, nullptr, false);
+    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
 }
 
 HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
@@ -1617,8 +1624,15 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams), false, false);
 
     verifyFlags(commandList->appendLaunchKernelIndirect(kernel.toHandle(), groupCount, nullptr, 0, nullptr, false), false, false);
-
-    verifyFlags(commandList->appendBarrier(nullptr, 0, nullptr, false), true, true);
+    CmdListWaitEventParameters waitEventsParametersForBarrier = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    verifyFlags(commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParametersForBarrier), true, true);
 
     CmdListMemoryCopyParams copyParams = {};
     verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams), false, false);
@@ -2039,8 +2053,15 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
         verifyFlags(commandList->appendLaunchKernelIndirect(kernel.toHandle(), groupCount, nullptr, numWaitlistEvents, waitlist, false),
                     hasEventDependencies, hasEventDependencies);
-
-        verifyFlags(commandList->appendBarrier(nullptr, numWaitlistEvents, waitlist, false),
+        CmdListWaitEventParameters waitEventsParametersForBarrier = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        verifyFlags(commandList->appendBarrier(nullptr, numWaitlistEvents, waitlist, waitEventsParametersForBarrier),
                     false, false);
         CmdListMemoryCopyParams copyParams = {};
         verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, numWaitlistEvents, waitlist, copyParams),
@@ -2234,7 +2255,15 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThe
     ultCsr->registerClient(&client2);
 
     // Initialize NP state
-    commandList->appendBarrier(nullptr, 1, &event, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendBarrier(nullptr, 1, &event, waitEventsParameters);
 
     if (useImmediateFlushTask) {
         EXPECT_TRUE(ultCsr->recordedImmediateDispatchFlags.hasRelaxedOrderingDependencies);
@@ -2252,7 +2281,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThe
         EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
     }
 
-    commandList->appendBarrier(nullptr, 1, &event, false);
+    commandList->appendBarrier(nullptr, 1, &event, waitEventsParameters);
 
     if (useImmediateFlushTask) {
         EXPECT_TRUE(ultCsr->recordedImmediateDispatchFlags.hasRelaxedOrderingDependencies);
@@ -2311,7 +2340,15 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierWit
     ultCsr->registerClient(&client2);
 
     // Initialize NP state
-    commandList0->appendBarrier(nullptr, 1, &event, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList0->appendBarrier(nullptr, 1, &event, waitEventsParameters);
 
     if (useImmediateFlushTask) {
         EXPECT_FALSE(ultCsr->recordedImmediateDispatchFlags.hasRelaxedOrderingDependencies);
@@ -2329,7 +2366,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierWit
     ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlushedBatchBuffer = true;
 
-    commandList->appendBarrier(event, 0, nullptr, false);
+    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters);
 
     if (useImmediateFlushTask) {
         EXPECT_FALSE(ultCsr->recordedImmediateDispatchFlags.hasRelaxedOrderingDependencies);
@@ -2472,7 +2509,15 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     verifyWalkerWithProfilingEnqueued(commandList->appendLaunchKernelIndirect(kernel.toHandle(), groupCount, event, 0, nullptr, false), expectWalkerWithProfilingEnqueued);
 
-    verifyWalkerWithProfilingEnqueued(commandList->appendBarrier(event, 0, nullptr, false), false);
+    CmdListWaitEventParameters waitEventsParametersForBarrier = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    verifyWalkerWithProfilingEnqueued(commandList->appendBarrier(event, 0, nullptr, waitEventsParametersForBarrier), false);
 
     CmdListMemoryCopyParams copyParams = {};
     verifyWalkerWithProfilingEnqueued(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
@@ -2596,7 +2641,15 @@ HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfiling
 
     verifyFlag(commandList->appendLaunchKernelIndirect(kernel.toHandle(), groupCount, event, 0, nullptr, false), expectFlagEnabled);
 
-    verifyFlag(commandList->appendBarrier(event, 0, nullptr, false), false);
+    CmdListWaitEventParameters waitEventsParametersForBarrier = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    verifyFlag(commandList->appendBarrier(event, 0, nullptr, waitEventsParametersForBarrier), false);
 
     CmdListMemoryCopyParams copyParams = {};
     verifyFlag(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, event, 0, nullptr, copyParams), expectFlagEnabled);
@@ -2694,7 +2747,16 @@ TEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAnd
     const auto oldCsr = queue->csr;
     queue->csr = &mockCommandStreamReceiver;
 
-    const auto appendBarrierResult = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+
+    const auto appendBarrierResult = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, appendBarrierResult);
 
     queue->csr = oldCsr;
@@ -2763,7 +2825,7 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
     returnValue = commandList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
+    returnValue = commandList->appendBarrier(nullptr, 1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -2887,7 +2949,7 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
     returnValue = commandList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
+    returnValue = commandList->appendBarrier(nullptr, 1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandList->appendSignalEvent(event, false);
@@ -3104,15 +3166,22 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendBarri
     std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
-
-    commandList->appendBarrier(event, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(nullptr, 0, nullptr, false);
+    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndCopyEngineAndAppendBarrierThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -3149,14 +3218,22 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndCopyEngineA
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendBarrier(event, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(nullptr, 0, nullptr, false);
+    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -3447,7 +3524,15 @@ HWTEST_F(CommandListCreateTests, givenCommandListWithCopyOnlyWhenSetBarrierThenM
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
-    commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -3470,7 +3555,15 @@ HWTEST_F(CommandListCreateTests, givenImmediateCommandListWithCopyOnlyWhenSetBar
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     auto &commandContainer = commandList->getCmdContainer();
-    commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -3538,7 +3631,15 @@ HWTEST_F(CommandListCreateTests, givenCommandListWhenSetBarrierThenPipeControlIs
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
-    commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -3553,7 +3654,15 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeCo
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    returnValue = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -3573,7 +3682,15 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeCo
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    returnValue = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -3591,7 +3708,15 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeCo
 HWTEST_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierWithIncorrectWaitEventsThenInvalidArgumentIsReturned) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
-    returnValue = commandList->appendBarrier(nullptr, 4, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = commandList->appendBarrier(nullptr, 4, nullptr, waitEventsParameters);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 

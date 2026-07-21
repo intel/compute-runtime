@@ -104,7 +104,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t destroy();
     virtual ze_result_t appendEventReset(ze_event_handle_t hEvent) = 0;
     virtual ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;
+                                      ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) = 0;
     virtual ze_result_t appendCustomOperation(const void *pNext,
                                               ze_event_handle_t hSignalEvent,
                                               uint32_t numWaitEvents,

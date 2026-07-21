@@ -1080,7 +1080,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPrese
 
         ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                                   uint32_t numWaitEvents,
-                                  ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
+                                  ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override {
             sequenceContainer.push_back(CmdInfo{numWaitEvents ? phWaitEvents[0] : nullptr, hSignalEvent});
             return ZE_RESULT_SUCCESS;
         }

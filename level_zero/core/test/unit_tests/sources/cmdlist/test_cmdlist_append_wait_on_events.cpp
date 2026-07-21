@@ -965,7 +965,16 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendBarrier(nullptr, 1, &eventHandle, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    commandListImmediate->appendBarrier(nullptr, 1, &eventHandle, waitEventsParameters);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 }

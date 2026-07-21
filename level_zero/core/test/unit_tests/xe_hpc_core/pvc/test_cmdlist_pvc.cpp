@@ -65,7 +65,15 @@ PVCTEST_F(CommandListAppendBarrierXeHpcCore, givenCommandListWhenAppendingBarrie
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    ze_result_t returnValue = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    ze_result_t returnValue = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(

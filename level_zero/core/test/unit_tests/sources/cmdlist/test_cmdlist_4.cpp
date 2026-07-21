@@ -586,8 +586,15 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
-
-    result = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    result = commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -617,8 +624,15 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
-
-    result = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    result = commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -628,8 +642,15 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
-
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -657,8 +678,15 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
-
-    result = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    result = commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -673,8 +701,15 @@ HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendBarrierT
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
     EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 0u);
-
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 2u);
 

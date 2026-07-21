@@ -1167,7 +1167,15 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndC
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
 
     EXPECT_EQ(event->queryStatus(0), ZE_RESULT_NOT_READY);
-    cmdList.appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    cmdList.appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_ERROR_DEVICE_LOST);
 
@@ -1200,8 +1208,15 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithB
     cmdList.cmdQImmediate = mockCmdQ.get();
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-
-    cmdList.appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    cmdList.appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
@@ -1221,8 +1236,15 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierT
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     EXPECT_FALSE(cmdList.dependenciesPresent);
-
-    cmdList.appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    cmdList.appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
 
     EXPECT_TRUE(cmdList.dependenciesPresent);
 
@@ -1290,9 +1312,9 @@ class MockAppendMemoryLockedCopyTestImmediateCmdList : public MockCommandListImm
         appendMemoryCopyKernelWithGACalled++;
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t appendBarrier(ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
+    ze_result_t appendBarrier(ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override {
         appendBarrierCalled++;
-        return MockCommandListImmediateHw<gfxCoreFamily>::appendBarrier(hEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+        return MockCommandListImmediateHw<gfxCoreFamily>::appendBarrier(hEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
     }
 
     void synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList) override {
@@ -2139,7 +2161,15 @@ HWTEST_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenAppe
 
     returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, cooperativeParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_EQ(event.get(), commandList->peekMappedEventList()[0]);

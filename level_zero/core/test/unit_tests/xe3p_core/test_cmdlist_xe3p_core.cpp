@@ -662,7 +662,15 @@ XE3P_CORETEST_F(MultiTileSynchronizedDispatchTestsXe3p, givenLimitedSyncDispatch
     offset = cmdStream->getUsed();
     auto handle = events[0]->toHandle();
     events[0]->unsetCmdQueue();
-    immCmdList->appendBarrier(nullptr, 1, &handle, false);
+    CmdListWaitEventParameters waitEventsParametersForBarrier = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendBarrier(nullptr, 1, &handle, waitEventsParametersForBarrier);
     EXPECT_TRUE(verifyTokenCheck(2, 0));
 
     context->freeMem(alloc);
