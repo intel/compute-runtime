@@ -103,6 +103,22 @@ struct AppendBarrierArgs {
           relaxedOrderingDispatch(relaxedOrderingDispatch) {}
 };
 
+struct AppendImageCopyFromMemoryExtArgs {
+    ze_image_handle_t dstImage;
+    const void *srcptr;
+    std::optional<ze_image_region_t> dstRegion;
+    uint32_t srcRowPitch;
+    uint32_t srcSlicePitch;
+    ze_event_handle_t signalEvent;
+    EventHandles waitEvents;
+
+    AppendImageCopyFromMemoryExtArgs(ze_image_handle_t dstImage, const void *srcptr, const ze_image_region_t *dstRegion,
+                                     uint32_t srcRowPitch, uint32_t srcSlicePitch, ze_event_handle_t signalEvent,
+                                     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+        : dstImage(dstImage), srcptr(srcptr), dstRegion(copyValue(dstRegion)), srcRowPitch(srcRowPitch),
+          srcSlicePitch(srcSlicePitch), signalEvent(signalEvent), waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
+};
+
 struct HostSynchronizeArgs {
     uint64_t timeout = 0u;
 };

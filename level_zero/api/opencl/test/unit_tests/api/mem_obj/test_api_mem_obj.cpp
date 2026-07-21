@@ -14,10 +14,15 @@
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj_helper.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
+#include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
+
+#include <vector>
 
 namespace NEO {
 namespace LEO {
@@ -231,6 +236,205 @@ TEST_F(MemObjHelperTest, givenContextDeviceWhenValidateMemoryPropertiesForBuffer
 
     bool valid = MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, CL_MEM_READ_WRITE, 0, *context);
     EXPECT_TRUE(valid);
+}
+
+struct LeoNv12ImageTest : LeoMemObjApiFixture {
+    void SetUp() override {
+        LeoMemObjApiFixture::SetUp();
+        if (!device->getHardwareInfo().capabilityTable.supportsImages) {
+            GTEST_SKIP() << "Product does not support images";
+        }
+        cl_device_id clDevice = device;
+        context = std::make_unique<Context>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(), 1, &clDevice, true);
+        ASSERT_EQ(CL_SUCCESS, context->initialize());
+        nv12Format.image_channel_order = CL_NV12_INTEL;
+        nv12Format.image_channel_data_type = CL_UNORM_INT8;
+        nv12Desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        nv12Desc.image_width = width;
+        nv12Desc.image_height = height;
+    }
+
+    cl_mem createParent() {
+        cl_int err = CL_INVALID_VALUE;
+        auto parent = clCreateImage(context.get(),
+                                    CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL,
+                                    &nv12Format, &nv12Desc, nullptr, &err);
+        EXPECT_EQ(CL_SUCCESS, err);
+        return parent;
+    }
+
+    cl_mem createPlane(cl_mem parent, cl_channel_order order, size_t planeIndex, cl_int *err) {
+        cl_image_format planeFormat{};
+        planeFormat.image_channel_order = order;
+        planeFormat.image_channel_data_type = CL_UNORM_INT8;
+        cl_image_desc planeDesc{};
+        planeDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        planeDesc.mem_object = parent;
+        planeDesc.image_depth = planeIndex;
+        return clCreateImage(context.get(), CL_MEM_READ_WRITE, &planeFormat, &planeDesc, nullptr, err);
+    }
+
+    static constexpr size_t width = 16;
+    static constexpr size_t height = 16;
+    cl_image_format nv12Format{};
+    cl_image_desc nv12Desc{};
+};
+
+TEST_F(LeoNv12ImageTest, givenNV12FormatWhenCreatingParentImageThenImageIsCreated) {
+    auto parent = createParent();
+    ASSERT_NE(nullptr, parent);
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+}
+
+TEST_F(LeoNv12ImageTest, givenNV12ParentWhenExtractingYPlaneThenDimensionsMatchParentAndParentIsAssociated) {
+    auto parent = createParent();
+    ASSERT_NE(nullptr, parent);
+
+    cl_int err = CL_INVALID_VALUE;
+    auto yPlane = createPlane(parent, CL_R, 0, &err);
+    ASSERT_EQ(CL_SUCCESS, err);
+    ASSERT_NE(nullptr, yPlane);
+
+    size_t planeWidth = 0;
+    size_t planeHeight = 0;
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(yPlane, CL_IMAGE_WIDTH, sizeof(planeWidth), &planeWidth, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(yPlane, CL_IMAGE_HEIGHT, sizeof(planeHeight), &planeHeight, nullptr));
+    EXPECT_EQ(width, planeWidth);
+    EXPECT_EQ(height, planeHeight);
+
+    cl_mem associated = nullptr;
+    EXPECT_EQ(CL_SUCCESS, clGetMemObjectInfo(yPlane, CL_MEM_ASSOCIATED_MEMOBJECT, sizeof(associated), &associated, nullptr));
+    EXPECT_EQ(parent, associated);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(yPlane));
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+}
+
+TEST_F(LeoNv12ImageTest, givenNV12ParentWhenExtractingUVPlaneThenDimensionsAreHalved) {
+    auto parent = createParent();
+    ASSERT_NE(nullptr, parent);
+
+    cl_int err = CL_INVALID_VALUE;
+    auto uvPlane = createPlane(parent, CL_RG, 1, &err);
+    ASSERT_EQ(CL_SUCCESS, err);
+    ASSERT_NE(nullptr, uvPlane);
+
+    size_t planeWidth = 0;
+    size_t planeHeight = 0;
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(uvPlane, CL_IMAGE_WIDTH, sizeof(planeWidth), &planeWidth, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(uvPlane, CL_IMAGE_HEIGHT, sizeof(planeHeight), &planeHeight, nullptr));
+    EXPECT_EQ(width / 2, planeWidth);
+    EXPECT_EQ(height / 2, planeHeight);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(uvPlane));
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+}
+
+TEST_F(LeoNv12ImageTest, givenInvalidPlaneIndexWhenExtractingPlaneThenInvalidImageDescriptorReturned) {
+    auto parent = createParent();
+    ASSERT_NE(nullptr, parent);
+
+    cl_int err = CL_SUCCESS;
+    auto badPlane = createPlane(parent, CL_R, 2, &err);
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, err);
+    EXPECT_EQ(nullptr, badPlane);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+}
+
+TEST_F(LeoNv12ImageTest, givenParentReleasedBeforePlaneThenPlaneKeepsParentAlive) {
+    auto parent = createParent();
+    ASSERT_NE(nullptr, parent);
+
+    cl_int err = CL_INVALID_VALUE;
+    auto yPlane = createPlane(parent, CL_R, 0, &err);
+    ASSERT_EQ(CL_SUCCESS, err);
+    ASSERT_NE(nullptr, yPlane);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+
+    size_t planeWidth = 0;
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(yPlane, CL_IMAGE_WIDTH, sizeof(planeWidth), &planeWidth, nullptr));
+    EXPECT_EQ(width, planeWidth);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(yPlane));
+}
+
+struct WhiteBoxNv12Context : public Context {
+    using Context::Context;
+    using Context::internalCopyCmdLists;
+};
+
+struct LeoNv12HostPtrImageTest : LeoNv12ImageTest {
+    void SetUp() override {
+        LeoNv12ImageTest::SetUp();
+        if (IsSkipped()) {
+            return;
+        }
+        cl_device_id clDevice = device;
+        hostPtrContext = std::make_unique<WhiteBoxNv12Context>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(), 1, &clDevice, true);
+        hostPtrContext->internalCopyCmdLists[device->getRootDeviceIndex()] = capturingCmdList.toHandle();
+    }
+
+    void TearDown() override {
+        if (hostPtrContext) {
+            hostPtrContext->internalCopyCmdLists.clear();
+            hostPtrContext.reset();
+        }
+        LeoNv12ImageTest::TearDown();
+    }
+
+    CapturingCommandList capturingCmdList{};
+    std::unique_ptr<WhiteBoxNv12Context> hostPtrContext;
+};
+
+TEST_F(LeoNv12HostPtrImageTest, givenNV12ImageCreatedWithHostPtrThenYAndUVPlanesAreWritten) {
+    std::vector<uint8_t> hostData((width * height * 3) / 2, 0x80);
+
+    cl_int err = CL_INVALID_VALUE;
+    auto parent = clCreateImage(hostPtrContext.get(),
+                                CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_COPY_HOST_PTR,
+                                &nv12Format, &nv12Desc, hostData.data(), &err);
+    EXPECT_EQ(CL_SUCCESS, err);
+    ASSERT_NE(nullptr, parent);
+
+    ASSERT_EQ(2u, capturingCmdList.appendImageCopyFromMemoryExtArgs.count());
+
+    const auto &yWrite = capturingCmdList.appendImageCopyFromMemoryExtArgs[0];
+    ASSERT_TRUE(yWrite.dstRegion.has_value());
+    EXPECT_EQ(width, yWrite.dstRegion->width);
+    EXPECT_EQ(height, yWrite.dstRegion->height);
+    EXPECT_EQ(width, yWrite.srcRowPitch);
+    EXPECT_EQ(static_cast<const void *>(hostData.data()), yWrite.srcptr);
+
+    const auto &uvWrite = capturingCmdList.appendImageCopyFromMemoryExtArgs[1];
+    ASSERT_TRUE(uvWrite.dstRegion.has_value());
+    EXPECT_EQ(width / 2, uvWrite.dstRegion->width);
+    EXPECT_EQ(height / 2, uvWrite.dstRegion->height);
+    EXPECT_EQ(width, uvWrite.srcRowPitch);
+    EXPECT_EQ(static_cast<const void *>(hostData.data() + width * height), uvWrite.srcptr);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+}
+
+TEST_F(LeoNv12HostPtrImageTest, givenNV12ImageCreatedWithHostPtrAndRowPitchThenUVPlaneOffsetUsesRowPitch) {
+    const size_t rowPitch = width + 32;
+    nv12Desc.image_row_pitch = rowPitch;
+    std::vector<uint8_t> hostData(rowPitch * height * 3 / 2, 0x40);
+
+    cl_int err = CL_INVALID_VALUE;
+    auto parent = clCreateImage(hostPtrContext.get(),
+                                CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_COPY_HOST_PTR,
+                                &nv12Format, &nv12Desc, hostData.data(), &err);
+    EXPECT_EQ(CL_SUCCESS, err);
+    ASSERT_NE(nullptr, parent);
+
+    ASSERT_EQ(2u, capturingCmdList.appendImageCopyFromMemoryExtArgs.count());
+    EXPECT_EQ(static_cast<uint32_t>(rowPitch), capturingCmdList.appendImageCopyFromMemoryExtArgs[0].srcRowPitch);
+    EXPECT_EQ(static_cast<uint32_t>(rowPitch), capturingCmdList.appendImageCopyFromMemoryExtArgs[1].srcRowPitch);
+    EXPECT_EQ(static_cast<const void *>(hostData.data() + rowPitch * height), capturingCmdList.appendImageCopyFromMemoryExtArgs[1].srcptr);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
 }
 
 } // namespace ult

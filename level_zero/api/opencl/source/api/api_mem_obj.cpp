@@ -266,72 +266,108 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         resolvedFormat.image_channel_data_type = L0::getClChannelDataType(l0imageDesc.format);
         resolvedFormat.image_channel_order = L0::getClChannelOrder(l0imageDesc.format, l0Image->isSrgb());
     } else {
-        l0imageDesc.miplevels = imageDesc->num_mip_levels;
-        l0imageDesc.width = static_cast<uint32_t>(imageDesc->image_width);
-        l0imageDesc.height = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageHeight(*imageDesc));
-        l0imageDesc.depth = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageDepth(*imageDesc));
-        l0imageDesc.arraylevels = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageArraySize(*imageDesc));
-
-        l0imageDesc.type = NEO::LEO::Image::clToL0ImageType(imageDesc->image_type);
-        NEO::LEO::Image::clToL0ImageFormat(l0imageDesc.format, imageFormat->image_channel_order, imageFormat->image_channel_data_type);
-
-        ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, NEO::LEO::Image::isSRGB(imageFormat->image_channel_order)};
-        l0imageDesc.pNext = &srgbExtDesc;
-
-        ze_image_pitched_exp_desc_t imageFromBuffer{ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC};
-
+        auto parentMemObj = NEO::LEO::castToObject<NEO::LEO::MemObj>(imageDesc->mem_object);
         auto device = pContext->getL0Object()->getDevices().begin()->second;
-        if (imageDesc->mem_object) {
-            imageFromBuffer.ptr = NEO::LEO::castToObject<NEO::LEO::Buffer>(imageDesc->mem_object)->getUsmPtr();
-            imageFromBuffer.pNext = l0imageDesc.pNext;
-            l0imageDesc.pNext = &imageFromBuffer;
-        }
 
-        // Per the OpenCL spec, an image created from a buffer with image_row_pitch==0
-        // uses image_width * elementSize. Pass this explicitly to zeImageCreate so a
-        // GMM-aligned pitch is not used.
-        const size_t effectiveRowPitch = NEO::LEO::Image::getRowPitchForImageFromBuffer(flags, imageFormat, imageDesc);
-
-        ze_custom_pitch_exp_desc_t customPitchDesc{ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC};
-        if (imageDesc->mem_object && (effectiveRowPitch != 0 || imageDesc->image_slice_pitch != 0) &&
-            imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-            customPitchDesc.rowPitch = effectiveRowPitch;
-            customPitchDesc.slicePitch = imageDesc->image_slice_pitch;
-            customPitchDesc.pNext = l0imageDesc.pNext;
-            l0imageDesc.pNext = &customPitchDesc;
-        }
-
-        L0::ze_depth_stencil_format_ext_desc_t depthStencilDesc{};
-        if (imageFormat->image_channel_order == CL_DEPTH_STENCIL) {
-            if (imageFormat->image_channel_data_type == CL_UNORM_INT24) {
-                depthStencilDesc.format = L0::ZE_DEPTH_STENCIL_FORMAT_D24_UNORM_S8_UINT;
-            } else {
-                depthStencilDesc.format = L0::ZE_DEPTH_STENCIL_FORMAT_D32_FLOAT_S8X24_UINT;
-            }
-            depthStencilDesc.pNext = l0imageDesc.pNext;
-            l0imageDesc.pNext = &depthStencilDesc;
-        }
-
-        ret = zeImageCreate(pContext->getL0ContextHandle(),
-                            device,
-                            &l0imageDesc,
-                            &imageHandle);
-
-        if (ret == ZE_RESULT_SUCCESS && !pContext->isSingleDeviceContext()) {
-            const auto primaryRootDeviceIndex = pContext->getL0Object()->getDevices().begin()->first;
-            for (auto clDevice : pContext->getClDevices()) {
-                const auto extraRootDeviceIndex = clDevice->getRootDeviceIndex();
-                if (extraRootDeviceIndex == primaryRootDeviceIndex || extraImageHandles.count(extraRootDeviceIndex) != 0) {
-                    continue;
+        if (parentMemObj && parentMemObj->isImage()) {
+            auto parentImage = static_cast<NEO::LEO::Image *>(parentMemObj);
+            const uint32_t planeIndex = static_cast<uint32_t>(imageDesc->image_depth);
+            if (planeIndex > 1) {
+                if (errcodeRet) {
+                    *errcodeRet = CL_INVALID_IMAGE_DESCRIPTOR;
                 }
-                ze_image_handle_t extraImageHandle{};
-                if (zeImageCreate(pContext->getL0ContextHandle(), clDevice->getL0Handle(), &l0imageDesc, &extraImageHandle) == ZE_RESULT_SUCCESS) {
-                    extraImageHandles[extraRootDeviceIndex] = extraImageHandle;
+                cl_mem tracingRetVal = nullptr;
+                TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+                return tracingRetVal;
+            }
+
+            const auto &parentImgDesc = parentImage->getL0Object()->getImageInfo().imgDesc;
+            l0imageDesc.type = ZE_IMAGE_TYPE_2D;
+            l0imageDesc.width = static_cast<uint32_t>(parentImgDesc.imageWidth);
+            l0imageDesc.height = static_cast<uint32_t>(parentImgDesc.imageHeight);
+            l0imageDesc.depth = 1;
+            if (planeIndex == 1) {
+                l0imageDesc.width /= 2;
+                l0imageDesc.height /= 2;
+            }
+
+            NEO::LEO::Image::clToL0ImageFormat(l0imageDesc.format, imageFormat->image_channel_order, imageFormat->image_channel_data_type);
+
+            ze_image_view_planar_ext_desc_t planarDesc{ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC};
+            planarDesc.planeIndex = planeIndex;
+            planarDesc.pNext = l0imageDesc.pNext;
+            l0imageDesc.pNext = &planarDesc;
+
+            ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, NEO::LEO::Image::isSRGB(imageFormat->image_channel_order)};
+            l0imageDesc.pNext = &srgbExtDesc;
+
+            ret = zeImageViewCreateExp(pContext->getL0ContextHandle(), device, &l0imageDesc, parentImage->getL0Handle(), &imageHandle);
+
+            resolvedFormat = *imageFormat;
+        } else {
+            l0imageDesc.miplevels = imageDesc->num_mip_levels;
+            l0imageDesc.width = static_cast<uint32_t>(imageDesc->image_width);
+            l0imageDesc.height = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageHeight(*imageDesc));
+            l0imageDesc.depth = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageDepth(*imageDesc));
+            l0imageDesc.arraylevels = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageArraySize(*imageDesc));
+
+            l0imageDesc.type = NEO::LEO::Image::clToL0ImageType(imageDesc->image_type);
+            NEO::LEO::Image::clToL0ImageFormat(l0imageDesc.format, imageFormat->image_channel_order, imageFormat->image_channel_data_type);
+
+            ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, NEO::LEO::Image::isSRGB(imageFormat->image_channel_order)};
+            l0imageDesc.pNext = &srgbExtDesc;
+
+            ze_image_pitched_exp_desc_t imageFromBuffer{ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC};
+
+            if (parentMemObj && parentMemObj->isBuffer()) {
+                imageFromBuffer.ptr = static_cast<NEO::LEO::Buffer *>(parentMemObj)->getUsmPtr();
+                imageFromBuffer.pNext = l0imageDesc.pNext;
+                l0imageDesc.pNext = &imageFromBuffer;
+            }
+
+            const size_t effectiveRowPitch = NEO::LEO::Image::getRowPitchForImageFromBuffer(flags, imageFormat, imageDesc);
+
+            ze_custom_pitch_exp_desc_t customPitchDesc{ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC};
+            if (parentMemObj && parentMemObj->isBuffer() && (effectiveRowPitch != 0 || imageDesc->image_slice_pitch != 0) &&
+                imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+                customPitchDesc.rowPitch = effectiveRowPitch;
+                customPitchDesc.slicePitch = imageDesc->image_slice_pitch;
+                customPitchDesc.pNext = l0imageDesc.pNext;
+                l0imageDesc.pNext = &customPitchDesc;
+            }
+
+            L0::ze_depth_stencil_format_ext_desc_t depthStencilDesc{};
+            if (imageFormat->image_channel_order == CL_DEPTH_STENCIL) {
+                if (imageFormat->image_channel_data_type == CL_UNORM_INT24) {
+                    depthStencilDesc.format = L0::ZE_DEPTH_STENCIL_FORMAT_D24_UNORM_S8_UINT;
+                } else {
+                    depthStencilDesc.format = L0::ZE_DEPTH_STENCIL_FORMAT_D32_FLOAT_S8X24_UINT;
+                }
+                depthStencilDesc.pNext = l0imageDesc.pNext;
+                l0imageDesc.pNext = &depthStencilDesc;
+            }
+
+            ret = zeImageCreate(pContext->getL0ContextHandle(),
+                                device,
+                                &l0imageDesc,
+                                &imageHandle);
+
+            if (ret == ZE_RESULT_SUCCESS && !pContext->isSingleDeviceContext()) {
+                const auto primaryRootDeviceIndex = pContext->getL0Object()->getDevices().begin()->first;
+                for (auto clDevice : pContext->getClDevices()) {
+                    const auto extraRootDeviceIndex = clDevice->getRootDeviceIndex();
+                    if (extraRootDeviceIndex == primaryRootDeviceIndex || extraImageHandles.count(extraRootDeviceIndex) != 0) {
+                        continue;
+                    }
+                    ze_image_handle_t extraImageHandle{};
+                    if (zeImageCreate(pContext->getL0ContextHandle(), clDevice->getL0Handle(), &l0imageDesc, &extraImageHandle) == ZE_RESULT_SUCCESS) {
+                        extraImageHandles[extraRootDeviceIndex] = extraImageHandle;
+                    }
                 }
             }
-        }
 
-        resolvedFormat = *imageFormat;
+            resolvedFormat = *imageFormat;
+        }
     }
 
     void *cpuPtr = nullptr;
@@ -342,22 +378,52 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     if (memoryProperties.flags.copyHostPtr || memoryProperties.flags.useHostPtr) {
         {
             auto lock = pContext->lockInternalCopy();
-            uint32_t regionHeight = std::max(l0imageDesc.height, 1u);
-            uint32_t regionDepth = std::max(l0imageDesc.depth, 1u);
-            if (l0imageDesc.type == ZE_IMAGE_TYPE_1DARRAY) {
-                regionHeight = std::max(l0imageDesc.arraylevels, 1u);
-            } else if (l0imageDesc.type == ZE_IMAGE_TYPE_2DARRAY) {
-                regionDepth = std::max(l0imageDesc.arraylevels, 1u);
+            if (NEO::LEO::isNV12Image(imageFormat)) {
+                auto device = pContext->getL0Object()->getDevices().begin()->second;
+                const uint32_t nv12Width = static_cast<uint32_t>(l0imageDesc.width);
+                const uint32_t nv12Height = l0imageDesc.height;
+                const uint32_t rowPitch = imageDesc->image_row_pitch != 0 ? static_cast<uint32_t>(imageDesc->image_row_pitch) : nv12Width;
+
+                auto writePlane = [&](uint32_t planeIndex, cl_channel_order channelOrder, uint32_t planeWidth, uint32_t planeHeight, const void *planePtr) {
+                    ze_image_desc_t planeDesc{ZE_STRUCTURE_TYPE_IMAGE_DESC};
+                    planeDesc.type = ZE_IMAGE_TYPE_2D;
+                    planeDesc.width = planeWidth;
+                    planeDesc.height = planeHeight;
+                    planeDesc.depth = 1;
+                    NEO::LEO::Image::clToL0ImageFormat(planeDesc.format, channelOrder, CL_UNORM_INT8);
+
+                    ze_image_view_planar_ext_desc_t planarDesc{ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC};
+                    planarDesc.planeIndex = planeIndex;
+                    planeDesc.pNext = &planarDesc;
+
+                    ze_image_handle_t planeHandle{};
+                    if (zeImageViewCreateExp(pContext->getL0ContextHandle(), device, &planeDesc, imageHandle, &planeHandle) == ZE_RESULT_SUCCESS) {
+                        ze_image_region_t planeRegion{0u, 0u, 0u, planeWidth, planeHeight, 1u};
+                        ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(), planeHandle, planePtr, &planeRegion, rowPitch, 0, nullptr, 0, nullptr);
+                        zeImageDestroy(planeHandle);
+                    }
+                };
+
+                writePlane(0, CL_R, nv12Width, nv12Height, hostPtr);
+                writePlane(1, CL_RG, nv12Width / 2, nv12Height / 2, ptrOffset(hostPtr, static_cast<size_t>(rowPitch) * nv12Height));
+            } else {
+                uint32_t regionHeight = std::max(l0imageDesc.height, 1u);
+                uint32_t regionDepth = std::max(l0imageDesc.depth, 1u);
+                if (l0imageDesc.type == ZE_IMAGE_TYPE_1DARRAY) {
+                    regionHeight = std::max(l0imageDesc.arraylevels, 1u);
+                } else if (l0imageDesc.type == ZE_IMAGE_TYPE_2DARRAY) {
+                    regionDepth = std::max(l0imageDesc.arraylevels, 1u);
+                }
+                ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width),
+                                         regionHeight, regionDepth};
+                ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(),
+                                                                imageHandle,
+                                                                hostPtr,
+                                                                &region,
+                                                                static_cast<uint32_t>(imageDesc->image_row_pitch),
+                                                                static_cast<uint32_t>(imageDesc->image_slice_pitch),
+                                                                nullptr, 0, nullptr);
             }
-            ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width),
-                                     regionHeight, regionDepth};
-            ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(),
-                                                            imageHandle,
-                                                            hostPtr,
-                                                            &region,
-                                                            static_cast<uint32_t>(imageDesc->image_row_pitch),
-                                                            static_cast<uint32_t>(imageDesc->image_slice_pitch),
-                                                            nullptr, 0, nullptr);
         }
         zeCommandListHostSynchronize(pContext->getInternalCopyCmdList(), std::numeric_limits<uint64_t>::max());
     }
@@ -367,6 +433,10 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     }
 
     cl_mem associatedMemObject = inputMemObjFound ? nullptr : imageDesc->mem_object;
+    if (auto parentImageObj = NEO::LEO::castToObject<NEO::LEO::MemObj>(associatedMemObject);
+        parentImageObj && parentImageObj->isImage()) {
+        parentImageObj->incRefInternal();
+    }
     auto image = new NEO::LEO::Image(pContext, memoryProperties, flags, imageHandle, cpuPtr, nullptr, inputMemObjFound, resolvedFormat, associatedMemObject);
     image->setOwnerRootDeviceIndex(pContext->getL0Object()->getDevices().begin()->first);
     for (auto &[extraRootDeviceIndex, extraImageHandle] : extraImageHandles) {

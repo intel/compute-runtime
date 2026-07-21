@@ -20,11 +20,12 @@ namespace NEO {
 namespace LEO {
 namespace ult {
 
-#define LEO_CAPTURED_APIS(MACRO)                              \
-    MACRO(appendMemoryCopy, AppendMemoryCopyArgs)             \
-    MACRO(appendMemoryCopyRegion, AppendMemoryCopyRegionArgs) \
-    MACRO(appendMemoryFill, AppendMemoryFillArgs)             \
-    MACRO(appendBarrier, AppendBarrierArgs)                   \
+#define LEO_CAPTURED_APIS(MACRO)                                          \
+    MACRO(appendMemoryCopy, AppendMemoryCopyArgs)                         \
+    MACRO(appendMemoryCopyRegion, AppendMemoryCopyRegionArgs)             \
+    MACRO(appendMemoryFill, AppendMemoryFillArgs)                         \
+    MACRO(appendImageCopyFromMemoryExt, AppendImageCopyFromMemoryExtArgs) \
+    MACRO(appendBarrier, AppendBarrierArgs)                               \
     MACRO(hostSynchronize, HostSynchronizeArgs)
 
 enum class ApiId : uint32_t {
@@ -92,6 +93,15 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
         return record(this->appendMemoryFillArgs, ApiId::appendMemoryFill,
                       AppendMemoryFillArgs{ptr, pattern, patternSize, size, hEvent, numWaitEvents, phWaitEvents},
                       result);
+    }
+
+    ze_result_t appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage, const void *srcptr,
+                                             const ze_image_region_t *pDstRegion, uint32_t srcRowPitch,
+                                             uint32_t srcSlicePitch, ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents, L0::CmdListMemoryCopyParams &memoryCopyParams) override {
+        return record(this->appendImageCopyFromMemoryExtArgs, ApiId::appendImageCopyFromMemoryExt,
+                      AppendImageCopyFromMemoryExtArgs{hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hEvent, numWaitEvents, phWaitEvents},
+                      ZE_RESULT_SUCCESS);
     }
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,

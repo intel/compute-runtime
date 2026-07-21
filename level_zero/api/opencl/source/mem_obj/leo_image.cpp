@@ -28,6 +28,9 @@ Image::~Image() {
     if (this->baseImageHandle) {
         UNRECOVERABLE_IF(zeImageDestroy(this->baseImageHandle) != ZE_RESULT_SUCCESS);
     }
+    if (this->associatedMemObject && this->associatedMemObject->isImage()) {
+        this->associatedMemObject->decRefInternal();
+    }
 }
 
 ze_image_type_t Image::clToL0ImageType(cl_mem_object_type clType) {
@@ -58,6 +61,27 @@ bool Image::isSRGB(cl_channel_order clChannelOrder) {
 void Image::clToL0ImageFormat(ze_image_format_t &l0Format, cl_channel_order clChannelOrder, cl_channel_type clChannelType) {
     int channelNumber = 0;
     switch (clChannelOrder) {
+    case CL_NV12_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_NV12;
+        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+        return;
+    case CL_YUYV_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_YUYV;
+        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+        return;
+    case CL_VYUY_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_VYUY;
+        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+        return;
+    case CL_YVYU_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_YVYU;
+        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+        return;
+    case CL_UYVY_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_UYVY;
+        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+        return;
+
     case CL_R:
         l0Format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
         l0Format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
