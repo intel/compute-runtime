@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -598,4 +599,21 @@ TEST_F(MemoryPropertiesHelperTests, givenSubDeviceIdWhenParsingExtraMemoryProper
                                                                 ClMemoryPropertiesHelper::ObjType::unknown, context));
     EXPECT_EQ(0b10u, memoryProperties.pDevice->getDeviceBitfield().to_ulong());
     EXPECT_EQ(&context.pSubDevice1->getDevice(), memoryProperties.pDevice);
+}
+TEST_F(MemoryPropertiesHelperTests, givenBindlessImagePropertyWhenParsingMemoryPropertiesForImageThenTrueIsReturnedAndFlagIsSet) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_BINDLESS_IMAGE_INTEL, 1,
+        0};
+    EXPECT_TRUE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                ClMemoryPropertiesHelper::ObjType::image, context));
+    EXPECT_TRUE(memoryProperties.flags.bindlessImage);
+}
+
+TEST_F(MemoryPropertiesHelperTests, givenNoBindlessImagePropertyWhenParsingMemoryPropertiesForImageThenBindlessFlagIsNotSet) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS, CL_MEM_READ_WRITE,
+        0};
+    EXPECT_TRUE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                ClMemoryPropertiesHelper::ObjType::image, context));
+    EXPECT_FALSE(memoryProperties.flags.bindlessImage);
 }

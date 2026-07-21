@@ -300,6 +300,19 @@ Image *Image::create(Context *context,
 
     setImageProperties(image, *imageDesc, imgInfo, parentImage, parentBuffer, hostPtrRowPitch, hostPtrSlicePitch, imageCount, hostPtrMinSize);
 
+    auto defaultRootDeviceEnv = defaultDevice->getExecutionEnvironment()->rootDeviceEnvironments[defaultRootDeviceIndex].get();
+    auto bindlessHelper = defaultRootDeviceEnv->getBindlessHeapsHelper();
+    if (bindlessHelper && image && memoryProperties.flags.bindlessImage) {
+        auto allocation = image->getGraphicsAllocation(defaultRootDeviceIndex);
+        auto memManager = context->getMemoryManager();
+        if (memManager->allocateBindlessSlot(allocation)) {
+            if (allocation->getBindlessOffset() != std::numeric_limits<uint64_t>::max()) {
+                image->bindlessInfo = std::make_unique<SurfaceStateInHeapInfo>(allocation->getBindlessInfo());
+                image->bindlessImage = true;
+            }
+        }
+    }
+
     errcodeRet = CL_SUCCESS;
     auto &defaultHwInfo = defaultDevice->getHardwareInfo();
     if (context->isProvidingPerformanceHints()) {
