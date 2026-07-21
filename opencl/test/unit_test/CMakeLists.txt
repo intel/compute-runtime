@@ -175,11 +175,10 @@ function(neo_gen_kernels_with_options platform_it_lower device revision_id filep
   foreach(filearg ${filepath})
     get_filename_component(filename ${filearg} NAME)
     get_filename_component(basename ${filearg} NAME_WE)
-    get_filename_component(base_workdir ${filearg} DIRECTORY)
+    get_filename_component(workdir ${filearg} DIRECTORY)
     get_filename_component(absolute_filepath ${filearg} ABSOLUTE)
 
     set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
-    set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
     if("${CORE_TYPE}" IN_LIST XE3P_AND_LATER_CORE_TYPES)
       set(addrmode "default")
     else()
@@ -226,8 +225,6 @@ function(neo_gen_kernels_with_options platform_it_lower device revision_id filep
   set(kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile_${platform_it_lower}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
-set(TEST_KERNEL test_files/CopyBuffer_simd16.cl)
-
 set(TEST_KERNEL_options
     "-cl-fast-relaxed-math"
     "-cl-finite-math-only"
@@ -246,6 +243,10 @@ macro(macro_for_each_platform)
     set(KERNEL_TO_REMOVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/test_files/${KERNEL_TO_REMOVE}")
     list(REMOVE_ITEM PLATFORM_TEST_KERNELS ${KERNEL_TO_REMOVE_PATH})
   endforeach()
+
+  set(PLATFORM_TEST_COPY_KERNELS ${PLATFORM_TEST_KERNELS})
+  list(FILTER PLATFORM_TEST_COPY_KERNELS INCLUDE REGEX "CopyBuffer_simd[0-9]+\\.cl")
+  list(GET PLATFORM_TEST_COPY_KERNELS 0 TEST_KERNEL)
 
   set(PREVIOUS_KERNELS)
 
