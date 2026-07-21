@@ -298,7 +298,7 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenPrintDebugMessagesWhenCacheIsEnable
     EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult\\directory\\\n\n");
 }
 
-TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetThenCacheConfigRemainsEnabled) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigIsEnabledOrDisabledAsExpected) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -319,8 +319,35 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetThenCacheConfigRemainsE
     SysCalls::mockEnvStringsW = envBlockWithIgc;
 
     cacheConfig = getDefaultCompilerCacheConfig();
+    EXPECT_FALSE(cacheConfig.enabled);
+
+    SysCalls::mockEnvStringsW = envBlockNoIgc;
+    cacheConfig = getDefaultCompilerCacheConfig();
+
     EXPECT_TRUE(cacheConfig.enabled);
     EXPECT_EQ(cacheConfig.cacheDir, "ult\\directory\\");
+}
+
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetWhenGetDefaultCacheConfigThenWarningIsPrinted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
+    DWORD getFileAttributesResultMock = FILE_ATTRIBUTE_DIRECTORY;
+    VariableBackup<DWORD> pathExistsMockBackup(&SysCalls::getFileAttributesResult, getFileAttributesResultMock);
+
+    wchar_t envBlockWithIgc[] = L"IGC_DEBUG=1\0NEO_CACHE_PERSISTENT=1\0NEO_CACHE_MAX_SIZE=22\0NEO_CACHE_DIR=ult\\directory\\\0\0";
+    VariableBackup<LPWCH> mockEnvStringsWBackup(&SysCalls::mockEnvStringsW, envBlockWithIgc);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    auto cacheConfig = getDefaultCompilerCacheConfig();
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_FALSE(cacheConfig.enabled);
+    EXPECT_STREQ(output.c_str(), "WARNING: Detected IGC_* environment variable(s). Compiler cache is disabled.\n");
 }
 
 } // namespace NEO

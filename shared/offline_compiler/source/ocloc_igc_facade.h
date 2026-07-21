@@ -36,7 +36,6 @@ class OclocIgcFacade : NEO::NonCopyableAndNonMovableClass {
     int initialize(const HardwareInfo &hwInfo);
     bool isInitialized() const;
     const char *getIgcRevision();
-    const std::string &getIgcRegKeys();
     size_t getIgcLibSize();
     time_t getIgcLibMTime();
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> createConstBuffer(const void *data, size_t size);
@@ -53,7 +52,6 @@ class OclocIgcFacade : NEO::NonCopyableAndNonMovableClass {
     OclocArgHelper *argHelper{};
     std::unique_ptr<OsLibrary> igcLib;
     std::vector<char> igcRevision;
-    std::string igcRegKeys;
     size_t igcLibSize{0};
     time_t igcLibMTime{0};
     CIF::RAII::UPtr_t<CIF::CIFMain> igcMain;

@@ -389,7 +389,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenNeoCachePersistentSetToZeroWhenGetDefau
     EXPECT_FALSE(cacheConfig.enabled);
 }
 
-TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetThenCacheConfigRemainsEnabled) {
+TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigIsEnabledOrDisabledAsExpected) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -418,9 +418,33 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetThenCacheConfigRemainsEnabl
         VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, NEO::ULT::MockEnvironBackup::defaultStatMock);
 
         auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-        EXPECT_TRUE(cacheConfig.enabled);
-        EXPECT_EQ(cacheConfig.cacheDir, "ult/directory/");
+        EXPECT_FALSE(cacheConfig.enabled);
     }
+}
+
+TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetWhenGetDefaultCacheConfigThenWarningIsPrinted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
+    mockableEnvs["IGC_DEBUG"] = "1";
+
+    std::vector<std::string> envStorage;
+    auto environVec = NEO::ULT::MockEnvironBackup::buildEnvironFromMap(mockableEnvs, envStorage);
+    NEO::ULT::MockEnvironBackup mockEnvBackup(environVec.data());
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, NEO::ULT::MockEnvironBackup::defaultStatMock);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_FALSE(cacheConfig.enabled);
+    EXPECT_STREQ(output.c_str(), "WARNING: Detected IGC_* environment variable(s). Compiler cache is disabled.\n");
 }
 
 } // namespace NEO

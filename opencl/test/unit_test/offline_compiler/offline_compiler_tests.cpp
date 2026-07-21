@@ -2874,7 +2874,6 @@ TEST_F(OfflineCompilerTests, givenAllowCachingWhenBuildSourceCodeThenGenBinaryIs
                                                                          mockOfflineCompiler->internalOptions,
                                                                          ArrayRef<const char>(), ArrayRef<const char>(),
                                                                          std::string(mockOfflineCompiler->igcFacade->getIgcRevision()),
-                                                                         mockOfflineCompiler->igcFacade->getIgcRegKeys(),
                                                                          mockOfflineCompiler->igcFacade->getIgcLibSize(),
                                                                          mockOfflineCompiler->igcFacade->getIgcLibMTime());
 

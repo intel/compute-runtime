@@ -81,14 +81,6 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     const char *revision = igcDeviceCtx->GetIGCRevision();
     strncpy_s(igcRevision.data(), 41, revision, 40);
 
-    auto igcRegKeysBuffer = igcMain->CreateBuiltin<CIF::Builtins::BufferLatest>();
-    if (igcRegKeysBuffer) {
-        igcDeviceCtx->GetIGCRegKeys(igcRegKeysBuffer.get());
-        if (igcRegKeysBuffer->GetSizeRaw() > 0) {
-            igcRegKeys.assign(igcRegKeysBuffer->GetMemory<char>(), igcRegKeysBuffer->GetSizeRaw());
-        }
-    }
-
     igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(CommonConstants::defaultProfilingTimerResolution));
 
     if (!initializeIgcDeviceContext(igcDeviceCtx.get(), hwInfo, compilerProductHelper.get())) {
@@ -127,10 +119,6 @@ CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> OclocIgcFacade::createIgcDeviceContex
 
 const char *OclocIgcFacade::getIgcRevision() {
     return igcRevision.data();
-}
-
-const std::string &OclocIgcFacade::getIgcRegKeys() {
-    return igcRegKeys;
 }
 
 size_t OclocIgcFacade::getIgcLibSize() {
