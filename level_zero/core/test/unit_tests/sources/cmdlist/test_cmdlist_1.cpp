@@ -1631,7 +1631,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     verifyFlags(commandList->appendSignalEvent(event, false), true, true);
 
-    verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false, false);
+    verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0), false, false);
     CmdListWaitEventParameters waitEventsParameters{
         .outWaitCmds = nullptr,
         .relaxedOrderingAllowed = false,
@@ -2056,7 +2056,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
         verifyFlags(commandList->appendSignalEvent(event, false), false, false);
 
-        verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false),
+        verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0),
                     false, false);
         CmdListWaitEventParameters waitEventsParameters{
             .outWaitCmds = nullptr,
@@ -2485,7 +2485,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     verifyWalkerWithProfilingEnqueued(commandList->appendSignalEvent(event, false), false);
 
-    verifyWalkerWithProfilingEnqueued(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0), false);
 
     CmdListWaitEventParameters waitEventsParameters{
         .outWaitCmds = nullptr,
@@ -2609,7 +2609,7 @@ HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfiling
 
     verifyFlag(commandList->appendSignalEvent(event, false), false);
 
-    verifyFlag(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false);
+    verifyFlag(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0), false);
 
     CmdListWaitEventParameters waitEventsParameters{
         .outWaitCmds = nullptr,

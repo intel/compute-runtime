@@ -549,7 +549,8 @@ struct Mock<CommandList> : public CommandList {
                      (NEO::GraphicsAllocation * dstptr,
                       NEO::GraphicsAllocation *srcptr,
                       size_t size,
-                      bool flushHost));
+                      bool flushHost,
+                      size_t offset));
 
     ADDMETHOD_NOBASE(appendMemoryCopyRegion, ze_result_t, ZE_RESULT_SUCCESS,
                      (void *dstptr,

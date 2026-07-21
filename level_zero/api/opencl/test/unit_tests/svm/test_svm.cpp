@@ -6,15 +6,19 @@
  */
 
 #include "shared/source/device/device_info.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
@@ -25,115 +29,130 @@ namespace NEO {
 namespace LEO {
 namespace ult {
 
-struct CapturingSharedMemL0Context : public L0::ult::Mock<L0::Context> {
-    CapturingSharedMemL0Context(L0::DriverHandle *driverHandle, ze_device_handle_t deviceHandle) : L0::ult::Mock<L0::Context>(driverHandle) {
-        this->devices[0] = deviceHandle;
-        this->numDevices = 1;
-    }
-
-    ze_result_t allocSharedMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc,
-                               const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, void **ptr) override {
-        ++allocSharedMemCallCount;
-        capturedSize = size;
-        capturedAlignment = alignment;
-        *ptr = &dummyStorage;
-        return ZE_RESULT_SUCCESS;
-    }
-
-    uint32_t allocSharedMemCallCount = 0u;
-    size_t capturedSize = 0u;
-    size_t capturedAlignment = 0u;
-    uint64_t dummyStorage = 0u;
-};
-
 struct ClSvmAllocTest : public Test<OclFixture> {
     void SetUp() override {
         Test<OclFixture>::SetUp();
         clDevice = platform->getDevices()[0].get();
+
+        cl_int errcode = CL_SUCCESS;
         cl_device_id clDeviceId = clDevice;
-        l0Context = std::make_unique<CapturingSharedMemL0Context>(driverHandle.get(), clDevice->getL0Handle());
-        leoContext = std::make_unique<Context>(nullptr, l0Context->toHandle(), 1, &clDeviceId, true);
+        clContext = clCreateContext(nullptr, 1, &clDeviceId, nullptr, nullptr, &errcode);
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        ASSERT_NE(nullptr, clContext);
+
+        svmManager = castToObject<Context>(clContext)->getL0Object()->getDriverHandle()->getSvmAllocsManager();
     }
 
     void TearDown() override {
-        leoContext.reset();
-        l0Context.reset();
+        clReleaseContext(clContext);
         Test<OclFixture>::TearDown();
     }
 
-    cl_context getContext() { return leoContext.get(); }
+    cl_context getContext() { return clContext; }
 
     ClDevice *clDevice = nullptr;
-    std::unique_ptr<CapturingSharedMemL0Context> l0Context;
-    std::unique_ptr<Context> leoContext;
+    cl_context clContext = nullptr;
+    NEO::SVMAllocsManager *svmManager = nullptr;
 
     static constexpr size_t validSize = 4096u * sizeof(cl_long);
 };
 
-TEST_F(ClSvmAllocTest, givenAtomicsWithoutFineGrainBufferFlagWhenClSvmAllocThenReturnsNullAndDoesNotAllocate) {
+TEST_F(ClSvmAllocTest, givenAtomicsWithoutFineGrainBufferFlagWhenClSvmAllocThenReturnsNull) {
     auto ptr = clSVMAlloc(getContext(), CL_MEM_SVM_ATOMICS, validSize, 0);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, l0Context->allocSharedMemCallCount);
 }
 
-TEST_F(ClSvmAllocTest, givenUseHostPtrFlagWhenClSvmAllocThenReturnsNullAndDoesNotAllocate) {
+TEST_F(ClSvmAllocTest, givenUseHostPtrFlagWhenClSvmAllocThenReturnsNull) {
     auto ptr = clSVMAlloc(getContext(), CL_MEM_USE_HOST_PTR, validSize, 0);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, l0Context->allocSharedMemCallCount);
 }
 
-TEST_F(ClSvmAllocTest, givenCopyHostPtrFlagWhenClSvmAllocThenReturnsNullAndDoesNotAllocate) {
+TEST_F(ClSvmAllocTest, givenCopyHostPtrFlagWhenClSvmAllocThenReturnsNull) {
     auto ptr = clSVMAlloc(getContext(), CL_MEM_COPY_HOST_PTR, validSize, 0);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, l0Context->allocSharedMemCallCount);
 }
 
-TEST_F(ClSvmAllocTest, givenInvalidFlagsWhenClSvmAllocThenReturnsNullAndDoesNotAllocate) {
+TEST_F(ClSvmAllocTest, givenInvalidFlagsWhenClSvmAllocThenReturnsNull) {
     auto ptr = clSVMAlloc(getContext(), 12345, validSize, 0);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, l0Context->allocSharedMemCallCount);
 }
 
-TEST_F(ClSvmAllocTest, givenZeroSizeWhenClSvmAllocThenReturnsNullAndDoesNotAllocate) {
+TEST_F(ClSvmAllocTest, givenZeroSizeWhenClSvmAllocThenReturnsNull) {
     auto ptr = clSVMAlloc(getContext(), 0, 0, 0);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, l0Context->allocSharedMemCallCount);
 }
 
-TEST_F(ClSvmAllocTest, givenNonPowerOfTwoAlignmentWhenClSvmAllocThenReturnsNullAndDoesNotAllocate) {
+TEST_F(ClSvmAllocTest, givenNonPowerOfTwoAlignmentWhenClSvmAllocThenReturnsNull) {
     for (cl_uint alignment : {3u, 5u, 6u, 7u}) {
         auto ptr = clSVMAlloc(getContext(), 0, validSize, alignment);
         EXPECT_EQ(nullptr, ptr) << "alignment: " << alignment;
     }
-    EXPECT_EQ(0u, l0Context->allocSharedMemCallCount);
 }
 
-TEST_F(ClSvmAllocTest, givenSizeExceedingMaxMemAllocSizeWhenClSvmAllocThenReturnsNullAndDoesNotAllocate) {
+TEST_F(ClSvmAllocTest, givenSizeExceedingMaxMemAllocSizeWhenClSvmAllocThenReturnsNull) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.AllowUnrestrictedSize.set(0);
 
     auto maxMemAllocSize = clDevice->getSharedDeviceInfo().maxMemAllocSize;
     auto ptr = clSVMAlloc(getContext(), CL_MEM_READ_WRITE, static_cast<size_t>(maxMemAllocSize) + 1u, 0);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, l0Context->allocSharedMemCallCount);
 }
 
-TEST_F(ClSvmAllocTest, givenFineGrainBufferFlagWhenFineGrainedSvmIsUnsupportedThenClSvmAllocReturnsNullAndDoesNotAllocate) {
+TEST_F(ClSvmAllocTest, givenFineGrainBufferFlagWhenFineGrainedSvmIsUnsupportedThenClSvmAllocReturnsNull) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.ForceFineGrainedSVMSupport.set(0);
 
     auto ptr = clSVMAlloc(getContext(), CL_MEM_SVM_FINE_GRAIN_BUFFER, validSize, 0);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, l0Context->allocSharedMemCallCount);
 }
 
-TEST_F(ClSvmAllocTest, givenValidArgumentsWhenClSvmAllocThenForwardsToSharedAllocWithMatchingSizeAndAlignment) {
+TEST_F(ClSvmAllocTest, givenValidArgumentsWhenClSvmAllocThenAllocationIsRegisteredAndFreedThroughSvmManager) {
     auto ptr = clSVMAlloc(getContext(), CL_MEM_READ_WRITE, validSize, 8);
-    EXPECT_EQ(&l0Context->dummyStorage, ptr);
-    EXPECT_EQ(1u, l0Context->allocSharedMemCallCount);
-    EXPECT_EQ(validSize, l0Context->capturedSize);
-    EXPECT_EQ(8u, l0Context->capturedAlignment);
+    ASSERT_NE(nullptr, ptr);
+
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_EQ(validSize, svmData->size);
+
+    clSVMFree(getContext(), ptr);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
 }
+
+TEST_F(ClSvmAllocTest, givenReadOnlyFlagWhenClSvmAllocThenAllocationIsRegistered) {
+    auto ptr = clSVMAlloc(getContext(), CL_MEM_READ_ONLY, validSize, 0);
+    ASSERT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, svmManager->getSVMAlloc(ptr));
+    clSVMFree(getContext(), ptr);
+}
+
+TEST_F(ClSvmAllocTest, givenSupportedAlignmentsWhenClSvmAllocThenAllocationSucceeds) {
+    for (cl_uint alignment : {0u, 1u, 2u, 4u, 8u, 16u, 128u}) {
+        auto ptr = clSVMAlloc(getContext(), CL_MEM_READ_WRITE, validSize, alignment);
+        EXPECT_NE(nullptr, ptr) << "alignment: " << alignment;
+        clSVMFree(getContext(), ptr);
+    }
+}
+
+struct RecordingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
+    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation, NEO::GraphicsAllocation *srcAllocation,
+                                    size_t size, bool flushHost, size_t offset) override {
+        ++appendPageFaultCopyCalled;
+        pageFaultDst = dstAllocation;
+        pageFaultSrc = srcAllocation;
+        pageFaultSize = size;
+        pageFaultFlushHost = flushHost;
+        pageFaultOffset = offset;
+        waitOnEventsCalledBeforeCopy = appendWaitOnEventsCalled;
+        return appendPageFaultCopyResult;
+    }
+
+    NEO::GraphicsAllocation *pageFaultDst = nullptr;
+    NEO::GraphicsAllocation *pageFaultSrc = nullptr;
+    size_t pageFaultSize = 0u;
+    size_t pageFaultOffset = 0u;
+    bool pageFaultFlushHost = false;
+    uint32_t waitOnEventsCalledBeforeCopy = 0u;
+};
 
 struct ClEnqueueSvmMapTest : public Test<OclFixture> {
     void SetUp() override {
@@ -152,21 +171,44 @@ struct ClEnqueueSvmMapTest : public Test<OclFixture> {
         context = castToObject<Context>(clContext);
         ASSERT_NE(nullptr, context);
 
+        svmManager = context->getL0Object()->getDriverHandle()->getSvmAllocsManager();
+
         // Inject a mock immediate command list so queue synchronization is observable.
         commandQueue = new CommandQueue(context, clDevice, nullptr, mockCmdList.toHandle());
     }
 
     void TearDown() override {
+        if (deviceStorageData) {
+            svmManager->removeSVMAlloc(*deviceStorageData);
+        }
         commandQueue->decRefApi();
         clReleaseContext(clContext);
         Test<OclFixture>::TearDown();
     }
 
+    void registerDeviceStorageAlloc(NEO::AllocationType allocationType = NEO::AllocationType::svmGpu) {
+        cpuAllocation = std::make_unique<MockGraphicsAllocation>(&svmStorage, sizeof(svmStorage));
+        gpuAllocation = std::make_unique<MockGraphicsAllocation>(&svmStorage, sizeof(svmStorage));
+        gpuAllocation->allocationType = allocationType;
+
+        deviceStorageData = std::make_unique<SvmAllocationData>(0u);
+        deviceStorageData->gpuAllocations.addAllocation(gpuAllocation.get());
+        deviceStorageData->cpuAllocation = cpuAllocation.get();
+        deviceStorageData->size = sizeof(svmStorage);
+
+        svmManager->insertSVMAlloc(*deviceStorageData);
+    }
+
     ClDevice *clDevice = nullptr;
     cl_context clContext = nullptr;
     Context *context = nullptr;
+    NEO::SVMAllocsManager *svmManager = nullptr;
     CommandQueue *commandQueue = nullptr;
-    L0::ult::Mock<L0::ult::CommandList> mockCmdList{};
+    RecordingCommandList mockCmdList{};
+
+    std::unique_ptr<MockGraphicsAllocation> cpuAllocation;
+    std::unique_ptr<MockGraphicsAllocation> gpuAllocation;
+    std::unique_ptr<SvmAllocationData> deviceStorageData;
     uint64_t svmStorage = 0u;
 };
 
@@ -176,6 +218,7 @@ TEST_F(ClEnqueueSvmMapTest, givenBlockingMapWhenClEnqueueSVMMapThenQueueIsSynchr
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
     EXPECT_EQ(1u, mockCmdList.hostSynchronizeCalled);
+    EXPECT_EQ(0u, mockCmdList.appendPageFaultCopyCalled);
 }
 
 TEST_F(ClEnqueueSvmMapTest, givenNonBlockingMapWhenClEnqueueSVMMapThenQueueIsNotSynchronized) {
@@ -184,6 +227,7 @@ TEST_F(ClEnqueueSvmMapTest, givenNonBlockingMapWhenClEnqueueSVMMapThenQueueIsNot
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
     EXPECT_EQ(0u, mockCmdList.hostSynchronizeCalled);
+    EXPECT_EQ(0u, mockCmdList.appendPageFaultCopyCalled);
 }
 
 TEST_F(ClEnqueueSvmMapTest, givenBlockingMapWhenHostSynchronizeFailsThenErrorIsReturned) {
@@ -201,6 +245,176 @@ TEST_F(ClEnqueueSvmMapTest, givenClEnqueueSVMUnmapThenQueueIsNotSynchronized) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
     EXPECT_EQ(0u, mockCmdList.hostSynchronizeCalled);
+    EXPECT_EQ(0u, mockCmdList.appendPageFaultCopyCalled);
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenDeviceStorageAllocationWhenClEnqueueSVMMapThenMigratesDeviceToHostAndRecordsOperation) {
+    registerDeviceStorageAlloc();
+
+    auto retVal = clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultDst);
+    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultSrc);
+    EXPECT_TRUE(mockCmdList.pageFaultFlushHost);
+    EXPECT_EQ(sizeof(svmStorage), mockCmdList.pageFaultSize);
+
+    auto mapOperation = svmManager->getSvmMapOperation(&svmStorage);
+    ASSERT_NE(nullptr, mapOperation);
+    EXPECT_FALSE(mapOperation->readOnlyMap);
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenAlreadyMappedDeviceStorageWhenClEnqueueSVMMapAgainThenMigrationIsSkipped) {
+    registerDeviceStorageAlloc();
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr));
+
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenReadOnlyMapWhenClEnqueueSVMUnmapThenMigrationIsSkippedAndOperationIsRemoved) {
+    registerDeviceStorageAlloc();
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_READ, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMUnmap(commandQueue, &svmStorage, 0, nullptr, nullptr));
+
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenWriteMapWhenClEnqueueSVMUnmapThenMigratesHostToDeviceAndRemovesOperation) {
+    registerDeviceStorageAlloc();
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMUnmap(commandQueue, &svmStorage, 0, nullptr, nullptr));
+
+    EXPECT_EQ(2u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultDst);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultSrc);
+    EXPECT_FALSE(mockCmdList.pageFaultFlushHost);
+    EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenBlockingDeviceStorageMapThenQueueIsSynchronizedAfterMigration) {
+    registerDeviceStorageAlloc();
+
+    auto retVal = clEnqueueSVMMap(commandQueue, CL_TRUE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.hostSynchronizeCalled);
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenWaitListWhenDeviceStorageMapThenWaitsBeforeMigration) {
+    registerDeviceStorageAlloc();
+
+    cl_int errcode = CL_SUCCESS;
+    cl_event userEvent = clCreateUserEvent(clContext, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, userEvent);
+
+    auto retVal = clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 1, &userEvent, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.appendWaitOnEventsCalled);
+    EXPECT_EQ(1u, mockCmdList.waitOnEventsCalledBeforeCopy);
+
+    clSetUserEventStatus(userEvent, CL_COMPLETE);
+    clReleaseEvent(userEvent);
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenZeroCopyAllocationWhenClEnqueueSVMMapThenMigrationIsSkipped) {
+    registerDeviceStorageAlloc(NEO::AllocationType::svmZeroCopy);
+
+    auto retVal = clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
+    EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenSubRegionMapAndUnmapWhenDeviceStorageThenOnlyThatRegionIsMigrated) {
+    registerDeviceStorageAlloc();
+
+    constexpr size_t regionOffset = sizeof(uint32_t);
+    constexpr size_t regionSize = sizeof(uint32_t);
+    auto regionPtr = ptrOffset(&svmStorage, regionOffset);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, regionPtr, regionSize, 0, nullptr, nullptr));
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultDst);
+    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultSrc);
+    EXPECT_EQ(regionSize, mockCmdList.pageFaultSize);
+    EXPECT_EQ(regionOffset, mockCmdList.pageFaultOffset);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMUnmap(commandQueue, regionPtr, 0, nullptr, nullptr));
+    EXPECT_EQ(2u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultDst);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultSrc);
+    EXPECT_EQ(regionSize, mockCmdList.pageFaultSize);
+    EXPECT_EQ(regionOffset, mockCmdList.pageFaultOffset);
+    EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(regionPtr));
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenReadOnlyMappedSvmBufferWhenClEnqueueUnmapMemObjectThenMapOperationIsReleasedAndNextMapMigratesAgain) {
+    registerDeviceStorageAlloc();
+
+    cl_int errcode = CL_SUCCESS;
+    cl_mem buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(svmStorage), &svmStorage, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, buffer);
+
+    auto mappedPtr = clEnqueueMapBuffer(commandQueue, buffer, CL_TRUE, CL_MAP_READ, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    EXPECT_EQ(static_cast<void *>(&svmStorage), mappedPtr);
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    ASSERT_NE(nullptr, svmManager->getSvmMapOperation(&svmStorage));
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer, mappedPtr, 0, nullptr, nullptr));
+    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
+
+    mappedPtr = clEnqueueMapBuffer(commandQueue, buffer, CL_TRUE, CL_MAP_READ, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    EXPECT_EQ(2u, mockCmdList.appendPageFaultCopyCalled);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer, mappedPtr, 0, nullptr, nullptr));
+    EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(ClEnqueueSvmMapTest, givenWriteInvalidateMappedSvmBufferWhenUnmappedThenHostToDeviceMigrationIsPerformed) {
+    registerDeviceStorageAlloc();
+
+    cl_int errcode = CL_SUCCESS;
+    cl_mem buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(svmStorage), &svmStorage, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, buffer);
+
+    auto mappedPtr = clEnqueueMapBuffer(commandQueue, buffer, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    EXPECT_EQ(static_cast<void *>(&svmStorage), mappedPtr);
+
+    auto mapOperation = svmManager->getSvmMapOperation(&svmStorage);
+    ASSERT_NE(nullptr, mapOperation);
+    EXPECT_FALSE(mapOperation->readOnlyMap);
+
+    auto migrationsAfterMap = mockCmdList.appendPageFaultCopyCalled;
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer, mappedPtr, 0, nullptr, nullptr));
+    EXPECT_EQ(migrationsAfterMap + 1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultDst);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultSrc);
+    EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
 } // namespace ult

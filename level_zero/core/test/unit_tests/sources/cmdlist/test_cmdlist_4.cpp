@@ -376,7 +376,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
 
-    auto result = commandList->appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    auto result = commandList->appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -398,7 +398,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenBindlessModeAndUseCsrIm
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
 
-    auto result = commandList->appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
+    auto result = commandList->appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 

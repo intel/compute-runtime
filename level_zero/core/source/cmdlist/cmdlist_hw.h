@@ -192,7 +192,8 @@ struct CommandListCoreFamily : public CommandList {
     ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
                                     NEO::GraphicsAllocation *srcAllocation,
                                     size_t size,
-                                    bool flushHost) override;
+                                    bool flushHost,
+                                    size_t offset) override;
     ze_result_t appendMemoryCopyRegion(void *dstPtr,
                                        const ze_copy_region_t *dstRegion,
                                        uint32_t dstPitch,
