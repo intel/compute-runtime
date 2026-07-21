@@ -355,6 +355,9 @@ bool CommandListCoreFamily<gfxCoreFamily>::singleEventPacketRequired(bool inputS
     return true;
 }
 
+template <>
+bool CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled() const { return NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1; }
+
 template struct CommandListCoreFamily<gfxCoreFamily>;
 template struct CommandListCoreFamilyImmediate<gfxCoreFamily>;
 

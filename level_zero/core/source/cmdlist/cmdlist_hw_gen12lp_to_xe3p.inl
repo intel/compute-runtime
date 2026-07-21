@@ -19,9 +19,6 @@ bool CommandListCoreFamily<gfxCoreFamily>::arePostBlitWACmdsRequired() const {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled() const { return NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1; }
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::useZeroedPatternInMemoryFill(CmdListMemoryCopyParams &memoryCopyParams) const {
     return false;
 }
