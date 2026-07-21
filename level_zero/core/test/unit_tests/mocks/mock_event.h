@@ -38,6 +38,7 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::maxPacketCount;
     using BaseClass::signalAllEventPackets;
     using BaseClass::signalScope;
+    using BaseClass::totalEventSize;
     using BaseClass::waitScope;
 };
 
@@ -53,7 +54,9 @@ struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass::externalEvent;
     using BaseClass::globalEndTS;
     using BaseClass::globalStartTS;
+    using BaseClass::gpuEndTimestamp;
     using BaseClass::gpuHangCheckPeriod;
+    using BaseClass::gpuStartTimestamp;
     using BaseClass::hostAddressFromPool;
     using BaseClass::hostEventSetValueTimestamps;
     using BaseClass::inOrderExecHelper;
@@ -64,6 +67,7 @@ struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass::maxPacketCount;
     using BaseClass::signalAllEventPackets;
     using BaseClass::signalScope;
+    using BaseClass::totalEventSize;
     using BaseClass::waitScope;
 };
 

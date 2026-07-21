@@ -3120,6 +3120,47 @@ HWTEST_F(EventSynchronizeTimestampTest, GivenDrmAndKmdWaitStrategyWhenTimestampN
     EXPECT_EQ(castToUint64(timestampCompletionAddress), csr.waitUserFenceParams.latestWaitedAddress);
 }
 
+TEST_F(EventSynchronizeTimestampTest, GivenCounterBasedTimestampEventBackedByNodeWithZeroTotalEventSizeWhenHostSignalThenProfilingCanBeRetrieved) {
+    using TimestampPackets = NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>;
+    MockTagAllocator<TimestampPackets> timestampAllocator(0, neoDevice->getMemoryManager());
+    auto timestampNode = timestampAllocator.getTag();
+    timestampNode->initialize();
+
+    event->totalEventSize = 0;
+    event->maxPacketCount = 1;
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->resetInOrderTimestampNode(timestampNode, 1);
+    event->resetKernelCountAndPacketUsedCount();
+
+    ASSERT_TRUE(event->isCounterBased());
+    ASSERT_TRUE(event->isEventTimestampFlagSet());
+    ASSERT_NE(nullptr, event->getAllocation(device));
+
+    event->setGpuStartTimestamp();
+    event->setGpuEndTimestamp();
+
+    ASSERT_NE(0u, event->gpuStartTimestamp);
+    ASSERT_NE(0u, event->gpuEndTimestamp);
+
+    const auto expectedStart = static_cast<uint32_t>(event->gpuStartTimestamp);
+    const auto expectedEnd = static_cast<uint32_t>(event->gpuEndTimestamp);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSignal(true));
+
+    ze_kernel_timestamp_result_t result = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, event->queryKernelTimestamp(&result));
+
+    EXPECT_EQ(expectedStart, result.context.kernelStart);
+    EXPECT_EQ(expectedEnd, result.context.kernelEnd);
+    EXPECT_EQ(expectedStart, result.global.kernelStart);
+    EXPECT_EQ(expectedEnd, result.global.kernelEnd);
+}
+
+TEST_F(EventSynchronizeTimestampTest, GivenZeroTotalEventSizeWhenGettingPoolIndexThenZeroIsReturnedWithoutDivideByZero) {
+    event->totalEventSize = 0;
+    EXPECT_EQ(0u, event->getPoolIndex());
+}
+
 HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingCounterBasedEventThenBoundedUserFenceWaitWithInterruptIsUsed) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
