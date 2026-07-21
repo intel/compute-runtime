@@ -222,9 +222,11 @@ TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenBuildFailsGrace
     auto tempCompilerCache = std::make_unique<CompilerCache>(config);
     pCompilerInterface->cache.reset(tempCompilerCache.release());
     pCompilerInterface->failCreateFclTranslationCtx = true;
+    pCompilerInterface->failCreateIgcTranslationCtx = true;
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     pCompilerInterface->failCreateFclTranslationCtx = false;
+    pCompilerInterface->failCreateIgcTranslationCtx = false;
     EXPECT_EQ(TranslationErrorCode::unknownError, err);
 }
 
@@ -414,9 +416,11 @@ TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenCompileFailsGra
     fclDebugVars.fileName = clFiles + "copybuffer.elf";
     gEnvironment->fclPushDebugVars(fclDebugVars);
     pCompilerInterface->failCreateFclTranslationCtx = true;
+    pCompilerInterface->failCreateIgcTranslationCtx = true;
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     pCompilerInterface->failCreateFclTranslationCtx = false;
+    pCompilerInterface->failCreateIgcTranslationCtx = false;
     EXPECT_EQ(TranslationErrorCode::unknownError, err);
 
     gEnvironment->fclPopDebugVars();

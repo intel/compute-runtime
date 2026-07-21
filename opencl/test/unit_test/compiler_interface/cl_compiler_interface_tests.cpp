@@ -72,10 +72,13 @@ TEST_F(ClCompilerInterfaceTestMockedBinaryFilesTest, WhenBuildIsInvokedThenFclRe
 
     fclDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
     gEnvironment->fclPushDebugVars(fclDebugVars);
+    igcDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_TRUE(hasSubstr(receivedInternalOptions, pClDevice->peekCompilerExtensions()));
+    gEnvironment->igcPopDebugVars();
     gEnvironment->fclPopDebugVars();
 }
 
@@ -84,9 +87,12 @@ TEST_F(ClCompilerInterfaceTestMockedBinaryFilesTest, WhenCompileIsInvokedThenFcl
 
     fclDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
     gEnvironment->fclPushDebugVars(fclDebugVars);
+    igcDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_TRUE(hasSubstr(receivedInternalOptions, pClDevice->peekCompilerExtensions()));
+    gEnvironment->igcPopDebugVars();
     gEnvironment->fclPopDebugVars();
 }

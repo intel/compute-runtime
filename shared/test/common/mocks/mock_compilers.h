@@ -44,6 +44,11 @@ struct MockCompilerDebugVars {
     bool shouldReturnInvalidTranslationOutput = false;
     bool shouldFailCreationOfTranslationContext = false;
     bool forceBuildFailure = false;
+    // When true, forceBuildFailure only applies to IGC translation contexts
+    // created with outType == oclGenBin (the actual backend/build step), not
+    // to front-end (FCL-role) IGC translation contexts used when a device's
+    // compilerProductHelper::useIgcAsFcl() is true.
+    bool forceBuildFailureBackendOnly = false;
     bool forceSuccessWithEmptyOutput = false;
     bool forceCreateFailure = false;
     bool forceRegisterFail = false;
@@ -155,6 +160,11 @@ struct MockIgcOclTranslationCtx : MockCIF<NEO::IgcOclTranslationCtxTag> {
     using MockCIF<NEO::IgcOclTranslationCtxTag>::TranslateImpl;
     MockIgcOclTranslationCtx();
     ~MockIgcOclTranslationCtx() override;
+
+    // outType this context was created with (see MockIgcOclDeviceCtx::CreateTranslationCtxImpl).
+    // Used to distinguish front-end (FCL-role) from backend/build translation
+    // calls when forceBuildFailureBackendOnly is set.
+    IGC::CodeType::CodeType_t createdOutType = IGC::CodeType::undefined;
 
     IGC::OclTranslationOutputBase *TranslateImpl(
         CIF::Version_t outVersion,

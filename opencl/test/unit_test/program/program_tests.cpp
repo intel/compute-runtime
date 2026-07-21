@@ -1082,9 +1082,13 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     auto debugVars = NEO::getFclDebugVars();
     debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
     gEnvironment->fclPushDebugVars(debugVars);
+    auto igcDebugVars = NEO::getIgcDebugVars();
+    igcDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(receivedInternalOptions, pPlatform->getClDevice(0)->peekCompilerExtensions())) << receivedInternalOptions;
+    gEnvironment->igcPopDebugVars();
     gEnvironment->fclPopDebugVars();
 
     // get build log

@@ -458,6 +458,7 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
     MockCompilerDebugVars igcDebugVars;
     retrieveBinaryKernelFilename(igcDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".bin", options);
     igcDebugVars.forceBuildFailure = true;
+    igcDebugVars.forceBuildFailureBackendOnly = true;
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
     std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
@@ -555,6 +556,16 @@ class CompilerInterfaceOclElfCacheTest : public ::testing::Test, public Compiler
         retrieveBinaryKernelFilename(igcFileName, KernelBinaryHelper::BUILT_INS + "_", ".spv", options);
 
         igcFclDebugVarsForceBuildFailure.forceBuildFailure = true;
+        igcFclDebugVarsForceBuildFailure.forceBuildFailureBackendOnly = true;
+        // When used for the front-end (FCL-role) IGC call (products where
+        // useIgcAsFcl() is true), forceBuildFailureBackendOnly means this call
+        // must actually succeed, so it needs valid output data - reuse the
+        // same content as igcDebugVarsDeviceBinary so the resulting
+        // intermediate representation - and thus its cache hash - matches the
+        // first (successful, non-cached) build() call exactly.
+        igcFclDebugVarsForceBuildFailure.fileName = igcFileName;
+        igcFclDebugVarsForceBuildFailure.binaryToReturn = deviceBinaryData.data();
+        igcFclDebugVarsForceBuildFailure.binaryToReturnSize = deviceBinaryData.size();
 
         igcDebugVarsDeviceBinary.fileName = igcFileName;
         igcDebugVarsDeviceBinary.forceBuildFailure = false;

@@ -30,11 +30,23 @@ function(compile_builtin_with_prefix core_type platform_it builtin bits builtin_
   get_filename_component(BASENAME ${builtin} NAME_WE)
   get_filename_component(absolute_filepath ${builtin} ABSOLUTE)
 
+  # Some core types' IGC frontend emits a different IR than plain SPIR-V; the
+  # list of such core types and the ocloc flags/extension to use for them are
+  # defined elsewhere. Fall back to plain SPIR-V generation for other cores.
+  set(IR_EXT "spv")
+  set(IR_FRONTEND_OPT "-spv_only")
+  set(IR_INPUT_OPT "-spirv_input")
+  if("${core_type}" IN_LIST IR_OVERRIDE_CORE_TYPES)
+    set(IR_EXT "${IR_OVERRIDE_EXT}")
+    set(IR_FRONTEND_OPT "${IR_OVERRIDE_FRONTEND_OPT}")
+    set(IR_INPUT_OPT "${IR_OVERRIDE_INPUT_OPT}")
+  endif()
+
   set(OUTPUT_FILE_SPV
-      ${OUTPUTDIR}/${mode_prefix}_${BASENAME}_${platform_it_lower}.spv
+      ${OUTPUTDIR}/${mode_prefix}_${BASENAME}_${platform_it_lower}.${IR_EXT}
   )
   set(TEMP_OUTPUT_FILE_SPV
-      ${OUTPUTDIR}/__${mode_prefix}_${BASENAME}_${platform_it_lower}.spv
+      ${OUTPUTDIR}/__${mode_prefix}_${BASENAME}_${platform_it_lower}.${IR_EXT}
   )
 
   set(__ocloc__options__ "")
@@ -50,7 +62,7 @@ function(compile_builtin_with_prefix core_type platform_it builtin bits builtin_
 
   add_custom_command(
                      OUTPUT ${OUTPUT_FILE_SPV}
-                     COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -spv_only -device ${platform_it_lower} -heapless_mode ${heapless_flag} ${builtin_options} -${bits} -output __${mode_prefix}_${BASENAME} -out_dir ${OUTPUTDIR} ${internal_options} -options "$<JOIN:${__ocloc__options__}, >"
+                     COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} ${IR_FRONTEND_OPT} -device ${platform_it_lower} -heapless_mode ${heapless_flag} ${builtin_options} -${bits} -output __${mode_prefix}_${BASENAME} -out_dir ${OUTPUTDIR} ${internal_options} -options "$<JOIN:${__ocloc__options__}, >"
                      COMMAND ${CMAKE_COMMAND} -E rename ${TEMP_OUTPUT_FILE_SPV} ${OUTPUT_FILE_SPV}
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${builtin} ocloc copy_compiler_files
@@ -76,7 +88,7 @@ function(compile_builtin_with_prefix core_type platform_it builtin bits builtin_
       get_filename_component(absolute_filepath_spv ${OUTPUT_FILE_SPV} ABSOLUTE)
       add_custom_command(
                          OUTPUT ${OUTPUT_FILE_CPP}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${RELEASE} -heapless_mode ${heapless_flag} ${builtin_options} -${bits} -stateful_address_mode ${stateful_addr_mode} -output ${mode_prefix}_${BASENAME}_${RELEASE_FILENAME} -output_no_suffix -out_dir ${OUTPUTDIR} ${internal_options} -options "$<JOIN:${__ocloc__options__}, >"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} ${IR_INPUT_OPT} -device ${RELEASE} -heapless_mode ${heapless_flag} ${builtin_options} -${bits} -stateful_address_mode ${stateful_addr_mode} -output ${mode_prefix}_${BASENAME}_${RELEASE_FILENAME} -output_no_suffix -out_dir ${OUTPUTDIR} ${internal_options} -options "$<JOIN:${__ocloc__options__}, >"
                          COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${BINARY_OUTPUT}.bin --output ${TEMP_OUTPUT_FILE_CPP} --array ${mode_prefix}_${BASENAME} --device ${RELEASE_FILENAME}
                          COMMAND ${CMAKE_COMMAND} -E rename ${TEMP_OUTPUT_FILE_CPP} ${OUTPUT_FILE_CPP}
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

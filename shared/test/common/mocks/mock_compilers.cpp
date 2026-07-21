@@ -187,7 +187,8 @@ std::unique_ptr<unsigned char[]> loadVirtualBinaryFile(StrT &&fileName, size_t &
 };
 
 void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::BufferSimple *options,
-               CIF::Builtins::BufferSimple *internalOptions, MockOclTranslationOutput *out) {
+               CIF::Builtins::BufferSimple *internalOptions, MockOclTranslationOutput *out,
+               IGC::CodeType::CodeType_t outType = IGC::CodeType::undefined) {
     MockCompilerDebugVars &debugVars = (usingIgc) ? *NEO::igcDebugVars : *fclDebugVars;
 
     if (debugVars.receivedInput != nullptr) {
@@ -204,11 +205,16 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
         }
     }
 
+    bool forceFailure = debugVars.forceBuildFailure;
+    if (forceFailure && debugVars.forceBuildFailureBackendOnly && (outType != IGC::CodeType::oclGenBin)) {
+        forceFailure = false;
+    }
+
     if (debugVars.forceSuccessWithEmptyOutput) {
         if (out) {
             out->setOutput(nullptr, 0);
         }
-    } else if ((debugVars.forceBuildFailure == false) &&
+    } else if ((forceFailure == false) &&
                (out && src && src->GetMemoryRaw() && src->GetSizeRaw())) {
 
         if (debugVars.internalOptionsExpected) {
@@ -314,7 +320,9 @@ IGC::IgcOclTranslationCtxBase *MockIgcOclDeviceCtx::CreateTranslationCtxImpl(CIF
     }
 
     requestedTranslationCtxs.emplace_back(inType, outType);
-    return new MockIgcOclTranslationCtx;
+    auto ctx = new MockIgcOclTranslationCtx;
+    ctx->createdOutType = outType;
+    return ctx;
 }
 
 bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine,
@@ -372,7 +380,7 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     }
 
     auto out = new MockOclTranslationOutput();
-    translate(true, src, options, internalOptions, out);
+    translate(true, src, options, internalOptions, out, createdOutType);
     return out;
 }
 
@@ -389,7 +397,7 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     }
 
     auto out = new MockOclTranslationOutput();
-    translate(true, src, options, internalOptions, out);
+    translate(true, src, options, internalOptions, out, createdOutType);
     return out;
 }
 
@@ -415,7 +423,7 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     }
 
     auto out = new MockOclTranslationOutput();
-    translate(true, src, options, internalOptions, out);
+    translate(true, src, options, internalOptions, out, createdOutType);
     return out;
 }
 
