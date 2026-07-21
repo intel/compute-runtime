@@ -27,6 +27,7 @@ class Image : public MemObj {
     static void clToL0ImageFormat(ze_image_format_t &l0Format, cl_channel_order clChannelOrder, cl_channel_type clChannelType);
     static bool isSRGB(cl_channel_order clChannelOrder);
     static const ClSurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat);
+    static size_t getRowPitchForImageFromBuffer(cl_mem_flags flags, const cl_image_format *imageFormat, const cl_image_desc *imageDesc);
 
     cl_int getImageInfo(cl_image_info paramName,
                         size_t paramValueSize,

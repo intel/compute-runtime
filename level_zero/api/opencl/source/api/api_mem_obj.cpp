@@ -287,10 +287,15 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
             l0imageDesc.pNext = &imageFromBuffer;
         }
 
+        // Per the OpenCL spec, an image created from a buffer with image_row_pitch==0
+        // uses image_width * elementSize. Pass this explicitly to zeImageCreate so a
+        // GMM-aligned pitch is not used.
+        const size_t effectiveRowPitch = NEO::LEO::Image::getRowPitchForImageFromBuffer(flags, imageFormat, imageDesc);
+
         ze_custom_pitch_exp_desc_t customPitchDesc{ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC};
-        if (imageDesc->mem_object && (imageDesc->image_row_pitch != 0 || imageDesc->image_slice_pitch != 0) &&
+        if (imageDesc->mem_object && (effectiveRowPitch != 0 || imageDesc->image_slice_pitch != 0) &&
             imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-            customPitchDesc.rowPitch = imageDesc->image_row_pitch;
+            customPitchDesc.rowPitch = effectiveRowPitch;
             customPitchDesc.slicePitch = imageDesc->image_slice_pitch;
             customPitchDesc.pNext = l0imageDesc.pNext;
             l0imageDesc.pNext = &customPitchDesc;
