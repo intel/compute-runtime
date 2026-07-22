@@ -231,7 +231,6 @@ __kernel void add_two_src_buffer(__global int *dst, __global int *src1, __global
 const char *scratchKernelSrc = R"===(
 typedef long16 TYPE;
 __attribute__((reqd_work_group_size(32, 1, 1))) // force LWS to 32
-__attribute__((intel_reqd_sub_group_size(16)))   // force SIMD to 16
 __kernel void
 scratch_kernel(__global int *resIdx, global TYPE *src, global TYPE *dst) {
     size_t lid = get_local_id(0);
