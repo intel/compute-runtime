@@ -320,7 +320,7 @@ struct CommandListCoreFamily : public CommandList {
                                                             size_t dstRowPitch, size_t dstSlicePitch,
                                                             const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                                             Event *signalEvent,
-                                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams, bool dualStreamCopyOffload);
+                                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
                                                           BufferBuiltIn builtin, const NEO::BuiltIn::AddressingMode &builtInMode,
@@ -329,7 +329,7 @@ struct CommandListCoreFamily : public CommandList {
                                                           const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                                           size_t srcOffset, Event *signalEvent,
                                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                                          bool relaxedOrderingDispatch);
+                                                          CmdListWaitEventParameters &waitEventParamters);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
                                                           BufferBuiltIn builtin, const NEO::BuiltIn::AddressingMode &builtInMode,
@@ -338,7 +338,7 @@ struct CommandListCoreFamily : public CommandList {
                                                           const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                                           uint32_t srcSlicePitch, size_t srcOffset,
                                                           Event *signalEvent, uint32_t numWaitEvents,
-                                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch);
+                                                          ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventParamters);
 
     MOCKABLE_VIRTUAL ze_result_t appendBlitFill(void *ptr, const void *pattern,
                                                 size_t patternSize, size_t size,

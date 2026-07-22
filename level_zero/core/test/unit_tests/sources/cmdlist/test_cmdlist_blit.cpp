@@ -339,7 +339,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlit
     Vec3<size_t> dstSize = {16, 16, 0};
 
     auto result = commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
-                                                          copySize, 0, 0, 0, 0, srcSize, dstSize, nullptr, 0, nullptr, copyParams, false);
+                                                          copySize, 0, 0, 0, 0, srcSize, dstSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &commandContainer = commandList->getCmdContainer();
@@ -379,7 +379,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlit
     Vec3<size_t> dstSize = {16, 16, 0};
 
     auto result = commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
-                                                          copySize, 16, 0, 16, 0, srcSize, dstSize, nullptr, 0, nullptr, copyParams, false);
+                                                          copySize, 16, 0, 16, 0, srcSize, dstSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &commandContainer = commandList->getCmdContainer();
@@ -451,7 +451,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryC
 
     AlignedAllocationData srcAllocationData = {nullptr, mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
     AlignedAllocationData dstAllocationData = {nullptr, mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
-    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event.get(), 0, nullptr, copyParams, false);
+    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event.get(), 0, nullptr, copyParams);
     GenCmdList cmdList;
 
     auto baseAddr = event->getGpuAddress(device);
@@ -1438,7 +1438,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenZeroWidthWhenAppendMemoryCopyRegionThenNoC
     AlignedAllocationData dstAllocationData = {nullptr, mockAllocationDst.getGpuAddress(), 0, &mockAllocationDst, false};
 
     commandList.appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
-                                           {0, 1, 1}, 0, 0, 0, 0, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams, false);
+                                           {0, 1, 1}, 0, 0, 0, 0, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(

@@ -775,10 +775,10 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, L0::Event *signalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                         bool relaxedOrderingDispatch) override {
+                                         CmdListWaitEventParameters &waitEventParamters) override {
         srcAlignedPtr = srcAlignedAllocation->alignedAllocationPtr;
         dstAlignedPtr = dstAlignedAllocation->alignedAllocationPtr;
-        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(dstAlignedAllocation, srcAlignedAllocation, builtin, builtInMode, dstRegion, dstPitch, dstOffset, srcRegion, srcPitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(dstAlignedAllocation, srcAlignedAllocation, builtin, builtInMode, dstRegion, dstPitch, dstOffset, srcRegion, srcPitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents, waitEventParamters);
     }
 
     ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
@@ -788,10 +788,10 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
                                          L0::Event *signalEvent, uint32_t numWaitEvents,
-                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
+                                         ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventParamters) override {
         srcAlignedPtr = srcAlignedAllocation->alignedAllocationPtr;
         dstAlignedPtr = dstAlignedAllocation->alignedAllocationPtr;
-        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(dstAlignedAllocation, srcAlignedAllocation, builtin, builtInMode, dstRegion, dstPitch, dstSlicePitch, dstOffset, srcRegion, srcPitch, srcSlicePitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(dstAlignedAllocation, srcAlignedAllocation, builtin, builtInMode, dstRegion, dstPitch, dstSlicePitch, dstOffset, srcRegion, srcPitch, srcSlicePitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents, waitEventParamters);
     }
 
     ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
@@ -802,11 +802,11 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                                            size_t dstRowPitch, size_t dstSlicePitch,
                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                            L0::Event *signalEvent,
-                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams, bool doubleStreamCopyOffload) override {
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override {
         srcBlitCopyRegionOffset = srcAllocationData->offset;
         dstBlitCopyRegionOffset = dstAllocationData->offset;
         return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(srcAllocationData, dstAllocationData, srcRegion, dstRegion, copySize, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch,
-                                                                                    srcSize, dstSize, signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams, doubleStreamCopyOffload);
+                                                                                    srcSize, dstSize, signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
     }
     uintptr_t srcAlignedPtr;
     uintptr_t dstAlignedPtr;

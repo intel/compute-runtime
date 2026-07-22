@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
+
 #include "cmdlist_memory_copy_params_ext.h"
 
 #include <cstddef>
@@ -39,6 +41,7 @@ struct CmdListMemoryCopyParams {
     bool taskCountUpdateRequired = false;
     bool bscSplitEnabled = false;
     CmdListMemoryCopyParamsExt paramsExt{};
+    CmdListWaitEventParameters waitEventsParameters{};
 };
 
 } // namespace L0
