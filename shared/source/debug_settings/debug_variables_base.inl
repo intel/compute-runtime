@@ -290,6 +290,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PrintTimestampPacketUsage, -1, "-1: default, 0: 
 DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeEventBeforeReset, -1, "-1: default, 0: Disabled, 1: Synchronize Event completion on host before calling reset. 2: Synchronize + print extra logs.")
 DECLARE_DEBUG_VARIABLE(int32_t, TrackNumCsrClientsOnSyncPoints, -1, "-1: default, 0: Disabled, 1: If set, synchronization points like zeEventHostSynchronize will unregister CmdQ from CSR clients")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDriverVersion, -1, "-1: default, >=0: Use value as reported driver version")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideVersionBuild, -1, "-1: default (use compiled NEO_VERSION_BUILD), >=0: force value as NEO_VERSION_BUILD in reported driver version and version string")
 DECLARE_DEBUG_VARIABLE(int32_t, WaitForUserFenceOnEventHostSynchronize, -1, "-1: default, 0: Disabled, 1: Enabled. If enabled, use WaitUserFence KMD call for in-order Events instead of active polling on host.")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceGpuStatusCheckOnSuccessfulEventHostSynchronize, -1, "-1: default, 0: Disabled, 1: Enabled. If enabled, check GPU status for every successful event host synchronize for hang/segfault.")
 DECLARE_DEBUG_VARIABLE(int32_t, DisableSystemPointerKernelArgument, -1, "-1: default, 0: Disabled, 1: using a system pointer for kernel argument returns an error.")

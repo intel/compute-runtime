@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/driver/driver.h"
@@ -48,7 +49,11 @@ zeIntelGetDriverVersionString(
     size_t *pVersionSize) {
     ze_api_version_t apiVersion;
     L0::DriverHandle::fromHandle(toInternalType(hDriver))->getApiVersion(&apiVersion);
-    std::string driverVersionString = std::to_string(ZE_MAJOR_VERSION(apiVersion)) + "." + std::to_string(ZE_MINOR_VERSION(apiVersion)) + "." + std::to_string(NEO_VERSION_BUILD);
+    uint32_t versionBuild = static_cast<uint32_t>(NEO_VERSION_BUILD);
+    if (NEO::debugManager.flags.OverrideVersionBuild.get() > -1) {
+        versionBuild = static_cast<uint32_t>(NEO::debugManager.flags.OverrideVersionBuild.get());
+    }
+    std::string driverVersionString = std::to_string(ZE_MAJOR_VERSION(apiVersion)) + "." + std::to_string(ZE_MINOR_VERSION(apiVersion)) + "." + std::to_string(versionBuild);
     if (NEO_VERSION_HOTFIX > 0) {
         driverVersionString.append("+");
         driverVersionString.append(std::to_string(NEO_VERSION_HOTFIX));
