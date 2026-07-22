@@ -609,7 +609,8 @@ struct Mock<CommandList> : public CommandList {
                       const size_t *pOffsets,
                       ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents));
+                      ze_event_handle_t *phWaitEvents,
+                      CmdListWaitEventParameters &waitEventsParameters));
 
     ADDMETHOD_NOBASE(appendMemoryCopyFromContext, ze_result_t, ZE_RESULT_SUCCESS,
                      (void *dstptr,

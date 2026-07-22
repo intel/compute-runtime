@@ -237,7 +237,8 @@ struct CommandListCoreFamily : public CommandList {
 
     ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
                                             const size_t *pOffsets, ze_event_handle_t hSignalEvent,
-                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                            CmdListWaitEventParameters &waitEventsParameters) override;
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override;

@@ -55,8 +55,16 @@ HWTEST_F(CommandListCreate, givenCommandListWithInvalidWaitEventArgWhenAppendQue
     auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto eventHandle = event.toHandle();
-
-    result = commandList->appendQueryKernelTimestamps(1u, &eventHandle, alloc, nullptr, nullptr, 1u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList->appendQueryKernelTimestamps(1u, &eventHandle, alloc, nullptr, nullptr, 1u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     context->freeMem(alloc);
@@ -94,8 +102,16 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
-
-    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     bool containsDstAlloc = false;
@@ -170,7 +186,16 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
 
     auto offsetSizes = reinterpret_cast<size_t *>(offsetAlloc);
-    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, offsetSizes, nullptr, 0u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, offsetSizes, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     bool containsDstPtr = false;
@@ -246,7 +271,17 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     auto result = context->allocHostMem(&hostDesc, size, 4096u, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    result = commandList.appendQueryKernelTimestamps(static_cast<uint32_t>(eventCount), events.get(), alloc, nullptr, nullptr, 0u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+
+    result = commandList.appendQueryKernelTimestamps(static_cast<uint32_t>(eventCount), events.get(), alloc, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto tsMode = commandList.defaultBuiltInMode;
@@ -309,7 +344,17 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     size_t size = sizeof(ze_kernel_timestamp_result_t) * eventCount;
     auto alloc = std::make_unique<uint8_t[]>(size);
 
-    auto result = commandList.appendQueryKernelTimestamps(static_cast<uint32_t>(eventCount), events.get(), alloc.get(), nullptr, nullptr, 0u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+
+    auto result = commandList.appendQueryKernelTimestamps(static_cast<uint32_t>(eventCount), events.get(), alloc.get(), nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto tsMode = commandList.defaultBuiltInMode;
@@ -411,8 +456,16 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     context->getDevices().insert(std::make_pair(mockDevice.getRootDeviceIndex(), mockDevice.toHandle()));
     auto result = context->allocDeviceMem(&mockDevice, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-
-    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 
     context->freeMem(alloc);
@@ -500,7 +553,17 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     auto result = context->allocDeviceMem(&mockDevice, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+
+    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 
     context->freeMem(alloc);
@@ -599,8 +662,16 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
         dstPtr = ptrOffset(dstAlloc, sizeof(ze_kernel_timestamp_result_t));
     }
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-
-    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto index0Allocation = mockDevice.tmpMockBultinLib->tmpMockKernel->index0Allocation;
@@ -3487,7 +3558,17 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
     void *alloc = reinterpret_cast<void *>(0x87651234uLL);
 
-    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, nullptr, 0u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(commandList.appendWaitOnEventsCalled, 0u);
     EXPECT_EQ(commandList.appendSignalEventCalled, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -3507,8 +3588,16 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     auto waitEventHandle = waitEvent.toHandle();
 
     void *alloc = reinterpret_cast<void *>(0x87651234uLL);
-
-    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, nullptr, 1u, &waitEventHandle);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, nullptr, 1u, &waitEventHandle, waitEventsParameters);
     EXPECT_EQ(commandList.appendWaitOnEventsCalled, 1u);
     EXPECT_EQ(commandList.appendSignalEventCalled, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -3529,7 +3618,17 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
     auto signalEventHandle = signalEvent.toHandle();
 
-    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 0u, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(commandList.appendWaitOnEventsCalled, 0u);
     EXPECT_EQ(commandList.appendSignalEventCalled, 1u);
@@ -3555,7 +3654,17 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     auto waitEventHandle = waitEvent.toHandle();
     auto signalEventHandle = signalEvent.toHandle();
 
-    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &waitEventHandle);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &waitEventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(commandList.appendWaitOnEventsCalled, 1u);
     EXPECT_EQ(commandList.appendSignalEventCalled, 1u);
@@ -3581,8 +3690,16 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendWaitEventReturnE
 
     auto waitEventHandle = waitEvent.toHandle();
     auto signalEventHandle = signalEvent.toHandle();
-
-    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &waitEventHandle);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &waitEventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
     EXPECT_EQ(commandList.appendWaitOnEventsCalled, 1u);
     EXPECT_EQ(commandList.appendSignalEventCalled, 0u);

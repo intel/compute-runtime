@@ -918,7 +918,17 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQue
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto eventHandle = event->toHandle();
 
-    result = pCommandList->appendQueryKernelTimestamps(1u, &eventHandle, alloc, nullptr, nullptr, 1u, &eventHandle);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+
+    result = pCommandList->appendQueryKernelTimestamps(1u, &eventHandle, alloc, nullptr, nullptr, 1u, &eventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     pCommandList->close();

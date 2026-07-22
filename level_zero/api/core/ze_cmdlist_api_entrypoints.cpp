@@ -101,8 +101,16 @@ ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendQueryKernelTimestamps(numEvents, phEvents, dstptr, pOffsets, hSignalEvent, numWaitEvents, phWaitEvents);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    return cmdList->appendQueryKernelTimestamps(numEvents, phEvents, dstptr, pOffsets, hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 }
 
 ze_result_t ZE_APICALL zeCommandListGetDeviceHandle(

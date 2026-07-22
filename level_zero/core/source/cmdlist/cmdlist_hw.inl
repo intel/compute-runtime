@@ -4042,19 +4042,11 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
     const size_t *pOffsets, ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+    CmdListWaitEventParameters &waitEventsParameters) {
     if (numEvents == 0) {
         ze_result_t ret = ZE_RESULT_SUCCESS;
         if (numWaitEvents > 0) {
-            CmdListWaitEventParameters waitEventsParameters{
-                .outWaitCmds = nullptr,
-                .relaxedOrderingAllowed = false,
-                .trackDependencies = false,
-                .waitForImplicitInOrderDependency = false,
-                .skipAddingWaitEventsToResidency = false,
-                .dualStreamCopyOffloadOperation = false,
-                .apiRequest = false,
-                .skipFlush = true};
             ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, waitEventsParameters);
         }
         if (ret == ZE_RESULT_SUCCESS && hSignalEvent != nullptr) {
@@ -4163,6 +4155,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     if constexpr (checkIfAllocationImportedRequired()) {
         launchParams.isDestinationAllocationImported = dstPtrAllocationStruct.alloc->getIsImported();
     }
+    launchParams.outListCommands = waitEventsParameters.outWaitCmds;
+    launchParams.omitAddingWaitEventsResidency = waitEventsParameters.skipAddingWaitEventsToResidency;
+    launchParams.relaxedOrderingDispatch = waitEventsParameters.relaxedOrderingAllowed;
     auto appendResult = appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, hSignalEvent, numWaitEvents,
                                            phWaitEvents, launchParams);
     if (appendResult != ZE_RESULT_SUCCESS) {

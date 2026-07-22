@@ -222,7 +222,8 @@ struct CommandList : _ze_command_list_handle_t {
 
     virtual ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
                                                     const size_t *pOffsets, ze_event_handle_t hSignalEvent,
-                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
+                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                    CmdListWaitEventParameters &waitEventsParameters) = 0;
 
     virtual ze_result_t appendMIBBStart(uint64_t address, size_t predication, bool secondLevel) = 0;
     virtual ze_result_t appendMIBBEnd() = 0;

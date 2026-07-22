@@ -599,8 +599,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCmdListWhenAppendQ
 
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
-
-    regularCmdList->appendQueryKernelTimestamps(2, queryEvents, deviceMem, nullptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    regularCmdList->appendQueryKernelTimestamps(2, queryEvents, deviceMem, nullptr, nullptr, 0, nullptr, waitEventsParameters);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
