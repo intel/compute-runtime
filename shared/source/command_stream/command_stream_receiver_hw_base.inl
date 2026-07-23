@@ -2577,7 +2577,6 @@ void CommandStreamReceiverHw<GfxFamily>::submitLateMidThreadPreemptionStart() {
     auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     UNRECOVERABLE_IF(submissionStatus != NEO::SubmissionStatus::success);
 
-    this->latestFlushedTaskCount = taskCount.load();
     this->skipPreemptionAllocation = false;
 }
 

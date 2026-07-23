@@ -3607,6 +3607,22 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenSubmitti
     EXPECT_ANY_THROW(commandStreamReceiver.submitLateMidThreadPreemptionStart());
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenPendingTaskCountWhenSubmittingLatePreemptionStartThenLatestFlushedTaskCountIsNotUpdated) {
+    auto *engineControl = pDevice->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular);
+    if (!engineControl) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*engineControl->commandStreamReceiver);
+    commandStreamReceiver.taskCount = 5u;
+    commandStreamReceiver.latestFlushedTaskCount = 2u;
+
+    commandStreamReceiver.submitLateMidThreadPreemptionStart();
+
+    EXPECT_EQ(2u, commandStreamReceiver.peekLatestFlushedTaskCount());
+    EXPECT_EQ(6u, commandStreamReceiver.peekTaskCount());
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
