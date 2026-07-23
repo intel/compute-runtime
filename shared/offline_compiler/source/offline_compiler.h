@@ -196,6 +196,7 @@ All supported acronyms: %s.
     MOCKABLE_VIRTUAL std::string validateInputType(const std::string &input, bool isLlvm, bool isSpirv);
     MOCKABLE_VIRTUAL int buildToIrBinary();
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
+    void updateBuildLog(const char *pErrorString, const size_t errorStringSize, ConstStringRef deviceName);
     std::string generateFilePathForIr(const std::string &fileNameBase) {
         auto ext = getFileExtension(intermediateRepresentation);
         return generateFilePath(outputDirectory, fileNameBase, ext.c_str());

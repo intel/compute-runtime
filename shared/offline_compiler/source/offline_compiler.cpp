@@ -48,6 +48,42 @@
 
 namespace NEO {
 
+namespace {
+
+std::string prefixNonEmptyLines(const std::string &log, ConstStringRef deviceName) {
+    if (log.empty()) {
+        return log;
+    }
+
+    const auto prefix = "[" + deviceName.str() + "] ";
+
+    std::string prefixedLog;
+    prefixedLog.reserve(log.size() + prefix.size());
+
+    size_t lineStart = 0;
+    while (lineStart < log.size()) {
+        const auto newlinePos = log.find('\n', lineStart);
+        const auto lineEnd = newlinePos == std::string::npos ? log.size() : newlinePos;
+        const auto lineLength = lineEnd - lineStart;
+        const bool emptyLine = lineLength == 0 || (lineLength == 1 && log[lineStart] == '\r');
+
+        if (!emptyLine) {
+            prefixedLog.append(prefix);
+        }
+        prefixedLog.append(log, lineStart, lineLength);
+
+        if (newlinePos == std::string::npos) {
+            break;
+        }
+        prefixedLog.push_back('\n');
+        lineStart = newlinePos + 1;
+    }
+
+    return prefixedLog;
+}
+
+} // namespace
+
 std::string convertToPascalCase(const std::string &inString) {
     std::string outString;
     bool capitalize = true;
@@ -859,7 +895,7 @@ int OfflineCompiler::buildSourceCode() {
     UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
     UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
 
-    updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
+    updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw(), deviceName);
 
     if (igcOutput->GetOutput()->GetSizeRaw() != 0) {
         storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
@@ -947,16 +983,24 @@ int OfflineCompiler::build() {
 }
 
 void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t errorStringSize) {
+    updateBuildLog(pErrorString, errorStringSize, ConstStringRef{});
+}
+
+void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t errorStringSize, ConstStringRef deviceName) {
     if (pErrorString != nullptr) {
         std::string log(pErrorString, pErrorString + errorStringSize);
         ConstStringRef errorString(log);
         const bool warningFound = errorString.containsCaseInsensitive("warning");
         if (!isQuiet() || !warningFound) {
+            log.resize(std::char_traits<char>::length(log.c_str()));
+            if (!deviceName.empty()) {
+                log = prefixNonEmptyLines(log, deviceName);
+            }
             if (buildLog.empty()) {
-                buildLog.assign(errorString.data());
+                buildLog.assign(log);
             } else {
                 buildLog.append("\n");
-                buildLog.append(errorString.data());
+                buildLog.append(log);
             }
         }
     }

@@ -2113,7 +2113,7 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
     mockOfflineCompiler.initialize(argv.size(), argv);
 
     const char buildWarning[] = "warning: This is a build log!";
-    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
+    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning), gEnvironment->devicePrefix.c_str());
     mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     // Dummy value
@@ -2135,7 +2135,7 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
     EXPECT_EQ(OCLOC_SUCCESS, buildResult);
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
 
-    const std::string expectedOutput{buildWarning + "\nBuild succeeded for : "s + deviceConfig + ".\n"s};
+    const std::string expectedOutput{"[" + gEnvironment->devicePrefix + "] " + buildWarning + "\nBuild succeeded for : "s + deviceConfig + ".\n"s};
     EXPECT_EQ(expectedOutput, output);
 }
 
@@ -2158,7 +2158,7 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
     const char buildWarning[] = "Warning: this is a build log!";
-    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
+    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning), gEnvironment->devicePrefix.c_str());
     mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     std::vector<char> bin = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};

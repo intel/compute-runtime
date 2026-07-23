@@ -66,6 +66,7 @@ struct MockCompilerDebugVars {
 
     std::string fileName;
     std::string fileNameSuffix;
+    std::string buildLogToReturn;
     std::string translationContextCreationError;
 };
 
@@ -204,6 +205,7 @@ struct MockOclTranslationOutput : MockCIF<NEO::OclTranslationOutputTag> {
         setError("");
     }
     void setError(const std::string &message);
+    void setBuildLog(const std::string &message);
     void setOutput(const void *data, size_t dataLen);
     void setDebugData(const void *data, size_t dataLen);
 

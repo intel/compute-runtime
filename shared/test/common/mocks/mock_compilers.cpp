@@ -208,11 +208,8 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
         if (out) {
             out->setOutput(nullptr, 0);
         }
-        return;
-    }
-
-    if ((debugVars.forceBuildFailure == false) &&
-        (out && src && src->GetMemoryRaw() && src->GetSizeRaw())) {
+    } else if ((debugVars.forceBuildFailure == false) &&
+               (out && src && src->GetMemoryRaw() && src->GetSizeRaw())) {
 
         if (debugVars.internalOptionsExpected) {
             if (internalOptions->GetSizeRaw() < 1 || internalOptions->GetMemoryRaw() == nullptr) { // NOLINT(clang-analyzer-core.CallAndMessage)
@@ -280,6 +277,10 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
         }
     } else {
         out->setError();
+    }
+
+    if (out != nullptr && !debugVars.buildLogToReturn.empty()) {
+        out->setBuildLog(debugVars.buildLogToReturn);
     }
 }
 
@@ -440,6 +441,10 @@ MockOclTranslationOutput::~MockOclTranslationOutput() {
 
 void MockOclTranslationOutput::setError(const std::string &message) {
     failed = true;
+    this->log->SetUnderlyingStorage(message.c_str(), message.size());
+}
+
+void MockOclTranslationOutput::setBuildLog(const std::string &message) {
     this->log->SetUnderlyingStorage(message.c_str(), message.size());
 }
 

@@ -3066,6 +3066,54 @@ TEST(OfflineCompilerTest, givenErrorStringsWithExtraNullCharactersWhenUpdatingBu
     EXPECT_EQ(mockOfflineCompiler->getBuildLog(), expectedBuildLogString);
 }
 
+TEST(OfflineCompilerTest, givenDeviceNameWhenUpdatingMultilineBuildLogThenEveryNonEmptyLineIsPrefixed) {
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const std::string buildLog = "warning: first line\n\nwarning: second line\r\n\r\nerror: final line";
+    mockOfflineCompiler.updateBuildLog(buildLog.data(), buildLog.size(), "12.71.0");
+
+    EXPECT_EQ("[12.71.0] warning: first line\n\n[12.71.0] warning: second line\r\n\r\n[12.71.0] error: final line", mockOfflineCompiler.getBuildLog());
+}
+
+TEST(OfflineCompilerTest, givenDeviceNameAndTrailingNewlineAndNullCharactersWhenUpdatingBuildLogThenFormattingIsPreserved) {
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const std::array<char, sizeof("warning: first line\n\0")> buildLog = {"warning: first line\n\0"};
+    mockOfflineCompiler.updateBuildLog(buildLog.data(), buildLog.size(), "bmg");
+
+    EXPECT_EQ("[bmg] warning: first line\n", mockOfflineCompiler.getBuildLog());
+}
+
+TEST_F(OfflineCompilerTests, givenIgcBuildLogWhenBuildingSourceCodeThenEveryNonEmptyLineIsPrefixedWithTargetDevice) {
+    MockOfflineCompiler mockOfflineCompiler;
+    Source source{reinterpret_cast<const uint8_t *>(spirvMagic.data()), spirvMagic.size(), "some_file.spv"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler.argHelper)->inputs.push_back(source);
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "some_file.spv",
+        "-spirv_input",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    ASSERT_EQ(CL_SUCCESS, initResult);
+
+    char binary[] = {1, 2, 3, 4};
+    MockCompilerDebugVars igcDebugVars(gEnvironment->igcDebugVars);
+    igcDebugVars.binaryToReturn = binary;
+    igcDebugVars.binaryToReturnSize = sizeof(binary);
+    igcDebugVars.buildLogToReturn = "warning: first line\n\nwarning: second line";
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    const auto buildResult = mockOfflineCompiler.build();
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
+
+    EXPECT_EQ(CL_SUCCESS, buildResult);
+    const std::string expectedLog = "[" + gEnvironment->devicePrefix + "] warning: first line\n\n[" + gEnvironment->devicePrefix + "] warning: second line";
+    EXPECT_EQ(expectedLog, mockOfflineCompiler.getBuildLog());
+}
+
 TEST(OfflineCompilerTest, givenValidSizeAndInvalidLogPointerWhenUpdatingBuildLogThenNothingIsWritten) {
     MockOfflineCompiler mockOfflineCompiler{};
 
