@@ -552,8 +552,8 @@ HWTEST_F(AppendFillTest, givenInvalidExtWhenAppendMemoryFillWithParametersCalled
     uint32_t dstBuffer = 0;
     uint8_t pattern = 1;
     ze_base_desc_t desc{};
-
-    ze_result_t result = commandList.appendMemoryFillWithParameters(&dstBuffer, &pattern, sizeof(pattern), sizeof(dstBuffer), &desc, nullptr, 0, nullptr);
+    CmdListMemoryCopyParams memoryCopyParams{};
+    ze_result_t result = commandList.appendMemoryFillWithParameters(&dstBuffer, &pattern, sizeof(pattern), sizeof(dstBuffer), &desc, nullptr, 0, nullptr, memoryCopyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 

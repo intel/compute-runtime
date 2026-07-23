@@ -179,7 +179,8 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendMemoryCopyWithParameters(void *dstptr, const void *srcptr, size_t size,
                                                        const void *pNext,
                                                        ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                                       ze_event_handle_t *phWaitEvents) = 0;
+                                                       ze_event_handle_t *phWaitEvents,
+                                                       CmdListMemoryCopyParams &memoryCopyParams) = 0;
     virtual ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr, size_t size, bool flushHost, size_t offset) = 0;
     virtual ze_result_t appendMemoryCopyRegion(void *dstPtr,
                                                const ze_copy_region_t *dstRegion,
@@ -197,7 +198,7 @@ struct CommandList : _ze_command_list_handle_t {
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
     virtual ze_result_t appendMemoryFillWithParameters(void *ptr, const void *pattern,
                                                        size_t patternSize, size_t size, const void *pNext, ze_event_handle_t hSignalEvent,
-                                                       uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
+                                                       uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
     virtual ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) = 0;
     virtual ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) = 0;
     virtual ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) = 0;
@@ -206,7 +207,8 @@ struct CommandList : _ze_command_list_handle_t {
                                                    CmdListWaitEventParameters &waitEventParams) = 0;
     virtual ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc,
                                                     const void *srcptr, size_t size, ze_event_handle_t hSignalEvent,
-                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;
+                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                    CmdListMemoryCopyParams &memoryCopyParams) = 0;
 
     virtual void *asMutable() { return nullptr; };
 

@@ -3291,7 +3291,8 @@ TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmedia
 
     size_t src = 0;
     size_t dst = 0;
-    auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, false);
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, memoryCopyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -3351,7 +3352,8 @@ TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmedia
 
     size_t src = 0;
     size_t dst = 0;
-    auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, false);
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, memoryCopyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -3412,7 +3414,8 @@ TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmedia
 
     size_t src = 0;
     size_t dst = 0;
-    auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, false);
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, memoryCopyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 

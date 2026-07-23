@@ -543,7 +543,8 @@ struct Mock<CommandList> : public CommandList {
                       const void *pNext,
                       ze_event_handle_t hEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents));
+                      ze_event_handle_t *phWaitEvents,
+                      CmdListMemoryCopyParams &memoryCopyParams));
 
     ADDMETHOD_NOBASE(appendPageFaultCopy, ze_result_t, ZE_RESULT_SUCCESS,
                      (NEO::GraphicsAllocation * dstptr,
@@ -586,7 +587,8 @@ struct Mock<CommandList> : public CommandList {
                       const void *pNext,
                       ze_event_handle_t hEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents));
+                      ze_event_handle_t *phWaitEvents,
+                      CmdListMemoryCopyParams &memoryCopyParams));
 
     ADDMETHOD_NOBASE(appendSignalEvent, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_event_handle_t hEvent, bool relaxedOrderingDispatch));
@@ -619,7 +621,7 @@ struct Mock<CommandList> : public CommandList {
                       size_t size,
                       ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
+                      ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams));
 
     ADDMETHOD_NOBASE(reserveSpace, ze_result_t, ZE_RESULT_SUCCESS,
                      (size_t size,

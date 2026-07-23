@@ -1471,8 +1471,8 @@ HWTEST_F(AppendMemoryCopyTests, givenInvalidExtWhenAppendMemoryCopyWithParameter
     uint32_t srcBuffer = 1;
     uint32_t dstBuffer = 0;
     ze_base_desc_t desc{};
-
-    ze_result_t result = cmdList.appendMemoryCopyWithParameters(&dstBuffer, &srcBuffer, sizeof(srcBuffer), &desc, nullptr, 0, nullptr);
+    CmdListMemoryCopyParams memoryCopyParams{};
+    ze_result_t result = cmdList.appendMemoryCopyWithParameters(&dstBuffer, &srcBuffer, sizeof(srcBuffer), &desc, nullptr, 0, nullptr, memoryCopyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 

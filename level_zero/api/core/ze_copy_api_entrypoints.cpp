@@ -232,8 +232,8 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyFromContext(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendMemoryCopyFromContext(dstptr, hContextSrc, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, false);
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    return cmdList->appendMemoryCopyFromContext(dstptr, hContextSrc, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 } // namespace L0

@@ -188,7 +188,8 @@ struct CommandListCoreFamily : public CommandList {
     ze_result_t appendMemoryCopyWithParameters(void *dstptr, const void *srcptr, size_t size,
                                                const void *pNext,
                                                ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                               ze_event_handle_t *phWaitEvents) override;
+                                               ze_event_handle_t *phWaitEvents,
+                                               CmdListMemoryCopyParams &memoryCopyParams) override;
     ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
                                     NEO::GraphicsAllocation *srcAllocation,
                                     size_t size,
@@ -215,7 +216,8 @@ struct CommandListCoreFamily : public CommandList {
                                                size_t patternSize, size_t size,
                                                const void *pNext,
                                                ze_event_handle_t hSignalEvent,
-                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                               CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendMIBBStart(uint64_t address, size_t predication, bool secondLevel) override;
     ze_result_t appendMIBBEnd() override;
@@ -256,7 +258,7 @@ struct CommandListCoreFamily : public CommandList {
                                            CmdListWaitEventParameters &waitEventParams) override;
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
                                             size_t size, ze_event_handle_t hSignalEvent,
-                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
     void appendMultiPartitionEpilogue() override;
     void appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency, bool copyOperation);

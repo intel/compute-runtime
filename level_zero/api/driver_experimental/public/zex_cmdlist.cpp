@@ -8,6 +8,7 @@
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
@@ -104,8 +105,8 @@ zexCommandListAppendMemoryCopyWithParameters(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    CmdListMemoryCopyParams memoryCopyParams{};
+    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t ZE_APICALL
@@ -138,8 +139,8 @@ zexCommandListAppendMemoryFillWithParameters(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
+    CmdListMemoryCopyParams memoryCopyParams{};
+    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t ZE_APICALL

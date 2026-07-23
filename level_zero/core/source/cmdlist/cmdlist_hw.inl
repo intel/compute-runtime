@@ -2449,8 +2449,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyWithParameters
                                                                                  const void *pNext,
                                                                                  ze_event_handle_t hSignalEvent,
                                                                                  uint32_t numWaitEvents,
-                                                                                 ze_event_handle_t *phWaitEvents) {
-    CmdListMemoryCopyParams memoryCopyParams{};
+                                                                                 ze_event_handle_t *phWaitEvents,
+                                                                                 CmdListMemoryCopyParams &memoryCopyParams) {
     ze_result_t ret = obtainMemoryCopyParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), memoryCopyParams, false);
     if (ret) {
         return ret;
@@ -3120,8 +3120,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFillWithParameters
                                                                                  const void *pNext,
                                                                                  ze_event_handle_t hSignalEvent,
                                                                                  uint32_t numWaitEvents,
-                                                                                 ze_event_handle_t *phWaitEvents) {
-    CmdListMemoryCopyParams memoryCopyParams{};
+                                                                                 ze_event_handle_t *phWaitEvents,
+                                                                                 CmdListMemoryCopyParams &memoryCopyParams) {
+
     ze_result_t ret = obtainMemoryCopyParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), memoryCopyParams, true);
     if (ret) {
         return ret;
@@ -4032,9 +4033,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyFromContext(
     void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
-    size_t size, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    CmdListMemoryCopyParams memoryCopyParams = {};
-    memoryCopyParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
+    size_t size, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 

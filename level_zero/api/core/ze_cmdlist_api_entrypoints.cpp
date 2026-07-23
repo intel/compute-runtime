@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
@@ -286,8 +287,8 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyWithParameters(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    CmdListMemoryCopyParams memoryCopyParams{};
+    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
@@ -305,8 +306,8 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    CmdListMemoryCopyParams memoryCopyParams{};
+    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 } // namespace L0
 
