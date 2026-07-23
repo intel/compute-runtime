@@ -249,7 +249,7 @@ scratch_kernel(__global int *resIdx, global TYPE *src, global TYPE *dst) {
 }
 )===";
 
-const char *scratchKernelBuildOptions = "-igc_opts 'VISAOptions=-forcespills' ";
+const char *scratchKernelBuildOptions = "-Xfinalizer -forcespills";
 
 const char *printfKernelSource = R"===(
 
