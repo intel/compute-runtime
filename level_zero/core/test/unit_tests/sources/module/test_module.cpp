@@ -45,6 +45,7 @@
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_module.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/internal_core_program_ext.h"
@@ -63,6 +64,21 @@ namespace L0 {
 namespace ult {
 
 using ModuleTest = Test<ModuleFixture>;
+
+TEST_F(ModuleTest, givenValidModuleHandleWhenCallingZeModuleGetDeviceHandleThenParentDeviceHandleReturned) {
+    ze_device_handle_t deviceHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeModuleGetDeviceHandleExt(module->toHandle(), &deviceHandle));
+    EXPECT_EQ(device->toHandle(), deviceHandle);
+}
+
+TEST_F(ModuleTest, givenNullModuleHandleWhenCallingZeModuleGetDeviceHandleThenInvalidNullHandleReturned) {
+    ze_device_handle_t deviceHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeModuleGetDeviceHandleExt(nullptr, &deviceHandle));
+}
+
+TEST_F(ModuleTest, givenNullDeviceHandlePointerWhenCallingZeModuleGetDeviceHandleThenInvalidNullPointerReturned) {
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeModuleGetDeviceHandleExt(module->toHandle(), nullptr));
+}
 
 TEST_F(ModuleTest, GivenGeneralRegisterFileDescriptorWhenGetKernelPropertiesIsCalledThenDescriptorIsCorrectlySet) {
     zex_device_module_register_file_exp_t descriptor{ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP};

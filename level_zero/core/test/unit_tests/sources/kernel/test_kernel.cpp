@@ -27,6 +27,7 @@
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_module.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
@@ -4129,6 +4130,21 @@ class KernelProgramBinaryTests : public ModuleFixture, public ::testing::Test {
     ze_kernel_handle_t kernelHandle;
     L0::Kernel *kernel = nullptr;
 };
+
+TEST_F(KernelProgramBinaryTests, givenValidKernelHandleWhenCallingZeKernelGetModuleHandleThenParentModuleHandleReturned) {
+    ze_module_handle_t moduleHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeKernelGetModuleHandleExt(kernelHandle, &moduleHandle));
+    EXPECT_EQ(module->toHandle(), moduleHandle);
+}
+
+TEST_F(KernelProgramBinaryTests, givenNullKernelHandleWhenCallingZeKernelGetModuleHandleThenInvalidNullHandleReturned) {
+    ze_module_handle_t moduleHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeKernelGetModuleHandleExt(nullptr, &moduleHandle));
+}
+
+TEST_F(KernelProgramBinaryTests, givenNullModuleHandlePointerWhenCallingZeKernelGetModuleHandleThenInvalidNullPointerReturned) {
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeKernelGetModuleHandleExt(kernelHandle, nullptr));
+}
 
 TEST_F(KernelProgramBinaryTests, givenCallTozeKernelGetBinaryExpThenCorrectSizeAndDataReturned) {
     size_t kernelBinarySize = 0;

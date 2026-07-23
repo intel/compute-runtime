@@ -187,6 +187,10 @@ struct KernelImp : Kernel {
         return *this->module;
     }
 
+    Module *getModule() const override {
+        return this->module;
+    }
+
     NEO::GraphicsAllocation *allocatePrivateMemoryGraphicsAllocation() override;
     void patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) override;
     void patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const override;

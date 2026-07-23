@@ -1545,6 +1545,8 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&::zexKernelGetArgumentSize) expectedKernelGetArgumentSize = L0::zexKernelGetArgumentSize;
     decltype(&::zexKernelGetArgumentType) expectedKernelGetArgumentType = L0::zexKernelGetArgumentType;
     decltype(&::zeIntelKernelGetBinaryExp) expectedIntelKernelGetBinaryExp = L0::zeIntelKernelGetBinaryExp;
+    decltype(&::zeKernelGetModuleHandleExt) expectedGetModuleHandle = L0::zeKernelGetModuleHandleExt;
+    decltype(&::zeModuleGetDeviceHandleExt) expectedModuleGetDeviceHandle = L0::zeModuleGetDeviceHandleExt;
 
     // context function addresses
     decltype(&zexMemFreeRegisterCallbackExt) expectedIntelMemFreeRegisterCallbackExt = L0::zexMemFreeRegisterCallbackExt;
@@ -1665,6 +1667,12 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelKernelGetBinaryExp", &funPtr));
     EXPECT_EQ(expectedIntelKernelGetBinaryExp, reinterpret_cast<decltype(&zeIntelKernelGetBinaryExp)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeKernelGetModuleHandleExt", &funPtr));
+    EXPECT_EQ(expectedGetModuleHandle, reinterpret_cast<decltype(&zeKernelGetModuleHandleExt)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeModuleGetDeviceHandleExt", &funPtr));
+    EXPECT_EQ(expectedModuleGetDeviceHandle, reinterpret_cast<decltype(&zeModuleGetDeviceHandleExt)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelGetDriverVersionString", &funPtr));
     EXPECT_EQ(expectedIntelGetDriverVersionString, reinterpret_cast<decltype(&zeIntelGetDriverVersionString)>(funPtr));

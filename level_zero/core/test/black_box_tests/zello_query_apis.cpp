@@ -8,6 +8,7 @@
 #include <level_zero/ze_api.h>
 
 #include "zello_common.h"
+#include "zello_compile.h"
 
 #include <iostream>
 
@@ -32,6 +33,9 @@ using ze_pfnCommandListIsMutableExp_t = ze_result_t(ZE_APICALL *)(ze_command_lis
 
 using ze_pfnEventGetCounterBasedFlags_t = ze_result_t(ZE_APICALL *)(ze_event_handle_t hEvent, ze_event_counter_based_flags_t *pFlags);
 
+using ze_pfnKernelGetModuleHandle_t = ze_result_t(ZE_APICALL *)(ze_kernel_handle_t hKernel, ze_module_handle_t *phModule);
+using ze_pfnModuleGetDeviceHandle_t = ze_result_t(ZE_APICALL *)(ze_module_handle_t hModule, ze_device_handle_t *phDevice);
+
 struct QueryApiFunctions {
     ze_pfnCommandQueueGetOrdinal_t commandQueueGetOrdinal = nullptr;
     ze_pfnCommandQueueGetIndex_t commandQueueGetIndex = nullptr;
@@ -51,6 +55,9 @@ struct QueryApiFunctions {
     ze_pfnCommandListIsMutableExp_t commandListIsMutableExp = nullptr;
 
     ze_pfnEventGetCounterBasedFlags_t eventGetCounterBasedFlags = nullptr;
+
+    ze_pfnKernelGetModuleHandle_t kernelGetModuleHandle = nullptr;
+    ze_pfnModuleGetDeviceHandle_t moduleGetDeviceHandle = nullptr;
 };
 
 template <typename FuncType>
@@ -78,6 +85,9 @@ void loadQueryFunctions(ze_driver_handle_t driverHandle, QueryApiFunctions &func
     loadFunction(driverHandle, "zeCommandListIsMutableExp", functions.commandListIsMutableExp);
 
     loadFunction(driverHandle, "zeEventGetCounterBasedFlags", functions.eventGetCounterBasedFlags);
+
+    loadFunction(driverHandle, "zeKernelGetModuleHandleExt", functions.kernelGetModuleHandle);
+    loadFunction(driverHandle, "zeModuleGetDeviceHandleExt", functions.moduleGetDeviceHandle);
 }
 
 } // namespace
@@ -235,6 +245,23 @@ int main(int argc, char *argv[]) {
     expect(counterBasedEventFlags != 0, "counter based events have a non-zero flags value");
 
     SUCCESS_OR_TERMINATE(zeEventDestroy(hCounterBasedEvent));
+
+    ze_module_handle_t module = nullptr;
+    LevelZeroBlackBoxTests::createModuleFromSpirV(context, device, LevelZeroBlackBoxTests::openCLKernelsSource, module);
+
+    ze_kernel_handle_t kernel = nullptr;
+    LevelZeroBlackBoxTests::createKernelWithName(module, "memcpy_bytes", kernel);
+
+    ze_module_handle_t queriedModule = nullptr;
+    SUCCESS_OR_TERMINATE(functions.kernelGetModuleHandle(kernel, &queriedModule));
+    expect(queriedModule == module, "kernel parent module mismatch");
+
+    ze_device_handle_t queriedModuleDevice = nullptr;
+    SUCCESS_OR_TERMINATE(functions.moduleGetDeviceHandle(module, &queriedModuleDevice));
+    expect(queriedModuleDevice == device, "module device mismatch");
+
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(immediateCmdList));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));

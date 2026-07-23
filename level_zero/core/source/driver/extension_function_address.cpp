@@ -53,6 +53,8 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zexKernelGetArgumentSize);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexKernelGetArgumentType);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelKernelGetBinaryExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeKernelGetModuleHandleExt);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeModuleGetDeviceHandleExt);
 
     // memory
     RETURN_L0_FUNC_PTR_IF_EXIST(zexMemGetIpcHandles);
