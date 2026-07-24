@@ -1861,36 +1861,36 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenValidFirmwareInterfaceWhe
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenNullFirmwareInterfaceWhenRetrievingSerialNumberThenUnknownIsReturned) {
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(0 == unknown.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_TRUE(0 == unknown.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenFirmwareErrorWhenRetrievingSerialNumberThenUnknownIsReturned) {
     pFwInterface->mockSerialNumberError = ZE_RESULT_ERROR_UNINITIALIZED;
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(0 == unknown.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_TRUE(0 == unknown.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithNonPrintableCharactersWhenRetrievingSerialNumberThenOnlyPrintablePartIsReturned) {
@@ -1904,12 +1904,12 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithNonPrinta
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberExceedingBufferSizeWhenRetrievingSerialNumberThenTruncatedSerialNumberIsReturned) {
@@ -1927,26 +1927,26 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberExceedingBuff
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     // Should be limited to IGSC_MAX_OEM_SN_LENGTH (512) since that's the firmware buffer size
-    EXPECT_EQ(strlen(oemSerialNumber.oemSerialNumber), static_cast<size_t>(IGSC_MAX_OEM_SN_LENGTH));
-    EXPECT_EQ('\0', oemSerialNumber.oemSerialNumber[IGSC_MAX_OEM_SN_LENGTH]);
+    EXPECT_EQ(strlen(oemSerialId.oemSerialId), static_cast<size_t>(IGSC_MAX_OEM_SN_LENGTH));
+    EXPECT_EQ('\0', oemSerialId.oemSerialId[IGSC_MAX_OEM_SN_LENGTH]);
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenEmptySerialNumberWhenRetrievingSerialNumberThenEmptyStringIsReturned) {
     pFwInterface->mockSerialNumberLen = 0;
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ('\0', oemSerialNumber.oemSerialNumber[0]);
+    EXPECT_EQ('\0', oemSerialId.oemSerialId[0]);
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithMultipleFieldsWhenRetrievingSerialNumberThenOnlyFirstFieldIsReturned) {
@@ -1965,12 +1965,12 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithMultipleF
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithControlCharactersWhenRetrievingSerialNumberThenStopsAtFirstControlChar) {
@@ -1984,12 +1984,12 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithControlCh
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialId.oemSerialId));
 }
 
 } // namespace ult
