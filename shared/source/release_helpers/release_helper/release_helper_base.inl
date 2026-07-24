@@ -55,7 +55,7 @@ bool ReleaseHelperHw<releaseType>::isSplitMatrixMultiplyAccumulateSupported() co
 
 template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isBFloat16ConversionSupported() const {
-    return false;
+    return true;
 }
 
 template <ReleaseType releaseType>

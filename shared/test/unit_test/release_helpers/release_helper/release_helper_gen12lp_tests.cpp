@@ -39,7 +39,7 @@ TEST_P(ReleaseHelperGen12LpTests, whenGettingCapabilitiesThenCorrectPropertiesAr
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
         EXPECT_FALSE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
         EXPECT_FALSE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
-        EXPECT_FALSE(releaseHelper->isBFloat16ConversionSupported());
+        EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_FALSE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_FALSE(releaseHelper->isRcsExposureDisabled());

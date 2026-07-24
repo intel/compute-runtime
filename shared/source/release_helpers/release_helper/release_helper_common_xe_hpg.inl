@@ -21,11 +21,6 @@ bool ReleaseHelperHw<release>::isSplitMatrixMultiplyAccumulateSupported() const 
 }
 
 template <>
-bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
     return true;
 }

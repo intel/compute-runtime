@@ -40,11 +40,6 @@ bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
     return false;
 }
 
-template <>
-bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
-    return true;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helpers/release_helper/release_helper_preferred_slm_xe_hpc_128k.inl"

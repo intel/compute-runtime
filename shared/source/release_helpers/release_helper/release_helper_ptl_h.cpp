@@ -15,11 +15,6 @@
 namespace NEO {
 constexpr auto release = ReleaseType::release3000;
 template <>
-bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
-    return true;
-}
-
-template <>
 const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
     return {32u, 64u, 96u, 128u, 160u, 192u, 256u};
 }

@@ -20,11 +20,6 @@ bool ReleaseHelperHw<release>::isAdjustWalkOrderAvailable() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isPipeControlPriorToPipelineSelectWaRequired() const {
     return true;
 }
