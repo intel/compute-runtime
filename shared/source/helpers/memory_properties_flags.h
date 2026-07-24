@@ -35,6 +35,7 @@ struct MemoryFlags {
     uint32_t compressedHint : 1;
     uint32_t uncompressedHint : 1;
     uint32_t ipcSupportedAllocationByDefault : 1;
+    uint32_t bindlessImage : 1;
 
     bool operator==(const MemoryFlags &) const = default;
 };

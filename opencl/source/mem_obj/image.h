@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/helpers/surface_formats.h"
@@ -205,6 +206,9 @@ class Image : public MemObj {
     void fillImageRegion(size_t *region) const;
 
     static bool validateHandleType(MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem);
+    SurfaceStateInHeapInfo *getBindlessSlot() const { return bindlessInfo.get(); }
+    uint64_t getBindlessHandle() const { return bindlessInfo ? bindlessInfo->surfaceStateOffset : 0; }
+    bool isBindlessImage() const { return bindlessImage; }
     void setAs3DUavOrRtvImage(bool isUavOrRtv);
     void setIsPackedFormat(bool isPackedFormat) { this->isPackedFormat = isPackedFormat; }
 
@@ -248,6 +252,8 @@ class Image : public MemObj {
     ImagePlane plane = ImagePlane::noPlane;
     bool is3DUAVOrRTV = false;
     bool isPackedFormat = false;
+    std::unique_ptr<SurfaceStateInHeapInfo> bindlessInfo;
+    bool bindlessImage = false;
 
     static bool isValidSingleChannelFormat(const cl_image_format *imageFormat);
     static bool isValidIntensityFormat(const cl_image_format *imageFormat);

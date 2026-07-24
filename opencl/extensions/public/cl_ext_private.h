@@ -421,4 +421,11 @@ typedef struct _cl_kernel_allocation_info_intel {
 // cl_device bfloat16 atomic capabilities
 #if !defined(CL_DEVICE_BFLOAT16_FP_ATOMIC_CAPABILITIES_EXT)
 #define CL_DEVICE_BFLOAT16_FP_ATOMIC_CAPABILITIES_EXT 0x10012
+
+/******************************************************
+ *   cl_intel_bindless_images extension               *
+ ******************************************************/
+#define CL_MEM_BINDLESS_IMAGE_INTEL 0x4220
+#define CL_IMAGE_BINDLESS_HANDLE_INTEL 0x4221
+
 #endif

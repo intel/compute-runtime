@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
@@ -20,7 +21,10 @@ StackVec<const char *, 4> validClPrefixes;
 StackVec<NEO::DebugVarPrefix, 4> validClPrefixTypes;
 
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper &releaseHelper) {
-    return false;
+    if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
+        return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
+    }
+    return releaseHelper.isGlobalBindlessAllocatorEnabled();
 }
 
 bool ApiSpecificConfig::getBindlessMode(const Device &device) {
@@ -30,9 +34,8 @@ bool ApiSpecificConfig::getBindlessMode(const Device &device) {
 
     if (debugManager.flags.UseBindlessMode.get() != -1) {
         return debugManager.flags.UseBindlessMode.get();
-    } else {
-        return false;
     }
+    return device.getReleaseHelper().isGlobalBindlessAllocatorEnabled();
 }
 
 bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
