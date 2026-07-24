@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -557,6 +557,20 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
         EXPECT_EQ(newmode, ZES_OC_MODE_OVERRIDE);
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandlesWhenCallingReInitOnFrequencyHandleContextThenHandlesRemainValid) {
+    auto handles = getFrequencyHandles(frequencyHandleComponentCount);
+    ASSERT_EQ(frequencyHandleComponentCount, static_cast<uint32_t>(handles.size()));
+
+    EXPECT_TRUE(pSysmanDeviceImp->pFrequencyHandleContext->isFrequencyInitDone());
+
+    pSysmanDeviceImp->pFrequencyHandleContext->reInit();
+
+    EXPECT_EQ(frequencyHandleComponentCount, static_cast<uint32_t>(pSysmanDeviceImp->pFrequencyHandleContext->handleList.size()));
+    for (auto pFrequency : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
+        EXPECT_NE(nullptr, pFrequency);
     }
 }
 

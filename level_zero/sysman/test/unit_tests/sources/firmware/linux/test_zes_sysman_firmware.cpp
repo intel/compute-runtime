@@ -73,6 +73,24 @@ class ZesSysmanFirmwareFixture : public SysmanDeviceFixture {
     }
 };
 
+TEST_F(ZesSysmanFirmwareFixture, GivenBdfChangedWhenCallingFirmwareContextReInitThenCachedFwInterfaceIsRefreshedOnEachHandle) {
+    initFirmware();
+    ASSERT_FALSE(pSysmanDeviceImp->pFirmwareHandleContext->handleList.empty());
+
+    auto pNewFwInterface = std::make_unique<MockFirmwareInterface>();
+    pLinuxSysmanImp->pFwUtilInterface = pNewFwInterface.get();
+
+    pSysmanDeviceImp->pFirmwareHandleContext->reInit();
+
+    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+        auto pFirmwareImp = static_cast<L0::Sysman::FirmwareImp *>(handle);
+        auto pOsFirmware = static_cast<PublicLinuxFirmwareImp *>(pFirmwareImp->pOsFirmware.get());
+        EXPECT_EQ(pNewFwInterface.get(), pOsFirmware->pFwInterface);
+    }
+
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface.get();
+}
+
 TEST_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenFlashingUnkownFirmwareThenFailureIsReturned) {
     for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         delete handle;

@@ -35,6 +35,16 @@ ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(zes_device_han
     }
 }
 
+ze_result_t ZE_APICALL zesIntelDriverRescanDevicesExp(zes_driver_handle_t hDriver, uint32_t *pCount, zes_device_handle_t *phDevices) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getDeviceRescan(pCount, phDevices);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 ze_result_t ZE_APICALL zesIntelDeviceGetHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t *pHealth) {
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -113,6 +123,10 @@ ze_result_t ZE_APICALL zesIntelDeviceGetHealthExp(zes_device_handle_t hDevice, z
 
 ze_result_t ZE_APICALL zesIntelDeviceSetHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) {
     return L0::zesIntelDeviceSetHealthExp(hDevice, health, pReason, authTokenLength, pAuthToken);
+}
+
+ze_result_t ZE_APICALL zesIntelDriverRescanDevicesExp(zes_driver_handle_t hDriver, uint32_t *pCount, zes_device_handle_t *phDevices) {
+    return L0::zesIntelDriverRescanDevicesExp(hDriver, pCount, phDevices);
 }
 
 ze_result_t ZE_APICALL zesIntelDriverEnumInfoLogsExp(zes_driver_handle_t hDriver, uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {

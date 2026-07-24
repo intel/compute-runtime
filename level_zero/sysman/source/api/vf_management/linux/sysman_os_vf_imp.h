@@ -42,6 +42,7 @@ class LinuxVfImp : public OsVf, NEO::NonCopyableAndNonMovableClass {
     ze_result_t vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) override;
     ze_result_t vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) override;
     bool vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) override;
+    void reInit() override;
 
   protected:
     ze_result_t vfEngineDataInit();

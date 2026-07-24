@@ -30,6 +30,16 @@ void LinuxEngineImp::cleanup() {
     fdList.clear();
 }
 
+void LinuxEngineImp::reInit() {
+    cleanup();
+    MapOfEngineInfo mapEngineInfo = {};
+    initStatus = OsEngine::getNumEngineTypeAndInstances(mapEngineInfo, static_cast<OsSysman *>(pLinuxSysmanImp));
+    if (initStatus != ZE_RESULT_SUCCESS) {
+        return;
+    }
+    init(mapEngineInfo);
+}
+
 LinuxEngineImp::~LinuxEngineImp() {
     cleanup();
 }

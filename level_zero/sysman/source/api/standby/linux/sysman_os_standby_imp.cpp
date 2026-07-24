@@ -74,6 +74,11 @@ ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
     return result;
 }
 
+void LinuxStandbyImp::reInit() {
+    standbyModeFile.clear();
+    init();
+}
+
 void LinuxStandbyImp::init() {
     const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
     bool baseDirectoryExists = false;

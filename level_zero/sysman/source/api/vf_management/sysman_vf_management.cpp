@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,9 +30,16 @@ ze_result_t VfManagementHandleContext::init() {
     return ZE_RESULT_SUCCESS;
 }
 
+void VfManagementHandleContext::reInit() {
+    for (auto &pVf : handleList) {
+        pVf->reInit();
+    }
+}
+
 ze_result_t VfManagementHandleContext::vfManagementGet(uint32_t *pCount, zes_vf_handle_t *phVfManagement) {
     std::call_once(initVfManagementOnce, [this]() {
         this->init();
+        this->vfManagementInitDone = true;
     });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);

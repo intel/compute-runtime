@@ -20,6 +20,9 @@
 #include "shared/source/utilities/directory.h"
 
 #include "level_zero/core/source/driver/driver.h"
+#include "level_zero/sysman/source/api/ecc/sysman_ecc_imp.h"
+#include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
+#include "level_zero/sysman/source/api/pci/sysman_pci.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
@@ -341,6 +344,50 @@ ze_result_t LinuxSysmanImp::reInitSysmanDeviceResources() {
     return ZE_RESULT_SUCCESS;
 }
 
+void LinuxSysmanImp::reInitSysmanDeviceCache() {
+    if (getSysmanDeviceImp()->pGlobalOperations != nullptr) {
+        auto pGlobalOpsImp = static_cast<L0::Sysman::GlobalOperationsImp *>(getSysmanDeviceImp()->pGlobalOperations);
+        pGlobalOpsImp->clearCaches();
+    }
+
+    if (getSysmanDeviceImp()->pTempHandleContext->isTempInitDone()) {
+        getSysmanDeviceImp()->pTempHandleContext->reInit();
+    }
+    if (getSysmanDeviceImp()->pPowerHandleContext->isPowerInitDone()) {
+        getSysmanDeviceImp()->pPowerHandleContext->reInit();
+    }
+    if (getSysmanDeviceImp()->pEngineHandleContext->isEngineInitDone()) {
+        getSysmanDeviceImp()->pEngineHandleContext->reInit();
+    }
+    if (getSysmanDeviceImp()->pFrequencyHandleContext->isFrequencyInitDone()) {
+        getSysmanDeviceImp()->pFrequencyHandleContext->reInit();
+    }
+    if (getSysmanDeviceImp()->pFanHandleContext->isFanInitDone()) {
+        getSysmanDeviceImp()->pFanHandleContext->reInit();
+    }
+    if (getSysmanDeviceImp()->pStandbyHandleContext->isStandbyInitDone()) {
+        getSysmanDeviceImp()->pStandbyHandleContext->reInit();
+    }
+    if (getSysmanDeviceImp()->pPci != nullptr) {
+        getSysmanDeviceImp()->pPci->init();
+    }
+    if (getSysmanDeviceImp()->pEcc != nullptr) {
+        getSysmanDeviceImp()->pEcc->reInit();
+    }
+    if (getSysmanDeviceImp()->pDiagnosticsHandleContext->isDiagnosticsInitDone()) {
+        getSysmanDeviceImp()->pDiagnosticsHandleContext->reInit();
+    }
+    if (getSysmanDeviceImp()->pFirmwareHandleContext->isFirmwareInitDone()) {
+        getSysmanDeviceImp()->pFirmwareHandleContext->reInit();
+    }
+    if (getSysmanDeviceImp()->pRasHandleContext->isRasInitDone()) {
+        getSysmanDeviceImp()->pRasHandleContext->reInit();
+    }
+    if (getSysmanDeviceImp()->pVfManagementHandleContext->isVfManagementInitDone()) {
+        getSysmanDeviceImp()->pVfManagementHandleContext->reInit();
+    }
+}
+
 // function to clear Hot-Plug interrupt enable bit in the slot control register
 // this is required to prevent interrupts from being raised in the warm reset path.
 void LinuxSysmanImp::clearHPIE(int fd) {
@@ -533,6 +580,22 @@ void LinuxSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
     }
 }
 
+std::string LinuxSysmanImp::getPciUuid() {
+    if (!pciUuid.empty()) {
+        return pciUuid;
+    }
+
+    std::string pciUuidPath = "device/device_uuid";
+    std::string uuidStr;
+    ze_result_t result = pSysfsAccess->read(pciUuidPath, uuidStr);
+    if (result != ZE_RESULT_SUCCESS) {
+        return "";
+    }
+
+    pciUuid = uuidStr;
+    return pciUuid;
+}
+
 bool LinuxSysmanImp::generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue) {
         uuid.fill(0);
@@ -676,6 +739,41 @@ ze_result_t LinuxSysmanImp::initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceI
 
 bool LinuxSysmanImp::isDeviceInSurvivabilityMode() {
     return pParentSysmanDeviceImp->isDeviceInSurvivabilityMode;
+}
+
+ze_result_t LinuxSysmanImp::updateBdfDependentData() {
+    pSysmanKmdInterface->setSysmanDeviceDirName(
+        getSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice);
+
+    // Rediscover sysfs device directory from updated file descriptor.
+    auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
+    int myDeviceFd = sysmanHwDeviceId.getFileDescriptor();
+    std::string devNodePath;
+    auto result = pProcfsAccess->getFileName(
+        pProcfsAccess->myProcessId(),
+        myDeviceFd,
+        devNodePath);
+
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getFileName() failed to resolve device node for fd %d and returning error:0x%x \n", __FUNCTION__, myDeviceFd, result);
+        return result;
+    }
+    pSysfsAccess->reinit(devNodePath);
+
+    devicePciBdf = pSysfsAccess->getDevicePciBdf();
+
+    rootPath = NEO::getPciRootPath(myDeviceFd).value_or("");
+    pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
+    pciBdfInfo = getDrm()->getPciBusInfo();
+
+    uuidVec.clear();
+    telemNodesInPciPath.clear();
+    mapOfSubDeviceIdToTelemData.clear();
+
+    releaseFwUtilInterface();
+    reInitSysmanDeviceCache();
+
+    return ZE_RESULT_SUCCESS;
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

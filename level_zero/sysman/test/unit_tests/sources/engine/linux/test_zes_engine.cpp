@@ -123,6 +123,54 @@ TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingZesEngineGetActivi
     }
 }
 
+TEST_F(ZesEngineFixtureI915, GivenValidEngineHandlesWhenCallingReInitOnEngineHandleContextThenHandlesRemainValidAndActivityCanStillBeQueried) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint32_t mockReadVal = 23;
+        std::ostringstream oStream;
+        oStream << mockReadVal;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+
+    pSysmanDeviceImp->pEngineHandleContext->reInit();
+
+    EXPECT_EQ(handleComponentCount, static_cast<uint32_t>(pSysmanDeviceImp->pEngineHandleContext->handleList.size()));
+
+    zes_engine_stats_t stats = {};
+    for (auto &handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, handle->engineGetActivity(&stats));
+    }
+}
+
+TEST_F(ZesEngineFixtureI915, GivenEngineInfoQueryFailsWhenCallingReInitOnEngineHandleContextThenReInitReturnsEarlyAndHandlesRemainNonNull) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint32_t mockReadVal = 23;
+        std::ostringstream oStream;
+        oStream << mockReadVal;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+
+    auto *pDrm = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->as<MockEngineNeoDrm>();
+    pDrm->mockSysmanQueryEngineInfoReturnFalse = false;
+
+    // Engine info query now fails, so LinuxEngineImp::reInit() hits the early-return after cleanup().
+    pSysmanDeviceImp->pEngineHandleContext->reInit();
+
+    EXPECT_EQ(handleComponentCount, static_cast<uint32_t>(pSysmanDeviceImp->pEngineHandleContext->handleList.size()));
+    for (auto &handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
+        EXPECT_NE(nullptr, handle);
+    }
+}
+
 TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {

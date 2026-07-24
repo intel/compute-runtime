@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -192,6 +192,25 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleWhenCallingEccSetStateAndEccGetState
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(pSysmanDevice->toHandle(), &props));
     EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, props.pendingState);
     EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, props.currentState);
+}
+
+TEST_F(ZesEccFixture, GivenBdfChangedWhenCallingReInitThenCachedFwInterfaceIsRefreshedToTheNewInstance) {
+    ze_bool_t eccAvailable = false;
+    pMockFwInterface->mockEccAvailable = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
+    EXPECT_TRUE(eccAvailable);
+
+    auto pNewFwInterface = std::make_unique<EccFwInterface>();
+    pNewFwInterface->mockEccAvailable = false;
+    pWddmSysmanImp->pFwUtilInterface = pNewFwInterface.get();
+
+    pEccImp->reInit();
+
+    eccAvailable = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
+    EXPECT_FALSE(eccAvailable);
+
+    pWddmSysmanImp->pFwUtilInterface = pMockFwInterface.get();
 }
 
 TEST_F(ZesEccFixture, GivenValidSysmanHandleWhenCallingEccSetStateAndEccGetStateThenVerifyApiCallSuccedsAndValidActionIsReturned) {

@@ -59,6 +59,33 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndEccUnsupportedWhenCallingEccApisT
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceSetEccState(device, &newState, &setProps));
 }
 
+TEST_F(ZesEccFixture, GivenBdfChangedWhenCallingReInitThenCachedFwInterfaceIsRefreshedToTheNewInstance) {
+    // ECC only routes through the FwUtil when the product supports ecc configuration.
+    struct MockSysmanProductHelperEccSupported : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+        bool isEccConfigurationSupported() override { return true; }
+    };
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperEccSupported>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    ze_bool_t eccAvailable = false;
+    pMockFwInterface->mockEccAvailable = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(device, &eccAvailable));
+    EXPECT_TRUE(eccAvailable);
+
+    auto pNewFwInterface = std::make_unique<MockEccFwInterface>();
+    pNewFwInterface->mockEccAvailable = false;
+    pLinuxSysmanImp->pFwUtilInterface = pNewFwInterface.get();
+
+    pEccImp->reInit();
+
+    eccAvailable = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(device, &eccAvailable));
+    EXPECT_FALSE(eccAvailable);
+
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface.get();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

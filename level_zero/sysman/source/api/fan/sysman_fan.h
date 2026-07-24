@@ -30,6 +30,7 @@ class Fan : _zes_fan_handle_t {
         return static_cast<Fan *>(handle);
     }
     inline zes_fan_handle_t toHandle() { return this; }
+    virtual void reInit() = 0;
 };
 struct FanHandleContext {
     FanHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
@@ -40,11 +41,18 @@ struct FanHandleContext {
 
     ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan);
 
+    void reInit();
+
+    bool isFanInitDone() {
+        return fanInitDone;
+    }
+
     OsSysman *pOsSysman = nullptr;
     std::vector<std::unique_ptr<Fan>> handleList = {};
 
   private:
     std::once_flag initFanOnce;
+    bool fanInitDone = false;
 };
 
 } // namespace Sysman

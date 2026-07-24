@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,6 +172,24 @@ TEST_F(ZesDiagnosticsFixture, GivenOneSupportedDiagnosticTestWhenCallingZesDevic
     EXPECT_NE(nullptr, diagnosticsHandle.data());
     EXPECT_EQ(testCount, mockDiagHandleCount);
 
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenBdfChangedWhenCallingDiagnosticsContextReInitThenCachedFwInterfaceIsRefreshedOnEachHandle) {
+    clearAndReinitHandles();
+    std::unique_ptr<L0::Sysman::DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<L0::Sysman::DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
+
+    auto pNewFwInterface = std::make_unique<MockDiagnosticsFwInterface>();
+    pLinuxSysmanImp->pFwUtilInterface = pNewFwInterface.get();
+
+    pSysmanDeviceImp->pDiagnosticsHandleContext->reInit();
+
+    auto pDiagnosticsImp = static_cast<L0::Sysman::DiagnosticsImp *>(pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0].get());
+    auto pOsDiagnostics = static_cast<PublicLinuxDiagnosticsImp *>(pDiagnosticsImp->pOsDiagnostics.get());
+    EXPECT_EQ(pNewFwInterface.get(), pOsDiagnostics->pFwInterface);
+
+    pLinuxSysmanImp->pFwUtilInterface = pMockDiagFwInterface.get();
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
 }
 

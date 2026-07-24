@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,10 @@ ze_result_t StandbyImp::standbyGetMode(zes_standby_promo_mode_t *pMode) {
 
 ze_result_t StandbyImp::standbySetMode(const zes_standby_promo_mode_t mode) {
     return pOsStandby->setMode(mode);
+}
+
+void StandbyImp::reInit() {
+    pOsStandby->reInit();
 }
 
 void StandbyImp::init() {

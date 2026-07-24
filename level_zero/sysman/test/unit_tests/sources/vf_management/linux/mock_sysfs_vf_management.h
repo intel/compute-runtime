@@ -207,6 +207,7 @@ class PublicLinuxVfImp : public L0::Sysman::LinuxVfImp {
   public:
     PublicLinuxVfImp(L0::Sysman::OsSysman *pOsSysman, uint32_t vfId) : L0::Sysman::LinuxVfImp(pOsSysman, vfId) {}
     using L0::Sysman::LinuxVfImp::pSysfsAccess;
+    using L0::Sysman::LinuxVfImp::reInit;
     using L0::Sysman::LinuxVfImp::vfEngineDataInit;
 };
 

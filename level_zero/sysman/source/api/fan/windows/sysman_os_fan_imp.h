@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class WddmFanImp : public OsFan, NEO::NonCopyableAndNonMovableClass {
     ze_result_t setFixedSpeedMode(const zes_fan_speed_t *pSpeed) override;
     ze_result_t setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTable) override;
     ze_result_t getState(zes_fan_speed_units_t units, int32_t *pSpeed) override;
+    void reInit() override {}
 
     WddmFanImp(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported);
     WddmFanImp() = default;

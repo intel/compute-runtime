@@ -66,6 +66,22 @@ TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingRes
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenWddmGlobalOperationsWhenCallingClearCachesThenCallSucceeds) {
+    init(true);
+    pGlobalOperationsImp->init();
+    ASSERT_NE(nullptr, pGlobalOperationsImp->pOsGlobalOperations);
+
+    // WddmGlobalOperationsImp does not override clearUuidCache, so this exercises the base no-op.
+    pGlobalOperationsImp->clearCaches();
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenNullOsGlobalOperationsWhenCallingClearCachesThenClearUuidCacheIsSkipped) {
+    init(true);
+    ASSERT_EQ(nullptr, pGlobalOperationsImp->pOsGlobalOperations);
+
+    pGlobalOperationsImp->clearCaches();
+}
+
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDeviceGetStateThenFailureIsReturned) {
     init(true);
     zes_device_state_t pState = {};

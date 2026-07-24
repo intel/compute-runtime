@@ -111,6 +111,23 @@ TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngi
     }
 }
 
+TEST_F(ZesVfFixturePrelim, GivenBdfChangedWhenCallingVfReInitThenStalePerfFdsAreClosedAndReopened) {
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    auto pVfImp = std::make_unique<PublicLinuxVfImp>(pOsSysman, 1);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pVfImp->vfEngineDataInit());
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+
+    // reInit closes the stale perf FDs (2 per engine) and re-opens them.
+    pVfImp->reInit();
+    EXPECT_EQ(numberMockedEngines * 2u, NEO::SysCalls::closeFuncCalled);
+
+    // A second reInit closes the same number again, proving the first reInit re-opened them.
+    pVfImp->reInit();
+    EXPECT_EQ(numberMockedEngines * 2u * 2u, NEO::SysCalls::closeFuncCalled);
+}
+
 TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngineUtilizationExp2WithEngineStatsCountThenCorrectEngineStatsCountIsReturned) {
 
     auto handles = getEnabledVfHandles(mockHandleCount);

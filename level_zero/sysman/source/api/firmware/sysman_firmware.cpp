@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,12 @@ void FirmwareHandleContext::init() {
     OsFirmware::getSupportedFwTypes(supportedFwTypes, pOsSysman);
     for (const std::string &fwType : supportedFwTypes) {
         createHandle(fwType);
+    }
+}
+
+void FirmwareHandleContext::reInit() {
+    for (Firmware *pFirmware : handleList) {
+        pFirmware->reInit();
     }
 }
 

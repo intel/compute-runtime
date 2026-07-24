@@ -11,12 +11,12 @@
 #include "shared/source/execution_environment/execution_environment.h"
 
 #include "level_zero/core/source/driver/extension_function_address.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/driver/os_sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
-
-#include <vector>
 
 namespace L0 {
 namespace Sysman {
@@ -38,6 +38,7 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceMemoryGetPageOfflineStateExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceGetHealthExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceSetHealthExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverRescanDevicesExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 
@@ -51,6 +52,17 @@ void SysmanDriverHandleImp::updateUuidMap(SysmanDevice *sysmanDevice) {
         uuidDeviceMap[uuid] = sysmanDevice;
     }
     return;
+}
+
+void SysmanDriverHandleImp::updatePciUuidMap(SysmanDevice *sysmanDevice) {
+    auto sysmanDeviceImp = static_cast<SysmanDeviceImp *>(sysmanDevice);
+    auto pOsSysman = sysmanDeviceImp->deviceGetOsInterface();
+    std::string pciUuid = pOsSysman->getPciUuid();
+    if (pciUuid.empty()) {
+        return;
+    }
+    auto pciBusInfo = pOsSysman->getPciBdfInfo();
+    pciUuidToPciBusInfoMap[pciUuid] = std::move(pciBusInfo);
 }
 
 SysmanDevice *SysmanDriverHandleImp::findSysmanDeviceFromCoreToSysmanDeviceMap(ze_device_handle_t handle) {
@@ -102,6 +114,7 @@ ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executi
         if (pSysmanDevice != nullptr) {
             this->sysmanDevices.push_back(pSysmanDevice);
             updateUuidMap(pSysmanDevice);
+            updatePciUuidMap(pSysmanDevice);
         }
     }
 
@@ -282,6 +295,18 @@ ze_result_t SysmanDriverHandleImp::enumInfoLogs(uint32_t *pCount, zes_intel_info
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return pOsSysmanDriver->enumInfoLogs(pCount, phInfoLogs);
+}
+
+ze_result_t SysmanDriverHandleImp::getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) {
+    std::lock_guard<std::mutex> lock(rescanMutex);
+
+    if (pOsSysmanDriver == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Os Sysman Driver Not initialized\n");
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    return pOsSysmanDriver->rescanDevices(this, pCount, phDevices);
 }
 
 SysmanDriverHandleImp::~SysmanDriverHandleImp() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
 
     uint32_t getSubDeviceCount() override;
     void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
+    std::string getPciUuid() override;
     SysmanDeviceImp *getSysmanDeviceImp();
     const NEO::HardwareInfo &getHardwareInfo() const override;
     PRODUCT_FAMILY getProductFamily() const;

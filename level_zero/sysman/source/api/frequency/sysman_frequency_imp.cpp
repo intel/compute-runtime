@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,10 @@ ze_result_t FrequencyImp::frequencyGetState(zes_freq_state_t *pState) {
 
 ze_result_t FrequencyImp::frequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) {
     return pOsFrequency->osFrequencyGetThrottleTime(pThrottleTime);
+}
+
+void FrequencyImp::reInit() {
+    pOsFrequency->reInit();
 }
 
 ze_result_t FrequencyImp::frequencyOcGetCapabilities(zes_oc_capabilities_t *pOcCapabilities) {

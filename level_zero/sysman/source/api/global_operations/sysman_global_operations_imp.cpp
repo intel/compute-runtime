@@ -222,6 +222,13 @@ void GlobalOperationsImp::init() {
     }
     UNRECOVERABLE_IF(nullptr == pOsGlobalOperations);
 }
+
+void GlobalOperationsImp::clearCaches() {
+    if (pOsGlobalOperations != nullptr) {
+        pOsGlobalOperations->clearUuidCache();
+    }
+}
+
 void GlobalOperationsImp::initGlobalOperations() {
     std::call_once(initGlobalOpOnce, [this]() {
         this->init();

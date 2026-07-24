@@ -95,6 +95,29 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingOsGetLocalMemoryUsedThenError
     EXPECT_FALSE(result);
 }
 
+TEST_F(ZesVfFixture, GivenValidVfHandlesWhenCallingReInitOnVfManagementHandleContextThenHandlesRemainValid) {
+    uint32_t vfId = 1;
+    std::unique_ptr<VfManagement> pVfManagement = std::make_unique<VfImp>(pOsSysman, vfId);
+    pSysmanDeviceImp->pVfManagementHandleContext->handleList.push_back(std::move(pVfManagement));
+
+    pSysmanDeviceImp->pVfManagementHandleContext->reInit();
+
+    EXPECT_EQ(1u, static_cast<uint32_t>(pSysmanDeviceImp->pVfManagementHandleContext->handleList.size()));
+    for (auto &handle : pSysmanDeviceImp->pVfManagementHandleContext->handleList) {
+        EXPECT_NE(nullptr, handle);
+    }
+}
+
+TEST_F(ZesVfFixture, GivenVfManagementHandleContextWhenCallingIsVfManagementInitDoneThenCorrectStateIsReported) {
+    EXPECT_FALSE(pSysmanDeviceImp->pVfManagementHandleContext->isVfManagementInitDone());
+
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumEnabledVFExp(pSysmanDevice->toHandle(), &count, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_TRUE(pSysmanDeviceImp->pVfManagementHandleContext->isVfManagementInitDone());
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

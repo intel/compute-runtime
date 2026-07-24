@@ -320,6 +320,17 @@ static std::string findHwmonDir(SysFsAccessInterface *pSysfsAccess, SysmanKmdInt
     return {};
 }
 
+void LinuxFanImp::reInit() {
+    hwmonDir.clear();
+    fanInputNode.clear();
+    fanMaxNode.clear();
+    pwmNode.clear();
+    pwmEnableNode.clear();
+    autoPointTempNodes = {};
+    autoPointPwmNodes = {};
+    init();
+}
+
 void LinuxFanImp::init() {
     hwmonDir = findHwmonDir(pSysfsAccess, pSysmanKmdInterface, 0, false);
     if (hwmonDir.empty()) {

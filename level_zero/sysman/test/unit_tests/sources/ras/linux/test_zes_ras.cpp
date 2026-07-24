@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,6 +84,20 @@ HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesInThen
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         EXPECT_NE(handle, nullptr);
+    }
+}
+
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandlesWhenCallingReInitOnRasHandleContextThenHandlesRemainValidAndPropertiesCanStillBeQueried, IsGtRasSupportedProduct) {
+    auto handles = getRasHandles(mockHandleCount);
+    ASSERT_EQ(mockHandleCount, static_cast<uint32_t>(handles.size()));
+
+    pSysmanDeviceImp->pRasHandleContext->reInit();
+
+    EXPECT_EQ(mockHandleCount, static_cast<uint32_t>(pSysmanDeviceImp->pRasHandleContext->handleList.size()));
+    for (auto pRas : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        ASSERT_NE(nullptr, pRas);
+        zes_ras_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pRas->rasGetProperties(&properties));
     }
 }
 

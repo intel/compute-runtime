@@ -31,6 +31,7 @@ class Standby : _zes_standby_handle_t {
         return static_cast<Standby *>(handle);
     }
     bool isStandbyEnabled = false;
+    virtual void reInit() = 0;
 };
 
 struct StandbyHandleContext {
@@ -41,12 +42,19 @@ struct StandbyHandleContext {
 
     ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby);
 
+    void reInit();
+
+    bool isStandbyInitDone() {
+        return standbyInitDone;
+    }
+
     OsSysman *pOsSysman;
     std::vector<std::unique_ptr<Standby>> handleList = {};
 
   private:
     void createHandle(bool onSubdevice, uint32_t subDeviceId);
     std::once_flag initStandbyOnce;
+    bool standbyInitDone = false;
 };
 
 } // namespace Sysman

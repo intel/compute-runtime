@@ -51,6 +51,7 @@ class LinuxRasImp : public OsRas, NEO::NonCopyableAndNonMovableClass {
     ze_result_t osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) override;
     ze_result_t osRasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) override;
     ze_result_t osRasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) override;
+    void reInit() override;
     LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxRasImp() = default;
     ~LinuxRasImp() override = default;

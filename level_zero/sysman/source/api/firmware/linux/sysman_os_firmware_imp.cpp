@@ -208,6 +208,10 @@ LinuxFirmwareImp::LinuxFirmwareImp(OsSysman *pOsSysman, const std::string &fwTyp
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
 }
 
+void LinuxFirmwareImp::reInit() {
+    pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
+}
+
 std::unique_ptr<OsFirmware> OsFirmware::create(OsSysman *pOsSysman, const std::string &fwType) {
     std::unique_ptr<LinuxFirmwareImp> pLinuxFirmwareImp = std::make_unique<LinuxFirmwareImp>(pOsSysman, fwType);
     return pLinuxFirmwareImp;

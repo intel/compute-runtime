@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,6 +126,10 @@ LinuxDiagnosticsImp::LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string 
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+}
+
+void LinuxDiagnosticsImp::reInit() {
+    pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
 }
 
 std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman, const std::string &diagTests) {

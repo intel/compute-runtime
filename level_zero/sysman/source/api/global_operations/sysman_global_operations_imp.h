@@ -21,6 +21,7 @@ struct OsSysman;
 class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableAndNonMovableClass {
   public:
     void init() override;
+    void clearCaches();
     ze_result_t reset(ze_bool_t force) override;
     ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) override;
     ze_result_t deviceGetSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) override;

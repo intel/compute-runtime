@@ -127,6 +127,13 @@ bool LinuxTemperatureImp::isIntelGraphicsHwmonDir(const std::string &name) {
     return name == pSysmanKmdInterface->getHwmonName(subdeviceId, isSubdevice);
 }
 
+void LinuxTemperatureImp::reInit() {
+    intelGraphicsHwmonDir.clear();
+    maxTemperatureFile.clear();
+    maxTemperatureFileExists = false;
+    init();
+}
+
 void LinuxTemperatureImp::init() {
     const auto maxTemperatureFileName = pSysmanKmdInterface->getTemperatureMaxFileName();
     if (maxTemperatureFileName.empty()) {

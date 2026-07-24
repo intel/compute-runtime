@@ -26,6 +26,7 @@ class OsFan {
     virtual ze_result_t getState(zes_fan_speed_units_t units, int32_t *pSpeed) = 0;
     static std::vector<uint32_t> getSupportedFanChannels(OsSysman *pOsSysman);
     static std::unique_ptr<OsFan> create(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported);
+    virtual void reInit() = 0;
     virtual ~OsFan() = default;
 };
 

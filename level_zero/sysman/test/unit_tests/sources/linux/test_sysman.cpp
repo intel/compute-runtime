@@ -861,6 +861,46 @@ TEST_F(SysmanDeviceFixture, GivenValidSysFsAccessWhenCallingGetDevicePciBdfWithI
     EXPECT_EQ("", bdf);
 }
 
+class PublicSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
+  public:
+    PublicSysFsAccessInterface() = default;
+    using L0::Sysman::SysFsAccessInterface::deviceNames;
+};
+
+TEST_F(SysmanDeviceFixture, GivenValidSysFsAccessWhenCallingReInitThenDeviceNamesAreReListedAndUpdated) {
+    static const char *mockPrimaryDevName = "card2";
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpendir(&NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        return reinterpret_cast<DIR *>(0xc001);
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> mockClosedir(&NEO::SysCalls::sysCallsClosedir, [](DIR *dir) -> int {
+        return 0;
+    });
+    // Return a non-primary entry ("renderD128") before the primary ("card2") so init() exercises
+    // both the non-matching (continue) and matching (break) sides of the primaryDevName check.
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(&NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
+        static const char *entries[] = {"renderD128", mockPrimaryDevName};
+        static uint32_t index = 0;
+        if (index >= 2) {
+            index = 0;
+            return nullptr;
+        }
+        static struct dirent entry = {};
+        strcpy_s(entry.d_name, sizeof(entry.d_name), entries[index++]);
+        return &entry;
+    });
+
+    auto pSysFsAccess = std::make_unique<PublicSysFsAccessInterface>();
+    pSysFsAccess->reinit("/dev/dri/card2");
+
+    ASSERT_EQ(2u, pSysFsAccess->deviceNames.size());
+    EXPECT_EQ(std::string(mockPrimaryDevName), pSysFsAccess->deviceNames[1]);
+
+    // Re-listing for a relocated device path must clear the previous entries (no accumulation).
+    pSysFsAccess->reinit("/dev/dri/card3");
+    EXPECT_EQ(2u, pSysFsAccess->deviceNames.size());
+}
+
 TEST_F(SysmanDeviceFixture, GivenValidPathWithSlashWhenCallingGetBaseNameThenFileNameIsReturned) {
     auto tempFsAccess = FsAccessInterface::create();
     std::string path = "/path/to/some/file.txt";

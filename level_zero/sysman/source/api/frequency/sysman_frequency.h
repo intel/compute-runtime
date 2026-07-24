@@ -47,6 +47,7 @@ class Frequency : _zes_freq_handle_t {
         return static_cast<Frequency *>(handle);
     }
     inline zes_freq_handle_t toZesFreqHandle() { return this; }
+    virtual void reInit() = 0;
 };
 
 struct FrequencyHandleContext {
@@ -57,12 +58,19 @@ struct FrequencyHandleContext {
 
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency);
 
+    void reInit();
+
+    bool isFrequencyInitDone() {
+        return frequencyInitDone;
+    }
+
     OsSysman *pOsSysman = nullptr;
     std::vector<Frequency *> handleList = {};
 
   private:
     void createHandle(ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t frequencyDomain);
     std::once_flag initFrequencyOnce;
+    bool frequencyInitDone = false;
 };
 
 } // namespace Sysman

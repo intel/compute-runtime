@@ -27,6 +27,10 @@ ze_result_t TemperatureImp::temperatureGetState(double *pTemperature) {
     return pOsTemperature->getSensorTemperature(pTemperature);
 }
 
+void TemperatureImp::reInit() {
+    pOsTemperature->reInit();
+}
+
 void TemperatureImp::init() {
     if (pOsTemperature->isTempModuleSupported()) {
         pOsTemperature->getProperties(&tempProperties);

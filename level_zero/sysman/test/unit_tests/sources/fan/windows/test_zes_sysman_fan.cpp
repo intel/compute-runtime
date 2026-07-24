@@ -1128,6 +1128,21 @@ TEST_F(SysmanDeviceFanFixture, GivenTwoFanDomainsWhenFanContextInitCalledThenTwo
     EXPECT_EQ(2u, pSysmanDeviceImp->pFanHandleContext->handleList.size());
 }
 
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandlesWhenCallingReInitOnFanHandleContextThenHandlesRemainValid) {
+    init(true);
+    auto handles = getFanHandles();
+    auto handleCountBeforeReInit = static_cast<uint32_t>(pSysmanDeviceImp->pFanHandleContext->handleList.size());
+
+    EXPECT_TRUE(pSysmanDeviceImp->pFanHandleContext->isFanInitDone());
+
+    pSysmanDeviceImp->pFanHandleContext->reInit();
+
+    EXPECT_EQ(handleCountBeforeReInit, static_cast<uint32_t>(pSysmanDeviceImp->pFanHandleContext->handleList.size()));
+    for (auto &handle : pSysmanDeviceImp->pFanHandleContext->handleList) {
+        EXPECT_NE(nullptr, handle);
+    }
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

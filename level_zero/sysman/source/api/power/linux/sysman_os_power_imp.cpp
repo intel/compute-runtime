@@ -383,6 +383,22 @@ bool LinuxPowerImp::isIntelGraphicsHwmonDir(const std::string &name) {
     return false;
 }
 
+void LinuxPowerImp::reInit() {
+    intelGraphicsHwmonDir.clear();
+    energyCounterNodeFile.clear();
+    burstPowerLimitFile.clear();
+    burstPowerLimitIntervalFile.clear();
+    criticalPowerLimitFile.clear();
+    sustainedPowerLimitFile.clear();
+    sustainedPowerLimitIntervalFile.clear();
+    burstPowerLimitFileExists = false;
+    criticalPowerLimitFileExists = false;
+    sustainedPowerLimitFileExists = false;
+    canControl = false;
+    powerLimitCount = 0;
+    init();
+}
+
 void LinuxPowerImp::init() {
     std::vector<std::string> listOfAllHwmonDirs = {};
     const std::string hwmonDir("device/hwmon");

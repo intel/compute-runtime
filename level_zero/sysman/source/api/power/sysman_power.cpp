@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,12 @@ void PowerHandleContext::createHandle(ze_bool_t isSubDevice, uint32_t subDeviceI
         handleList.push_back(pPower);
     } else {
         delete pPower;
+    }
+}
+
+void PowerHandleContext::reInit() {
+    for (Power *pPower : handleList) {
+        pPower->reInit();
     }
 }
 

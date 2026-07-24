@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,6 +141,18 @@ TEST_F(SysmanDeviceEngineFixture, GivenZeroResponseSizeFromKmdWhenEnumeratingEng
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, 0u);
+}
+
+TEST_F(SysmanDeviceEngineFixture, GivenValidEngineHandlesWhenCallingReInitOnEngineHandleContextThenHandlesRemainValid) {
+    auto handles = getEngineHandles(MockEngineKmdSysManager::mockEngineHandleComponentCount);
+    ASSERT_EQ(MockEngineKmdSysManager::mockEngineHandleComponentCount, static_cast<uint32_t>(handles.size()));
+
+    pSysmanDeviceImp->pEngineHandleContext->reInit();
+
+    EXPECT_EQ(MockEngineKmdSysManager::mockEngineHandleComponentCount, static_cast<uint32_t>(pSysmanDeviceImp->pEngineHandleContext->handleList.size()));
+    for (auto &handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
+        EXPECT_NE(nullptr, handle);
+    }
 }
 
 } // namespace ult

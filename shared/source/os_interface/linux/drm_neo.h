@@ -102,7 +102,7 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
-    int queryAdapterBDF();
+    MOCKABLE_VIRTUAL int queryAdapterBDF();
     MOCKABLE_VIRTUAL int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
     MOCKABLE_VIRTUAL int createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested);

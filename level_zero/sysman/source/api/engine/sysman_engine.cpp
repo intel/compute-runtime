@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,12 @@ void EngineHandleContext::init(uint32_t subDeviceCount) {
 
 void EngineHandleContext::releaseEngines() {
     handleList.clear();
+}
+
+void EngineHandleContext::reInit() {
+    for (auto &handle : handleList) {
+        handle->reInit();
+    }
 }
 
 ze_result_t EngineHandleContext::engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) {

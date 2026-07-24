@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,10 @@ ze_result_t DiagnosticsImp::diagnosticsGetTests(uint32_t *pCount, zes_diag_test_
 
 ze_result_t DiagnosticsImp::diagnosticsRunTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) {
     return pOsDiagnostics->osRunDiagTests(start, end, pResult);
+}
+
+void DiagnosticsImp::reInit() {
+    pOsDiagnostics->reInit();
 }
 
 DiagnosticsImp::DiagnosticsImp(OsSysman *pOsSysman, const std::string &initializedDiagTest) {

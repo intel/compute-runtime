@@ -26,6 +26,7 @@ class Firmware : _zes_firmware_handle_t {
     virtual ze_result_t firmwareGetSecurityVersion(char *pVersion) = 0;
     virtual ze_result_t firmwareSetSecurityVersion() = 0;
     virtual ze_result_t firmwareGetConsoleLogs(size_t *pSize, char *pFirmwareLog) = 0;
+    virtual void reInit() = 0;
     inline zes_firmware_handle_t toHandle() { return this; }
 
     static Firmware *fromHandle(zes_firmware_handle_t handle) {
@@ -39,6 +40,7 @@ struct FirmwareHandleContext {
     void releaseFwHandles();
 
     MOCKABLE_VIRTUAL void init();
+    void reInit();
 
     ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware);
 

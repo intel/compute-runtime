@@ -115,6 +115,59 @@ ze_result_t ZE_APICALL zesIntelDevicePciLinkSpeedUpdateExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME
+/// @brief Driver device rescan extension name
+#define ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME "ZES_intel_experimental_driver_rescan_devices"
+#endif // ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver device rescan extension Version(s)
+typedef enum _zes_intel_driver_rescan_devices_exp_version_t {
+    ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_rescan_devices_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Rescan devices after BDF changes
+///
+/// @details
+///     - This function scans for devices that may have changed their PCI BDF
+///       (Domain:Bus:Device:Function) address after events like device reset or hot-plug.
+///     - The driver will update internal cached BDF information for devices that moved.
+///     - Device handles remain valid after this call - applications do not need to re-enumerate.
+///     - This is a synchronous operation that may take several milliseconds.
+///     - The application must not call any other sysman telemetry or query APIs
+///       concurrently with this call. While the rescan is in progress the driver
+///       is updating its cached BDF-dependent state, so the device objects are in
+///       a transient/inconsistent state and any concurrent sysman API may return
+///       stale or incorrect data.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///         + One or more devices were unplugged and are no longer available
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pCount`
+ze_result_t ZE_APICALL zesIntelDriverRescanDevicesExp(
+    zes_driver_handle_t hDriver,   ///< [in] handle of the driver instance
+    uint32_t *pCount,              ///< [in,out] pointer to the number of devices.
+                                   ///< if count is zero, then the driver shall update the value with the
+                                   ///< total number of devices available.
+                                   ///< if count is greater than the number of devices available, then the
+                                   ///< driver shall update the value with the correct number of devices available.
+    zes_device_handle_t *phDevices ///< [in,out][optional][range(0, *pCount)] array of handle of devices.
+                                   ///< if count is less than the number of devices available, then driver
+                                   ///< shall only retrieve that number of device handles.
+);
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_DRIVER_NAME_EXP_PROPERTY_NAME
 /// @brief Driver name property extension name
 #define ZES_INTEL_DRIVER_NAME_EXP_PROPERTY_NAME "ZES_intel_experimental_driver_name_property"

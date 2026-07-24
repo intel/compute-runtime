@@ -408,6 +408,22 @@ void LinuxFrequencyImp::getCurrentVoltage(double &voltage) {
     voltage = -1.0;
 }
 
+void LinuxFrequencyImp::reInit() {
+    minFreqFile.clear();
+    maxFreqFile.clear();
+    boostFreqFile.clear();
+    minDefaultFreqFile.clear();
+    maxDefaultFreqFile.clear();
+    requestFreqFile.clear();
+    tdpFreqFile.clear();
+    actualFreqFile.clear();
+    efficientFreqFile.clear();
+    maxValFreqFile.clear();
+    minValFreqFile.clear();
+    canControl = false;
+    init();
+}
+
 void LinuxFrequencyImp::init() {
     if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
         canControl = false;

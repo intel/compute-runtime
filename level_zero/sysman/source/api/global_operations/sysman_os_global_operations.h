@@ -47,6 +47,7 @@ class OsGlobalOperations {
     virtual ze_result_t getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) = 0;
     virtual ze_result_t getDeviceHealthExp(zes_intel_device_health_status_exp_t *pHealth) = 0;
     virtual ze_result_t setDeviceHealthExp(zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) = 0;
+    virtual void clearUuidCache() = 0;
     static OsGlobalOperations *create(OsSysman *pOsSysman);
     virtual ~OsGlobalOperations() {}
 };

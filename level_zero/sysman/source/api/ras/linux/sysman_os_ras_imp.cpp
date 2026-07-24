@@ -225,6 +225,12 @@ LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool
     initSources();
 }
 
+void LinuxRasImp::reInit() {
+    rasSources.clear();
+    supportedErrorCategoriesExp.clear();
+    initSources();
+}
+
 OsRas *OsRas::create(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) {
     LinuxRasImp *pLinuxRasImp = new LinuxRasImp(pOsSysman, type, onSubdevice, subdeviceId);
     return static_cast<OsRas *>(pLinuxRasImp);

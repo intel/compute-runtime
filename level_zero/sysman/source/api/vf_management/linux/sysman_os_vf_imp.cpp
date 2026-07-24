@@ -244,6 +244,12 @@ void LinuxVfImp::cleanup() {
     pEngineUtils.clear();
 }
 
+void LinuxVfImp::reInit() {
+    cleanup();
+    engineGroupInstance.clear();
+    vfEngineDataInit();
+}
+
 LinuxVfImp::~LinuxVfImp() {
     cleanup();
 }

@@ -1635,6 +1635,55 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceFDWhenRetrievingUuidTh
     std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
 }
 
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidUuidCacheWhenCallingClearCachesThenUuidCacheIsInvalidated) {
+    initGlobalOps();
+
+    std::unique_ptr<ProductHelper> mockProductHelper = std::make_unique<MockGlobalOperationsProductHelper>();
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    EXPECT_TRUE(pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid));
+
+    auto pLinuxGlobalOps = static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations);
+    EXPECT_TRUE(pLinuxGlobalOps->uuid[0].isValid);
+
+    pGlobalOperationsImp->clearCaches();
+
+    for (uint32_t i = 0; i < maxUuidsPerDevice; i++) {
+        EXPECT_FALSE(pLinuxGlobalOps->uuid[i].isValid);
+    }
+
+    std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenNullOsGlobalOperationsWhenCallingClearCachesThenNoCrashOccurs) {
+    auto pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
+    pGlobalOperationsImp->pOsGlobalOperations = nullptr;
+
+    pGlobalOperationsImp->clearCaches();
+
+    pGlobalOperationsImp->pOsGlobalOperations = pOsGlobalOperationsPrev;
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenLinuxGlobalOperationsWhenCallingClearUuidCacheDirectlyThenAllEntriesAreInvalidated) {
+    initGlobalOps();
+    auto pLinuxGlobalOps = static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations);
+    for (uint32_t i = 0; i < maxUuidsPerDevice; i++) {
+        pLinuxGlobalOps->uuid[i].isValid = true;
+        pLinuxGlobalOps->uuid[i].id.fill(0xAB);
+    }
+
+    pLinuxGlobalOps->clearUuidCache();
+
+    for (uint32_t i = 0; i < maxUuidsPerDevice; i++) {
+        EXPECT_FALSE(pLinuxGlobalOps->uuid[i].isValid);
+        for (const auto &byte : pLinuxGlobalOps->uuid[i].id) {
+            EXPECT_EQ(0u, byte);
+        }
+    }
+}
+
 using SysmanSubDevicePropertiesExperimentalTestMultiDevice = SysmanMultiDeviceFixture;
 HWTEST2_F(SysmanSubDevicePropertiesExperimentalTestMultiDevice,
           GivenValidDeviceHandleWhenCallingGetSubDevicePropertiesThenApiSucceeds, IsXeHpcCore) {

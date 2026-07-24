@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_driver.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
@@ -69,7 +70,8 @@ bool verifyExtensionDefinition(std::vector<zes_driver_extension_properties_t> &e
         {ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME, ZES_INTEL_MEM_PAGE_OFFLINE_PROPERTIES_EXP_VERSION_CURRENT},
         {ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTY_NAME, ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES_VERSION_CURRENT},
         {ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME, ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_VERSION_CURRENT},
-        {ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME, ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_VERSION_CURRENT}};
+        {ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME, ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME, ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_CURRENT}};
     for (uint32_t i = 0; i < count; i++) {
         if (extensionsReturned[i].name != supportedExtensions[i].first) {
             return false;
@@ -142,6 +144,28 @@ TEST_F(SysmanDriverHandleTest,
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDeviceSetHealthExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+using SysmanRescanDriverHandleTest = SysmanDriverHandleTest;
+
+TEST_F(SysmanRescanDriverHandleTest, GivenWddmDriverWhenCallingGetDeviceRescanThenUnsupportedFeatureIsReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, driverHandle->getDeviceRescan(&count, nullptr));
+}
+
+TEST_F(SysmanRescanDriverHandleTest, GivenNullOsSysmanDriverWhenCallingGetDeviceRescanThenUninitializedIsReturned) {
+    auto savedOsSysmanDriver = driverHandle->pOsSysmanDriver;
+    driverHandle->pOsSysmanDriver = nullptr;
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, driverHandle->getDeviceRescan(&count, nullptr));
+
+    driverHandle->pOsSysmanDriver = savedOsSysmanDriver;
+}
+
+TEST_F(SysmanRescanDriverHandleTest, GivenWddmDriverWhenCallingRescanEntrypointThenUnsupportedFeatureIsReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverRescanDevicesExp(driverHandle->toHandle(), &count, nullptr));
 }
 
 } // namespace ult

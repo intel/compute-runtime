@@ -539,6 +539,27 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempera
     }
 }
 
+HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandlesWhenCallingReInitOnTemperatureHandleContextThenHandlesRemainValidAndPropertiesCanStillBeQueried, IsPVC) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessPvc);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
+    auto handles = getTempHandles(handleComponentCountForTwoTileDevices);
+    ASSERT_EQ(handleComponentCountForTwoTileDevices, static_cast<uint32_t>(handles.size()));
+
+    pSysmanDeviceImp->pTempHandleContext->reInit();
+
+    EXPECT_EQ(handleComponentCountForTwoTileDevices, static_cast<uint32_t>(pSysmanDeviceImp->pTempHandleContext->handleList.size()));
+    for (auto &handle : pSysmanDeviceImp->pTempHandleContext->handleList) {
+        ASSERT_NE(nullptr, handle);
+        zes_temp_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, handle->temperatureGetProperties(&properties));
+    }
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

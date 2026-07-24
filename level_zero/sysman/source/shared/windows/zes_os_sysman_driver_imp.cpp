@@ -8,7 +8,6 @@
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_driver_imp.h"
 
 #include "shared/source/helpers/sleep.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/sysman/source/api/info_log/sysman_info_log.h"
 #include "level_zero/sysman/source/device/os_sysman.h"
@@ -57,6 +56,10 @@ ze_result_t WddmSysmanDriverImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_l
     }
 
     return pInfoLogHandleContext->infoLogGet(pCount, phInfoLogs);
+}
+
+ze_result_t WddmSysmanDriverImp::rescanDevices(SysmanDriverHandleImp *driverHandle, uint32_t *pCount, zes_device_handle_t *phDevices) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 OsSysmanDriver *OsSysmanDriver::create() {

@@ -26,6 +26,12 @@ void TemperatureHandleContext::createHandle(bool onSubdevice, uint32_t subDevice
     }
 }
 
+void TemperatureHandleContext::reInit() {
+    for (auto &handle : handleList) {
+        handle->reInit();
+    }
+}
+
 ze_result_t TemperatureHandleContext::init(uint32_t subDeviceCount) {
 
     std::map<zes_temp_sensors_t, uint32_t> supportedSensorTypeMap = {};

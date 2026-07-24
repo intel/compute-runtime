@@ -27,6 +27,7 @@ class OsRas {
     virtual ze_result_t osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) = 0;
     virtual ze_result_t osRasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) = 0;
     virtual ze_result_t osRasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) = 0;
+    virtual void reInit() = 0;
     static OsRas *create(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId);
     virtual ~OsRas() = default;

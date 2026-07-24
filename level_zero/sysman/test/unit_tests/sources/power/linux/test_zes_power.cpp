@@ -564,6 +564,20 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenSettingPowerEnergy
     }
 }
 
+TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandlesWhenCallingReInitOnPowerHandleContextThenHandlesRemainValidAndPropertiesCanStillBeQueried) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    ASSERT_EQ(powerHandleComponentCount, static_cast<uint32_t>(handles.size()));
+
+    pSysmanDeviceImp->pPowerHandleContext->reInit();
+
+    EXPECT_EQ(powerHandleComponentCount, static_cast<uint32_t>(pSysmanDeviceImp->pPowerHandleContext->handleList.size()));
+    for (auto pPower : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        ASSERT_NE(nullptr, pPower);
+        zes_power_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPower->powerGetProperties(&properties));
+    }
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

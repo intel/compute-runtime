@@ -146,6 +146,7 @@ void usage() {
                  "\n  -v,   --vftelemetry                                                                             selectively run vf telemetry API black box test"
                  "\n  -H,   --health                                                                                  selectively run device health EXP API black box test"
                  "\n        [--set-health <ok|warning|critical|failed>]                                               optionally set device health status (requires root)"
+                 "\n  -x,   --rescan                                                                                  selectively run driver rescan EXP API black box test and re-run telemetry on rescanned handles"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -2351,6 +2352,60 @@ void testSysmanDeviceHealth(ze_device_handle_t &device, zes_intel_device_health_
     }
 }
 
+typedef ze_result_t(ZE_APICALL *zesIntelDriverRescanDevicesExp_pfn)(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_device_handle_t *phDevices);
+
+zesIntelDriverRescanDevicesExp_pfn zesIntelDriverRescanDevicesExpPtr = nullptr;
+
+void getDriverRescanExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverRescanDevicesExp", reinterpret_cast<void **>(&zesIntelDriverRescanDevicesExpPtr)));
+}
+
+void testSysmanDriverRescan(zes_driver_handle_t driver, std::vector<ze_device_handle_t> &devices) {
+    std::cout << std::endl
+              << " ----  Driver Rescan tests ---- " << std::endl;
+
+    if (!zesIntelDriverRescanDevicesExpPtr) {
+        std::cout << "Driver Rescan EXP function pointer not available" << std::endl;
+        return;
+    }
+
+    uint32_t rescanCount = 0;
+    VALIDATECALL(zesIntelDriverRescanDevicesExpPtr(driver, &rescanCount, nullptr));
+    std::cout << "Number of devices reported by rescan = " << rescanCount << std::endl;
+
+    std::vector<zes_device_handle_t> rescannedDevices(rescanCount);
+    VALIDATECALL(zesIntelDriverRescanDevicesExpPtr(driver, &rescanCount, rescannedDevices.data()));
+
+    // Exercise all telemetry modules on the original device handles to confirm they remain valid
+    // and functional after the rescan.
+    getGlobalOperationsExpFunctionPointers(driver);
+    std::vector<std::string> emptyBuf;
+    uint32_t pciDeviceIndex = 0;
+    uint32_t powerDeviceIndex = 0;
+    uint32_t performanceDeviceIndex = 0;
+    bool pFactorIsSet = true;
+    std::for_each(devices.begin(), devices.end(), [&](auto device) {
+        testSysmanPci(device, emptyBuf, pciDeviceIndex);
+        testSysmanFrequency(device);
+        testSysmanStandby(device);
+        testSysmanEngine(device);
+        testSysmanScheduler(device);
+        testSysmanTemperature(device);
+        testSysmanPower(device, emptyBuf, powerDeviceIndex);
+        testSysmanMemory(device);
+        testSysmanRas(device);
+        testSysmanRasExp(device);
+        testSysmanFan(device, "");
+        testSysmanPerformance(device, emptyBuf, performanceDeviceIndex, pFactorIsSet);
+        testSysmanFabricPort(device);
+        testSysmanGlobalOperations(device);
+        testSysmanVfTelemetry(device);
+    });
+}
+
 bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector<std::string> &buf) {
     uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[1]));
     if (deviceIndex >= devices.size()) {
@@ -2744,6 +2799,11 @@ int main(int argc, char *argv[]) {
             testSysmanDeviceHealth(device, healthSetStatus, healthDoSet);
         });
         buf.clear();
+    }
+
+    if (isParamEnabled(argc, argv, "-x", "--rescan", &optind)) {
+        getDriverRescanExpFunctionPointers(driver);
+        testSysmanDriverRescan(driver, devices);
     }
 
     return 0;

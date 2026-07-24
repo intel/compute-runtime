@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,12 @@ void DiagnosticsHandleContext::init() {
     OsDiagnostics::getSupportedDiagTestsFromFW(pOsSysman, supportedDiagTests);
     for (const std::string &diagTests : supportedDiagTests) {
         createHandle(diagTests);
+    }
+}
+
+void DiagnosticsHandleContext::reInit() {
+    for (auto &pDiagnostics : handleList) {
+        pDiagnostics->reInit();
     }
 }
 

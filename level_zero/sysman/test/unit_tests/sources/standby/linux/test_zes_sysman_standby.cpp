@@ -467,6 +467,33 @@ TEST_F(ZesStandbyMultiDeviceFixture, GivenOnSubdeviceNotSetWhenValidatingOsStand
     EXPECT_EQ(properties.onSubdevice, onSubdevice);
 }
 
+HWTEST2_F(ZesStandbyFixtureI915, GivenStandbyHandleContextWhenCallingStandbyGetThenStandbyInitDoneFlagIsSet, IsXeCore) {
+    mockKMDInterfaceSetup();
+    EXPECT_FALSE(pSysmanDeviceImp->pStandbyHandleContext->isStandbyInitDone());
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumStandbyDomains(device, &count, nullptr));
+    EXPECT_EQ(count, mockHandleCount);
+
+    EXPECT_TRUE(pSysmanDeviceImp->pStandbyHandleContext->isStandbyInitDone());
+}
+
+HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandlesWhenCallingReInitOnStandbyHandleContextThenHandlesRemainValidAndPropertiesCanStillBeQueried, IsXeCore) {
+    mockKMDInterfaceSetup();
+    auto handles = getStandbyHandles(mockHandleCount);
+    ASSERT_EQ(mockHandleCount, static_cast<uint32_t>(handles.size()));
+
+    pSysmanDeviceImp->pStandbyHandleContext->reInit();
+
+    EXPECT_EQ(mockHandleCount, static_cast<uint32_t>(pSysmanDeviceImp->pStandbyHandleContext->handleList.size()));
+    for (auto &handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
+        ASSERT_NE(nullptr, handle);
+        zes_standby_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, handle->standbyGetProperties(&properties));
+        EXPECT_EQ(ZES_STANDBY_TYPE_GLOBAL, properties.type);
+    }
+}
+
 using SysmanProductHelperStandbyTest = SysmanDeviceFixture;
 
 TEST_F(SysmanProductHelperStandbyTest, GivenValidProductHelperHandleWhenQueryingStandbySupportThenFalseIsReturned) {

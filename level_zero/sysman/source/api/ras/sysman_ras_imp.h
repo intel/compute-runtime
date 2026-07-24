@@ -29,6 +29,7 @@ class RasImp : public Ras, NEO::NonCopyableAndNonMovableClass {
     ze_result_t rasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) override;
     ze_result_t rasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) override;
     ze_result_t rasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) override;
+    void reInit() override;
 
     RasImp() = default;
     RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t isSubDevice, uint32_t subDeviceId);

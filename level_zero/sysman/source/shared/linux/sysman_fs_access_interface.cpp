@@ -453,18 +453,23 @@ std::string SysFsAccessInterface::fullPath(const std::string &file) {
     return std::string(dirname + file);
 }
 
-SysFsAccessInterface::SysFsAccessInterface(const std::string dev) {
+void SysFsAccessInterface::init(const std::string &dev) {
     // dev could be either /dev/dri/cardX or /dev/dri/renderDX
-    std::string fileName = FsAccessInterface::getBaseName(std::move(dev));
+    std::string fileName = FsAccessInterface::getBaseName(dev);
     std::string devicesDir = drmPath + fileName + std::string("/") + devicesPath;
 
-    FsAccessInterface::listDirectory(std::move(devicesDir), deviceNames);
+    deviceNames.clear();
+    FsAccessInterface::listDirectory(devicesDir, deviceNames);
     for (auto &&next : deviceNames) {
         if (!next.compare(0, primaryDevName.length(), primaryDevName)) {
             dirname = drmPath + next + std::string("/");
             break;
         }
     }
+}
+
+SysFsAccessInterface::SysFsAccessInterface(const std::string &dev) {
+    init(dev);
 }
 
 std::unique_ptr<SysFsAccessInterface> SysFsAccessInterface::create(const std::string dev) {
@@ -637,6 +642,10 @@ std::string SysFsAccessInterface::getDevicePciPath() {
 
 void SysFsAccessInterface::clearFdCache() {
     FsAccessInterface::clearFdCache();
+}
+
+void SysFsAccessInterface::reinit(const std::string &dev) {
+    init(dev);
 }
 
 } // namespace Sysman

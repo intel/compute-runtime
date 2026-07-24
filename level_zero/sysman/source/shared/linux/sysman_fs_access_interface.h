@@ -137,13 +137,15 @@ class SysFsAccessInterface : protected FsAccessInterface {
     std::string getDevicePciBdf();
     std::string getDevicePciPath();
     void clearFdCache() override;
+    void reinit(const std::string &dev);
 
   protected:
     SysFsAccessInterface();
-    SysFsAccessInterface(const std::string file);
+    SysFsAccessInterface(const std::string &file);
     std::vector<std::string> deviceNames;
 
   private:
+    void init(const std::string &dev);
     std::string fullPath(const std::string &file);
     std::string dirname;
     std::string devicePciBdf;

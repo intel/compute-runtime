@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,10 @@ ze_result_t FanImp::fanSetFixedSpeedMode(const zes_fan_speed_t *pSpeed) {
 
 ze_result_t FanImp::fanSetSpeedTableMode(const zes_fan_speed_table_t *pSpeedTable) {
     return pOsFan->setSpeedTableMode(pSpeedTable);
+}
+
+void FanImp::reInit() {
+    pOsFan->reInit();
 }
 
 ze_result_t FanImp::fanGetState(zes_fan_speed_units_t units, int32_t *pSpeed) {

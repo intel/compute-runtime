@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,12 @@ void FrequencyHandleContext::createHandle(ze_bool_t onSubdevice, uint32_t subdev
     handleList.push_back(pFrequency);
 }
 
+void FrequencyHandleContext::reInit() {
+    for (Frequency *pFrequency : handleList) {
+        pFrequency->reInit();
+    }
+}
+
 ze_result_t FrequencyHandleContext::init(uint32_t subDeviceCount) {
 
     auto totalDomains = OsFrequency::getNumberOfFreqDomainsSupported(pOsSysman);
@@ -51,6 +57,7 @@ ze_result_t FrequencyHandleContext::init(uint32_t subDeviceCount) {
 ze_result_t FrequencyHandleContext::frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) {
     std::call_once(initFrequencyOnce, [this]() {
         this->init(pOsSysman->getSubDeviceCount());
+        this->frequencyInitDone = true;
     });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);

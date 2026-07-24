@@ -44,6 +44,10 @@ void RasImp::init() {
     pOsRas->osRasGetProperties(rasProperties);
 }
 
+void RasImp::reInit() {
+    pOsRas->reInit();
+}
+
 ze_result_t RasImp::rasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) {
     return pOsRas->osRasGetSupportedCategoriesExp(pCount, pCategories);
 }

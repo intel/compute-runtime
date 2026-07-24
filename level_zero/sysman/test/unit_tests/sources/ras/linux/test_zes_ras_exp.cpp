@@ -68,6 +68,24 @@ TEST_F(SysmanRasExpFixture, GivenRasUtilNoneWhenCallingRasGetAndSetConfigExpThen
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, rasUtilNone.rasSetConfigExp(count, &config));
 }
 
+TEST_F(SysmanRasExpFixture, GivenBdfChangedWhenCallingRasOsReInitThenSourcesAreRebuiltAndSupportedCategoriesAreNotDuplicated) {
+    auto pRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+
+    ASSERT_FALSE(pRasImp->rasSources.empty());
+    const size_t sourceCountBefore = pRasImp->rasSources.size();
+    const size_t categoriesCountBefore = pRasImp->supportedErrorCategoriesExp.size();
+
+    pRasImp->reInit();
+
+    // Sources rebuilt with no accumulation; if reInit failed to clear first, both would have doubled.
+    EXPECT_EQ(sourceCountBefore, pRasImp->rasSources.size());
+    EXPECT_EQ(categoriesCountBefore, pRasImp->supportedErrorCategoriesExp.size());
+
+    pRasImp->reInit();
+    EXPECT_EQ(sourceCountBefore, pRasImp->rasSources.size());
+    EXPECT_EQ(categoriesCountBefore, pRasImp->supportedErrorCategoriesExp.size());
+}
+
 TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetSupportedCategoriesExpThenSuccessIsReturned) {
     auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
     uint32_t count = 0u;

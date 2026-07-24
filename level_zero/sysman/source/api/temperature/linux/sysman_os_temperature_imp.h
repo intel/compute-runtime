@@ -24,6 +24,7 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     ze_result_t getProperties(zes_temp_properties_t *pProperties) override;
     ze_result_t getSensorTemperature(double *pTemperature) override;
     bool isTempModuleSupported() override;
+    void reInit() override;
     void setSensorType(zes_temp_sensors_t sensorType);
     LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxTemperatureImp() = default;

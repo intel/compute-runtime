@@ -39,6 +39,7 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNo
     ze_result_t getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) override;
     ze_result_t getDeviceHealthExp(zes_intel_device_health_status_exp_t *pHealth) override;
     ze_result_t setDeviceHealthExp(zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) override;
+    void clearUuidCache() override {}
     WddmGlobalOperationsImp(OsSysman *pOsSysman);
     WddmGlobalOperationsImp() = default;
     ~WddmGlobalOperationsImp() override = default;

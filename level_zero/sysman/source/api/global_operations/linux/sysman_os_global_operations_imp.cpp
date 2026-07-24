@@ -263,6 +263,13 @@ bool LinuxGlobalOperationsImp::getUuidFromSubDeviceInfo(uint32_t subDeviceID, st
     return this->uuid[subDeviceID].isValid;
 }
 
+void LinuxGlobalOperationsImp::clearUuidCache() {
+    for (uint32_t i = 0; i < maxUuidsPerDevice; i++) {
+        uuid[i].isValid = false;
+        uuid[i].id.fill(0);
+    }
+}
+
 ze_bool_t LinuxGlobalOperationsImp::getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     for (uint32_t index = 0; index < (subDeviceCount + 1); index++) {

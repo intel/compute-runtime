@@ -8,6 +8,8 @@
 #pragma once
 #include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 
+#include <map>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -15,6 +17,7 @@
 
 namespace NEO {
 class ExecutionEnvironment;
+struct PhysicalDevicePciBusInfo;
 } // namespace NEO
 
 namespace L0 {
@@ -40,17 +43,22 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     SysmanDevice *getSysmanDeviceFromCoreDeviceHandle(ze_device_handle_t hDevice);
     SysmanDriverHandle *getSysmanDriverHandleFromCoreDriverHandle(ze_driver_handle_t handle);
     ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) override;
+    ze_result_t getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) override;
     const std::unordered_map<std::string, SysmanDevice *> &getUuidDeviceMap() const {
         return uuidDeviceMap;
     }
     // list of supported extension apis
     static const std::vector<std::pair<std::string, uint32_t>> extensionsSupported;
 
-  private:
     void updateUuidMap(SysmanDevice *sysmanDevice);
+    void updatePciUuidMap(SysmanDevice *sysmanDevice);
+    std::map<std::string, std::unique_ptr<NEO::PhysicalDevicePciBusInfo>> pciUuidToPciBusInfoMap;
+
+  private:
     SysmanDevice *findSysmanDeviceFromCoreToSysmanDeviceMap(ze_device_handle_t handle);
     SysmanDriverHandle *findSysmanDriverHandleFromCoreToSysmanDriverMap(ze_driver_handle_t handle);
     std::mutex coreToSysmanDeviceMapLock;
+    std::mutex rescanMutex;
     std::unordered_map<ze_device_handle_t, SysmanDevice *> coreToSysmanDeviceMap{};
 
   protected:

@@ -25,6 +25,7 @@ class Temperature : _zes_temp_handle_t {
     virtual ze_result_t temperatureGetConfig(zes_temp_config_t *pConfig) = 0;
     virtual ze_result_t temperatureSetConfig(const zes_temp_config_t *pConfig) = 0;
     virtual ze_result_t temperatureGetState(double *pTemperature) = 0;
+    virtual void reInit() = 0;
 
     static Temperature *fromHandle(zes_temp_handle_t handle) {
         return static_cast<Temperature *>(handle);
@@ -39,6 +40,8 @@ struct TemperatureHandleContext {
     ~TemperatureHandleContext();
 
     ze_result_t init(uint32_t subDeviceCount);
+
+    void reInit();
 
     ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature);
     void releaseTemperatureHandles();

@@ -363,6 +363,31 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingFrequencyProp
     delete pLinuxFrequencyImp;
 }
 
+TEST_F(SysmanDeviceFrequencyFixture, GivenFrequencyHandleContextWhenCallingFrequencyGetThenFrequencyInitDoneFlagIsSet) {
+    EXPECT_FALSE(pSysmanDeviceImp->pFrequencyHandleContext->isFrequencyInitDone());
+
+    auto handles = getFreqHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, static_cast<uint32_t>(handles.size()));
+
+    EXPECT_TRUE(pSysmanDeviceImp->pFrequencyHandleContext->isFrequencyInitDone());
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandlesWhenCallingReInitOnFrequencyHandleContextThenHandlesRemainValidAndPropertiesCanStillBeQueried) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
+    ASSERT_GT(count, 0u);
+    auto handleCountBeforeReInit = static_cast<uint32_t>(pSysmanDeviceImp->pFrequencyHandleContext->handleList.size());
+
+    pSysmanDeviceImp->pFrequencyHandleContext->reInit();
+
+    EXPECT_EQ(handleCountBeforeReInit, static_cast<uint32_t>(pSysmanDeviceImp->pFrequencyHandleContext->handleList.size()));
+    for (auto pFrequency : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
+        ASSERT_NE(nullptr, pFrequency);
+        zes_freq_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pFrequency->frequencyGetProperties(&properties));
+    }
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0
