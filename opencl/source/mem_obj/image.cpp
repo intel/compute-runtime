@@ -855,7 +855,11 @@ cl_int Image::getImageInfo(cl_image_info paramName,
         srcParamSize = sizeof(cl_uint);
         srcParam = &(imageDesc.num_samples);
         break;
-
+    case CL_IMAGE_BINDLESS_HANDLE_INTEL:
+        srcParamSize = sizeof(uint64_t);
+        retParam = getBindlessHandle();
+        srcParam = &retParam;
+        break;
     default:
         getOsSpecificImageInfo(paramName, &srcParamSize, &srcParam);
         break;

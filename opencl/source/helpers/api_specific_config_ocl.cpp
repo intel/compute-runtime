@@ -34,9 +34,8 @@ bool ApiSpecificConfig::getBindlessMode(const Device &device) {
 
     if (debugManager.flags.UseBindlessMode.get() != -1) {
         return debugManager.flags.UseBindlessMode.get();
-    } else {
-        return false;
     }
+    return device.getReleaseHelper().isGlobalBindlessAllocatorEnabled();
 }
 
 bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
