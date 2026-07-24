@@ -32,8 +32,9 @@ struct MutableAppendLaunchKernelWithParams {
     bool isCooperativeFromApi = false;
 };
 
-struct MutableAppendLaunchKernelEvents {
+struct MutableAppendEvents {
     CommandToPatchInCmdList signalCmd = {PatchSignalEventPostSyncPipeControl{}};
+    CommandToPatchContainer *mutableCmdPatchlistContainer = nullptr;
 
     bool waitEvents = false;
     bool signalEvent = false;
@@ -44,6 +45,7 @@ struct MutableAppendLaunchKernelEvents {
     bool l3FlushEvent = false;
     bool eventInsideInOrder = false;
     bool inOrderIncrementEvent = false;
+    bool omitWaitEventResidency = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -102,7 +104,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
                                                  CmdListKernelLaunchParams &launchParams,
                                                  Kernel *kernel,
                                                  KernelVariableDescriptor *kernelVariables);
-    void storeSignalEventVariable(MutableAppendLaunchKernelEvents &mutableEventParams,
+    void storeSignalEventVariable(MutableAppendEvents &mutableEventParams,
                                   CmdListKernelLaunchParams &launchParams,
                                   Event *event);
 
@@ -121,6 +123,11 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
                                                           const ze_group_count_t &threadGroupDimensions,
                                                           Event *event,
                                                           MutableAppendLaunchKernelWithParams &parentMutableAppendLaunchParams);
+    void storeWaitEventsVariables(uint32_t numWaitEvents,
+                                  ze_event_handle_t *phWaitEvents,
+                                  MutableAppendEvents &mutableEventParams);
+    void processWaitEventVariables(uint32_t numWaitEvents);
+    void clearMutableAppendData();
 
     void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) override;
     void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) override;
