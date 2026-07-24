@@ -215,7 +215,7 @@ struct MockOclTranslationOutput : MockCIF<NEO::OclTranslationOutputTag> {
     MockCIFBuffer *debugData = nullptr;
 };
 
-struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<5>> {
+struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<3>> {
     static CIF::ICIF *Create(CIF::InterfaceId_t intId, CIF::Version_t version); // NOLINT(readability-identifier-naming)
 
     MockIgcOclDeviceCtx();

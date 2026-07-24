@@ -13,8 +13,6 @@ set(NEO_CORE_COMPILER_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/spirv_capabilities_parser.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/spirv_capabilities_parser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_warnings/compiler_warnings.h
     ${CMAKE_CURRENT_SOURCE_DIR}/create_main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/default_cache_config.cpp
