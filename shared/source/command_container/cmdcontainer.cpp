@@ -155,7 +155,8 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
     addToResidencyContainer(cmdBufferAllocation);
     if (requireHeaps) {
-        heapHelper = std::make_unique<HeapHelper>(device, device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u);
+        auto csrForHeapReuse = this->immediateCmdListCsr ? this->immediateCmdListCsr : device->getDefaultEngine().commandStreamReceiver;
+        heapHelper = std::make_unique<HeapHelper>(device, csrForHeapReuse->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u);
 
         for (uint32_t i = 0; i < IndirectHeap::Type::numTypes; i++) {
             auto heapType = static_cast<HeapType>(i);

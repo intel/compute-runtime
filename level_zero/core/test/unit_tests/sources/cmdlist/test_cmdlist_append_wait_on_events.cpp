@@ -344,6 +344,7 @@ using CommandListImmediateAppendRegularTest = Test<CommandListFixture>;
 HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndAppendRegularCommandlistWhenWaitFailsThenExecuteNotCalled, IsAtLeastXeHpcCore) {
     ze_command_queue_desc_t queueDesc = {};
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    mockCommandStreamReceiver.osContext = neoDevice->getDefaultEngine().osContext;
     MockCommandQueueExecute queue(device, &mockCommandStreamReceiver, &queueDesc);
 
     auto cmdList = new MockCommandListImmediateHwWithWaitEventFail<FamilyType::gfxCoreFamily>;
@@ -383,8 +384,9 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
 
 HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndAppendRegularCommandlistWhenSubOperationsSucceedThenFinalCallSucceeds, IsAtLeastXeHpcCore) {
     ze_command_queue_desc_t queueDesc = {};
-    void *dummyCpuPtr = reinterpret_cast<void *>(0x12345000);
-    MockGraphicsAllocation mockGraphicsAllocation(dummyCpuPtr, 0x1000);
+    auto tagMemory = std::make_unique<TagAddressType[]>(MemoryConstants::pageSize / sizeof(TagAddressType));
+    memset(tagMemory.get(), 0xFF, MemoryConstants::pageSize);
+    MockGraphicsAllocation mockGraphicsAllocation(tagMemory.get(), MemoryConstants::pageSize);
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     mockCommandStreamReceiver.setTagAllocation(&mockGraphicsAllocation);
     mockCommandStreamReceiver.osContext = neoDevice->getDefaultEngine().osContext;

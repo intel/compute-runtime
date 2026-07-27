@@ -14,14 +14,18 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/source/utilities/thread_data_hash.h"
 #include "shared/source/utilities/thread_data_map.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -1532,6 +1536,89 @@ struct MockHeapHelper : public HeapHelper {
   public:
     using HeapHelper::storageForReuse;
 };
+
+TEST_F(CommandContainerTest, givenImmediateCmdListCsrNotSetWhenInitializingCmdContainerThenHeapHelperUsesDefaultCsrStorageForReuse) {
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    EXPECT_EQ(CommandContainer::ErrorCode::success,
+              cmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false));
+
+    auto heapHelper = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper());
+    ASSERT_NE(nullptr, heapHelper);
+    EXPECT_EQ(pDevice->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), heapHelper->storageForReuse);
+}
+
+TEST_F(CommandContainerTest, givenImmediateCmdListCsrSetWhenInitializingCmdContainerThenHeapHelperUsesImmediateCsrStorageForReuse) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+
+    auto defaultCsr = pDevice->getDefaultEngine().commandStreamReceiver;
+
+    VariableBackup<uint32_t> maxOsContextCountBackup(&MemoryManager::maxOsContextCount, MemoryManager::maxOsContextCount + 1);
+    MockCommandStreamReceiver immediateCsr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto osContext = pDevice->getMemoryManager()->createAndRegisterOsContext(&immediateCsr,
+                                                                             EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+    immediateCsr.setupContext(*osContext);
+
+    EXPECT_NE(&defaultCsr->getOsContext(), &immediateCsr.getOsContext());
+    EXPECT_NE(defaultCsr->getOsContext().getContextId(), immediateCsr.getOsContext().getContextId());
+
+    auto collectAllocations = [](AllocationsList &allocationsList) {
+        std::vector<GraphicsAllocation *> allocations;
+        for (auto allocation = allocationsList.peekHead(); allocation != nullptr; allocation = allocation->next) {
+            allocations.push_back(allocation);
+        }
+        return allocations;
+    };
+
+    auto &defaultCsrAllocationsForReuse = defaultCsr->getInternalAllocationStorage()->getAllocationsForReuse();
+    auto &immediateCsrAllocationsForReuse = immediateCsr.getInternalAllocationStorage()->getAllocationsForReuse();
+
+    auto defaultCsrAllocationsBefore = collectAllocations(defaultCsrAllocationsForReuse);
+    EXPECT_TRUE(immediateCsrAllocationsForReuse.peekIsEmpty());
+
+    std::vector<GraphicsAllocation *> heapAllocations;
+    {
+        auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+        cmdContainer->setImmediateCmdListCsr(&immediateCsr);
+        EXPECT_EQ(CommandContainer::ErrorCode::success,
+                  cmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false));
+
+        auto heapHelper = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper());
+        ASSERT_NE(nullptr, heapHelper);
+        EXPECT_EQ(immediateCsr.getInternalAllocationStorage(), heapHelper->storageForReuse);
+        EXPECT_NE(defaultCsr->getInternalAllocationStorage(), heapHelper->storageForReuse);
+
+        for (uint32_t heapType = 0; heapType < IndirectHeap::Type::numTypes; heapType++) {
+            if (auto heapAllocation = cmdContainer->getIndirectHeapAllocation(static_cast<HeapType>(heapType))) {
+                heapAllocations.push_back(heapAllocation);
+            }
+        }
+        EXPECT_FALSE(heapAllocations.empty());
+    }
+
+    // heaps are returned to the immediate cmd list csr storage, default engine csr storage is left untouched
+    EXPECT_EQ(heapAllocations, collectAllocations(immediateCsrAllocationsForReuse));
+    EXPECT_EQ(defaultCsrAllocationsBefore, collectAllocations(defaultCsrAllocationsForReuse));
+
+    // next cmd container using the same csr reuses the heaps taken from that csr storage
+    {
+        auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+        cmdContainer->setImmediateCmdListCsr(&immediateCsr);
+        EXPECT_EQ(CommandContainer::ErrorCode::success,
+                  cmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false));
+
+        for (uint32_t heapType = 0; heapType < IndirectHeap::Type::numTypes; heapType++) {
+            auto heapAllocation = cmdContainer->getIndirectHeapAllocation(static_cast<HeapType>(heapType));
+            if (heapAllocation == nullptr) {
+                continue;
+            }
+            EXPECT_NE(heapAllocations.end(), std::find(heapAllocations.begin(), heapAllocations.end(), heapAllocation));
+        }
+        EXPECT_TRUE(immediateCsrAllocationsForReuse.peekIsEmpty());
+    }
+}
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThenAllocListsNotEmptyAndMadeResident) {
     DebugManagerStateRestore dbgRestore;
