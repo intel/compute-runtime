@@ -1468,7 +1468,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     const auto copyOffloadModeForOperation = getCopyOffloadModeForOperation(copyOffloadSubmission);
     auto queue = getCmdQImmediate(copyOffloadModeForOperation);
     this->latestFlushIsDualCopyOffload = (copyOffloadModeForOperation == CopyOffloadModes::dualStream);
-    this->latestFlushIsHostVisible = (!this->dcFlushSupport && !this->isPostSyncSkippedOnLatestInOrderOperation);
+    this->latestFlushIsHostVisible = !this->dcFlushSupport;
 
     if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
         queue->getCsr()->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
