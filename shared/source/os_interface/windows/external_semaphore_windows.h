@@ -42,6 +42,9 @@ class ExternalSemaphoreWindows : public ExternalSemaphore {
     bool enqueueWait(uint64_t *fenceValue) override;
     bool enqueueSignal(uint64_t *fenceValue) override;
 
+    uint64_t acquireWaitFenceValue(uint64_t fenceValue) override;
+    uint64_t acquireSignalFenceValue(uint64_t fenceValue) override;
+
     SharedMemoryContentHeader *getSharedMemoryContentHeader() {
         return reinterpret_cast<SharedMemoryContentHeader *>(this->pCpuAddress);
     }

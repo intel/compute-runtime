@@ -220,15 +220,7 @@ bool ExternalSemaphoreWindows::enqueueWait(uint64_t *fenceValue) {
     wait.hDevice = wddm->getDeviceHandle();
     wait.ObjectCount = 1;
     wait.ObjectHandleArray = &this->syncHandle;
-
-    uint64_t lastSignaledValue = 0;
-    if (this->type == ExternalSemaphore::OpaqueWin32) {
-        lastSignaledValue = *this->pLastSignaledValue;
-        wait.FenceValueArray = &lastSignaledValue;
-    } else {
-        wait.FenceValueArray = fenceValue;
-    }
-
+    wait.FenceValueArray = fenceValue;
     wait.hAsyncEvent = nullptr;
     wait.Flags = waitFlags;
 
@@ -249,17 +241,10 @@ bool ExternalSemaphoreWindows::enqueueSignal(uint64_t *fenceValue) {
     signal.hDevice = wddm->getDeviceHandle();
     signal.ObjectCount = 1;
     signal.ObjectHandleArray = &this->syncHandle;
+    signal.FenceValueArray = fenceValue;
 
-    if (this->type == ExternalSemaphore::TimelineSemaphoreWin32) {
+    if (this->type == ExternalSemaphore::TimelineSemaphoreWin32 || this->type == ExternalSemaphore::OpaqueWin32) {
         signal.Flags.AllowFenceRewind = true;
-    }
-
-    uint64_t lastSignaledValue = 0;
-    if (this->type == ExternalSemaphore::OpaqueWin32) {
-        lastSignaledValue = *this->pLastSignaledValue + 2;
-        signal.FenceValueArray = &lastSignaledValue;
-    } else {
-        signal.FenceValueArray = fenceValue;
     }
 
     auto status = wddm->getGdi()->signalSynchronizationObjectFromCpu(&signal);
@@ -267,12 +252,25 @@ bool ExternalSemaphoreWindows::enqueueSignal(uint64_t *fenceValue) {
         return false;
     }
 
-    if (this->type == ExternalSemaphore::OpaqueWin32) {
-        *this->pLastSignaledValue += 2;
-    }
     this->state = SemaphoreState::Signaled;
 
     return true;
+}
+
+uint64_t ExternalSemaphoreWindows::acquireWaitFenceValue(uint64_t fenceValue) {
+    if (this->type == ExternalSemaphore::OpaqueWin32) {
+        return *this->pLastSignaledValue;
+    }
+
+    return fenceValue;
+}
+
+uint64_t ExternalSemaphoreWindows::acquireSignalFenceValue(uint64_t fenceValue) {
+    if (this->type == ExternalSemaphore::OpaqueWin32) {
+        return *this->pLastSignaledValue += 2;
+    }
+
+    return fenceValue;
 }
 
 } // namespace NEO

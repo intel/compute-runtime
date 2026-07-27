@@ -1216,7 +1216,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
             return ret;
         }
 
-        semController->proxyEvents.emplace_back(event, ExternalSemaphore::fromHandle(hSemaphores[i]), params[i].value, ExternalSemaphoreController::SemaphoreOperation::Wait);
+        auto semaphore = static_cast<ExternalSemaphoreImp *>(hSemaphores[i]);
+        auto fenceValue = semaphore->neoExternalSemaphore->acquireWaitFenceValue(params[i].value);
+
+        semController->proxyEvents.emplace_back(event, semaphore->toBase(), fenceValue, ExternalSemaphoreController::SemaphoreOperation::Wait);
     }
 
     semController->semControllerCv.notify_one();
@@ -1283,7 +1286,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
             return ret;
         }
 
-        semController->proxyEvents.emplace_back(event, ExternalSemaphore::fromHandle(hSemaphores[i]), params[i].value, ExternalSemaphoreController::SemaphoreOperation::Signal);
+        auto semaphore = static_cast<ExternalSemaphoreImp *>(hSemaphores[i]);
+        auto fenceValue = semaphore->neoExternalSemaphore->acquireSignalFenceValue(params[i].value);
+
+        semController->proxyEvents.emplace_back(event, semaphore->toBase(), fenceValue, ExternalSemaphoreController::SemaphoreOperation::Signal);
     }
 
     semController->semControllerCv.notify_one();

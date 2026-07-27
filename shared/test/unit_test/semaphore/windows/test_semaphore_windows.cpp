@@ -17,6 +17,8 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 namespace NEO {
 
 using WddmExternalSemaphoreTest = WddmFixture;
@@ -69,10 +71,6 @@ class MockWindowsExternalSemaphore : public ExternalSemaphoreWindows {
         this->pCpuAddress = nullptr;
         this->pLastSignaledValue = signalVal;
     }
-
-    uint64_t lastSignaledValue() const {
-        return pLastSignaledValue ? *pLastSignaledValue : 0u;
-    }
 };
 
 class MockSyncGdi : public MockGdi {
@@ -101,7 +99,8 @@ class MockSyncGdi : public MockGdi {
         return (failWaitForSynchObjectFromCpu ? STATUS_UNSUCCESSFUL : STATUS_SUCCESS);
     }
 
-    static NTSTATUS __stdcall mockSignalSynchronizationObjectFromCpu(IN CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *) {
+    static NTSTATUS __stdcall mockSignalSynchronizationObjectFromCpu(IN CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *signalSyncObject) {
+        allowFenceRewindPassedToSignal = signalSyncObject->Flags.AllowFenceRewind;
         return (failSignalSynchObjectFromCpu ? STATUS_UNSUCCESSFUL : STATUS_SUCCESS);
     }
 
@@ -110,6 +109,7 @@ class MockSyncGdi : public MockGdi {
     static bool failWaitForSynchObjectFromCpu;
     static bool failSignalSynchObjectFromCpu;
     static uint32_t openSyncObjectNtHandleFromNameCallCount;
+    static uint32_t allowFenceRewindPassedToSignal;
 };
 
 bool MockSyncGdi::failOpenSyncObjectNtHandleName = true;
@@ -117,89 +117,147 @@ bool MockSyncGdi::failOpenSyncObjectFromNtHandle = true;
 bool MockSyncGdi::failWaitForSynchObjectFromCpu = false;
 bool MockSyncGdi::failSignalSynchObjectFromCpu = false;
 uint32_t MockSyncGdi::openSyncObjectNtHandleFromNameCallCount = 0;
+uint32_t MockSyncGdi::allowFenceRewindPassedToSignal = 0;
 
-TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjFailsWhenEnqueueSignalIsCalledWithOpaqueWin32ThenFalseIsReturnedAndSignalValueIsNotUpdated) {
+TEST_F(WddmExternalSemaphoreTest, givenOpaqueWin32OrTimelineSemaphoreWin32WhenEnqueueSignalIsCalledThenAllowFenceRewindIsSet) {
+    const ExternalSemaphore::Type types[] = {ExternalSemaphore::Type::OpaqueWin32,
+                                             ExternalSemaphore::Type::TimelineSemaphoreWin32};
+
+    for (auto type : types) {
+        auto mockGdi = new MockSyncGdi();
+        static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
+        MockSyncGdi::allowFenceRewindPassedToSignal = 0;
+
+        uint64_t lastSignaledValue = 5u;
+        auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, type, &lastSignaledValue);
+
+        uint64_t fenceValue = 7u;
+        EXPECT_TRUE(extSem->enqueueSignal(&fenceValue));
+        EXPECT_EQ(1u, MockSyncGdi::allowFenceRewindPassedToSignal);
+    }
+}
+
+TEST_F(WddmExternalSemaphoreTest, givenFenceSemaphoreWhenEnqueueSignalIsCalledThenAllowFenceRewindIsNotSet) {
+    const ExternalSemaphore::Type types[] = {ExternalSemaphore::Type::D3d12Fence,
+                                             ExternalSemaphore::Type::D3d11Fence};
+
+    for (auto type : types) {
+        auto mockGdi = new MockSyncGdi();
+        static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
+        MockSyncGdi::allowFenceRewindPassedToSignal = 1;
+
+        uint64_t lastSignaledValue = 5u;
+        auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, type, &lastSignaledValue);
+
+        uint64_t fenceValue = 7u;
+        EXPECT_TRUE(extSem->enqueueSignal(&fenceValue));
+        EXPECT_EQ(0u, MockSyncGdi::allowFenceRewindPassedToSignal);
+    }
+}
+
+TEST_F(WddmExternalSemaphoreTest, givenGdiSignalSyncObjFailsWhenEnqueueSignalIsCalledWithOpaqueWin32ThenFalseIsReturnedAndStateIsNotChanged) {
     auto mockGdi = new MockSyncGdi();
     static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
 
-    uint64_t signalVal = 0u;
-    auto extSem = new MockWindowsExternalSemaphore{osInterface, ExternalSemaphore::Type::OpaqueWin32, &signalVal};
-    EXPECT_NE(extSem, nullptr);
+    uint64_t lastSignaledValue = 5u;
+    auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
     EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
-    EXPECT_EQ(extSem->lastSignaledValue(), 0u);
-    EXPECT_EQ(signalVal, 0u);
+
+    uint64_t fenceValue = 7u;
 
     MockSyncGdi::failSignalSynchObjectFromCpu = true;
-    auto result = extSem->enqueueSignal(&signalVal);
+    auto result = extSem->enqueueSignal(&fenceValue);
     MockSyncGdi::failSignalSynchObjectFromCpu = false;
+
     EXPECT_EQ(result, false);
     EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
-    EXPECT_EQ(extSem->lastSignaledValue(), signalVal);
-    EXPECT_EQ(signalVal, 0ull);
-
-    delete extSem;
 }
 
-TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjFailsWhenEnqueueWaitIsCalledWithOpaqueWin32ThenFalseIsReturned) {
+TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjFailsWhenEnqueueWaitIsCalledWithOpaqueWin32ThenFalseIsReturnedAndStateIsNotChanged) {
     auto mockGdi = new MockSyncGdi();
     static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
 
-    uint64_t signalVal = 0u;
-    auto extSem = new MockWindowsExternalSemaphore{osInterface, ExternalSemaphore::Type::OpaqueWin32, &signalVal};
-    EXPECT_NE(extSem, nullptr);
+    uint64_t lastSignaledValue = 5u;
+    auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
     EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
-    EXPECT_EQ(extSem->lastSignaledValue(), 0u);
-    EXPECT_EQ(signalVal, 0ull);
+
+    uint64_t fenceValue = 7u;
 
     MockSyncGdi::failWaitForSynchObjectFromCpu = true;
-    auto result = extSem->enqueueWait(&signalVal);
+    auto result = extSem->enqueueWait(&fenceValue);
     MockSyncGdi::failWaitForSynchObjectFromCpu = false;
+
     EXPECT_EQ(result, false);
     EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
-    EXPECT_EQ(extSem->lastSignaledValue(), signalVal);
-    EXPECT_EQ(signalVal, 0ull);
-
-    delete extSem;
 }
 
-TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjSucceedsWhenEnqueueSignalIsCalledWithOpaqueWin32ThenTrueIsReturnedAndSignalValueIsUpdated) {
+TEST_F(WddmExternalSemaphoreTest, givenGdiSignalSyncObjSucceedsWhenEnqueueSignalIsCalledWithOpaqueWin32ThenTrueIsReturned) {
     auto mockGdi = new MockSyncGdi();
     static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
 
-    uint64_t signalVal = 0u;
-    auto extSem = new MockWindowsExternalSemaphore{osInterface, ExternalSemaphore::Type::OpaqueWin32, &signalVal};
-    EXPECT_NE(extSem, nullptr);
+    uint64_t lastSignaledValue = 5u;
+    auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
     EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
-    EXPECT_EQ(extSem->lastSignaledValue(), 0u);
-    EXPECT_EQ(signalVal, 0ull);
 
-    auto result = extSem->enqueueSignal(&signalVal);
+    uint64_t fenceValue = 7u;
+    auto result = extSem->enqueueSignal(&fenceValue);
+
     EXPECT_EQ(result, true);
     EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Signaled);
-    EXPECT_EQ(extSem->lastSignaledValue(), signalVal);
-    EXPECT_EQ(signalVal, 2ull);
-
-    delete extSem;
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjSucceedsWhenEnqueueWaitIsCalledWithOpaqueWin32ThenTrueIsReturned) {
     auto mockGdi = new MockSyncGdi();
     static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
 
-    uint64_t signalVal = 0u;
-    auto extSem = new MockWindowsExternalSemaphore{osInterface, ExternalSemaphore::Type::OpaqueWin32, &signalVal};
-    EXPECT_NE(extSem, nullptr);
+    uint64_t lastSignaledValue = 5u;
+    auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
     EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
-    EXPECT_EQ(extSem->lastSignaledValue(), 0u);
-    EXPECT_EQ(signalVal, 0ull);
 
-    auto result = extSem->enqueueWait(&signalVal);
+    uint64_t fenceValue = 7u;
+    auto result = extSem->enqueueWait(&fenceValue);
+
     EXPECT_EQ(result, true);
     EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Signaled);
-    EXPECT_EQ(extSem->lastSignaledValue(), signalVal);
-    EXPECT_EQ(signalVal, 0ull);
+}
 
-    delete extSem;
+TEST_F(WddmExternalSemaphoreTest, givenOpaqueWin32SemaphoreWhenAcquireSignalFenceValueIsCalledThenLastSignaledValueIsIncrementedByTwoAndReturned) {
+    uint64_t lastSignaledValue = 10u;
+    auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
+
+    EXPECT_EQ(extSem->acquireSignalFenceValue(0u), 12ull);
+    EXPECT_EQ(lastSignaledValue, 12ull);
+
+    EXPECT_EQ(extSem->acquireSignalFenceValue(1000u), 14ull);
+    EXPECT_EQ(lastSignaledValue, 14ull);
+}
+
+TEST_F(WddmExternalSemaphoreTest, givenOpaqueWin32SemaphoreWhenAcquireWaitFenceValueIsCalledThenLastSignaledValueIsReturnedAndNotModified) {
+    uint64_t lastSignaledValue = 10u;
+    auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
+
+    EXPECT_EQ(extSem->acquireWaitFenceValue(0u), 10ull);
+    EXPECT_EQ(extSem->acquireWaitFenceValue(1000u), 10ull);
+    EXPECT_EQ(lastSignaledValue, 10ull);
+
+    lastSignaledValue = 20u;
+    EXPECT_EQ(extSem->acquireWaitFenceValue(1000u), 20ull);
+    EXPECT_EQ(lastSignaledValue, 20ull);
+}
+
+TEST_F(WddmExternalSemaphoreTest, givenNonOpaqueWin32SemaphoreWhenAcquireFenceValueIsCalledThenPassedValueIsReturnedAndLastSignaledValueIsNotModified) {
+    const ExternalSemaphore::Type types[] = {ExternalSemaphore::Type::TimelineSemaphoreWin32,
+                                             ExternalSemaphore::Type::D3d12Fence,
+                                             ExternalSemaphore::Type::D3d11Fence};
+
+    for (auto type : types) {
+        uint64_t lastSignaledValue = 10u;
+        auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, type, &lastSignaledValue);
+
+        EXPECT_EQ(extSem->acquireWaitFenceValue(123u), 123ull);
+        EXPECT_EQ(extSem->acquireSignalFenceValue(321u), 321ull);
+        EXPECT_EQ(lastSignaledValue, 10ull);
+    }
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenTimelineSemaphoreWin32FailsToOpenSyncObjectFromNameThenNullptrIsReturned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,9 @@ class ExternalSemaphore {
     OSInterface *osInterface = nullptr;
 
     SemaphoreState getState() { return state; }
+
+    virtual uint64_t acquireWaitFenceValue(uint64_t fenceValue) { return fenceValue; }
+    virtual uint64_t acquireSignalFenceValue(uint64_t fenceValue) { return fenceValue; }
 
   protected:
     Type type = Type::Invalid;

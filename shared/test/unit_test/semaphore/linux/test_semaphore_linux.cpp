@@ -40,6 +40,24 @@ TEST_F(DrmExternalSemaphoreTest, givenOpaqueFdSemaphoreTypeWhenCreateExternalSem
     EXPECT_NE(externalSemaphore, nullptr);
 }
 
+TEST_F(DrmExternalSemaphoreTest, givenSemaphoreWithBaseFenceValueAcquisitionWhenAcquireWaitFenceValueIsCalledThenPassedValueIsReturned) {
+    auto externalSemaphore = ExternalSemaphore::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr);
+    ASSERT_NE(externalSemaphore, nullptr);
+
+    EXPECT_EQ(0u, externalSemaphore->acquireWaitFenceValue(0u));
+    EXPECT_EQ(123u, externalSemaphore->acquireWaitFenceValue(123u));
+    EXPECT_EQ(123u, externalSemaphore->acquireWaitFenceValue(123u));
+}
+
+TEST_F(DrmExternalSemaphoreTest, givenSemaphoreWithBaseFenceValueAcquisitionWhenAcquireSignalFenceValueIsCalledThenPassedValueIsReturned) {
+    auto externalSemaphore = ExternalSemaphore::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), ExternalSemaphore::Type::TimelineSemaphoreFd, nullptr, 0u, nullptr);
+    ASSERT_NE(externalSemaphore, nullptr);
+
+    EXPECT_EQ(0u, externalSemaphore->acquireSignalFenceValue(0u));
+    EXPECT_EQ(321u, externalSemaphore->acquireSignalFenceValue(321u));
+    EXPECT_EQ(321u, externalSemaphore->acquireSignalFenceValue(321u));
+}
+
 TEST_F(DrmExternalSemaphoreTest, givenIoctlFailsWhenCreateExternalSemaphoreIsCalledThenNullptrIsReturned) {
     auto mockDrm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
     mockDrm->failOnSyncObjFdToHandle = true;
