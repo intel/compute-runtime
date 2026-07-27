@@ -626,5 +626,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(controlWalker->getPartitionType(), walkerCmdGpu->getPartitionType());
     EXPECT_EQ(controlWalker->getPartitionSize(), walkerCmdGpu->getPartitionSize());
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableHwCommandTest,
+            givenMutableComputeWalkerCreatedCommandViewWhenDeletingCommandViewThenIsSuccessfullyFreed) {
+    void *cmdView = L0::MCL::MutableComputeWalkerHw<FamilyType>::createCommandBuffer();
+    L0::MCL::MutableComputeWalkerHw<FamilyType>::deleteCommandBuffer(cmdView);
+    cmdView = nullptr;
+    L0::MCL::MutableComputeWalkerHw<FamilyType>::deleteCommandBuffer(cmdView);
+}
 } // namespace ult
 } // namespace L0

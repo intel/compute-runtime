@@ -22,7 +22,10 @@ struct Device;
 struct CommandList;
 struct Kernel;
 struct Event;
+struct CmdListHostFunctionParameters;
 struct CmdListKernelLaunchParams;
+struct CmdListMemoryCopyParams;
+struct CmdListWaitEventParameters;
 
 namespace MCL {
 struct InterfaceLabelDescriptor;
@@ -135,6 +138,62 @@ struct MutableCommandList {
     virtual ze_result_t appendMILoadRegMem(MclAluReg reg, uint64_t address) = 0;
     virtual ze_result_t appendMIStoreRegMem(MclAluReg reg, uint64_t address) = 0;
     virtual ze_result_t appendMIMath(void *aluArray, size_t aluCount) = 0;
+
+    virtual ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                      ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) = 0;
+    virtual ze_result_t appendMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
+                                                  const void **pRanges,
+                                                  ze_event_handle_t hSignalEvent,
+                                                  uint32_t numWaitEvents,
+                                                  ze_event_handle_t *phWaitEvents,
+                                                  CmdListWaitEventParameters &waitEventParams) = 0;
+    virtual ze_result_t appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage, const void *srcptr,
+                                                     const ze_image_region_t *pDstRegion,
+                                                     uint32_t srcRowPitch, uint32_t srcSlicePitch,
+                                                     ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                                     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
+    virtual ze_result_t appendImageCopyToMemoryExt(void *dstptr, ze_image_handle_t hSrcImage,
+                                                   const ze_image_region_t *pSrcRegion,
+                                                   uint32_t destRowPitch, uint32_t destSlicePitch,
+                                                   ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                                   ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
+    virtual ze_result_t appendImageCopyRegion(ze_image_handle_t hDstImage, ze_image_handle_t hSrcImage,
+                                              const ze_image_region_t *pDstRegion, const ze_image_region_t *pSrcRegion,
+                                              ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                              ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
+    virtual ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
+                                         ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                         ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
+    virtual ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc,
+                                                    const void *srcptr, size_t size, ze_event_handle_t hSignalEvent,
+                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                    CmdListMemoryCopyParams &memoryCopyParams) = 0;
+    virtual ze_result_t appendMemoryCopyRegion(void *dstPtr,
+                                               const ze_copy_region_t *dstRegion,
+                                               uint32_t dstPitch,
+                                               uint32_t dstSlicePitch,
+                                               const void *srcPtr,
+                                               const ze_copy_region_t *srcRegion,
+                                               uint32_t srcPitch,
+                                               uint32_t srcSlicePitch,
+                                               ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents,
+                                               ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
+    virtual ze_result_t appendMemoryFill(void *ptr, const void *pattern,
+                                         size_t patternSize, size_t size, ze_event_handle_t hSignalEvent,
+                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
+    virtual ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) = 0;
+    virtual ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
+                                                   uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                   CmdListWaitEventParameters &waitEventParams) = 0;
+
+    virtual ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction,
+                                           void *pUserData,
+                                           const void *pNext,
+                                           ze_event_handle_t hSignalEvent,
+                                           uint32_t numWaitEvents,
+                                           ze_event_handle_t *phWaitEvents,
+                                           CmdListHostFunctionParameters &parameters) = 0;
 
     virtual ze_result_t tempMemSetElementCount(size_t elementCount) = 0;
     virtual ze_result_t tempMemGetSize(size_t *tempMemSize) = 0;

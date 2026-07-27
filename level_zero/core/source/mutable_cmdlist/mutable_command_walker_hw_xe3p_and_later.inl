@@ -244,9 +244,11 @@ void *MutableComputeWalkerHw<GfxFamily>::createCommandBuffer() {
 }
 
 template <typename GfxFamily>
-void MutableComputeWalkerHw<GfxFamily>::deleteCommandBuffer() {
+void MutableComputeWalkerHw<GfxFamily>::deleteCommandBuffer(void *input) {
     using WalkerType = typename GfxFamily::DefaultWalkerType;
-    delete (reinterpret_cast<WalkerType *>(cpuBuffer));
+    if (input != nullptr) {
+        delete (reinterpret_cast<WalkerType *>(input));
+    }
 }
 
 template <typename GfxFamily>

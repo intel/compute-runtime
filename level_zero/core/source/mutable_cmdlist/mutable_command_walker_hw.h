@@ -18,7 +18,7 @@ struct MutableComputeWalkerHw : public MutableComputeWalker, NEO::NonCopyableAnd
         : MutableComputeWalker(walker, indirectOffset, scratchOffset, stageCommitMode),
           cpuBuffer(cpuBuffer) {}
     ~MutableComputeWalkerHw() override {
-        deleteCommandBuffer();
+        MutableComputeWalkerHw<GfxFamily>::deleteCommandBuffer(this->cpuBuffer);
     }
 
     void setKernelStartAddress(GpuAddress kernelStartAddress) override;
@@ -46,7 +46,7 @@ struct MutableComputeWalkerHw : public MutableComputeWalker, NEO::NonCopyableAnd
 
     static size_t getCommandSize();
     static void *createCommandBuffer();
-    void deleteCommandBuffer();
+    static void deleteCommandBuffer(void *input);
 
     void copyWalkerDataToHostBuffer(MutableComputeWalker *sourceWalker) override;
     void updateWalkerScratchPatchAddress(GpuAddress scratchPatchAddress) override;

@@ -11,9 +11,12 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "level_zero/api/internal/l0_event.h"
+#include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include "level_zero/driver_experimental/zex_event.h"
 
@@ -407,6 +410,273 @@ bool MutableCommandListFixtureInit::isAllocationInMutableResidency(MutableComman
                                          return ref.allocation == allocation;
                                      });
     return allocationIt != whiteBoxAllocations.addedAllocations.end();
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendBarrierCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    L0::CmdListWaitEventParameters waitEventParams;
+    callbackData->result = this->mutableCommandList->appendBarrier(callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams);
+    callbackData->outWaitCmds = waitEventParams.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = waitEventParams.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendRangesBarrierCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    uint8_t dstPtr[64] = {};
+    size_t rangeSizes = 1;
+    const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
+
+    L0::CmdListWaitEventParameters waitEventParams;
+    callbackData->result = this->mutableCommandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams);
+    callbackData->outWaitCmds = waitEventParams.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = waitEventParams.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto srcPtr = allocateUsm(64);
+    auto dstPtr = allocateUsm(64);
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    callbackData->result = this->mutableCommandList->appendMemoryCopy(dstPtr, srcPtr, 64, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyRegionCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto srcPtr = allocateUsm(64);
+    auto dstPtr = allocateUsm(64);
+    const ze_copy_region_t region = {0U, 0U, 0U, 1, 1, 0U};
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    callbackData->result = this->mutableCommandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyWithParametersCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto srcPtr = allocateUsm(64);
+    auto dstPtr = allocateUsm(64);
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    callbackData->result = this->mutableCommandList->getBase()->appendMemoryCopyWithParameters(dstPtr, srcPtr, 64, nullptr, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyFromContextCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto srcPtr = allocateUsm(64);
+    auto dstPtr = allocateUsm(64);
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    callbackData->result = this->mutableCommandList->getBase()->appendMemoryCopyFromContext(dstPtr, nullptr, srcPtr, 64, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryFillCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto dstPtr = allocateUsm(64);
+
+    uint8_t pattern = 0;
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    callbackData->result = this->mutableCommandList->appendMemoryFill(dstPtr, &pattern, 1, 64, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryFillWithParametersCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto dstPtr = allocateUsm(64);
+
+    uint8_t pattern = 0;
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    callbackData->result = this->mutableCommandList->getBase()->appendMemoryFillWithParameters(dstPtr, &pattern, 1, 64, nullptr, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemoryCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto usm = allocateUsm(64);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    L0::Image *imagePtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtr));
+    callbackData->dstImageHandle = imagePtr->toHandle();
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    ze_image_region_t dstImgRegion = {2, 1, 1, 4, 2, 2};
+
+    callbackData->result = this->mutableCommandList->getBase()->appendImageCopyFromMemory(imagePtr->toHandle(), usm, &dstImgRegion, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemoryExtCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto usm = allocateUsm(64);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    L0::Image *imagePtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtr));
+    callbackData->dstImageHandle = imagePtr->toHandle();
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    ze_image_region_t dstImgRegion = {2, 1, 1, 4, 2, 2};
+
+    uint32_t rowPitch = static_cast<uint32_t>(imagePtr->getImageInfo().rowPitch);
+    uint32_t slicePitch = rowPitch;
+
+    callbackData->result = this->mutableCommandList->appendImageCopyFromMemoryExt(imagePtr->toHandle(), usm, &dstImgRegion, rowPitch, slicePitch, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto usm = allocateUsm(64);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    L0::Image *imagePtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtr));
+    callbackData->srcImageHandle = imagePtr->toHandle();
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    ze_image_region_t srcImgRegion = {2, 1, 1, 4, 2, 2};
+
+    callbackData->result = this->mutableCommandList->getBase()->appendImageCopyToMemory(usm, imagePtr->toHandle(), &srcImgRegion, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryExtCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    auto usm = allocateUsm(64);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    L0::Image *imagePtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtr));
+    callbackData->srcImageHandle = imagePtr->toHandle();
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    ze_image_region_t srcImgRegion = {2, 1, 1, 4, 2, 2};
+
+    uint32_t rowPitch = static_cast<uint32_t>(imagePtr->getImageInfo().rowPitch);
+    uint32_t slicePitch = rowPitch;
+
+    callbackData->result = this->mutableCommandList->appendImageCopyToMemoryExt(usm, imagePtr->toHandle(), &srcImgRegion, rowPitch, slicePitch, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    L0::Image *imagePtrSrc = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtrSrc));
+    callbackData->srcImageHandle = imagePtrSrc->toHandle();
+
+    L0::Image *imagePtrDst = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtrDst));
+    callbackData->dstImageHandle = imagePtrDst->toHandle();
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+
+    callbackData->result = this->mutableCommandList->getBase()->appendImageCopy(imagePtrDst->toHandle(), imagePtrSrc->toHandle(), callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyRegionCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    L0::Image *imagePtrSrc = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtrSrc));
+    callbackData->srcImageHandle = imagePtrSrc->toHandle();
+
+    L0::Image *imagePtrDst = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtrDst));
+    callbackData->dstImageHandle = imagePtrDst->toHandle();
+
+    L0::CmdListMemoryCopyParams memoryParams{};
+    ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
+
+    callbackData->result = this->mutableCommandList->appendImageCopyRegion(imagePtrDst->toHandle(), imagePtrSrc->toHandle(), &imgRegion, &imgRegion, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, memoryParams);
+    callbackData->outWaitCmds = memoryParams.waitEventsParameters.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = memoryParams.waitEventsParameters.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendWaitOnEventsCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    L0::CmdListWaitEventParameters waitEventParams;
+    // when signal event is set, then it is cb to force error, then make it here wait event to force error
+    if (callbackData->signalEvent != nullptr) {
+        callbackData->numWaitEvents = 1;
+        callbackData->waitEvents = &callbackData->signalEvent;
+    }
+    callbackData->result = this->mutableCommandList->appendWaitOnEvents(callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams);
+    callbackData->outWaitCmds = waitEventParams.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = waitEventParams.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendWriteGlobalTimestampCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    L0::CmdListWaitEventParameters waitEventParams;
+
+    auto usm = allocateUsm(256);
+    callbackData->result = this->mutableCommandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(usm), callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams);
+    callbackData->outWaitCmds = waitEventParams.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = waitEventParams.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendQueryKernelTimestampsCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    L0::CmdListWaitEventParameters waitEventParams;
+
+    auto testEvent = this->createTestEvent(false, false, false, false, false);
+    auto testEventHandle = testEvent->toHandle();
+
+    auto usm = allocateUsm(256);
+
+    callbackData->result = this->mutableCommandList->getBase()->appendQueryKernelTimestamps(1, &testEventHandle, usm, nullptr, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams);
+    callbackData->outWaitCmds = waitEventParams.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = waitEventParams.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendHostFunctionCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
+    CmdListHostFunctionParameters parameters;
+
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+
+    callbackData->result = this->mutableCommandList->appendHostFunction(pHostFunction, pUserData, nullptr, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, parameters);
+    callbackData->outWaitCmds = parameters.waitEventParams.outWaitCmds;
+    callbackData->skipAddingWaitEventsToResidency = parameters.waitEventParams.skipAddingWaitEventsToResidency;
 }
 
 } // namespace ult

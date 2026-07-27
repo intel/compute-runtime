@@ -1085,6 +1085,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
     launchParams.relaxedOrderingDispatch = memoryCopyParams.relaxedOrderingDispatch;
+    launchParams.outListCommands = memoryCopyParams.waitEventsParameters.outWaitCmds;
+    launchParams.omitAddingWaitEventsResidency = memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency;
 
     auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), kernelArgs,
                                                                            event, numWaitEvents, phWaitEvents,
@@ -1346,6 +1348,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         }
     }
     launchParams.relaxedOrderingDispatch = memoryCopyParams.relaxedOrderingDispatch;
+    launchParams.outListCommands = memoryCopyParams.waitEventsParameters.outWaitCmds;
+    launchParams.omitAddingWaitEventsResidency = memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency;
     ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), kernelArgs,
                                                                    event, numWaitEvents, phWaitEvents, launchParams);
     addToMappedEventList(event);
@@ -1525,6 +1529,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
     launchParams.relaxedOrderingDispatch = memoryCopyParams.relaxedOrderingDispatch;
+    launchParams.outListCommands = memoryCopyParams.waitEventsParameters.outWaitCmds;
+    launchParams.omitAddingWaitEventsResidency = memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency;
     auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernel->toHandle(), kernelArgs,
                                                                            event, numWaitEvents, phWaitEvents,
                                                                            launchParams);
@@ -4159,6 +4165,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     launchParams.relaxedOrderingDispatch = waitEventsParameters.relaxedOrderingAllowed;
     auto appendResult = appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, hSignalEvent, numWaitEvents,
                                            phWaitEvents, launchParams);
+    waitEventsParameters.skipAddingWaitEventsToResidency = launchParams.omitAddingWaitEventsResidency;
+    waitEventsParameters.outWaitCmds = launchParams.outListCommands;
     if (appendResult != ZE_RESULT_SUCCESS) {
         return appendResult;
     }

@@ -77,6 +77,50 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     template <typename FamilyType>
     void waitCbEventBelongToDifferentMutateToDifferent();
 
+    struct MutableWaitEventsOnAppendOperationsData {
+        CommandToPatchContainer *outWaitCmds = nullptr;
+
+        ze_event_handle_t signalEvent = nullptr;
+        ze_event_handle_t *waitEvents = nullptr;
+
+        ze_image_handle_t srcImageHandle = nullptr;
+        ze_image_handle_t dstImageHandle = nullptr;
+
+        uint32_t numWaitEvents = 0;
+        ze_result_t result = ZE_RESULT_SUCCESS;
+
+        bool skipAddingWaitEventsToResidency = false;
+    };
+
+    using MutableEventOnAppendOperationCallback = void (MutableCommandListFixtureInit::*)(MutableWaitEventsOnAppendOperationsData *callbackData);
+
+    void mutableWaitEventsOnAppendBarrierCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendRangesBarrierCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+
+    void mutableWaitEventsOnAppendImageCopyFromMemoryCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyFromMemoryExtCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyToMemoryCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyToMemoryExtCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyRegionCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryCopyCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryCopyRegionCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryCopyWithParametersCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryCopyFromContextCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryFillCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryFillWithParametersCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+
+    void mutableWaitEventsOnAppendWaitOnEventsCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendWriteGlobalTimestampCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendQueryKernelTimestampsCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendHostFunctionCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+
+    template <typename FamilyType>
+    void mutableWaitEventsOnAppendOperations(MutableEventOnAppendOperationCallback callback,
+                                             bool doNotSelectWaitEvents,
+                                             bool createCbEvent,
+                                             bool doNotGetNextCommandId);
+
     ze_mutable_command_id_exp_desc_t mutableCommandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
     ze_mutable_commands_exp_desc_t mutableCommandsDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
 

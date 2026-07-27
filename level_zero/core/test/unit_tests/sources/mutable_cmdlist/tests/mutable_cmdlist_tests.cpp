@@ -11,9 +11,11 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
@@ -2023,6 +2025,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
     this->testLaunchParams.isBuiltInKernel = false;
     this->testLaunchParams.isIndirect = true;
     result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
@@ -3347,6 +3352,430 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListInOrderSem64Test,
             givenSemaphore64OnAndKernelWithWaitCbEventBelongingToDifferentCmdListWhenMutatedIntoCbEventBelongingToDifferentThenUpdateAddressAndValue) {
     waitCbEventBelongToDifferentMutateToDifferent<FamilyType>();
+}
+
+template <typename FamilyType>
+void MutableCommandListFixtureInit::mutableWaitEventsOnAppendOperations(
+    MutableEventOnAppendOperationCallback callbackInit,
+    bool doNotSelectWaitEvents,
+    bool createCbEvent,
+    bool doNotGetNextCommandId) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto event = this->createTestEvent(createCbEvent, false, false, false, false);
+    auto eventHandle = event->toHandle();
+
+    MutableWaitEventsOnAppendOperationsData callbackData = {};
+
+    if (createCbEvent) {
+        callbackData.signalEvent = eventHandle;
+    } else {
+        callbackData.waitEvents = &eventHandle;
+        callbackData.numWaitEvents = 1;
+    }
+
+    if (doNotSelectWaitEvents) {
+        this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+    } else {
+        this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    }
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    if (doNotGetNextCommandId == false) {
+        result = this->mutableCommandList->getNextCommandId(&this->mutableCommandIdDesc, 0, nullptr, &this->commandId);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+
+    // create resources and call the append
+    (this->*callbackInit)(&callbackData);
+    if (createCbEvent) {
+        EXPECT_NE(ZE_RESULT_SUCCESS, callbackData.result);
+    } else {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, callbackData.result);
+
+        if (doNotSelectWaitEvents || doNotGetNextCommandId) {
+            EXPECT_EQ(nullptr, callbackData.outWaitCmds);
+        } else {
+            EXPECT_NE(nullptr, callbackData.outWaitCmds);
+            EXPECT_TRUE(callbackData.skipAddingWaitEventsToResidency);
+        }
+    }
+
+    result = this->mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    if (doNotGetNextCommandId) {
+        EXPECT_EQ(0u, mutableCommandList->eventMutations.size());
+    } else {
+        auto waitEvents = this->getVariableList(this->commandId, L0::MCL::VariableType::waitEvent, nullptr);
+        if (doNotSelectWaitEvents || createCbEvent) {
+            EXPECT_EQ(0u, waitEvents.size());
+        } else {
+            ASSERT_EQ(1u, waitEvents.size());
+            auto waitEventVar = waitEvents[0];
+            auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+            auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+            auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+            auto waitAddress = event->getGpuAddress(this->device);
+
+            bool sem64bSupport = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+            EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd, sem64bSupport));
+        }
+    }
+
+    if (callbackData.srcImageHandle) {
+        auto srcImage = L0::Image::fromHandle(callbackData.srcImageHandle);
+        srcImage->destroy();
+    }
+    if (callbackData.dstImageHandle) {
+        auto dstImage = L0::Image::fromHandle(callbackData.dstImageHandle);
+        dstImage->destroy();
+    }
+
+    result = this->mutableCommandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendBarrierThenExpectCreateWaitEventVariable) {
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendBarrierCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendBarrierCallback, true, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendBarrierCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendBarrierCallback, false, false, true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryRangesBarrierThenExpectCreateWaitEventVariable) {
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendRangesBarrierCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendRangesBarrierCallback, true, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendRangesBarrierCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendRangesBarrierCallback, false, false, true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryCopyThenExpectCreateWaitEventVariable) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferToBufferMiddle, getDefaultBuiltInMode());
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+
+    auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+    auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+    isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyCallback, false, false, true);
+
+    isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryCopyRegionThenExpectCreateWaitEventVariable) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferToBufferMiddle, getDefaultBuiltInMode());
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+
+    auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+    auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+    isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyRegionCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyRegionCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyRegionCallback, false, false, true);
+
+    isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryCopyWithParametersThenExpectCreateWaitEventVariable) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferToBufferMiddle, getDefaultBuiltInMode());
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+
+    auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+    auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+    isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyWithParametersCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyWithParametersCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyWithParametersCallback, false, false, true);
+
+    isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryCopyFromContextThenExpectCreateWaitEventVariable) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferToBufferMiddle, getDefaultBuiltInMode());
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+
+    auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+    auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+    isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyFromContextCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyFromContextCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryCopyFromContextCallback, false, false, true);
+
+    isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryFillThenExpectCreateWaitEventVariable) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::fillBufferImmediate, getDefaultBuiltInMode());
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+
+    auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+    auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+    isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryFillCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryFillCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryFillCallback, false, false, true);
+
+    isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryFillWithParametersThenExpectCreateWaitEventVariable) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::fillBufferImmediate, getDefaultBuiltInMode());
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+
+    auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+    auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+    isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryFillWithParametersCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryFillWithParametersCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendMemoryFillWithParametersCallback, false, false, true);
+
+    isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryImageCopyFromMemoryThenExpectCreateWaitEventVariable) {
+    if constexpr (FamilyType::supportsSampler) {
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+        auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+        auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+        isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemoryCallback,
+                                                        false, false, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemoryCallback,
+                                                        false, true, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemoryCallback,
+                                                        false, false, true);
+
+        isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryImageCopyFromMemoryExtThenExpectCreateWaitEventVariable) {
+    if constexpr (FamilyType::supportsSampler) {
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+        auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+        auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+        isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemoryExtCallback,
+                                                        false, false, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemoryExtCallback,
+                                                        false, true, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemoryExtCallback,
+                                                        false, false, true);
+
+        isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryImageCopyToMemoryThenExpectCreateWaitEventVariable) {
+    if constexpr (FamilyType::supportsSampler) {
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+        auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+        auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+        isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryCallback,
+                                                        false, false, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryCallback,
+                                                        false, true, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryCallback,
+                                                        false, false, true);
+
+        isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryImageCopyToMemoryExtThenExpectCreateWaitEventVariable) {
+    if constexpr (FamilyType::supportsSampler) {
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+        auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+        auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+        isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryExtCallback,
+                                                        false, false, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryExtCallback,
+                                                        false, true, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryExtCallback,
+                                                        false, false, true);
+
+        isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryImageCopyThenExpectCreateWaitEventVariable) {
+    if constexpr (FamilyType::supportsSampler) {
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+        auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+        auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+        isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyCallback,
+                                                        false, false, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyCallback,
+                                                        false, true, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyCallback,
+                                                        false, false, true);
+
+        isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendMemoryImageCopyRegionThenExpectCreateWaitEventVariable) {
+    if constexpr (FamilyType::supportsSampler) {
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+        auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+        auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+        isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyRegionCallback,
+                                                        false, false, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyRegionCallback,
+                                                        false, true, false);
+
+        mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyRegionCallback,
+                                                        false, false, true);
+
+        isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendWaitOnEventsThenExpectCreateWaitEventVariable) {
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendWaitOnEventsCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendWaitOnEventsCallback, true, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendWaitOnEventsCallback, true, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendWaitOnEventsCallback, false, false, true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendWriteGlobalTimestampThenExpectCreateWaitEventVariable) {
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendWriteGlobalTimestampCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendWriteGlobalTimestampCallback, true, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendWriteGlobalTimestampCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendWriteGlobalTimestampCallback, false, false, true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendQueryKernelTimestampsThenExpectCreateWaitEventVariable) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::queryKernelTimestamps, getDefaultBuiltInMode());
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+
+    auto kernelImmutableData = mockBuiltinKernel->getImmutableData();
+    auto isa = kernelImmutableData->getIsaGraphicsAllocation();
+    isa->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(0x100000), isa->getGpuAddress());
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendQueryKernelTimestampsCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendQueryKernelTimestampsCallback, false, false, true);
+
+    isa->setCpuPtrAndGpuAddress(nullptr, isa->getGpuAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListSelectedWaitEventsWhenCallAppendHostFunctionThenExpectCreateWaitEventVariable) {
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendHostFunctionCallback, false, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendHostFunctionCallback, true, false, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendHostFunctionCallback, false, true, false);
+
+    mutableWaitEventsOnAppendOperations<FamilyType>(&MutableCommandListFixtureInit::mutableWaitEventsOnAppendHostFunctionCallback, false, false, true);
 }
 
 } // namespace ult

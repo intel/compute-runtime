@@ -281,7 +281,6 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLa
     ret = addVariableDispatch(kernel->getKernelDescriptor(), *dispatch,
                               groupSize, groupCount, nullptr, nullptr,
                               mutableCommandWalker, dispatchParams);
-
     return ret;
 }
 

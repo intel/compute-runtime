@@ -14,7 +14,10 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
+#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -157,6 +160,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
     auto retCode = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernelHandle, threadGroupDimensions, hEvent, numWaitEvents, phWaitEvents, launchParams);
     if (retCode != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
         return retCode;
     }
 
@@ -223,12 +227,22 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions, Event *event, CmdListKernelLaunchParams &launchParams) {
 
-    if (launchParams.isIndirect || launchParams.isBuiltInKernel) {
+    if (launchParams.isIndirect) {
         if (this->nextAppendKernelMutable) {
-            // active get next command id
+            // indirect kernels and active next command id are not supported
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         } else {
             return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
+        }
+    }
+
+    if (launchParams.isBuiltInKernel) {
+        constexpr ze_mutable_command_exp_flags_t notSupportedNonKernelMutationFlags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
+                                                                                      ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET |
+                                                                                      ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+        // builtin kernels are supported with only wait event mutation flags
+        if (this->nextAppendKernelMutable && (this->nextMutationFlags & notSupportedNonKernelMutationFlags) != 0) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }
 
@@ -285,6 +299,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
     launchParams.cmdWalkerBuffer = MutableComputeWalkerHw<GfxFamily>::createCommandBuffer();
     auto retVal = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
     if (retVal != ZE_RESULT_SUCCESS) {
+        MutableComputeWalkerHw<GfxFamily>::deleteCommandBuffer(launchParams.cmdWalkerBuffer);
         return retVal;
     }
     auto walkerPtr = std::make_unique<MutableComputeWalkerHw<GfxFamily>>(launchParams.outWalker,
@@ -1030,6 +1045,402 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::clearMutableAppendData(
     this->nextAppendKernelMutable = false;
     this->nextMutationFlags = 0;
     this->appendKernelMutableComputeWalker = nullptr;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent,
+                                                                       uint32_t numWaitEvents,
+                                                                       ze_event_handle_t *phWaitEvents,
+                                                                       CmdListWaitEventParameters &waitEventsParameters) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        waitEventsParameters.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        if (mutableEventParams.waitEvents) {
+            processWaitEventVariables(numWaitEvents);
+        }
+
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint32_t numRanges,
+                                                                                   const size_t *pRangeSizes,
+                                                                                   const void **pRanges,
+                                                                                   ze_event_handle_t hSignalEvent,
+                                                                                   uint32_t numWaitEvents,
+                                                                                   ze_event_handle_t *phWaitEvents,
+                                                                                   CmdListWaitEventParameters &waitEventParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        waitEventParams.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        waitEventParams.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents, waitEventParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        if (mutableEventParams.waitEvents) {
+            processWaitEventVariables(numWaitEvents);
+        }
+
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage,
+                                                                                      const void *srcptr,
+                                                                                      const ze_image_region_t *pDstRegion,
+                                                                                      uint32_t srcRowPitch,
+                                                                                      uint32_t srcSlicePitch,
+                                                                                      ze_event_handle_t hEvent,
+                                                                                      uint32_t numWaitEvents,
+                                                                                      ze_event_handle_t *phWaitEvents,
+                                                                                      CmdListMemoryCopyParams &memoryCopyParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        memoryCopyParams.waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
+        processWaitEventVariables(numWaitEvents);
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(void *dstptr,
+                                                                                    ze_image_handle_t hSrcImage,
+                                                                                    const ze_image_region_t *pSrcRegion,
+                                                                                    uint32_t destRowPitch,
+                                                                                    uint32_t destSlicePitch,
+                                                                                    ze_event_handle_t hEvent,
+                                                                                    uint32_t numWaitEvents,
+                                                                                    ze_event_handle_t *phWaitEvents,
+                                                                                    CmdListMemoryCopyParams &memoryCopyParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        memoryCopyParams.waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
+        processWaitEventVariables(numWaitEvents);
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image_handle_t hDstImage,
+                                                                               ze_image_handle_t hSrcImage,
+                                                                               const ze_image_region_t *pDstRegion,
+                                                                               const ze_image_region_t *pSrcRegion,
+                                                                               ze_event_handle_t hSignalEvent,
+                                                                               uint32_t numWaitEvents,
+                                                                               ze_event_handle_t *phWaitEvents,
+                                                                               CmdListMemoryCopyParams &memoryCopyParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        memoryCopyParams.waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
+        processWaitEventVariables(numWaitEvents);
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
+                                                                          const void *srcptr,
+                                                                          size_t size,
+                                                                          ze_event_handle_t hSignalEvent,
+                                                                          uint32_t numWaitEvents,
+                                                                          ze_event_handle_t *phWaitEvents,
+                                                                          CmdListMemoryCopyParams &memoryCopyParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        memoryCopyParams.waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
+        processWaitEventVariables(numWaitEvents);
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyFromContext(void *dstptr,
+                                                                                     ze_context_handle_t hContextSrc,
+                                                                                     const void *srcptr,
+                                                                                     size_t size,
+                                                                                     ze_event_handle_t hSignalEvent,
+                                                                                     uint32_t numWaitEvents,
+                                                                                     ze_event_handle_t *phWaitEvents,
+                                                                                     CmdListMemoryCopyParams &memoryCopyParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        memoryCopyParams.waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyFromContext(dstptr, hContextSrc, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
+        processWaitEventVariables(numWaitEvents);
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *dstPtr,
+                                                                                const ze_copy_region_t *dstRegion,
+                                                                                uint32_t dstPitch,
+                                                                                uint32_t dstSlicePitch,
+                                                                                const void *srcPtr,
+                                                                                const ze_copy_region_t *srcRegion,
+                                                                                uint32_t srcPitch,
+                                                                                uint32_t srcSlicePitch,
+                                                                                ze_event_handle_t hSignalEvent,
+                                                                                uint32_t numWaitEvents,
+                                                                                ze_event_handle_t *phWaitEvents,
+                                                                                CmdListMemoryCopyParams &memoryCopyParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        memoryCopyParams.waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, dstRegion, dstPitch, dstSlicePitch, srcPtr, srcRegion, srcPitch, srcSlicePitch, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
+        processWaitEventVariables(numWaitEvents);
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
+                                                                          const void *pattern,
+                                                                          size_t patternSize,
+                                                                          size_t size,
+                                                                          ze_event_handle_t hSignalEvent,
+                                                                          uint32_t numWaitEvents,
+                                                                          ze_event_handle_t *phWaitEvents,
+                                                                          CmdListMemoryCopyParams &memoryCopyParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        memoryCopyParams.waitEventsParameters.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        memoryCopyParams.waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
+        processWaitEventVariables(numWaitEvents);
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents,
+                                                                            ze_event_handle_t *phEvent,
+                                                                            CmdListWaitEventParameters &waitEventParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numEvents, phEvent, mutableEventParams);
+
+        waitEventParams.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        waitEventParams.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phEvent, waitEventParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        if (mutableEventParams.waitEvents) {
+            processWaitEventVariables(numEvents);
+        }
+
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(uint64_t *dstptr,
+                                                                                    ze_event_handle_t hSignalEvent,
+                                                                                    uint32_t numWaitEvents,
+                                                                                    ze_event_handle_t *phWaitEvents,
+                                                                                    CmdListWaitEventParameters &waitEventParams) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        waitEventParams.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        waitEventParams.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents, waitEventParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        if (mutableEventParams.waitEvents) {
+            processWaitEventVariables(numWaitEvents);
+        }
+
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendHostFunction(ze_host_function_callback_t pHostFunction,
+                                                                            void *pUserData,
+                                                                            const void *pNext,
+                                                                            ze_event_handle_t hSignalEvent,
+                                                                            uint32_t numWaitEvents,
+                                                                            ze_event_handle_t *phWaitEvents,
+                                                                            CmdListHostFunctionParameters &parameters) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+        parameters.waitEventParams.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        parameters.waitEventParams.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        if (mutableEventParams.waitEvents) {
+            processWaitEventVariables(numWaitEvents);
+        }
+
+        clearMutableAppendData();
+    }
+    return result;
 }
 
 } // namespace MCL
