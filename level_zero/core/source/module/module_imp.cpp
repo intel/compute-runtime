@@ -362,6 +362,7 @@ ze_result_t ModuleTranslationUnit::buildFromSource(ze_module_format_t inputForma
 
     std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
     NEO::appendExtensionsToInternalOptions(neoDevice->getHardwareInfo(), this->options, internalOptions);
+    NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::preserveVec3Type);
 
     NEO::TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::undefined};
     auto compileMode = CompilationMode::build;
@@ -386,6 +387,7 @@ ze_result_t ModuleTranslationUnit::buildFromSourceWithHeaders(ze_module_format_t
 
     std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
     NEO::appendExtensionsToInternalOptions(neoDevice->getHardwareInfo(), this->options, internalOptions);
+    NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::preserveVec3Type);
 
     NEO::Elf::ElfEncoder<> elfEncoder(true, true, 1U);
     elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_SOURCE;

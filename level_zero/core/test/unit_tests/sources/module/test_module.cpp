@@ -3968,7 +3968,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenOclExtensionsDescWhenBuildingModuleFrom
     moduleDesc.pInputModule = binary;
     moduleDesc.inputSize = sizeof(binary);
 
-    // No descriptor: native L0 contract, no -ocl-version.
+    // No descriptor: native L0 contract, no -ocl-version and no OpenCL-C vec3 handling.
     {
         Module module(device, nullptr, ModuleType::user);
         auto mockTranslationUnit = new MockModuleTranslationUnit(device);
@@ -3976,6 +3976,8 @@ HWTEST_F(ModuleTranslationUnitTest, GivenOclExtensionsDescWhenBuildingModuleFrom
         module.translationUnit.reset(mockTranslationUnit);
         ASSERT_EQ(ZE_RESULT_SUCCESS, module.initialize(&moduleDesc, neoDevice));
         EXPECT_EQ(std::string::npos, pMockCompilerInterface->inputInternalOptions.find("-ocl-version"));
+        EXPECT_FALSE(NEO::CompilerOptions::contains(pMockCompilerInterface->inputInternalOptions, NEO::CompilerOptions::preserveVec3Type))
+            << pMockCompilerInterface->inputInternalOptions;
     }
 
     // With descriptor: caller options are appended to the compiler internal options.

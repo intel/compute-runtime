@@ -305,9 +305,10 @@ bool Program::populateModuleConstants(ze_module_constants_t &moduleConstants,
     return true;
 }
 
-std::string Program::computeOclExtensionsInternalOptions(const std::string &buildOptions) const {
+std::string Program::computeOclCContractInternalOptions(const std::string &buildOptions) const {
     std::string internalOptions;
     NEO::appendExtensionsToInternalOptions(this->context->getClDevice()->getHardwareInfo(), buildOptions, internalOptions);
+    NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::preserveVec3Type);
     return internalOptions;
 }
 
@@ -315,9 +316,9 @@ std::string Program::computeOclExtensionsInternalOptions(const std::string &buil
  * @brief Use l0 api to link spirv to gen binary.
  */
 cl_int Program::buildFromIL(const char *options) {
-    const std::string oclExtensionsInternalOptions = computeOclExtensionsInternalOptions(options ? options : "");
+    const std::string oclCContractInternalOptions = computeOclCContractInternalOptions(options ? options : "");
     L0::ze_module_ocl_extensions_exp_desc_t oclExtensionsDesc;
-    oclExtensionsDesc.pInternalBuildOptions = oclExtensionsInternalOptions.c_str();
+    oclExtensionsDesc.pInternalBuildOptions = oclCContractInternalOptions.c_str();
 
     ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, &oclExtensionsDesc, ZE_MODULE_FORMAT_IL_SPIRV, this->irBinarySize, reinterpret_cast<uint8_t *>(this->irBinary.get()), options, nullptr};
 
@@ -436,9 +437,9 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
         moduleProgDesc.pNext = &llvmBcDesc;
     }
 
-    const std::string oclExtensionsInternalOptions = computeOclExtensionsInternalOptions(options ? options : "");
+    const std::string oclCContractInternalOptions = computeOclCContractInternalOptions(options ? options : "");
     L0::ze_module_ocl_extensions_exp_desc_t oclExtensionsDesc;
-    oclExtensionsDesc.pInternalBuildOptions = oclExtensionsInternalOptions.c_str();
+    oclExtensionsDesc.pInternalBuildOptions = oclCContractInternalOptions.c_str();
     oclExtensionsDesc.pNext = moduleDesc.pNext;
     moduleDesc.pNext = &oclExtensionsDesc;
 
