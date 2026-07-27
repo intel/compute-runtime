@@ -239,7 +239,7 @@ struct Graph : _ze_graph_handle_t {
     template <CaptureApi api, typename... TArgs>
     ze_result_t capture(TArgs... apiArgs) {
         if (false == Closure<api>::isSupported) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            return ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED;
         }
 
         auto graphCommandId = orderedCommands->acquireNextGraphCommandId();

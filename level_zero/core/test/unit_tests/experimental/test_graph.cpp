@@ -343,7 +343,7 @@ TEST_F(GraphTestApiCaptureBeginEnd, WhenCommandListIsNotRecordingThenEndCaptureR
     auto cmdListHandle = cmdlist.toHandle();
     ze_graph_handle_t retGraph = nullptr;
     auto err = L0::zeCommandListEndGraphCaptureExp(cmdListHandle, &retGraph, nullptr);
-    EXPECT_NE(ZE_RESULT_SUCCESS, err);
+    EXPECT_EQ(ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING, err);
     EXPECT_EQ(nullptr, retGraph);
 }
 
@@ -3158,7 +3158,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenGraphWithUnjoinedForksWhenEndGraphCapt
     // try to use graph with unjoined fork
     ze_executable_graph_handle_t execGraph = nullptr;
     err = L0::zeCommandListInstantiateGraphExp(&srcGraph, &execGraph, nullptr);
-    EXPECT_NE(ZE_RESULT_SUCCESS, err);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
     EXPECT_EQ(nullptr, execGraph);
 
     if (nullptr != execGraph) {
@@ -3198,7 +3198,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenCommandListNotCapturingWhenEndGraphCap
 
     ze_graph_handle_t retGraph = nullptr;
     auto err = L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &retGraph, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
+    EXPECT_EQ(ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING, err);
     EXPECT_EQ(nullptr, retGraph);
 }
 
@@ -3245,7 +3245,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenHostSynchronizeWhenCapturingCmdlistThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 
     err = immCmdList->hostSynchronize(0);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, err);
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED, err);
 }
 
 TEST_F(GraphTestCaptureRestrictions, GivenEventSignalledByCapturingCmdlistWhenEventHostSynchronizeCalledThenUnsupportedFeatureReturned) {
@@ -3280,7 +3280,7 @@ TEST(GraphTestZeCommandListGetGraphExp, GivenInvalidParametersThenReturnsAppropr
     ze_graph_handle_t queryResult = {};
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeCommandListGetGraphExp(nullptr, &queryResult)) << "Empty cmdlist is invalid";
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeCommandListGetGraphExp(&cmdlist, &queryResult)) << "Non recording cmdlist is invalid";
+    EXPECT_EQ(ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING, L0::zeCommandListGetGraphExp(&cmdlist, &queryResult)) << "Non recording cmdlist is invalid";
     cmdlist.setGraphCaptureTarget(&graph);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListGetGraphExp(&cmdlist, &queryResult));
     EXPECT_EQ(&graph, queryResult) << "Recording cmdlist should return target graph";
@@ -3900,7 +3900,7 @@ TEST_F(GraphTestApiPauseResume, GivenCapturePausedAndResumedWhenAppendingCommand
 
     // paused capture, command list should not have graph associated
     ze_graph_handle_t queriedGraph{};
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeCommandListGetGraphExp(immCmdListHandle, &queriedGraph));
+    EXPECT_EQ(ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING, L0::zeCommandListGetGraphExp(immCmdListHandle, &queriedGraph));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0U, nullptr));
     // state of the graph should be unchanged
@@ -3928,8 +3928,8 @@ TEST_F(GraphTestApiPauseResume, GivenGraphNotCapturingWhenCallingGraphPauseResum
     MockGraph graph{&ctx, true};
     auto hGraph = graph.toHandle();
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphPauseCaptureExt(hGraph));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphResumeCaptureExt(hGraph));
+    EXPECT_EQ(ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING, L0::zeGraphPauseCaptureExt(hGraph));
+    EXPECT_EQ(ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING, L0::zeGraphResumeCaptureExt(hGraph));
 }
 
 TEST_F(GraphTestApiPauseResume, GivenActiveCaptureWhenPausingAndResumingThenCommandListCaptureTargetIsDetachedAndRestored) {

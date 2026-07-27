@@ -350,7 +350,7 @@ void Graph::stopCapturing() {
 
 ze_result_t Graph::pauseCapturing() {
     if (nullptr == this->captureSrc) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING;
     }
 
     if (this->captureSrc->getGraphCaptureTarget() != this) {
@@ -365,7 +365,7 @@ ze_result_t Graph::pauseCapturing() {
 
 ze_result_t Graph::resumeCapturing() {
     if (nullptr == this->captureSrc) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING;
     }
 
     if (this->captureSrc->getGraphCaptureTarget() != nullptr) {

@@ -96,7 +96,7 @@ ze_result_t ZE_APICALL zeCommandListEndGraphCaptureExt(ze_command_list_handle_t 
 
     auto *graph = cmdList->getGraphCaptureTarget();
     if (nullptr == graph) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING;
     }
 
     if ((nullptr == phGraph) && (false == graph->wasPreallocated())) {
@@ -193,8 +193,11 @@ ze_result_t ZE_APICALL zeCommandListIsGraphCaptureEnabledExt(ze_command_list_han
 
 ze_result_t ZE_APICALL zeCommandListGetGraphExt(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph) {
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    if ((nullptr == cmdList) || (nullptr == phGraph) || (nullptr == cmdList->getGraphCaptureTarget())) {
+    if ((nullptr == cmdList) || (nullptr == phGraph)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (nullptr == cmdList->getGraphCaptureTarget()) {
+        return ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING;
     }
     auto rootGraph = cmdList->getGraphCaptureTarget();
 
