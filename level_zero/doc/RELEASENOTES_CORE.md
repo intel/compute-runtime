@@ -1,10 +1,38 @@
 <!---
 
-Copyright (C) 2021-2025 Intel Corporation
+Copyright (C) 2021-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 -->
+
+# Release Notes v1.17
+
+Level Zero Core API.
+
+July 2026
+
+Changes in this release:
+
+The update involves changes introduced across Level Zero spec from v1.16 upto and including v1.17. Some of the important changes are as follows:
+
+| Feature	| Spec link	|
+| ------------------ | -------------------|
+| Support for zeCommandListAppendMemoryCopyWithParameters API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistappendmemorycopywithparameters |
+| Support for zeCommandListAppendMemoryFillWithParameters API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistappendmemoryfillwithparameters |
+| Support for zeCommandListImmediateAppendCommandListsWithParameters API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistimmediateappendcommandlistswithparameters |
+| Support for Graph recording/replay extension APIs | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#graph |
+| Support for zeCommandListAppendHostFunction API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistappendhostfunction |
+| Support for zeCommandListGetFlags API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistgetflags |
+| Support for zeCommandListImmediateGetFlags API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistimmediategetflags |
+| Support for zeCommandListImmediateGetMode API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistimmediategetmode |
+| Support for zeCommandListImmediateGetPriority API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistimmediategetpriority |
+| Support for zeCommandListIsMutableExp API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistismutableexp |
+| Support for zeCommandQueueGetFlags API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandqueuegetflags |
+| Support for zeCommandQueueGetMode API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandqueuegetmode |
+| Support for zeCommandQueueGetPriority API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandqueuegetpriority |
+| Support for zeDeviceGetCounterBasedEventMaxValue API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zedevicegetcounterbasedeventmaxvalue |
+| Support for zeEventGetCounterBasedFlags API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeeventgetcounterbasedflags |
 
 # Release Notes v1.15
 
