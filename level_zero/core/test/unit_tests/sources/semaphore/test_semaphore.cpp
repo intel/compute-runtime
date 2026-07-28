@@ -236,6 +236,9 @@ HWTEST_F(ExternalSemaphoreTest, DISABLED_givenExternalSemaphoreControllerStartCa
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendWaitExternalSemaphoresIsCalledThenInvalidArgumentIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -246,6 +249,9 @@ HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendWaitExternalSem
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendSignalExternalSemaphoresIsCalledThenInvalidArgumentIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -727,6 +733,9 @@ HWTEST_F(ExternalSemaphoreTest, givenProxyEventBasedExternalSemaphoresWhenAppend
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendSignalExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
@@ -758,6 +767,9 @@ HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendSignalExterna
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendSignalExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
@@ -789,6 +801,9 @@ HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendSignal
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendWaitForExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
@@ -819,6 +834,9 @@ HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendWaitFo
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendSignalExternalSemaphoresExpIsCalledThenErrorIsNotReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
@@ -855,6 +873,7 @@ HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendSignalExter
 
 HWTEST_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendSignalExternalSemaphoresExpIsCalledThenErrorIsReturned) {
     DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
 
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
@@ -887,6 +906,9 @@ HWTEST_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendSignalExterna
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendWaitExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
@@ -917,6 +939,9 @@ HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendWaitExternalS
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenAppendWaitOnEventFailsWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
@@ -948,6 +973,9 @@ HWTEST_F(ExternalSemaphoreTest, givenAppendWaitOnEventFailsWhenAppendWaitExterna
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsNotReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
@@ -983,6 +1011,7 @@ HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendWaitExterna
 
 HWTEST_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned) {
     DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
 
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
