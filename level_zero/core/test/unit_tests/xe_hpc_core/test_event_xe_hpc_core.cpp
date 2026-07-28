@@ -72,9 +72,9 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenGettingIpcHandleForEventPoolWithDe
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
     constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
-    EXPECT_NE(expectedHandle, ipcHandleData.handle);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle.val);
     EXPECT_EQ(numEvents, ipcHandleData.numEvents);
     EXPECT_EQ(0u, ipcHandleData.rootDeviceIndex);
     EXPECT_EQ(1u, ipcHandleData.numDevices);

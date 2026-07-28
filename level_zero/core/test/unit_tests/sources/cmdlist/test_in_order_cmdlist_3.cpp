@@ -15,6 +15,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
+#include <cstring>
 #include <map>
 #include <vector>
 
@@ -81,14 +82,11 @@ struct CounterBasedIpcImportTrackingContext : public Context {
         unsigned int processId = 0;
         uint64_t cacheId = 0;
         bool isOpaqueHandle = false;
+        bool hadReservedHandleData = false;
     };
 
     std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheId, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
-        importCalls.push_back({handle, allocationType, isHostIpcAllocation, processId, cacheId, isOpaqueHandle});
-
-        if (!isOpaqueHandle) {
-            return {nullptr, nullptr};
-        }
+        importCalls.push_back({handle, allocationType, isHostIpcAllocation, processId, cacheId, isOpaqueHandle, reservedHandleData != nullptr});
 
         auto allocationIt = allocations.find(handle);
         if (allocationIt == allocations.end()) {
@@ -256,7 +254,6 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData)
 
     IpcCounterBasedEventData &ipcData = *reinterpret_cast<IpcCounterBasedEventData *>(zeIpcData.data);
 
-    EXPECT_EQ(0u, ipcData.oneWayAllocCounterHandle);
     EXPECT_EQ(0u, ipcData.oneWayCounterValue);
     EXPECT_EQ(0u, ipcData.oneWayPartitionCount);
 
@@ -424,7 +421,6 @@ HWTEST_F(InOrderIpcTests, givenNonOpaqueHandleAndCounterOffsetWhenOpenIsCalledTh
         EXPECT_EQ(eventDataPtr->counterValue, ipcData.oneWayCounterValue);
         EXPECT_EQ(eventDataPtr->devicePartitions, ipcData.oneWayPartitionCount);
 
-        EXPECT_EQ(0u, ipcData.communicationAllocHandle);
         EXPECT_EQ(expectedOffset, ipcData.allocOffset);
         EXPECT_TRUE(events[1]->counterBasedFlags == ipcData.counterBasedFlags);
         EXPECT_TRUE(events[1]->signalScope == ipcData.signalScopeFlags);
@@ -645,6 +641,150 @@ HWTEST_F(InOrderIpcTests, givenOpaqueIpcHandleWhenOpeningThenImportCommunication
     for (const auto &importCall : trackingContext.importCalls) {
         EXPECT_EQ(exporterProcessId, importCall.processId);
     }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(importedEventHandle));
+}
+
+HWTEST_F(InOrderIpcTests, given2WayIpcHandleWithReservedDataWhenOpeningThenReservedHandleDataIsForwardedToGetMemHandlePtr) {
+    constexpr uint64_t communicationHandle = 0x1234;
+    constexpr uint64_t deviceCounterHandle = 0x2345;
+    constexpr uint64_t hostCounterHandle = 0x3456;
+    constexpr unsigned int exporterProcessId = 0x4567;
+
+    auto memoryManager = device->getNEODevice()->getMemoryManager();
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+
+    auto communicationAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::InOrderExecEventDataNodeType::getAllocationType()});
+    auto deviceCounterAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::DeviceAllocNodeType<true>::getAllocationType()});
+    auto hostCounterAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::DeviceAllocNodeType<false>::getAllocationType()});
+
+    ASSERT_NE(nullptr, communicationAllocation);
+    ASSERT_NE(nullptr, deviceCounterAllocation);
+    ASSERT_NE(nullptr, hostCounterAllocation);
+
+    auto eventData = reinterpret_cast<NEO::InOrderExecEventData *>(communicationAllocation->getUnderlyingBuffer());
+    eventData->deviceAllocIpcHandle = deviceCounterHandle;
+    eventData->hostAllocIpcHandle = hostCounterHandle;
+    eventData->counterValue = 1;
+    eventData->deviceIpcAllocOffset = 0;
+    eventData->hostIpcAllocOffset = 0;
+    eventData->counterOffset = 0;
+    eventData->devicePartitions = 1;
+    eventData->hostPartitions = 1;
+    eventData->exporterProcessId = exporterProcessId;
+
+    IpcCounterBasedEventData ipcData = {};
+    ipcData.communicationAllocHandle = communicationHandle;
+    ipcData.processId = exporterProcessId;
+    ipcData.counterBasedFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IPC;
+    memset(ipcData.reservedHandleData, 0xcd, sizeof(ipcData.reservedHandleData));
+
+    CounterBasedIpcImportTrackingContext trackingContext(driverHandle.get());
+    trackingContext.settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    trackingContext.settings.handleType = IpcHandleType::fdHandle;
+    trackingContext.allocations[communicationHandle] = communicationAllocation;
+    trackingContext.allocations[deviceCounterHandle] = deviceCounterAllocation;
+    trackingContext.allocations[hostCounterHandle] = hostCounterAllocation;
+
+    VariableBackup<ze_context_handle_t> defaultContextBackup(&driverHandle->defaultContext, trackingContext.toHandle());
+
+    auto deviceHandle = device->toHandle();
+    ze_event_handle_t importedEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, Event::openCounterBasedIpcHandle(ipcData, &importedEventHandle, driverHandle.get(), &trackingContext, 1, &deviceHandle));
+    ASSERT_NE(nullptr, importedEventHandle);
+
+    ASSERT_EQ(3u, trackingContext.importCalls.size());
+    EXPECT_EQ(communicationHandle, trackingContext.importCalls[0].handle);
+    EXPECT_TRUE(trackingContext.importCalls[0].hadReservedHandleData);
+    EXPECT_FALSE(trackingContext.importCalls[1].hadReservedHandleData);
+    EXPECT_FALSE(trackingContext.importCalls[2].hadReservedHandleData);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(importedEventHandle));
+}
+
+HWTEST_F(InOrderIpcTests, given2WayIpcHandleWithEmptyReservedDataWhenOpeningThenNullReservedHandleDataIsForwardedToGetMemHandlePtr) {
+    constexpr uint64_t communicationHandle = 0x1234;
+    constexpr uint64_t deviceCounterHandle = 0x2345;
+    constexpr uint64_t hostCounterHandle = 0x3456;
+    constexpr unsigned int exporterProcessId = 0x4567;
+
+    auto memoryManager = device->getNEODevice()->getMemoryManager();
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+
+    auto communicationAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::InOrderExecEventDataNodeType::getAllocationType()});
+    auto deviceCounterAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::DeviceAllocNodeType<true>::getAllocationType()});
+    auto hostCounterAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::DeviceAllocNodeType<false>::getAllocationType()});
+
+    ASSERT_NE(nullptr, communicationAllocation);
+    ASSERT_NE(nullptr, deviceCounterAllocation);
+    ASSERT_NE(nullptr, hostCounterAllocation);
+
+    auto eventData = reinterpret_cast<NEO::InOrderExecEventData *>(communicationAllocation->getUnderlyingBuffer());
+    eventData->deviceAllocIpcHandle = deviceCounterHandle;
+    eventData->hostAllocIpcHandle = hostCounterHandle;
+    eventData->counterValue = 1;
+    eventData->devicePartitions = 1;
+    eventData->hostPartitions = 1;
+    eventData->exporterProcessId = exporterProcessId;
+
+    IpcCounterBasedEventData ipcData = {};
+    ipcData.communicationAllocHandle = communicationHandle;
+    ipcData.processId = exporterProcessId;
+    ipcData.counterBasedFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IPC;
+
+    CounterBasedIpcImportTrackingContext trackingContext(driverHandle.get());
+    trackingContext.settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    trackingContext.settings.handleType = IpcHandleType::fdHandle;
+    trackingContext.allocations[communicationHandle] = communicationAllocation;
+    trackingContext.allocations[deviceCounterHandle] = deviceCounterAllocation;
+    trackingContext.allocations[hostCounterHandle] = hostCounterAllocation;
+
+    VariableBackup<ze_context_handle_t> defaultContextBackup(&driverHandle->defaultContext, trackingContext.toHandle());
+
+    auto deviceHandle = device->toHandle();
+    ze_event_handle_t importedEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, Event::openCounterBasedIpcHandle(ipcData, &importedEventHandle, driverHandle.get(), &trackingContext, 1, &deviceHandle));
+    ASSERT_NE(nullptr, importedEventHandle);
+
+    ASSERT_EQ(3u, trackingContext.importCalls.size());
+    EXPECT_FALSE(trackingContext.importCalls[0].hadReservedHandleData);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(importedEventHandle));
+}
+
+HWTEST_F(InOrderIpcTests, given1WayIpcHandleWhenOpeningThenNullReservedHandleDataIsForwardedToGetMemHandlePtr) {
+    constexpr uint64_t deviceCounterHandle = 0x2345;
+    constexpr unsigned int exporterProcessId = 0x4567;
+
+    auto memoryManager = device->getNEODevice()->getMemoryManager();
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+
+    auto deviceCounterAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::DeviceAllocNodeType<true>::getAllocationType()});
+    ASSERT_NE(nullptr, deviceCounterAllocation);
+
+    IpcCounterBasedEventData ipcData = {};
+    ipcData.oneWayAllocCounterHandle = deviceCounterHandle;
+    ipcData.processId = exporterProcessId;
+    ipcData.oneWayCounterValue = 1;
+    ipcData.oneWayPartitionCount = 1;
+    ipcData.counterBasedFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IPC;
+
+    CounterBasedIpcImportTrackingContext trackingContext(driverHandle.get());
+    trackingContext.settings.useOpaqueHandle = OpaqueHandlingType::none;
+    trackingContext.settings.handleType = IpcHandleType::fdHandle;
+    trackingContext.allocations[deviceCounterHandle] = deviceCounterAllocation;
+
+    VariableBackup<ze_context_handle_t> defaultContextBackup(&driverHandle->defaultContext, trackingContext.toHandle());
+
+    auto deviceHandle = device->toHandle();
+    ze_event_handle_t importedEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, Event::openCounterBasedIpcHandle(ipcData, &importedEventHandle, driverHandle.get(), &trackingContext, 1, &deviceHandle));
+    ASSERT_NE(nullptr, importedEventHandle);
+
+    ASSERT_EQ(1u, trackingContext.importCalls.size());
+    EXPECT_EQ(deviceCounterHandle, trackingContext.importCalls[0].handle);
+    EXPECT_FALSE(trackingContext.importCalls[0].isOpaqueHandle);
+    EXPECT_FALSE(trackingContext.importCalls[0].hadReservedHandleData);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(importedEventHandle));
 }
