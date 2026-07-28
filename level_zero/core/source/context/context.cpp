@@ -896,14 +896,9 @@ void Context::releaseIpcEventPoolHandle(uint64_t handle) {
 }
 
 ze_result_t Context::putIpcEventPoolHandle(ze_ipc_event_pool_handle_t ipcEventPoolHandle) {
-    uint64_t handle = 0;
-    if (settings.useOpaqueHandle) {
-        IpcOpaqueEventPoolData &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
-        handle = ipcData.handle.val;
-    } else {
-        IpcEventPoolData &ipcData = *reinterpret_cast<IpcEventPoolData *>(ipcEventPoolHandle.data);
-        handle = ipcData.handle;
-    }
+    // getIpcHandle always writes IpcOpaqueEventPoolData, so parse it as such (see event.h).
+    IpcOpaqueEventPoolData &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
+    uint64_t handle = ipcData.handle.val;
     auto lock = driverHandle->lockIPCHandleMap();
     auto &ipcMap = driverHandle->getIPCHandleMap();
     auto ipcIter = ipcMap.find(handle);
