@@ -35,11 +35,11 @@ namespace NEO {
 namespace LEO {
 namespace ult {
 
-struct MockModuleForKernelNames : public L0::Module {
+struct MockModule : public L0::Module {
     std::vector<std::string> kernelNamesStorage;
     std::vector<const char *> kernelNamePtrs;
 
-    MockModuleForKernelNames(std::vector<std::string> names) : kernelNamesStorage(std::move(names)) {
+    MockModule(std::vector<std::string> names = {}) : kernelNamesStorage(std::move(names)) {
         for (auto &name : kernelNamesStorage) {
             kernelNamePtrs.push_back(name.c_str());
         }
@@ -77,11 +77,39 @@ struct MockModuleForKernelNames : public L0::Module {
     bool shouldAllocatePrivateMemoryPerDispatch() const override { return false; }
     uint32_t getProfileFlags() const override { return 0; }
     void checkIfPrivateMemoryPerDispatchIsNeeded() override {}
-    void populateZebinExtendedArgsMetadata() override {}
-    void generateDefaultExtendedArgsMetadata() override {}
+
+    void populateZebinExtendedArgsMetadata() override {
+        populateZebinExtendedArgsMetadataCalledTimes++;
+        if (nullptr == descriptorForMetadata || argTypeSizesFromZeInfo.empty()) {
+            return;
+        }
+
+        auto &extendedMetadata = descriptorForMetadata->explicitArgsExtendedMetadata;
+        extendedMetadata.resize(argTypeSizesFromZeInfo.size());
+        for (size_t argIndex = 0; argIndex < argTypeSizesFromZeInfo.size(); argIndex++) {
+            extendedMetadata[argIndex].typeSize = argTypeSizesFromZeInfo[argIndex];
+        }
+    }
+
+    void generateDefaultExtendedArgsMetadata() override {
+        generateDefaultExtendedArgsMetadataCalledTimes++;
+        if (nullptr == descriptorForMetadata) {
+            return;
+        }
+
+        auto &extendedMetadata = descriptorForMetadata->explicitArgsExtendedMetadata;
+        if (extendedMetadata.empty()) {
+            extendedMetadata.resize(descriptorForMetadata->payloadMappings.explicitArgs.size());
+        }
+    }
+
     bool isModulesPackage() const override { return false; }
 
     std::vector<std::unique_ptr<L0::KernelImmutableData>> emptyKernelImmData;
+    NEO::KernelDescriptor *descriptorForMetadata = nullptr;
+    std::vector<size_t> argTypeSizesFromZeInfo;
+    uint32_t populateZebinExtendedArgsMetadataCalledTimes = 0;
+    uint32_t generateDefaultExtendedArgsMetadataCalledTimes = 0;
 };
 
 struct MockContextForKernelNames : public Context {
@@ -204,7 +232,7 @@ TEST(CreateKernelsInProgramTests, givenNullProgramWhenCreateKernelsInProgramThen
 
 TEST(CreateKernelsInProgramTests, givenProgramWithExternalFunctionsWhenCreateKernelsInProgramThenExternalFunctionsAreFilteredOut) {
     std::string externalFunctionsName{NEO::Zebin::Elf::SectionNames::externalFunctions};
-    MockModuleForKernelNames mockModule({"kernel0", externalFunctionsName, "kernel1"});
+    MockModule mockModule({"kernel0", externalFunctionsName, "kernel1"});
 
     MockContextForKernelNames context;
     MockProgramForKernelNames program(&context, mockModule.toHandle());
@@ -217,7 +245,7 @@ TEST(CreateKernelsInProgramTests, givenProgramWithExternalFunctionsWhenCreateKer
 
 TEST(GetProgramInfoTests, givenProgramWithExternalFunctionsWhenGetProgramInfoWithNumKernelsThenExternalFunctionsAreFilteredOut) {
     std::string externalFunctionsName{NEO::Zebin::Elf::SectionNames::externalFunctions};
-    MockModuleForKernelNames mockModule({"kernel0", externalFunctionsName, "kernel1"});
+    MockModule mockModule({"kernel0", externalFunctionsName, "kernel1"});
 
     MockContextForKernelNames context;
     MockProgramForKernelNames program(&context, mockModule.toHandle());
@@ -230,7 +258,7 @@ TEST(GetProgramInfoTests, givenProgramWithExternalFunctionsWhenGetProgramInfoWit
 
 TEST(GetProgramInfoTests, givenProgramWithExternalFunctionsWhenGetProgramInfoWithKernelNamesThenExternalFunctionsAreFilteredOut) {
     std::string externalFunctionsName{NEO::Zebin::Elf::SectionNames::externalFunctions};
-    MockModuleForKernelNames mockModule({"kernel0", externalFunctionsName, "kernel1"});
+    MockModule mockModule({"kernel0", externalFunctionsName, "kernel1"});
 
     MockContextForKernelNames context;
     MockProgramForKernelNames program(&context, mockModule.toHandle());
@@ -504,6 +532,165 @@ TEST_F(SvmKernelValidationFixture, givenKnownSvmPointerWhenSetKernelExecInfoSvmP
     EXPECT_TRUE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
 
     context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->removeSVMAlloc(allocData);
+}
+
+struct ImmediateArgKernelFixture : public Test<OclFixture> {
+    struct PaddedStruct {
+        uint32_t a;
+        char b;
+    };
+    static_assert(sizeof(PaddedStruct) > sizeof(uint32_t) + sizeof(char), "PaddedStruct is expected to have trailing padding");
+
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        cl_device_id clDeviceId = clDevice;
+        context = std::make_unique<Context>(nullptr, nullptr, 1, &clDeviceId, true);
+        program = std::make_unique<Program>(context.get());
+
+        l0Kernel = std::make_unique<L0::ult::Mock<L0::KernelImp>>();
+        l0Kernel->privateState.kernelArgHandlers.resize(1);
+        l0Kernel->checkPassedArgumentValues = true;
+        l0Kernel->passedArgumentValues.resize(1);
+        auto &explicitArgs = l0Kernel->descriptor.payloadMappings.explicitArgs;
+        explicitArgs.resize(1);
+        explicitArgs[0] = NEO::ArgDescriptor(NEO::ArgDescriptor::argTValue);
+
+        module = std::make_unique<MockModule>();
+        module->descriptorForMetadata = &l0Kernel->descriptor;
+        l0Kernel->setModule(module.get());
+
+        std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
+        kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
+    }
+
+    void TearDown() override {
+        kernel.reset();
+        l0Kernel.release();
+        module.reset();
+        program.reset();
+        context.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    void setArgTypeSizeFromZeInfo(size_t typeSize) {
+        module->argTypeSizesFromZeInfo = {typeSize};
+    }
+
+    ClDevice *clDevice = nullptr;
+    std::unique_ptr<Context> context;
+    std::unique_ptr<Program> program;
+    std::unique_ptr<MockModule> module;
+    std::unique_ptr<L0::ult::Mock<L0::KernelImp>> l0Kernel;
+    std::unique_ptr<Kernel> kernel;
+};
+
+TEST_F(ImmediateArgKernelFixture, givenImmediateArgAndArgSizeSmallerThanRequiredWhenSetKernelArgThenReturnsInvalidArgSize) {
+    setArgTypeSizeFromZeInfo(sizeof(uint32_t));
+    uint16_t argValue = 0xabcd;
+
+    auto retVal = clSetKernelArg(kernel.get(), 0, sizeof(argValue), &argValue);
+
+    EXPECT_EQ(CL_INVALID_ARG_SIZE, retVal);
+}
+
+TEST_F(ImmediateArgKernelFixture, givenImmediateArgAndExactArgSizeWhenSetKernelArgThenReturnsSuccessAndValueIsPassedToL0) {
+    setArgTypeSizeFromZeInfo(sizeof(uint32_t));
+    uint32_t argValue = 0x12345678;
+
+    auto retVal = clSetKernelArg(kernel.get(), 0, sizeof(argValue), &argValue);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(sizeof(argValue), l0Kernel->passedArgumentValues[0].size());
+    EXPECT_EQ(argValue, *reinterpret_cast<uint32_t *>(l0Kernel->passedArgumentValues[0].data()));
+}
+
+TEST_F(ImmediateArgKernelFixture, givenImmediateArgAndArgSizeLargerThanRequiredWhenSetKernelArgThenReturnsSuccess) {
+    setArgTypeSizeFromZeInfo(sizeof(uint32_t));
+    uint64_t argValue = 0x1234567887654321ull;
+
+    auto retVal = clSetKernelArg(kernel.get(), 0, sizeof(argValue), &argValue);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(ImmediateArgKernelFixture, givenStructWithTrailingPaddingAndExactArgSizeWhenSetKernelArgThenReturnsSuccess) {
+    setArgTypeSizeFromZeInfo(sizeof(PaddedStruct));
+    PaddedStruct argValue{0xaaaaaaaa, 'x'};
+
+    auto retVal = clSetKernelArg(kernel.get(), 0, sizeof(argValue), &argValue);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(PaddedStruct), l0Kernel->passedArgumentValues[0].size());
+}
+
+TEST_F(ImmediateArgKernelFixture, givenStructWithTrailingPaddingAndArgSizeWithoutPaddingWhenSetKernelArgThenReturnsInvalidArgSize) {
+    setArgTypeSizeFromZeInfo(sizeof(PaddedStruct));
+    PaddedStruct argValue{0xaaaaaaaa, 'x'};
+
+    auto retVal = clSetKernelArg(kernel.get(), 0, sizeof(uint32_t) + sizeof(char), &argValue);
+
+    EXPECT_EQ(CL_INVALID_ARG_SIZE, retVal);
+}
+
+TEST_F(ImmediateArgKernelFixture, givenNoArgTypeSizeInZeInfoWhenSetKernelArgWithSmallerArgSizeThenReturnsSuccess) {
+    PaddedStruct argValue{0xaaaaaaaa, 'x'};
+
+    auto retVal = clSetKernelArg(kernel.get(), 0, sizeof(uint32_t) + sizeof(char), &argValue);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_FALSE(l0Kernel->descriptor.explicitArgsExtendedMetadata.empty());
+    EXPECT_EQ(0u, l0Kernel->descriptor.explicitArgsExtendedMetadata[0].typeSize);
+}
+
+TEST_F(ImmediateArgKernelFixture, givenEmptyExtendedArgsMetadataWhenSetKernelArgWithSmallerArgSizeThenReturnsSuccess) {
+    module->descriptorForMetadata = nullptr;
+    PaddedStruct argValue{0xaaaaaaaa, 'x'};
+
+    auto retVal = clSetKernelArg(kernel.get(), 0, sizeof(uint32_t) + sizeof(char), &argValue);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(l0Kernel->descriptor.explicitArgsExtendedMetadata.empty());
+}
+
+TEST_F(ImmediateArgKernelFixture, givenImmediateArgWhenSetKernelArgThenExtendedArgsMetadataIsPopulated) {
+    setArgTypeSizeFromZeInfo(sizeof(uint32_t));
+    EXPECT_EQ(0u, module->populateZebinExtendedArgsMetadataCalledTimes);
+    uint32_t argValue = 0x12345678;
+
+    auto retVal = clSetKernelArg(kernel.get(), 0, sizeof(argValue), &argValue);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, module->populateZebinExtendedArgsMetadataCalledTimes);
+    EXPECT_EQ(1u, module->generateDefaultExtendedArgsMetadataCalledTimes);
+}
+
+TEST_F(ImmediateArgKernelFixture, givenNullArgValueWhenSetKernelArgWithSmallerArgSizeThenArgSizeIsNotValidated) {
+    setArgTypeSizeFromZeInfo(sizeof(uint32_t));
+
+    auto retVal = clSetKernelArg(kernel.get(), 0, sizeof(uint16_t), nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(ImmediateArgKernelFixture, givenImmediateArgAndArgSizeSmallerThanRequiredWhenSetKernelArgThenArgIsNotMarkedAsSet) {
+    setArgTypeSizeFromZeInfo(sizeof(uint32_t));
+    uint32_t argValue = 0x12345678;
+
+    EXPECT_EQ(CL_INVALID_ARG_SIZE, clSetKernelArg(kernel.get(), 0, sizeof(uint16_t), &argValue));
+    EXPECT_FALSE(kernel->areAllArgsSet());
+
+    EXPECT_EQ(CL_SUCCESS, clSetKernelArg(kernel.get(), 0, sizeof(argValue), &argValue));
+    EXPECT_TRUE(kernel->areAllArgsSet());
+}
+
+TEST_F(ImmediateArgKernelFixture, givenArgIndexOutOfRangeWhenSetKernelArgThenReturnsInvalidArgIndex) {
+    setArgTypeSizeFromZeInfo(sizeof(uint32_t));
+    uint32_t argValue = 0x12345678;
+
+    auto retVal = clSetKernelArg(kernel.get(), 1, sizeof(argValue), &argValue);
+
+    EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
 }
 
 } // namespace ult

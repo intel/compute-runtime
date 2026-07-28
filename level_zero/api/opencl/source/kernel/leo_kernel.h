@@ -68,6 +68,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     NEO::KernelExecutionType getExecutionType() const { return this->executionType; }
 
     cl_int setArgumentValue(uint32_t argIndex, size_t argSize, const void *argValue);
+    cl_int validateImmediateArgSize(uint32_t argIndex, size_t argSize) const;
 
     void setImageArg(uint32_t argIndex, Image *image) { this->imageArgs[argIndex] = image; }
     void clearImageArg(uint32_t argIndex) { this->imageArgs.erase(argIndex); }

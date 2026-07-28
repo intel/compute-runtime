@@ -401,6 +401,23 @@ cl_int Kernel::setArgumentValue(uint32_t argIndex, size_t argSize, const void *a
     return result;
 }
 
+cl_int Kernel::validateImmediateArgSize(uint32_t argIndex, size_t argSize) const {
+    auto l0Kernel = getL0Object();
+    l0Kernel->populateMetadata();
+
+    const auto &extendedMetadata = l0Kernel->getKernelDescriptor().explicitArgsExtendedMetadata;
+    if (argIndex >= extendedMetadata.size()) {
+        return CL_SUCCESS;
+    }
+
+    const auto requiredArgSize = extendedMetadata[argIndex].typeSize;
+    if (requiredArgSize != 0u && argSize < requiredArgSize) {
+        return CL_INVALID_ARG_SIZE;
+    }
+
+    return CL_SUCCESS;
+}
+
 cl_int Kernel::setIndirectAccess(cl_kernel_exec_info flag, cl_bool val) {
     cl_int result = CL_SUCCESS;
     if (CL_TRUE == val) {

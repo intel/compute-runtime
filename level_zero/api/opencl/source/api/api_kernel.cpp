@@ -191,11 +191,21 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
         TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
         return tracingRetVal;
     }
+    const auto &argDescriptor = pKernel->getL0Object()->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
+    const bool isImmediateArg = (argDescriptor.type == NEO::ArgDescriptor::argTValue);
+
+    if (isImmediateArg && argValue) {
+        cl_int validationRetVal = pKernel->validateImmediateArgSize(argIndex, argSize);
+        if (validationRetVal != CL_SUCCESS) [[unlikely]] {
+            TRACING_EXIT(ClSetKernelArg, &validationRetVal);
+            return validationRetVal;
+        }
+    }
+
     pKernel->markArgAsSet(argIndex);
     pKernel->clearImageArg(argIndex);
 
-    const auto &argDescriptor = pKernel->getL0Object()->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
-    if (argDescriptor.type == NEO::ArgDescriptor::argTValue) [[likely]] {
+    if (isImmediateArg) {
         cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, argSize, argValue);
         TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
         return tracingRetVal;
