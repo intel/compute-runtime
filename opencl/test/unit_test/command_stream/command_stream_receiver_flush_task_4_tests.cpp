@@ -108,12 +108,12 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMu
         EXPECT_EQ(2u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node4->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd0));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node4->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd0));
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd1));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd1));
     }
 
     {
@@ -136,12 +136,12 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMu
         EXPECT_EQ(2u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd0));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd0));
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node3->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd1));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node3->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd1));
     }
     alignedFree(svmPtr);
 }
@@ -213,16 +213,16 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
         ASSERT_EQ(3u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node4->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd0));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node4->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd0));
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd1));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd1));
 
         auto semaphoreCmd2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[2]));
-        EXPECT_EQ(1u, semaphoreCmd2->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node6->getContextEndAddress(0u)), semaphoreCmd2->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd2));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node6->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd2));
     }
 
     {
@@ -238,16 +238,16 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
         EXPECT_EQ(3u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd0));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd0));
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node3->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd1));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node3->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd1));
 
         auto semaphoreCmd2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[2]));
-        EXPECT_EQ(1u, semaphoreCmd2->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), semaphoreCmd2->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd2));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd2));
     }
 
     {
@@ -272,8 +272,8 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
         EXPECT_EQ(1u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd0));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd0));
     }
 }
 
@@ -444,8 +444,8 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 
         ASSERT_EQ(1u, semaphores.size());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(event2->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0)->getContextEndAddress(0u)), semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(event2->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0)->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     }
     {
         HardwareParse csHwParser;
@@ -454,8 +454,8 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 
         ASSERT_EQ(1u, semaphores.size());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(event1->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0)->getContextEndAddress(0u)), semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(event1->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0)->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     }
     event1->release();
     event2->release();
@@ -632,9 +632,9 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 
         EXPECT_EQ(1u, semaphores.size());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
         auto node = event2->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0);
-        EXPECT_EQ(node->getGpuAddress() + node->getContextEndOffset(), semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(node->getGpuAddress() + node->getContextEndOffset(), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     }
     {
         HardwareParse csHwParser;
@@ -650,9 +650,9 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 
         EXPECT_EQ(2u, semaphores.size());
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd0));
         auto node = event1->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0);
-        EXPECT_EQ(node->getGpuAddress() + node->getContextEndOffset(), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(node->getGpuAddress() + node->getContextEndOffset(), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd0));
     }
     {
         HardwareParse csHwParser;

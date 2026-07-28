@@ -13,6 +13,7 @@ using GenGfxFamily = NEO::Gen12LpFamily;
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mode.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_csr_base_address.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_from_gen12lp_to_xe3_core.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_gpgpu_walker.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_l3_control.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_sip.inl"

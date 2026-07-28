@@ -364,8 +364,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
-
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);

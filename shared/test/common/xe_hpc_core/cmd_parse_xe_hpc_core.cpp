@@ -9,6 +9,7 @@
 using GenStruct = NEO::XeHpcCore;
 using GenGfxFamily = NEO::XeHpcCoreFamily;
 
+#include "shared/test/common/cmd_parse/cmd_parse_from_gen12lp_to_xe3_core.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_mem_fence.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_mem_set.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_state_prefetch.inl"

@@ -133,9 +133,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
 
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miSemaphoreWait);
-    EXPECT_EQ(miSemaphoreWait->getSemaphoreGraphicsAddress(), miAtomicTileAddress);
+    EXPECT_EQ(NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait), miAtomicTileAddress);
     EXPECT_EQ(miSemaphoreWait->getCompareOperation(), MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
-    EXPECT_EQ(miSemaphoreWait->getSemaphoreDataDword(), 4u);
+    EXPECT_EQ(NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait), 4u);
 
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
@@ -233,9 +233,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(postWalkerSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -302,9 +302,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(preWalkerSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(preWalkerSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto loadRegisterMem = genCmdCast<WalkerPartition::LOAD_REGISTER_MEM<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -342,9 +342,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(postWalkerSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -421,36 +421,36 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
         const auto expectedSemaphoreAddress = walker.getPostSync().getDestinationAddress() + 8llu;
-        EXPECT_EQ(expectedSemaphoreAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(expectedSemaphoreAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(1u, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
         const auto expectedSemaphoreAddress = walker.getPostSync().getDestinationAddress() + 8llu + 16llu;
-        EXPECT_EQ(expectedSemaphoreAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(expectedSemaphoreAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(1u, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
         const auto expectedSemaphoreAddress = walker.getPostSync().getDestinationAddress() + 8llu + 32llu;
-        EXPECT_EQ(expectedSemaphoreAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(expectedSemaphoreAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(1u, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
         const auto expectedSemaphoreAddress = walker.getPostSync().getDestinationAddress() + 8llu + 48llu;
-        EXPECT_EQ(expectedSemaphoreAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(expectedSemaphoreAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(1u, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
 
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
@@ -537,9 +537,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(postWalkerSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -570,9 +570,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(finalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto storeDataImm = genCmdCast<WalkerPartition::MI_STORE_DATA_IMM<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -607,9 +607,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(finalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(2 * testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(2 * testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
@@ -696,9 +696,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(postWalkerSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -729,9 +729,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(finalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto storeDataImm = genCmdCast<WalkerPartition::MI_STORE_DATA_IMM<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -766,9 +766,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(finalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(2 * testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(2 * testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
@@ -857,9 +857,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(postWalkerSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -890,9 +890,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(finalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -931,9 +931,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(finalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(2 * testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(2 * testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
@@ -1023,9 +1023,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(postWalkerSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1056,9 +1056,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(finalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     {
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1097,9 +1097,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphoreWait);
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(finalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
         EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-        EXPECT_EQ(2 * testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+        EXPECT_EQ(2 * testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     }
     EXPECT_EQ(parsedOffset, totalBytesProgrammed);
 }
@@ -1216,9 +1216,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     for (uint32_t partitionId = 0u; partitionId < testArgs.partitionCount; partitionId++) {
         ASSERT_NE(nullptr, miSemaphoreWait);
-        EXPECT_EQ(miSemaphoreWait->getSemaphoreGraphicsAddress(), postSyncAddress + 8llu + partitionId * 16llu);
+        EXPECT_EQ(NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait), postSyncAddress + 8llu + partitionId * 16llu);
         EXPECT_EQ(miSemaphoreWait->getCompareOperation(), MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-        EXPECT_EQ(miSemaphoreWait->getSemaphoreDataDword(), 1u);
+        EXPECT_EQ(NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait), 1u);
 
         parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
         miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1462,9 +1462,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
 
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miSemaphoreWait);
-    EXPECT_EQ(miAtomicTileAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(miAtomicTileAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(2u, miSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(2u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     auto loadRegisterMem = genCmdCast<WalkerPartition::LOAD_REGISTER_MEM<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1561,9 +1561,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miSemaphoreWait);
-    EXPECT_EQ(crossTileSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(crossTileSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1665,9 +1665,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miSemaphoreWait);
-    EXPECT_EQ(crossTileSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(crossTileSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1691,9 +1691,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miSemaphoreWait);
-    EXPECT_EQ(finalSyncTileCountAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(finalSyncTileCountAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     auto crossTileFieldStore = genCmdCast<WalkerPartition::MI_STORE_DATA_IMM<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1712,9 +1712,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miSemaphoreWait);
-    EXPECT_EQ(finalSyncTileCountAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(finalSyncTileCountAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(2u * testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(2u * testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     EXPECT_EQ(parsedOffset, expectedCommandUsedSize);
@@ -1815,9 +1815,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miSemaphoreWait);
-    EXPECT_EQ(crossTileSyncAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(crossTileSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1841,9 +1841,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miSemaphoreWait);
-    EXPECT_EQ(finalSyncTileCountAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(finalSyncTileCountAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     auto crossTileFieldAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1867,9 +1867,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miSemaphoreWait);
-    EXPECT_EQ(finalSyncTileCountAddress, miSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(finalSyncTileCountAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT<FamilyType>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(2u * testArgs.tileCount, miSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(2u * testArgs.tileCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphoreWait));
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     EXPECT_EQ(parsedOffset, expectedCommandUsedSize);

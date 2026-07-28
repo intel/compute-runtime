@@ -136,7 +136,6 @@ void CommandQueueHwBlitTest<ooq>::SetUp() {
     debugManager.flags.EnableTimestampPacket.set(1);
     debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    UnitTestSetter::setupSemaphore64bCmdSupport(this->state, hwInfo.platform.eRenderCoreFamily);
     ClDeviceFixture::setUpImpl(&hwInfo);
     cl_device_id device = pClDevice;
     REQUIRE_FULL_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());

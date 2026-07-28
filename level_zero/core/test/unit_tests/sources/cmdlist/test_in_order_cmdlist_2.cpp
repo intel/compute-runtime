@@ -487,10 +487,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     bool waitsOnCopyEngine = false;
     for (auto &semaphore : semaphores) {
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
-        if (semaphoreCmd->getSemaphoreGraphicsAddress() == mainTagAddress) {
+        if (NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd) == mainTagAddress) {
             waitsOnComputeEngine = true;
         }
-        if (semaphoreCmd->getSemaphoreGraphicsAddress() == copyTagAddress) {
+        if (NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd) == copyTagAddress) {
             waitsOnCopyEngine = true;
         }
     }
@@ -531,7 +531,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWithoutPr
     const auto copyTagAddress = copyCsr->getTagAllocation()->getGpuAddress();
     for (auto &semaphore : semaphores) {
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
-        EXPECT_NE(copyTagAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_NE(copyTagAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     }
 }
 
@@ -3167,8 +3167,8 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendi
             return false;
         }
 
-        EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(device->getSyncDispatchTokenAllocation()->getGpuAddress() + sizeof(uint32_t), semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+        EXPECT_EQ(device->getSyncDispatchTokenAllocation()->getGpuAddress() + sizeof(uint32_t), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
         EXPECT_EQ(COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
         EXPECT_EQ(expectedInitCalls++, immCmdList->initCalled);
@@ -3340,8 +3340,8 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppending
         auto semaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(
             ptrOffset(jumpToEndSectionFromPrimaryTile, NEO::EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false)));
 
-        EXPECT_EQ(0u, semaphore->getSemaphoreDataDword());
-        EXPECT_EQ(syncAllocGpuVa + sizeof(uint32_t), semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphore));
+        EXPECT_EQ(syncAllocGpuVa + sizeof(uint32_t), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphore->getCompareOperation());
 
         if (::testing::Test::HasFailure()) {
@@ -3369,8 +3369,8 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppending
         }
 
         semaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(++miPredicate);
-        EXPECT_EQ(queueId, semaphore->getSemaphoreDataDword());
-        EXPECT_EQ(syncAllocGpuVa + sizeof(uint32_t), semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(queueId, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphore));
+        EXPECT_EQ(syncAllocGpuVa + sizeof(uint32_t), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphore->getCompareOperation());
 
         // End section
@@ -3559,8 +3559,8 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchAndOutOfOrderW
         }
 
         auto semaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(++miAtomic);
-        EXPECT_EQ(0u, semaphore->getSemaphoreDataDword());
-        EXPECT_EQ(syncAllocGpuVa, semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphore));
+        EXPECT_EQ(syncAllocGpuVa, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphore->getCompareOperation());
 
         return !::testing::Test::HasFailure();
@@ -4387,7 +4387,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
             auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
             ASSERT_NE(nullptr, semaphoreCmd);
 
-            EXPECT_EQ(externalDependencyGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(externalDependencyGpuVa, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
         }
 
         itor = find<XY_COPY_BLT *>(itor, cmdList.end());
@@ -4457,7 +4457,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
         ASSERT_NE(nullptr, subCopyEventSemaphore);
 
-        while (bcsSplit->events.getEventResources().subcopy[submissionId]->getInOrderExecEventHelper().getBaseDeviceAddress() != subCopyEventSemaphore->getSemaphoreGraphicsAddress()) {
+        while (bcsSplit->events.getEventResources().subcopy[submissionId]->getInOrderExecEventHelper().getBaseDeviceAddress() != NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(subCopyEventSemaphore)) {
             semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
             ASSERT_NE(cmdList.end(), semaphoreItor);
 
@@ -4470,7 +4470,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
             auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
             ASSERT_NE(nullptr, subCopyEventSemaphore);
 
-            EXPECT_EQ(bcsSplit->events.getEventResources().subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device), subCopyEventSemaphore->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(bcsSplit->events.getEventResources().subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(subCopyEventSemaphore));
 
             itor = ++semaphoreItor;
         }

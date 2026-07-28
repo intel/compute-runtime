@@ -7,7 +7,6 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "neo_igfxfmid.h"
@@ -28,14 +27,6 @@ void UnitTestSetter::setRcsExposure(RootDeviceEnvironment &rootDeviceEnvironment
 
     if (hwInfo && (hwInfo->platform.eRenderCoreFamily >= IGFX_XE3P_CORE)) {
         rootDeviceEnvironment.setRcsExposure();
-    }
-}
-
-void UnitTestSetter::setupSemaphore64bCmdSupport([[maybe_unused]] const DebugManagerStateRestore &restorer, uint32_t gfxCoreFamily) {
-    // for Xe3p+ force 64b semaphore cmd to have consistency between platforms in tests,
-    // as default semaphore cmd is set to 64b for Xe3p gen but some platforms may have it disabled (see isAvailableSemaphore64 method)
-    if (gfxCoreFamily >= IGFX_XE3P_CORE) {
-        debugManager.flags.Enable64BitSemaphore.set(1);
     }
 }
 

@@ -90,7 +90,7 @@ NVLPTEST_F(NvlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(featureTable.flags.ftrCCSNode);
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
-    EXPECT_FALSE(featureTable.flags.ftrHwSemaphore64);
+    EXPECT_TRUE(featureTable.flags.ftrHwSemaphore64);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
     NvlHwConfig::setupHardwareInfo(&hwInfo, false, releaseHelper.get());
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
@@ -103,7 +103,7 @@ NVLPTEST_F(NvlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(featureTable.flags.ftrCCSNode);
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
-    EXPECT_FALSE(featureTable.flags.ftrHwSemaphore64);
+    EXPECT_TRUE(featureTable.flags.ftrHwSemaphore64);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
     NvlHwConfig::setupHardwareInfo(&hwInfo, true, releaseHelper.get());
     EXPECT_TRUE(featureTable.flags.ftrFlatPhysCCS);

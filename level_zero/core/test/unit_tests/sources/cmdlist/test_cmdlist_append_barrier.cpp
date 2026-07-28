@@ -143,9 +143,9 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
     {
         auto miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphore);
-        EXPECT_EQ(gpuCrossTileSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(gpuCrossTileSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphore));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
-        EXPECT_EQ(2u, miSemaphore->getSemaphoreDataDword());
+        EXPECT_EQ(2u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphore));
         parsedOffset += NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
     }
     {
@@ -181,9 +181,9 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
         {
             auto miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, parsedOffset));
             ASSERT_NE(nullptr, miSemaphore);
-            EXPECT_EQ(gpuFinalSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(gpuFinalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphore));
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
-            EXPECT_EQ(2u, miSemaphore->getSemaphoreDataDword());
+            EXPECT_EQ(2u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphore));
             parsedOffset += NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
         }
         {
@@ -205,9 +205,9 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
         {
             auto miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, parsedOffset));
             ASSERT_NE(nullptr, miSemaphore);
-            EXPECT_EQ(gpuFinalSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(gpuFinalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphore));
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
-            EXPECT_EQ(4u, miSemaphore->getSemaphoreDataDword());
+            EXPECT_EQ(4u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphore));
             parsedOffset += NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
         }
     }
@@ -225,8 +225,6 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
 
     void setUp() {
         BaseClass::setUp();
-
-        UnitTestSetter::setupSemaphore64bCmdSupport(this->restorer, device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
     }
 
     void tearDown() {
@@ -702,9 +700,9 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     auto itorSemaphore = find<MI_SEMAPHORE_WAIT *>(itorAtomic, cmdList.end());
     ASSERT_NE(cmdList.end(), itorSemaphore);
     auto cmdSemaphoreWait = genCmdCast<MI_SEMAPHORE_WAIT *>(*itorSemaphore);
-    EXPECT_EQ(crossTileSyncGpuAddress, cmdSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(crossTileSyncGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmdSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, cmdSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(2u, cmdSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(2u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmdSemaphoreWait));
 
     auto itorBbStart = find<MI_BATCH_BUFFER_START *>(itorSemaphore, cmdList.end());
     ASSERT_NE(cmdList.end(), itorBbStart);
@@ -827,7 +825,7 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     auto itorSemaphore = find<MI_SEMAPHORE_WAIT *>(itorAtomic, itorBbStart);
     ASSERT_NE(itorBbStart, itorSemaphore);
     auto cmdSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*itorSemaphore);
-    EXPECT_EQ(expectedAtomicCounterAddress, cmdSemaphore->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(expectedAtomicCounterAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmdSemaphore));
 }
 
 HWTEST2_F(MultiTilePatchPreambleTest,
@@ -928,15 +926,20 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     auto semaphoreList = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_TRUE((partitionCount <= semaphoreList.size()));
 
+    bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
     auto semAddress = dummyTagGpuAddress;
     for (uint32_t i = 0; i < partitionCount; i++) {
         auto cmdSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreList[i]);
-        EXPECT_EQ(semAddress, cmdSemaphore->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(dummyTagTaskCount, cmdSemaphore->getSemaphoreDataDword());
+        EXPECT_EQ(semAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmdSemaphore));
+        if (lriRequired) {
+            EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmdSemaphore));
+        } else {
+            EXPECT_EQ(dummyTagTaskCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmdSemaphore));
+        }
         semAddress += postSyncOffset;
     }
 
-    if (!useSemaphore64bCmd) {
+    if (lriRequired) {
         bool foundLriForSemaphore = false;
         auto lriList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), semaphoreList[0]);
         ASSERT_TRUE((2u <= lriList.size()));

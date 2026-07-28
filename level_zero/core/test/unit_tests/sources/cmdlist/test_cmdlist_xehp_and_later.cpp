@@ -1076,9 +1076,9 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
             for (uint32_t i = 0; i < allPackets; i++) {
                 auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itorSemWait[i]);
-                EXPECT_EQ(gpuAddress, cmd->getSemaphoreGraphicsAddress());
+                EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd));
                 EXPECT_EQ(COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, cmd->getCompareOperation());
-                EXPECT_EQ(Event::STATE_CLEARED, cmd->getSemaphoreDataDword());
+                EXPECT_EQ(Event::STATE_CLEARED, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmd));
                 gpuAddress += event->getSinglePacketSize();
             }
         }
@@ -2865,7 +2865,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     ASSERT_EQ(*semaphoreWaitList[0], cmd->pDestination);
     auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd->pDestination);
     ASSERT_NE(nullptr, semaphoreWaitCmd);
-    EXPECT_EQ(eventCompletionAddress + cmd->offset, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(eventCompletionAddress + cmd->offset, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreWaitCmd));
 
     auto &residencyContainer = commandContainer.getResidencyContainer();
 

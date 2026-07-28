@@ -10,9 +10,15 @@
 namespace NEO {
 
 template <typename GfxFamily>
-uint64_t UnitTestHelper<GfxFamily>::getSemaphoreWaitAddress(void *semWaitCmd, bool useSem64) {
+uint64_t UnitTestHelper<GfxFamily>::getSemaphoreWaitAddress(const void *semWaitCmd) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-    return reinterpret_cast<MI_SEMAPHORE_WAIT *>(semWaitCmd)->getSemaphoreGraphicsAddress();
+    return reinterpret_cast<const MI_SEMAPHORE_WAIT *>(semWaitCmd)->getSemaphoreGraphicsAddress();
+}
+
+template <typename GfxFamily>
+uint64_t UnitTestHelper<GfxFamily>::getSemaphoreWaitData(const void *semWaitCmd) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    return reinterpret_cast<const MI_SEMAPHORE_WAIT *>(semWaitCmd)->getSemaphoreDataDword();
 }
 
 } // namespace NEO

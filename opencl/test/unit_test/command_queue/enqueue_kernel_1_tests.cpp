@@ -1877,7 +1877,6 @@ HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocati
 
 struct PauseOnGpuTests : public EnqueueKernelTest {
     void SetUp() override {
-        UnitTestSetter::setupSemaphore64bCmdSupport(this->restore, defaultHwInfo->platform.eRenderCoreFamily);
         EnqueueKernelTest::SetUp();
 
         auto &csr = pDevice->getGpgpuCommandStreamReceiver();
@@ -1893,8 +1892,8 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
 
-        if ((static_cast<uint32_t>(requiredDebugPauseState) == semaphoreCmd->getSemaphoreDataDword()) &&
-            (debugPauseStateAddress == semaphoreCmd->getSemaphoreGraphicsAddress())) {
+        if ((static_cast<uint32_t>(requiredDebugPauseState) == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd)) &&
+            (debugPauseStateAddress == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd))) {
 
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
             EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, semaphoreCmd->getWaitMode());

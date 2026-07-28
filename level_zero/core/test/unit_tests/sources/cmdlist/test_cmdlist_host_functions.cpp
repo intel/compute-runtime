@@ -125,12 +125,12 @@ HWTEST_F(HostFunctionTests, givenWaitEventWhenAppendHostFunctionIsCalledThenSema
     auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
     EXPECT_EQ(cmd->getCompareOperation(),
               MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(-1), cmd->getSemaphoreDataDword());
+    EXPECT_EQ(static_cast<uint32_t>(-1), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmd));
     auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
     uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
-    EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
+    EXPECT_EQ(gpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
 }
 
 HWTEST_F(HostFunctionTests, givenOOQCmdListAndCounterBasedEventThenAppendHostFunctionIsCalledThenInvalidArgumentErrorIsReturned) {
@@ -334,7 +334,6 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
 
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
-    UnitTestSetter::setupSemaphore64bCmdSupport(restore, defaultHwInfo->platform.eRenderCoreFamily);
 
     auto queueMode = GetParam();
 
@@ -388,8 +387,8 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
 
     // wait for completion
     auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[0]);
-    EXPECT_EQ(hostFunctionIdAddress, miWaitTag->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
+    EXPECT_EQ(hostFunctionIdAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
+    EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
 
@@ -414,7 +413,6 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
-    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, defaultHwInfo->platform.eRenderCoreFamily);
 
     auto queueMode = GetParam();
 
@@ -470,8 +468,8 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
         auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[partitionId]);
 
         auto expectedAddress = hostFunctionIdBaseAddress + partitionId * partitionOffset;
-        EXPECT_EQ(expectedAddress, miWaitTag->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
+        EXPECT_EQ(expectedAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
+        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
         EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
 

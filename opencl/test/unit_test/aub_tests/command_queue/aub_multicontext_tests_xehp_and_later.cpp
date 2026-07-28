@@ -304,8 +304,8 @@ HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForK
             if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
                 continue;
             }
-            EXPECT_EQ(4u, semaphoreCmd->getSemaphoreDataDword());
-            tileAtomicGpuAddress = semaphoreCmd->getSemaphoreGraphicsAddress();
+            EXPECT_EQ(4u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+            tileAtomicGpuAddress = NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd);
             lastSemaphoreFound = true;
             break;
         }

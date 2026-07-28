@@ -81,9 +81,9 @@ HWTEST_F(MultiIoqCmdQSynchronizationTest, givenTwoIoqCmdQsWhenEnqueuesSynchroniz
         }
         auto semaphoreCmdBcs = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreBcsItor);
         EXPECT_NE(nullptr, semaphoreCmdBcs);
-        EXPECT_EQ(1u, semaphoreCmdBcs->getSemaphoreDataDword());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmdBcs));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmdBcs->getCompareOperation());
-        bcsSemaphoreAddress = semaphoreCmdBcs->getSemaphoreGraphicsAddress();
+        bcsSemaphoreAddress = NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmdBcs);
     }
 
     {
@@ -93,8 +93,8 @@ HWTEST_F(MultiIoqCmdQSynchronizationTest, givenTwoIoqCmdQsWhenEnqueuesSynchroniz
         const auto semaphoreCcsItor = find<MI_SEMAPHORE_WAIT *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCcsItor);
         ASSERT_NE(nullptr, semaphoreCmd);
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(nodeGpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+        EXPECT_EQ(nodeGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
         bool storeRegmemForBcsSemaphoreFound = false;
@@ -1354,7 +1354,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitAfterBarrierWhenEnqueueingCommandTh
 
         const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
         auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-        EXPECT_EQ(barrierNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(barrierNodeAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
 
         const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, bcsHwParser.cmdList.end());
         EXPECT_EQ(bcsHwParser.cmdList.end(), pipeControlItor);
@@ -1400,7 +1400,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
 
         const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(queueHwParser.cmdList.begin(), queueHwParser.cmdList.end());
         const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-        EXPECT_EQ(lastBlitNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(lastBlitNodeAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
 
         const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, queueHwParser.cmdList.end());
         const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
@@ -1439,7 +1439,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
 
         const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
         const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-        EXPECT_EQ(barrierNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(barrierNodeAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
         EXPECT_EQ(bcsHwParser.cmdList.end(), find<PIPE_CONTROL *>(semaphoreItor, bcsHwParser.cmdList.end()));
 
         // Only one barrier semaphore from first BCS enqueue
@@ -1490,7 +1490,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlockedBlitAfterBarrierWhenEnqueueingCo
 
         const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
         const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-        EXPECT_EQ(lastBlitNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(lastBlitNodeAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
 
         const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, ccsHwParser.cmdList.end());
         const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
@@ -1507,7 +1507,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlockedBlitAfterBarrierWhenEnqueueingCo
 
         const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
         const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-        EXPECT_EQ(barrierNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(barrierNodeAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
         EXPECT_EQ(bcsHwParser.cmdList.end(), find<PIPE_CONTROL *>(semaphoreItor, bcsHwParser.cmdList.end()));
     }
 

@@ -30,7 +30,6 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingS
     using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
 
     DebugManagerStateRestore restore;
-    UnitTestSetter::setupSemaphore64bCmdSupport(restore, this->pDevice->getHardwareInfo().platform.eRenderCoreFamily);
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);

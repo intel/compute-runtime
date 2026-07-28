@@ -24,7 +24,6 @@ struct EnqueueWithWalkerPartitionTests : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.EnableWalkerPartition.set(1u);
         debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
-        UnitTestSetter::setupSemaphore64bCmdSupport(restore, defaultHwInfo->platform.eRenderCoreFamily);
 
         rootDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, 0));
 
@@ -68,7 +67,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueWithWalkerPartitionTests,
             if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
                 continue;
             }
-            EXPECT_EQ(numberOfTiles, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(numberOfTiles, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
             lastSemaphoreFound = true;
             break;
         }

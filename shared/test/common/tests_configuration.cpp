@@ -27,6 +27,13 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     // set Gt and FeatureTable to initial state
     bool setupFeatureTableAndWorkaroundTable = isAubTestMode(testMode);
     hardwareInfoSetup[hwInfoForTests.platform.eProductFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig, releaseHelper.get());
+
+    // Reflect the release's semaphore64 availability explicitly so a device derives deviceInfo.semaphore64bCmdSupport
+    // per its real default rather than defaulting the whole gen to the legacy command.
+    if (releaseHelper) {
+        hwInfoForTests.featureTable.flags.ftrHwSemaphore64 = releaseHelper->isAvailableSemaphore64Base();
+    }
+
     GT_SYSTEM_INFO &gtSystemInfo = hwInfoForTests.gtSystemInfo;
 
     // and adjust dynamic values if not specified

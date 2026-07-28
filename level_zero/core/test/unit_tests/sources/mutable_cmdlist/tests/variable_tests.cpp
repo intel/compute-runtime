@@ -1421,7 +1421,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 
     ret = this->variable->setValue(0, 0, newEvent);
@@ -1464,7 +1464,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(this->variable->desc.eventValue.noopState);
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 }
 
@@ -1748,7 +1748,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto expectedWaitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 }
 
@@ -1791,7 +1791,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_NE(nullptr, this->variable->desc.eventValue.cbEventDeviceCounterAllocation);
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 }
 
@@ -1875,7 +1875,7 @@ void VariableInOrderFixture::testAsyncMutationWaitEventTest(bool indirect) {
 
     auto semWait = genCmdCast<MI_SEMAPHORE_WAIT *>(this->mutableSemaphoreWait->getCommandView());
     EXPECT_NE(nullptr, semWait);
-    auto testWaitAddress = semWait->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWait);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 
     if (this->qwordIndirect) {

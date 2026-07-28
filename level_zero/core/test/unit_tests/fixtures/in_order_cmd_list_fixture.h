@@ -118,7 +118,6 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         createKernel();
 
         const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.flags.usesPrintf = false;
-        UnitTestSetter::setupSemaphore64bCmdSupport(restorer, hardwareInfo->platform.eRenderCoreFamily);
     }
 
     void TearDown() override {
@@ -376,18 +375,18 @@ bool InOrderCmdListFixture::verifyInOrderDependency(GenCmdList::iterator &cmd, u
         return false;
     }
 
-    EXPECT_EQ(syncVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(syncVa, NEO::UnitTestHelper<GfxFamily>::getSemaphoreWaitAddress(semaphoreCmd));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
     if (qwordCounter) {
         if (lriRequired) {
-            EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(0u, NEO::UnitTestHelper<GfxFamily>::getSemaphoreWaitData(semaphoreCmd));
         } else {
-            EXPECT_EQ(getLowPart(counter), semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(counter, NEO::UnitTestHelper<GfxFamily>::getSemaphoreWaitData(semaphoreCmd));
         }
     } else {
         EXPECT_EQ(0u, getHighPart(counter));
-        EXPECT_EQ(getLowPart(counter), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(getLowPart(counter), NEO::UnitTestHelper<GfxFamily>::getSemaphoreWaitData(semaphoreCmd));
     }
 
     cmd++;
@@ -473,7 +472,6 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         auto hwInfo = *NEO::defaultHwInfo;
         hwInfo.featureTable.ftrBcsInfo = 0b111111111;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
-        UnitTestSetter::setupSemaphore64bCmdSupport(restore, hwInfo.platform.eRenderCoreFamily);
         auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
 
         NEO::DeviceVector devices;

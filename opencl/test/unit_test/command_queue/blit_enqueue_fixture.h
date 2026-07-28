@@ -248,7 +248,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
 
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-        EXPECT_EQ(expectedAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(expectedAddress, NEO::UnitTestHelper<Family>::getSemaphoreWaitAddress(semaphoreCmd));
     }
 
     DebugManagerStateRestore restore;

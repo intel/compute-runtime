@@ -57,8 +57,6 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-
-        UnitTestSetter::setupSemaphore64bCmdSupport(this->restorer, pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     }
 
     void tearDown() {

@@ -315,8 +315,8 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
         using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
 
-        if ((static_cast<uint32_t>(requiredDebugPauseState) == semaphoreCmd->getSemaphoreDataDword()) &&
-            (debugPauseStateAddress == semaphoreCmd->getSemaphoreGraphicsAddress())) {
+        if ((static_cast<uint32_t>(requiredDebugPauseState) == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd)) &&
+            (debugPauseStateAddress == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd))) {
 
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
             EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, semaphoreCmd->getWaitMode());
@@ -1701,7 +1701,6 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
-    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, hardwareInfo->platform.eRenderCoreFamily);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -1799,15 +1798,14 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     EXPECT_EQ(expectedHostFunctionMappedMemory, storeDataImm.getAddress());
 
     auto expectedSemaphoreWaitClearedId = 0u;
-    EXPECT_EQ(expectedSemaphoreWaitClearedId, semaphoreWait.getSemaphoreDataDword());
-    EXPECT_EQ(expectedHostFunctionMappedMemory, semaphoreWait.getSemaphoreGraphicsAddress());
+    EXPECT_EQ(expectedSemaphoreWaitClearedId, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(&semaphoreWait));
+    EXPECT_EQ(expectedHostFunctionMappedMemory, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(&semaphoreWait));
 
     commandList->destroy();
 }
 
 HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenHostFunctionsRequireDifferentMemorySynchronizationThenEstimatedSizeIsCorect, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
-    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, hardwareInfo->platform.eRenderCoreFamily);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -1866,7 +1864,6 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     }
 
     DebugManagerStateRestore restore;
-    UnitTestSetter::setupSemaphore64bCmdSupport(restore, FamilyType::gfxCoreFamily);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -1981,8 +1978,8 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     EXPECT_TRUE(pc.getDcFlushEnable());
 
     auto expectedSemaphoreWaitClearedId = 0u;
-    EXPECT_EQ(expectedSemaphoreWaitClearedId, semaphoreWait.getSemaphoreDataDword());
-    EXPECT_EQ(expectedHostFunctionMappedMemory, semaphoreWait.getSemaphoreGraphicsAddress());
+    EXPECT_EQ(expectedSemaphoreWaitClearedId, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(&semaphoreWait));
+    EXPECT_EQ(expectedHostFunctionMappedMemory, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(&semaphoreWait));
 
     commandList->destroy();
 }
@@ -2165,7 +2162,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     ASSERT_EQ(1u, semWaitCmds.size());
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(*semWaitCmds[0]);
 
-    EXPECT_EQ(otherTagAllocation.getGpuAddress(), semWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(otherTagAllocation.getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
     EXPECT_EQ(COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semWaitCmd->getCompareOperation());
 
     EXPECT_TRUE(ultCsr->isMadeResident(&otherTagAllocation));

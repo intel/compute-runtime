@@ -37,8 +37,8 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
                                                         useSemaphore64);
 
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore1.getCompareOperation());
-    EXPECT_EQ(4u, miSemaphore1.getSemaphoreDataDword());
-    EXPECT_EQ(0x123400u, miSemaphore1.getSemaphoreGraphicsAddress());
+    EXPECT_EQ(4u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(&miSemaphore1));
+    EXPECT_EQ(0x123400u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(&miSemaphore1));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore1.getWaitMode());
 
     MI_SEMAPHORE_WAIT miSemaphore2;
@@ -77,8 +77,8 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
     ASSERT_NE(nullptr, miSemaphore);
 
     EXPECT_EQ(compareMode, miSemaphore->getCompareOperation());
-    EXPECT_EQ(5u, miSemaphore->getSemaphoreDataDword());
-    EXPECT_EQ(0xFF00FF000u, miSemaphore->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(5u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphore));
+    EXPECT_EQ(0xFF00FF000u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphore));
     EXPECT_EQ(WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore->getWaitMode());
 }
 

@@ -79,7 +79,7 @@ uint32_t UnitTestHelper<GfxFamily>::getDefaultSshUsage() {
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWait(const typename GfxFamily::MI_SEMAPHORE_WAIT &semaphoreWait) {
-    return (semaphoreWait.getSemaphoreDataDword() == EncodeSemaphore<GfxFamily>::invalidHardwareTag);
+    return (NEO::UnitTestHelper<GfxFamily>::getSemaphoreWaitData(&semaphoreWait) == EncodeSemaphore<GfxFamily>::invalidHardwareTag);
 }
 
 template <typename GfxFamily>

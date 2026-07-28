@@ -62,10 +62,6 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
             }
         }
     }
-
-    if (defaultHwInfo->platform.eRenderCoreFamily >= IGFX_XE3P_CORE) {
-        neoDevice->deviceInfo.semaphore64bCmdSupport = true;
-    }
 }
 
 void DeviceFixture::tearDown() {
@@ -119,7 +115,6 @@ void PageFaultDeviceFixture::tearDown() {
 void MultiDeviceFixture::setUp() {
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-    UnitTestSetter::setupSemaphore64bCmdSupport(this->restorer, defaultHwInfo->platform.eRenderCoreFamily);
 
     auto executionEnvironment = new NEO::ExecutionEnvironment;
     executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);

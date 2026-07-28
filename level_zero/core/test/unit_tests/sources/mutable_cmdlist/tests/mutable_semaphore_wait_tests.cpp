@@ -161,19 +161,19 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
                                                              false, true, false, false, false, useSemaphore64bCmd);
 
     auto semWaitCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->cmdBufferGpuPtr);
-    EXPECT_EQ((semaphoreAddress + offset), semWaitCommand->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(data, semWaitCommand->getSemaphoreDataDword());
+    EXPECT_EQ((semaphoreAddress + offset), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCommand));
+    EXPECT_EQ(data, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCommand));
 
     L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, nullptr, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
 
     semaphoreAddress = 0x428000;
     mutableSemaphoreWait.setSemaphoreAddress(semaphoreAddress);
 
-    EXPECT_EQ((semaphoreAddress + offset), semWaitCommand->getSemaphoreGraphicsAddress());
+    EXPECT_EQ((semaphoreAddress + offset), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCommand));
 
     data = Event::STATE_SIGNALED;
     mutableSemaphoreWait.setSemaphoreValue(data);
-    EXPECT_EQ(data, semWaitCommand->getSemaphoreDataDword());
+    EXPECT_EQ(data, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCommand));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -332,18 +332,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
                                                              false, true, false, false, false, useSemaphore64bCmd);
 
     auto semWaitCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(cmdView);
-    EXPECT_EQ((semaphoreAddress + offset), semWaitCommand->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(data, semWaitCommand->getSemaphoreDataDword());
+    EXPECT_EQ((semaphoreAddress + offset), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCommand));
+    EXPECT_EQ(data, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCommand));
 
     L0::MCL::MutableSemaphoreWaitHw<FamilyType> mutableSemaphoreWait(0, cmdView, this->cmdBufferGpuPtr, offset, type, qwordData, useSemaphore64bCmd);
     semaphoreAddress = 0x428000;
     mutableSemaphoreWait.setSemaphoreAddress(semaphoreAddress);
 
-    EXPECT_EQ((semaphoreAddress + offset), semWaitCommand->getSemaphoreGraphicsAddress());
+    EXPECT_EQ((semaphoreAddress + offset), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCommand));
 
     data = Event::STATE_SIGNALED;
     mutableSemaphoreWait.setSemaphoreValue(data);
-    EXPECT_EQ(data, semWaitCommand->getSemaphoreDataDword());
+    EXPECT_EQ(data, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCommand));
 }
 
 } // namespace ult

@@ -12,8 +12,6 @@
 #include <cstddef>
 #include <vector>
 
-class DebugManagerStateRestore;
-
 namespace WalkerPartition {
 
 struct WalkerPartitionArgs;
@@ -30,7 +28,6 @@ struct HardwareInfo;
 struct RootDeviceEnvironment;
 
 struct UnitTestSetter {
-    static void setupSemaphore64bCmdSupport(const DebugManagerStateRestore &restorer, uint32_t gfxCoreFamily);
     static void setCcsExposure(RootDeviceEnvironment &rootDeviceEnvironment);
     static void setRcsExposure(RootDeviceEnvironment &rootDeviceEnvironment);
 };
@@ -98,6 +95,10 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
     static const bool additionalMiFlushDwRequired;
 
     static uint64_t getPipeControlPostSyncAddress(const typename GfxFamily::PIPE_CONTROL &pipeControl);
+
+    static uint64_t getSemaphoreWaitAddress(const void *semWaitCmd);
+    static uint64_t getSemaphoreWaitData(const void *semWaitCmd);
+
     static bool getPipeControlHdcPipelineFlush(const typename GfxFamily::PIPE_CONTROL &pipeControl);
     static void setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush);
 
@@ -134,7 +135,6 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
     template <typename WalkerType>
     static uint64_t getWalkerActivePostSyncAddress(WalkerType *walkerCmd);
     static void skipStatePrefetch(GenCmdList::iterator &iter);
-    static uint64_t getSemaphoreWaitAddress(void *semWaitCmd, bool useSem64);
 };
 
 } // namespace NEO

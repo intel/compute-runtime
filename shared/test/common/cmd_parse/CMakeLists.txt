@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -42,4 +42,17 @@ if(TESTS_XE2_AND_LATER)
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse_xe2_hpg_and_later.inl
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_resource_barrier.inl
   )
+
+  if(TESTS_XE3_AND_BEFORE)
+    target_sources(neo_libult_common PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_from_gen12lp_to_xe3_core.inl
+    )
+  endif()
+
+  if(TESTS_XE3P_AND_LATER)
+    target_sources(neo_libult_common PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_xe3p_and_later.inl
+    )
+  endif()
+
 endif()

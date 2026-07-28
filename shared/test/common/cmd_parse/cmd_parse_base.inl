@@ -166,14 +166,6 @@ MI_LOAD_REGISTER_REG *genCmdCast<MI_LOAD_REGISTER_REG *>(void *buffer) {
 }
 
 template <>
-MI_SEMAPHORE_WAIT *genCmdCast<MI_SEMAPHORE_WAIT *>(void *buffer) {
-    return matchCommandHeader<MI_SEMAPHORE_WAIT>(buffer, [](const MI_SEMAPHORE_WAIT &header) {
-        return MI_SEMAPHORE_WAIT::COMMAND_TYPE_MI_COMMAND == header.TheStructure.Common.CommandType &&
-               MI_SEMAPHORE_WAIT::MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT == header.TheStructure.Common.MiCommandOpcode;
-    });
-}
-
-template <>
 MI_STORE_DATA_IMM *genCmdCast<MI_STORE_DATA_IMM *>(void *buffer) {
     return matchCommandHeader<MI_STORE_DATA_IMM>(buffer, [](const MI_STORE_DATA_IMM &header) {
         return MI_STORE_DATA_IMM::COMMAND_TYPE_MI_COMMAND == header.TheStructure.Common.CommandType &&
@@ -310,7 +302,7 @@ size_t CmdParse<T>::getCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd);
         if (pCmd) {
-            return pCmd->TheStructure.Common.DwordLength + 2;
+            return sizeof(MI_SEMAPHORE_WAIT) / sizeof(uint32_t);
         }
     }
     {

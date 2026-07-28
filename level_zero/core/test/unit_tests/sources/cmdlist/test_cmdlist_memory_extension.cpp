@@ -270,18 +270,18 @@ bool validateProgramming(const GenCmdList &cmdList, uint64_t compareData, uint64
         return false;
     }
 
-    EXPECT_EQ(compareAddr, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(compareAddr, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     EXPECT_EQ(semaphoreCmd->getCompareOperation(), compareMode);
     EXPECT_EQ(semaphoreCmd->getWaitMode(), MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
 
     if (useQwordData) {
         if (expectLriForQwordData) {
-            EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
         } else {
-            EXPECT_EQ(compareData, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(compareData, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
         }
     } else {
-        EXPECT_EQ(getLowPart(compareData), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(getLowPart(compareData), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
         EXPECT_EQ(0u, getHighPart(compareData));
     }
 
@@ -765,7 +765,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMem
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
 
-    EXPECT_EQ(expectedGpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
+    EXPECT_EQ(expectedGpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
 
     commandList->removeHostPtrAllocations();
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);

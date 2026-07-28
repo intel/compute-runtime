@@ -618,7 +618,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCmdListWhenAppendQ
 
     auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphores[0]);
 
-    EXPECT_EQ(events[1]->getCompletionFieldGpuAddress(device), semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(events[1]->getCompletionFieldGpuAddress(device), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
 
     context->freeMem(deviceMem);
 }
@@ -3476,8 +3476,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walker);
     ASSERT_NE(nullptr, semaphoreCmd);
 
-    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+    EXPECT_EQ(eventEndGpuVa, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
     sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
@@ -4116,7 +4116,7 @@ HWTEST_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFrom
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
         ASSERT_NE(nullptr, semaphoreCmd);
 
-        if (semaphoreCmd->getSemaphoreGraphicsAddress() == immCmdList->inOrderExecInfo->getBaseDeviceAddress()) {
+        if (NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd) == immCmdList->inOrderExecInfo->getBaseDeviceAddress()) {
             // skip implicit dependency
             semaphoreItor++;
         } else if (lriRequired) {
@@ -4711,7 +4711,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularInOrderCmdListWhen
     EXPECT_NE(cmdList.end(), semaphoreItor);
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(semaphoreItor, cmdList.end());
-    EXPECT_NE(cmdList.end(), sdiItor);
+    ASSERT_NE(cmdList.end(), sdiItor);
 
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
     ASSERT_NE(nullptr, sdiCmd);
@@ -4838,8 +4838,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
             auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
             ASSERT_NE(nullptr, semaphoreCmd);
 
-            EXPECT_EQ(std::numeric_limits<uint32_t>::max(), semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(baseGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(std::numeric_limits<uint32_t>::max(), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+            EXPECT_EQ(baseGpuVa, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
 
             auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
             ASSERT_NE(nullptr, sdiCmd);
@@ -4980,7 +4980,7 @@ HWTEST_F(InOrderCmdListTests, givenStandaloneCbEventWhenDispatchingThenProgramCo
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
 
         ASSERT_TRUE(semaphoreCmd != nullptr);
-        if (event->getInOrderExecEventHelper().getBaseDeviceAddress() == semaphoreCmd->getSemaphoreGraphicsAddress()) {
+        if (event->getInOrderExecEventHelper().getBaseDeviceAddress() == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd)) {
             semaphoreFound = true;
         }
     }
