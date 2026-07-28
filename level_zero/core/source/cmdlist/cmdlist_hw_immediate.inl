@@ -28,6 +28,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/performance_counters.h"
+#include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
@@ -1693,6 +1694,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         NEO::streamCopy(cpuMemcpyDstPtr, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
     } else {
         memcpy_s(cpuMemcpyDstPtr, cpuMemCopyInfo.size, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
+    }
+
+    const bool isTransferToLocalMemory = (dstLockPointer != nullptr);
+    if (isTransferToLocalMemory) {
+        NEO::CpuIntrinsics::sfence();
     }
 
     if (signalEvent) {

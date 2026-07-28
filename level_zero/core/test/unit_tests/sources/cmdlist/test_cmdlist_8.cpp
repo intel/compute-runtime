@@ -30,6 +30,10 @@ extern bool getNumThreadsCalled;
 }
 } // namespace NEO
 
+namespace CpuIntrinsicsTests {
+extern std::atomic<uint32_t> sfenceCounter;
+} // namespace CpuIntrinsicsTests
+
 namespace L0 {
 namespace ult {
 
@@ -1063,6 +1067,44 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWh
 
     auto lockedPtr = reinterpret_cast<char *>(dstAlloc->getLockedPtr());
     EXPECT_EQ(0, memcmp(lockedPtr, nonUsmHostPtr, 1024));
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenLockedDeviceDestinationWhenPerformCpuMemcpyThenSfenceIsCalled) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
+    cmdList.obtainAllocData(cpuMemCopyInfo, false);
+
+    CpuIntrinsicsTests::sfenceCounter.store(0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.performCpuMemcpy(cpuMemCopyInfo, nullptr, 0, nullptr));
+    EXPECT_EQ(1u, CpuIntrinsicsTests::sfenceCounter.load());
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenHostDestinationWhenPerformCpuMemcpyThenSfenceIsNotCalled) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    CpuMemCopyInfo cpuMemCopyInfoToHostNonUsm(nonUsmHostPtr, devicePtr, 1024);
+    cmdList.obtainAllocData(cpuMemCopyInfoToHostNonUsm, false);
+
+    CpuIntrinsicsTests::sfenceCounter.store(0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.performCpuMemcpy(cpuMemCopyInfoToHostNonUsm, nullptr, 0, nullptr));
+    EXPECT_EQ(0u, CpuIntrinsicsTests::sfenceCounter.load());
+
+    CpuMemCopyInfo cpuMemCopyInfoToHostUsm(hostPtr, nonUsmHostPtr, 1024);
+    cmdList.obtainAllocData(cpuMemCopyInfoToHostUsm, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.performCpuMemcpy(cpuMemCopyInfoToHostUsm, nullptr, 0, nullptr));
+    EXPECT_EQ(0u, CpuIntrinsicsTests::sfenceCounter.load());
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenCpuStreamMemcpyEnabledWhenCopyH2DThenCopySucceeds) {
