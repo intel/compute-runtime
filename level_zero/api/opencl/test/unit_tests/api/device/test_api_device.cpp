@@ -49,6 +49,30 @@ TEST_F(GetDeviceIDsTests, givenAcceleratorDeviceTypeWhenGetDeviceIDsThenReturnsC
     EXPECT_EQ(0u, numDevices);
 }
 
+using CreateSubDevicesTests = Test<OclFixture>;
+
+TEST_F(CreateSubDevicesTests, givenNullDeviceWhenCreateSubDevicesThenReturnsCLInvalidDevice) {
+    cl_uint numDevicesRet = 0xdeadbeef;
+    auto retVal = clCreateSubDevices(nullptr, nullptr, 0, nullptr, &numDevicesRet);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(0xdeadbeefu, numDevicesRet);
+}
+
+TEST_F(CreateSubDevicesTests, givenValidDeviceWhenCreateSubDevicesThenNumDevicesRetIsZeroedAndPartitionFails) {
+    cl_device_id device = platform->getDevices()[0].get();
+    cl_uint numDevicesRet = 0xdeadbeef;
+    cl_device_partition_property properties[] = {CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN, CL_DEVICE_AFFINITY_DOMAIN_NUMA, 0};
+    auto retVal = clCreateSubDevices(device, properties, 0, nullptr, &numDevicesRet);
+    EXPECT_EQ(CL_DEVICE_PARTITION_FAILED, retVal);
+    EXPECT_EQ(0u, numDevicesRet);
+}
+
+TEST_F(CreateSubDevicesTests, givenNullNumDevicesRetWhenCreateSubDevicesThenPartitionFails) {
+    cl_device_id device = platform->getDevices()[0].get();
+    auto retVal = clCreateSubDevices(device, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_DEVICE_PARTITION_FAILED, retVal);
+}
+
 TEST(GetDeviceInfoTests, givenNullDeviceWhenGetDeviceInfoThenReturnsCLInvalidDevice) {
     auto retVal = clGetDeviceInfo(nullptr, CL_DEVICE_TYPE, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);

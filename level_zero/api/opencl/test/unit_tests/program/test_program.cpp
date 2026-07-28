@@ -362,6 +362,13 @@ TEST(CreateProgramTests, givenNullContextWhenCreateProgramWithBinaryThenReturnsI
     EXPECT_EQ(CL_SUCCESS, clReleaseProgram(program));
 }
 
+TEST(CreateProgramTests, givenAnyInputWhenCreateProgramWithBuiltInKernelsThenErrcodeIsSetToInvalidValue) {
+    cl_int errcode = CL_SUCCESS;
+    auto program = clCreateProgramWithBuiltInKernels(nullptr, 0, nullptr, "", &errcode);
+    EXPECT_EQ(nullptr, program);
+    EXPECT_EQ(CL_INVALID_VALUE, errcode);
+}
+
 TEST(CreateProgramTests, givenNullContextWhenCreateProgramWithILThenReturnsInvalidContextAndReleasableProgram) {
     cl_int errcode = CL_SUCCESS;
     auto program = clCreateProgramWithIL(nullptr, spirvBlob, sizeof(spirvBlob), &errcode);

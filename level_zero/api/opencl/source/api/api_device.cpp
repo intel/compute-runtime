@@ -95,7 +95,18 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
                                       cl_device_id *outDevices,
                                       cl_uint *numDevicesRet) {
     TRACING_ENTER(ClCreateSubDevices, &inDevice, &properties, &numDevices, &outDevices, &numDevicesRet);
-    cl_int tracingRetVal = CL_SUCCESS;
+    auto pInDevice = NEO::LEO::castToObject<NEO::LEO::ClDevice>(inDevice);
+    if (pInDevice == nullptr) [[unlikely]] {
+        cl_int tracingRetVal = CL_INVALID_DEVICE;
+        TRACING_EXIT(ClCreateSubDevices, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    if (numDevicesRet != nullptr) {
+        *numDevicesRet = 0;
+    }
+
+    cl_int tracingRetVal = CL_DEVICE_PARTITION_FAILED;
     TRACING_EXIT(ClCreateSubDevices, &tracingRetVal);
     return tracingRetVal;
 }
