@@ -4903,7 +4903,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitExternalSemaphores(u
             pHostFunctionData = &hostFunctionData;
         }
 
-        CmdListHostFunctionParameters parameters{};
+        CmdListHostFunctionParameters parameters{.memorySynchronizationRequired = false};
 
         return this->appendHostFunction(semaphoreWaitHostFunction, pHostFunctionData, nullptr, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
     }
@@ -4932,7 +4932,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalExternalSemaphores
             pHostFunctionData = &hostFunctionData;
         }
 
-        CmdListHostFunctionParameters parameters{};
+        CmdListHostFunctionParameters parameters{.memorySynchronizationRequired = false};
 
         return this->appendHostFunction(semaphoreSignalHostFunction, pHostFunctionData, nullptr, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
     }
