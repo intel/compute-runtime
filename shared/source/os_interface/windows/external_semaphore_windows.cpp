@@ -242,10 +242,7 @@ bool ExternalSemaphoreWindows::enqueueSignal(uint64_t *fenceValue) {
     signal.ObjectCount = 1;
     signal.ObjectHandleArray = &this->syncHandle;
     signal.FenceValueArray = fenceValue;
-
-    if (this->type == ExternalSemaphore::TimelineSemaphoreWin32 || this->type == ExternalSemaphore::OpaqueWin32) {
-        signal.Flags.AllowFenceRewind = true;
-    }
+    signal.Flags.AllowFenceRewind = true;
 
     auto status = wddm->getGdi()->signalSynchronizationObjectFromCpu(&signal);
     if (status != STATUS_SUCCESS) {

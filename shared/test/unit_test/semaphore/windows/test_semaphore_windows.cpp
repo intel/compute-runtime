@@ -137,21 +137,19 @@ TEST_F(WddmExternalSemaphoreTest, givenOpaqueWin32OrTimelineSemaphoreWin32WhenEn
     }
 }
 
-TEST_F(WddmExternalSemaphoreTest, givenFenceSemaphoreWhenEnqueueSignalIsCalledThenAllowFenceRewindIsNotSet) {
+TEST_F(WddmExternalSemaphoreTest, givenFenceSemaphoreWhenEnqueueSignalIsCalledThenSuccessIsReturned) {
     const ExternalSemaphore::Type types[] = {ExternalSemaphore::Type::D3d12Fence,
                                              ExternalSemaphore::Type::D3d11Fence};
 
     for (auto type : types) {
         auto mockGdi = new MockSyncGdi();
         static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
-        MockSyncGdi::allowFenceRewindPassedToSignal = 1;
 
         uint64_t lastSignaledValue = 5u;
         auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, type, &lastSignaledValue);
 
         uint64_t fenceValue = 7u;
         EXPECT_TRUE(extSem->enqueueSignal(&fenceValue));
-        EXPECT_EQ(0u, MockSyncGdi::allowFenceRewindPassedToSignal);
     }
 }
 
