@@ -119,7 +119,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
         const auto heapGranularity = (heap == HeapIndex::heapStandard2MB) ? GfxPartition::heapGranularity2MB : GfxPartition::heapGranularity;
         const auto minimalAddress = gfxPartition.getHeapMinimalAddress(heap);
 
-        if (heap == HeapIndex::heapSvm) {
+        if (heap == HeapIndex::heapSvm || heap == HeapIndex::heapStandard64KB) {
             EXPECT_EQ(minimalAddress, gfxPartition.getHeapBase(heap));
         } else if (isInternalHeapType) {
             auto frontWindowHeap = heap == HeapIndex::heapInternal ? HeapIndex::heapInternalFrontWindow : HeapIndex::heapInternalDeviceFrontWindow;

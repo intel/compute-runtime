@@ -197,6 +197,7 @@ void GfxPartition::freeGpuAddressRange(uint64_t ptr, size_t size) {
 
 uint64_t GfxPartition::getHeapMinimalAddress(HeapIndex heapIndex) {
     if (heapIndex == HeapIndex::heapSvm ||
+        heapIndex == HeapIndex::heapStandard64KB ||
         heapIndex == HeapIndex::heapExternalDeviceFrontWindow ||
         heapIndex == HeapIndex::heapExternalFrontWindow ||
         heapIndex == HeapIndex::heapInternalDeviceFrontWindow ||
