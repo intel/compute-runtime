@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -31,7 +31,7 @@ function(level_zero_generate_kernels target_list platform_name device revision_i
                          OUTPUT ${output_files}
                          COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options "${options}"
                          WORKING_DIRECTORY ${workdir}
-                         DEPENDS ${filepath} ocloc ${PREVIOUS_KERNELS}
+                         DEPENDS ${filepath} ocloc copy_compiler_files ${PREVIOUS_KERNELS}
       )
 
       if(NEO_SERIALIZED_BUILTINS_COMPILATION)
@@ -84,7 +84,7 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
                          OUTPUT ${output_files}
                          COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >"
                          WORKING_DIRECTORY ${workdir}
-                         DEPENDS ${filepath} ocloc ${PREVIOUS_KERNELS}
+                         DEPENDS ${filepath} ocloc copy_compiler_files ${PREVIOUS_KERNELS}
                          VERBATIM
       )
 

@@ -145,7 +145,7 @@ function(neo_gen_kernels platform_it_lower device revision_id)
                          OUTPUT ${output_files}
                          COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -revision_id ${revision_id} -out_dir ${outputdir} ${formatArgument} -output_no_suffix -output ${outputname_base}
                          WORKING_DIRECTORY ${workdir}
-                         DEPENDS ${filepath} ocloc ${PREVIOUS_KERNELS}
+                         DEPENDS ${filepath} ocloc copy_compiler_files ${PREVIOUS_KERNELS}
       )
 
       if(NEO_SERIALIZED_BUILTINS_COMPILATION)
@@ -200,7 +200,7 @@ function(neo_gen_kernels_with_options platform_it_lower device revision_id filep
                            OUTPUT ${output_files}
                            COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${arg}
                            WORKING_DIRECTORY ${workdir}
-                           DEPENDS ${filearg} ocloc ${PREVIOUS_KERNELS}
+                           DEPENDS ${filearg} ocloc copy_compiler_files ${PREVIOUS_KERNELS}
         )
 
         if(NEO_SERIALIZED_BUILTINS_COMPILATION)
