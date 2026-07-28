@@ -120,6 +120,18 @@ struct AppendImageCopyFromMemoryExtArgs {
           srcSlicePitch(srcSlicePitch), signalEvent(signalEvent), waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
 };
 
+struct AppendHostFunctionArgs {
+    ze_host_function_callback_t hostFunction;
+    void *userData;
+    ze_event_handle_t signalEvent;
+    EventHandles waitEvents;
+
+    AppendHostFunctionArgs(ze_host_function_callback_t hostFunction, void *userData, ze_event_handle_t signalEvent,
+                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+        : hostFunction(hostFunction), userData(userData), signalEvent(signalEvent),
+          waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
+};
+
 struct HostSynchronizeArgs {
     uint64_t timeout = 0u;
 };

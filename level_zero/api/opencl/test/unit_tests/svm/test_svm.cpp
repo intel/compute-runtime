@@ -16,6 +16,7 @@
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -24,6 +25,7 @@
 #include "CL/cl_ext.h"
 
 #include <memory>
+#include <vector>
 
 namespace NEO {
 namespace LEO {
@@ -415,6 +417,144 @@ TEST_F(ClEnqueueSvmMapTest, givenWriteInvalidateMappedSvmBufferWhenUnmappedThenH
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+struct WhiteBoxLeoContext : public Context {
+    using Context::Context;
+    using Context::internalComputeCmdLists;
+};
+
+struct SvmFreeCallbackRecord {
+    cl_command_queue commandQueue = nullptr;
+    cl_uint numSvmPointers = 0u;
+    std::vector<void *> svmPointers{};
+    uint32_t callCount = 0u;
+};
+
+struct ClEnqueueSvmFreeTest : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+
+        auto &clDevices = platform->getDevices();
+        ASSERT_FALSE(clDevices.empty());
+        clDevice = clDevices[0].get();
+        cl_device_id clDeviceId = clDevice;
+
+        leoContext = std::make_unique<WhiteBoxLeoContext>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(),
+                                                          1, &clDeviceId, true);
+        // Intercept the completion callback LEO defers onto the internal cmdlist, it cannot be executed by the GPU here.
+        leoContext->internalComputeCmdLists[clDevice->getRootDeviceIndex()] = capturingInternalCmdList.toHandle();
+
+        commandQueue = new CommandQueue(leoContext.get(), clDevice, nullptr, capturingQueueCmdList.toHandle());
+    }
+
+    void TearDown() override {
+        drainHostFunctions();
+        commandQueue->decRefApi();
+        otherContext.reset();
+        if (leoContext) {
+            leoContext->internalComputeCmdLists.clear();
+            leoContext.reset();
+        }
+        Test<OclFixture>::TearDown();
+    }
+
+    // Executes the pending deferred callbacks, they own the callback user data and an event reference.
+    void drainHostFunctions() {
+        const auto captured = capturingInternalCmdList.appendHostFunctionArgs.count();
+        for (auto i = drainedHostFunctions; i < captured; ++i) {
+            const auto &hostFunctionArgs = capturingInternalCmdList.appendHostFunctionArgs[i];
+            hostFunctionArgs.hostFunction(hostFunctionArgs.userData);
+        }
+        drainedHostFunctions = captured;
+    }
+
+    cl_command_type queryCommandType(cl_event event) {
+        cl_command_type commandType = 0u;
+        EXPECT_EQ(CL_SUCCESS, clGetEventInfo(event, CL_EVENT_COMMAND_TYPE, sizeof(commandType), &commandType, nullptr));
+        return commandType;
+    }
+
+    static void CL_CALLBACK svmFreeCallback(cl_command_queue commandQueue, cl_uint numSvmPointers,
+                                            void *svmPointers[], void *userData) {
+        auto record = static_cast<SvmFreeCallbackRecord *>(userData);
+        record->commandQueue = commandQueue;
+        record->numSvmPointers = numSvmPointers;
+        record->svmPointers.assign(svmPointers, svmPointers + numSvmPointers);
+        ++record->callCount;
+    }
+
+    ClDevice *clDevice = nullptr;
+    std::unique_ptr<WhiteBoxLeoContext> leoContext;
+    std::unique_ptr<WhiteBoxLeoContext> otherContext;
+    CommandQueue *commandQueue = nullptr;
+    CapturingCommandList capturingQueueCmdList{};
+    CapturingCommandList capturingInternalCmdList{};
+    SvmFreeCallbackRecord freeRecord{};
+    size_t drainedHostFunctions = 0u;
+    uint32_t firstStorage = 0u;
+    uint32_t secondStorage = 0u;
+    void *svmPointers[2] = {&firstStorage, &secondStorage};
+};
+
+TEST_F(ClEnqueueSvmFreeTest, givenUserProvidedEventWhenClEnqueueSVMFreeThenCommandTypeIsSvmFreeBeforeCallbackRuns) {
+    cl_event event = nullptr;
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMFree(commandQueue, 2, svmPointers, svmFreeCallback, &freeRecord, 0, nullptr, &event));
+    ASSERT_NE(nullptr, event);
+
+    EXPECT_EQ(1u, capturingInternalCmdList.appendHostFunctionArgs.count());
+    EXPECT_EQ(0u, freeRecord.callCount);
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_FREE), queryCommandType(event));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
+}
+
+TEST_F(ClEnqueueSvmFreeTest, givenDeferredCallbackWhenHostFunctionRunsThenUserFreeCallbackIsInvoked) {
+    cl_event event = nullptr;
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMFree(commandQueue, 2, svmPointers, svmFreeCallback, &freeRecord, 0, nullptr, &event));
+    ASSERT_NE(nullptr, event);
+
+    drainHostFunctions();
+
+    EXPECT_EQ(1u, freeRecord.callCount);
+    EXPECT_EQ(static_cast<cl_command_queue>(commandQueue), freeRecord.commandQueue);
+    EXPECT_EQ(2u, freeRecord.numSvmPointers);
+    ASSERT_EQ(2u, freeRecord.svmPointers.size());
+    EXPECT_EQ(static_cast<void *>(&firstStorage), freeRecord.svmPointers[0]);
+    EXPECT_EQ(static_cast<void *>(&secondStorage), freeRecord.svmPointers[1]);
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_FREE), queryCommandType(event));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
+}
+
+TEST_F(ClEnqueueSvmFreeTest, givenMarkerEnqueuedWhenQueryingCommandTypeThenMarkerIsReported) {
+    cl_event event = nullptr;
+    EXPECT_EQ(CL_SUCCESS, clEnqueueMarkerWithWaitList(commandQueue, 0, nullptr, &event));
+    ASSERT_NE(nullptr, event);
+
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), queryCommandType(event));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
+}
+
+TEST_F(ClEnqueueSvmFreeTest, givenWaitListEventFromOtherContextWhenClEnqueueSVMFreeThenInvalidContextIsReturned) {
+    cl_device_id clDeviceId = clDevice;
+    otherContext = std::make_unique<WhiteBoxLeoContext>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(),
+                                                        1, &clDeviceId, true);
+
+    cl_int errcode = CL_SUCCESS;
+    auto userEvent = clCreateUserEvent(otherContext.get(), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, userEvent);
+
+    cl_event event = nullptr;
+    EXPECT_EQ(CL_INVALID_CONTEXT, clEnqueueSVMFree(commandQueue, 1, svmPointers, svmFreeCallback, &freeRecord, 1, &userEvent, &event));
+
+    EXPECT_EQ(nullptr, event);
+    EXPECT_FALSE(capturingInternalCmdList.appendHostFunctionArgs.wasCalled());
+    EXPECT_EQ(0u, freeRecord.callCount);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(userEvent));
 }
 
 } // namespace ult

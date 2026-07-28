@@ -1369,7 +1369,14 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
         event = &evntForCallback;
     }
 
-    clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
+    retVal = clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClEnqueueSvmFree, &retVal);
+        return retVal;
+    }
+
+    // Marker labels the event CL_COMMAND_MARKER; relabel here.
+    NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_FREE);
 
     struct ClEnqueueSVMFreeUserData {
         cl_command_queue commandQueue = nullptr;
@@ -1402,8 +1409,6 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
 
         if (clEnqueueSVMFreeUserData->ownsEventDeletion) {
             clReleaseEvent(event);
-        } else {
-            pEvent->updateCommandType(CL_COMMAND_SVM_FREE);
         }
 
         delete clEnqueueSVMFreeUserData;
