@@ -1,0 +1,47 @@
+#
+# Copyright (C) 2026 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+set(NEO_CORE_COMPILER_RELEASE_HELPER
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_tgl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_rkl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_adl_s.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_adl_p.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_adl_n.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_dg1.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_dg2_g10.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_dg2_g11.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_dg2_g12.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_pvc.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_pvc_vg.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_mtl_u.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_mtl_h.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_arl_h.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_bmg_g21.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_bmg_g31.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_lnl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_ptl_h.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_ptl_u.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_wcl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_nvl_s.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_nvl_u.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_nvl_p.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_cri.cpp
+)
+
+set_property(GLOBAL APPEND PROPERTY NEO_CORE_ENABLE_RELEASE_HELPER
+             ${CMAKE_CURRENT_SOURCE_DIR}/enable_compiler_release_helper_xe.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}/enable_compiler_release_helper_xe2.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}/enable_compiler_release_helper_xe3.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_compiler_release_helper_xe3p.cpp
+)
+
+set_property(GLOBAL APPEND PROPERTY NEO_CORE_RELEASE_HELPER ${NEO_CORE_COMPILER_RELEASE_HELPER})
+
+add_subdirectories()

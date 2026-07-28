@@ -28,7 +28,7 @@ struct HardwareInfo;
 
 inline constexpr uint32_t maxArchitecture = 64;
 using createReleaseHelperFunctionType = std::unique_ptr<ReleaseHelper> (*)(HardwareIpVersion hardwareIpVersion);
-inline createReleaseHelperFunctionType *releaseHelperFactory[maxArchitecture]{};
+inline constinit createReleaseHelperFunctionType *releaseHelperFactory[maxArchitecture]{};
 
 using ThreadsPerEUConfigs = StackVec<uint32_t, 6>;
 using SizeToPreferredSlmValueArray = std::array<SizeToPreferredSlmValue, 25>;

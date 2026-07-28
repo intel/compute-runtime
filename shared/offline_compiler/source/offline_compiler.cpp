@@ -33,6 +33,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
 #include "shared/source/os_interface/debug_env_reader.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 
@@ -1084,14 +1085,17 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
     }
 
     retVal = initHardwareInfoForProductConfig(deviceName);
-    if (retVal == OCLOC_SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
+        retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, compilerProductHelper, releaseHelper);
+    }
+
+    if (retVal != OCLOC_SUCCESS) {
+        argHelper->printf("Could not determine device target: %s.\n", deviceName.c_str());
         return retVal;
     }
 
-    retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, compilerProductHelper, releaseHelper);
-    if (retVal != OCLOC_SUCCESS) {
-        argHelper->printf("Could not determine device target: %s.\n", deviceName.c_str());
-    }
+    compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
+
     return retVal;
 }
 
@@ -1551,7 +1555,7 @@ int OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     if (compilerProductHelper->isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
-    if (compilerProductHelper->isForceEmuInt32DivRemSPRequired()) {
+    if (compilerReleaseHelper->isForceEmuInt32DivRemSPRequired()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
     if ((!releaseHelper->isBindlessAddressingDisabled() && addressingMode != "bindful") ||

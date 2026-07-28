@@ -24,11 +24,6 @@ bool CompilerProductHelperHw<gfxProduct>::isMidThreadPreemptionSupported(const H
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isForceEmuInt32DivRemSPRequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint64_t CompilerProductHelperHw<gfxProduct>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
     return 0x0;
 }

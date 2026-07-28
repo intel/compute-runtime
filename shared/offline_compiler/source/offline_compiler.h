@@ -33,6 +33,7 @@ namespace NEO {
 
 class CompilerCache;
 class CompilerProductHelper;
+class CompilerReleaseHelper;
 class OclocFclFacadeBase;
 class OclocIgcFacade;
 
@@ -278,6 +279,7 @@ All supported acronyms: %s.
     std::unique_ptr<OclocFclFacadeBase> fclFacade;
     std::unique_ptr<CompilerCache> cache;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
+    std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
     std::unique_ptr<ReleaseHelper> releaseHelper;
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
     IGC::CodeType::CodeType_t intermediateRepresentation = IGC::CodeType::undefined;

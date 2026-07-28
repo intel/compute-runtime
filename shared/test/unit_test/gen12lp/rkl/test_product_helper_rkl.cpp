@@ -11,7 +11,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
@@ -114,11 +113,4 @@ RKLTEST_F(RklProductHelper, givenA0OrBSteppingAndRklPlatformWhenAskingIfWAIsRequ
 
 RKLTEST_F(RklProductHelper, givenProductHelperWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->is3DPipelineSelectWARequired());
-}
-
-using CompilerProductHelperHelperTestsRkl = ::testing::Test;
-RKLTEST_F(CompilerProductHelperHelperTestsRkl, givenRklWhenIsForceEmuInt32DivRemSPRequiredIsCalledThenReturnsTrue) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
-    EXPECT_TRUE(compilerProductHelper.isForceEmuInt32DivRemSPRequired());
 }

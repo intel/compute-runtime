@@ -17,7 +17,6 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     using BaseClass::getDefaultHwIpVersion;
     ADDMETHOD_CONST_NOBASE(isMidThreadPreemptionSupported, bool, false, (const HardwareInfo &hwInfo));
 
-    ADDMETHOD_CONST_NOBASE(isForceEmuInt32DivRemSPRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isStatelessToStatefulBufferOffsetSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isMatrixMultiplyAccumulateTF32Supported, bool, false, (const HardwareInfo &hwInfo));
     ADDMETHOD_CONST_NOBASE(isSubgroupLocalBlockIoSupported, bool, false, ());

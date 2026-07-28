@@ -29,6 +29,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -237,6 +238,18 @@ TEST(RootDeviceEnvironment, givenDefaultHardwareInfoWhenPrepareDeviceEnvironment
     bool shouldRcsBeDisabled = releaseHelper.isRcsExposureDisabled();
     bool isRcsDisabled = hwInfo->featureTable.flags.ftrRcsNode;
     EXPECT_NE(shouldRcsBeDisabled, isRcsDisabled);
+}
+
+TEST(RootDeviceEnvironment, givenCompilerReleaseHelperWhenGetHelperForCompilerReleaseHelperIsCalledThenSameInstanceIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
+
+    auto mockCompilerReleaseHelper = std::make_unique<MockCompilerReleaseHelper>();
+    auto mockCompilerReleaseHelperPtr = mockCompilerReleaseHelper.get();
+    rootDeviceEnvironment->compilerReleaseHelper = std::move(mockCompilerReleaseHelper);
+
+    auto &compilerReleaseHelper = rootDeviceEnvironment->getHelper<CompilerReleaseHelper>();
+    EXPECT_EQ(mockCompilerReleaseHelperPtr, &compilerReleaseHelper);
 }
 
 TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {

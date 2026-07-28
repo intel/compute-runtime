@@ -56,7 +56,6 @@ class CompilerProductHelper {
     }
 
     virtual bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
     virtual bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSubgroupLocalBlockIoSupported() const = 0;
@@ -102,7 +101,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     }
 
     bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const override;
-    bool isForceEmuInt32DivRemSPRequired() const override;
     bool isStatelessToStatefulBufferOffsetSupported() const override;
     bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const override;
     bool isSubgroupLocalBlockIoSupported() const override;

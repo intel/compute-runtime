@@ -1,0 +1,21 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/test/unit_test/release_helpers/compiler_release_helper/compiler_release_helper_tests_base.h"
+
+#include "gtest/gtest.h"
+
+struct CompilerReleaseHelperDg2G10Tests : public CompilerReleaseHelperTests<12, 55> {
+
+    std::vector<uint32_t> getRevisions() override {
+        return {0, 1, 4, 8};
+    }
+};
+
+TEST_F(CompilerReleaseHelperDg2G10Tests, whenIsForceEmuInt32DivRemSPRequiredCalledThenFalseReturned) {
+    whenIsForceEmuInt32DivRemSPRequiredCalledThenFalseReturned();
+}
