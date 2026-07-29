@@ -111,7 +111,10 @@ bool tryGetTagNodeChunkOffsetInAllocation(const TagNodeBase &tagNode, const Grap
 CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                                              uint32_t rootDeviceIndex,
                                              const DeviceBitfield deviceBitfield)
-    : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex), deviceBitfield(deviceBitfield) {
+    : executionEnvironment(executionEnvironment),
+      debugConfirmationFunction([]() { std::cin.get(); }),
+      rootDeviceIndex(rootDeviceIndex),
+      deviceBitfield(deviceBitfield) {
     residencyAllocations.reserve(startingResidencyContainerSize);
 
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
@@ -1624,8 +1627,6 @@ void CommandStreamReceiver::ensurePrimaryCsrInitialized(Device &device) {
 }
 
 void CommandStreamReceiver::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {}
-
-std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };
 
 DeferredFreeContext CommandStreamReceiver::createDeferredFreeContext() const {
     DeferredFreeContext ctx{};
