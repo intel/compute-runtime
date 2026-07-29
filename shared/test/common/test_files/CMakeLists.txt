@@ -38,12 +38,8 @@ function(compile_kernels_gen device revision_id platform_name use_stateless use_
 
     set(outputpath_base "${outputdir}${outputname_base}")
 
+    set(output_file "${outputpath_base}.bin")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-      set(output_files
-          ${outputpath_base}.spv
-          ${outputpath_base}.bin
-      )
-
       set(heapless_mode "disable")
       set(internal_options "")
       if(${use_heapless})
@@ -55,24 +51,22 @@ function(compile_kernels_gen device revision_id platform_name use_stateless use_
       list(APPEND __ocloc__options__ "-I ${NEO_SOURCE_DIR}/shared/source/built_ins/kernels")
 
       add_custom_command(
-                         OUTPUT ${output_files}
+                         OUTPUT ${output_file}
                          COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -internal_options ${internal_options} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files
       )
 
-      list(APPEND compiled_kernels_${platform_name}_${revision_id} ${output_files})
+      list(APPEND compiled_kernels_${platform_name}_${revision_id} ${output_file})
     else()
-      foreach(file_extension "spv" "bin")
-        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/${outputname_base}.${file_extension}")
-        add_custom_command(
-                           OUTPUT ${outputpath_base}.${file_extension}
-                           COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
-                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
-        )
+      set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/${outputname_base}.bin")
+      add_custom_command(
+                         OUTPUT ${output_file}
+                         COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+      )
 
-        list(APPEND compiled_kernels_${platform_name}_${revision_id} ${outputpath_base}.${file_extension})
-      endforeach()
+      list(APPEND compiled_kernels_${platform_name}_${revision_id} ${output_file})
     endif()
   endforeach()
   set(compiled_kernels_${platform_name}_${revision_id} ${compiled_kernels_${platform_name}_${revision_id}} PARENT_SCOPE)

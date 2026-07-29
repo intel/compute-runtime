@@ -19,23 +19,17 @@ extern PRODUCT_FAMILY productFamily;
 
 KernelBinaryHelper::KernelBinaryHelper(const std::string &name, bool appendOptionsToFileName) {
     // set mock compiler to return expected kernel
-    MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, name + "_", ".spv");
     retrieveBinaryKernelFilename(igcDebugVars.fileName, name + "_", ".bin");
 
-    appendBinaryNameSuffix(fclDebugVars.fileNameSuffix);
     appendBinaryNameSuffix(igcDebugVars.fileNameSuffix);
 
-    fclDebugVars.appendOptionsToFileName = appendOptionsToFileName;
     igcDebugVars.appendOptionsToFileName = appendOptionsToFileName;
 
-    gEnvironment->fclPushDebugVars(fclDebugVars);
     gEnvironment->igcPushDebugVars(igcDebugVars);
 }
 
 KernelBinaryHelper::~KernelBinaryHelper() {
     gEnvironment->igcPopDebugVars();
-    gEnvironment->fclPopDebugVars();
 }

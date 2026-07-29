@@ -247,7 +247,6 @@ TEST_F(CompilerInterfaceMockedBinaryFilesTest, GivenOptionsWhenCompilingToIsaThe
 
     std::string internalOptions = "SOME_OPTION";
 
-    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
     fclDebugVars.internalOptionsExpected = true;
     gEnvironment->fclPushDebugVars(fclDebugVars);
 
@@ -267,7 +266,6 @@ TEST_F(CompilerInterfaceMockedBinaryFilesTest, GivenOptionsWhenCompilingToIsaThe
 
 TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenCompilingToIrThenSuccessIsReturned) {
 
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBufferShared_simd32_", ".spv");
     gEnvironment->fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);

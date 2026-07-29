@@ -135,35 +135,29 @@ function(neo_gen_kernels platform_it_lower device revision_id)
 
     set(outputname_base "${basename}_${platform_it_lower}")
     set(outputpath_base "${outputdir}${outputname_base}")
+    set(output_file "${outputpath_base}.bin")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-      set(output_files
-          ${outputpath_base}.spv
-          ${outputpath_base}.bin
-      )
-
       add_custom_command(
-                         OUTPUT ${output_files}
+                         OUTPUT ${output_file}
                          COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -revision_id ${revision_id} -out_dir ${outputdir} ${formatArgument} -output_no_suffix -output ${outputname_base}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files ${PREVIOUS_KERNELS}
       )
 
       if(NEO_SERIALIZED_BUILTINS_COMPILATION)
-        set(PREVIOUS_KERNELS ${output_files})
+        set(PREVIOUS_KERNELS ${output_file})
       endif()
 
-      list(APPEND kernels_to_compile ${output_files})
+      list(APPEND kernels_to_compile ${output_file})
     else()
-      foreach(extension "spv" "bin")
-        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${platform_it_lower}.${extension}")
-        add_custom_command(
-                           OUTPUT ${outputpath_base}.${extension}
-                           COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
-                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
-        )
+      set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${platform_it_lower}.bin")
+      add_custom_command(
+                         OUTPUT ${output_file}
+                         COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+      )
 
-        list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${outputpath_base}.${extension})
-      endforeach()
+      list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${output_file})
     endif()
   endforeach()
   list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile})
@@ -190,34 +184,28 @@ function(neo_gen_kernels_with_options platform_it_lower device revision_id filep
       set(base_filename ${basename}_${argwospaces})
       set(outputname_base "${base_filename}_${platform_it_lower}")
       set(outputpath_base "${outputdir}/${outputname_base}")
+      set(output_file "${outputpath_base}.bin")
       if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-        set(output_files
-            ${outputpath_base}.spv
-            ${outputpath_base}.bin
-        )
-
         add_custom_command(
-                           OUTPUT ${output_files}
+                           OUTPUT ${output_file}
                            COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${arg}
                            WORKING_DIRECTORY ${workdir}
                            DEPENDS ${filearg} ocloc copy_compiler_files ${PREVIOUS_KERNELS}
         )
 
         if(NEO_SERIALIZED_BUILTINS_COMPILATION)
-          set(PREVIOUS_KERNELS ${output_files})
+          set(PREVIOUS_KERNELS ${output_file})
         endif()
-        list(APPEND kernels_to_compile ${output_files})
+        list(APPEND kernels_to_compile ${output_file})
       else()
-        foreach(extension "spv" "bin")
-          set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/${base_filename}_${platform_it_lower}.${extension}")
-          add_custom_command(
-                             OUTPUT ${outputpath_base}.${extension}
-                             COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
-                             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
-          )
+        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/${base_filename}_${platform_it_lower}.bin")
+        add_custom_command(
+                           OUTPUT ${output_file}
+                           COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+        )
 
-          list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${outputpath_base}.${extension})
-        endforeach()
+        list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${output_file})
       endif()
     endforeach()
   endforeach()

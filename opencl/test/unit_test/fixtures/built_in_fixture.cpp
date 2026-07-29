@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@ void BuiltInFixture::setUp(Device *pDevice) {
     pBuiltIns = pDevice->getBuiltIns();
 
     // set mock compiler to return expected kernel...
-    MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
     std::string builtInsFileName;
@@ -29,14 +28,12 @@ void BuiltInFixture::setUp(Device *pDevice) {
     } else {
         builtInsFileName = KernelBinaryHelper::BUILT_INS;
     }
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv");
+
     retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
 
-    gEnvironment->fclPushDebugVars(fclDebugVars);
     gEnvironment->igcPushDebugVars(igcDebugVars);
 }
 
 void BuiltInFixture::tearDown() {
     gEnvironment->igcPopDebugVars();
-    gEnvironment->fclPopDebugVars();
 }
