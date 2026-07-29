@@ -47,14 +47,14 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmTotalSizeAboveActualHwL
     EXPECT_EQ(valueAtLimit, idd.getPreferredSlmAllocationSize());
 }
 
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsXe2HpgCore) {
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsBMG) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
     using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     // clang-format off
-    const SlmTestHelper<FamilyType> slmHelperXe2HpgCore{
+    const SlmTestHelper<FamilyType> slmHelperBmg{
         .programmableSlmSizesPerThreadGroup = {
             {0 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K},
             {1 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K},
@@ -79,7 +79,41 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEn
     };
     // clang-format on
 
-    verifyPreferredSlmValues<FamilyType>(slmHelperXe2HpgCore, pDevice->getRootDeviceEnvironment());
+    verifyPreferredSlmValues<FamilyType>(slmHelperBmg, pDevice->getRootDeviceEnvironment());
+}
+
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsLNL) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
+    using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
+
+    // clang-format off
+    const SlmTestHelper<FamilyType> slmHelperLnl{
+        .programmableSlmSizesPerThreadGroup = {
+            {0 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K},
+            {1 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K},
+            {2 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_2K},
+            {4 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_4K},
+            {8 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_8K},
+            {16 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_16K},
+            {24 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_24K},
+            {32 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_32K},
+            {48 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_48K},
+            {64 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_64K},
+            {96 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_96K},
+            {128 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_128K}},
+        .programmablePreferredSlmSizesPerSubslice = {
+            {0 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
+            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
+            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
+            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
+            {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
+            {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K}}
+    };
+    // clang-format on
+
+    verifyPreferredSlmValues<FamilyType>(slmHelperLnl, pDevice->getRootDeviceEnvironment());
 }
 
 HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsXe3Core) {
@@ -109,9 +143,7 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEn
             {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
             {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
             {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K},
-            {160 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_160K},
-            {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_192K}}
+            {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K}}
     };
     // clang-format on
 
