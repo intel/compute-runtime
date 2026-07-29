@@ -136,24 +136,27 @@ TEST_F(ClSvmAllocTest, givenSupportedAlignmentsWhenClSvmAllocThenAllocationSucce
 }
 
 struct RecordingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
-    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation, NEO::GraphicsAllocation *srcAllocation,
-                                    size_t size, bool flushHost, size_t offset) override {
-        ++appendPageFaultCopyCalled;
-        pageFaultDst = dstAllocation;
-        pageFaultSrc = srcAllocation;
-        pageFaultSize = size;
-        pageFaultFlushHost = flushHost;
-        pageFaultOffset = offset;
-        waitOnEventsCalledBeforeCopy = appendWaitOnEventsCalled;
-        return appendPageFaultCopyResult;
+    ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
+                                 ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                 ze_event_handle_t *phWaitEvents, L0::CmdListMemoryCopyParams &memoryCopyParams) override {
+        ++migrationCalled;
+        migrationDstPtr = dstptr;
+        migrationSrcPtr = srcptr;
+        migrationSize = size;
+        migrationDstAlloc = memoryCopyParams.dstAllocInfo.explicitAlloc;
+        migrationSrcAlloc = memoryCopyParams.srcAllocInfo.explicitAlloc;
+        migrationNumWaitEvents = numWaitEvents;
+        return migrationResult;
     }
 
-    NEO::GraphicsAllocation *pageFaultDst = nullptr;
-    NEO::GraphicsAllocation *pageFaultSrc = nullptr;
-    size_t pageFaultSize = 0u;
-    size_t pageFaultOffset = 0u;
-    bool pageFaultFlushHost = false;
-    uint32_t waitOnEventsCalledBeforeCopy = 0u;
+    void *migrationDstPtr = nullptr;
+    const void *migrationSrcPtr = nullptr;
+    NEO::GraphicsAllocation *migrationDstAlloc = nullptr;
+    NEO::GraphicsAllocation *migrationSrcAlloc = nullptr;
+    size_t migrationSize = 0u;
+    uint32_t migrationCalled = 0u;
+    uint32_t migrationNumWaitEvents = 0u;
+    ze_result_t migrationResult = ZE_RESULT_SUCCESS;
 };
 
 struct ClEnqueueSvmMapTest : public Test<OclFixture> {
@@ -220,7 +223,7 @@ TEST_F(ClEnqueueSvmMapTest, givenBlockingMapWhenClEnqueueSVMMapThenQueueIsSynchr
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
     EXPECT_EQ(1u, mockCmdList.hostSynchronizeCalled);
-    EXPECT_EQ(0u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(0u, mockCmdList.migrationCalled);
 }
 
 TEST_F(ClEnqueueSvmMapTest, givenNonBlockingMapWhenClEnqueueSVMMapThenQueueIsNotSynchronized) {
@@ -229,7 +232,7 @@ TEST_F(ClEnqueueSvmMapTest, givenNonBlockingMapWhenClEnqueueSVMMapThenQueueIsNot
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
     EXPECT_EQ(0u, mockCmdList.hostSynchronizeCalled);
-    EXPECT_EQ(0u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(0u, mockCmdList.migrationCalled);
 }
 
 TEST_F(ClEnqueueSvmMapTest, givenBlockingMapWhenHostSynchronizeFailsThenErrorIsReturned) {
@@ -247,7 +250,7 @@ TEST_F(ClEnqueueSvmMapTest, givenClEnqueueSVMUnmapThenQueueIsNotSynchronized) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
     EXPECT_EQ(0u, mockCmdList.hostSynchronizeCalled);
-    EXPECT_EQ(0u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(0u, mockCmdList.migrationCalled);
 }
 
 TEST_F(ClEnqueueSvmMapTest, givenDeviceStorageAllocationWhenClEnqueueSVMMapThenMigratesDeviceToHostAndRecordsOperation) {
@@ -256,11 +259,11 @@ TEST_F(ClEnqueueSvmMapTest, givenDeviceStorageAllocationWhenClEnqueueSVMMapThenM
     auto retVal = clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
-    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultDst);
-    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultSrc);
-    EXPECT_TRUE(mockCmdList.pageFaultFlushHost);
-    EXPECT_EQ(sizeof(svmStorage), mockCmdList.pageFaultSize);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.migrationDstAlloc);
+    EXPECT_EQ(nullptr, mockCmdList.migrationSrcAlloc);
+    EXPECT_EQ(static_cast<const void *>(&svmStorage), mockCmdList.migrationSrcPtr);
+    EXPECT_EQ(sizeof(svmStorage), mockCmdList.migrationSize);
 
     auto mapOperation = svmManager->getSvmMapOperation(&svmStorage);
     ASSERT_NE(nullptr, mapOperation);
@@ -273,18 +276,18 @@ TEST_F(ClEnqueueSvmMapTest, givenAlreadyMappedDeviceStorageWhenClEnqueueSVMMapAg
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr));
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr));
 
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
 }
 
 TEST_F(ClEnqueueSvmMapTest, givenReadOnlyMapWhenClEnqueueSVMUnmapThenMigrationIsSkippedAndOperationIsRemoved) {
     registerDeviceStorageAlloc();
 
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_READ, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr));
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
 
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMUnmap(commandQueue, &svmStorage, 0, nullptr, nullptr));
 
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 }
 
@@ -292,14 +295,14 @@ TEST_F(ClEnqueueSvmMapTest, givenWriteMapWhenClEnqueueSVMUnmapThenMigratesHostTo
     registerDeviceStorageAlloc();
 
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr));
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
 
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMUnmap(commandQueue, &svmStorage, 0, nullptr, nullptr));
 
-    EXPECT_EQ(2u, mockCmdList.appendPageFaultCopyCalled);
-    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultDst);
-    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultSrc);
-    EXPECT_FALSE(mockCmdList.pageFaultFlushHost);
+    EXPECT_EQ(2u, mockCmdList.migrationCalled);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.migrationSrcAlloc);
+    EXPECT_EQ(nullptr, mockCmdList.migrationDstAlloc);
+    EXPECT_EQ(static_cast<void *>(&svmStorage), mockCmdList.migrationDstPtr);
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 }
 
@@ -309,11 +312,11 @@ TEST_F(ClEnqueueSvmMapTest, givenBlockingDeviceStorageMapThenQueueIsSynchronized
     auto retVal = clEnqueueSVMMap(commandQueue, CL_TRUE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
     EXPECT_EQ(1u, mockCmdList.hostSynchronizeCalled);
 }
 
-TEST_F(ClEnqueueSvmMapTest, givenWaitListWhenDeviceStorageMapThenWaitsBeforeMigration) {
+TEST_F(ClEnqueueSvmMapTest, givenWaitListWhenDeviceStorageMapThenWaitEventsArePassedToMigration) {
     registerDeviceStorageAlloc();
 
     cl_int errcode = CL_SUCCESS;
@@ -324,9 +327,9 @@ TEST_F(ClEnqueueSvmMapTest, givenWaitListWhenDeviceStorageMapThenWaitsBeforeMigr
     auto retVal = clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 1, &userEvent, nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
-    EXPECT_EQ(1u, mockCmdList.appendWaitOnEventsCalled);
-    EXPECT_EQ(1u, mockCmdList.waitOnEventsCalledBeforeCopy);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
+    EXPECT_EQ(1u, mockCmdList.migrationNumWaitEvents);
+    EXPECT_EQ(0u, mockCmdList.appendWaitOnEventsCalled);
 
     clSetUserEventStatus(userEvent, CL_COMPLETE);
     clReleaseEvent(userEvent);
@@ -338,7 +341,7 @@ TEST_F(ClEnqueueSvmMapTest, givenZeroCopyAllocationWhenClEnqueueSVMMapThenMigrat
     auto retVal = clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(0u, mockCmdList.migrationCalled);
     EXPECT_EQ(1u, mockCmdList.appendBarrierCalled);
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 }
@@ -349,20 +352,21 @@ TEST_F(ClEnqueueSvmMapTest, givenSubRegionMapAndUnmapWhenDeviceStorageThenOnlyTh
     constexpr size_t regionOffset = sizeof(uint32_t);
     constexpr size_t regionSize = sizeof(uint32_t);
     auto regionPtr = ptrOffset(&svmStorage, regionOffset);
+    auto expectedCpuSidePtr = reinterpret_cast<void *>(cpuAllocation->getGpuAddress() + regionOffset);
 
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, regionPtr, regionSize, 0, nullptr, nullptr));
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
-    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultDst);
-    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultSrc);
-    EXPECT_EQ(regionSize, mockCmdList.pageFaultSize);
-    EXPECT_EQ(regionOffset, mockCmdList.pageFaultOffset);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.migrationDstAlloc);
+    EXPECT_EQ(expectedCpuSidePtr, mockCmdList.migrationDstPtr);
+    EXPECT_EQ(static_cast<const void *>(regionPtr), mockCmdList.migrationSrcPtr);
+    EXPECT_EQ(regionSize, mockCmdList.migrationSize);
 
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMUnmap(commandQueue, regionPtr, 0, nullptr, nullptr));
-    EXPECT_EQ(2u, mockCmdList.appendPageFaultCopyCalled);
-    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultDst);
-    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultSrc);
-    EXPECT_EQ(regionSize, mockCmdList.pageFaultSize);
-    EXPECT_EQ(regionOffset, mockCmdList.pageFaultOffset);
+    EXPECT_EQ(2u, mockCmdList.migrationCalled);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.migrationSrcAlloc);
+    EXPECT_EQ(static_cast<const void *>(expectedCpuSidePtr), mockCmdList.migrationSrcPtr);
+    EXPECT_EQ(static_cast<void *>(regionPtr), mockCmdList.migrationDstPtr);
+    EXPECT_EQ(regionSize, mockCmdList.migrationSize);
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(regionPtr));
 }
 
@@ -377,16 +381,16 @@ TEST_F(ClEnqueueSvmMapTest, givenReadOnlyMappedSvmBufferWhenClEnqueueUnmapMemObj
     auto mappedPtr = clEnqueueMapBuffer(commandQueue, buffer, CL_TRUE, CL_MAP_READ, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
     ASSERT_EQ(CL_SUCCESS, errcode);
     EXPECT_EQ(static_cast<void *>(&svmStorage), mappedPtr);
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
     ASSERT_NE(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 
     EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer, mappedPtr, 0, nullptr, nullptr));
-    EXPECT_EQ(1u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(1u, mockCmdList.migrationCalled);
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 
     mappedPtr = clEnqueueMapBuffer(commandQueue, buffer, CL_TRUE, CL_MAP_READ, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
     ASSERT_EQ(CL_SUCCESS, errcode);
-    EXPECT_EQ(2u, mockCmdList.appendPageFaultCopyCalled);
+    EXPECT_EQ(2u, mockCmdList.migrationCalled);
 
     EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer, mappedPtr, 0, nullptr, nullptr));
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
@@ -409,11 +413,11 @@ TEST_F(ClEnqueueSvmMapTest, givenWriteInvalidateMappedSvmBufferWhenUnmappedThenH
     ASSERT_NE(nullptr, mapOperation);
     EXPECT_FALSE(mapOperation->readOnlyMap);
 
-    auto migrationsAfterMap = mockCmdList.appendPageFaultCopyCalled;
+    auto migrationsAfterMap = mockCmdList.migrationCalled;
     EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer, mappedPtr, 0, nullptr, nullptr));
-    EXPECT_EQ(migrationsAfterMap + 1u, mockCmdList.appendPageFaultCopyCalled);
-    EXPECT_EQ(gpuAllocation.get(), mockCmdList.pageFaultDst);
-    EXPECT_EQ(cpuAllocation.get(), mockCmdList.pageFaultSrc);
+    EXPECT_EQ(migrationsAfterMap + 1u, mockCmdList.migrationCalled);
+    EXPECT_EQ(cpuAllocation.get(), mockCmdList.migrationSrcAlloc);
+    EXPECT_EQ(nullptr, mockCmdList.migrationDstAlloc);
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));

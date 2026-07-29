@@ -27,6 +27,7 @@
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
@@ -1622,21 +1623,21 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
     if (deviceStorage) {
-        auto svmBasePtr = svmData->cpuAllocation->getUnderlyingBuffer();
+        auto cpuAllocation = svmData->cpuAllocation;
+        auto svmBasePtr = cpuAllocation->getUnderlyingBuffer();
         const size_t svmOffset = ptrDiff(svmPtr, svmBasePtr);
         if (svmAllocsManager->getSvmMapOperation(svmPtr) == nullptr) {
-            if (waitEvents.size() > 0) {
-                zeCommandListAppendWaitOnEvents(cmdListHandle, waitEvents.size(), waitEvents.data());
-            }
-            auto rootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
-            ret = pCommandQueue->getL0Object()->appendPageFaultCopy(svmData->cpuAllocation,
-                                                                    svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex),
-                                                                    size, true, svmOffset);
-            zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, 0, nullptr);
+            L0::CmdListMemoryCopyParams memoryCopyParams{};
+            memoryCopyParams.dstAllocInfo.explicitAlloc = cpuAllocation;
+            auto dstPtr = reinterpret_cast<void *>(cpuAllocation->getGpuAddress() + svmOffset);
+
+            ret = pCommandQueue->getL0Object()->appendMemoryCopy(dstPtr, svmPtr, size, hSignalEvent,
+                                                                 static_cast<uint32_t>(waitEvents.size()), waitEvents.data(),
+                                                                 memoryCopyParams);
+            svmAllocsManager->insertSvmMapOperation(svmPtr, size, svmBasePtr, svmOffset, mapFlags == CL_MAP_READ);
         } else {
             ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
         }
-        svmAllocsManager->insertSvmMapOperation(svmPtr, size, svmBasePtr, svmOffset, mapFlags == CL_MAP_READ);
     } else {
         ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
     }
@@ -1681,14 +1682,14 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
     if (deviceStorage) {
         auto mapOperation = svmAllocsManager->getSvmMapOperation(svmPtr);
         if (mapOperation && !mapOperation->readOnlyMap) {
-            if (waitEvents.size() > 0) {
-                zeCommandListAppendWaitOnEvents(cmdListHandle, waitEvents.size(), waitEvents.data());
-            }
-            auto rootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
-            ret = pCommandQueue->getL0Object()->appendPageFaultCopy(svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex),
-                                                                    svmData->cpuAllocation,
-                                                                    mapOperation->regionSize, false, mapOperation->offset);
-            zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, 0, nullptr);
+            auto cpuAllocation = svmData->cpuAllocation;
+            L0::CmdListMemoryCopyParams memoryCopyParams{};
+            memoryCopyParams.srcAllocInfo.explicitAlloc = cpuAllocation;
+            auto srcPtr = reinterpret_cast<const void *>(cpuAllocation->getGpuAddress() + mapOperation->offset);
+
+            ret = pCommandQueue->getL0Object()->appendMemoryCopy(svmPtr, srcPtr, mapOperation->regionSize, hSignalEvent,
+                                                                 static_cast<uint32_t>(waitEvents.size()), waitEvents.data(),
+                                                                 memoryCopyParams);
         } else {
             ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
         }

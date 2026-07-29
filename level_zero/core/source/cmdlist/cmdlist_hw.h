@@ -420,6 +420,7 @@ struct CommandListCoreFamily : public CommandList {
     MOCKABLE_VIRTUAL AlignedAllocationData resolveAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, const MemAllocInfo *bufferAllocInfo, const ResolveAlignedAllocationFlags &flags);
     AlignedAllocationData alignSvmAllocationData(Device *device, NEO::SvmAllocationData *svmAlloc, const void *buffer, uintptr_t sourcePtr, size_t sshAlignmentOffset);
     AlignedAllocationData alignImportedHostAllocationData(NEO::GraphicsAllocation *importedHostAlloc, void *ptr);
+    AlignedAllocationData alignExplicitAllocationData(NEO::GraphicsAllocation *alloc, void *ptr);
     AlignedAllocationData alignCachedHostAllocationData(NEO::GraphicsAllocation *cachedHostAlloc, uintptr_t sourcePtr, size_t sshAlignmentOffset);
     void addVirtualReservationToResidency(NEO::SvmAllocationData *svmAlloc, const void *buffer);
     size_t getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation);

@@ -240,6 +240,33 @@ HWTEST_F(CommandListCreateTests, givenZeroBufferSizeWhenResolveAlignedAllocation
     EXPECT_TRUE(outData.needsFlush);
 }
 
+HWTEST_F(CommandListCreateTests, givenExplicitAllocationWhenResolveAlignedAllocationCalledThenPointerLookupIsSkippedAndAllocationIsMadeResident) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    constexpr size_t allocationSize = MemoryConstants::pageSize;
+    constexpr size_t offsetInAllocation = 64u;
+
+    NEO::MockGraphicsAllocation explicitAllocation(reinterpret_cast<void *>(0x2000), allocationSize);
+
+    L0::MemAllocInfo allocInfo{};
+    allocInfo.explicitAlloc = &explicitAllocation;
+
+    auto ptr = reinterpret_cast<void *>(explicitAllocation.getGpuAddress() + offsetInAllocation);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, ptr, allocationSize, &allocInfo, {});
+
+    EXPECT_EQ(&explicitAllocation, outData.alloc);
+    EXPECT_EQ(nullptr, outData.svmAllocData);
+    EXPECT_EQ(static_cast<uintptr_t>(explicitAllocation.getGpuAddress()), outData.alignedAllocationPtr);
+    EXPECT_EQ(offsetInAllocation, outData.offset);
+
+    bool foundInResidency = false;
+    for (auto *residentAllocation : commandList->commandContainer.getResidencyContainer()) {
+        foundInResidency |= (residentAllocation == &explicitAllocation);
+    }
+    EXPECT_TRUE(foundInResidency);
+}
+
 HWTEST_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsInMapThenAllocationReturned) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);

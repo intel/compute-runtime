@@ -752,17 +752,22 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
 
     ze_result_t ret;
+
+    const bool hasExplicitAllocs = memoryCopyParams.hasExplicitAllocs();
+
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, const_cast<void *>(srcptr), size);
-    this->obtainAllocData(cpuMemCopyInfo, isCopyOffloadEnabled());
-    if (preferCopyThroughLockedPtr(cpuMemCopyInfo, numWaitEvents, phWaitEvents)) {
-        ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
-        if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {
-            return ret;
+    if (!hasExplicitAllocs) {
+        this->obtainAllocData(cpuMemCopyInfo, isCopyOffloadEnabled());
+        if (preferCopyThroughLockedPtr(cpuMemCopyInfo, numWaitEvents, phWaitEvents)) {
+            ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
+            if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {
+                return ret;
+            }
         }
     }
 
     NEO::TransferDirection direction;
-    auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size, direction);
+    auto isSplitNeeded = !hasExplicitAllocs && this->isAppendSplitNeeded(dstptr, srcptr, size, direction);
     if (isSplitNeeded) {
         this->setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush, srcptr, dstptr, size, size);
 
@@ -775,11 +780,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
         ret = this->device->bcsSplit->template appendImmediateSplitCall<gfxCoreFamily>(this, copyParams, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
 
-    } else if (this->isValidForStagingTransfer(cpuMemCopyInfo, numWaitEvents > 0)) {
+    } else if (!hasExplicitAllocs && this->isValidForStagingTransfer(cpuMemCopyInfo, numWaitEvents > 0)) {
         return this->appendStagingMemoryCopy(cpuMemCopyInfo, hSignalEvent, memoryCopyParams);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
-                                                                     numWaitEvents, phWaitEvents, memoryCopyParams, &cpuMemCopyInfo.dstAllocInfo, &cpuMemCopyInfo.srcAllocInfo);
+                                                                     numWaitEvents, phWaitEvents, memoryCopyParams,
+                                                                     hasExplicitAllocs ? &memoryCopyParams.dstAllocInfo : &cpuMemCopyInfo.dstAllocInfo,
+                                                                     hasExplicitAllocs ? &memoryCopyParams.srcAllocInfo : &cpuMemCopyInfo.srcAllocInfo);
     }
 
     copyOffloadFlush |= memoryCopyParams.copyOffloadAllowed;

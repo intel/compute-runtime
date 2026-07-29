@@ -2207,7 +2207,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents,
                                                                    CmdListMemoryCopyParams &memoryCopyParams) {
-    return appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams, nullptr, nullptr);
+    return appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams,
+                            &memoryCopyParams.dstAllocInfo, &memoryCopyParams.srcAllocInfo);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3302,6 +3303,11 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::resolveAligne
     NEO::GraphicsAllocation *cachedHostAlloc = bufferAllocInfo ? bufferAllocInfo->cachedHostAlloc : nullptr;
 
     void *ptr = const_cast<void *>(buffer);
+
+    if (bufferAllocInfo && bufferAllocInfo->explicitAlloc) {
+        return alignExplicitAllocationData(bufferAllocInfo->explicitAlloc, ptr);
+    }
+
     uintptr_t sourcePtr = reinterpret_cast<uintptr_t>(ptr);
     size_t sshAlignmentOffset = 0;
     NEO::EncodeSurfaceState<GfxFamily>::getSshAlignedPointer(sourcePtr, sshAlignmentOffset);
@@ -3375,6 +3381,17 @@ void CommandListCoreFamily<gfxCoreFamily>::addVirtualReservationToResidency(NEO:
             commandContainer.addToResidencyContainer(mappedAllocationData.second->mappedAllocation.allocation);
         }
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::alignExplicitAllocationData(NEO::GraphicsAllocation *alloc, void *ptr) {
+    uintptr_t alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
+    size_t offset = reinterpret_cast<uintptr_t>(ptr) - alignedPtr;
+
+    commandContainer.addToResidencyContainer(alloc);
+
+    return AlignedAllocationData::fromAllocation(nullptr, alignedPtr, offset, alloc,
+                                                 this->isUsingSystemAllocation(alloc->getAllocationType()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
