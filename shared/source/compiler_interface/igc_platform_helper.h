@@ -12,11 +12,10 @@
 
 namespace NEO {
 struct HardwareInfo;
-class CompilerProductHelper;
 
 constexpr inline uint32_t ocl30ApiVersion = 300;
 
 void populateIgcPlatform(PlatformTag &igcPlatform, const HardwareInfo &hwInfo);
 
-bool initializeIgcDeviceContext(NEO::IgcOclDeviceCtxTag *igcDeviceCtx, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper);
+bool initializeIgcDeviceContext(NEO::IgcOclDeviceCtxTag *igcDeviceCtx, const HardwareInfo &hwInfo);
 } // namespace NEO

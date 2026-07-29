@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -63,10 +62,9 @@ void ProductHelper::applyLimitGrfSupported(SupportedNumGrfs &grfs) const {
     }
 }
 
-void ProductHelper::setupPreemptionMode(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment, bool kmdPreemptionSupport) {
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+void ProductHelper::setupPreemptionMode(HardwareInfo &hwInfo, bool kmdPreemptionSupport) {
     PreemptionHelper::adjustDefaultPreemptionMode(hwInfo.capabilityTable,
-                                                  compilerProductHelper.isMidThreadPreemptionSupported(hwInfo) && kmdPreemptionSupport,
+                                                  static_cast<bool>(hwInfo.featureTable.flags.ftrWalkerMTP) && kmdPreemptionSupport,
                                                   static_cast<bool>(hwInfo.featureTable.flags.ftrGpGpuThreadGroupLevelPreempt) && kmdPreemptionSupport,
                                                   static_cast<bool>(hwInfo.featureTable.flags.ftrGpGpuMidBatchPreempt) && kmdPreemptionSupport);
 }

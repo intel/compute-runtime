@@ -34,7 +34,7 @@ void populateIgcPlatform(PlatformTag &igcPlatform, const HardwareInfo &inputHwIn
     igcPlatform.SetRenderBlockID(hwInfo.ipVersion.value);
 }
 
-bool initializeIgcDeviceContext(NEO::IgcOclDeviceCtxTag *igcDeviceCtx, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) {
+bool initializeIgcDeviceContext(NEO::IgcOclDeviceCtxTag *igcDeviceCtx, const HardwareInfo &hwInfo) {
     auto igcPlatform = igcDeviceCtx->GetPlatformHandle<NEO::PlatformTag>();
     auto igcGtSystemInfo = igcDeviceCtx->GetGTSystemInfoHandle<NEO::GTSystemInfoTag>();
     auto igcFtrWa = igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle<NEO::IgcFeaturesAndWorkaroundsTag>();
@@ -46,9 +46,7 @@ bool initializeIgcDeviceContext(NEO::IgcOclDeviceCtxTag *igcDeviceCtx, const Har
 
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo.gtSystemInfo);
 
-    if (compilerProductHelper) {
-        igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-    }
+    igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(hwInfo.featureTable.flags.ftrWalkerMTP);
     igcFtrWa->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
     igcFtrWa->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
     igcFtrWa->SetFtrEfficient64BitAddressing(hwInfo.featureTable.flags.ftrHeaplessMode);

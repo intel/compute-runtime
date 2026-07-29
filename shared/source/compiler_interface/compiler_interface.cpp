@@ -509,7 +509,7 @@ NEO::IgcOclDeviceCtxTag *CompilerInterface::getIgcDeviceCtx(const Device &device
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
 
-    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo, &device.getCompilerProductHelper())) {
+    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo)) {
         DEBUG_BREAK_IF(true); // could not initialize device context
         return nullptr;
     }
@@ -544,7 +544,7 @@ NEO::IgcOclDeviceCtxTag *CompilerInterface::getFinalizerDeviceCtx(const Device &
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
 
-    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo, &device.getCompilerProductHelper())) {
+    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo)) {
         DEBUG_BREAK_IF(true); // could not initialize device context
         return nullptr;
     }

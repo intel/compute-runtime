@@ -55,7 +55,6 @@ class CompilerProductHelper {
         return compilerProductHelper;
     }
 
-    virtual bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
     virtual bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSubgroupLocalBlockIoSupported() const = 0;
@@ -100,7 +99,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
         return std::make_unique<CompilerProductHelperHw<gfxProduct>>();
     }
 
-    bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const override;
     bool isStatelessToStatefulBufferOffsetSupported() const override;
     bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const override;
     bool isSubgroupLocalBlockIoSupported() const override;

@@ -35,15 +35,6 @@ NVLSTEST_F(NvlsProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersio
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::NVL_S_A0);
 }
 
-HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned, IGFX_NVL_XE3G);
-NVLSTEST_F(NvlsProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemptionSupportThenCorrectValueIsSet) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrWalkerMTP = false;
-    EXPECT_FALSE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-    hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-}
-
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;

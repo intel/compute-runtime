@@ -309,7 +309,7 @@ class ProductHelper {
     void applyLimitGrfSupported(SupportedNumGrfs &grfs) const;
     static void setupPreemptionSurfaceSize(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setupKmdNotifyProperties(KmdNotifyProperties &kmdNotifyProperties);
-    static void setupPreemptionMode(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment, bool kmdPreemptionSupport);
+    static void setupPreemptionMode(HardwareInfo &hwInfo, bool kmdPreemptionSupport);
     static void setupImageSupport(HardwareInfo &hwInfo);
 };
 } // namespace NEO

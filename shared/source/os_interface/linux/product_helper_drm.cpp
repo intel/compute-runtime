@@ -97,7 +97,7 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     drm->checkQueueSliceSupport();
     drm->checkNonPersistentContextsSupport();
     drm->checkPreemptionSupport();
-    setupPreemptionMode(*outHwInfo, rootDeviceEnvironment, drm->isPreemptionSupported());
+    setupPreemptionMode(*outHwInfo, drm->isPreemptionSupported());
     setupPreemptionSurfaceSize(*outHwInfo, rootDeviceEnvironment);
     setupKmdNotifyProperties(outHwInfo->capabilityTable.kmdNotifyProperties);
     setupImageSupport(*outHwInfo);

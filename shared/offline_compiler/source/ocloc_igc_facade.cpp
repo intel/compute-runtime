@@ -83,7 +83,7 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
 
     igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(CommonConstants::defaultProfilingTimerResolution));
 
-    if (!initializeIgcDeviceContext(igcDeviceCtx.get(), hwInfo, compilerProductHelper.get())) {
+    if (!initializeIgcDeviceContext(igcDeviceCtx.get(), hwInfo)) {
         argHelper->printf("Error! IGC device context has not been properly created!\n");
         return OCLOC_OUT_OF_HOST_MEMORY;
     }

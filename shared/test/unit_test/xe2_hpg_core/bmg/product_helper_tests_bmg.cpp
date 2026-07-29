@@ -106,15 +106,6 @@ BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersonTh
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::BMG_G21_A0);
 }
 
-HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned, IGFX_BMG);
-BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemptionSupportThenCorrectValueIsSet) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrWalkerMTP = false;
-    EXPECT_FALSE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-    hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-}
-
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }

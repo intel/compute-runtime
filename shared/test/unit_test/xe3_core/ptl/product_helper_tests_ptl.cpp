@@ -41,15 +41,6 @@ PTLTEST_F(PtlProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionT
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::PTL_H_B0);
 }
 
-HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned, IGFX_PTL);
-PTLTEST_F(PtlProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemptionSupportThenCorrectValueIsSet) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrWalkerMTP = false;
-    EXPECT_FALSE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-    hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-}
-
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;

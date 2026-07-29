@@ -21,15 +21,6 @@ using namespace NEO;
 
 using CompilerProductHelperFixture = Test<DeviceFixture>;
 
-HWTEST_F(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned) {
-    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo.featureTable.flags.ftrWalkerMTP = false;
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    EXPECT_FALSE(compilerProductHelper.isMidThreadPreemptionSupported(hwInfo));
-    hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_TRUE(compilerProductHelper.isMidThreadPreemptionSupported(hwInfo));
-}
-
 TEST(CompilerProductHelperTest, GivenIgcLibraryNameDebugKeyWhenQueryingForCustomIgcLibraryNameThenDebugKeyValueisReturned) {
     DebugManagerStateRestore restorer;
 

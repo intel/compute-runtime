@@ -8,7 +8,6 @@
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
 #include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -134,7 +133,7 @@ TEST_F(MockProductHelperTestLinux, whenConfigureHwInfoIsCalledAndPersitentContex
     EXPECT_FALSE(drm->areNonPersistentContextsSupported());
 }
 
-HWTEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledMidThreadOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
+TEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledMidThreadOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
@@ -147,9 +146,8 @@ HWTEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledMidThreadOnWhenCon
 
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
-    if (getRootDeviceEnvironment().compilerProductHelper->isMidThreadPreemptionSupported(outHwInfo)) {
-        EXPECT_EQ(PreemptionMode::MidThread, outHwInfo.capabilityTable.defaultPreemptionMode);
-    }
+    EXPECT_TRUE(outHwInfo.featureTable.flags.ftrWalkerMTP);
+    EXPECT_EQ(PreemptionMode::MidThread, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 

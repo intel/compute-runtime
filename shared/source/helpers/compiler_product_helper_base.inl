@@ -19,11 +19,6 @@ template <PRODUCT_FAMILY gfxProduct>
 CompilerProductHelperHw<gfxProduct>::CompilerProductHelperHw() = default;
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const {
-    return hwInfo.featureTable.flags.ftrWalkerMTP;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint64_t CompilerProductHelperHw<gfxProduct>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
     return 0x0;
 }
