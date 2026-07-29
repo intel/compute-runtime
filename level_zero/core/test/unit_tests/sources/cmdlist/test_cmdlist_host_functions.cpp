@@ -582,6 +582,24 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
     EXPECT_EQ(2u, events[1]->inOrderExecHelper.getEventData()->counterValue);
 }
 
+HWTEST_F(HostFunctionsInOrderCmdListTests, givenProfilingEnabledCounterBasedEventWhenAppendHostFunctionThenTimestampNodeIsAssignedAndSuccessIsReturned) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    ASSERT_TRUE(events[0]->isEventTimestampFlagSet());
+    EXPECT_FALSE(events[0]->hasInOrderTimestampNode());
+
+    CmdListHostFunctionParameters parameters{};
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+
+    auto result = immCmdList->appendHostFunction(pHostFunction, pUserData, nullptr, events[0]->toHandle(), 0, nullptr, parameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(events[0]->hasInOrderTimestampNode());
+    EXPECT_NE(0u, events[0]->getGpuAddress(device));
+}
+
 HWTEST_F(HostFunctionsInOrderCmdListTests, givenImmediateCmdListWhenAppendHostFunctionThenPerformMigrationsIsFalse) {
 
     class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {

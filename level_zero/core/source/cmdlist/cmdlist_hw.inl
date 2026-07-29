@@ -2086,15 +2086,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
     const bool copyOffload = false;
     const bool copyQueue = isCopyOnly(copyOffload);
 
+    if (!handleCounterBasedEventOperations(signalEvent, skipAddingSignalEventsToResidency)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     appendEventForProfiling(signalEvent, nullptr, beforeWalker, skipBarrierForEndProfiling, skipAddingSignalEventsToResidency, copyQueue);
 
     dispatchHostFunction(pHostFunction, pUserData, parameters.memorySynchronizationRequired);
 
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, skipBarrierForEndProfiling, skipAddingSignalEventsToResidency, copyQueue);
-
-    if (!handleCounterBasedEventOperations(signalEvent, skipAddingSignalEventsToResidency)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
 
     addToMappedEventList(signalEvent);
 
