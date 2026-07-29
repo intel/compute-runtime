@@ -452,7 +452,6 @@ int main(int argc, char **argv) {
             builtInsFileName = KernelBinaryHelper::BUILT_INS;
         }
         std::string options;
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv", options);
         retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin", options);
 
         static uint8_t mockBuiltInIrPlaceholder[64] = {};

@@ -3260,7 +3260,6 @@ struct DebugDataGuard {
             zebinPtr = std::make_unique<MockZebinWrapper<>>(*defaultHwInfo);
             vars.binaryToReturn = const_cast<unsigned char *>(zebinPtr->binaries[0]);
             vars.binaryToReturnSize = sizeof(unsigned char) * zebinPtr->binarySizes[0];
-            NEO::setFclDebugVars(vars);
         }
         vars.debugDataToReturn = mockDebugData;
         vars.debugDataToReturnSize = sizeof(mockDebugData);
@@ -3278,9 +3277,6 @@ struct DebugDataGuard {
         vars.debugDataToReturn = nullptr;
         vars.debugDataToReturnSize = 0;
         NEO::setIgcDebugVars(vars);
-        if (useMockZebin) {
-            NEO::setFclDebugVars(vars);
-        }
     }
 
     bool useMockZebin = false;

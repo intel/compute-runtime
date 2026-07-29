@@ -396,23 +396,15 @@ TEST_F(CompilerInterfaceTest, GivenProgramCreatedFromIrWhenCompileIsCalledThenDo
 }
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCompileFailsGracefully) {
-    MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = clFiles + "copybuffer.elf";
-    gEnvironment->fclPushDebugVars(fclDebugVars);
     pCompilerInterface->defaultIgc.entryPoint->Release();
     pCompilerInterface->setIgcMain(nullptr);
     pCompilerInterface->failLoadIgc = true;
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::compilerNotAvailable, err);
-
-    gEnvironment->fclPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenCompileFailsGracefully) {
-    MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = clFiles + "copybuffer.elf";
-    gEnvironment->fclPushDebugVars(fclDebugVars);
     pCompilerInterface->failCreateFclTranslationCtx = true;
     pCompilerInterface->failCreateIgcTranslationCtx = true;
     TranslationOutput translationOutput = {};
@@ -420,13 +412,10 @@ TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenCompileFailsGra
     pCompilerInterface->failCreateFclTranslationCtx = false;
     pCompilerInterface->failCreateIgcTranslationCtx = false;
     EXPECT_EQ(TranslationErrorCode::unknownError, err);
-
-    gEnvironment->fclPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenCompilingToIrThenCompilationFailureErrorIsReturned) {
     MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = "../copybuffer.elf";
     fclDebugVars.forceBuildFailure = true;
     gEnvironment->fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};
@@ -567,7 +556,6 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenFclBuildingThenBuildFail
     fclDebugVars.forceCreateFailure = false;
     fclDebugVars.forceBuildFailure = true;
     fclDebugVars.forceRegisterFail = false;
-    fclDebugVars.fileName = "copybuffer_skl.spv";
 
     gEnvironment->fclPushDebugVars(fclDebugVars);
 

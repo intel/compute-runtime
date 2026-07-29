@@ -403,7 +403,6 @@ struct CompilerInterfaceCachedTests : public ::testing::Test {
         if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
             modeOptions = std::string("-heapless_") + CompilerOptions::kernelOptions.c_str();
         }
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".spv");
 
         gEnvironment->fclPushDebugVars(fclDebugVars);
     }
@@ -420,10 +419,6 @@ TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsRet
 
     inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
-    MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
-    gEnvironment->fclPushDebugVars(fclDebugVars);
-
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.fileName = gEnvironment->igcGetMockFile();
     igcDebugVars.forceBuildFailure = true;
@@ -438,7 +433,6 @@ TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsRet
     auto err = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::buildFailure, err);
 
-    gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
 }
 
@@ -480,7 +474,6 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
     // we force both compilers to fail compilation request
     // at the end we expect CL_SUCCESS which means compilation ends in cache
     MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
     fclDebugVars.forceBuildFailure = true;
     gEnvironment->fclPushDebugVars(fclDebugVars);
 
@@ -510,7 +503,6 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
     inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
     MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
     fclDebugVars.forceBuildFailure = true;
     gEnvironment->fclPushDebugVars(fclDebugVars);
 
