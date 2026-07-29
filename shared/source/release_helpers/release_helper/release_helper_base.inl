@@ -232,4 +232,9 @@ uint64_t ReleaseHelperHw<releaseType>::overrideSystemMemoryPatIndex(uint64_t pat
     return patIndex;
 }
 
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::getIpVersionForGmm() const {
+    return hardwareIpVersion.value;
+}
+
 } // namespace NEO
