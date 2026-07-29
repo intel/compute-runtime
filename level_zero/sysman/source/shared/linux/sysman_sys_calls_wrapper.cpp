@@ -56,5 +56,12 @@ int SysmanSysCallsWrapper::close(int fd, int &errorNum) {
     return result;
 }
 
+int SysmanSysCallsWrapper::access(const char *pathname, int mode, int &errorNum) {
+    errno = 0;
+    int result = NEO::SysCalls::access(pathname, mode);
+    errorNum = errno;
+    return result;
+}
+
 } // namespace Sysman
 } // namespace L0

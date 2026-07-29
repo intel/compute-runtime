@@ -12,6 +12,10 @@
 namespace L0 {
 namespace Sysman {
 
+InfoLogHandleContext::InfoLogHandleContext() {
+    supportedFormats = OsInfoLog::getSupportedInfoLogFormats();
+}
+
 void InfoLogHandleContext::releaseInfoLogHandles() {
     handleList.clear();
 }
@@ -20,13 +24,15 @@ InfoLogHandleContext::~InfoLogHandleContext() {
     releaseInfoLogHandles();
 }
 
-void InfoLogHandleContext::createHandle() {
-    std::unique_ptr<InfoLog> pInfoLog = std::make_unique<InfoLogImp>();
+void InfoLogHandleContext::createHandle(zes_intel_info_log_format_exp_t format) {
+    std::unique_ptr<InfoLog> pInfoLog = std::make_unique<InfoLogImp>(format);
     handleList.push_back(std::move(pInfoLog));
 }
 
 void InfoLogHandleContext::init() {
-    createHandle();
+    for (const auto &format : supportedFormats) {
+        createHandle(format);
+    }
 }
 
 ze_result_t InfoLogHandleContext::infoLogGet(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {

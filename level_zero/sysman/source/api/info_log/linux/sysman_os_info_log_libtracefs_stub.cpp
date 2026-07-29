@@ -1,0 +1,35 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_imp.h"
+#include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
+
+namespace L0 {
+namespace Sysman {
+
+std::unique_ptr<TraceFsApi> (*LinuxInfoLogImp::createTraceFsApi)() = []() -> std::unique_ptr<TraceFsApi> { return nullptr; };
+
+LinuxInfoLogImp::~LinuxInfoLogImp() = default;
+
+std::vector<zes_intel_info_log_format_exp_t> OsInfoLog::getSupportedInfoLogFormats() {
+    return {};
+}
+
+ze_result_t LinuxInfoLogImp::getProperties(zes_intel_info_log_properties_exp_t *pProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxInfoLogImp::infoLogRead(uint32_t *pSize, uint8_t *pBuffer) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxInfoLogImp::infoLogEnable(bool state) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+} // namespace Sysman
+} // namespace L0

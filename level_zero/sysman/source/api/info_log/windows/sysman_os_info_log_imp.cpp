@@ -12,7 +12,7 @@ namespace Sysman {
 
 WddmInfoLogImp::WddmInfoLogImp() {}
 
-std::unique_ptr<OsInfoLog> OsInfoLog::create() {
+std::unique_ptr<OsInfoLog> OsInfoLog::create(zes_intel_info_log_format_exp_t format) {
     return std::make_unique<WddmInfoLogImp>();
 }
 
@@ -26,6 +26,10 @@ ze_result_t WddmInfoLogImp::infoLogRead(uint32_t *pSize, uint8_t *pBuffer) {
 
 ze_result_t WddmInfoLogImp::infoLogEnable(bool state) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+std::vector<zes_intel_info_log_format_exp_t> OsInfoLog::getSupportedInfoLogFormats() {
+    return {};
 }
 
 } // namespace Sysman

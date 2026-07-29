@@ -7,6 +7,7 @@
 
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "level_zero/sysman/test/unit_tests/sources/linux/tracefs_api/mock_tracefs_api.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/tracefs_api/mock_tracefs_os_library.h"
 
 #include "gtest/gtest.h"
@@ -14,39 +15,6 @@
 namespace L0 {
 namespace Sysman {
 namespace ult {
-
-class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
-  public:
-    using L0::Sysman::TraceFsApi::traceFsLibraryHandle;
-
-    bool loadEntryPointsFromBase() {
-        return L0::Sysman::TraceFsApi::loadEntryPoints();
-    }
-
-    bool allEntryPointsLoaded() const {
-        return traceFsInstanceCreateEntry != nullptr &&
-               traceFsInstanceDestroyEntry != nullptr &&
-               traceFsInstanceFreeEntry != nullptr &&
-               traceFsInstanceGetNameEntry != nullptr &&
-               traceFsInstanceGetTraceDirEntry != nullptr &&
-               traceFsInstanceFileOpenEntry != nullptr &&
-               traceFsInstanceFileReadEntry != nullptr &&
-               traceFsInstanceFileWriteEntry != nullptr &&
-               traceFsInstanceFileAppendEntry != nullptr &&
-               traceFsTraceOnEntry != nullptr &&
-               traceFsTraceOffEntry != nullptr &&
-               traceFsEventEnableEntry != nullptr &&
-               traceFsEventDisableEntry != nullptr &&
-               traceFsLocalEventsEntry != nullptr &&
-               traceFsLocalEventsFreeEntry != nullptr &&
-               traceFsInstanceGetBufferPercentEntry != nullptr &&
-               traceFsInstanceSetBufferPercentEntry != nullptr &&
-               traceFsInstanceGetBufferSizeEntry != nullptr &&
-               traceFsInstanceSetBufferSizeEntry != nullptr &&
-               traceFsInstanceGetFileEntry != nullptr &&
-               traceFsGetTracingFileEntry != nullptr;
-    }
-};
 
 class SysmanTraceFsApiFixture : public ::testing::Test {
   protected:
@@ -172,8 +140,21 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenTraceOnCalledThenVerifyReturn
     EXPECT_EQ(0, result);
 }
 
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenTraceOnCalledWithLoadedEntryPointThenVerifyEntryPointIsCalledAndValidValueReturned) {
+
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    int result = testTraceFsApi.traceFsTraceOnBase(&MockTraceFsOsLibrary::mockTraceFsInstance);
+    EXPECT_EQ(0, result);
+}
+
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenTraceOffCalledThenVerifyReturnValue) {
     int result = testTraceFsApi.traceFsTraceOff(&MockTraceFsOsLibrary::mockTraceFsInstance);
+    EXPECT_EQ(0, result);
+}
+
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenTraceOffCalledWithLoadedEntryPointThenVerifyEntryPointIsCalledAndValidValueReturned) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    int result = testTraceFsApi.traceFsTraceOffBase(&MockTraceFsOsLibrary::mockTraceFsInstance);
     EXPECT_EQ(0, result);
 }
 
@@ -184,10 +165,26 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenEventEnableCalledThenVerifyRe
     EXPECT_EQ(0, result);
 }
 
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenEventEnableCalledWithLoadedEntryPointThenVerifyEntryPointIsCalledAndValidValueReturned) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    int result = testTraceFsApi.traceFsEventEnableBase(&MockTraceFsOsLibrary::mockTraceFsInstance,
+                                                       MockTraceFsOsLibrary::mockSystemName,
+                                                       MockTraceFsOsLibrary::mockEventName);
+    EXPECT_EQ(0, result);
+}
+
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenEventDisableCalledThenVerifyReturnValue) {
     int result = testTraceFsApi.traceFsEventDisable(&MockTraceFsOsLibrary::mockTraceFsInstance,
                                                     MockTraceFsOsLibrary::mockSystemName,
                                                     MockTraceFsOsLibrary::mockEventName);
+    EXPECT_EQ(0, result);
+}
+
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenEventDisableCalledWithLoadedEntryPointThenVerifyEntryPointIsCalledAndValidValueReturned) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    int result = testTraceFsApi.traceFsEventDisableBase(&MockTraceFsOsLibrary::mockTraceFsInstance,
+                                                        MockTraceFsOsLibrary::mockSystemName,
+                                                        MockTraceFsOsLibrary::mockEventName);
     EXPECT_EQ(0, result);
 }
 
@@ -217,6 +214,13 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetBufferSizeCalledThenVerify
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferSize, size);
 }
 
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetBufferSizeCalledWithLoadedEntryPointThenEntryPointIsCalledAndValidValueReturned) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    long long result = testTraceFsApi.traceFsInstanceGetBufferSizeBase(&MockTraceFsOsLibrary::mockTraceFsInstance,
+                                                                       MockTraceFsOsLibrary::mockCpu);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferSize, result);
+}
+
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferSizeCalledThenVerifyReturnValue) {
     int result = testTraceFsApi.traceFsInstanceSetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance,
                                                              MockTraceFsOsLibrary::mockSize,
@@ -233,6 +237,7 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetFileCalledThenVerifyReturn
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetTracingFileCalledThenVerifyReturnValue) {
     char *file = testTraceFsApi.traceFsGetTracingFile(MockTraceFsOsLibrary::mockFileName);
     EXPECT_NE(nullptr, file);
+    free(file);
 }
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenLibraryAvailableThenIsAvailableReturnsTrue) {

@@ -7,25 +7,16 @@
 
 #include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_imp.h"
 
+#include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
+
 namespace L0 {
 namespace Sysman {
 
-LinuxInfoLogImp::LinuxInfoLogImp() {}
+LinuxInfoLogImp::LinuxInfoLogImp(zes_intel_info_log_format_exp_t format)
+    : infoLogFormat(format), pTraceFsApi(createTraceFsApi()) {}
 
-std::unique_ptr<OsInfoLog> OsInfoLog::create() {
-    return std::make_unique<LinuxInfoLogImp>();
-}
-
-ze_result_t LinuxInfoLogImp::getProperties(zes_intel_info_log_properties_exp_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t LinuxInfoLogImp::infoLogRead(uint32_t *pSize, uint8_t *pBuffer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t LinuxInfoLogImp::infoLogEnable(bool state) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+std::unique_ptr<OsInfoLog> OsInfoLog::create(zes_intel_info_log_format_exp_t format) {
+    return std::make_unique<LinuxInfoLogImp>(format);
 }
 
 } // namespace Sysman

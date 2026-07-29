@@ -36,7 +36,7 @@ class InfoLog {
 };
 
 struct InfoLogHandleContext {
-    InfoLogHandleContext() {};
+    InfoLogHandleContext();
     ~InfoLogHandleContext();
 
     void init();
@@ -44,9 +44,10 @@ struct InfoLogHandleContext {
     void releaseInfoLogHandles();
 
     std::vector<std::unique_ptr<InfoLog>> handleList = {};
+    std::vector<zes_intel_info_log_format_exp_t> supportedFormats;
 
   private:
-    void createHandle();
+    void createHandle(zes_intel_info_log_format_exp_t format);
     std::once_flag initInfoLogOnce;
     bool infoLogInitDone = false;
 };

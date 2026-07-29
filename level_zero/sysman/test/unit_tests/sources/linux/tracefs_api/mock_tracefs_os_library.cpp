@@ -15,6 +15,8 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+static constexpr const char *mockTraceFsAbsolutePath = "/tmp/neo_sysman_mock_trace";
+
 struct tracefs_instance MockTraceFsOsLibrary::mockTraceFsInstance;
 struct tep_handle MockTraceFsOsLibrary::mockTepHandle;
 
@@ -139,8 +141,9 @@ char *mockTraceFsInstanceGetFile(struct tracefs_instance *instance, const char *
 }
 
 char *mockTraceFsGetTracingFile(const char *file) {
-    EXPECT_STREQ(MockTraceFsOsLibrary::mockFileName, file);
-    return const_cast<char *>(MockTraceFsOsLibrary::mockFileName);
+    EXPECT_TRUE((strcmp(MockTraceFsOsLibrary::mockFileName, file) == 0) ||
+                (strcmp("events/xe/xe_error_cper", file) == 0));
+    return strdup(mockTraceFsAbsolutePath);
 }
 }
 

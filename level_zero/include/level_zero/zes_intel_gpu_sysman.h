@@ -569,7 +569,7 @@ typedef struct _zes_intel_info_log_properties_exp_t {
     void *pNext;                                   ///< [in,out][optional] pointer to extension-specific structure
     zes_intel_info_log_type_exp_t infoLogType;     ///< [out] Type of the info log
     zes_intel_info_log_format_exp_t infoLogFormat; ///< [out] Format of the info log.
-    uint32_t maxSize;                              ///< [out] Maximum size of the info log in bytes. This is the maximum size
+    uint32_t maxSize;                              ///< [out] Maximum size of the info log in kilobytes. This is the maximum size
                                                    ///< of the buffer that can be allocated to read the info log. The application should not
                                                    ///< allocate a buffer larger than this size.
 } zes_intel_info_log_properties_exp_t;
@@ -602,7 +602,6 @@ ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(
 ///
 /// @details
 ///     - This function reads the info log content for the supplied info log handle.
-///     - If `*pSize` is 0, the API returns the required buffer size in bytes.
 ///     - If `*pSize` is non-zero, the API reads the info log into `pBuffer`.
 ///     - This API is NOT thread-safe. It must be called from a single thread or process.
 ///

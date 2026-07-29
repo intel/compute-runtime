@@ -17,7 +17,7 @@ namespace Sysman {
 
 class InfoLogImp : public InfoLog {
   public:
-    InfoLogImp();
+    InfoLogImp(zes_intel_info_log_format_exp_t format);
     ~InfoLogImp() override = default;
 
     ze_result_t infoLogGetProperties(zes_intel_info_log_properties_exp_t *pProperties) override;

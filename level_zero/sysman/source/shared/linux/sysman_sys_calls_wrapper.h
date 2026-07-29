@@ -23,6 +23,7 @@ class SysmanSysCallsWrapper {
     static off_t lseek(int fd, off_t offset, int whence, int &errorNum);
     static int ioctl(int fd, unsigned long request, void *arg, int &errorNum);
     static int close(int fd, int &errorNum);
+    static int access(const char *pathname, int mode, int &errorNum);
 };
 
 } // namespace Sysman

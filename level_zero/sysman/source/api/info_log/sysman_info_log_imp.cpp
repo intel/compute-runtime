@@ -27,8 +27,8 @@ void InfoLogImp::init() {
     pOsInfoLog->getProperties(&infoLogProperties);
 }
 
-InfoLogImp::InfoLogImp() {
-    pOsInfoLog = OsInfoLog::create();
+InfoLogImp::InfoLogImp(zes_intel_info_log_format_exp_t format) {
+    pOsInfoLog = OsInfoLog::create(format);
     init();
 }
 

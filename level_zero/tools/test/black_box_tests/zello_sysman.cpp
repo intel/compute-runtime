@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <sys/stat.h>
@@ -45,6 +46,7 @@ std::string getErrorString(ze_result_t error) {
         {ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, "ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS"},
         {ZE_RESULT_ERROR_NOT_AVAILABLE, "ZE_RESULT_ERROR_NOT_AVAILABLE"},
         {ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, "ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE"},
+        {ZE_RESULT_WARNING_DROPPED_DATA, "ZE_RESULT_WARNING_DROPPED_DATA"},
         {ZE_RESULT_ERROR_UNINITIALIZED, "ZE_RESULT_ERROR_UNINITIALIZED"},
         {ZE_RESULT_ERROR_UNSUPPORTED_VERSION, "ZE_RESULT_ERROR_UNSUPPORTED_VERSION"},
         {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, "ZE_RESULT_ERROR_UNSUPPORTED_FEATURE"},
@@ -147,6 +149,8 @@ void usage() {
                  "\n  -H,   --health                                                                                  selectively run device health EXP API black box test"
                  "\n        [--set-health <ok|warning|critical|failed>]                                               optionally set device health status (requires root)"
                  "\n  -x,   --rescan                                                                                  selectively run driver rescan EXP API black box test and re-run telemetry on rescanned handles"
+                 "\n  -L,   --infolog                                                                                 selectively run info log EXP API black box test"
+                 "\n        [--enable <true|false>]                                                                   optionally enable/disable info log collection (requires root)"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -2406,6 +2410,123 @@ void testSysmanDriverRescan(zes_driver_handle_t driver, std::vector<ze_device_ha
     });
 }
 
+// Info Log EXP APIs function pointers
+typedef ze_result_t(ZE_APICALL *zesIntelDriverEnumInfoLogsExp_pfn)(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_intel_info_log_handle_t *phInfoLogs);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogGetPropertiesExp_pfn)(
+    zes_intel_info_log_handle_t hInfoLog,
+    zes_intel_info_log_properties_exp_t *pProperties);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogReadExp_pfn)(
+    zes_intel_info_log_handle_t hInfoLog,
+    uint32_t *pSize,
+    uint8_t *pBuffer);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogEnableExp_pfn)(
+    zes_intel_info_log_handle_t hInfoLog,
+    bool state);
+
+zesIntelDriverEnumInfoLogsExp_pfn zesIntelDriverEnumInfoLogsExpPtr = nullptr;
+zesIntelInfoLogGetPropertiesExp_pfn zesIntelInfoLogGetPropertiesExpPtr = nullptr;
+zesIntelInfoLogReadExp_pfn zesIntelInfoLogReadExpPtr = nullptr;
+zesIntelInfoLogEnableExp_pfn zesIntelInfoLogEnableExpPtr = nullptr;
+
+void getInfoLogExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverEnumInfoLogsExp", reinterpret_cast<void **>(&zesIntelDriverEnumInfoLogsExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogGetPropertiesExp", reinterpret_cast<void **>(&zesIntelInfoLogGetPropertiesExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogReadExp", reinterpret_cast<void **>(&zesIntelInfoLogReadExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogEnableExp", reinterpret_cast<void **>(&zesIntelInfoLogEnableExpPtr)));
+}
+
+std::string getInfoLogTypeString(zes_intel_info_log_type_exp_t type) {
+    static const std::map<zes_intel_info_log_type_exp_t, std::string> infoLogTypeMap{
+        {ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE, "ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE"}};
+    auto i = infoLogTypeMap.find(type);
+    if (i == infoLogTypeMap.end()) {
+        return "Unknown info log type";
+    }
+    return i->second;
+}
+
+std::string getInfoLogFormatString(zes_intel_info_log_format_exp_t format) {
+    static const std::map<zes_intel_info_log_format_exp_t, std::string> infoLogFormatMap{
+        {ZES_INTEL_INFO_LOG_FORMAT_CPER, "ZES_INTEL_INFO_LOG_FORMAT_CPER"}};
+    auto i = infoLogFormatMap.find(format);
+    if (i == infoLogFormatMap.end()) {
+        return "Unknown info log format";
+    }
+    return i->second;
+}
+
+void testSysmanInfoLog(zes_driver_handle_t driver, bool doEnable, bool enableState) {
+    std::cout << std::endl
+              << " ----  Info Log tests ---- " << std::endl;
+
+    if (!zesIntelDriverEnumInfoLogsExpPtr || !zesIntelInfoLogGetPropertiesExpPtr ||
+        !zesIntelInfoLogReadExpPtr || !zesIntelInfoLogEnableExpPtr) {
+        std::cout << "Info Log EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    uint32_t count = 0;
+    VALIDATECALL(zesIntelDriverEnumInfoLogsExpPtr(driver, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Info Log handles" << std::endl;
+        return;
+    }
+    std::cout << "Found " << count << " info log handles.." << std::endl;
+
+    std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesIntelDriverEnumInfoLogsExpPtr(driver, &count, handles.data()));
+
+    bool iamroot = (geteuid() == 0);
+
+    for (const auto &handle : handles) {
+        zes_intel_info_log_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP};
+        VALIDATECALL(zesIntelInfoLogGetPropertiesExpPtr(handle, &properties));
+        if (verbose) {
+            std::cout << "properties.infoLogType = " << getInfoLogTypeString(properties.infoLogType) << std::endl;
+            std::cout << "properties.infoLogFormat = " << getInfoLogFormatString(properties.infoLogFormat) << std::endl;
+            std::cout << "properties.maxSize = " << properties.maxSize << " KB" << std::endl;
+        }
+
+        if (doEnable) {
+            if (!iamroot) {
+                std::cout << "Not running as Root. Skipping zesIntelInfoLogEnableExp test." << std::endl;
+                continue;
+            }
+            std::cout << (enableState ? "Enabling" : "Disabling") << " info log collection" << std::endl;
+            VALIDATECALL(zesIntelInfoLogEnableExpPtr(handle, enableState));
+            if (!enableState) {
+                continue;
+            }
+        }
+
+        if (properties.maxSize == 0) {
+            std::cout << "Info log maximum size is reported as zero. Skipping zesIntelInfoLogReadExp test." << std::endl;
+            continue;
+        }
+
+        uint32_t size = properties.maxSize * 1024;
+        std::vector<uint8_t> buffer(size, 0);
+        ze_result_t result = zesIntelInfoLogReadExpPtr(handle, &size, buffer.data());
+        if (result == ZE_RESULT_WARNING_DROPPED_DATA) {
+            std::cout << "Info log data was truncated to fit the supplied buffer" << std::endl;
+        } else if (result != ZE_RESULT_SUCCESS) {
+            std::cout << "zesIntelInfoLogReadExp() Failed!! " << getErrorString(result) << std::endl;
+            continue;
+        }
+
+        if (size == 0) {
+            std::cout << "No info log records are available to be read" << std::endl;
+            continue;
+        }
+    }
+}
+
 bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector<std::string> &buf) {
     uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[1]));
     if (deviceIndex >= devices.size()) {
@@ -2804,6 +2925,33 @@ int main(int argc, char *argv[]) {
     if (isParamEnabled(argc, argv, "-x", "--rescan", &optind)) {
         getDriverRescanExpFunctionPointers(driver);
         testSysmanDriverRescan(driver, devices);
+    }
+
+    if (isParamEnabled(argc, argv, "-L", "--infolog", &optind)) {
+        bool infoLogDoEnable = false;
+        bool infoLogEnableState = false;
+        optind = optind + 1;
+        while (optind < argc) {
+            buf.push_back(argv[optind]);
+            optind++;
+        }
+        if (buf.size() != 0) {
+            if (buf.size() != 2 || buf[0] != "--enable") {
+                std::cout << "Invalid Arguments passed to enable info log collection" << std::endl;
+                usage();
+                exit(0);
+            }
+            if (buf[1] != "true" && buf[1] != "false") {
+                std::cout << "Invalid --enable value '" << buf[1] << "': must be true or false" << std::endl;
+                usage();
+                exit(0);
+            }
+            infoLogEnableState = (buf[1] == "true");
+            infoLogDoEnable = true;
+        }
+        getInfoLogExpFunctionPointers(driver);
+        testSysmanInfoLog(driver, infoLogDoEnable, infoLogEnableState);
+        buf.clear();
     }
 
     return 0;

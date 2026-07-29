@@ -1,0 +1,123 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/tracefs_api/mock_tracefs_os_library.h"
+
+namespace L0 {
+namespace Sysman {
+namespace ult {
+
+class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
+  public:
+    using L0::Sysman::TraceFsApi::traceFsLibraryHandle;
+
+    int eventEnableReturnValue = 0;
+    int eventDisableReturnValue = 0;
+    int traceOnReturnValue = 0;
+    int traceOffReturnValue = 0;
+    std::string mockTracePipeData;
+
+    bool loadEntryPointsFromBase() {
+        return L0::Sysman::TraceFsApi::loadEntryPoints();
+    }
+
+    char *traceFsInstanceFileRead(struct tracefs_instance *instance, const char *file, int *psize) override {
+        if (file && std::string(file) == "trace_pipe" && !mockTracePipeData.empty()) {
+            if (psize) {
+                *psize = static_cast<int>(mockTracePipeData.size());
+            }
+            return const_cast<char *>(mockTracePipeData.c_str());
+        }
+        return L0::Sysman::TraceFsApi::traceFsInstanceFileRead(instance, file, psize);
+    }
+
+    long long traceFsInstanceGetBufferSize(struct tracefs_instance *instance, int cpu) override {
+        if (traceFsInstanceGetBufferSizeEntry != nullptr) {
+            return MockTraceFsOsLibrary::mockBufferSize;
+        }
+        return L0::Sysman::TraceFsApi::traceFsInstanceGetBufferSize(instance, cpu);
+    }
+
+    long long traceFsInstanceGetBufferSizeBase(struct tracefs_instance *instance, int cpu) {
+        return L0::Sysman::TraceFsApi::traceFsInstanceGetBufferSize(instance, cpu);
+    }
+
+    int traceFsEventEnable(struct tracefs_instance *instance, const char *system, const char *event) override {
+        if (traceFsEventEnableEntry != nullptr) {
+            return eventEnableReturnValue;
+        }
+        return L0::Sysman::TraceFsApi::traceFsEventEnable(instance, system, event);
+    }
+
+    int traceFsEventEnableBase(struct tracefs_instance *instance, const char *system, const char *event) {
+        return L0::Sysman::TraceFsApi::traceFsEventEnable(instance, system, event);
+    }
+
+    int traceFsEventDisable(struct tracefs_instance *instance, const char *system, const char *event) override {
+        if (traceFsEventDisableEntry != nullptr) {
+            return eventDisableReturnValue;
+        }
+        return L0::Sysman::TraceFsApi::traceFsEventDisable(instance, system, event);
+    }
+
+    int traceFsEventDisableBase(struct tracefs_instance *instance, const char *system, const char *event) {
+        return L0::Sysman::TraceFsApi::traceFsEventDisable(instance, system, event);
+    }
+
+    int traceFsTraceOn(struct tracefs_instance *instance) override {
+        if (traceFsTraceOnEntry != nullptr) {
+            return traceOnReturnValue;
+        }
+        return L0::Sysman::TraceFsApi::traceFsTraceOn(instance);
+    }
+
+    int traceFsTraceOnBase(struct tracefs_instance *instance) {
+        return L0::Sysman::TraceFsApi::traceFsTraceOn(instance);
+    }
+
+    int traceFsTraceOff(struct tracefs_instance *instance) override {
+        if (traceFsTraceOffEntry != nullptr) {
+            return traceOffReturnValue;
+        }
+        return L0::Sysman::TraceFsApi::traceFsTraceOff(instance);
+    }
+
+    int traceFsTraceOffBase(struct tracefs_instance *instance) {
+        return L0::Sysman::TraceFsApi::traceFsTraceOff(instance);
+    }
+
+    bool allEntryPointsLoaded() const {
+        return traceFsInstanceCreateEntry != nullptr &&
+               traceFsInstanceDestroyEntry != nullptr &&
+               traceFsInstanceFreeEntry != nullptr &&
+               traceFsInstanceGetNameEntry != nullptr &&
+               traceFsInstanceGetTraceDirEntry != nullptr &&
+               traceFsInstanceFileOpenEntry != nullptr &&
+               traceFsInstanceFileReadEntry != nullptr &&
+               traceFsInstanceFileWriteEntry != nullptr &&
+               traceFsInstanceFileAppendEntry != nullptr &&
+               traceFsTraceOnEntry != nullptr &&
+               traceFsTraceOffEntry != nullptr &&
+               traceFsEventEnableEntry != nullptr &&
+               traceFsEventDisableEntry != nullptr &&
+               traceFsLocalEventsEntry != nullptr &&
+               traceFsLocalEventsFreeEntry != nullptr &&
+               traceFsInstanceGetBufferPercentEntry != nullptr &&
+               traceFsInstanceSetBufferPercentEntry != nullptr &&
+               traceFsInstanceGetBufferSizeEntry != nullptr &&
+               traceFsInstanceSetBufferSizeEntry != nullptr &&
+               traceFsInstanceGetFileEntry != nullptr &&
+               traceFsGetTracingFileEntry != nullptr;
+    }
+};
+
+} // namespace ult
+} // namespace Sysman
+} // namespace L0

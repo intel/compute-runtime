@@ -24,7 +24,7 @@ namespace ult {
 
 class MockTraceFsOsLibrary : public NEO::OsLibrary {
   public:
-    bool isLoaded() override { return false; }
+    bool isLoaded() override { return true; }
     void *getProcAddress(const std::string &procName) override;
     std::string getFullPath() override {
         return std::string();
@@ -33,6 +33,7 @@ class MockTraceFsOsLibrary : public NEO::OsLibrary {
     void deleteEntryPoint(const std::string &procName);
 
     MockTraceFsOsLibrary();
+    ~MockTraceFsOsLibrary() override = default;
 
     static struct tracefs_instance mockTraceFsInstance;
     static struct tep_handle mockTepHandle;
