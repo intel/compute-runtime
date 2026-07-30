@@ -21,6 +21,7 @@
 #include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_compiler_cache.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
@@ -37,6 +38,20 @@
 #include <memory>
 
 using namespace NEO;
+
+TEST(CompilerCache, givenIgcShaderDumpEnvironmentVariablesWhenCheckingIfHashIsNeededThenReturnTheirState) {
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    EXPECT_FALSE(isIgcShaderDumpEnabled());
+
+    mockableEnvs["IGC_ShaderDumpEnable"] = "1";
+    EXPECT_TRUE(isIgcShaderDumpEnabled());
+
+    mockableEnvs.clear();
+    mockableEnvs["IGC_ShaderDumpEnableAll"] = "1";
+    EXPECT_TRUE(isIgcShaderDumpEnabled());
+}
 
 TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPtrDataIsUsed) {
     Hash hash;
@@ -286,6 +301,112 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcRegKeys, igcLibSize, igcLibMTime);
     std::string hash2 = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcRegKeys, igcLibSize, igcLibMTime);
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
+}
+
+TEST(CompilerCacheHashTests, GivenOptionsWithDifferentOrderAndWhitespaceWhenGettingHashThenHashIsTheSame) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    constexpr const char source[] = "kernel void foo(global int *dst) { dst[0] = 1; }";
+    constexpr const char optionsA[] = "  -cl-opt-disable   -DVALUE=1  -g  ";
+    constexpr const char optionsB[] = "-g -DVALUE=1 -cl-opt-disable";
+    constexpr const char internalOptionsA[] = " -igc_opts   -ze-intel-128-GRF-per-thread ";
+    constexpr const char internalOptionsB[] = "-ze-intel-128-GRF-per-thread -igc_opts";
+
+    const auto hashA = CompilerCache::getHashValue(hwInfo,
+                                                   ArrayRef<const char>(source, sizeof(source) - 1),
+                                                   ArrayRef<const char>(optionsA, sizeof(optionsA) - 1),
+                                                   ArrayRef<const char>(internalOptionsA, sizeof(internalOptionsA) - 1),
+                                                   ArrayRef<const char>(),
+                                                   ArrayRef<const char>());
+
+    const auto hashB = CompilerCache::getHashValue(hwInfo,
+                                                   ArrayRef<const char>(source, sizeof(source) - 1),
+                                                   ArrayRef<const char>(optionsB, sizeof(optionsB) - 1),
+                                                   ArrayRef<const char>(internalOptionsB, sizeof(internalOptionsB) - 1),
+                                                   ArrayRef<const char>(),
+                                                   ArrayRef<const char>());
+
+    EXPECT_EQ(hashA, hashB);
+}
+
+TEST(CompilerCacheHashTests, GivenClAndZeOptionsWhenGettingHashThenHashIsTheSame) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    constexpr const char source[] = "kernel void foo(global int *dst) { dst[0] = 1; }";
+    constexpr const char clOptions[] = "-cl-opt-disable -cl-intel-greater-than-4GB-buffer-required";
+    constexpr const char zeOptions[] = "-ze-opt-disable -ze-opt-greater-than-4GB-buffer-required";
+    constexpr const char clInternalOptions[] = "-cl-intel-enable-auto-large-GRF-mode";
+    constexpr const char zeInternalOptions[] = "-ze-intel-enable-auto-large-GRF-mode";
+
+    const auto clHash = CompilerCache::getHashValue(hwInfo,
+                                                    ArrayRef<const char>(source, sizeof(source) - 1),
+                                                    ArrayRef<const char>(clOptions, sizeof(clOptions) - 1),
+                                                    ArrayRef<const char>(clInternalOptions, sizeof(clInternalOptions) - 1),
+                                                    ArrayRef<const char>(),
+                                                    ArrayRef<const char>());
+
+    const auto zeHash = CompilerCache::getHashValue(hwInfo,
+                                                    ArrayRef<const char>(source, sizeof(source) - 1),
+                                                    ArrayRef<const char>(zeOptions, sizeof(zeOptions) - 1),
+                                                    ArrayRef<const char>(zeInternalOptions, sizeof(zeInternalOptions) - 1),
+                                                    ArrayRef<const char>(),
+                                                    ArrayRef<const char>());
+
+    EXPECT_EQ(clHash, zeHash);
+
+    constexpr const char unmatchedClOption[] = "-cl-uniform-work-group-size";
+    constexpr const char unmatchedZeOption[] = "-ze-uniform-work-group-size";
+    const auto unmatchedClHash = CompilerCache::getHashValue(hwInfo,
+                                                             ArrayRef<const char>(source, sizeof(source) - 1),
+                                                             ArrayRef<const char>(unmatchedClOption, sizeof(unmatchedClOption) - 1),
+                                                             ArrayRef<const char>(),
+                                                             ArrayRef<const char>(),
+                                                             ArrayRef<const char>());
+    const auto unmatchedZeHash = CompilerCache::getHashValue(hwInfo,
+                                                             ArrayRef<const char>(source, sizeof(source) - 1),
+                                                             ArrayRef<const char>(unmatchedZeOption, sizeof(unmatchedZeOption) - 1),
+                                                             ArrayRef<const char>(),
+                                                             ArrayRef<const char>(),
+                                                             ArrayRef<const char>());
+
+    EXPECT_NE(unmatchedClHash, unmatchedZeHash);
+}
+
+TEST(CompilerCacheHashTests, GivenEmptyOrNullTerminatedOptionsWhenGettingHashThenHashIsNormalized) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    constexpr const char source[] = "kernel void foo(global int *dst) { dst[0] = 1; }";
+    constexpr const char option[] = "-cl-opt-disable";
+    constexpr const char nullTerminatedOption[] = "-cl-opt-disable";
+    constexpr const char emptyOption[] = "";
+
+    const auto emptyHash = CompilerCache::getHashValue(hwInfo,
+                                                       ArrayRef<const char>(source, sizeof(source) - 1),
+                                                       ArrayRef<const char>(),
+                                                       ArrayRef<const char>(),
+                                                       ArrayRef<const char>(),
+                                                       ArrayRef<const char>());
+    const auto nullTerminatedEmptyHash = CompilerCache::getHashValue(hwInfo,
+                                                                     ArrayRef<const char>(source, sizeof(source) - 1),
+                                                                     ArrayRef<const char>(emptyOption, sizeof(emptyOption)),
+                                                                     ArrayRef<const char>(emptyOption, sizeof(emptyOption)),
+                                                                     ArrayRef<const char>(),
+                                                                     ArrayRef<const char>());
+    const auto nonTerminatedHash = CompilerCache::getHashValue(hwInfo,
+                                                               ArrayRef<const char>(source, sizeof(source) - 1),
+                                                               ArrayRef<const char>(option, sizeof(option) - 1),
+                                                               ArrayRef<const char>(option, sizeof(option) - 1),
+                                                               ArrayRef<const char>(),
+                                                               ArrayRef<const char>());
+    const auto nullTerminatedHash = CompilerCache::getHashValue(hwInfo,
+                                                                ArrayRef<const char>(source, sizeof(source) - 1),
+                                                                ArrayRef<const char>(nullTerminatedOption, sizeof(nullTerminatedOption)),
+                                                                ArrayRef<const char>(nullTerminatedOption, sizeof(nullTerminatedOption)),
+                                                                ArrayRef<const char>(),
+                                                                ArrayRef<const char>());
+
+    EXPECT_EQ(emptyHash, nullTerminatedEmptyHash);
+    EXPECT_EQ(nonTerminatedHash, nullTerminatedHash);
 }
 
 TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFilesAreCreated) {

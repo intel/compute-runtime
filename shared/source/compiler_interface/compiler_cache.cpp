@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/compiler_cache.h"
 
+#include "shared/source/compiler_interface/tokenized_string.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/casts.h"
 #include "shared/source/helpers/file_io.h"
@@ -18,36 +19,88 @@
 #include "elements_struct.h"
 #include "os_inc.h"
 
+#include <algorithm>
+#include <array>
 #include <cstring>
 #include <iomanip>
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace NEO {
 
 std::mutex CompilerCache::cacheAccessMtx;
 
-const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
-                                                   const ArrayRef<const char> options, const ArrayRef<const char> internalOptions,
-                                                   const ArrayRef<const char> specIds, const ArrayRef<const char> specValues,
-                                                   const ArrayRef<const char> igcRevision, const ArrayRef<const char> igcRegKeys, size_t igcLibSize, time_t igcLibMTime) {
-    Hash hash;
+namespace {
 
-    hash.update("----", 4);
-    hash.update(&*igcRevision.begin(), igcRevision.size());
-    hash.update(safePodCast<const char *>(&igcLibSize), sizeof(igcLibSize));
-    hash.update(safePodCast<const char *>(&igcLibMTime), sizeof(igcLibMTime));
-    hash.update("----", 4);
-    hash.update(&*igcRegKeys.begin(), igcRegKeys.size());
+std::string normalizeOptionForHash(ConstStringRef option) {
+    constexpr std::array<std::pair<ConstStringRef, ConstStringRef>, 3> equivalentOptions = {{
+        {"-cl-opt-disable", "-ze-opt-disable"},
+        {"-cl-intel-greater-than-4GB-buffer-required", "-ze-opt-greater-than-4GB-buffer-required"},
+        {"-cl-intel-enable-auto-large-GRF-mode", "-ze-intel-enable-auto-large-GRF-mode"},
+    }};
+
+    for (const auto &[clOption, zeOption] : equivalentOptions) {
+        if (option == clOption) {
+            return zeOption.str();
+        }
+    }
+
+    return option.str();
+}
+
+std::string normalizeOptionsForHash(ArrayRef<const char> options) {
+    if (options.empty()) {
+        return "";
+    }
+
+    auto size = options.size();
+    if ((size > 0) && (options[size - 1] == '\0')) {
+        --size;
+    }
+
+    auto tokens = CompilerOptions::tokenize(ConstStringRef(options.begin(), size));
+    std::vector<std::string> normalizedTokens;
+    normalizedTokens.reserve(tokens.size());
+    for (const auto &token : tokens) {
+        normalizedTokens.push_back(normalizeOptionForHash(token));
+    }
+
+    std::sort(normalizedTokens.begin(), normalizedTokens.end());
+
+    std::string normalizedOptions;
+    for (const auto &token : normalizedTokens) {
+        if (!normalizedOptions.empty()) {
+            normalizedOptions += ' ';
+        }
+        normalizedOptions += token;
+    }
+
+    return normalizedOptions;
+}
+
+} // namespace
+
+bool isIgcShaderDumpEnabled() {
+    return IoFunctions::getEnvToBool("IGC_ShaderDumpEnable") || IoFunctions::getEnvToBool("IGC_ShaderDumpEnableAll");
+}
+
+uint64_t CompilerCache::getHashValue(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
+                                     const ArrayRef<const char> options, const ArrayRef<const char> internalOptions,
+                                     const ArrayRef<const char> specIds, const ArrayRef<const char> specValues) {
+    Hash hash;
 
     hash.update("----", 4);
     hash.update(&*input.begin(), input.size());
     hash.update("----", 4);
-    hash.update(&*options.begin(), options.size());
+    auto normalizedOptions = normalizeOptionsForHash(options);
+    hash.update(normalizedOptions.c_str(), normalizedOptions.size());
     hash.update("----", 4);
-    hash.update(&*internalOptions.begin(), internalOptions.size());
+    auto normalizedInternalOptions = normalizeOptionsForHash(internalOptions);
+    hash.update(normalizedInternalOptions.c_str(), normalizedInternalOptions.size());
     hash.update("----", 4);
+
     hash.update(&*specIds.begin(), specIds.size());
     hash.update(&*specValues.begin(), specValues.size());
     hash.update("----", 4);
@@ -64,7 +117,30 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
 
     hash.update(reinterpret_cast<const char *>(&hwInfo.ipVersion), sizeof(uint32_t));
 
-    auto res = hash.finish();
+    return hash.finish();
+}
+
+const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
+                                                   const ArrayRef<const char> options, const ArrayRef<const char> internalOptions,
+                                                   const ArrayRef<const char> specIds, const ArrayRef<const char> specValues,
+                                                   const ArrayRef<const char> igcRevision, const ArrayRef<const char> igcRegKeys, size_t igcLibSize, time_t igcLibMTime) {
+
+    auto res = getHashValue(hwInfo, input, options, internalOptions, specIds, specValues);
+
+    Hash igcHash;
+    igcHash.update("----", 4);
+    igcHash.update(&*igcRevision.begin(), igcRevision.size());
+    igcHash.update(safePodCast<const char *>(&igcLibSize), sizeof(igcLibSize));
+    igcHash.update(safePodCast<const char *>(&igcLibMTime), sizeof(igcLibMTime));
+    igcHash.update("----", 4);
+    igcHash.update(&*igcRegKeys.begin(), igcRegKeys.size());
+
+    char resBytes[sizeof(res)];
+    std::memcpy(resBytes, &res, sizeof(res));
+    igcHash.update(resBytes, sizeof(resBytes));
+
+    res = igcHash.finish();
+
     std::stringstream stream;
     stream << std::setfill('0')
            << std::setw(sizeof(res) * 2)

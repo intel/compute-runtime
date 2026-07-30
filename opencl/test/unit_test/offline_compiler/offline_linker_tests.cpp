@@ -14,7 +14,9 @@
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 
 #include "environment.h"
 
@@ -512,6 +514,9 @@ TEST_F(OfflineLinkerTest, GivenSPIRVandLLVMBCFilesWhenElfOutputIsRequestedThenEl
 }
 
 TEST_F(OfflineLinkerTest, GivenValidInputFileContentsWhenLlvmBcOutputIsRequestedThenSuccessIsReturnedAndFileIsWritten) {
+    std::unordered_map<std::string, std::string> mockableEnvs{{"IGC_ShaderDumpEnableAll", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
     auto spirvFileContent = createFileContent(getEmptySpirvFile(), IGC::CodeType::spirV);
     auto llvmbcFileContent = createFileContent(getEmptyLlvmBcFile(), IGC::CodeType::llvmBc);
 

@@ -35,13 +35,16 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
@@ -61,6 +64,7 @@
 
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -1235,6 +1239,136 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsOption));
     EXPECT_TRUE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
     EXPECT_EQ(1, MockProgram::getInternalOptionsCalled);
+}
+
+namespace {
+
+struct CapturingFclTranslationCtxForHashTest : MockFclOclTranslationCtx {
+    uint64_t capturedSrcHash = 0u;
+    bool wasCalled = false;
+
+    IGC::OclTranslationOutputBase *TranslateImpl(
+        CIF::Version_t outVersion,
+        CIF::Builtins::BufferSimple *src,
+        CIF::Builtins::BufferSimple *options,
+        CIF::Builtins::BufferSimple *internalOptions,
+        CIF::Builtins::BufferSimple *tracingOptions,
+        uint32_t tracingOptionsCount,
+        uint64_t srcHash) override {
+        wasCalled = true;
+        capturedSrcHash = srcHash;
+        return MockFclOclTranslationCtx::TranslateImpl(
+            outVersion, src, options, internalOptions, tracingOptions, tracingOptionsCount, srcHash);
+    };
+};
+
+struct CapturingIgcTranslationCtxForHashTest : MockIgcOclTranslationCtx {
+    uint64_t capturedSrcHash = 0u;
+    std::vector<uint64_t> capturedSrcHashes;
+
+    IGC::OclTranslationOutputBase *TranslateImpl(
+        CIF::Version_t outVersion,
+        CIF::Builtins::BufferSimple *src,
+        CIF::Builtins::BufferSimple *specConstantsIds,
+        CIF::Builtins::BufferSimple *specConstantsValues,
+        CIF::Builtins::BufferSimple *options,
+        CIF::Builtins::BufferSimple *internalOptions,
+        CIF::Builtins::BufferSimple *tracingOptions,
+        uint32_t tracingOptionsCount,
+        void *gtPinInput,
+        uint64_t srcHash) override {
+        capturedSrcHash = srcHash;
+        capturedSrcHashes.push_back(srcHash);
+        return MockIgcOclTranslationCtx::TranslateImpl(
+            outVersion, src, specConstantsIds, specConstantsValues,
+            options, internalOptions, tracingOptions, tracingOptionsCount, gtPinInput, srcHash);
+    }
+};
+
+struct CapturingCompilerInterfaceForHashTest : MockCompilerInterface {
+    CapturingIgcTranslationCtxForHashTest *igcCaptCtx = nullptr;
+    CapturingFclTranslationCtxForHashTest *fclCaptCtx = nullptr;
+
+    CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> createIgcTranslationCtx(
+        const Device &device,
+        IGC::CodeType::CodeType_t inType,
+        IGC::CodeType::CodeType_t outType) override {
+        requestedTranslationCtxs.emplace_back(inType, outType);
+        igcCaptCtx->Retain();
+        return CIF::RAII::Pack<NEO::IgcOclTranslationCtxTag>(igcCaptCtx);
+    }
+
+    CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> createFclTranslationCtx(
+        const Device &device,
+        IGC::CodeType::CodeType_t inType,
+        IGC::CodeType::CodeType_t outType) override {
+        requestedTranslationCtxs.emplace_back(inType, outType);
+        fclCaptCtx->Retain();
+        return CIF::RAII::Pack<NEO::FclOclTranslationCtxTag>(fclCaptCtx);
+    }
+};
+
+} // namespace
+
+static std::pair<CapturingIgcTranslationCtxForHashTest *, CapturingFclTranslationCtxForHashTest *> buildProgramWithCapturingCompilerInterface(
+    MockContext *pContext, MockZebinWrapper<> &zebinWrapper, cl_int &retVal) {
+
+    zebinWrapper.setAsMockCompilerReturnedBinary();
+
+    auto igcCaptCtx = new CapturingIgcTranslationCtxForHashTest();
+    auto fclCaptCtx = new CapturingFclTranslationCtxForHashTest();
+    auto cip = new CapturingCompilerInterfaceForHashTest();
+    cip->igcCaptCtx = igcCaptCtx;
+    cip->fclCaptCtx = fclCaptCtx;
+
+    auto compilerMain = new MockCIFMain();
+    compilerMain->setDefaultCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
+    compilerMain->setDefaultCreatorFunc<NEO::MockFclOclDeviceCtx>(NEO::MockFclOclDeviceCtx::Create);
+    compilerMain->Retain();
+    cip->setIgcMain(compilerMain);
+    cip->setFclMain(compilerMain);
+
+    auto pClDevice = pContext->getDevice(0);
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
+    pProgram->sourceCode = "__kernel void mock() {}";
+    pProgram->createdFrom = Program::CreatedFrom::source;
+
+    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0");
+    return std::make_pair(igcCaptCtx, fclCaptCtx);
+}
+
+TEST_F(ProgramFromSourceTest, givenProgramWhenBuildingProgramWithOpenClCTheHashIsPersistent) {
+    std::unordered_map<std::string, std::string> mockableEnvs{{"IGC_ShaderDumpEnable", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    auto captCtx = buildProgramWithCapturingCompilerInterface(pContext, *zebinPtr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(0u, captCtx.first->capturedSrcHash);
+    if (captCtx.second->wasCalled) {
+        EXPECT_NE(0u, captCtx.second->capturedSrcHash);
+        EXPECT_EQ(captCtx.first->capturedSrcHash, captCtx.second->capturedSrcHash);
+    } else {
+        ASSERT_EQ(2u, captCtx.first->capturedSrcHashes.size());
+        EXPECT_EQ(captCtx.first->capturedSrcHashes[0], captCtx.first->capturedSrcHashes[1]);
+    }
+    captCtx.first->Release();
+    captCtx.second->Release();
+}
+
+TEST_F(ProgramFromSourceTest, givenProgramWhenBuildingProgramWithoutShaderDumpThenSourceHashIsNotPassedToCompiler) {
+    auto captCtx = buildProgramWithCapturingCompilerInterface(pContext, *zebinPtr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, captCtx.first->capturedSrcHash);
+    if (captCtx.second->wasCalled) {
+        EXPECT_EQ(0u, captCtx.second->capturedSrcHash);
+    } else {
+        ASSERT_EQ(2u, captCtx.first->capturedSrcHashes.size());
+        EXPECT_EQ(0u, captCtx.first->capturedSrcHashes[1]);
+    }
+    captCtx.first->Release();
+    captCtx.second->Release();
 }
 
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAddedOnlyOnce) {
