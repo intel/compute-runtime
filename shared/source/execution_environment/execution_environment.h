@@ -19,6 +19,7 @@
 namespace NEO {
 class DirectSubmissionController;
 class UnifiedMemoryReuseCleaner;
+class UsmReusePerfLogger;
 class GfxCoreHelper;
 class MemoryManager;
 struct OsEnvironment;
@@ -77,11 +78,18 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     DirectSubmissionController *initializeDirectSubmissionController();
     void initializeUnifiedMemoryReuseCleaner(bool isAnyDirectSubmissionLightEnabled);
+    UsmReusePerfLogger &getUsmReusePerfLogger() const;
 
     std::unique_lock<std::mutex> obtainPeerAccessQueryLock() {
         return std::unique_lock<std::mutex>(peerAccessQueryMutex);
     }
 
+  private:
+    // Must be declared before the memory manager and reuse cleaner to outlive their teardown
+    mutable std::once_flag usmReusePerfLoggerOnceFlag;
+    mutable std::unique_ptr<UsmReusePerfLogger> usmReusePerfLogger;
+
+  public:
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<UnifiedMemoryReuseCleaner> unifiedMemoryReuseCleaner;
     std::unique_ptr<DirectSubmissionController> directSubmissionController;

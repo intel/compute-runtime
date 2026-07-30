@@ -25,6 +25,7 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -45,6 +46,15 @@ TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenExecutionEnv
     ExecutionEnvironment environment;
     EXPECT_EQ(0, environment.getRefInternalCount());
     EXPECT_EQ(0, environment.getRefApiCount());
+}
+
+TEST(ExecutionEnvironment, givenUsmReusePerfLoggerWhenRequestedMoreThanOnceThenTheSameInstanceIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+
+    auto &firstLogger = executionEnvironment.getUsmReusePerfLogger();
+    auto &secondLogger = executionEnvironment.getUsmReusePerfLogger();
+
+    EXPECT_EQ(&firstLogger, &secondLogger);
 }
 
 TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
@@ -445,7 +455,15 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     EXPECT_NE(0u, executionEnvironment.memoryManager->usmReuseInfo.getMaxAllocationsSavedForReuseSize());
 }
 
+namespace {
+struct UsmReusePerfLoggerMembers {
+    std::once_flag onceFlag;
+    std::unique_ptr<UsmReusePerfLogger> logger;
+};
+} // namespace
+
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManager>) +
+                                                  sizeof(UsmReusePerfLoggerMembers) +
                                                   sizeof(std::unique_ptr<DirectSubmissionController>) +
                                                   sizeof(std::unique_ptr<UnifiedMemoryReuseCleaner>) +
                                                   sizeof(std::unique_ptr<OsEnvironment>) +

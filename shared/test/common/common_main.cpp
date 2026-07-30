@@ -155,10 +155,7 @@ void applyCommonWorkarounds() {
     }
 
     // Create FileLogger to prevent false memory leaks
-    {
-        NEO::fileLoggerInstance();
-        NEO::usmReusePerfLoggerInstance();
-    }
+    NEO::fileLoggerInstance();
 
     // Force initialization of inverted compatibility mapping here so its allocations happen before memory-leak listener is enabled.
     // This prevents false-positive leak reports.

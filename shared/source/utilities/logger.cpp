@@ -8,7 +8,6 @@
 #include "shared/source/utilities/logger.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -36,10 +35,8 @@ FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
     return fileLoggerInstance;
 }
 
-FileLogger<globalDebugFunctionalityLevel> &usmReusePerfLoggerInstance() {
-    static FileLogger<globalDebugFunctionalityLevel> usmReusePerfLoggerInstance(std::string("usm_reuse_perf.csv"), debugManager.flags);
-    return usmReusePerfLoggerInstance;
-}
+UsmReusePerfLogger::UsmReusePerfLogger()
+    : FileLogger(std::string("usm_reuse_perf.csv"), debugManager.flags) {}
 
 template <DebugFunctionalityLevel debugLevel>
 FileLogger<debugLevel>::FileLogger(std::string filename, const DebugVariables &flags) {

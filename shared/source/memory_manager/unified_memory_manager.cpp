@@ -28,6 +28,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/logger.h"
 
 namespace NEO {
 
@@ -278,12 +279,12 @@ void SVMAllocsManager::SvmAllocationCache::logCacheOperation(const SvmAllocation
         break;
     }
     isSuccessString = cachePerfEvent.isSuccess ? "TRUE" : "FALSE";
-    NEO::usmReusePerfLoggerInstance().log(true, ",",
-                                          cachePerfEvent.timePoint.time_since_epoch().count(), ",",
-                                          allocationTypeString, ",",
-                                          operationTypeString, ",",
-                                          cachePerfEvent.allocationSize, ",",
-                                          isSuccessString);
+    memoryManager->peekExecutionEnvironment().getUsmReusePerfLogger().log(true, ",",
+                                                                          cachePerfEvent.timePoint.time_since_epoch().count(), ",",
+                                                                          allocationTypeString, ",",
+                                                                          operationTypeString, ",",
+                                                                          cachePerfEvent.allocationSize, ",",
+                                                                          isSuccessString);
 }
 
 void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) {

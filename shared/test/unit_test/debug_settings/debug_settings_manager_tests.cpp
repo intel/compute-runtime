@@ -19,7 +19,9 @@
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
@@ -462,15 +464,19 @@ TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCal
 }
 
 TEST(DebugSettingsManager, GivenLogsEnabledWhenLogCacheOperationCalledThenStringPrintedToFile) {
-    if (!NEO::usmReusePerfLoggerInstance().enabled()) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(executionEnvironment);
+    auto &logger = executionEnvironment.getUsmReusePerfLogger();
+    if (!logger.enabled()) {
         GTEST_SKIP();
     }
-    DebugManagerStateRestore restorer;
 
-    auto logFile = NEO::usmReusePerfLoggerInstance().getLogFileName();
+    auto logFile = logger.getLogFileName();
     removeVirtualFile(logFile);
 
     SVMAllocsManager::SvmAllocationCache svmAllocationCache;
+    svmAllocationCache.memoryManager = &memoryManager;
     auto timePoint = std::chrono::high_resolution_clock::now();
     svmAllocationCache.logCacheOperation({.allocationSize = 1024,
                                           .timePoint = timePoint,

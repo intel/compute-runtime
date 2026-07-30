@@ -26,10 +26,18 @@
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/logger.h"
 
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {
     this->configureNeoEnvironment();
+}
+
+UsmReusePerfLogger &ExecutionEnvironment::getUsmReusePerfLogger() const {
+    std::call_once(usmReusePerfLoggerOnceFlag, [this] {
+        usmReusePerfLogger = std::make_unique<UsmReusePerfLogger>();
+    });
+    return *usmReusePerfLogger;
 }
 
 void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment) {
