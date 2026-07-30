@@ -152,4 +152,11 @@ cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription, bool
     return CL_INVALID_VALUE;
 }
 
+bool isTwoPlaneYuv420Format(ze_image_format_layout_t layout) {
+    return layout == ZE_IMAGE_FORMAT_LAYOUT_NV12 ||
+           layout == ZE_IMAGE_FORMAT_LAYOUT_P010 ||
+           layout == ZE_IMAGE_FORMAT_LAYOUT_P012 ||
+           layout == ZE_IMAGE_FORMAT_LAYOUT_P016;
+}
+
 } // namespace L0

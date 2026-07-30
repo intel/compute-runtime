@@ -239,10 +239,6 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     ze_image_handle_t imageHandle{};
 
     if (needsView) {
-        if (imagePlane == ImagePlane::planeU || imagePlane == ImagePlane::planeV || imagePlane == ImagePlane::planeUV) {
-            l0imageDesc.width /= 2;
-            l0imageDesc.height /= 2;
-        }
         ret = zeImageViewCreateExp(context->getL0ContextHandle(), context->getClDevice()->getL0Handle(), &l0imageDesc, baseImageHandle, &imageHandle);
     } else {
         ret = zeImageCreate(context->getL0ContextHandle(), context->getClDevice()->getL0Handle(), &l0imageDesc, &imageHandle);

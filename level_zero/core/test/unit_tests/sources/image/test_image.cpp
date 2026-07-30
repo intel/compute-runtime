@@ -612,6 +612,167 @@ HWTEST_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated)
     zeImageDestroy(planeUV);
 }
 
+HWTEST_F(ImageView, givenTwoPlaneYuv420ImageWhenCreatingChromaViewThenDimensionsAreHalved) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    struct PlanarCase {
+        ze_image_format_layout_t baseLayout;
+        ze_image_format_layout_t lumaViewLayout;
+        ze_image_format_layout_t chromaViewLayout;
+    };
+
+    const PlanarCase cases[] = {
+        {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_LAYOUT_8_8},
+        {ZE_IMAGE_FORMAT_LAYOUT_P010, ZE_IMAGE_FORMAT_LAYOUT_16, ZE_IMAGE_FORMAT_LAYOUT_16_16},
+        {ZE_IMAGE_FORMAT_LAYOUT_P012, ZE_IMAGE_FORMAT_LAYOUT_16, ZE_IMAGE_FORMAT_LAYOUT_16_16},
+        {ZE_IMAGE_FORMAT_LAYOUT_P016, ZE_IMAGE_FORMAT_LAYOUT_16, ZE_IMAGE_FORMAT_LAYOUT_16_16}};
+
+    // Result must not depend on whether the caller already halved the view descriptor.
+    const bool chromaDescPreHalvedValues[] = {false, true};
+
+    for (const auto &planarCase : cases) {
+        for (const auto chromaDescPreHalved : chromaDescPreHalvedValues) {
+            ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                          nullptr,
+                                          ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                          ZE_IMAGE_TYPE_2D,
+                                          {planarCase.baseLayout, ZE_IMAGE_FORMAT_TYPE_UNORM,
+                                           ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                           ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                          width,
+                                          height,
+                                          depth,
+                                          0,
+                                          0};
+
+            auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+            ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &srcImgDesc)) << planarCase.baseLayout;
+
+            ze_image_view_planar_exp_desc_t lumaPlaneDesc = {};
+            lumaPlaneDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+            lumaPlaneDesc.planeIndex = 0u;
+
+            ze_image_desc_t lumaViewDesc = srcImgDesc;
+            lumaViewDesc.pNext = &lumaPlaneDesc;
+            lumaViewDesc.format.layout = planarCase.lumaViewLayout;
+
+            ze_image_handle_t lumaView = nullptr;
+            ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->createView(device, &lumaViewDesc, &lumaView)) << planarCase.baseLayout;
+
+            auto luma = L0::Image::fromHandle(lumaView);
+            EXPECT_EQ(width, luma->getImageInfo().imgDesc.imageWidth) << planarCase.baseLayout;
+            EXPECT_EQ(height, luma->getImageInfo().imgDesc.imageHeight) << planarCase.baseLayout;
+            EXPECT_EQ(width, luma->getImageDesc().width) << planarCase.baseLayout;
+            EXPECT_EQ(height, luma->getImageDesc().height) << planarCase.baseLayout;
+
+            ze_image_view_planar_exp_desc_t chromaPlaneDesc = {};
+            chromaPlaneDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+            chromaPlaneDesc.planeIndex = 1u;
+
+            ze_image_desc_t chromaViewDesc = srcImgDesc;
+            chromaViewDesc.pNext = &chromaPlaneDesc;
+            chromaViewDesc.format.layout = planarCase.chromaViewLayout;
+            if (chromaDescPreHalved) {
+                chromaViewDesc.width = width / 2;
+                chromaViewDesc.height = static_cast<uint32_t>(height / 2);
+            }
+
+            ze_image_handle_t chromaView = nullptr;
+            ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->createView(device, &chromaViewDesc, &chromaView)) << planarCase.baseLayout;
+
+            auto chroma = L0::Image::fromHandle(chromaView);
+            EXPECT_EQ(width / 2, chroma->getImageInfo().imgDesc.imageWidth) << planarCase.baseLayout;
+            EXPECT_EQ(height / 2, chroma->getImageInfo().imgDesc.imageHeight) << planarCase.baseLayout;
+            EXPECT_EQ(width / 2, chroma->getImageDesc().width) << planarCase.baseLayout;
+            EXPECT_EQ(height / 2, chroma->getImageDesc().height) << planarCase.baseLayout;
+
+            zeImageDestroy(lumaView);
+            zeImageDestroy(chromaView);
+        }
+    }
+}
+
+HWTEST_F(ImageView, givenTwoPlaneYuv420ImageWhenCreatingChromaViewThenRowPitchIsNotHalved) {
+    const size_t width = 32;
+    const size_t height = 32;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  nullptr,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_P010, ZE_IMAGE_FORMAT_TYPE_UNORM,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  1,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &srcImgDesc));
+    const auto basePitch = imageHW->getImageInfo().imgDesc.imageRowPitch;
+
+    ze_image_view_planar_exp_desc_t chromaPlaneDesc = {};
+    chromaPlaneDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    chromaPlaneDesc.planeIndex = 1u;
+
+    ze_image_desc_t chromaViewDesc = srcImgDesc;
+    chromaViewDesc.pNext = &chromaPlaneDesc;
+    chromaViewDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16;
+
+    ze_image_handle_t chromaView = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->createView(device, &chromaViewDesc, &chromaView));
+
+    // Two 16 bit chroma samples over half the width span the same bytes as a luma row.
+    EXPECT_EQ(basePitch, L0::Image::fromHandle(chromaView)->getImageInfo().imgDesc.imageRowPitch);
+
+    zeImageDestroy(chromaView);
+}
+
+HWTEST_F(ImageView, givenRgbpImageWhenCreatingPlaneViewThenDimensionsAreNotHalved) {
+    const size_t width = 32;
+    const size_t height = 32;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  nullptr,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_RGBP, ZE_IMAGE_FORMAT_TYPE_UNORM,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  1,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &srcImgDesc));
+
+    ze_image_view_planar_exp_desc_t planeDesc = {};
+    planeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    planeDesc.planeIndex = 1u;
+
+    ze_image_desc_t viewDesc = srcImgDesc;
+    viewDesc.pNext = &planeDesc;
+    viewDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+
+    ze_image_handle_t view = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->createView(device, &viewDesc, &view));
+
+    // RGBP is planar but not subsampled.
+    auto plane = L0::Image::fromHandle(view);
+    EXPECT_EQ(width, plane->getImageInfo().imgDesc.imageWidth);
+    EXPECT_EQ(height, plane->getImageInfo().imgDesc.imageHeight);
+    EXPECT_EQ(width, plane->getImageDesc().width);
+    EXPECT_EQ(height, plane->getImageDesc().height);
+
+    zeImageDestroy(view);
+}
+
 HWTEST_F(ImageView, given3ChannelImageWhenCreateImageViewIsCalledThenProperViewIsCreated) {
     const size_t width = 32;
     const size_t height = 32;

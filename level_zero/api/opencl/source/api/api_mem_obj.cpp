@@ -286,10 +286,6 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
             l0imageDesc.width = static_cast<uint32_t>(parentImgDesc.imageWidth);
             l0imageDesc.height = static_cast<uint32_t>(parentImgDesc.imageHeight);
             l0imageDesc.depth = 1;
-            if (planeIndex == 1) {
-                l0imageDesc.width /= 2;
-                l0imageDesc.height /= 2;
-            }
 
             NEO::LEO::Image::clToL0ImageFormat(l0imageDesc.format, imageFormat->image_channel_order, imageFormat->image_channel_data_type);
 

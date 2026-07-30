@@ -1036,6 +1036,46 @@ HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullDestinationRegionWhenIma
     EXPECT_FALSE(cmdList.useEvents);
 }
 
+HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullRegionWhenImageCopyToMemoryFromChromaViewThenCopySizeIsHalved, ImageSupport) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    constexpr uint32_t width = 32;
+    constexpr uint32_t height = 32;
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_P010, ZE_IMAGE_FORMAT_TYPE_UNORM,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A};
+    zeDesc.width = width;
+    zeDesc.height = height;
+    zeDesc.depth = 1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &zeDesc));
+
+    ze_image_view_planar_exp_desc_t chromaPlaneDesc = {};
+    chromaPlaneDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    chromaPlaneDesc.planeIndex = 1u;
+
+    // Frame dimensions, as the sharing layers pass them.
+    ze_image_desc_t chromaViewDesc = zeDesc;
+    chromaViewDesc.pNext = &chromaPlaneDesc;
+    chromaViewDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16;
+
+    ze_image_handle_t chromaView = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->createView(device, &chromaViewDesc, &chromaView));
+
+    Vec3<size_t> expectedRegionCopySize = {width / 2, height / 2, 1};
+    cmdList.appendImageCopyToMemory(dstPtr, chromaView, nullptr, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+
+    zeImageDestroy(chromaView);
+}
+
 HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullDestinationRegionWhen1DImageCopyFromMemoryWithInvalidHeightAndDepthThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);

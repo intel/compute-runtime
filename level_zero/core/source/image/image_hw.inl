@@ -237,7 +237,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     if (!this->imageFromBuffer && gmm != nullptr) {
         NEO::ImagePlane yuvPlaneType = NEO::ImagePlane::noPlane;
-        if (isImageView() && (sourceImageFormatDesc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12)) {
+        if (isImageView() && isTwoPlaneYuv420Format(sourceImageFormatDesc->format.layout)) {
             yuvPlaneType = NEO::ImagePlane::planeY;
             if (imgInfo.plane == NEO::ImagePlane::planeU) {
                 yuvPlaneType = NEO::ImagePlane::planeUV;
@@ -247,6 +247,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                                            ? lookupTable.d3dTextureExt.arrayIndex
                                            : 0u;
         gmm->updateImgInfoAndDesc(imgInfo, gmmArrayIndex, yuvPlaneType);
+
+        if (yuvPlaneType == NEO::ImagePlane::planeUV) {
+            // Callers pass frame dimensions per plane - copy bounds read this descriptor.
+            this->imageFormatDesc.width = imgInfo.imgDesc.imageWidth;
+            this->imageFormatDesc.height = static_cast<uint32_t>(imgInfo.imgDesc.imageHeight);
+        }
 
         if (lookupTable.isSharedHandle && lookupTable.glTextureExt.present) {
             imgInfo.offset = 0;
