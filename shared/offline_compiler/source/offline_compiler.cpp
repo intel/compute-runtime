@@ -1536,9 +1536,6 @@ void OfflineCompiler::unifyExcludeIrFlags() {
 
 void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
     bool isStatelessToStatefulBufferOffsetSupported = true;
-    if (!deviceName.empty()) {
-        isStatelessToStatefulBufferOffsetSupported = compilerProductHelper->isStatelessToStatefulBufferOffsetSupported();
-    }
     if (debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
         isStatelessToStatefulBufferOffsetSupported = debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
     }
