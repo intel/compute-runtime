@@ -17,9 +17,7 @@ namespace LEO {
 
 class Image : public MemObj {
   public:
-    Image(Context *context, MemoryProperties &properties, cl_mem_flags flags, ze_image_handle_t imageHandle, void *cpuPtr, ze_image_handle_t baseImageHandle, bool externalHandle, cl_image_format originalFormat, cl_mem memObject) : MemObj(context, properties, flags, cpuPtr, externalHandle, MemObjType::image), imageHandle(imageHandle), baseImageHandle(baseImageHandle), originalFormat(originalFormat) {
-        this->associatedMemObject = memObject ? castToObject<MemObj>(memObject) : nullptr;
-    };
+    Image(Context *context, MemoryProperties &properties, cl_mem_flags flags, ze_image_handle_t imageHandle, void *cpuPtr, ze_image_handle_t baseImageHandle, bool externalHandle, cl_image_format originalFormat, cl_mem memObject);
     Image() = delete;
     ~Image() override;
 

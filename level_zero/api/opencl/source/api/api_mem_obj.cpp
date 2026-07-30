@@ -433,10 +433,6 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     }
 
     cl_mem associatedMemObject = inputMemObjFound ? nullptr : imageDesc->mem_object;
-    if (auto parentImageObj = NEO::LEO::castToObject<NEO::LEO::MemObj>(associatedMemObject);
-        parentImageObj && parentImageObj->isImage()) {
-        parentImageObj->incRefInternal();
-    }
     auto image = new NEO::LEO::Image(pContext, memoryProperties, flags, imageHandle, cpuPtr, nullptr, inputMemObjFound, resolvedFormat, associatedMemObject);
     image->setOwnerRootDeviceIndex(pContext->getL0Object()->getDevices().begin()->first);
     for (auto &[extraRootDeviceIndex, extraImageHandle] : extraImageHandles) {

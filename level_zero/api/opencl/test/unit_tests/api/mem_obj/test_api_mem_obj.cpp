@@ -228,6 +228,74 @@ TEST_F(CreateImageFromBufferWiringTest, givenImage2dFromBufferWithZeroRowPitchWh
     clReleaseMemObject(image);
 }
 
+TEST_F(CreateImageFromBufferWiringTest, givenImage1dBufferFromBufferWhenCreateImageThenParentBufferIsRetainedWithoutChangingItsApiRefCount) {
+    CapturingImageL0Context mockL0Context{};
+    mockL0Context.devices[device->getRootDeviceIndex()] = device->getL0Handle();
+
+    cl_device_id clDeviceId = device;
+    auto leoContext = std::make_unique<Context>(nullptr, mockL0Context.toHandle(), 1, &clDeviceId, true);
+
+    const size_t width = 64;
+    const size_t elementSize = 4;
+    MemoryProperties bufferProperties{};
+    uint64_t dummyBufferStorage = 0;
+    Buffer buffer(leoContext.get(), bufferProperties, CL_MEM_READ_WRITE, &dummyBufferStorage, nullptr, width * elementSize, true);
+    const auto refCountWithoutImage = buffer.getRefInternalCount();
+
+    cl_image_format imageFormat{CL_RGBA, CL_SIGNED_INT8};
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    imageDesc.image_width = width;
+    imageDesc.mem_object = static_cast<cl_mem>(&buffer);
+
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImage(leoContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(refCountWithoutImage + 1, buffer.getRefInternalCount());
+
+    cl_uint bufferApiRefCount = 0;
+    EXPECT_EQ(CL_SUCCESS, clGetMemObjectInfo(static_cast<cl_mem>(&buffer), CL_MEM_REFERENCE_COUNT,
+                                             sizeof(bufferApiRefCount), &bufferApiRefCount, nullptr));
+    EXPECT_EQ(1u, bufferApiRefCount);
+
+    clReleaseMemObject(image);
+    EXPECT_EQ(refCountWithoutImage, buffer.getRefInternalCount());
+}
+
+TEST_F(CreateImageFromBufferWiringTest, givenImage2dFromBufferWhenCreateImageThenParentBufferIsRetained) {
+    CapturingImageL0Context mockL0Context{};
+    mockL0Context.devices[device->getRootDeviceIndex()] = device->getL0Handle();
+
+    cl_device_id clDeviceId = device;
+    auto leoContext = std::make_unique<Context>(nullptr, mockL0Context.toHandle(), 1, &clDeviceId, true);
+
+    const size_t width = 64;
+    const size_t height = 100;
+    MemoryProperties bufferProperties{};
+    uint64_t dummyBufferStorage = 0;
+    Buffer buffer(leoContext.get(), bufferProperties, CL_MEM_READ_WRITE, &dummyBufferStorage, nullptr, width * height, true);
+    const auto refCountWithoutImage = buffer.getRefInternalCount();
+
+    cl_image_format imageFormat{CL_R, CL_UNORM_INT8};
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = width;
+    imageDesc.image_height = height;
+    imageDesc.mem_object = static_cast<cl_mem>(&buffer);
+
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImage(leoContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(refCountWithoutImage + 1, buffer.getRefInternalCount());
+
+    clReleaseMemObject(image);
+    EXPECT_EQ(refCountWithoutImage, buffer.getRefInternalCount());
+}
+
 using MemObjHelperTest = LeoMemObjApiFixture;
 
 TEST_F(MemObjHelperTest, givenContextDeviceWhenValidateMemoryPropertiesForBufferThenDeviceIsAssociated) {

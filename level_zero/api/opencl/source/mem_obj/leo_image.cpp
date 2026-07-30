@@ -18,6 +18,19 @@
 namespace NEO {
 namespace LEO {
 
+Image::Image(Context *context, MemoryProperties &properties, cl_mem_flags flags, ze_image_handle_t imageHandle,
+             void *cpuPtr, ze_image_handle_t baseImageHandle, bool externalHandle, cl_image_format originalFormat,
+             cl_mem memObject)
+    : MemObj(context, properties, flags, cpuPtr, externalHandle, MemObjType::image),
+      imageHandle(imageHandle), baseImageHandle(baseImageHandle), originalFormat(originalFormat) {
+    this->associatedMemObject = memObject ? castToObject<MemObj>(memObject) : nullptr;
+    if (this->associatedMemObject) {
+        // Image borrows the parent's storage, so the parent must outlive it.
+        this->associatedMemObject->incRefInternal();
+        this->setParentSharingHandler(this->associatedMemObject->getSharingHandler());
+    }
+}
+
 Image::~Image() {
     if (!externalHandle && this->imageHandle) {
         UNRECOVERABLE_IF(zeImageDestroy(this->imageHandle) != ZE_RESULT_SUCCESS);
@@ -28,7 +41,8 @@ Image::~Image() {
     if (this->baseImageHandle) {
         UNRECOVERABLE_IF(zeImageDestroy(this->baseImageHandle) != ZE_RESULT_SUCCESS);
     }
-    if (this->associatedMemObject && this->associatedMemObject->isImage()) {
+    // Must follow zeImageDestroy above - the parent owns the storage backing this image.
+    if (this->associatedMemObject) {
         this->associatedMemObject->decRefInternal();
     }
 }
