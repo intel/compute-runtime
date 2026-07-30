@@ -26,6 +26,7 @@ D3DSharing<D3D>::D3DSharing(Context *context, D3DResource *resource, D3DResource
     if (sharingFunctions) {
         sharingFunctions->addRef(resource);
         sharingFunctions->createQuery(&this->d3dQuery);
+        sharingFunctions->createFence(&this->d3dFence);
         sharingFunctions->track(resource, subresource);
     }
 };
@@ -39,6 +40,7 @@ D3DSharing<D3D>::~D3DSharing() {
         }
         sharingFunctions->release(resource);
         sharingFunctions->release(d3dQuery);
+        sharingFunctions->release(d3dFence);
     }
 };
 
@@ -52,6 +54,32 @@ void D3DSharing<D3D>::synchronizeObject(UpdateData &updateData) {
     } else if (!context->getInteropUserSyncEnabled()) {
         sharingFunctions->flushAndWait(d3dQuery);
     }
+    sharingFunctions->releaseDeviceContext(d3dQuery);
+
+    updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
+}
+
+template <>
+void D3DSharing<NEO::LEO::D3DTypesHelper::D3D11>::synchronizeObject(UpdateData &updateData) {
+    std::unique_lock<std::mutex> lock(this->mtx);
+    sharingFunctions->getDeviceContext(d3dQuery);
+
+    if (d3dFence) {
+        if (!sharedResource) {
+            sharingFunctions->copySubresourceRegion(resourceStaging, 0, resource, subresource);
+            sharingFunctions->signalAndWait(d3dFence);
+        } else if (!context->getInteropUserSyncEnabled()) {
+            sharingFunctions->signalAndWait(d3dFence);
+        }
+    } else {
+        if (!sharedResource) {
+            sharingFunctions->copySubresourceRegion(resourceStaging, 0, resource, subresource);
+            sharingFunctions->flushAndWait(d3dQuery);
+        } else if (!context->getInteropUserSyncEnabled()) {
+            sharingFunctions->flushAndWait(d3dQuery);
+        }
+    }
+
     sharingFunctions->releaseDeviceContext(d3dQuery);
 
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
