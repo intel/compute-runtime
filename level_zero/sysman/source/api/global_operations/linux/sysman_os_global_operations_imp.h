@@ -108,6 +108,9 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     ze_result_t getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize);
     ze_result_t resetImpl(ze_bool_t force, zes_reset_type_t resetType);
     bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
+    zes_device_state_ext_flags_t getDeviceStateExtFlags();
+    MOCKABLE_VIRTUAL bool isDevicePciPathAccessible();
+    MOCKABLE_VIRTUAL bool isDrmIoctlOk();
 };
 
 } // namespace Sysman

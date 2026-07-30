@@ -5,11 +5,14 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
+
+#include "drm.h"
 
 namespace L0 {
 
@@ -110,15 +113,15 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInFdoModeWhenCallingDeviceGet
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     deviceState.pNext = &extState;
 
     ze_result_t result = zesDeviceGetState(device, &deviceState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED | ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY | ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE;
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY | ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE;
     EXPECT_EQ(expectedFlags, extState.flags);
 }
 
@@ -128,8 +131,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInSurvivabilityModeButNotFdoW
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     deviceState.pNext = &extState;
 
@@ -137,19 +140,21 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInSurvivabilityModeButNotFdoW
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // In survivability mode (not FDO), wedged and survivability flags should be set
-    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED | ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY;
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY;
     EXPECT_EQ(expectedFlags, extState.flags);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceOnlyWedgedWhenCallingDeviceGetStateWithExtensionThenOnlyWedgedFlagIsSet) {
     pFsAccess->mockFdoModeValue = "disabled";
     pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = true;
+    pFsAccess->mockDriverLoaded = true;
     pLinuxSysmanImp->isDeviceInWedgedState = true;
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     deviceState.pNext = &extState;
 
@@ -157,27 +162,107 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceOnlyWedgedWhenCallingDeviceGe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Only wedged flag should be set
-    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED;
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED;
     EXPECT_EQ(expectedFlags, extState.flags);
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInNormalStateWhenCallingDeviceGetStateWithExtensionThenNoFlagsAreSet) {
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathAccessibleAndSampleIoctlFailsWhenCallingDeviceGetStateWithExtensionThenWedgedFlagIsSet) {
     pFsAccess->mockFdoModeValue = "disabled";
     pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = true;
+    pFsAccess->mockDriverLoaded = true;
     pLinuxSysmanImp->isDeviceInWedgedState = false;
+    // DRM get-version IOCTL fails
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        return -1;
+    });
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     deviceState.pNext = &extState;
 
     ze_result_t result = zesDeviceGetState(device, &deviceState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    // No flags should be set in normal state
-    EXPECT_EQ(0u, extState.flags);
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED;
+    EXPECT_EQ(expectedFlags, extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathInaccessibleWhenCallingDeviceGetStateWithExtensionThenGpuLostFlagIsSet) {
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = false;
+    pLinuxSysmanImp->isDeviceInWedgedState = false;
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST), extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathAccessibleButDriverNotLoadedWhenCallingDeviceGetStateWithExtensionThenDriverNotLoadedFlagIsSet) {
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = true;
+    pFsAccess->mockDriverLoaded = false;
+    pLinuxSysmanImp->isDeviceInWedgedState = false;
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED), extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathAccessibleAndSampleIoctlSucceedsWhenCallingDeviceGetStateWithExtensionThenNormalFlagIsSet) {
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = true;
+    pFsAccess->mockDriverLoaded = true;
+    pLinuxSysmanImp->isDeviceInWedgedState = false;
+    // DRM get-version IOCTL succeeds and reports a supported driver.
+    // The IOCTL only succeeds on a valid descriptor, mirroring the kernel: sysman
+    // keeps the device node closed while idle, so the probe must open it first.
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        const char *drmVersion = "xe";
+        if (fileDescriptor < 0) {
+            return -1;
+        }
+        if (request == DRM_IOCTL_VERSION) {
+            auto pVersion = static_cast<NEO::DrmVersion *>(arg);
+            memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
+        }
+        return 0;
+    });
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Only normal flag should be set in normal state
+    EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_NORMAL), extState.flags);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenNullExtensionPointerWhenCallingDeviceGetStateThenSuccessIsReturned) {
@@ -198,8 +283,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenExtensionInPNextChainWhenCallingDev
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     extState.flags = 0xFFFFFFFF; // Set to non-zero to verify it gets initialized
 
@@ -209,7 +294,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenExtensionInPNextChainWhenCallingDev
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Verify flags were initialized and then set correctly
-    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED | ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY | ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE;
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY | ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE;
     EXPECT_EQ(expectedFlags, extState.flags);
 }
 
@@ -219,7 +304,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenNonMatchingExtensionInPNextChainWhe
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
 
-    zes_intel_device_state_exp_t extState = {};
+    zes_device_ext_state_t extState = {};
     extState.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
     extState.pNext = nullptr;
     extState.flags = 0xFFFFFFFF; // Set to verify it doesn't get modified

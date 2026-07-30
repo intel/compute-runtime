@@ -207,6 +207,7 @@ class SysmanKmdInterface {
     virtual bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) { return false; }
     virtual bool isDeviceInFdoMode() { return false; }
     virtual bool isDeviceInSurvivabilityMode() { return false; }
+    MOCKABLE_VIRTUAL bool isDriverLoaded();
     virtual std::string getFanInputNode(const std::string &hwmonDir, uint32_t channel) { return {}; }
     virtual std::string getFanMaxNode(const std::string &hwmonDir, uint32_t channel) { return {}; }
     virtual std::string getPwmNode(const std::string &hwmonDir, uint32_t channel) { return {}; }

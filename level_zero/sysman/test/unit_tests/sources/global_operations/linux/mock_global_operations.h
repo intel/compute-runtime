@@ -551,6 +551,25 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
     std::string mockWarmResetValue = "unknown";
     std::string mockFdoModeValue = "disabled";
     std::string mockSurvivabilityModeValue = "";
+    bool mockDevicePciPathAccessible = true;
+    bool mockDriverLoaded = true;
+
+    bool directoryExists(const std::string path) override {
+        return mockDevicePciPathAccessible;
+    }
+
+    // The driver symlink is resolved by absolute path through FsAccess, so the
+    // per-device sysfs interface must not be involved here.
+    ze_result_t readSymLink(const std::string path, std::string &buf) override {
+        if (path.find("/driver") != std::string::npos) {
+            if (!mockDriverLoaded) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            buf = "../../../../../../bus/pci/drivers/xe";
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
 
     ze_result_t read(const std::string file, std::string &val) override {
         if (mockReadError != ZE_RESULT_SUCCESS) {
@@ -756,9 +775,28 @@ struct MockGlobalOpsLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
 };
 
 constexpr int mockFdGlobalOperations = 33;
+
+// Mirrors SysmanHwDeviceIdDrm: sysman keeps the device node closed while idle, so
+// the descriptor is valid only for the lifetime of a scoped single instance.
+// Callers that read the descriptor without acquiring one observe -1.
+class MockGlobalOpsSysmanHwDeviceIdDrm : public L0::Sysman::SysmanHwDeviceIdDrm {
+  public:
+    using L0::Sysman::SysmanHwDeviceIdDrm::SysmanHwDeviceIdDrm;
+
+    int openFileDescriptor() override {
+        fileDescriptor = mockFdGlobalOperations;
+        return fileDescriptor;
+    }
+
+    int closeFileDescriptor() override {
+        fileDescriptor = -1;
+        return 0;
+    }
+};
+
 class DrmGlobalOpsMock : public Drm {
   public:
-    DrmGlobalOpsMock(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFdGlobalOperations, ""), rootDeviceEnvironment) {}
+    DrmGlobalOpsMock(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockGlobalOpsSysmanHwDeviceIdDrm>(-1, ""), rootDeviceEnvironment) {}
     using Drm::setupIoctlHelper;
     int ioctlRetVal = 0;
     int ioctlErrno = 0;

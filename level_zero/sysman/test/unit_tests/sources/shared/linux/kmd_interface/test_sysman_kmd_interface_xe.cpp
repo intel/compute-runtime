@@ -544,6 +544,32 @@ TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityF
     EXPECT_TRUE(pSysmanKmdInterface->isDeviceInFdoMode());
 }
 
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenDriverSymLinkIsReadableThenIsDriverLoadedReturnsTrue) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_SUCCESS;
+
+    EXPECT_TRUE(pSysmanKmdInterface->isDriverLoaded());
+}
+
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenIsDriverLoadedIsCalledThenDriverSymLinkIsQueriedWithAbsolutePciPath) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_SUCCESS;
+    pSysmanKmdInterface->isDriverLoaded();
+
+    EXPECT_EQ(0u, pMockFsAccess->readSymLinkPathRequested.find("/sys/bus/pci/devices/"));
+    EXPECT_NE(std::string::npos, pMockFsAccess->readSymLinkPathRequested.find("/driver"));
+}
+
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenDriverSymLinkCannotBeReadThenIsDriverLoadedReturnsFalse) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    EXPECT_FALSE(pSysmanKmdInterface->isDriverLoaded());
+}
+
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenDeviceIsNotWedgedThenGetWedgedStatusDoesNotSetWedgedFlag) {
     auto pSysmanKmdInterface = static_cast<SysmanKmdInterfaceXe *>(pLinuxSysmanImp->pSysmanKmdInterface.get());
 

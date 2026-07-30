@@ -11,7 +11,9 @@
 #include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_pmu_interface.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysfs_interface.h"
 
 #include "gtest/gtest.h"
 
@@ -341,6 +343,44 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenCallingIsLate
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenCallingIsDeviceInSurvivabilityModeThenFalseIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_FALSE(pSysmanKmdInterface->isDeviceInSurvivabilityMode());
+}
+
+class SysmanKmdInterfaceDriverLoadedFixtureI915Upstream : public SysmanDeviceFixture {
+  protected:
+    MockSysmanKmdInterfaceUpstream *pMockSysmanKmdInterface = nullptr;
+    MockFdoSysFsAccessInterface *pMockSysFsAccess = nullptr;
+    MockFdoFsAccessInterface *pMockFsAccess = nullptr;
+
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+        pMockSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getSysmanProductHelper());
+        pMockSysFsAccess = new MockFdoSysFsAccessInterface();
+        pMockFsAccess = new MockFdoFsAccessInterface();
+        pMockSysmanKmdInterface->pSysfsAccess.reset(pMockSysFsAccess);
+        pMockSysmanKmdInterface->pFsAccess.reset(pMockFsAccess);
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pMockSysmanKmdInterface);
+    }
+
+    void TearDown() override {
+        SysmanDeviceFixture::TearDown();
+    }
+};
+
+TEST_F(SysmanKmdInterfaceDriverLoadedFixtureI915Upstream, GivenSysmanKmdInterfaceWhenDriverSymLinkIsReadableThenIsDriverLoadedReturnsTrue) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_SUCCESS;
+    pMockFsAccess->mockDriverSymLinkValue = "../../../../../../bus/pci/drivers/i915";
+
+    EXPECT_TRUE(pSysmanKmdInterface->isDriverLoaded());
+}
+
+TEST_F(SysmanKmdInterfaceDriverLoadedFixtureI915Upstream, GivenSysmanKmdInterfaceWhenDriverSymLinkCannotBeReadThenIsDriverLoadedReturnsFalse) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    EXPECT_FALSE(pSysmanKmdInterface->isDriverLoaded());
 }
 
 } // namespace ult

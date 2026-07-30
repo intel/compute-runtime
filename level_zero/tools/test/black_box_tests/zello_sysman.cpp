@@ -673,8 +673,8 @@ void testSysmanSurvivability(ze_device_handle_t &device) {
     std::cout << std::endl;
 
     // Get device state with extension to check wedged, survivability, and flash override status
-    zes_intel_device_state_exp_t extDeviceState = {};
-    extDeviceState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extDeviceState = {};
+    extDeviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extDeviceState.pNext = nullptr;
 
     zes_device_state_t deviceState = {};
@@ -686,14 +686,23 @@ void testSysmanSurvivability(ze_device_handle_t &device) {
         std::cout << "Device reset status: 0x" << std::hex << deviceState.reset << std::dec << std::endl;
         std::cout << "Device repaired status: " << deviceState.repaired << std::endl;
 
-        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED) {
+        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_NORMAL) {
+            std::cout << "Device is operating NORMALLY" << std::endl;
+        }
+        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_WEDGED) {
             std::cout << "Device is WEDGED" << std::endl;
         }
-        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY) {
+        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY) {
             std::cout << "Device is in SURVIVABILITY mode" << std::endl;
         }
-        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE) {
+        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE) {
             std::cout << "Device has FLASH OVERRIDE enabled" << std::endl;
+        }
+        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST) {
+            std::cout << "Device is LOST (PCI path inaccessible)" << std::endl;
+        }
+        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED) {
+            std::cout << "Device has NO DRIVER loaded" << std::endl;
         }
         std::cout << std::endl;
     }
@@ -1920,18 +1929,43 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
             std::cout << "processes.engines = " << process.engines << std::endl;
         }
     }
+
+    zes_device_ext_state_t extDeviceState = {};
+    extDeviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+    extDeviceState.pNext = nullptr;
+
     zes_device_state_t deviceState = {};
-    VALIDATECALL(zesDeviceGetState(device, &deviceState));
+    deviceState.pNext = &extDeviceState;
+
+    ze_result_t stateResult = zesDeviceGetState(device, &deviceState);
     if (verbose) {
-        std::cout << "reset status: " << deviceState.reset << std::endl;
-        std::cout << "repair: " << deviceState.repaired << std::endl;
-        if (deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED) {
-            std::cout << "state reset wedged = " << deviceState.reset << std::endl;
+        std::cout << "--- Device State ---" << std::endl;
+        if (stateResult != ZE_RESULT_SUCCESS) {
+            std::cout << "zesDeviceGetState() failed with 0x" << std::hex << stateResult << std::dec << std::endl;
+        } else {
+            std::cout << "Device reset status: 0x" << std::hex << deviceState.reset << std::dec << std::endl;
+            std::cout << "Device repaired status: " << deviceState.repaired << std::endl;
+
+            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_NORMAL) {
+                std::cout << "Device is operating NORMALLY" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_WEDGED) {
+                std::cout << "Device is WEDGED" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY) {
+                std::cout << "Device is in SURVIVABILITY mode" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE) {
+                std::cout << "Device has FLASH OVERRIDE enabled" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST) {
+                std::cout << "Device is LOST (PCI path inaccessible)" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED) {
+                std::cout << "Device has NO DRIVER loaded" << std::endl;
+            }
         }
-        if (deviceState.reset & ZES_RESET_REASON_FLAG_REPAIR) {
-            std::cout << "state reset repair = " << deviceState.reset << std::endl;
-            std::cout << "repair state = " << deviceState.repaired << std::endl;
-        }
+        std::cout << std::endl;
     }
 
     if (zesIntelDeviceMemoryGetPageOfflineStateExpPtr) {

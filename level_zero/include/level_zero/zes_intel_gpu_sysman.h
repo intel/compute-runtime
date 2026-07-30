@@ -341,7 +341,6 @@ typedef struct _zes_intel_device_state_pending_action_exp_t {
                                         ///< For example, When device is wedged this will be set to ZES_PENDING_ACTION_PENDING_COLD_RESET
 } zes_intel_device_state_pending_action_exp_t;
 
-///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_DEVICE_STATE_EXP_NAME
 /// @brief Device state extension name
 #define ZES_INTEL_DEVICE_STATE_EXP_NAME "ZES_intel_device_state_exp"
@@ -356,27 +355,13 @@ typedef enum _zes_intel_device_state_exp_version_t {
 } zes_intel_device_state_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Device state flags extension
-typedef uint32_t zes_intel_device_state_flags_exp_t;
-typedef enum _zes_intel_device_state_flag_exp_t {
-    ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED = ZE_BIT(0),         ///< The device is wedged
-    ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY = ZE_BIT(1),  ///< The device is in survivability mode
-    ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE = ZE_BIT(2), ///< The device has flash override enabled
-    ZES_INTEL_DEVICE_STATE_FLAG_EXP_FORCE_UINT32 = 0x7fffffff
-} zes_intel_device_state_flag_exp_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Extension to provide device state information
+/// @brief Intel experimental extension to the standard ::zes_device_state_ext_flag_t
 ///
 /// @details
-///     - This structure can be passed in the 'pNext' of zes_device_state_t
-///     - Provides extended device state information
-typedef struct _zes_intel_device_state_exp_t {
-    zes_structure_type_ext_t stype;           ///< [in] type of this structure
-    void *pNext;                              ///< [in][optional] must be null or a pointer to an extension-specific
-                                              ///< structure (i.e. contains stype and pNext).
-    zes_intel_device_state_flags_exp_t flags; ///< [out] Device state flags. Returns 0 (none) or a combination of ::zes_intel_device_state_flag_exp_t
-} zes_intel_device_state_exp_t;
+///     - These flags extend the standard device state flags (bits 0-3 defined by
+///       ::zes_device_state_ext_flag_t)
+#define ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST ZE_BIT(4)          ///< The GPU is lost: the device PCI path is inaccessible
+#define ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED ZE_BIT(5) ///< No kernel driver is bound to the device
 
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME

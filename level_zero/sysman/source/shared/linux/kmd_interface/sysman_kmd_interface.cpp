@@ -209,6 +209,19 @@ void SysmanKmdInterface::getWedgedStatusImpl(LinuxSysmanImp *pLinuxSysmanImp, ze
     }
 }
 
+bool SysmanKmdInterface::isDriverLoaded() {
+    // A kernel driver is bound to the device when its PCI "driver" entry
+    // (e.g. /sys/bus/pci/devices/0000:03:00.0/driver) is a symlink to the bound
+    // driver (e.g. .../bus/pci/drivers/xe). If the symlink cannot be read, no
+    // driver is loaded.
+    // getDevicePciPath() is already absolute, so it must be resolved through
+    // pFsAccess. pSysfsAccess would prepend the per-device sysfs directory.
+    const std::string driverSymLink = pSysfsAccess->getDevicePciPath() + "/driver";
+    std::string driverPath;
+    auto result = pFsAccess->readSymLink(driverSymLink, driverPath);
+    return (result == ZE_RESULT_SUCCESS);
+}
+
 ze_result_t SysmanKmdInterface::checkErrorNumberAndReturnStatus() {
     if (errno == EMFILE || errno == ENFILE) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", __FUNCTION__);

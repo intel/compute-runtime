@@ -804,26 +804,64 @@ ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState)
     void *pNext = const_cast<void *>(pState->pNext);
     while (pNext) {
         auto *pBase = static_cast<zes_base_state_t *>(pNext);
-        if (pBase->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP) {
-            auto *pExt = reinterpret_cast<zes_intel_device_state_exp_t *>(pBase);
-            pExt->flags = 0; // Initialize flags to 0
-
-            if (pSysmanKmdInterface->isDeviceInFdoMode()) {
-                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED;
-                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY;
-                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE;
-            } else if (pSysmanKmdInterface->isDeviceInSurvivabilityMode()) {
-                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED;
-                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY;
-            } else if (pLinuxSysmanImp->isDeviceInWedgedState) {
-                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED;
-            }
+        if (pBase->stype == ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE) {
+            auto *pExt = reinterpret_cast<zes_device_ext_state_t *>(pBase);
+            pExt->flags = getDeviceStateExtFlags();
             break;
         }
         pNext = const_cast<void *>(pBase->pNext);
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+bool LinuxGlobalOperationsImp::isDevicePciPathAccessible() {
+    // The device PCI path (e.g. /sys/bus/pci/devices/0000:03:00.0) must be reachable
+    // to be able to probe the device. If it cannot be accessed, the device state
+    // cannot be determined.
+    const std::string devicePciPath = pSysfsAccess->getDevicePciPath();
+    return pFsAccess->directoryExists(devicePciPath);
+}
+
+bool LinuxGlobalOperationsImp::isDrmIoctlOk() {
+    // Probe device health with a DRM get-version IOCTL.
+    // A device that is wedged returns an error for this IOCTL.
+    // Sysman keeps the device node closed while idle, so the file descriptor is
+    // only valid for the lifetime of this scoped instance. Without it the
+    // descriptor is -1 and the IOCTL would fail on a perfectly healthy device.
+    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+    return NEO::Drm::isDrmSupported(hwDeviceId.getFileDescriptor());
+}
+
+zes_device_state_ext_flags_t LinuxGlobalOperationsImp::getDeviceStateExtFlags() {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+
+    // If the device PCI path cannot be accessed, the GPU is lost.
+    if (!isDevicePciPathAccessible()) {
+        return ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST;
+    }
+
+    if (pSysmanKmdInterface->isDeviceInFdoMode()) {
+        return ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY | ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE;
+    }
+
+    if (pSysmanKmdInterface->isDeviceInSurvivabilityMode()) {
+        return ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY;
+    }
+
+    // The PCI path exists but no kernel driver is bound to the device.
+    if (!pSysmanKmdInterface->isDriverLoaded()) {
+        return ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED;
+    }
+
+    // PCI path is available: probe the device with a DRM get-version IOCTL.
+    // If it fails (or the device was already flagged wedged), the device is wedged;
+    // otherwise it is operating normally.
+    if (pLinuxSysmanImp->isDeviceInWedgedState || !isDrmIoctlOk()) {
+        return ZES_DEVICE_STATE_EXT_FLAG_WEDGED;
+    }
+
+    return ZES_DEVICE_STATE_EXT_FLAG_NORMAL;
 }
 
 ze_result_t LinuxGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
