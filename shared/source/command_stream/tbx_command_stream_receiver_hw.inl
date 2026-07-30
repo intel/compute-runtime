@@ -180,7 +180,9 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
 
         if (csr->aubManager) {
             if (!csr->aubManager->isOpen()) {
-                csr->aubManager->open(csr->subCaptureManager ? csr->subCaptureManager->getSubCaptureFileName("") : fullName);
+                const auto aubFilePath = csr->subCaptureManager ? csr->subCaptureManager->getSubCaptureFileName("") : fullName;
+                AUBCommandStreamReceiver::createDirectoriesForFilePath(aubFilePath);
+                csr->aubManager->open(aubFilePath);
                 UNRECOVERABLE_IF(!csr->aubManager->isOpen());
             }
         }

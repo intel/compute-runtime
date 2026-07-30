@@ -20,9 +20,11 @@
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/directory.h"
 
 #include <algorithm>
 #include <cstring>
+#include <filesystem>
 #include <sstream>
 
 namespace NEO {
@@ -62,6 +64,24 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     filePath.append(fileName);
 
     return filePath;
+}
+
+// Returns an empty string when there is nothing to create - no directory part at all,
+// the filesystem root or the current directory.
+std::string AUBCommandStreamReceiver::getDirectoryPathForFilePath(const std::string &filePath) {
+    const std::filesystem::path directoryPath = std::filesystem::path(filePath).parent_path();
+    if (directoryPath == directoryPath.root_path() || directoryPath == ".") {
+        return {};
+    }
+
+    return directoryPath.string();
+}
+
+void AUBCommandStreamReceiver::createDirectoriesForFilePath(const std::string &filePath) {
+    const auto directoryPath = getDirectoryPathForFilePath(filePath);
+    if (!directoryPath.empty()) {
+        Directory(directoryPath).parseDirectories(Directory::createDirs);
+    }
 }
 
 CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseName,
