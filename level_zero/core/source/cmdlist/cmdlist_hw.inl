@@ -3587,6 +3587,60 @@ bool CommandListCoreFamily<gfxCoreFamily>::isResolveIoqDependencyWithBarrier(boo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrderExecEventHelper &eventInOrderHelper, CommandToPatchContainer *outListCommands, bool skipAddingWaitEventsToResidency,
+                                                                     bool dualStreamCopyOffloadOperation) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+    uint64_t counter = eventInOrderHelper.getPatchPreambleCounter();
+    bool noopDispatch = counter == 0;
+    if (noopDispatch == true && this->allowCbWaitEventsNoopDispatch == false) {
+        return;
+    }
+    bool indirectMode = false;
+    const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(isQwordInOrderCounter(), useSemaphore64bCmd);
+    const bool copyOnlyWait = isCopyOnly(dualStreamCopyOffloadOperation);
+    bool switchOnUnsuccessful = true;
+
+    NEO::GraphicsAllocation *devicePatchPreambleCounterAlloc = eventInOrderHelper.getPatchPreambleDeviceAllocation();
+    uint64_t devicePatchPreambleCounterGpuAddress = eventInOrderHelper.getPatchPreambleDeviceGpuAddress();
+
+    const uint32_t immWriteOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+    uint32_t devicePartitionCount = eventInOrderHelper.getEventData()->devicePartitions;
+
+    NEO::EncodeCaptureCommandData cmdCaptureData = {};
+
+    if (!skipAddingWaitEventsToResidency) {
+        commandContainer.addToResidencyContainer(devicePatchPreambleCounterAlloc);
+    }
+
+    for (uint32_t i = 0; i < devicePartitionCount; i++) {
+        if (qwordIndirect) {
+            indirectMode = true;
+
+            constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
+            constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
+
+            NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), firstRegister, getLowPart(counter), true, copyOnlyWait, &cmdCaptureData);
+            if (noopDispatch) {
+                memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+            }
+
+            NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), secondRegister, getHighPart(counter), true, copyOnlyWait, &cmdCaptureData);
+            if (noopDispatch) {
+                memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+            }
+        }
+
+        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), devicePatchPreambleCounterGpuAddress, counter, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
+                                                                   false, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful, useSemaphore64bCmd, &cmdCaptureData);
+        if (noopDispatch) {
+            memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+        }
+        devicePatchPreambleCounterGpuAddress += immWriteOffset;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::GraphicsAllocation *deviceCounterAlloc, uint64_t deviceBaseCounterGpuVa, uint32_t deviceCounterPartitionCount, CommandToPatchContainer *outListCommands,
                                                                          uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency, bool skipAddingWaitEventsToResidency,
                                                                          bool noopDispatch, bool dualStreamCopyOffloadOperation) {
@@ -3737,6 +3791,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         if ((isImmediateType() && event->isAlreadyCompleted()) ||
             canSkipInOrderEventWait(*event, this->allowCbWaitEventsNoopDispatch)) {
             continue;
+        }
+
+        if (event->isExternalEvent()) {
+            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(event->getInOrderExecEventHelper(), waitEventParams.outWaitCmds, waitEventParams.skipAddingWaitEventsToResidency, dualStreamCopyOffload);
         }
 
         if (event->isCounterBased() && (this->heaplessModeEnabled || !event->hasInOrderTimestampNode())) {

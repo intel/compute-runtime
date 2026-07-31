@@ -7,6 +7,7 @@
 
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/internal/l0_event.h"
@@ -1581,6 +1582,147 @@ HWTEST_F(InOrderIpcTests, givenEventWithNoExportedIpcHandlesWhenUnregisterCalled
     EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
     events[0]->unregisterExportedIpcHandles();
     EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
+}
+
+using InOrderCmdListTests = InOrderCmdListFixture;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            InOrderCmdListTests,
+            givenExternalEventWithNoPatchPreambleDataWhenAppendWaitOnPatchPreambleThenNoCommandIsDispatched) {
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+
+    ze_event_handle_t handle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    auto eventObj = Event::fromHandle(handle);
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->assignInOrderExecInfoToEvent(eventObj);
+
+    regularCmdList->allowCbWaitEventsNoopDispatch = false;
+
+    size_t sizeBefore = regularCmdList->commandContainer.getCommandStream()->getUsed();
+    regularCmdList->appendWaitOnPatchPreamble(eventObj->getInOrderExecEventHelper(), nullptr, false, false);
+    size_t sizeAfter = regularCmdList->commandContainer.getCommandStream()->getUsed();
+
+    EXPECT_EQ(sizeBefore, sizeAfter);
+
+    zeEventDestroy(handle);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            InOrderCmdListTests,
+            givenExternalEventWithNoPatchPreambleDataAndAllowedNoopDispatchWhenAppendWaitOnPatchPreambleThenNoopCommandSpaceIsDispatched) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    uint8_t noopedSpace[sizeof(MI_SEMAPHORE_WAIT) + 2 * sizeof(MI_LOAD_REGISTER_IMM)] = {};
+
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+
+    ze_event_handle_t handle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    auto eventObj = Event::fromHandle(handle);
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->assignInOrderExecInfoToEvent(eventObj);
+
+    const bool useSemaphore64bCmd = device->getDeviceInfo().semaphore64bCmdSupport;
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(regularCmdList->isQwordInOrderCounter(), useSemaphore64bCmd);
+
+    regularCmdList->allowCbWaitEventsNoopDispatch = true;
+
+    size_t sizeBefore = regularCmdList->commandContainer.getCommandStream()->getUsed();
+    regularCmdList->appendWaitOnPatchPreamble(eventObj->getInOrderExecEventHelper(), nullptr, false, false);
+    size_t sizeAfter = regularCmdList->commandContainer.getCommandStream()->getUsed();
+    EXPECT_NE(sizeBefore, sizeAfter);
+
+    size_t expectedSize = sizeof(MI_SEMAPHORE_WAIT);
+    if (qwordIndirect) {
+        expectedSize += 2 * sizeof(MI_LOAD_REGISTER_IMM);
+    }
+    EXPECT_EQ(sizeAfter - sizeBefore, expectedSize);
+    EXPECT_EQ(0, memcmp(noopedSpace, ptrOffset(regularCmdList->commandContainer.getCommandStream()->getCpuBase(), sizeBefore), expectedSize));
+
+    zeEventDestroy(handle);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            InOrderCmdListTests,
+            givenExternalEventWithPatchPreambleDataWhenAppendWaitOnPatchPreambleThenCommandIsDispatched) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+
+    ze_event_handle_t handle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    auto eventObj = Event::fromHandle(handle);
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->assignInOrderExecInfoToEvent(eventObj);
+
+    const bool useSemaphore64bCmd = device->getDeviceInfo().semaphore64bCmdSupport;
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(regularCmdList->isQwordInOrderCounter(), useSemaphore64bCmd);
+
+    constexpr uint64_t counter = 5;
+    constexpr uint64_t deviceGpuAddress = 0xABC000;
+    MockGraphicsAllocation patchPreambleAlloc(nullptr, deviceGpuAddress, 0);
+
+    eventObj->getInOrderExecEventHelper().assignPatchPreambleData(counter, nullptr, 0u, nullptr, deviceGpuAddress, &patchPreambleAlloc);
+
+    bool skipAddingWaitEventsToResidency = true;
+
+    size_t sizeBefore = regularCmdList->commandContainer.getCommandStream()->getUsed();
+    regularCmdList->appendWaitOnPatchPreamble(eventObj->getInOrderExecEventHelper(), nullptr, skipAddingWaitEventsToResidency, false);
+    size_t sizeAfter = regularCmdList->commandContainer.getCommandStream()->getUsed();
+    EXPECT_NE(sizeBefore, sizeAfter);
+
+    size_t expectedSize = sizeof(MI_SEMAPHORE_WAIT);
+    if (qwordIndirect) {
+        expectedSize += 2 * sizeof(MI_LOAD_REGISTER_IMM);
+    }
+    EXPECT_EQ(sizeAfter - sizeBefore, expectedSize);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(regularCmdList->commandContainer.getCommandStream()->getCpuBase(), sizeBefore),
+        sizeAfter - sizeBefore));
+
+    size_t expectedCmds = qwordIndirect ? 3 : 1;
+    ASSERT_EQ(expectedCmds, cmdList.size());
+
+    auto it = cmdList.begin();
+    if (qwordIndirect) {
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        EXPECT_NE(nullptr, lriCmd);
+        EXPECT_EQ(0x2600u, lriCmd->getRegisterOffset());
+        EXPECT_EQ(getLowPart(counter), lriCmd->getDataDword());
+        ++it;
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        EXPECT_NE(nullptr, lriCmd);
+        EXPECT_EQ(0x2604u, lriCmd->getRegisterOffset());
+        EXPECT_EQ(getHighPart(counter), lriCmd->getDataDword());
+        ++it;
+    }
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
+    EXPECT_NE(nullptr, semaphoreCmd);
+    EXPECT_EQ(deviceGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
+    if (qwordIndirect == false) {
+        EXPECT_EQ(counter, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+    }
+
+    auto &cmdlistResidency = regularCmdList->commandContainer.getResidencyContainer();
+    EXPECT_EQ(cmdlistResidency.end(), std::find(cmdlistResidency.begin(), cmdlistResidency.end(), &patchPreambleAlloc));
+
+    skipAddingWaitEventsToResidency = false;
+    regularCmdList->appendWaitOnPatchPreamble(eventObj->getInOrderExecEventHelper(), nullptr, skipAddingWaitEventsToResidency, false);
+    EXPECT_NE(cmdlistResidency.end(), std::find(cmdlistResidency.begin(), cmdlistResidency.end(), &patchPreambleAlloc));
+
+    zeEventDestroy(handle);
 }
 
 } // namespace ult
