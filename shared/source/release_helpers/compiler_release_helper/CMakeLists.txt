@@ -9,6 +9,8 @@ set(NEO_CORE_COMPILER_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe_hpg.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe_lpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_tgl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_rkl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_adl_s.cpp

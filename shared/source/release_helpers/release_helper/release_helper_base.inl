@@ -84,11 +84,6 @@ const SupportedNumGrfs ReleaseHelperHw<releaseType>::getSupportedNumGrfs() const
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isBindlessAddressingDisabled() const {
-    return true;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isGlobalBindlessAllocatorEnabled() const {
     return false;
 }

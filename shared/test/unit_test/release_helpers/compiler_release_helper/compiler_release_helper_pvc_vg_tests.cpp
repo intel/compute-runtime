@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/unit_test/release_helpers/compiler_release_helper/compiler_release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
@@ -15,6 +16,16 @@ struct CompilerReleaseHelperPvcVgTests : public CompilerReleaseHelperTests<12, 6
         return {7};
     }
 };
+
+TEST_F(CompilerReleaseHelperPvcVgTests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        compilerReleaseHelper = CompilerReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, compilerReleaseHelper);
+
+        EXPECT_TRUE(compilerReleaseHelper->isBindlessAddressingDisabled());
+    }
+}
 
 TEST_F(CompilerReleaseHelperPvcVgTests, whenIsForceEmuInt32DivRemSPRequiredCalledThenFalseReturned) {
     whenIsForceEmuInt32DivRemSPRequiredCalledThenFalseReturned();

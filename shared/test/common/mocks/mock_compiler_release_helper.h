@@ -15,6 +15,7 @@ class MockCompilerReleaseHelper : public CompilerReleaseHelper {
   public:
     MockCompilerReleaseHelper() : CompilerReleaseHelper(0) {}
     ADDMETHOD_CONST_NOBASE(isForceEmuInt32DivRemSPRequired, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isBindlessAddressingDisabled, bool, true, ());
 };
 
 } // namespace NEO

@@ -37,7 +37,6 @@ TEST_F(ReleaseHelperBmgG21Tests, whenGettingCapabilitiesThenCorrectPropertiesAre
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_TRUE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
-        EXPECT_FALSE(releaseHelper->isBindlessAddressingDisabled());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());

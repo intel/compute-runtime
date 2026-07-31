@@ -28,11 +28,6 @@ bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
     return false;
 }

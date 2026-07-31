@@ -258,6 +258,11 @@ const ReleaseHelper &RootDeviceEnvironment::getReleaseHelper() const {
     return *releaseHelper;
 }
 
+const CompilerReleaseHelper &RootDeviceEnvironment::getCompilerReleaseHelper() const {
+    UNRECOVERABLE_IF(compilerReleaseHelper == nullptr);
+    return *compilerReleaseHelper;
+}
+
 AILConfiguration *RootDeviceEnvironment::getAILConfigurationHelper() const {
     return ailConfiguration.get();
 }

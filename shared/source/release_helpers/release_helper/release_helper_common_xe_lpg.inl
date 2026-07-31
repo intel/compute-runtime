@@ -17,11 +17,6 @@ bool ReleaseHelperHw<release>::isDirectSubmissionLightSupported() const {
 }
 
 template <>
-inline bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
-    return false;
-}
-
-template <>
 inline bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
     return true;
 }

@@ -10,8 +10,8 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
 
@@ -99,11 +99,11 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfCompilerCacheIsEnabledByDefaultThen
 
 TEST(ApiSpecificConfigL0Tests, WhenCheckingIfBindlessAddressingIsEnabledThenReturnProperValue) {
     MockAILConfiguration mockAilConfigurationHelper;
-    MockReleaseHelper mockReleaseHelper;
+    MockCompilerReleaseHelper mockCompilerReleaseHelper;
     MockDevice mockDevice;
 
-    mockReleaseHelper.isBindlessAddressingDisabledResult = false;
-    mockDevice.mockReleaseHelper = &mockReleaseHelper;
+    mockCompilerReleaseHelper.isBindlessAddressingDisabledResult = false;
+    mockDevice.mockCompilerReleaseHelper = &mockCompilerReleaseHelper;
     EXPECT_TRUE(ApiSpecificConfig::getBindlessMode(mockDevice));
 
     mockDevice.mockAilConfigurationHelper = &mockAilConfigurationHelper;

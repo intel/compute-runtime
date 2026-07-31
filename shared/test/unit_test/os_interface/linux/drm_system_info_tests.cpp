@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -131,6 +132,23 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     const ReleaseHelperExpose *exposedReleaseHelper = static_cast<const ReleaseHelperExpose *>(releaseHelper);
     EXPECT_EQ(12u, exposedReleaseHelper->hardwareIpVersion.architecture);
     EXPECT_EQ(55u, exposedReleaseHelper->hardwareIpVersion.release);
+}
+
+TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenCompilerReleaseHelperIsCreated) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->releaseHelper.reset(nullptr);
+    executionEnvironment->rootDeviceEnvironments[0]->compilerReleaseHelper.reset(nullptr);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    DrmMockToQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
+    EXPECT_EQ(ret, 0);
+    EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->compilerReleaseHelper.get());
 }
 
 TEST(DrmSystemInfoTest, givenInvalidDeviceIdWhenSetupHardwareInfoThenReturnsSuccessForValidIpVersion) {

@@ -546,6 +546,7 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
 
     ioctlHelper->setupIpVersion();
     rootDeviceEnvironment.initReleaseHelper();
+    rootDeviceEnvironment.initCompilerReleaseHelper();
 
     const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, &releaseHelper);

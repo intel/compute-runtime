@@ -9,6 +9,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -96,6 +97,16 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
 
     const ReleaseHelperExpose *exposedReleaseHelper = static_cast<const ReleaseHelperExpose *>(releaseHelper);
     EXPECT_EQ(config, exposedReleaseHelper->hardwareIpVersion.value);
+}
+
+TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenCompilerReleaseHelperIsCreated) {
+    ExecutionEnvironment executionEnvironment{};
+    auto config = defaultHwInfo.get()->ipVersion.value;
+    debugManager.flags.OverrideHwIpVersion.set(config);
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    EXPECT_TRUE(success);
+    EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->compilerReleaseHelper.get());
 }
 
 TEST_F(DeviceFactoryTests, givenHwIpVersionAndDeviceIdOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenCorrectValueIsSet) {

@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
@@ -39,11 +40,11 @@ bool ApiSpecificConfig::getBindlessMode(const Device &device) {
     }
 
     auto ailHelper = device.getAilConfigurationHelper();
-    const auto &releaseHelper = device.getReleaseHelper();
+    const auto &compilerReleaseHelper = device.getCompilerReleaseHelper();
     if (ailHelper && ailHelper->disableBindlessAddressing()) {
         return false;
     } else {
-        return !releaseHelper.isBindlessAddressingDisabled();
+        return !compilerReleaseHelper.isBindlessAddressingDisabled();
     }
 }
 

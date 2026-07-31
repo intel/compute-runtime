@@ -30,11 +30,6 @@ bool ReleaseHelperHw<release>::isRayTracingSupported() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
     return true;
 }

@@ -51,7 +51,6 @@ class ReleaseHelper {
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
     virtual bool isRcsExposureDisabled() const = 0;
     virtual const SupportedNumGrfs getSupportedNumGrfs() const = 0;
-    virtual bool isBindlessAddressingDisabled() const = 0;
     virtual bool isGlobalBindlessAllocatorEnabled() const = 0;
     virtual uint64_t getTotalMemBankSize() const = 0;
     virtual const ThreadsPerEUConfigs getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const = 0;
@@ -111,7 +110,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isResolvingSubDeviceIDNeeded() const override;
     bool isRcsExposureDisabled() const override;
     const SupportedNumGrfs getSupportedNumGrfs() const override;
-    bool isBindlessAddressingDisabled() const override;
     bool isGlobalBindlessAllocatorEnabled() const override;
     uint64_t getTotalMemBankSize() const override;
     const StackVec<uint32_t, 6> getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const override;

@@ -14,4 +14,9 @@ bool CompilerReleaseHelperHw<releaseType>::isForceEmuInt32DivRemSPRequired() con
     return false;
 }
 
+template <ReleaseType releaseType>
+bool CompilerReleaseHelperHw<releaseType>::isBindlessAddressingDisabled() const {
+    return true;
+}
+
 } // namespace NEO

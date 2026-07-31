@@ -38,7 +38,6 @@ TEST_F(ReleaseHelperBmgG31Tests, whenGettingCapabilitiesThenCorrectPropertiesAre
 
         EXPECT_TRUE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
-        EXPECT_FALSE(releaseHelper->isBindlessAddressingDisabled());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());

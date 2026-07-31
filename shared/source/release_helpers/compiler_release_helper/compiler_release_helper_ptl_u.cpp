@@ -12,6 +12,12 @@
 
 namespace NEO {
 constexpr auto release = ReleaseType::release3001;
+
+template <>
+bool CompilerReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
+    return false;
+}
+
 } // namespace NEO
 
 template class NEO::CompilerReleaseHelperHw<NEO::release>;

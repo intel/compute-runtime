@@ -38,7 +38,6 @@ TEST_F(ReleaseHelperCriTests, whenGettingCapabilitiesThenCorrectPropertiesAreRet
         EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_FALSE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
-        EXPECT_TRUE(releaseHelper->isBindlessAddressingDisabled());
         EXPECT_FALSE(releaseHelper->isRayTracingSupported());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());

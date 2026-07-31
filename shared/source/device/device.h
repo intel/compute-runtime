@@ -35,6 +35,7 @@ class FrontEndController;
 class GfxCoreHelper;
 class GmmClientContext;
 class GmmHelper;
+class CompilerReleaseHelper;
 class GraphicsAllocation;
 class ISAPoolAllocator;
 class OSTime;
@@ -205,6 +206,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     const ProductHelper &getProductHelper() const;
     const CompilerProductHelper &getCompilerProductHelper() const;
     MOCKABLE_VIRTUAL const ReleaseHelper &getReleaseHelper() const;
+    MOCKABLE_VIRTUAL const CompilerReleaseHelper &getCompilerReleaseHelper() const;
     MOCKABLE_VIRTUAL AILConfiguration *getAilConfigurationHelper() const;
     ISAPoolAllocator &getIsaPoolAllocator() {
         return *isaPoolAllocator;

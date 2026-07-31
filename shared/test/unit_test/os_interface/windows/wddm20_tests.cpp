@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -161,6 +162,20 @@ TEST(Wddm20EnumAdaptersTest, WhenInitializingWddmThenHardwareInfoIsCorrectlyPopu
     EXPECT_TRUE(success);
 
     EXPECT_EQ(rootDeviceEnvironment.getHardwareInfo()->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
+}
+
+TEST(Wddm20EnumAdaptersTest, WhenInitializingWddmThenCompilerReleaseHelperIsCreated) {
+
+    const HardwareInfo *hwInfo = defaultHwInfo.get();
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
+                                                         &hwInfo->gtSystemInfo,
+                                                         hwInfo->capabilityTable.gpuAddressSpace));
+
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    auto wddm = Wddm::createWddm(nullptr, rootDeviceEnvironment);
+    EXPECT_TRUE(wddm->init());
+    EXPECT_NE(nullptr, rootDeviceEnvironment.compilerReleaseHelper.get());
 }
 
 TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFalseIsReturnedAndOutputIsEmpty) {

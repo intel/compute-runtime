@@ -43,7 +43,6 @@ TEST_P(ReleaseHelperGen12LpTests, whenGettingCapabilitiesThenCorrectPropertiesAr
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_FALSE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_FALSE(releaseHelper->isRcsExposureDisabled());
-        EXPECT_TRUE(releaseHelper->isBindlessAddressingDisabled());
         EXPECT_FALSE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_FALSE(releaseHelper->isRayTracingSupported());

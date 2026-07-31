@@ -29,10 +29,10 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compiler_cache.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
+#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_fcl_facade.h"
@@ -4302,16 +4302,16 @@ struct OfflineCompilerBindlessOptionsTests : public ::testing::Test {
         mockOfflineCompiler->initHardwareInfo(mockOfflineCompiler->deviceName);
         mockOfflineCompiler->internalOptions.clear();
 
-        releaseHelper = std::make_unique<MockReleaseHelper>();
+        compilerReleaseHelper = std::make_unique<MockCompilerReleaseHelper>();
     }
 
     std::unique_ptr<MockOfflineCompiler> mockOfflineCompiler;
-    std::unique_ptr<MockReleaseHelper> releaseHelper;
+    std::unique_ptr<MockCompilerReleaseHelper> compilerReleaseHelper;
 };
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingEnabledWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreAddedToInternalOptions) {
-    releaseHelper->isBindlessAddressingDisabledResult = false;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    compilerReleaseHelper->isBindlessAddressingDisabledResult = false;
+    mockOfflineCompiler->compilerReleaseHelper = std::move(compilerReleaseHelper);
 
     auto internalOptions = mockOfflineCompiler->internalOptions;
     mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
@@ -4320,8 +4320,8 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingEnabledWhenAp
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessNotEnabledAddrModeSetWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotAddedToInternalOptions) {
-    releaseHelper->isBindlessAddressingDisabledResult = false;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    compilerReleaseHelper->isBindlessAddressingDisabledResult = false;
+    mockOfflineCompiler->compilerReleaseHelper = std::move(compilerReleaseHelper);
     mockOfflineCompiler->addressingMode = "bindful";
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(false);
@@ -4336,8 +4336,8 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessNotEnabledAddrModeSetWh
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingDisabledWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotAddedToInternalOptions) {
-    releaseHelper->isBindlessAddressingDisabledResult = true;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    compilerReleaseHelper->isBindlessAddressingDisabledResult = true;
+    mockOfflineCompiler->compilerReleaseHelper = std::move(compilerReleaseHelper);
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(false);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
@@ -4350,8 +4350,8 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingDisabledWhenA
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindfulModeWhenAppendExtraInternalOptionsThenErrorIsReturned) {
-    releaseHelper->isBindlessAddressingDisabledResult = true;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    compilerReleaseHelper->isBindlessAddressingDisabledResult = true;
+    mockOfflineCompiler->compilerReleaseHelper = std::move(compilerReleaseHelper);
     mockOfflineCompiler->addressingMode = "bindful";
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
@@ -4372,8 +4372,8 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindful
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndDefaultModeWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreAdded) {
-    releaseHelper->isBindlessAddressingDisabledResult = true;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    compilerReleaseHelper->isBindlessAddressingDisabledResult = true;
+    mockOfflineCompiler->compilerReleaseHelper = std::move(compilerReleaseHelper);
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
@@ -4389,8 +4389,8 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndDefault
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindlessAlreadyInInternalOptionsWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotDuplicated) {
-    releaseHelper->isBindlessAddressingDisabledResult = true;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    compilerReleaseHelper->isBindlessAddressingDisabledResult = true;
+    mockOfflineCompiler->compilerReleaseHelper = std::move(compilerReleaseHelper);
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);

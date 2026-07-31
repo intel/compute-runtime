@@ -104,6 +104,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     void initReleaseHelper();
     void initAilConfigurationHelper();
     const ReleaseHelper &getReleaseHelper() const;
+    const CompilerReleaseHelper &getCompilerReleaseHelper() const;
     AILConfiguration *getAILConfigurationHelper() const;
     template <typename HelperType>
     HelperType &getHelper() const;

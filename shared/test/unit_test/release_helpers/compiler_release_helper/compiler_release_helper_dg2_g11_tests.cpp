@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/unit_test/release_helpers/compiler_release_helper/compiler_release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
@@ -15,6 +16,16 @@ struct CompilerReleaseHelperDg2G11Tests : public CompilerReleaseHelperTests<12, 
         return {0, 4, 5};
     }
 };
+
+TEST_F(CompilerReleaseHelperDg2G11Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        compilerReleaseHelper = CompilerReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, compilerReleaseHelper);
+
+        EXPECT_FALSE(compilerReleaseHelper->isBindlessAddressingDisabled());
+    }
+}
 
 TEST_F(CompilerReleaseHelperDg2G11Tests, whenIsForceEmuInt32DivRemSPRequiredCalledThenFalseReturned) {
     whenIsForceEmuInt32DivRemSPRequiredCalledThenFalseReturned();
