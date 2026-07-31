@@ -141,25 +141,25 @@ struct ExternalCbEventInfo {
 
 using PatchPreambleCounter = uint64_t;
 using PatchPreambleHostAddress = uint64_t *;
-using PatchPreambleDeviceAddress = uint64_t;
-using PatchPreambleGraphicsAllocation = NEO::GraphicsAllocation *;
+using PatchPreambleHostGpuAddress = uint64_t;
+using PatchPreambleHostGraphicsAllocation = NEO::GraphicsAllocation *;
 
-using PatchPreambleData = std::tuple<PatchPreambleCounter, PatchPreambleHostAddress, PatchPreambleDeviceAddress, PatchPreambleGraphicsAllocation>;
+using PatchPreambleData = std::tuple<PatchPreambleCounter, PatchPreambleHostAddress, PatchPreambleHostGpuAddress, PatchPreambleHostGraphicsAllocation>;
 struct PatchPreambleItem {
-    PatchPreambleItem(uint64_t counter, uint64_t *hostAddress, uint64_t deviceAddress, NEO::GraphicsAllocation *allocation, L0::CommandList *key)
+    PatchPreambleItem(uint64_t counter, uint64_t *hostAddress, uint64_t hostGpuAddress, NEO::GraphicsAllocation *hostAllocation, L0::CommandList *key)
         : key(key),
-          data(counter, hostAddress, deviceAddress, allocation) {}
+          data(counter, hostAddress, hostGpuAddress, hostAllocation) {}
     PatchPreambleItem() : PatchPreambleItem(0, nullptr, 0, nullptr, nullptr) {}
 
     PatchPreambleCounter &counter() { return std::get<0>(data); }
     PatchPreambleHostAddress &hostAddress() { return std::get<1>(data); }
-    PatchPreambleDeviceAddress &deviceAddress() { return std::get<2>(data); }
-    PatchPreambleGraphicsAllocation &allocation() { return std::get<3>(data); }
+    PatchPreambleHostGpuAddress &hostGpuAddress() { return std::get<2>(data); }
+    PatchPreambleHostGraphicsAllocation &hostAllocation() { return std::get<3>(data); }
 
     const PatchPreambleCounter &counter() const { return std::get<0>(data); }
     const PatchPreambleHostAddress &hostAddress() const { return std::get<1>(data); }
-    const PatchPreambleDeviceAddress &deviceAddress() const { return std::get<2>(data); }
-    const PatchPreambleGraphicsAllocation &allocation() const { return std::get<3>(data); }
+    const PatchPreambleHostGpuAddress &hostGpuAddress() const { return std::get<2>(data); }
+    const PatchPreambleHostGraphicsAllocation &hostAllocation() const { return std::get<3>(data); }
 
     L0::CommandList *key = nullptr;
 

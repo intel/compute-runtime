@@ -153,9 +153,9 @@ struct CommandQueue : _ze_command_queue_handle_t {
 
     void getPatchPreambleFullData(uint64_t &outCounterValue,
                                   uint64_t *&outHostAddress,
-                                  uint64_t &outDeviceAddress,
-                                  NEO::GraphicsAllocation *&outGraphicsAllocation) {
-        patchPreambleCounter.getPatchPreambleFullData(this->device, outCounterValue, outHostAddress, outDeviceAddress, outGraphicsAllocation);
+                                  uint64_t &outHostGpuAddress,
+                                  NEO::GraphicsAllocation *&outHostGraphicsAllocation) {
+        patchPreambleCounter.getPatchPreambleFullData(this->device, outCounterValue, outHostAddress, outHostGpuAddress, outHostGraphicsAllocation);
     }
 
   protected:

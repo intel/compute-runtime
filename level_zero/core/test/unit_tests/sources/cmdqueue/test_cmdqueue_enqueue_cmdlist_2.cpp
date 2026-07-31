@@ -1217,12 +1217,11 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
 
     commandQueue->setPatchingPreamble(true);
 
-    uint64_t counterDeviceAddress = 0;
+    uint64_t counterHostGpuAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-    NEO::GraphicsAllocation *counterAllocation = nullptr;
-    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterDeviceAddress, counterAllocation);
-
+    NEO::GraphicsAllocation *counterHostAllocation = nullptr;
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -1236,7 +1235,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    EXPECT_TRUE(ultCsr->isMadeResident(counterAllocation));
+    EXPECT_TRUE(ultCsr->isMadeResident(counterHostAllocation));
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1252,7 +1251,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlCmd);
         if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             auto actualAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
-            if (counterDeviceAddress == actualAddress &&
+            if (counterHostGpuAddress == actualAddress &&
                 pipeControl->getImmediateData() == counter) {
                 foundPostSyncWithCounter = true;
                 break;
@@ -1355,12 +1354,11 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
 
     commandQueue->setPatchingPreamble(true);
 
-    uint64_t counterDeviceAddress = 0;
+    uint64_t counterHostGpuAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-    NEO::GraphicsAllocation *counterAllocation = nullptr;
-    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterDeviceAddress, counterAllocation);
-
+    NEO::GraphicsAllocation *counterHostAllocation = nullptr;
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -1374,7 +1372,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    EXPECT_TRUE(ultCsr->isMadeResident(counterAllocation));
+    EXPECT_TRUE(ultCsr->isMadeResident(counterHostAllocation));
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1390,7 +1388,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
     for (auto &miFlushCmd : miFlushCmds) {
         auto miFlush = reinterpret_cast<MI_FLUSH_DW *>(*miFlushCmd);
         if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD &&
-            miFlush->getDestinationAddress() == counterDeviceAddress &&
+            miFlush->getDestinationAddress() == counterHostGpuAddress &&
             miFlush->getImmediateData() == counter) {
             foundPostSyncWithCounter = true;
             break;

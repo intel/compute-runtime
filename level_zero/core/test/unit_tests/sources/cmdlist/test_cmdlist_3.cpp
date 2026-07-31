@@ -704,27 +704,26 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenGettingPatchPreamble
 
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-    uint64_t deviceAddress = 0;
-    NEO::GraphicsAllocation *allocation = nullptr;
+    uint64_t hostNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
 
-    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation);
     EXPECT_EQ(1u, counter);
     EXPECT_NE(nullptr, hostAddress);
-    EXPECT_NE(0u, deviceAddress);
-    EXPECT_NE(nullptr, allocation);
+    EXPECT_NE(0u, hostNodeGpuAddress);
+    EXPECT_NE(nullptr, hostNodeAllocation);
+    hostNodeGpuAddress = 0;
+    hostNodeAllocation = nullptr;
 
-    deviceAddress = 0;
-    allocation = nullptr;
+    whiteBoxCmdQueue->patchPreambleCounter.getPatchPreambleNodeData(hostNodeAllocation, hostNodeGpuAddress);
+    EXPECT_NE(nullptr, hostNodeAllocation);
+    EXPECT_NE(0u, hostNodeGpuAddress);
 
-    whiteBoxCmdQueue->patchPreambleCounter.getPatchPreambleDeviceData(allocation, deviceAddress);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_NE(0u, deviceAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, hostNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, hostNodeGpuAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, hostAddress);
 
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.allocation, allocation);
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, deviceAddress);
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, hostAddress);
-
-    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation);
     EXPECT_EQ(2u, counter);
 }
 

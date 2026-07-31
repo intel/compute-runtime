@@ -2258,8 +2258,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         }
         EXPECT_EQ(0u, entry.counter());
         EXPECT_EQ(nullptr, entry.hostAddress());
-        EXPECT_EQ(0u, entry.deviceAddress());
-        EXPECT_EQ(nullptr, entry.allocation());
+        EXPECT_EQ(0u, entry.hostGpuAddress());
+        EXPECT_EQ(nullptr, entry.hostAllocation());
     }
 
     EXPECT_TRUE(virtualRootFound);
@@ -2269,31 +2269,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     auto &rootHostPatchPreambleData = cbEventContainer->getPreambleData(nullptr);
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootHostPatchPreambleData.counter());
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, rootHostPatchPreambleData.hostAddress());
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, rootHostPatchPreambleData.deviceAddress());
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.allocation, rootHostPatchPreambleData.allocation());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, rootHostPatchPreambleData.hostAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, rootHostPatchPreambleData.hostGpuAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, rootHostPatchPreambleData.hostAllocation());
 
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, forkEvent->getInOrderExecEventHelper().getPatchPreambleCounter());
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, forkEvent->getInOrderExecEventHelper().getPatchPreambleHostAddress());
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, forkEvent->getInOrderExecEventHelper().getPatchPreambleDeviceAddress());
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.allocation, forkEvent->getInOrderExecEventHelper().getPatchPreambleAllocation());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, forkEvent->getInOrderExecEventHelper().getPatchPreambleHostAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, forkEvent->getInOrderExecEventHelper().getPatchPreambleHostGpuAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, forkEvent->getInOrderExecEventHelper().getPatchPreambleHostAllocation());
 
     auto &childHostPatchPreambleData = cbEventContainer->getPreambleData(subCommandList.get());
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, childHostPatchPreambleData.counter());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, childHostPatchPreambleData.hostAddress());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceAddress, childHostPatchPreambleData.deviceAddress());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.allocation, childHostPatchPreambleData.allocation());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeCpuAddress, childHostPatchPreambleData.hostAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeGpuAddress, childHostPatchPreambleData.hostGpuAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeAllocation, childHostPatchPreambleData.hostAllocation());
 
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, joinEvent->getInOrderExecEventHelper().getPatchPreambleCounter());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, joinEvent->getInOrderExecEventHelper().getPatchPreambleHostAddress());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceAddress, joinEvent->getInOrderExecEventHelper().getPatchPreambleDeviceAddress());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.allocation, joinEvent->getInOrderExecEventHelper().getPatchPreambleAllocation());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeCpuAddress, joinEvent->getInOrderExecEventHelper().getPatchPreambleHostAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeGpuAddress, joinEvent->getInOrderExecEventHelper().getPatchPreambleHostGpuAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeAllocation, joinEvent->getInOrderExecEventHelper().getPatchPreambleHostAllocation());
 
     auto &nullPatchPreambleData = cbEventContainer->getPreambleData(reinterpret_cast<L0::CommandList *>(0x123));
     EXPECT_EQ(0u, nullPatchPreambleData.counter());
     EXPECT_EQ(nullptr, nullPatchPreambleData.hostAddress());
-    EXPECT_EQ(0u, nullPatchPreambleData.deviceAddress());
-    EXPECT_EQ(nullptr, nullPatchPreambleData.allocation());
+    EXPECT_EQ(0u, nullPatchPreambleData.hostGpuAddress());
+    EXPECT_EQ(nullptr, nullPatchPreambleData.hostAllocation());
 
     auto nullCounter = cbEventContainer->getPreambleCounter(reinterpret_cast<L0::CommandList *>(0x123));
     EXPECT_EQ(0u, nullCounter);
@@ -2371,8 +2371,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         }
         EXPECT_EQ(0u, entry.counter());
         EXPECT_EQ(nullptr, entry.hostAddress());
-        EXPECT_EQ(0u, entry.deviceAddress());
-        EXPECT_EQ(nullptr, entry.allocation());
+        EXPECT_EQ(0u, entry.hostGpuAddress());
+        EXPECT_EQ(nullptr, entry.hostAllocation());
     }
 
     EXPECT_FALSE(virtualRootFound);
@@ -2383,19 +2383,19 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto &rootHostPatchPreambleData = cbEventContainer->getPreambleData(nullptr); // there should be no data for root, as event is attached to child
     EXPECT_EQ(0u, rootHostPatchPreambleData.counter());
     EXPECT_EQ(nullptr, rootHostPatchPreambleData.hostAddress());
-    EXPECT_EQ(0u, rootHostPatchPreambleData.deviceAddress());
-    EXPECT_EQ(nullptr, rootHostPatchPreambleData.allocation());
+    EXPECT_EQ(0u, rootHostPatchPreambleData.hostGpuAddress());
+    EXPECT_EQ(nullptr, rootHostPatchPreambleData.hostAllocation());
 
     auto &childHostPatchPreambleData = cbEventContainer->getPreambleData(subCommandList.get());
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, childHostPatchPreambleData.counter());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, childHostPatchPreambleData.hostAddress());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceAddress, childHostPatchPreambleData.deviceAddress());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.allocation, childHostPatchPreambleData.allocation());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeCpuAddress, childHostPatchPreambleData.hostAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeGpuAddress, childHostPatchPreambleData.hostGpuAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeAllocation, childHostPatchPreambleData.hostAllocation());
 
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, event->getInOrderExecEventHelper().getPatchPreambleCounter());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, event->getInOrderExecEventHelper().getPatchPreambleHostAddress());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceAddress, event->getInOrderExecEventHelper().getPatchPreambleDeviceAddress());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.allocation, event->getInOrderExecEventHelper().getPatchPreambleAllocation());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeCpuAddress, event->getInOrderExecEventHelper().getPatchPreambleHostAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeGpuAddress, event->getInOrderExecEventHelper().getPatchPreambleHostGpuAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeAllocation, event->getInOrderExecEventHelper().getPatchPreambleHostAllocation());
 
     srcGraph.reset();
     event->destroy();
@@ -2801,10 +2801,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto cbEventContainer = execGraph.getExternalCbEventInfoContainer().get();
     auto &rootHostPatchPreambleData = cbEventContainer->getPreambleData(nullptr);
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootHostPatchPreambleData.counter());
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, rootHostPatchPreambleData.deviceAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, rootHostPatchPreambleData.hostGpuAddress());
 
     auto counter = whiteBoxCmdQueue->patchPreambleCounter.counter;
-    auto deviceAddress = whiteBoxCmdQueue->patchPreambleCounter.deviceAddress;
+    auto hostGpuAddress = whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress;
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -2820,7 +2820,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlCmd);
         auto actualAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
         if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA &&
-            deviceAddress == actualAddress &&
+            hostGpuAddress == actualAddress &&
             pipeControl->getImmediateData() == counter) {
             foundPostSyncWithCounter = true;
             break;

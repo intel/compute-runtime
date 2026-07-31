@@ -650,7 +650,7 @@ bool EventImp<TagSizeT>::tbxDownload(NEO::CommandStreamReceiver &csr, bool &down
     }
 
     if (!downloadedPatchPreambleAllocation) {
-        auto alloc = inOrderExecHelper.getPatchPreambleAllocation();
+        auto alloc = inOrderExecHelper.getPatchPreambleHostAllocation();
         if (alloc && alloc->isUsedByOsContext(csr.getOsContext().getContextId())) {
             csr.downloadAllocation(*alloc);
             downloadedPatchPreambleAllocation = true;
@@ -698,7 +698,7 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
     if (this->tbxMode) {
         bool downloadedAllocation = (eventPoolAllocation == nullptr);
         bool downloadedInOrdedAllocation = (inOrderExecHelper.getDeviceCounterAllocation() == nullptr);
-        bool downloadedPatchPreambleAllocation = (inOrderExecHelper.getPatchPreambleAllocation() == nullptr);
+        bool downloadedPatchPreambleAllocation = (inOrderExecHelper.getPatchPreambleHostAllocation() == nullptr);
 
         DEBUG_BREAK_IF(inOrderExecHelper.isDataAssigned() && (inOrderExecHelper.getDeviceCounterAllocation() == nullptr)); //  external allocation - not able to download
 

@@ -992,18 +992,18 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
         auto neoDevice = this->device->getNEODevice();
         bool usePostSync = ctx.patchPreambleRequiredCounter > 0;
         auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
-        NEO::GraphicsAllocation *counterAllocation = nullptr;
-        uint64_t counterDeviceAddress = 0;
+        NEO::GraphicsAllocation *counterHostAllocation = nullptr;
+        uint64_t counterHostGpuAddress = 0;
         if (usePostSync) {
-            patchPreambleCounter.getPatchPreambleDeviceData(counterAllocation, counterDeviceAddress);
-            this->csr->makeResident(*counterAllocation);
+            patchPreambleCounter.getPatchPreambleNodeData(counterHostAllocation, counterHostGpuAddress);
+            this->csr->makeResident(*counterHostAllocation);
         }
         if (this->isCopyOnlyCommandQueue) {
             NEO::EncodeDummyBlitWaArgs waArgs{false, &(rootDeviceEnvironment)};
             NEO::MiFlushArgs args{waArgs};
             args.commandWithPostSync = usePostSync;
 
-            NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(ctx.currentPatchPreambleBuffer, counterDeviceAddress, ctx.patchPreambleRequiredCounter, args);
+            NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(ctx.currentPatchPreambleBuffer, counterHostGpuAddress, ctx.patchPreambleRequiredCounter, args);
         } else {
             NEO::PipeControlArgs args;
             if (this->partitionCount > 1) {
@@ -1014,7 +1014,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
                     neoDevice->getDeviceBitfield(),
                     args,
                     rootDeviceEnvironment,
-                    counterDeviceAddress, ctx.patchPreambleRequiredCounter,
+                    counterHostGpuAddress, ctx.patchPreambleRequiredCounter,
                     commandBufferCurrentGpuAddress,
                     false,
                     false);
@@ -1022,7 +1022,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
                 if (usePostSync) {
                     NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(ctx.currentPatchPreambleBuffer,
                                                                                                    NEO::PostSyncMode::immediateData,
-                                                                                                   counterDeviceAddress,
+                                                                                                   counterHostGpuAddress,
                                                                                                    ctx.patchPreambleRequiredCounter,
                                                                                                    rootDeviceEnvironment,
                                                                                                    args);

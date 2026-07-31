@@ -848,9 +848,9 @@ void CommandList::destroyRecordedBcsSplitResources() {
 
 void CommandList::getPatchPreambleFullData(uint64_t &outCounterValue,
                                            uint64_t *&outHostAddress,
-                                           uint64_t &outDeviceAddress,
-                                           NEO::GraphicsAllocation *&outGraphicsAllocation) {
-    cmdQImmediate->getPatchPreambleFullData(outCounterValue, outHostAddress, outDeviceAddress, outGraphicsAllocation);
+                                           uint64_t &outHostGpuAddress,
+                                           NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation) {
+    cmdQImmediate->getPatchPreambleFullData(outCounterValue, outHostAddress, outHostGpuAddress, outHostNodeGraphicsAllocation);
 }
 
 } // namespace L0

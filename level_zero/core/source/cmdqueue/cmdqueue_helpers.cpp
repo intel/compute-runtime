@@ -22,21 +22,21 @@ CommandQueuePatchPreambleCounter::~CommandQueuePatchPreambleCounter() {
 void CommandQueuePatchPreambleCounter::getPatchPreambleFullData(Device *device,
                                                                 uint64_t &outCounterValue,
                                                                 uint64_t *&outHostAddress,
-                                                                uint64_t &outDeviceAddress,
-                                                                NEO::GraphicsAllocation *&outGraphicsAllocation) {
+                                                                uint64_t &outHostGpuAddress,
+                                                                NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation) {
     std::lock_guard<std::mutex> lock(this->mutex);
     if (this->hostCounterNode == nullptr) {
         auto tagAllocator = device->getHostInOrderCounterAllocator();
         this->hostCounterNode = tagAllocator->getTag();
-        this->hostAddress = reinterpret_cast<uint64_t *>(this->hostCounterNode->getCpuBase());
-        this->deviceAddress = this->hostCounterNode->getGpuAddress();
-        this->allocation = this->hostCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
-        memset(this->hostAddress, 0x0, tagAllocator->getTagSize());
+        this->hostNodeCpuAddress = reinterpret_cast<uint64_t *>(this->hostCounterNode->getCpuBase());
+        this->hostNodeGpuAddress = this->hostCounterNode->getGpuAddress();
+        this->hostNodeAllocation = this->hostCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
+        memset(this->hostNodeCpuAddress, 0x0, tagAllocator->getTagSize());
     }
     outCounterValue = ++this->counter;
-    outHostAddress = this->hostAddress;
-    outDeviceAddress = this->deviceAddress;
-    outGraphicsAllocation = this->allocation;
+    outHostAddress = this->hostNodeCpuAddress;
+    outHostGpuAddress = this->hostNodeGpuAddress;
+    outHostNodeGraphicsAllocation = this->hostNodeAllocation;
 }
 
 } // namespace L0

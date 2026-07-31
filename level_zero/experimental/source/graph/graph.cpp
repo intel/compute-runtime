@@ -484,8 +484,8 @@ void ExternalCbEventInfoContainer::attachExternalCbEventsToExecutableGraph() {
         auto &currentPreambleData = getPreambleData(info.executorCommandList);
         info.event->getInOrderExecEventHelper().assignPatchPreambleData(currentPreambleData.counter(),
                                                                         currentPreambleData.hostAddress(),
-                                                                        currentPreambleData.deviceAddress(),
-                                                                        currentPreambleData.allocation());
+                                                                        currentPreambleData.hostGpuAddress(),
+                                                                        currentPreambleData.hostAllocation());
     }
 }
 void ExternalCbEventInfoContainer::finalizeExecutorContainer() {
@@ -502,16 +502,16 @@ void ExternalCbEventInfoContainer::finalizeExecutorContainer() {
 void ExternalCbEventInfoContainer::updateExecutorContainer(L0::CommandList *currentRoot) {
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-    uint64_t deviceAddress = 0;
-    NEO::GraphicsAllocation *allocation = nullptr;
+    uint64_t hostGpuAddress = 0;
+    NEO::GraphicsAllocation *hostAllocation = nullptr;
     for (auto &elem : executorStorage) {
         L0::CommandList *currentKey = elem.key;
         if (currentKey == nullptr) {
-            currentRoot->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
+            currentRoot->getPatchPreambleFullData(counter, hostAddress, hostGpuAddress, hostAllocation);
         } else {
-            currentKey->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
+            currentKey->getPatchPreambleFullData(counter, hostAddress, hostGpuAddress, hostAllocation);
         }
-        elem = {counter, hostAddress, deviceAddress, allocation, currentKey};
+        elem = {counter, hostAddress, hostGpuAddress, hostAllocation, currentKey};
     }
 }
 

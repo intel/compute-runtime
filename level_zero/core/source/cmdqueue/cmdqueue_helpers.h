@@ -102,9 +102,9 @@ struct CommandListRequiredStateChange {
 struct CommandQueuePatchPreambleCounter {
     uint64_t counter = 0;
     NEO::TagNodeBase *hostCounterNode = nullptr;
-    uint64_t *hostAddress = nullptr;
-    uint64_t deviceAddress = 0;
-    NEO::GraphicsAllocation *allocation = nullptr;
+    uint64_t *hostNodeCpuAddress = nullptr;
+    uint64_t hostNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
     std::mutex mutex;
 
     CommandQueuePatchPreambleCounter() = default;
@@ -115,11 +115,11 @@ struct CommandQueuePatchPreambleCounter {
     void getPatchPreambleFullData(Device *device,
                                   uint64_t &outCounterValue,
                                   uint64_t *&outHostAddress,
-                                  uint64_t &outDeviceAddress,
-                                  NEO::GraphicsAllocation *&outGraphicsAllocation);
-    void getPatchPreambleDeviceData(NEO::GraphicsAllocation *&outAllocation, uint64_t &outDeviceAddress) {
-        outDeviceAddress = this->deviceAddress;
-        outAllocation = this->allocation;
+                                  uint64_t &outHostGpuAddress,
+                                  NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation);
+    void getPatchPreambleNodeData(NEO::GraphicsAllocation *&outHostNodeAllocation, uint64_t &outHostNodeGpuAddress) {
+        outHostNodeGpuAddress = this->hostNodeGpuAddress;
+        outHostNodeAllocation = this->hostNodeAllocation;
     }
 };
 

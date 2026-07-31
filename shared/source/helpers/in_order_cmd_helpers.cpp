@@ -290,8 +290,8 @@ void InOrderExecEventHelper::assignData(uint64_t counterValue, uint32_t counterO
 
     this->patchPreambleCounterCpuAddress = nullptr;
     this->patchPreambleCounter = 0;
-    this->patchPreambleDeviceAddress = 0;
-    this->patchPreambleCounterAllocation = nullptr;
+    this->patchPreambleHostGpuAddress = 0;
+    this->patchPreambleHostAllocation = nullptr;
 
     dataAssigned = true;
 }

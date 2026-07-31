@@ -673,8 +673,8 @@ struct CommandList : _ze_command_list_handle_t {
 
     void getPatchPreambleFullData(uint64_t &outCounterValue,
                                   uint64_t *&outHostAddress,
-                                  uint64_t &outDeviceAddress,
-                                  NEO::GraphicsAllocation *&outGraphicsAllocation);
+                                  uint64_t &outHostGpuAddress,
+                                  NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation);
 
     virtual void handlePostSyncPrintfAndAssert(bool hangDetected) {};
 

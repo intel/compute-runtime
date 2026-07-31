@@ -834,12 +834,12 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
-    uint64_t counterDeviceAddress = 0;
+    uint64_t counterHostGpuAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-    NEO::GraphicsAllocation *counterAllocation = nullptr;
+    NEO::GraphicsAllocation *counterHostAllocation = nullptr;
 
-    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterDeviceAddress, counterAllocation);
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation);
 
     commandQueue->setPatchingPreamble(true);
     commandList->close();
@@ -884,7 +884,7 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     auto cmdPipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeControl);
     EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, cmdPipeControl->getPostSyncOperation());
     EXPECT_EQ(counter, cmdPipeControl->getImmediateData());
-    EXPECT_EQ(counterDeviceAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmdPipeControl));
+    EXPECT_EQ(counterHostGpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmdPipeControl));
     EXPECT_TRUE(cmdPipeControl->getWorkloadPartitionIdOffsetEnable());
 }
 
