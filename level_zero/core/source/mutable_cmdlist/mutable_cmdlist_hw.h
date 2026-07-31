@@ -166,6 +166,9 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void captureCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                               std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
                                               std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList);
+    void captureExternalCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
+                                                      std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
+                                                      std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList);
     void captureRegularWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                          std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList);
     void captureCounterBasedTimestampSignalEventCommands(SignalEventVariableDescriptor &currentMutableSignalEvent,

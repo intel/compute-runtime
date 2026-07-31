@@ -3613,6 +3613,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
     const uint32_t devicePartitionCount = eventInOrderHelper.getEventData()->devicePartitions;
 
     NEO::EncodeCaptureCommandData cmdCaptureData = {};
+    if (outListCommands != nullptr) {
+        cmdCaptureData.makeCommandView = outListCommands->makeCommandView;
+    }
 
     if (!skipAddingWaitEventsToResidency) {
         commandContainer.addToResidencyContainer(devicePatchPreambleCounterAlloc);
@@ -3626,11 +3629,33 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
             NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), firstRegister, getLowPart(counter), true, copyOnlyWait, &cmdCaptureData);
             if (noopDispatch) {
                 memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+                if (cmdCaptureData.commandView) {
+                    memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
+                }
+            }
+            if (outListCommands != nullptr) {
+                outListCommands->emplace_back(PatchExternalCbWaitEventPreambleCounterLoadRegisterImm{
+                    .gpuDestination = cmdCaptureData.gpuAddress,
+                    .pDestination = cmdCaptureData.cpuBuffer,
+                    .commandView = cmdCaptureData.commandView,
+                    .offset = firstRegister,
+                    .patchSize = cmdCaptureData.cmdSize});
             }
 
             NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), secondRegister, getHighPart(counter), true, copyOnlyWait, &cmdCaptureData);
             if (noopDispatch) {
                 memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+                if (cmdCaptureData.commandView) {
+                    memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
+                }
+            }
+            if (outListCommands != nullptr) {
+                outListCommands->emplace_back(PatchExternalCbWaitEventPreambleCounterLoadRegisterImm{
+                    .gpuDestination = cmdCaptureData.gpuAddress,
+                    .pDestination = cmdCaptureData.cpuBuffer,
+                    .commandView = cmdCaptureData.commandView,
+                    .offset = firstRegister,
+                    .patchSize = cmdCaptureData.cmdSize});
             }
         }
 
@@ -3638,7 +3663,19 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
                                                                    false, isQwordInOrderCounter(), qwordIndirect, switchOnUnsuccessful, useSemaphore64bCmd, &cmdCaptureData);
         if (noopDispatch) {
             memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+            if (cmdCaptureData.commandView) {
+                memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
+            }
         }
+        if (outListCommands != nullptr) {
+            outListCommands->emplace_back(PatchExternalCbWaitEventPreambleCounterSemaphoreWait{
+                .gpuDestination = cmdCaptureData.gpuAddress,
+                .pDestination = cmdCaptureData.cpuBuffer,
+                .commandView = cmdCaptureData.commandView,
+                .offset = i * immWriteOffset,
+                .patchSize = cmdCaptureData.cmdSize});
+        }
+
         devicePatchPreambleCounterGpuAddress += immWriteOffset;
     }
 }

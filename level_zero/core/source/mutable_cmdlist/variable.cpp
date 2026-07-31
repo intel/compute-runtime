@@ -803,7 +803,7 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
     bool newPatchPreambleNooped = newPatchPreambleCounter == 0;
 
     for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
-        if (mutableSemWait->getType() == MutableSemaphoreWait::cbEventWait) {
+        if (mutableSemWait->getType() != MutableSemaphoreWait::cbEventWaitPatchPreambleCounter) {
             if (operation == CbWaitEventOperationType::set) {
                 mutableSemWait->setSemaphoreAddress(waitAddress);
             } else if (operation == CbWaitEventOperationType::noop) {
@@ -818,47 +818,13 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                 }
             }
         } else {
-            if (mutableSemWait->getType() == MutableSemaphoreWait::cbEventWaitPatchPreambleCounter) {
-                if (operation == CbWaitEventOperationType::set) {
-                    // general order to set
-                    if (this->desc.eventValue.patchPreambleNoopState) {
-                        if (newPatchPreambleNooped == false) {
-                            // was patch preamble nooped -> can patch preamble set: restore + set value
-                            mutableSemWait->restoreWithSemaphoreAddress(newPatchPreambleCounterAddress);
-                            if (qwordIndirect == false) {
-                                mutableSemWait->setSemaphoreValue(newPatchPreambleCounter);
-                            }
-                        }
-                    } else {
-                        if (newPatchPreambleNooped == false) {
-                            // was patch preamble set -> can patch preamble set: just update address and value
-                            mutableSemWait->setSemaphoreAddress(newPatchPreambleCounterAddress);
-                            if (qwordIndirect == false) {
-                                mutableSemWait->setSemaphoreValue(newPatchPreambleCounter);
-                            }
-                        } else {
-                            // was patch preamble set -> needs patch preamble nooped: noop
-                            mutableSemWait->noop();
-                        }
-                    }
-                } else if (operation == CbWaitEventOperationType::noop) {
-                    mutableSemWait->noop();
-                } else if (operation == CbWaitEventOperationType::restore) {
-                    // general order to restore, can patch preamble restore only if new patch preamble counter is not 0, otherwise noop
-                    if (newPatchPreambleNooped == false) {
-                        mutableSemWait->restoreWithSemaphoreAddress(newPatchPreambleCounterAddress);
-                        if (qwordIndirect == false) {
-                            mutableSemWait->setSemaphoreValue(newPatchPreambleCounter);
-                        }
-                    }
-                }
-            }
+            setCbWaitEventPatchPreambleSemWaitOperation(operation, mutableSemWait, newPatchPreambleCounter, newPatchPreambleCounterAddress, newPatchPreambleNooped, qwordIndirect);
         }
     }
     if (qwordIndirect) {
         uint32_t cmdIndex = 0;
         for (auto &mutableLoadRegImm : this->desc.eventValue.loadRegImmCmds) {
-            if (mutableLoadRegImm->getType() == MutableLoadRegisterImm::cbEventWaitLoadCounter) {
+            if (mutableLoadRegImm->getType() != MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter) {
                 if (operation == CbWaitEventOperationType::noop) {
                     mutableLoadRegImm->noop();
                 } else if (operation == CbWaitEventOperationType::restore) {
@@ -873,37 +839,76 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                     }
                 }
             } else {
-                if (mutableLoadRegImm->getType() == MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter) {
-                    // check if cmdIndex is even - there can be multiple lri pairs, even takes lower, odd takes higher part of 64b value
-                    uint32_t waitValue = ((cmdIndex & 1u) == 0u) ? getLowPart(newPatchPreambleCounter) : getHighPart(newPatchPreambleCounter);
-                    if (operation == CbWaitEventOperationType::set) {
-                        // was patch preamble nooped -> can patch preamble set: restore + set value
-                        if (this->desc.eventValue.patchPreambleNoopState) {
-                            if (newPatchPreambleNooped == false) {
-                                mutableLoadRegImm->restore();
-                                mutableLoadRegImm->setValue(waitValue);
-                            }
-                        } else {
-                            if (newPatchPreambleNooped == false) {
-                                // was patch preamble set -> can patch preamble set: just update address and value
-                                mutableLoadRegImm->setValue(waitValue);
-                            } else {
-                                // was patch preamble set -> needs patch preamble nooped: noop
-                                mutableLoadRegImm->noop();
-                            }
-                        }
-                    } else if (operation == CbWaitEventOperationType::noop) {
-                        mutableLoadRegImm->noop();
-                    } else if (operation == CbWaitEventOperationType::restore) {
-                        // general order to restore, can patch preamble restore only if new patch preamble counter is not 0, otherwise remain noop
-                        if (newPatchPreambleNooped == false) {
-                            mutableLoadRegImm->restore();
-                            mutableLoadRegImm->setValue(waitValue);
-                        }
-                    }
-                }
+                setCbWaitEventPatchPreambleLoadRegImmOperation(operation, mutableLoadRegImm, newPatchPreambleCounter, cmdIndex, newPatchPreambleNooped);
             }
             cmdIndex++;
+        }
+    }
+}
+
+void Variable::setCbWaitEventPatchPreambleSemWaitOperation(CbWaitEventOperationType operation, MutableSemaphoreWait *mutableSemWait, uint64_t counter, uint64_t deviceGpuAddress, bool newPatchPreambleNoop, bool qwordIndirect) {
+    if (operation == CbWaitEventOperationType::set) {
+        // general order to set
+        if (this->desc.eventValue.patchPreambleNoopState) {
+            if (newPatchPreambleNoop == false) {
+                // was patch preamble nooped -> can patch preamble set: restore + set value
+                mutableSemWait->restoreWithSemaphoreAddress(deviceGpuAddress);
+                if (qwordIndirect == false) {
+                    mutableSemWait->setSemaphoreValue(counter);
+                }
+            }
+        } else {
+            if (newPatchPreambleNoop == false) {
+                // was patch preamble set -> can patch preamble set: just update address and value
+                mutableSemWait->setSemaphoreAddress(deviceGpuAddress);
+                if (qwordIndirect == false) {
+                    mutableSemWait->setSemaphoreValue(counter);
+                }
+            } else {
+                // was patch preamble set -> needs patch preamble nooped: noop
+                mutableSemWait->noop();
+            }
+        }
+    } else if (operation == CbWaitEventOperationType::noop) {
+        mutableSemWait->noop();
+    } else if (operation == CbWaitEventOperationType::restore) {
+        // general order to restore, can patch preamble restore only if new patch preamble counter is not 0, otherwise noop
+        if (newPatchPreambleNoop == false) {
+            mutableSemWait->restoreWithSemaphoreAddress(deviceGpuAddress);
+            if (qwordIndirect == false) {
+                mutableSemWait->setSemaphoreValue(counter);
+            }
+        }
+    }
+}
+
+void Variable::setCbWaitEventPatchPreambleLoadRegImmOperation(CbWaitEventOperationType operation, MutableLoadRegisterImm *mutableLoadRegImm, uint64_t counter, uint32_t cmdIndex, bool newPatchPreambleNoop) {
+    // check if cmdIndex is even - there can be multiple lri pairs, even takes lower, odd takes higher part of 64b value
+    uint32_t waitValue = ((cmdIndex & 1u) == 0u) ? getLowPart(counter) : getHighPart(counter);
+
+    if (operation == CbWaitEventOperationType::set) {
+        // was patch preamble nooped -> can patch preamble set: restore + set value
+        if (this->desc.eventValue.patchPreambleNoopState) {
+            if (newPatchPreambleNoop == false) {
+                mutableLoadRegImm->restore();
+                mutableLoadRegImm->setValue(waitValue);
+            }
+        } else {
+            if (newPatchPreambleNoop == false) {
+                // was patch preamble set -> can patch preamble set: just update address and value
+                mutableLoadRegImm->setValue(waitValue);
+            } else {
+                // was patch preamble set -> needs patch preamble nooped: noop
+                mutableLoadRegImm->noop();
+            }
+        }
+    } else if (operation == CbWaitEventOperationType::noop) {
+        mutableLoadRegImm->noop();
+    } else if (operation == CbWaitEventOperationType::restore) {
+        // general order to restore, can patch preamble restore only if new patch preamble counter is not 0, otherwise remain noop
+        if (newPatchPreambleNoop == false) {
+            mutableLoadRegImm->restore();
+            mutableLoadRegImm->setValue(waitValue);
         }
     }
 }

@@ -15,6 +15,15 @@
 namespace L0::MCL {
 
 template <typename GfxFamily>
+MutableSemaphoreWaitHw<GfxFamily>::MutableSemaphoreWaitHw(uint64_t gpuDestination, void *cmdView, void *semWait, size_t offset, Type type, bool qwordData, bool useSemaphore64bCmd)
+    : MutableSemaphoreWait(gpuDestination, cmdView, sizeof(SemaphoreWait), type),
+      semWait(semWait),
+      offset(offset),
+      qwordData(qwordData),
+      useSemaphore64bCmd(useSemaphore64bCmd),
+      qwordIndirect(NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->qwordData, this->useSemaphore64bCmd)) {}
+
+template <typename GfxFamily>
 MutableSemaphoreWaitHw<GfxFamily>::~MutableSemaphoreWaitHw() {
     if (this->commandView) {
         NEO::EncodeSemaphore<GfxFamily>::deallocateSemaphoreWaitCommand(this->commandView, this->useSemaphore64bCmd);
@@ -55,12 +64,11 @@ void MutableSemaphoreWaitHw<GfxFamily>::restoreWithSemaphoreAddress(GpuAddress s
                                                                 CompareOperation::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
                                                                 registerPollMode, waitMode, useQwordData, indirect, switchOnUnsuccessful, this->useSemaphore64bCmd);
     } else if (type == Type::cbEventWait || type == Type::cbEventWaitPatchPreambleCounter) {
-        bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->qwordData, this->useSemaphore64bCmd);
         NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<SemaphoreWait *>(targetPointer),
                                                                 semaphoreAddress,
                                                                 0,
                                                                 CompareOperation::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                registerPollMode, waitMode, this->qwordData, qwordIndirect, switchOnUnsuccessful, this->useSemaphore64bCmd);
+                                                                registerPollMode, waitMode, this->qwordData, this->qwordIndirect, switchOnUnsuccessful, this->useSemaphore64bCmd);
     }
 }
 

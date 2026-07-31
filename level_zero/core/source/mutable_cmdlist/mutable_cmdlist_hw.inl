@@ -531,6 +531,58 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::switchCounterBasedEvents(uint6
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
+                                                                                               std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
+                                                                                               std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList) {
+    bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(isQwordInOrderCounter(), this->semaphore64bCmdSupported);
+    if (qwordIndirect) {
+        auto *loadRegImmCmdToPatch = std::get_if<PatchExternalCbWaitEventPreambleCounterLoadRegisterImm>(&(*cmdsIterator));
+        UNRECOVERABLE_IF(loadRegImmCmdToPatch == nullptr);
+
+        auto loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch->gpuDestination,
+                                                                                   loadRegImmCmdToPatch->commandView,
+                                                                                   loadRegImmCmdToPatch->pDestination,
+                                                                                   static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
+                                                                                   MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter);
+        mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
+        auto loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
+        variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
+
+        ++cmdsIterator;
+
+        auto *loadRegImmCmdToPatch2 = std::get_if<PatchExternalCbWaitEventPreambleCounterLoadRegisterImm>(&(*cmdsIterator));
+        UNRECOVERABLE_IF(loadRegImmCmdToPatch2 == nullptr);
+
+        loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch2->gpuDestination,
+                                                                              loadRegImmCmdToPatch2->commandView,
+                                                                              loadRegImmCmdToPatch2->pDestination,
+                                                                              static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
+                                                                              MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter);
+        mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
+        loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
+        variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
+
+        ++cmdsIterator;
+    }
+
+    auto *semaphoreWaitCmdToPatch = std::get_if<PatchExternalCbWaitEventPreambleCounterSemaphoreWait>(&(*cmdsIterator));
+    UNRECOVERABLE_IF(semaphoreWaitCmdToPatch == nullptr);
+
+    auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch->gpuDestination,
+                                                                          semaphoreWaitCmdToPatch->commandView,
+                                                                          semaphoreWaitCmdToPatch->pDestination,
+                                                                          semaphoreWaitCmdToPatch->offset,
+                                                                          MutableSemaphoreWait::cbEventWaitPatchPreambleCounter,
+                                                                          isQwordInOrderCounter(),
+                                                                          this->semaphore64bCmdSupported);
+    mutableSemaphoreWaitCmds.emplace_back(std::move(semWaitPtr));
+    auto semWaitCmd = (*mutableSemaphoreWaitCmds.rbegin()).get();
+    variableSemaphoreWaitList.emplace_back(semWaitCmd);
+
+    ++cmdsIterator;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                                                                        std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
                                                                                        std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList) {
@@ -574,7 +626,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
                                                                           semaphoreWaitCmdToPatch->pDestination,
                                                                           semaphoreWaitCmdToPatch->offset,
                                                                           MutableSemaphoreWait::cbEventWait,
-                                                                          qwordIndirect,
+                                                                          isQwordInOrderCounter(),
                                                                           this->semaphore64bCmdSupported);
     mutableSemaphoreWaitCmds.emplace_back(std::move(semWaitPtr));
     auto semWaitCmd = (*mutableSemaphoreWaitCmds.rbegin()).get();
@@ -996,6 +1048,10 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
                     mutableEventParams.omitWaitEventResidency = true;
                     auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
                     addToResidencyContainer(getDeviceCounterAllocForResidency(deviceCounterAlloc));
+                    if (event->isExternalEvent()) {
+                        auto deviceCounterPatchPreambleAlloc = event->getInOrderExecEventHelper().getPatchPreambleDeviceAllocation();
+                        addToResidencyContainer(deviceCounterPatchPreambleAlloc);
+                    }
                 } else {
                     mutableWaitEventDesc.waitEventPackets = event->getPacketsToWait();
                 }
@@ -1029,6 +1085,12 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::processWaitEventVariabl
 
         auto &variableSemWaitCmdList = mutableWaitEvent.eventVariable->getSemWaitList();
         auto &variableLoadRegImmCmdList = mutableWaitEvent.eventVariable->getLoadRegImmList();
+
+        if (mutableWaitEvent.event->isExternalEvent()) {
+            for (uint32_t packet = 0; packet < mutableWaitEvent.event->getInOrderExecEventHelper().getEventData()->devicePartitions; packet++) {
+                captureExternalCounterBasedWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList, variableLoadRegImmCmdList);
+            }
+        }
 
         for (uint32_t packet = 0; packet < mutableWaitEvent.waitEventPackets; packet++) {
             if (CommandList::isInOrderExecutionEnabled() && mutableWaitEvent.event->isCounterBased() && (this->heaplessModeEnabled || !mutableWaitEvent.event->hasInOrderTimestampNode())) {

@@ -165,6 +165,9 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     uint16_t nextArgOffset = defaultNextArgOffset;
 
     bool createInOrder;
+    bool qwordInUse = false;
+    bool sem64bSupport = false;
+    bool lriRequired = false;
 };
 
 template <bool createInOrderT, int32_t useSemaphore64>

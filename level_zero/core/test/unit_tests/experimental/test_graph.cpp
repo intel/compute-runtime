@@ -2484,6 +2484,8 @@ void GraphExternalWaitEventFixtureInit::testExternalWaitEventRootChild(bool exte
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+
     alignas(4) uint8_t semWaitCmdRootMemory[sizeof(MI_SEMAPHORE_WAIT)] = {};
     alignas(4) uint8_t semWaitCmdChildMemory[sizeof(MI_SEMAPHORE_WAIT)] = {};
     uint32_t *semWaitCmdRootDw = reinterpret_cast<uint32_t *>(semWaitCmdRootMemory);
@@ -2629,17 +2631,32 @@ void GraphExternalWaitEventFixtureInit::testExternalWaitEventRootChild(bool exte
     // when external wait event is used, command list is mutable, stores mutable sem_wait object for wait events
     // and sem wait command gpu address of the command buffer, so the sem wait command can be reprogrammed using async mutable patch list
     // under patch preamble, these gpu addreses can be used to find patching SDI commands
+    constexpr size_t semWaitForPatchPreambleIndex = 1;
+    constexpr size_t semWaitForForkWaitIndex = 1;
     if (externalWaitRoot) {
-        rootSemWait = rootCmdList->mutableSemaphoreWaitCmds[0].get();
+        // external wait event was used on immediate, so no patch preamble available - it should be nooped in command view
+        auto noopPatchPreambleSemWait = rootCmdList->mutableSemaphoreWaitCmds[0].get();
+        EXPECT_EQ(0, memcmp(semWaitNoopSpace, noopPatchPreambleSemWait->getCommandView(), sizeof(MI_SEMAPHORE_WAIT)));
+
+        rootSemWait = rootCmdList->mutableSemaphoreWaitCmds[semWaitForPatchPreambleIndex].get();
         EXPECT_NE(nullptr, rootSemWait);
         semWaitGpuAddressForRootEvent = rootSemWait->getGpuDestinationAddress();
     }
     if (externalWaitChild) {
         if (multiEngineGraph) {
-            childSemWait = childCmdList->mutableSemaphoreWaitCmds[1].get();
+            // external wait event was used on immediate, so no patch preamble available - it should be nooped in command view
+            auto noopPatchPreambleSemWait = childCmdList->mutableSemaphoreWaitCmds[semWaitForForkWaitIndex].get();
+            EXPECT_EQ(0, memcmp(semWaitNoopSpace, noopPatchPreambleSemWait->getCommandView(), sizeof(MI_SEMAPHORE_WAIT)));
+
+            childSemWait = childCmdList->mutableSemaphoreWaitCmds[semWaitForPatchPreambleIndex + semWaitForForkWaitIndex].get();
             EXPECT_NE(nullptr, childSemWait);
         } else {
-            childSemWait = rootCmdList->mutableSemaphoreWaitCmds[1 + (externalWaitRoot ? 1 : 0)].get();
+            // external wait event was used on immediate, so no patch preamble available - it should be nooped in command view
+            size_t rootIndices = (externalWaitRoot ? 1 + semWaitForPatchPreambleIndex : 0);
+            auto noopPatchPreambleSemWait = rootCmdList->mutableSemaphoreWaitCmds[semWaitForForkWaitIndex + rootIndices].get();
+            EXPECT_EQ(0, memcmp(semWaitNoopSpace, noopPatchPreambleSemWait->getCommandView(), sizeof(MI_SEMAPHORE_WAIT)));
+
+            childSemWait = rootCmdList->mutableSemaphoreWaitCmds[semWaitForPatchPreambleIndex + semWaitForForkWaitIndex + rootIndices].get();
             EXPECT_NE(nullptr, childSemWait);
         }
         semWaitGpuAddressForChildEvent = childSemWait->getGpuDestinationAddress();

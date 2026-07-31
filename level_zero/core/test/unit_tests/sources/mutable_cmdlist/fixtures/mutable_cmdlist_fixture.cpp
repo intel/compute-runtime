@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "level_zero/api/internal/l0_event.h"
@@ -39,6 +40,10 @@ void MutableCommandListFixtureInit::setUp(bool createInOrder, int32_t useSemapho
     this->engineGroupType = gfxCoreHelper.getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(), neoDevice->getDefaultEngine().getEngineUsage(), device->getHwInfo());
 
     mutableCommandList = createMutableCmdList();
+
+    this->qwordInUse = this->mutableCommandList->isQwordInOrderCounter();
+    this->sem64bSupport = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+    this->lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->qwordInUse, this->sem64bSupport);
 
     mockKernelImmData2 = prepareKernelImmData(0x100);
     module2 = prepareModule(mockKernelImmData2.get());

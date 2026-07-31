@@ -113,7 +113,23 @@ struct PatchCbWaitEventSemaphoreWait {
     size_t patchSize = 0;
 };
 
+struct PatchExternalCbWaitEventPreambleCounterSemaphoreWait {
+    uint64_t gpuDestination = 0;
+    void *pDestination = nullptr;
+    void *commandView = nullptr;
+    size_t offset = 0;
+    size_t patchSize = 0;
+};
+
 struct PatchCbWaitEventLoadRegisterImm {
+    uint64_t gpuDestination = 0;
+    void *pDestination = nullptr;
+    void *commandView = nullptr;
+    size_t offset = 0;
+    size_t patchSize = 0;
+};
+
+struct PatchExternalCbWaitEventPreambleCounterLoadRegisterImm {
     uint64_t gpuDestination = 0;
     void *pDestination = nullptr;
     void *commandView = nullptr;
@@ -151,6 +167,8 @@ using CommandToPatchInCmdList = std::variant<
     PatchCbEventTimestampClearStoreDataImm,
     PatchCbWaitEventSemaphoreWait,
     PatchCbWaitEventLoadRegisterImm,
+    PatchExternalCbWaitEventPreambleCounterSemaphoreWait,
+    PatchExternalCbWaitEventPreambleCounterLoadRegisterImm,
     PatchPrefetchKernelMemory>;
 
 struct CommandToPatchContainer {
