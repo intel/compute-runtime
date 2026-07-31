@@ -49,19 +49,29 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         return tracingRetVal;
     }
 
-    if (numDevices) {
-        if (deviceType != CL_DEVICE_TYPE_GPU && deviceType != CL_DEVICE_TYPE_ALL && deviceType != CL_DEVICE_TYPE_DEFAULT) {
+    if ((deviceType & CL_DEVICE_TYPE_ALL) == CL_DEVICE_TYPE_ALL) {
+        deviceType = CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU |
+                     CL_DEVICE_TYPE_ACCELERATOR | CL_DEVICE_TYPE_DEFAULT;
+    }
+
+    const bool allGpusRequested = (deviceType & CL_DEVICE_TYPE_GPU) != 0;
+    const bool defaultGpuRequested = (deviceType & CL_DEVICE_TYPE_DEFAULT) != 0;
+    if (!allGpusRequested && !defaultGpuRequested) {
+        if (numDevices) {
             *numDevices = 0;
-            cl_int tracingRetVal = CL_DEVICE_NOT_FOUND;
-            TRACING_EXIT(ClGetDeviceIDs, &tracingRetVal);
-            return tracingRetVal;
-        } else {
-            *numDevices = deviceType == CL_DEVICE_TYPE_DEFAULT ? 1u : static_cast<cl_uint>(pPlatform->getDevices().size());
         }
+        cl_int tracingRetVal = CL_DEVICE_NOT_FOUND;
+        TRACING_EXIT(ClGetDeviceIDs, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    const auto numAvailableDevices = allGpusRequested ? static_cast<cl_uint>(pPlatform->getDevices().size()) : 1u;
+    if (numDevices) {
+        *numDevices = numAvailableDevices;
     }
 
     if (devices) {
-        auto numDevicesToReturn = deviceType == CL_DEVICE_TYPE_DEFAULT ? 1u : std::min(static_cast<cl_uint>(pPlatform->getDevices().size()), numEntries);
+        auto numDevicesToReturn = std::min(numAvailableDevices, numEntries);
         for (cl_uint i = 0; i < numDevicesToReturn; ++i) {
             devices[i] = pPlatform->getDevices()[i].get();
         }

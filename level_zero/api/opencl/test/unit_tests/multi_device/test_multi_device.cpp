@@ -75,6 +75,50 @@ TEST_F(LeoMultiDevicePlatformTests, givenMultiDevicePlatformWhenClGetDeviceIDsTh
     }
 }
 
+TEST_F(LeoMultiDevicePlatformTests, givenDeviceTypeBitfieldContainingGpuWhenClGetDeviceIDsThenAllRootDevicesAreReturned) {
+    const cl_device_type deviceTypes[] = {
+        CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR,
+        CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_DEFAULT,
+        CL_DEVICE_TYPE_ALL};
+
+    auto expectedDevices = getClDeviceIds();
+    ASSERT_EQ(numRootDevices, static_cast<uint32_t>(expectedDevices.size()));
+
+    for (auto deviceType : deviceTypes) {
+        cl_uint numDevices = 0;
+        auto retVal = clGetDeviceIDs(platform.get(), deviceType, 0, nullptr, &numDevices);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(numRootDevices, numDevices);
+
+        std::vector<cl_device_id> devices(numRootDevices, nullptr);
+        retVal = clGetDeviceIDs(platform.get(), deviceType, numRootDevices, devices.data(), nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(expectedDevices, devices);
+    }
+}
+
+TEST_F(LeoMultiDevicePlatformTests, givenDeviceTypeDefaultOnlyWhenClGetDeviceIDsThenOnlyDefaultDeviceIsReturned) {
+    ASSERT_GT(numRootDevices, 1u);
+    auto dummyDevice = reinterpret_cast<cl_device_id>(0x1357);
+
+    const cl_device_type deviceTypes[] = {
+        CL_DEVICE_TYPE_DEFAULT,
+        CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_DEFAULT};
+
+    for (auto deviceType : deviceTypes) {
+        cl_uint numDevices = 0;
+        std::vector<cl_device_id> devices(numRootDevices, dummyDevice);
+
+        auto retVal = clGetDeviceIDs(platform.get(), deviceType, numRootDevices, devices.data(), &numDevices);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(1u, numDevices);
+        EXPECT_EQ(platform->getDevices()[0].get(), devices[0]);
+        for (auto i = 1u; i < numRootDevices; i++) {
+            EXPECT_EQ(dummyDevice, devices[i]);
+        }
+    }
+}
+
 using LeoMultiDeviceContextTests = Test<MultiDeviceOclFixture>;
 
 TEST_F(LeoMultiDeviceContextTests, givenMultipleDevicesWhenCreatingContextThenItIsNotSingleDeviceAndGroupsAllRootDevices) {
