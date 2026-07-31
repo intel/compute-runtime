@@ -302,11 +302,21 @@ struct Graph : _ze_graph_handle_t {
 
     struct CaptureTargetDesc {
         ze_device_handle_t hDevice = nullptr;
-        ze_command_list_desc_t desc{};
+        ze_command_list_desc_t desc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+        ze_mutable_command_list_exp_desc_t mutableExpDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC};
     };
 
     const CaptureTargetDesc &getCaptureTargetDesc() const {
         return captureTargetDesc;
+    }
+
+    void enableMutableCommandList() {
+        captureTargetDesc.desc.pNext = &captureTargetDesc.mutableExpDesc;
+        mutableCmdlist = true;
+    }
+
+    bool isMutableCommandList() const {
+        return mutableCmdlist;
     }
 
     bool empty() const {
@@ -428,6 +438,7 @@ struct Graph : _ze_graph_handle_t {
     bool preallocated = false;
     bool wasCapturingStopped = false;
     bool multiEngineGraph = false;
+    bool mutableCmdlist = false;
 
     WeaklyShared<OrderedCommandsRegistry> orderedCommands; // shared between graph and subgraphs
 
@@ -471,6 +482,11 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     auto ret = graphCaptureTarget->capture<api>(apiArgs...);
     if (ZE_RESULT_SUCCESS != ret) {
         return ret;
+    }
+    for (const auto &event : eventsWaitList) {
+        if (L0::Event::fromHandle(event)->isExternalEvent()) {
+            graphCaptureTarget->enableMutableCommandList();
+        }
     }
 
     if (getCommandsSignalEvent<api>(apiArgs...)) {

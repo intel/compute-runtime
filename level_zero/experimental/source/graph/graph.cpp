@@ -1209,6 +1209,7 @@ L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode(uint32
     UNRECOVERABLE_IF(nullptr == newCmdList);
     newCmdList->disableFlatCapture();
     newCmdList->setIsGraphInstantiationTarget(true);
+    newCmdList->setupPatchPreambleEnabled(this->usePatchingPreamble);
     this->myCommandLists.emplace_back(newCmdList);
     return newCmdList;
 }

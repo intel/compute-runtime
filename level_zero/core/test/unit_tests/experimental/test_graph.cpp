@@ -47,6 +47,11 @@ struct GraphFixture : public DeviceFixture {
     L0::CommandList *immCmdList = nullptr;
 };
 
+struct GraphExternalWaitEventFixture : public GraphFixture {
+
+    void testExternalWaitEventRootChild(bool externalWaitRoot, bool externalWaitChild);
+};
+
 using GraphTestApiSubmit = Test<GraphFixture>;
 using GraphTestApiInstantiate = Test<GraphFixture>;
 using GraphTestApiCaptureWithDevice = Test<GraphFixture>;
@@ -58,6 +63,7 @@ using GraphTestDebugApis = Test<GraphFixture>;
 using GraphInstantiationValidation = Test<GraphFixture>;
 using GraphTestApiCaptureBeginEnd = Test<GraphFixture>;
 using GraphTestApiPauseResume = Test<GraphFixture>;
+using GraphTestInstantiationExternalWaitEventTest = Test<GraphExternalWaitEventFixture>;
 
 struct LaunchKernelWithArgumentsVisitorCapture {
     ze_command_list_handle_t hCommandList = nullptr;
@@ -2157,7 +2163,9 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     event->destroy();
 }
 
-TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParentExecutorIsNullChildIsObject) {
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            WhenForkJoinCbExternalEventsAreUsedThenParentExecutorIsNullChildIsObject) {
     GraphsCleanupGuard graphCleanup;
 
     ze_result_t returnValue;
@@ -2278,7 +2286,9 @@ TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParent
     joinEvent->destroy();
 }
 
-TEST_F(GraphTestInstantiationTest, WhenForkAndJoinUsesSingleCbExternalEventsThenOnlySingleAndLastUsedBranchIsUsedForEvent) {
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            WhenForkAndJoinUsesSingleCbExternalEventsThenOnlySingleAndLastUsedBranchIsUsedForEvent) {
     GraphsCleanupGuard graphCleanup;
 
     ze_result_t returnValue;
@@ -2372,6 +2382,126 @@ TEST_F(GraphTestInstantiationTest, WhenForkAndJoinUsesSingleCbExternalEventsThen
 
     srcGraph.reset();
     event->destroy();
+}
+
+void GraphExternalWaitEventFixture::testExternalWaitEventRootChild(bool externalWaitRoot, bool externalWaitChild) {
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    subCommandList->setOrdinal(0);
+    auto subCommandListHandle = subCommandList->toHandle();
+
+    ze_event_pool_desc_t poolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 4};
+    ze_event_pool_handle_t hPool = nullptr;
+    auto devHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &poolDesc, 1, &devHandle, &hPool));
+    auto eventPool = L0::EventPool::fromHandle(hPool);
+    ze_event_desc_t eventNonCbDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
+
+    zex_counter_based_event_desc_t eventCbDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    eventCbDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+
+    ze_event_handle_t eventHandleRoot = nullptr;
+    if (externalWaitRoot) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventCbDesc, &eventHandleRoot));
+    } else {
+        eventNonCbDesc.index = 0;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(hPool, &eventNonCbDesc, &eventHandleRoot));
+    }
+    auto eventRoot = L0::Event::fromHandle(eventHandleRoot);
+
+    ze_event_handle_t eventHandleChild = nullptr;
+    if (externalWaitChild) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventCbDesc, &eventHandleChild));
+    } else {
+        eventNonCbDesc.index = 1;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(hPool, &eventNonCbDesc, &eventHandleChild));
+    }
+    auto eventChild = L0::Event::fromHandle(eventHandleChild);
+
+    // attach cb events for sake of having them correct in order exec info before recording starts
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandleRoot, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandleChild, 0U, nullptr));
+
+    ze_event_handle_t eventHandleFork = nullptr;
+    eventNonCbDesc.index = 2;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(hPool, &eventNonCbDesc, &eventHandleFork));
+    auto eventFork = L0::Event::fromHandle(eventHandleFork);
+
+    ze_event_handle_t eventHandleJoin = nullptr;
+    eventNonCbDesc.index = 3;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(hPool, &eventNonCbDesc, &eventHandleJoin));
+    auto eventJoin = L0::Event::fromHandle(eventHandleJoin);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    // signal forkEvent to have something for the fork, eventHandleRoot is used as a testing wait event
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandleFork, 1U, &eventHandleRoot));
+    // have two wait events - one is testing external cb event, the other is regular event for the fork in sub command list
+    ze_event_handle_t forkWaitEvents[] = {eventHandleFork, eventHandleChild};
+    // signal jointEvent to have something for the join into a root
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(subCommandListHandle, eventHandleJoin, 2U, forkWaitEvents));
+    // join event is waited on root for correctness of the test, but it is not used for the external cb event testing
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 1U, &eventHandleJoin));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    const auto &rootDesc = srcGraph->getCaptureTargetDesc();
+    const auto &childs = srcGraph->getSubgraphs();
+    ASSERT_NE(0u, childs.size());
+    auto childGraph = childs[0];
+    const auto &childDesc = childGraph->getCaptureTargetDesc();
+
+    if (externalWaitRoot) {
+        EXPECT_EQ(reinterpret_cast<const void *>(&rootDesc.mutableExpDesc), rootDesc.desc.pNext);
+        EXPECT_TRUE(srcGraph->isMutableCommandList());
+    } else {
+        EXPECT_EQ(nullptr, rootDesc.desc.pNext);
+        EXPECT_FALSE(srcGraph->isMutableCommandList());
+    }
+
+    if (externalWaitChild) {
+        EXPECT_EQ(reinterpret_cast<const void *>(&childDesc.mutableExpDesc), childDesc.desc.pNext);
+        EXPECT_TRUE(childGraph->isMutableCommandList());
+    } else {
+        EXPECT_EQ(nullptr, childDesc.desc.pNext);
+        EXPECT_FALSE(childGraph->isMutableCommandList());
+    }
+
+    srcGraph.reset();
+    eventRoot->destroy();
+    eventChild->destroy();
+    eventFork->destroy();
+    eventJoin->destroy();
+    eventPool->destroy();
+}
+
+TEST_F(GraphTestInstantiationExternalWaitEventTest,
+       GivenExternalWaitEventsUsedOnRootNotUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
+    GraphsCleanupGuard graphCleanup;
+
+    testExternalWaitEventRootChild(true, false);
+}
+
+TEST_F(GraphTestInstantiationExternalWaitEventTest,
+       GivenExternalWaitEventsNotUsedOnRootUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
+    GraphsCleanupGuard graphCleanup;
+
+    testExternalWaitEventRootChild(false, true);
+}
+
+TEST_F(GraphTestInstantiationExternalWaitEventTest, GivenExternalWaitEventsUsedOnRootUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
+    GraphsCleanupGuard graphCleanup;
+
+    testExternalWaitEventRootChild(true, true);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
