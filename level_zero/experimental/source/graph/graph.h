@@ -292,12 +292,16 @@ struct Graph : _ze_graph_handle_t {
         return ctx;
     }
 
+    Graph *getRootGraph() {
+        return findRootGraph(this);
+    }
+
+    const Graph *getRootGraph() const {
+        return findRootGraph(this);
+    }
+
     uint64_t getId() const {
-        const Graph *root = this;
-        while (nullptr != root->parentGraph) {
-            root = root->parentGraph;
-        }
-        return root->id;
+        return getRootGraph()->id;
     }
 
     struct CaptureTargetDesc {
@@ -412,6 +416,14 @@ struct Graph : _ze_graph_handle_t {
     }
 
   protected:
+    template <typename GraphT>
+    static GraphT *findRootGraph(GraphT *graph) {
+        while (nullptr != graph->parentGraph) {
+            graph = graph->parentGraph;
+        }
+        return graph;
+    }
+
     void setCaptureTargetRecursively(bool attach);
     void setRecordedSignalsRecursively(bool attach);
     void unregisterSignallingEvents();
@@ -455,6 +467,7 @@ void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Gra
 
 bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList);
 bool usesForkEvents(std::span<ze_event_handle_t> events);
+bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events);
 
 template <CaptureApi api, typename... TArgs>
 ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarget, RecordedApiCommands *flatCaptureTarget, TArgs... apiArgs) {
@@ -470,6 +483,11 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     if (false == isGraphCapturingAllowed(srcCmdList)) {
         // it's an error to try and fork to a cmdlist that doesn't support capturing
         return usesForkEvents(eventsWaitList) ? ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE : ZE_RESULT_ERROR_NOT_AVAILABLE;
+    } else if ((false == eventsWaitList.empty()) && (nullptr != graphCaptureTarget)) {
+        // it's an error to merge two capture sessions by waiting on an event recorded by a different one
+        if (usesForkEventsFromOtherSession(graphCaptureTarget->getRootGraph(), eventsWaitList)) {
+            return ZE_RESULT_ERROR_GRAPH_CAPTURE_MERGE_ATTEMPT;
+        }
     }
     if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation
         recordHandleWaitEventsFromNextCommand(srcCmdList, graphCaptureTarget, eventsWaitList);

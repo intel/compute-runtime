@@ -3282,8 +3282,11 @@ TEST_F(GraphTestCaptureRestrictions, GivenGraphWithUnjoinedForksWhenEndGraphCapt
 
     ze_graph_handle_t retGraph = nullptr;
     auto err = L0::zeCommandListEndGraphCaptureExp(mainCmdlistHandle, &retGraph, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
-    EXPECT_NE(nullptr, retGraph);
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_UNJOINED_FORKS, err);
+    EXPECT_EQ(srcGraph.toHandle(), retGraph); // graph is still returned, so that the caller can destroy it
+    EXPECT_FALSE(srcGraph.valid());
+    EXPECT_FALSE(mainCmdlist.isCapturingGraph());
+    EXPECT_FALSE(subCmdlist.isCapturingGraph());
 
     // try to use graph with unjoined fork
     ze_executable_graph_handle_t execGraph = nullptr;
@@ -3294,6 +3297,202 @@ TEST_F(GraphTestCaptureRestrictions, GivenGraphWithUnjoinedForksWhenEndGraphCapt
     if (nullptr != execGraph) {
         L0::zeExecutableGraphDestroyExp(execGraph);
     }
+}
+
+TEST_F(GraphTestCaptureRestrictions, GivenGraphWithUnjoinedForksWhenEndGraphCaptureCalledWithoutOutputHandleThenErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext mainCmdlist{&ctx};
+    mainCmdlist.device = this->device;
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+
+    auto mainCmdlistHandle = mainCmdlist.toHandle();
+    auto forkEventHandle = forkEvent.toHandle();
+
+    Graph srcGraph(&ctx, true); // preallocated, so that no output handle is needed when ending capture
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExt(mainCmdlistHandle, srcGraph.toHandle(), nullptr));
+
+    Graph *mainCaptureTarget = &srcGraph;
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdlist, mainCaptureTarget, nullptr, mainCmdlistHandle, forkEventHandle, 0U, nullptr);
+
+    Graph *subCaptureTarget = nullptr;
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdlist, subCaptureTarget, nullptr, &subCmdlist, nullptr, 1U, &forkEventHandle);
+    ASSERT_NE(nullptr, subCaptureTarget); // forked, but never joined back
+
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_UNJOINED_FORKS, L0::zeCommandListEndGraphCaptureExt(mainCmdlistHandle, nullptr, nullptr));
+    EXPECT_FALSE(srcGraph.valid());
+    EXPECT_FALSE(mainCmdlist.isCapturingGraph());
+    EXPECT_FALSE(subCmdlist.isCapturingGraph());
+}
+
+TEST_F(GraphTestCaptureRestrictions, GivenSubgraphWithUnjoinedForksWhenEndGraphCaptureCalledThenErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext mainCmdlist{&ctx};
+    mainCmdlist.device = this->device;
+    MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
+    MockGraphCmdListWithContext grandChildCmdlist{&ctx};
+    grandChildCmdlist.device = this->device;
+    Mock<Event> forkToChildEvent;
+    Mock<Event> forkToGrandChildEvent;
+    Mock<Event> joinChildEvent;
+
+    auto mainCmdlistHandle = mainCmdlist.toHandle();
+    auto forkToChildEventHandle = forkToChildEvent.toHandle();
+    auto forkToGrandChildEventHandle = forkToGrandChildEvent.toHandle();
+    auto joinChildEventHandle = joinChildEvent.toHandle();
+
+    Graph srcGraph(&ctx, true);
+    Graph *mainCaptureTarget = &srcGraph;
+    mainCmdlist.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(mainCmdlist, false);
+
+    // lvl 0 : fork to child
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdlist, mainCaptureTarget, nullptr, mainCmdlistHandle, forkToChildEventHandle, 0U, nullptr);
+
+    // lvl 1 : child forks to grandchild
+    Graph *childCaptureTarget = nullptr;
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childCaptureTarget, nullptr, &childCmdlist, forkToGrandChildEventHandle, 1U, &forkToChildEventHandle);
+    ASSERT_NE(nullptr, childCaptureTarget);
+
+    // lvl 2 : grandchild is never joined back to the child
+    Graph *grandChildCaptureTarget = nullptr;
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildCaptureTarget, nullptr, &grandChildCmdlist, nullptr, 1U, &forkToGrandChildEventHandle);
+    ASSERT_NE(nullptr, grandChildCaptureTarget);
+
+    // lvl 1 -> lvl 0 : child is properly joined back
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childCaptureTarget, nullptr, &childCmdlist, joinChildEventHandle, 0U, nullptr);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdlist, mainCaptureTarget, nullptr, mainCmdlistHandle, nullptr, 1U, &joinChildEventHandle);
+
+    ze_graph_handle_t retGraph = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_UNJOINED_FORKS, L0::zeCommandListEndGraphCaptureExt(mainCmdlistHandle, nullptr, &retGraph));
+    EXPECT_EQ(srcGraph.toHandle(), retGraph);
+    EXPECT_TRUE(srcGraph.getUnjoinedForks().empty()); // the unjoined fork is in the subgraph
+    EXPECT_FALSE(srcGraph.valid());
+}
+
+TEST_F(GraphTestCaptureRestrictions, GivenEventFromOtherCaptureSessionWhenCapturingCommandListWaitsOnItThenMergeAttemptErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlistA{&ctx};
+    cmdlistA.device = this->device;
+    MockGraphCmdListWithContext cmdlistB{&ctx};
+    cmdlistB.device = this->device;
+    Mock<Event> eventFromB;
+
+    auto cmdlistAHandle = cmdlistA.toHandle();
+    auto cmdlistBHandle = cmdlistB.toHandle();
+    auto eventFromBHandle = eventFromB.toHandle();
+
+    // two independent capture sessions, each with its own primary command list
+    Graph graphA(&ctx, true);
+    Graph *captureTargetA = &graphA;
+    cmdlistA.setGraphCaptureTarget(&graphA);
+    graphA.startCapturingFrom(cmdlistA, false);
+
+    Graph graphB(&ctx, true);
+    Graph *captureTargetB = &graphB;
+    cmdlistB.setGraphCaptureTarget(&graphB);
+    graphB.startCapturingFrom(cmdlistB, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlistB, captureTargetB, nullptr, cmdlistBHandle, eventFromBHandle, 0U, nullptr));
+
+    // waiting in session A on an event recorded in session B would merge both graphs
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_CAPTURE_MERGE_ATTEMPT, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlistA, captureTargetA, nullptr, cmdlistAHandle, nullptr, 1U, &eventFromBHandle));
+    EXPECT_TRUE(graphA.getCapturedCommands().empty());  // nothing was recorded into the waiting session
+    EXPECT_EQ(1U, graphB.getCapturedCommands().size()); // nor into the signalling one
+    EXPECT_TRUE(graphA.getSubgraphs().empty());         // and neither session was forked into the other
+    EXPECT_TRUE(graphB.getSubgraphs().empty());
+}
+
+TEST_F(GraphTestCaptureRestrictions, GivenEventsFromOwnAndOtherCaptureSessionWhenCapturingCommandListWaitsOnThemThenMergeAttemptErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlistA{&ctx};
+    cmdlistA.device = this->device;
+    MockGraphCmdListWithContext cmdlistB{&ctx};
+    cmdlistB.device = this->device;
+    Mock<Event> eventFromA;
+    Mock<Event> eventFromB;
+
+    auto cmdlistAHandle = cmdlistA.toHandle();
+    auto cmdlistBHandle = cmdlistB.toHandle();
+    auto eventFromAHandle = eventFromA.toHandle();
+    auto eventFromBHandle = eventFromB.toHandle();
+
+    Graph graphA(&ctx, true);
+    Graph *captureTargetA = &graphA;
+    cmdlistA.setGraphCaptureTarget(&graphA);
+    graphA.startCapturingFrom(cmdlistA, false);
+
+    Graph graphB(&ctx, true);
+    Graph *captureTargetB = &graphB;
+    cmdlistB.setGraphCaptureTarget(&graphB);
+    graphB.startCapturingFrom(cmdlistB, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlistA, captureTargetA, nullptr, cmdlistAHandle, eventFromAHandle, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlistB, captureTargetB, nullptr, cmdlistBHandle, eventFromBHandle, 0U, nullptr));
+
+    // the foreign event must be detected regardless of its position in the wait list
+    ze_event_handle_t ownEventFirst[] = {eventFromAHandle, eventFromBHandle};
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_CAPTURE_MERGE_ATTEMPT, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlistA, captureTargetA, nullptr, cmdlistAHandle, nullptr, 2U, ownEventFirst));
+
+    ze_event_handle_t foreignEventFirst[] = {eventFromBHandle, eventFromAHandle};
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_CAPTURE_MERGE_ATTEMPT, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlistA, captureTargetA, nullptr, cmdlistAHandle, nullptr, 2U, foreignEventFirst));
+
+    EXPECT_EQ(1U, graphA.getCapturedCommands().size()); // only the initial signalling barrier was recorded
+}
+
+TEST_F(GraphTestCaptureRestrictions, GivenEventFromSameCaptureSessionWhenChildCommandListWaitsOnItThenCaptureIsContinued) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext parentCmdlist{&ctx};
+    parentCmdlist.device = this->device;
+    MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    Mock<Event> nextParentEvent;
+    Mock<Event> joinEvent;
+
+    auto parentCmdlistHandle = parentCmdlist.toHandle();
+    auto forkEventHandle = forkEvent.toHandle();
+    auto nextParentEventHandle = nextParentEvent.toHandle();
+    auto joinEventHandle = joinEvent.toHandle();
+
+    Graph srcGraph(&ctx, true);
+    Graph *parentCaptureTarget = &srcGraph;
+    parentCmdlist.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(parentCmdlist, false);
+
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(parentCmdlist, parentCaptureTarget, nullptr, parentCmdlistHandle, forkEventHandle, 0U, nullptr);
+
+    Graph *childCaptureTarget = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childCaptureTarget, nullptr, &childCmdlist, nullptr, 1U, &forkEventHandle));
+    ASSERT_NE(nullptr, childCaptureTarget);
+    ASSERT_NE(&srcGraph, childCaptureTarget);                 // child records into a subgraph ...
+    EXPECT_EQ(&srcGraph, childCaptureTarget->getRootGraph()); // ... of the same capture session
+
+    // subsequent signals from the parent to the child stay within the same session and are not a merge attempt
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(parentCmdlist, parentCaptureTarget, nullptr, parentCmdlistHandle, nextParentEventHandle, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childCaptureTarget, nullptr, &childCmdlist, nullptr, 1U, &nextParentEventHandle));
+    EXPECT_EQ(2U, childCaptureTarget->getCapturedCommands().size());
+
+    // join the fork back, so that the whole session is still a valid graph
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childCaptureTarget, nullptr, &childCmdlist, joinEventHandle, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(parentCmdlist, parentCaptureTarget, nullptr, parentCmdlistHandle, nullptr, 1U, &joinEventHandle));
+
+    ze_graph_handle_t retGraph = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExt(parentCmdlistHandle, nullptr, &retGraph));
+    EXPECT_EQ(srcGraph.toHandle(), retGraph);
+    EXPECT_TRUE(srcGraph.valid());
 }
 
 TEST_F(GraphTestCaptureRestrictions, GivenCommandListAlreadyCapturingWhenBeginGraphCaptureCalledThenErrorIsReturned) {

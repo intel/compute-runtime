@@ -1516,6 +1516,23 @@ bool usesForkEvents(std::span<ze_event_handle_t> events) {
     return false;
 }
 
+bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events) {
+    for (const auto &event : events) {
+        const auto *signalFromCmdList = L0::Event::fromHandle(event)->getRecordedSignalFrom();
+        if (nullptr == signalFromCmdList) {
+            continue; // not a fork/join event
+        }
+        const auto *eventSession = signalFromCmdList->getGraphCaptureTarget();
+        if (nullptr == eventSession) {
+            continue; // that command list is no longer capturing, so the event belongs to no session
+        }
+        if (session != eventSession->getRootGraph()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 struct VisitContext {
     explicit VisitContext(const ze_visit_ext_desc_t *desc)
         : desc(desc),

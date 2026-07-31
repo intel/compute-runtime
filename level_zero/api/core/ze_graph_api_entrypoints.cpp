@@ -103,15 +103,17 @@ ze_result_t ZE_APICALL zeCommandListEndGraphCaptureExt(ze_command_list_handle_t 
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    cmdList->getGraphCaptureTarget()->stopCapturing();
+    graph->stopCapturing();
 
     if (nullptr == phGraph) {
         UNRECOVERABLE_IF(false == graph->wasPreallocated());
-        cmdList->setGraphCaptureTarget(nullptr);
-        return ZE_RESULT_SUCCESS;
     } else {
         *phGraph = graph->toHandle();
-        cmdList->setGraphCaptureTarget(nullptr);
+    }
+    cmdList->setGraphCaptureTarget(nullptr);
+
+    if (false == graph->valid()) {
+        return ZE_RESULT_ERROR_GRAPH_UNJOINED_FORKS;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -196,18 +198,13 @@ ze_result_t ZE_APICALL zeCommandListGetGraphExt(ze_command_list_handle_t hComman
     if ((nullptr == cmdList) || (nullptr == phGraph)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    if (nullptr == cmdList->getGraphCaptureTarget()) {
+
+    auto *graph = cmdList->getGraphCaptureTarget();
+    if (nullptr == graph) {
+        *phGraph = nullptr;
         return ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING;
     }
-    auto rootGraph = cmdList->getGraphCaptureTarget();
-
-    if (rootGraph) {
-        while (rootGraph->getParentGraph() != nullptr) {
-            rootGraph = rootGraph->getParentGraph();
-        }
-    }
-
-    *phGraph = rootGraph;
+    *phGraph = graph->getRootGraph();
     return ZE_RESULT_SUCCESS;
 }
 
@@ -287,12 +284,7 @@ ze_result_t ZE_APICALL zeGraphGetPrimaryCommandListExt(ze_graph_handle_t hGraph,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto *rootGraph = graph;
-    while (rootGraph->getParentGraph() != nullptr) {
-        rootGraph = rootGraph->getParentGraph();
-    }
-
-    auto *primaryCmdList = rootGraph->getPrimaryCaptureSource();
+    auto *primaryCmdList = graph->getRootGraph()->getPrimaryCaptureSource();
     if (nullptr == primaryCmdList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
