@@ -30,6 +30,13 @@ inline EventHandles copyWaitEvents(uint32_t numWaitEvents, ze_event_handle_t *ph
     return {phWaitEvents, phWaitEvents + numWaitEvents};
 }
 
+inline std::vector<ze_command_list_handle_t> copyCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
+    if ((phCommandLists == nullptr) || (numCommandLists == 0u)) {
+        return {};
+    }
+    return {phCommandLists, phCommandLists + numCommandLists};
+}
+
 inline std::vector<uint8_t> copyPattern(const void *pattern, size_t patternSize) {
     if ((pattern == nullptr) || (patternSize == 0u)) {
         return {};
@@ -129,6 +136,17 @@ struct AppendHostFunctionArgs {
     AppendHostFunctionArgs(ze_host_function_callback_t hostFunction, void *userData, ze_event_handle_t signalEvent,
                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
         : hostFunction(hostFunction), userData(userData), signalEvent(signalEvent),
+          waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
+};
+
+struct AppendCommandListsArgs {
+    std::vector<ze_command_list_handle_t> commandLists;
+    ze_event_handle_t signalEvent;
+    EventHandles waitEvents;
+
+    AppendCommandListsArgs(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, ze_event_handle_t signalEvent,
+                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+        : commandLists(copyCommandLists(numCommandLists, phCommandLists)), signalEvent(signalEvent),
           waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
 };
 

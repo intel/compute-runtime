@@ -318,6 +318,9 @@ if(BUILD_WITH_L0)
       )
     endif()
 
+    # LEO implements beta OpenCL extensions, whose declarations in CL/cl_ext.h are guarded by this macro
+    target_compile_definitions(${LIB_NAME} PUBLIC CL_ENABLE_BETA_EXTENSIONS)
+
     set_property(TARGET ${LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
     set_target_properties(${LIB_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
 

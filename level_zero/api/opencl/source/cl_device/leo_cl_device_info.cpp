@@ -18,6 +18,7 @@
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device_get_cap.inl"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device_info_map.h"
+#include "level_zero/api/opencl/source/command_buffer/leo_command_buffer.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 
@@ -309,6 +310,17 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         if (isPciBusInfoValid()) {
             src = &deviceInfo.pciBusInfo;
             retSize = srcSize = sizeof(deviceInfo.pciBusInfo);
+        }
+        break;
+    case CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR:
+    case CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR:
+    case CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR:
+        // No optional capability is claimed, and no queue property is either supported or required,
+        // while command recording is not implemented. All three are bitfields of the same width.
+        if (CommandBuffer::isSupported()) {
+            param.bitfield = 0u;
+            src = &param.bitfield;
+            retSize = srcSize = sizeof(cl_bitfield);
         }
         break;
     case CL_DEVICE_UUID_KHR:

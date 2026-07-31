@@ -10,6 +10,7 @@
 
 #include "level_zero/api/opencl/source/api/leo_additional_extensions.h"
 #include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/command_buffer/leo_command_buffer.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
@@ -200,6 +201,18 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
 
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueAcquireExternalMemObjectsKHR);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueReleaseExternalMemObjectsKHR);
+
+    // cl_khr_command_buffer is incomplete, so its entry points resolve only when the
+    // EnableClKhrCommandBuffer debug variable enables it. A client probing for the
+    // function pointer must not be able to mistake it for support.
+    if (NEO::LEO::CommandBuffer::isSupported()) {
+        RETURN_FUNC_PTR_IF_EXIST(clCreateCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clFinalizeCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clRetainCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clReleaseCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clEnqueueCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clGetCommandBufferInfoKHR);
+    }
 
     void *ret = NEO::LEO::sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {

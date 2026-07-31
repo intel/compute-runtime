@@ -27,6 +27,7 @@ namespace ult {
     MACRO(appendImageCopyFromMemoryExt, AppendImageCopyFromMemoryExtArgs) \
     MACRO(appendBarrier, AppendBarrierArgs)                               \
     MACRO(appendHostFunction, AppendHostFunctionArgs)                     \
+    MACRO(appendCommandLists, AppendCommandListsArgs)                     \
     MACRO(hostSynchronize, HostSynchronizeArgs)
 
 enum class ApiId : uint32_t {
@@ -118,6 +119,14 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
         auto result = BaseClass::appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
         return record(this->appendHostFunctionArgs, ApiId::appendHostFunction,
                       AppendHostFunctionArgs{pHostFunction, pUserData, hSignalEvent, numWaitEvents, phWaitEvents}, result);
+    }
+
+    ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
+                                   ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                   L0::CommandListExecutionInternalOptions &internalOptions) override {
+        auto result = BaseClass::appendCommandLists(numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents, internalOptions);
+        return record(this->appendCommandListsArgs, ApiId::appendCommandLists,
+                      AppendCommandListsArgs{numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents}, result);
     }
 
     ze_result_t hostSynchronize(uint64_t timeout) override {

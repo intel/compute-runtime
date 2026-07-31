@@ -20,6 +20,7 @@
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
+#include "level_zero/api/opencl/source/command_buffer/leo_command_buffer.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 
@@ -182,6 +183,10 @@ void ClDevice::initializeCaps() {
 
     if (isPciBusInfoValid()) {
         deviceExtensions += "cl_khr_pci_bus_info ";
+    }
+
+    if (CommandBuffer::isSupported()) {
+        deviceExtensions += "cl_khr_command_buffer ";
     }
 
     // LEO does not implement cl_intel_driver_diagnostics performance hints

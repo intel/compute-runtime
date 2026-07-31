@@ -54,6 +54,7 @@ OpenCL objects such as `cl_command_queue`, `cl_mem`, and `cl_kernel` are interna
 | OpenCL Object | Level Zero Equivalent |
 |---|---|
 | Buffer | USM pointer |
+| Command buffer | Regular (non-immediate) command list |
 | Command queue | Immediate command list with copy offload |
 | Context | Context |
 | Device | Device |
@@ -93,4 +94,5 @@ Querying `CL_DEVICE_VERSION` (for example via `clinfo`) and observing `OpenCL 3.
 
 - Core compute paths (kernel dispatch, memory operations) are functional.
 - Not all OpenCL extensions and edge cases are fully mapped.
+- `cl_khr_command_buffer` is partially implemented and off by default -- see [LEO_COMMAND_BUFFER.md](LEO_COMMAND_BUFFER.md).
 - Performance characterization is ongoing.

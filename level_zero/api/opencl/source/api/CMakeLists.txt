@@ -10,6 +10,7 @@ set(LEO_API_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_additional_extensions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_api.h
     ${CMAKE_CURRENT_SOURCE_DIR}/api_accelerator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/api_command_buffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/api_command_queue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/api_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/api_device.cpp

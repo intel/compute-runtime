@@ -17,6 +17,7 @@
 namespace NEO {
 namespace LEO {
 
+class CommandBuffer;
 class CommandQueue;
 class MemObj;
 class Buffer;
@@ -71,6 +72,7 @@ using ImageObj = TypedMemObj<Image>;
 [[nodiscard]] cl_int validateObject(cl_device_id object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_platform_id object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_command_queue object) noexcept;
+[[nodiscard]] cl_int validateObject(cl_command_buffer_khr object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_event object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_mem object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_sampler object) noexcept;
@@ -95,6 +97,11 @@ struct InternalObjectTypeHelper;
 template <>
 struct InternalObjectTypeHelper<cl_command_queue> {
     using type = CommandQueue;
+};
+
+template <>
+struct InternalObjectTypeHelper<cl_command_buffer_khr> {
+    using type = CommandBuffer;
 };
 
 template <>

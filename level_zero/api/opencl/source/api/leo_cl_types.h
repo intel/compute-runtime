@@ -17,6 +17,9 @@ struct ClDispatch {
 struct _cl_accelerator_intel : public ClDispatch {
 };
 
+struct _cl_command_buffer_khr : public ClDispatch {
+};
+
 struct _cl_command_queue : public ClDispatch {
 };
 

@@ -8,6 +8,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
+#include "level_zero/api/opencl/source/command_buffer/leo_command_buffer.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/event/leo_event.h"
@@ -34,6 +35,10 @@ cl_int validateObject(cl_platform_id object) noexcept {
 
 cl_int validateObject(cl_command_queue object) noexcept {
     return castToObject<CommandQueue>(object) != nullptr ? CL_SUCCESS : CL_INVALID_COMMAND_QUEUE;
+}
+
+cl_int validateObject(cl_command_buffer_khr object) noexcept {
+    return castToObject<CommandBuffer>(object) != nullptr ? CL_SUCCESS : CL_INVALID_COMMAND_BUFFER_KHR;
 }
 
 cl_int validateObject(cl_event object) noexcept {

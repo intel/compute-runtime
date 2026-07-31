@@ -169,6 +169,8 @@ cl_version getOclCExtensionVersion(std::string name, cl_version defaultVer) {
         return CL_MAKE_VERSION(1u, 2u, 0);
     } else if (name.compare("cl_khr_external_memory") == 0) {
         return CL_MAKE_VERSION(0, 9u, 1u);
+    } else if (name.compare("cl_khr_command_buffer") == 0) {
+        return CL_MAKE_VERSION(0, 9u, 8u);
     } else {
         return defaultVer;
     }
