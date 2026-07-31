@@ -24,6 +24,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_base_address_model.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/state_base_address_helper.h"
@@ -862,9 +863,9 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSync(C
         uint64_t tagGpuAddress = commandList->getLatestTagGpuAddress();
         ctx.patchPreambleWaitSyncNeeded = (tagGpuAddress != 0) && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
         if (ctx.patchPreambleWaitSyncNeeded) {
-            bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+            const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
             waitSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * this->partitionCount;
-            if (!useSemaphore64bCmd) {
+            if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(GfxFamily::isQwordInOrderCounter, useSemaphore64bCmd)) {
                 waitSize += (2 * sizeof(MI_LOAD_REGISTER_IMM));
             }
         }
@@ -1083,8 +1084,9 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(Com
             uint64_t waitAddress = commandList->getLatestTagGpuAddress();
             auto waitValue = commandList->getLatestTaskCount();
 
-            bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
-            if (!useSemaphore64bCmd) {
+            const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+            const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(GfxFamily::isQwordInOrderCounter, useSemaphore64bCmd);
+            if (qwordIndirect) {
                 NEO::LriHelper<GfxFamily>::program(reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ctx.currentPatchPreambleBuffer),
                                                    firstRegister,
                                                    getLowPart(waitValue),
@@ -1107,7 +1109,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(Com
                                                                         false,
                                                                         true,
                                                                         GfxFamily::isQwordInOrderCounter,
-                                                                        GfxFamily::isQwordInOrderCounter && !useSemaphore64bCmd,
+                                                                        qwordIndirect,
                                                                         false,
                                                                         useSemaphore64bCmd);
                 ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
