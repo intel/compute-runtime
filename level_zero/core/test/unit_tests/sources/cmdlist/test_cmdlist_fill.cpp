@@ -403,6 +403,33 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPtrWithOffsetAndFailAppendUnal
     delete[] ptr;
 }
 
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeThenSuccessIsReturned) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    size_t nonMultipleSize = allocSize + 1;
+    uint8_t *nonMultipleDstPtr = new uint8_t[nonMultipleSize];
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryFill(nonMultipleDstPtr, pattern, 4, nonMultipleSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    delete[] nonMultipleDstPtr;
+}
+
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeAndAppendLaunchKernelFailureOnRemainderThenSuccessIsNotReturned) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList->thresholdOfCallsToAppendLaunchKernelWithParamsToFail = 1;
+
+    size_t nonMultipleSize = allocSize + 1;
+    uint8_t *nonMultipleDstPtr = new uint8_t[nonMultipleSize];
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryFill(nonMultipleDstPtr, pattern, 4, nonMultipleSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+
+    delete[] nonMultipleDstPtr;
+}
+
 HWTEST2_F(AppendFillTest,
           givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesRegistersThenSinglePacketUsesRegisterProfiling, IsGen12LP) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
