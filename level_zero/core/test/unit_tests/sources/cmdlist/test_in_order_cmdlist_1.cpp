@@ -4905,6 +4905,59 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingBarrierWithHostVisibleSignalEventThenSignalCounterWithoutPipeControl) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = false;
+
+    // A host scope signal event on a platform requiring DC flush makes the barrier a stalling
+    // operation, which is the case that used to program PIPE_CONTROL on a copy engine.
+    immCmdList->dcFlushSupport = true;
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+    ASSERT_TRUE(immCmdList->getDcFlushRequired(events[0]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)));
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    CmdListWaitEventParameters waitEventsParametersForBarrier = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(eventHandle, 0, nullptr, waitEventsParametersForBarrier));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
+
+    // Copy engines do not implement PIPE_CONTROL, so the counter write would never land and
+    // any host wait on this command list would never complete.
+    EXPECT_TRUE(findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end()).empty());
+
+    auto inOrderExecInfo = immCmdList->inOrderExecInfo;
+    const uint64_t syncVa = inOrderExecInfo->getBaseDeviceAddress() + inOrderExecInfo->getAllocationOffset();
+    const uint64_t signalValue = inOrderExecInfo->getCounterValue();
+
+    bool counterSignalled = false;
+    for (auto &it : findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end())) {
+        auto flushCmd = genCmdCast<MI_FLUSH_DW *>(*it);
+        if ((flushCmd->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) &&
+            (flushCmd->getDestinationAddress() == syncVa) &&
+            (flushCmd->getImmediateData() == signalValue)) {
+            counterSignalled = true;
+        }
+    }
+    EXPECT_TRUE(counterSignalled);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithWaitlistThenSignalSyncAllocation) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;

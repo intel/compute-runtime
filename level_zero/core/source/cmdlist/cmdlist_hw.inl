@@ -3826,7 +3826,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
         encodeMiFlush(0, 0, args);
     }
 
-    if (stall && !copyOffloadOperation) {
+    if (stall && !copyOffloadOperation && !isCopyOnly(copyOffloadOperation)) {
         NEO::PipeControlArgs args;
         args.dcFlushEnable = signalEvent ? getDcFlushRequired(signalEvent->isSignalScope()) : false;
         args.workloadPartitionOffset = partitionCount > 1;
@@ -3839,6 +3839,13 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
             signalValue,
             device->getNEODevice()->getRootDeviceEnvironment(),
             args);
+
+    } else if (stall && isCopyOnly(copyOffloadOperation)) {
+        // Copy engines do not implement PIPE_CONTROL. A single MI_FLUSH_DW both
+        // flushes and writes the in-order counter, so the host wait can complete.
+        NEO::MiFlushArgs args{this->dummyBlitWa};
+        args.commandWithPostSync = true;
+        encodeMiFlush(deviceAllocGpuVa + inOrderExecInfo->getAllocationOffset(), signalValue, args);
 
     } else if (this->inOrderAtomicSignalingEnabled) {
         ATOMIC_OPCODES opcode = ATOMIC_OPCODES::ATOMIC_8B_INCREMENT;
