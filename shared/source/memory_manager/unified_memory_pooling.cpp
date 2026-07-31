@@ -387,10 +387,7 @@ bool UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType memoryType, bool 
 }
 
 bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager, const InitParams &initParams) {
-    bool poolManagerEnabled = device->getGfxCoreHelper().isUsmPoolManagerSupported(memoryType);
-    if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
-        poolManagerEnabled = NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != 0;
-    }
+    const bool poolManagerEnabled = isPoolManagerSupported(memoryType, device);
 
     if (poolManagerEnabled) {
         auto managerDevice = memoryType == InternalMemoryType::deviceUnifiedMemory ? device : nullptr;

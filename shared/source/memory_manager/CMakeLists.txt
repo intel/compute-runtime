@@ -57,6 +57,7 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}unified_memory_pooling_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_reuse.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_reuse_cleaner.cpp

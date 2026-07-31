@@ -175,6 +175,7 @@ class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
         bool compressedHint{false};
     };
     static bool poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault);
+    static bool isPoolManagerSupported(InternalMemoryType memoryType, const Device *device);
     bool initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager, const InitParams &initParams);
     bool isInitialized() const;
     void cleanup();

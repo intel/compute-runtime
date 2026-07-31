@@ -878,6 +878,26 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
     usmMemAllocPoolsManager->cleanup();
 }
 
+TEST(UnifiedMemoryPoolingFacadeStaticTest, givenDebugFlagWhenCheckingPoolManagerSupportThenFlagOverridesGfxCoreHelper) {
+    DebugManagerStateRestore restorer;
+    UltDeviceFactory deviceFactory{1, 1};
+    auto device = deviceFactory.rootDevices[0];
+
+    debugManager.flags.EnableUsmAllocationPoolManager.set(-1);
+    EXPECT_EQ(device->getGfxCoreHelper().isUsmPoolManagerSupported(InternalMemoryType::hostUnifiedMemory),
+              UsmMemAllocPoolsFacade::isPoolManagerSupported(InternalMemoryType::hostUnifiedMemory, device));
+    EXPECT_EQ(device->getGfxCoreHelper().isUsmPoolManagerSupported(InternalMemoryType::deviceUnifiedMemory),
+              UsmMemAllocPoolsFacade::isPoolManagerSupported(InternalMemoryType::deviceUnifiedMemory, device));
+
+    debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+    EXPECT_FALSE(UsmMemAllocPoolsFacade::isPoolManagerSupported(InternalMemoryType::hostUnifiedMemory, device));
+    EXPECT_FALSE(UsmMemAllocPoolsFacade::isPoolManagerSupported(InternalMemoryType::deviceUnifiedMemory, device));
+
+    debugManager.flags.EnableUsmAllocationPoolManager.set(1);
+    EXPECT_TRUE(UsmMemAllocPoolsFacade::isPoolManagerSupported(InternalMemoryType::hostUnifiedMemory, device));
+    EXPECT_TRUE(UsmMemAllocPoolsFacade::isPoolManagerSupported(InternalMemoryType::deviceUnifiedMemory, device));
+}
+
 class UnifiedMemoryPoolingFacadeTest : public SVMMemoryAllocatorFixture<true, 1u>, public ::testing::TestWithParam<std::tuple<InternalMemoryType, bool>> {
   public:
     void SetUp() override {
