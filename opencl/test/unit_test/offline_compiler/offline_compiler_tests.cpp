@@ -285,7 +285,7 @@ TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFi
 
     std::vector<std::string> singleArgs = {
         "-file",
-        clFiles + "ImANaughtyFile.cl",
+        "ImANaughtyFile.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1267,7 +1267,7 @@ TEST_F(OfflineCompilerTests, givenDeviceAsPvcHexIdAndDeviceOptionsStricteForPvcO
                 exampleDevOptionsStr = "-options -ze-opt-large-register-file";
     const std::vector<std::string> argv = {
         "ocloc",
-        "-file", clFiles + "foo.spv",
+        "-file", "foo.spv",
         "-output_no_suffix",
         "-spirv_input",
         "-device_options", relevantAcronymStr, exampleDevOptionsStr,
@@ -1356,7 +1356,7 @@ TEST_F(OfflineCompilerTests, givenDeviceHexIdAndDeviceOptionsInGeneralWhenCmdLin
     const std::vector<std::string> argv = {
         "ocloc",
         "compile",
-        "-file", clFiles + "foo.spv",
+        "-file", "foo.spv",
         "-output_no_suffix",
         "-spirv_input",
         "-device_options", relevantAcronymStr, exampleDevOptionsStr,
@@ -2341,7 +2341,7 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated
     bool isSpvFile = false;
     bool isGenFile = false;
     bool isBinFile = false;
-    std::string filePath = clFiles + "copybuffer.cl";
+    std::string filePath = "copybuffer.cl";
 
     const char *argv[] = {
         "ocloc",
@@ -2420,7 +2420,7 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
     uint64_t *lenOutputs = nullptr;
     uint8_t **dataOutputs = nullptr;
     char **nameOutputs = nullptr;
-    std::string filePath = clFiles + "copybuffer.cl";
+    std::string filePath = "copybuffer.cl";
 
     bool isSpvFile = false;
     bool isGenFile = false;
@@ -2591,7 +2591,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsR
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "ImANaughtyFile.cl",
+        "ImANaughtyFile.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2610,7 +2610,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFlagWhenBuildingThenInvalidCommandLineE
     std::vector<std::string> argv = {
         "ocloc",
         "-n",
-        clFiles + "ImANaughtyFile.cl",
+        "ImANaughtyFile.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2645,7 +2645,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidOptionsWhenBuildingThenInvalidCommandLi
     std::vector<std::string> argvB = {
         "ocloc",
         "-file",
-        clFiles + "ImANaughtyFile.cl",
+        "ImANaughtyFile.cl",
         "-device"};
 
     capture.captureStdout();
@@ -2704,7 +2704,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailu
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    gEnvironment->SetInputFileName("invalid_file_name");
+    gEnvironment->setInvalidMockKernel();
 
     StreamCapture capture;
     capture.captureStdout();
@@ -2718,7 +2718,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailu
     std::string buildLog = pOfflineCompiler->getBuildLog();
     EXPECT_STRNE(buildLog.c_str(), "");
 
-    gEnvironment->SetInputFileName("copybuffer");
+    gEnvironment->setValidMockKernel();
 
     delete pOfflineCompiler;
 }
@@ -3490,7 +3490,7 @@ TEST_F(OfflineCompilerTests, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTra
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "emptykernel.cl",
+        "emptykernel.cl",
         "-llvm_input",
         "-llvm_bc",
         "-device",
@@ -4147,7 +4147,9 @@ __kernel void shouldfail(global ushort *dst) {
 
         StreamCapture capture;
         capture.captureStdout();
+        gEnvironment->setInvalidMockKernel();
         auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
+        gEnvironment->setValidMockKernel();
         EXPECT_NE(retVal, OCLOC_SUCCESS);
         std::string output = capture.getCapturedStdout();
         EXPECT_FALSE(output.find("Building with options:\n"
@@ -4172,7 +4174,9 @@ __kernel void shouldfail(global ushort *dst) {
 
         StreamCapture capture;
         capture.captureStdout();
+        gEnvironment->setInvalidMockKernel();
         auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
+        gEnvironment->setValidMockKernel();
         EXPECT_NE(retVal, OCLOC_SUCCESS);
         std::string output = capture.getCapturedStdout();
         EXPECT_TRUE(output.find("Building with options:\n"
@@ -4201,7 +4205,9 @@ __kernel void shouldfail(global ushort *dst) {
 
         StreamCapture capture;
         capture.captureStdout();
+        gEnvironment->setInvalidMockKernel();
         auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
+        gEnvironment->setValidMockKernel();
         EXPECT_NE(retVal, OCLOC_SUCCESS);
         std::string output = capture.getCapturedStdout();
         EXPECT_FALSE(output.find("Building with options:\n"

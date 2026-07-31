@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -18,7 +17,6 @@
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/mock_sip_listener.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -29,7 +27,6 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_os_thread.h"
 #include "shared/test/common/mocks/mock_sip.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/test_stats.h"
 #include "shared/test/common/tests_configuration.h"
 
@@ -445,21 +442,11 @@ int main(int argc, char **argv) {
         MockCompilerDebugVars fclDebugVars;
         MockCompilerDebugVars igcDebugVars;
 
-        std::string builtInsFileName;
-        if (TestChecks::supportsImages(defaultHwInfo)) {
-            builtInsFileName = KernelBinaryHelper::BUILT_INS_WITH_IMAGES;
-        } else {
-            builtInsFileName = KernelBinaryHelper::BUILT_INS;
-        }
-        std::string options;
-        retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin", options);
-
         static uint8_t mockBuiltInIrPlaceholder[64] = {};
         memcpy_s(mockBuiltInIrPlaceholder, sizeof(mockBuiltInIrPlaceholder), NEO::spirvMagic.data(), NEO::spirvMagic.size());
         fclDebugVars.binaryToReturn = mockBuiltInIrPlaceholder;
         fclDebugVars.binaryToReturnSize = sizeof(mockBuiltInIrPlaceholder);
 
-        gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
         gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
         int sigOut = setSegv(enableSegv);
@@ -528,41 +515,6 @@ int main(int argc, char **argv) {
                         return -1;
                     }
                 }
-            }
-            std::string kernelOptions = CompilerOptions::kernelOptions;
-            std::replace(kernelOptions.begin(), kernelOptions.end(), ' ', '_');
-            std::string kernelStatelessOptions = CompilerOptions::kernelStatelessOptions;
-            std::replace(kernelStatelessOptions.begin(), kernelStatelessOptions.end(), ' ', '_');
-            std::string kernelWideStatelessOptions = CompilerOptions::kernelWideStatelessOptions;
-            std::replace(kernelWideStatelessOptions.begin(), kernelWideStatelessOptions.end(), ' ', '_');
-            std::string kernelTypeOptions;
-            if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
-                kernelTypeOptions = std::string("-heapless_") + CompilerOptions::kernelStatelessOptions;
-                std::replace(kernelTypeOptions.begin(), kernelTypeOptions.end(), ' ', '_');
-            }
-            auto loadBuiltInsKernels = [&](const std::string &name) -> bool {
-                for (const std::string &opts : {options, kernelOptions, kernelStatelessOptions, kernelWideStatelessOptions, kernelTypeOptions}) {
-                    std::string filename;
-                    retrieveBinaryKernelFilename(filename, name + "_", ".bin", opts);
-                    size_t retFileNsize = 0;
-                    auto retFiledata = NEO::loadDataFromFile(filename.c_str(), retFileNsize);
-                    if (retFiledata) {
-                        if (retFileNsize == 0) {
-                            std::cout << "ERROR: built-in kernel file is empty: " << filename << "\n";
-                            return false;
-                        }
-                        virtualFileListTestKernelsOnly[filename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
-                        if (retFileNsize != virtualFileListTestKernelsOnly[filename].str().size()) {
-                            std::cout << "ERROR: failed to load built-in kernel file: " << filename << "\n";
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            };
-            if (!loadBuiltInsKernels(KernelBinaryHelper::BUILT_INS) ||
-                !loadBuiltInsKernels(KernelBinaryHelper::BUILT_INS_WITH_IMAGES)) {
-                return -1;
             }
             populateApiSpecificVirtualFileList(hwInfoForTests);
         }

@@ -11,8 +11,6 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/ult_config_listener.h"
 
-#include "test_files_setup.h"
-
 namespace NEO {
 const char *apiName = "OCL";
 }
@@ -35,10 +33,6 @@ void setupTestFiles(std::string testBinaryFiles, int32_t revId) {
     testBinaryFiles.append("/");
     testBinaryFiles.append(testFiles);
     testFiles = testBinaryFiles;
-
-    std::string nClFiles = NEO_OPENCL_TEST_FILES_DIR;
-    nClFiles.append("/");
-    clFiles = nClFiles;
 }
 
 std::string getBaseExecutionDir() {

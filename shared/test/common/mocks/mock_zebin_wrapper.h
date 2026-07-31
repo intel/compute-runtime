@@ -90,19 +90,6 @@ struct MockZebinWrapper {
                                                                          }};
     }
 
-    void setAsMockCompilerLoadedFile(const std::string &fileName) {
-        debugVarsRestore.reset();
-        virtualFileList[fileName] << this->binaries[0];
-        MockCompilerDebugVars debugVars;
-        debugVars.fileName = fileName;
-        gEnvironment->igcPushDebugVars(debugVars);
-        gEnvironment->fclPushDebugVars(debugVars);
-        this->debugVarsRestore = std::unique_ptr<void, void (*)(void *)>{&gEnvironment, [](void *) -> void {
-                                                                             gEnvironment->igcPopDebugVars();
-                                                                             gEnvironment->fclPopDebugVars();
-                                                                         }};
-    }
-
     ZebinTestData::ZebinCopyBufferModule<numBits> data;
     std::array<const unsigned char *, binariesCount> binaries;
     std::array<size_t, binariesCount> binarySizes;

@@ -50,10 +50,7 @@ struct MockCompilerDebugVars {
     // compilerProductHelper::useIgcAsFcl() is true.
     bool forceBuildFailureBackendOnly = false;
     bool forceSuccessWithEmptyOutput = false;
-    bool forceCreateFailure = false;
-    bool forceRegisterFail = false;
     bool internalOptionsExpected = false;
-    bool appendOptionsToFileName = true;
     void *debugDataToReturn = nullptr;
     size_t debugDataToReturnSize = 0;
     void *binaryToReturn = nullptr;
@@ -69,8 +66,6 @@ struct MockCompilerDebugVars {
     std::string *receivedInternalOptionsOutput = nullptr;
     std::string *receivedInput = nullptr;
 
-    std::string fileName;
-    std::string fileNameSuffix;
     std::string buildLogToReturn;
     std::string translationContextCreationError;
 };

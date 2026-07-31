@@ -19,7 +19,6 @@
 
 #include "environment.h"
 #include "limits.h"
-#include "test_files_setup.h"
 
 #include <fstream>
 #include <igfxfmid.h>
@@ -163,10 +162,6 @@ int main(int argc, char **argv) {
     nTestFiles.append(testFiles);
     testFiles = nTestFiles;
     binaryNameSuffix.append(devicePrefix);
-
-    std::string nClFiles = NEO_OPENCL_TEST_FILES_DIR;
-    nClFiles.append("/");
-    clFiles = nClFiles;
 
 #ifdef WIN32
 #include <direct.h>

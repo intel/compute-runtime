@@ -232,7 +232,7 @@ TEST_F(OclocApiTest, WhenGoodArgsAreGivenThenSuccessIsReturned) {
         return static_cast<size_t>(fileStream.gcount() / size);
     });
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     const char *argv[] = {
         "ocloc",
         "-file",
@@ -284,7 +284,7 @@ TEST_F(OclocApiTest, GivenQuietModeAndValidArgumentsWhenRunningOclocThenSuccessI
         return static_cast<size_t>(fileStream.gcount() / size);
     });
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     const char *argv[] = {
         "ocloc",
         "-file",
@@ -503,7 +503,7 @@ TEST_F(OclocApiTest, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
         fileStream.read(static_cast<char *>(ptr), totalBytes);
         return static_cast<size_t>(fileStream.gcount() / size);
     });
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
     auto allSupportedDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
     if (allSupportedDeviceConfigs.empty()) {
@@ -864,7 +864,7 @@ TEST_F(OclocApiTest, GivenOnlySpirVWithMultipleDevicesWhenCompilingThenFirstDevi
         return static_cast<size_t>(fileStream.gcount() / size);
     });
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     AOT::FAMILY productFamily = AOT::UNKNOWN_FAMILY;
     std::string familyAcronym("");
     std::string firstDeviceAcronym("");
@@ -1257,7 +1257,7 @@ TEST_F(OclocApiTest, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
         return static_cast<size_t>(fileStream.gcount() / size);
     });
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     const char *argv[] = {
         "ocloc",
         "-file",
@@ -1283,7 +1283,7 @@ TEST_F(OclocApiTest, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
 TEST_F(OclocApiTest, GivenFormerDeviceNamesWhenCompilingThenFormerOclocIsUsedAndSuccessIsReturned) {
     IoFunctionsMockHelper mockIoFunctions;
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto formerHelper = std::make_unique<FormerProductConfigHelper>();
@@ -1345,7 +1345,7 @@ TEST_F(OclocApiTest, GivenFormerDeviceNamesWhenCompilingThenFormerOclocIsUsedAnd
 TEST_F(OclocApiTest, GivenMixedFormerAndCurrentDeviceNamesWhenCompilingThenCorrectOclocIsUsedAndSuccessIsReturned) {
     IoFunctionsMockHelper mockIoFunctions;
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto formerHelper = std::make_unique<FormerProductConfigHelper>();
@@ -1409,7 +1409,7 @@ TEST_F(OclocApiTest, GivenMixedFormerAndCurrentDeviceNamesWhenCompilingThenCorre
 TEST_F(OclocApiTest, GivenFormerFamilyNamesWhenCompilingThenFormerOclocIsUsedAndSuccessIsReturned) {
     IoFunctionsMockHelper mockIoFunctions;
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto formerHelper = std::make_unique<FormerProductConfigHelper>();
@@ -1468,7 +1468,7 @@ TEST_F(OclocApiTest, GivenFormerFamilyNamesWhenCompilingThenFormerOclocIsUsedAnd
 TEST_F(OclocApiTest, GivenMixedFormerAndCurrentFamilyNamesWhenCompilingThenCorrectOclocIsUsedAndSuccessIsReturned) {
     IoFunctionsMockHelper mockIoFunctions;
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto formerHelper = std::make_unique<FormerProductConfigHelper>();
@@ -1536,7 +1536,7 @@ TEST_F(OclocApiTest, GivenMixedFormerAndCurrentFamilyNamesWhenCompilingThenCorre
 TEST_F(OclocApiTest, GivenFormerReleaseNamesWhenCompilingThenFormerOclocIsUsedAndSuccessIsReturned) {
     IoFunctionsMockHelper mockIoFunctions;
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto formerHelper = std::make_unique<FormerProductConfigHelper>();
@@ -1595,7 +1595,7 @@ TEST_F(OclocApiTest, GivenFormerReleaseNamesWhenCompilingThenFormerOclocIsUsedAn
 TEST_F(OclocApiTest, GivenMixedFormerAndCurrentReleaseNamesWhenCompilingThenCorrectOclocIsUsedAndSuccessIsReturned) {
     IoFunctionsMockHelper mockIoFunctions;
 
-    std::string clFileName(clFiles + "copybuffer.cl");
+    std::string clFileName("copybuffer.cl");
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto formerHelper = std::make_unique<FormerProductConfigHelper>();

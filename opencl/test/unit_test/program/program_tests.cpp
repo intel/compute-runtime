@@ -1035,7 +1035,7 @@ TEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesThenSourc
 }
 
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
-    zebinPtr->setAsMockCompilerLoadedFile("copybuffer.bin");
+    zebinPtr->setAsMockCompilerReturnedBinary();
 
     auto device = pPlatform->getClDevice(0);
 
@@ -1062,8 +1062,16 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     p2.reset(nullptr);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
-    // fail build - any build error (here caused by specifying unrecognized option)
-    retVal = pProgram->build(pProgram->getDevices(), "-invalid-option");
+    // fail build - any build error (here forced directly on the mock compiler)
+    {
+        MockCompilerDebugVars failDebugVars;
+        failDebugVars.forceBuildFailure = true;
+        gEnvironment->igcPushDebugVars(failDebugVars);
+        gEnvironment->fclPushDebugVars(failDebugVars);
+        retVal = pProgram->build(pProgram->getDevices(), nullptr);
+        gEnvironment->fclPopDebugVars();
+        gEnvironment->igcPopDebugVars();
+    }
     EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
 
     // fail build - linked code is corrupted and cannot be postprocessed
@@ -1475,7 +1483,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     const char *source = "example_kernel(){}";
     size_t sourceSize = std::strlen(source) + 1;
     const char *sources[1] = {source};
-    zebinPtr->setAsMockCompilerLoadedFile("copybuffer.bin");
+    zebinPtr->setAsMockCompilerReturnedBinary();
     p3 = Program::create<MockProgram>(pContext, 1, sources, &sourceSize, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, p3);
@@ -1501,8 +1509,16 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     p2.reset(nullptr);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
-    // fail compilation - any compilation error (here caused by specifying unrecognized option)
-    retVal = pProgram->compile(pProgram->getDevices(), "-invalid-option", 0, nullptr, nullptr);
+    // fail compilation - any compilation error (here forced directly on the mock compiler)
+    {
+        MockCompilerDebugVars failDebugVars;
+        failDebugVars.forceBuildFailure = true;
+        gEnvironment->igcPushDebugVars(failDebugVars);
+        gEnvironment->fclPushDebugVars(failDebugVars);
+        retVal = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
+        gEnvironment->fclPopDebugVars();
+        gEnvironment->igcPopDebugVars();
+    }
     EXPECT_EQ(CL_COMPILE_PROGRAM_FAILURE, retVal);
 
     // compile successfully
@@ -1637,7 +1653,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     cl_program program = pProgram;
     cl_program nullprogram = nullptr;
     cl_program invprogram = (cl_program)pContext;
-    zebinPtr->setAsMockCompilerLoadedFile("copybuffer.bin");
+    zebinPtr->setAsMockCompilerReturnedBinary();
 
     // Order of following microtests is important - do not change.
     // Add new microtests at end.
@@ -1683,8 +1699,16 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
     pProgram->setIrBinarySize(irBinSize, isSpirvTmp);
 
-    // fail linking - any link error (here caused by specifying unrecognized option)
-    retVal = pProgram->link(pProgram->getDevices(), "-invalid-option", 1, &program);
+    // fail linking - any link error (here forced directly on the mock compiler)
+    {
+        MockCompilerDebugVars failDebugVars;
+        failDebugVars.forceBuildFailure = true;
+        gEnvironment->igcPushDebugVars(failDebugVars);
+        gEnvironment->fclPushDebugVars(failDebugVars);
+        retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &program);
+        gEnvironment->fclPopDebugVars();
+        gEnvironment->igcPopDebugVars();
+    }
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
     // fail linking - linked code is corrupted and cannot be postprocessed
@@ -1699,8 +1723,8 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectErrorIsReturned) {
-    zebinPtr->setAsMockCompilerLoadedFile("copybuffer.bin");
+TEST_F(ProgramFromSourceTest, GivenLinkFailureWhenCreatingLibraryThenCorrectErrorIsReturned) {
+    zebinPtr->setAsMockCompilerReturnedBinary();
     cl_program program = pProgram;
 
     // Order of following microtests is important - do not change.
@@ -1714,8 +1738,16 @@ TEST_F(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
     retVal = pProgram->link(pProgram->getDevices(), CompilerOptions::createLibrary.data(), 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // fail library creation - any link error (here caused by specifying unrecognized option)
-    retVal = pProgram->link(pProgram->getDevices(), CompilerOptions::concatenate(CompilerOptions::createLibrary, "-invalid-option").c_str(), 1, &program);
+    // fail library creation - any link error (here forced directly on the mock compiler)
+    {
+        MockCompilerDebugVars failDebugVars;
+        failDebugVars.forceBuildFailure = true;
+        gEnvironment->igcPushDebugVars(failDebugVars);
+        gEnvironment->fclPushDebugVars(failDebugVars);
+        retVal = pProgram->link(pProgram->getDevices(), CompilerOptions::createLibrary.data(), 1, &program);
+        gEnvironment->fclPopDebugVars();
+        gEnvironment->igcPopDebugVars();
+    }
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
     auto device = pContext->getDevice(0);

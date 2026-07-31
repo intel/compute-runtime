@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/test.h"
 

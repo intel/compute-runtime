@@ -18,8 +18,6 @@
 #include "shared/test/common/tests_configuration.h"
 #include "shared/test/unit_test/mocks/mock_cpuid_functions.h"
 
-#include "test_files_setup.h"
-
 namespace NEO {
 namespace ImplicitScaling {
 bool apiSupport = false;
@@ -91,10 +89,6 @@ void setupTestFiles(std::string testBinaryFiles, int32_t revId) {
     testBinaryFiles.append("/");
     testBinaryFiles.append(testFiles);
     testFiles = testBinaryFiles;
-
-    std::string nClFiles = NEO_SHARED_TEST_FILES_DIR;
-    nClFiles.append("/");
-    clFiles = nClFiles;
 }
 
 std::string getBaseExecutionDir() {

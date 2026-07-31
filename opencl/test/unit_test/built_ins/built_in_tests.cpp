@@ -39,7 +39,6 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/test/unit_test/fixtures/built_in_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
@@ -56,12 +55,10 @@
 using namespace NEO;
 
 class BuiltInTests
-    : public BuiltInFixture,
-      public ClDeviceFixture,
+    : public ClDeviceFixture,
       public ContextFixture,
       public ::testing::Test {
 
-    using BuiltInFixture::setUp;
     using ContextFixture::setUp;
 
   public:
@@ -70,7 +67,6 @@ class BuiltInTests
         ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
         ContextFixture::setUp(1, &device);
-        BuiltInFixture::setUp(pDevice);
         auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
         bool bindlessEnabled = ApiSpecificConfig::getBindlessMode(pClDevice->getDevice());
 
@@ -91,7 +87,6 @@ class BuiltInTests
                 builders[i].first.reset();
             }
         }
-        BuiltInFixture::tearDown();
         ContextFixture::tearDown();
         ClDeviceFixture::tearDown();
     }
@@ -134,7 +129,8 @@ HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinTh
 
 class MockAuxBuilInOp : public AuxTranslationBuiltin {
   public:
-    using AuxTranslationBuiltin::AuxTranslationBuiltin;
+    MockAuxBuilInOp(ClDevice &device, BuiltIn::AddressingMode mode)
+        : AuxTranslationBuiltin(*device.getDevice().getBuiltIns(), device, mode) {}
     using BuiltIn::DispatchInfoBuilder::populate;
     using BaseClass = AuxTranslationBuiltin;
     using BaseClass::baseKernel;
@@ -154,7 +150,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTransla
         kernelObjType = kernelObjTypeParam;
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        MockAuxBuilInOp mockAuxBuiltInOp(*pClDevice, defaultMode);
 
         BuiltIn::OpParams builtinOpParamsToAux;
         builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
@@ -519,7 +515,7 @@ HWTEST2_F(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispat
 }
 
 HWTEST2_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5, AuxBuiltinsMatcher) {
-    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+    MockAuxBuilInOp mockAuxBuiltInOp(*pClDevice, defaultMode);
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 }
@@ -528,7 +524,7 @@ HWTEST2_F(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInst
     for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
         kernelObjType = kernelObjTypeParam;
 
-        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        MockAuxBuilInOp mockAuxBuiltInOp(*pClDevice, defaultMode);
         EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
         EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 
@@ -554,7 +550,7 @@ HWTEST2_F(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInst
 }
 
 HWTEST2_F(BuiltInTests, givenAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesFromBaseKernel, AuxBuiltinsMatcher) {
-    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+    MockAuxBuilInOp mockAuxBuiltInOp(*pClDevice, defaultMode);
     size_t newSize = mockAuxBuiltInOp.convertToAuxKernel.size() + 3;
     mockAuxBuiltInOp.resizeKernelInstances(newSize);
 
@@ -574,7 +570,7 @@ HWTEST2_F(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
         kernelObjType = kernelObjTypeParam;
 
         BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
-        auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pClDevice, defaultMode);
+        auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pClDevice, defaultMode);
         pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
 
         auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
@@ -632,7 +628,7 @@ HWTEST2_F(AuxBuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSet
 
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        MockAuxBuilInOp mockAuxBuiltInOp(*pClDevice, defaultMode);
 
         BuiltIn::OpParams builtinOpParamsToAux;
         builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
@@ -704,7 +700,7 @@ HWTEST2_F(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
         using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        MockAuxBuilInOp mockAuxBuiltInOp(*pClDevice, defaultMode);
 
         BuiltIn::OpParams builtinOpParams;
         builtinOpParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
@@ -767,7 +763,7 @@ HWTEST2_F(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
         using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        MockAuxBuilInOp mockAuxBuiltInOp(*pClDevice, defaultMode);
 
         BuiltIn::OpParams builtinOpParams;
         builtinOpParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
@@ -1858,7 +1854,7 @@ TEST_F(BuiltInTests, givenOneApiPvcSendWarWaEnvFalseWhenGettingBuiltinCodeThenSo
 using BuiltInOwnershipWrapperTests = BuiltInTests;
 
 HWTEST2_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnlockOnDestruction, AuxBuiltinsMatcher) {
-    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+    MockAuxBuilInOp mockAuxBuiltInOp(*pClDevice, defaultMode);
     MockContext context(pClDevice);
     {
         EXPECT_EQ(nullptr, mockAuxBuiltInOp.baseKernel->getProgram()->getContextPtr());
@@ -1873,7 +1869,7 @@ HWTEST2_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUn
 }
 
 HWTEST2_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingThenLockOnlyWhenRequested, AuxBuiltinsMatcher) {
-    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+    MockAuxBuilInOp mockAuxBuiltInOp(*pClDevice, defaultMode);
     MockContext context(pClDevice);
     {
         BuiltIn::OwnershipWrapper lock;
@@ -1889,8 +1885,8 @@ HWTEST2_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructi
 }
 
 HWTEST2_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOwnershipCalledThenAbort, AuxBuiltinsMatcher) {
-    MockAuxBuilInOp mockAuxBuiltInOp1(*pBuiltIns, *pClDevice, defaultMode);
-    MockAuxBuilInOp mockAuxBuiltInOp2(*pBuiltIns, *pClDevice, defaultMode);
+    MockAuxBuilInOp mockAuxBuiltInOp1(*pClDevice, defaultMode);
+    MockAuxBuilInOp mockAuxBuiltInOp2(*pClDevice, defaultMode);
     MockContext context(pClDevice);
 
     BuiltIn::OwnershipWrapper lock(mockAuxBuiltInOp1, &context);

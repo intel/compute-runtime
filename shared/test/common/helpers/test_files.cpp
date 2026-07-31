@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,13 +10,9 @@
 #include "shared/source/helpers/file_io.h"
 
 #include "config.h"
-#include "test_files_setup.h"
 
 std::string testFiles("test_files/" NEO_ARCH "/");
 std::string testFilesApiSpecific("test_files/" NEO_ARCH "/");
-std::string clFiles("test_files/");
-std::string sharedFiles(NEO_SHARED_TEST_FILES_DIR);
-std::string sharedBuiltinsDir(NEO_SHARED_BUILTINS_DIR);
 std::string binaryNameSuffix("");
 
 void retrieveBinaryKernelFilename(std::string &outputFilename, const std::string &kernelName, const std::string &extension, const std::string &options) {

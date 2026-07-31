@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,13 +40,6 @@ class TestEnvironment : public ::testing::Environment {
         MockCompilerDebugVars &igcDefaults,
         HardwareInfo &hwInfo);
 
-    virtual void setMockFileNames(
-        std::string &fclMockFile,
-        std::string &igcMockFile);
-
-    virtual std::string &fclGetMockFile();
-    virtual std::string &igcGetMockFile();
-
   protected:
     OsLibrary *libraryFrontEnd = nullptr;
     OsLibrary *libraryIGC = nullptr;
@@ -61,9 +54,6 @@ class TestEnvironment : public ::testing::Environment {
     MockCompilerDebugVars fclDefaultDebugVars{};
     MockCompilerDebugVars igcDefaultDebugVars{};
     HardwareInfo hwInfoDefaultDebugVars{};
-
-    std::string fclMockFile{};
-    std::string igcMockFile{};
 
     MockCompilerEnableGuard mockCompilerGuard{};
 };

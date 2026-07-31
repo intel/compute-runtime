@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,19 +76,4 @@ void TestEnvironment::setDefaultDebugVars(
     fclDefaultDebugVars = fclDefaults;
     igcDefaultDebugVars = igcDefaults;
     hwInfoDefaultDebugVars = hwInfo;
-}
-
-void TestEnvironment::setMockFileNames(
-    std::string &fclMockFile,
-    std::string &igcMockFile) {
-    this->fclMockFile = fclMockFile;
-    this->igcMockFile = igcMockFile;
-}
-
-std::string &TestEnvironment::fclGetMockFile() {
-    return this->fclMockFile;
-}
-
-std::string &TestEnvironment::igcGetMockFile() {
-    return this->igcMockFile;
 }

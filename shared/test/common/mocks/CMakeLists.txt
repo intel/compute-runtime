@@ -34,8 +34,6 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_cache.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_product_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_release_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cpu_page_fault_manager.h
