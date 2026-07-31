@@ -485,11 +485,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenZetMetricG
     // Raw results.
     const size_t rawResultsSize = 560;
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -577,11 +577,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenInvalidDataCountAndTotalMetricCoun
     // Raw results.
     const size_t rawResultsSize = 560;
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -670,11 +670,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenInvalidQueryReportSizeWhenZetMetri
     // Raw results.
     const size_t rawResultsSize = 560;
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -756,11 +756,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenErrorGeneralOnCalculateMetricsWhen
     // Raw results.
     const size_t rawResultsSize = 560;
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -848,11 +848,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenZetMetricG
     // Raw results.
     const size_t rawResultsSize = 560;
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -934,11 +934,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenFirstSubDe
     // Raw results.
     constexpr size_t rawResultsSize = 512; // metricsSetParams.RawReportSize * returnedMetricCount
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -1030,11 +1030,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenSecondSubD
     // Raw results.
     constexpr size_t rawResultsSize = 512; // metricsSetParams.RawReportSize * returnedMetricCount
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -1123,11 +1123,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
     // Raw results.
     constexpr size_t rawResultsSize = 512; // metricsSetParams.RawReportSize * returnedMetricCount
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -1208,11 +1208,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
     // Raw results.
     constexpr size_t rawResultsSize = 512; // metricsSetParams.RawReportSize * returnedMetricCount
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -1304,11 +1304,11 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
     // Raw results.
     constexpr size_t rawResultsSize = 512; // metricsSetParams.RawReportSize * returnedMetricCount
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
 
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = subDeviceCount;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 

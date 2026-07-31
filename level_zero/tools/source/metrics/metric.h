@@ -369,16 +369,6 @@ struct MetricGroupImp : public MetricGroup {
     bool isMultiDevice = false;
 };
 
-struct MetricGroupCalculateHeader {
-    static constexpr uint32_t magicValue = 0xFFFEDCBA;
-
-    uint32_t magic;
-    uint32_t dataCount;
-    uint32_t rawDataOffsets;
-    uint32_t rawDataSizes;
-    uint32_t rawDataOffset;
-};
-
 struct MetricCollectorEventNotify {
     virtual Event::State getNotificationState() = 0;
     void attachEvent(ze_event_handle_t hNotificationEvent);

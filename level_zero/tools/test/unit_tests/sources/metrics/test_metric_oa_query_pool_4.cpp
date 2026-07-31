@@ -127,7 +127,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenFailedGetDataWhenZetMetricQueryGetDa
     // Get desired raw data size.
     size_t rawSize = 0;
     EXPECT_EQ(zetMetricQueryGetData(queryHandle, &rawSize, nullptr), ZE_RESULT_SUCCESS);
-    const size_t expectedRawSize = (reportSize * subDeviceCount) + sizeof(MetricGroupCalculateHeader) + (2 * sizeof(uint32_t) * subDeviceCount);
+    const size_t expectedRawSize = (reportSize * subDeviceCount) + sizeof(OaMetricGroupCalculateHeader) + (2 * sizeof(uint32_t) * subDeviceCount);
     EXPECT_EQ(rawSize, expectedRawSize);
 
     // Get data.

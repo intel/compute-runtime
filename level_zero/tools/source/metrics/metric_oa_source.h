@@ -15,6 +15,15 @@ struct MetricsLibrary;
 struct MetricsStreamer;
 struct Device;
 
+struct OaMetricGroupCalculateHeader {
+    static constexpr uint32_t magicValue = 0xFFFEDCBA;
+
+    uint32_t magic;
+    uint32_t dataCount;
+    uint32_t rawDataOffsets;
+    uint32_t rawDataSizes;
+    uint32_t rawDataOffset;
+};
 class OaMetricSourceImp : public MetricSource {
 
   public:

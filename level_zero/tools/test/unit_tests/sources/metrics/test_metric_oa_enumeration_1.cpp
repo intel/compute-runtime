@@ -2601,10 +2601,10 @@ TEST_F(MetricEnumerationTest, givenInvalidQueryReportSizeWhenZetMetricGroupCalcu
     // Raw results.
     const size_t rawResultsSize = 284;
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = 1;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
@@ -2682,10 +2682,10 @@ TEST_F(MetricEnumerationTest, givenCorrectRawDataHeaderWhenZetMetricGroupCalcula
     // Raw results.
     const size_t rawResultsSize = 284;
     uint8_t rawResults[rawResultsSize] = {};
-    MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawResults);
-    pRawHeader->magic = MetricGroupCalculateHeader::magicValue;
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
     pRawHeader->dataCount = 1;
-    pRawHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
     pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
     pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
 
