@@ -15,8 +15,8 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/fixtures/mock_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
@@ -212,25 +212,22 @@ struct PerformanceHintEnqueueMapTest : public PerformanceHintEnqueueTest {
     }
 };
 
-struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
-                                          public ProgramFixture {
+struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest {
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
-        createProgramFromBinary(context, context->getDevices(), "CopyBuffer_simd32");
-        retVal = pProgram->build(pProgram->getDevices(), nullptr);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = Kernel::create<MockKernel>(pProgram, pProgram->getKernelInfoForKernel("CopyBuffer"), *context->getDevice(0), retVal);
+        mockKernelWithInternals = createBufferArgsKernel(*context);
+        kernel = mockKernelWithInternals->mockKernel;
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
         rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
     }
 
     void TearDown() override {
-        delete kernel;
-        ProgramFixture::tearDown();
+        mockKernelWithInternals.reset();
         PerformanceHintEnqueueTest::TearDown();
     }
+    std::unique_ptr<MockKernelWithInternals> mockKernelWithInternals;
     MockKernel *kernel = nullptr;
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     size_t globalWorkGroupSize[3]{};
@@ -248,30 +245,26 @@ struct PerformanceHintEnqueueKernelBadSizeTest : public PerformanceHintEnqueueKe
     }
 };
 
-struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTest,
-                                                public ProgramFixture {
-    class KernelWhitebox : public Kernel {
-      public:
-        using Kernel::initializeLocalIdsCache;
-    };
+struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTest {
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
-        createProgramFromBinary(context, context->getDevices(), "simple_kernels");
-        retVal = pProgram->build(pProgram->getDevices(), nullptr);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = static_cast<KernelWhitebox *>(Kernel::create(pProgram, pProgram->getKernelInfoForKernel("test_printf"), *context->getDevice(0), retVal));
-        kernel->initializeLocalIdsCache();
+        mockKernelWithInternals = createBufferArgsKernel(*context);
+        kernel = mockKernelWithInternals->mockKernel;
+
+        auto &kernelInfo = mockKernelWithInternals->kernelInfo;
+        kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
+        kernelInfo.setPrintfSurface(sizeof(uintptr_t), 64);
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
     }
 
     void TearDown() override {
-        delete kernel;
-        ProgramFixture::tearDown();
+        mockKernelWithInternals.reset();
         PerformanceHintEnqueueTest::TearDown();
     }
-    KernelWhitebox *kernel = nullptr;
+    std::unique_ptr<MockKernelWithInternals> mockKernelWithInternals;
+    MockKernel *kernel = nullptr;
     size_t globalWorkGroupSize[3]{};
 };
 

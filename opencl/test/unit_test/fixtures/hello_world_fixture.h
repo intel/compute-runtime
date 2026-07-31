@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
+#include "opencl/test/unit_test/fixtures/mock_kernel_fixture.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
@@ -26,7 +26,7 @@ struct HelloWorldFixtureFactory {
     typedef NEO::IndirectHeapFixture IndirectHeapFixture;
     typedef NEO::CommandStreamFixture CommandStreamFixture;
     typedef NEO::CommandQueueHwFixture CommandQueueFixture;
-    typedef NEO::HelloWorldKernelFixture KernelFixture;
+    typedef NEO::MockKernelFixture KernelFixture;
 };
 
 //  Instantiates a fixture based on the supplied fixture factory.
@@ -47,9 +47,9 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
     using CommandQueueFixture::setUp;
     using CommandStreamFixture::pCS;
     using CommandStreamFixture::setUp;
-    using HelloWorldKernelFixture::setUp;
     using IndirectHeapFixture::setUp;
     using KernelFixture::pKernel;
+    using KernelFixture::setUp;
 
   public:
     void setUp() {

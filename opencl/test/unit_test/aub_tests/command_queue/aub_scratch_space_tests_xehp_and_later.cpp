@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,9 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 
 using namespace NEO;
@@ -158,19 +157,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, Gen12AubScratchSpaceForPrivateTest, WhenKernelUsesS
     expectMemory<FamilyType>(dstBuffer, expectedMemory, expectedMemorySize);
 }
 
-class DefaultGrfKernelFixture : public ProgramFixture {
-  public:
-    using ProgramFixture::setUp;
-
+class DefaultGrfKernelFixture {
   protected:
     void setUp(ClDevice *device, Context *context) {
-        ProgramFixture::setUp();
-
         std::string programName("simple_spill_fill_kernel");
-        createProgramFromBinary(
-            context,
-            context->getDevices(),
-            programName);
+        pProgram = createProgramFromBinaryFile(context, programName);
         ASSERT_NE(nullptr, pProgram);
 
         retVal = pProgram->build(
@@ -179,7 +170,7 @@ class DefaultGrfKernelFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         kernel.reset(Kernel::create<MockKernel>(
-            pProgram,
+            pProgram.get(),
             pProgram->getKernelInfoForKernel("spill_test"),
             *device,
             retVal));
@@ -190,11 +181,10 @@ class DefaultGrfKernelFixture : public ProgramFixture {
         if (kernel) {
             kernel.reset(nullptr);
         }
-
-        ProgramFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
+    ReleaseableObjectPtr<MockProgram> pProgram;
     std::unique_ptr<Kernel> kernel;
 };
 

@@ -718,25 +718,13 @@ class KernelFromBinaryTest : public ProgramSimpleFixture {
 typedef Test<KernelFromBinaryTest> KernelFromBinaryTests;
 
 TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsReturned) {
-    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
-
-    ASSERT_NE(nullptr, pProgram);
-    retVal = pProgram->build(
-        pProgram->getDevices(),
-        nullptr);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    auto &kernelInfo = pProgram->getKernelInfoForKernel("simple_kernel_0");
-
-    // create a kernel
-    auto kernel = Kernel::create(
-        pProgram,
-        kernelInfo,
-        *pClDevice,
-        retVal);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
+    MockKernelWithInternals mockKernelWithInternals(*pContext);
+    auto &kernelInfo = mockKernelWithInternals.kernelInfo;
+    kernelInfo.addArgBuffer(0);
+    kernelInfo.addArgBuffer(1);
+    kernelInfo.addArgBuffer(2);
+    mockKernelWithInternals.mockKernel->initialize();
+    auto kernel = mockKernelWithInternals.mockKernel;
 
     cl_uint paramValue = 0;
     size_t paramValueSizeRet = 0;
@@ -751,54 +739,26 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_uint), paramValueSizeRet);
     EXPECT_EQ(3u, paramValue);
-
-    delete kernel;
 }
 
 TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
-    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
-
-    ASSERT_NE(nullptr, pProgram);
-    retVal = pProgram->build(
-        pProgram->getDevices(),
-        nullptr);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    auto &kernelInfo = pProgram->getKernelInfoForKernel("simple_kernel_0");
-
-    // create a kernel
-    auto kernel = Kernel::create(
-        pProgram,
-        kernelInfo,
-        *pClDevice,
-        retVal);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, kernel);
+    MockKernelWithInternals mockKernelWithInternals(*pContext);
 
     // get builtIn property
-    bool isBuiltIn = kernel->isBuiltInKernel();
+    bool isBuiltIn = mockKernelWithInternals.mockKernel->isBuiltInKernel();
 
     EXPECT_FALSE(isBuiltIn);
-
-    delete kernel;
 }
 
-HWTEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreatedThenArgumentIsMarkedAsReadOnly) {
-    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
+TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreatedThenArgumentIsMarkedAsReadOnly) {
+    MockKernelWithInternals mockKernelWithInternals(*pContext);
+    auto &kernelInfo = mockKernelWithInternals.kernelInfo;
+    kernelInfo.addArgBuffer(0);
+    kernelInfo.addArgBuffer(1);
+    kernelInfo.setAddressQualifier(1, KernelArgMetadata::AddrConstant);
+    mockKernelWithInternals.mockKernel->initialize();
 
-    ASSERT_NE(nullptr, pProgram);
-    retVal = pProgram->build(
-        pProgram->getDevices(),
-        nullptr);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    auto pKernelInfo = pProgram->getKernelInfo("simple_kernel_6", rootDeviceIndex);
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(1).isReadOnly());
-    pKernelInfo = pProgram->getKernelInfo("simple_kernel_1", rootDeviceIndex);
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(0).isReadOnly());
+    EXPECT_TRUE(kernelInfo.getArgDescriptorAt(1).isReadOnly());
 }
 
 typedef Test<ClDeviceFixture> KernelPrivateSurfaceTest;

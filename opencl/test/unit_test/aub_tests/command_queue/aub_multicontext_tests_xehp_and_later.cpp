@@ -21,8 +21,8 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 

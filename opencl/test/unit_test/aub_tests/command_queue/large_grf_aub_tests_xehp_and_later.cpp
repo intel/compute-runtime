@@ -12,8 +12,8 @@
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
-#include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
@@ -21,7 +21,7 @@
 
 using namespace NEO;
 
-class AUBRunLargeGrfKernelFixture : public ProgramFixture {
+class AUBRunLargeGrfKernelFixture {
   public:
     AUBRunLargeGrfKernelFixture()
         : indexMemory(nullptr, alignedFree), sourceMemory(nullptr, alignedFree),
@@ -36,11 +36,9 @@ class AUBRunLargeGrfKernelFixture : public ProgramFixture {
         if (staticLargeGrfMode) {
             setStaticLargeGrfDebugFlags();
         }
-        ProgramFixture::setUp();
     }
 
     void tearDown() {
-        ProgramFixture::tearDown();
     }
 
     virtual bool getLargeGrfConfig() const = 0;
@@ -54,12 +52,10 @@ class AUBRunLargeGrfKernelFixture : public ProgramFixture {
     }
 
     void createKernels(bool largeOnly) {
-        createProgramFromBinary(getContext(), getContext()->getDevices(),
-                                "spill_fill_kernel_large_grf");
+        pProgram = createProgramFromBinaryFile(getContext(), "spill_fill_kernel_large_grf");
         ASSERT_NE(nullptr, pProgram);
         auto rootDeviceIndex = pProgram->getDevices()[0]->getRootDeviceIndex();
-        largeGrfProgram.reset(pProgram);
-        pProgram = nullptr;
+        largeGrfProgram.reset(pProgram.release());
 
         auto retVal =
             largeGrfProgram->build(largeGrfProgram->getDevices(), nullptr);
@@ -81,8 +77,7 @@ class AUBRunLargeGrfKernelFixture : public ProgramFixture {
         ASSERT_NE(nullptr, largeGrfKernel);
 
         if (!largeOnly) {
-            createProgramFromBinary(getContext(), getContext()->getDevices(),
-                                    "simple_kernels");
+            pProgram = createProgramFromBinaryFile(getContext(), "simple_kernels");
             ASSERT_NE(nullptr, pProgram);
 
             retVal = pProgram->build(pProgram->getDevices(), nullptr);
@@ -95,7 +90,7 @@ class AUBRunLargeGrfKernelFixture : public ProgramFixture {
                 128u);
 
             smallGrfMultiDeviceKernel.reset(
-                MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*kernelInfoSmallGrf, rootDeviceIndex), retVal));
+                MultiDeviceKernel::create<MockKernel>(pProgram.get(), MockKernel::toKernelInfoContainer(*kernelInfoSmallGrf, rootDeviceIndex), retVal));
             EXPECT_EQ(CL_SUCCESS, retVal);
             ASSERT_NE(nullptr, smallGrfMultiDeviceKernel.get());
             smallGrfKernel = smallGrfMultiDeviceKernel->getKernel(rootDeviceIndex);
@@ -209,6 +204,7 @@ class AUBRunLargeGrfKernelFixture : public ProgramFixture {
     }
 
     cl_int retVal = CL_FALSE;
+    ReleaseableObjectPtr<MockProgram> pProgram;
     std::unique_ptr<DebugManagerStateRestore> debugManagerStateRestore;
 
     static const cl_int numElems = 16;
@@ -265,8 +261,7 @@ class LargeGrfTest : public AUBFixture,
 static bool largeGrfModes[] = {true, false};
 
 HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, IsAtLeastXeCore) {
-    createProgramFromBinary(getContext(), getContext()->getDevices(),
-                            "simple_kernel_large_grf");
+    pProgram = createProgramFromBinaryFile(getContext(), "simple_kernel_large_grf");
 
     retVal = pProgram->build(
         pProgram->getDevices(),
@@ -279,7 +274,7 @@ HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, Is
     EXPECT_EQ(256u, kernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired);
 
     std::unique_ptr<MultiDeviceKernel> multiDeviceKernel(MultiDeviceKernel::create<MockKernel>(
-        pProgram,
+        pProgram.get(),
         MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex),
         retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);

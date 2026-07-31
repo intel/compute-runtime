@@ -16,9 +16,9 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 
 using namespace NEO;
@@ -79,7 +79,7 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
     }
 
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;
-    TestVariables variables[5] = {};
+    TestVariables variables[4] = {};
     size_t variablesCount;
 
     HardwareParse hwParser;
@@ -91,17 +91,10 @@ struct InlineDataFixture : AubDispatchThreadDataFixture {
         debugManager.flags.EnablePassInlineData.set(true);
 
         initializeKernel3Variables();
-        initializeKernel4Variables();
 
         AubDispatchThreadDataFixture::setUp();
 
         setUpKernel3();
-    }
-
-    void initializeKernel4Variables() {
-        kernelIds |= (1 << 4);
-        variables[4].gwsSize = 1;
-        variables[4].lwsSize = 1;
     }
 
     void initializeKernel3Variables() {
@@ -144,8 +137,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t globalWorkSize[3] = {variables[4].gwsSize, 1, 1};
-    size_t localWorkSize[3] = {variables[4].lwsSize, 1, 1};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;

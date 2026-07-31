@@ -48,6 +48,8 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/cl_device_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/context_fixture.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/context_fixture.h
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/mock_kernel_fixture.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/mock_kernel_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/program_fixture.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/program_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/indirect_heap/indirect_heap_fixture.cpp

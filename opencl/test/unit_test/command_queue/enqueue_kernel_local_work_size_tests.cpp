@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/fixtures/mock_kernel_fixture.h"
 
 #include "gtest/gtest.h"
 
@@ -34,26 +34,24 @@ TEST_F(EnqueueKernelLocalWorkSize, GivenNullLwsInWhenEnqueuingKernelThenSuccessI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-struct EnqueueKernelRequiredWorkSize : public HelloWorldKernelFixture,
-                                       public CommandQueueHwFixture,
+struct EnqueueKernelRequiredWorkSize : public CommandQueueHwFixture,
                                        public ClDeviceFixture,
                                        public ::testing::Test {
     void SetUp() override {
         ClDeviceFixture::setUp();
         CommandQueueHwFixture::setUp(pClDevice, 0);
-        MockZebinWrapper<>::Descriptor desc{};
-        auto productHelper = NEO::CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
-        desc.isStateless = productHelper->isForceToStatelessRequired();
-        desc.userAttributes["reqd_work_group_size"] = "[ 8, 2, 2 ]";
-        desc.execEnv["required_work_group_size"] = "[ 8, 2, 2 ]";
-        HelloWorldKernelFixture::setUp(pClDevice, desc);
+        mockKernelWithInternals = createBufferArgsKernelWithRequiredWorkGroupSize(*context, {8, 2, 2});
+        pKernel = mockKernelWithInternals->mockKernel;
     }
 
     void TearDown() override {
-        HelloWorldKernelFixture::tearDown();
+        mockKernelWithInternals.reset();
         CommandQueueHwFixture::tearDown();
         ClDeviceFixture::tearDown();
     }
+
+    std::unique_ptr<MockKernelWithInternals> mockKernelWithInternals;
+    MockKernel *pKernel = nullptr;
 };
 
 // Kernel specifies the optional reqd_work_group_size() attribute but it wasn't

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "opencl/source/command_queue/resource_barrier.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 
 using namespace NEO;
 

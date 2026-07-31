@@ -17,10 +17,10 @@
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
+#include "opencl/test/unit_test/fixtures/mock_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
 #include "shared/test/common/test_macros/heapless_matchers.h"
@@ -467,21 +467,10 @@ HWTEST2_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSiz
     EXPECT_EQ(sizeSSH, expectedSizeSSH);
 }
 
-struct GetSizeRequiredBufferHelloWorldTest : public GetSizeRequiredBufferTest,
-                                             public HelloWorldKernelFixture {
+HWTEST_F(GetSizeRequiredBufferTest, GivenBufferArgsKernelWhenEnqueingKernelThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
+    auto kernelWithInternals = createBufferArgsKernel(*context);
+    auto *pKernel = kernelWithInternals->mockKernel;
 
-    void SetUp() override {
-        GetSizeRequiredBufferTest::SetUp();
-        HelloWorldKernelFixture::setUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
-    }
-
-    void TearDown() override {
-        HelloWorldKernelFixture::tearDown();
-        GetSizeRequiredBufferTest::TearDown();
-    }
-};
-
-HWTEST_F(GetSizeRequiredBufferHelloWorldTest, GivenHelloWorldKernelWhenEnqueingKernelThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto dshBefore = pDSH->getUsed();
@@ -519,21 +508,10 @@ HWTEST_F(GetSizeRequiredBufferHelloWorldTest, GivenHelloWorldKernelWhenEnqueingK
     EXPECT_GE(expectedSizeSSH, sshAfter - sshBefore);
 }
 
-struct GetSizeRequiredBufferSimpleArgTest : public GetSizeRequiredBufferTest,
-                                            public SimpleArgKernelFixture {
+HWTEST_F(GetSizeRequiredBufferTest, GivenSimpleArgKernelWhenEnqueingKernelThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
+    auto kernelWithInternals = createSimpleArgKernel(*context);
+    auto *pKernel = kernelWithInternals->mockKernel;
 
-    void SetUp() override {
-        GetSizeRequiredBufferTest::SetUp();
-        SimpleArgKernelFixture::setUp(pClDevice);
-    }
-
-    void TearDown() override {
-        SimpleArgKernelFixture::tearDown();
-        GetSizeRequiredBufferTest::TearDown();
-    }
-};
-
-HWTEST_F(GetSizeRequiredBufferSimpleArgTest, GivenKernelWithSimpleArgWhenEnqueingKernelThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto dshBefore = pDSH->getUsed();

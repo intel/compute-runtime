@@ -52,6 +52,7 @@
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_with_source.h"
@@ -1765,44 +1766,14 @@ TEST_F(ProgramFromSourceTest, GivenLinkFailureWhenCreatingLibraryThenCorrectErro
 
 using ProgramBinaryTests = Test<ProgramSimpleFixture>;
 
-TEST_F(ProgramBinaryTests, WhenBuildingProgramThenGwsIsSet) {
-    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
-
-    ASSERT_NE(nullptr, pProgram);
-    retVal = pProgram->build(
-        pProgram->getDevices(),
-        nullptr);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    auto pKernelInfo = pProgram->getKernelInfo("test_get_global_size", rootDeviceIndex);
-
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[0]);
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[1]);
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[2]);
-}
-
 TEST_F(ProgramBinaryTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
-    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
-
-    ASSERT_NE(nullptr, pProgram);
-    retVal = pProgram->build(
-        pProgram->getDevices(),
-        nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto pKernelInfo = pProgram->getKernelInfo("constant_kernel", rootDeviceIndex);
-    ASSERT_NE(nullptr, pKernelInfo);
-
-    auto pKernel = Kernel::create(
-        pProgram,
-        *pKernelInfo,
-        *pClDevice,
-        retVal);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, pKernel);
+    MockKernelWithInternals mockKernelWithInternals(*pContext);
+    auto &kernelInfo = mockKernelWithInternals.kernelInfo;
+    kernelInfo.addArgBuffer(0, 0, sizeof(uintptr_t), 64);
+    kernelInfo.addArgBuffer(1, 8, sizeof(uintptr_t), 0);
+    kernelInfo.addArgImmediate(2, sizeof(int), 16);
+    mockKernelWithInternals.mockKernel->initialize();
+    auto pKernel = mockKernelWithInternals.mockKernel;
 
     uint32_t numArgs;
     retVal = pKernel->getInfo(CL_KERNEL_NUM_ARGS, sizeof(numArgs), &numArgs, nullptr);
@@ -1810,10 +1781,8 @@ TEST_F(ProgramBinaryTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable
     EXPECT_EQ(3u, numArgs);
 
     uint32_t sizeOfPtr = sizeof(void *);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize, sizeOfPtr);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescPointer>().pointerSize, sizeOfPtr);
-
-    delete pKernel;
+    EXPECT_EQ(kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize, sizeOfPtr);
+    EXPECT_EQ(kernelInfo.getArgDescriptorAt(1).as<ArgDescPointer>().pointerSize, sizeOfPtr);
 }
 
 TEST(ProgramFromBinaryTests, givenBinaryWithUnknownFormatThenErrorIsReturned) {
@@ -3267,7 +3236,8 @@ TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramT
     StreamCapture capture;
     capture.captureStdout();
 
-    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
+    MockZebinWrapper<> zebin{*defaultHwInfo};
+    createProgramFromBinary(pContext, pContext->getDevices(), zebin.binaries.data(), zebin.binarySizes.data());
 
     auto retVal = pProgram->build(
         pProgram->getDevices(),

@@ -20,7 +20,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 
 #include "gtest/gtest.h"
 

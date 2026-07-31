@@ -493,27 +493,29 @@ int main(int argc, char **argv) {
             VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtellSetter(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int { return ftell(stream); });
             VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFreadSetter(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t { return fread(ptr, size, count, stream); });
             VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFcloseSetter(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return fclose(stream); });
-            for (const std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
-                                                           "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16",
-                                                           "system_memfence",
-                                                           "simple_spill_fill_kernel", "spill_fill_kernel_large_grf", "simple_kernel_large_grf"}) {
-                std::string testFilename;
-                retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin", "");
-                size_t retFileNsize = 0;
-                auto retFiledata = NEO::loadDataFromFile(testFilename.c_str(), retFileNsize);
-                if (retFiledata) {
-                    if (retFileNsize == 0) {
-                        std::cout << "ERROR: kernel file is empty: " << testFilename << "\n";
-                        return -1;
-                    }
-                    virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
-                    if (retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size()) {
-                        std::cout << "ERROR: failed to load kernel file: " << testFilename << "\n";
-                        return -1;
+            if (isAubTestMode(testMode)) {
+                for (const std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
+                                                               "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16",
+                                                               "system_memfence",
+                                                               "simple_spill_fill_kernel", "spill_fill_kernel_large_grf", "simple_kernel_large_grf"}) {
+                    std::string testFilename;
+                    retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin");
+                    size_t retFileNsize = 0;
+                    auto retFiledata = NEO::loadDataFromFile(testFilename.c_str(), retFileNsize);
+                    if (retFiledata) {
+                        if (retFileNsize == 0) {
+                            std::cout << "ERROR: kernel file is empty: " << testFilename << "\n";
+                            return -1;
+                        }
+                        virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
+                        if (retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size()) {
+                            std::cout << "ERROR: failed to load kernel file: " << testFilename << "\n";
+                            return -1;
+                        }
                     }
                 }
+                populateApiSpecificVirtualFileList(hwInfoForTests);
             }
-            populateApiSpecificVirtualFileList(hwInfoForTests);
         }
 
         retVal = RUN_ALL_TESTS();

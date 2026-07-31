@@ -7,9 +7,6 @@
 
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 
-#include "shared/test/common/helpers/mock_file_io.h"
-#include "shared/test/common/helpers/test_files.h"
-
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -44,48 +41,6 @@ void ProgramFixture::cleanup() {
         pProgram->release();
     }
     knownSource.reset();
-}
-
-void ProgramFixture::createProgramFromBinary(Context *pContext,
-                                             const ClDeviceVector &deviceVector,
-                                             const std::string &binaryFileName,
-                                             cl_int &retVal,
-                                             const std::string &options) {
-    retVal = CL_SUCCESS;
-
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, binaryFileName + "_", ".bin", options);
-
-    knownSource = loadDataFromVirtualFileTestKernelsOnly(
-        testFile.c_str(),
-        knownSourceSize);
-    ASSERT_NE(0u, knownSourceSize);
-    ASSERT_NE(nullptr, knownSource);
-
-    pProgram = Program::create<MockProgram>(
-        pContext,
-        deviceVector,
-        &knownSourceSize,
-        (const unsigned char **)&knownSource,
-        nullptr,
-        retVal);
-}
-
-void ProgramFixture::createProgramFromBinary(Context *pContext,
-                                             const ClDeviceVector &deviceVector,
-                                             const std::string &binaryFileName,
-                                             const std::string &options) {
-    cleanup();
-    cl_int retVal = CL_SUCCESS;
-    createProgramFromBinary(
-        pContext,
-        deviceVector,
-        binaryFileName,
-        retVal,
-        options);
-
-    ASSERT_NE(nullptr, pProgram);
-    ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
 void ProgramFixture::createProgramFromBinary(Context *pContext,

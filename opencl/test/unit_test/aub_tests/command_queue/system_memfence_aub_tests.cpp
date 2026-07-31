@@ -15,8 +15,8 @@
 #include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
-#include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
@@ -175,8 +175,7 @@ HWTEST2_F(SystemMemFenceBlitter, givenSystemMemFenceWhenGeneratedAsMiMemFenceCmd
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-class SystemMemFenceViaKernel : public ProgramFixture,
-                                public MulticontextOclAubFixture,
+class SystemMemFenceViaKernel : public MulticontextOclAubFixture,
                                 public ::testing::Test {
   public:
     void SetUp() override {
@@ -184,16 +183,15 @@ class SystemMemFenceViaKernel : public ProgramFixture,
         debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
 
-        ProgramFixture::setUp();
         MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, true);
     }
     void TearDown() override {
         MulticontextOclAubFixture::tearDown();
-        ProgramFixture::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
     cl_int retVal = CL_SUCCESS;
+    ReleaseableObjectPtr<MockProgram> pProgram;
 };
 
 HWTEST2_F(SystemMemFenceViaKernel, givenSystemMemFenceWhenKernelInstructionThenWritesToSystemMemoryAreGloballyObservable, IsXeHpcCore) {
@@ -213,7 +211,7 @@ HWTEST2_F(SystemMemFenceViaKernel, givenSystemMemFenceWhenKernelInstructionThenW
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, hostMemAlloc);
 
-    createProgramFromBinary(context.get(), context->getDevices(), "system_memfence");
+    pProgram = createProgramFromBinaryFile(context.get(), "system_memfence");
 
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -221,7 +219,7 @@ HWTEST2_F(SystemMemFenceViaKernel, givenSystemMemFenceWhenKernelInstructionThenW
     const KernelInfo *pKernelInfo = pProgram->getKernelInfo("SystemMemFence", rootDeviceIndex);
     ASSERT_NE(nullptr, pKernelInfo);
 
-    auto pMultiDeviceKernel = clUniquePtr(MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), retVal));
+    auto pMultiDeviceKernel = clUniquePtr(MultiDeviceKernel::create<MockKernel>(pProgram.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), retVal));
     ASSERT_NE(nullptr, pMultiDeviceKernel);
     ASSERT_EQ(CL_SUCCESS, retVal);
 

@@ -11,28 +11,28 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
 
 using namespace NEO;
 
 class AUBPrintfKernelFixture : public AUBFixture,
-                               public HelloWorldKernelFixture,
+                               public AUBHelloWorldKernelFixture,
                                public testing::Test {
   public:
-    using HelloWorldKernelFixture::setUp;
+    using AUBHelloWorldKernelFixture::setUp;
 
     void SetUp() override {
         AUBFixture::setUp(nullptr);
         ASSERT_NE(nullptr, device);
-        HelloWorldKernelFixture::setUp(device, programFile, kernelName);
+        AUBHelloWorldKernelFixture::setUp(context, programFile, kernelName);
         initialized = true;
     }
     void TearDown() override {
         if (!initialized) {
             return;
         }
-        HelloWorldKernelFixture::tearDown();
+        AUBHelloWorldKernelFixture::tearDown();
         AUBFixture::tearDown();
     }
     const char *programFile = "simple_kernels";
@@ -47,7 +47,7 @@ HWTEST_F(AUBPrintfKernelFixture, GivenPrintfKernelThenEnqueuingSucceeds) {
     size_t gws[3] = {4, 1, 1};
     size_t lws[3] = {4, 1, 1};
 
-    std::unique_ptr<Buffer> buffer(BufferHelper<BufferUseHostPtr<>>::create(pContext));
+    std::unique_ptr<Buffer> buffer(BufferHelper<BufferUseHostPtr<>>::create(context));
     const uint32_t number = 4;
     *(reinterpret_cast<uint32_t *>(buffer->getCpuAddressForMemoryTransfer())) = number;
 

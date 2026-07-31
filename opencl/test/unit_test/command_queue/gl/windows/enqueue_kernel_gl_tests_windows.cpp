@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
     glSharing.uploadDataToBufferInfo(1, 0, mockGmm.gmmResourceInfo->peekGmmResourceInfo());
     pContext->setSharingFunctions(glSharing.sharingFunctions.release());
     auto retVal = CL_SUCCESS;
-    auto sharedBuffer = GlBuffer::createSharedGlBuffer(pContext, CL_MEM_READ_WRITE, 1, &retVal);
+    auto sharedBuffer = GlBuffer::createSharedGlBuffer(pContext.get(), CL_MEM_READ_WRITE, 1, &retVal);
     auto graphicsAllocation = sharedBuffer->getGraphicsAllocation(pContext->getDevice(0)->getRootDeviceIndex());
     auto sharedMem = static_cast<cl_mem>(sharedBuffer);
     auto nonSharedMem = static_cast<cl_mem>(nonSharedBuffer);

@@ -779,7 +779,7 @@ TEST_F(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEn
     }
 }
 
-HWTEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueKernelIsCalledWithWorkDim3ThenContextProvidesProperHint) {
+TEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueKernelIsCalledWithWorkDim3ThenContextProvidesProperHint) {
     size_t preferredWorkGroupSize[3];
     auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getClDevice(0)->getSharedDeviceInfo().maxWorkGroupSize);
     if (debugManager.flags.EnableComputeWorkSizeND.get()) {
