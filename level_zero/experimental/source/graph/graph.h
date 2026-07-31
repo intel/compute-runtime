@@ -518,6 +518,10 @@ using GraphSubmissionSegment = std::variant<L0::CommandList *, ExecutableGraph *
 using GraphSubmissionChain = std::vector<GraphSubmissionSegment>;
 
 void handleExternalCbEvent(L0::Event *event, CbExternalEventInstantiateContext &cbEventContext);
+void handleExternalCbWaitEvents(uint32_t numWaitEvents,
+                                ze_event_handle_t *phWaitEvents,
+                                CbExternalEventInstantiateContext &cbEventContext,
+                                L0::CommandList *executionTarget);
 
 struct GraphInstatiateSettings {
     GraphInstatiateSettings() = default;
@@ -672,6 +676,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     std::vector<ze_event_handle_t> trailingEvents;
 
     bool usePatchingPreamble = true;
+    bool mutableExecGraph = false;
 };
 
 constexpr size_t maxVariantSize = 2 * 64;

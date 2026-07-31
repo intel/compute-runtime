@@ -168,6 +168,12 @@ struct PatchPreambleItem {
 };
 using PatchPreambleDataContainer = std::vector<PatchPreambleItem>;
 
+struct ExternalWaitCbEventsInfo {
+    std::vector<ze_event_handle_t> waitEvents;
+    uint64_t commandId = 0;
+    L0::CommandList *executor = nullptr;
+};
+
 struct ExternalCbEventInfoContainer {
     void addCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList) {
         auto it = std::find_if(storage.begin(),
@@ -212,8 +218,23 @@ struct ExternalCbEventInfoContainer {
         return it == executorStorage.end() ? 0u : it->counter();
     }
 
+    void addWaitCbEventsInfo(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, uint64_t commandId, L0::CommandList *executor) {
+        ExternalWaitCbEventsInfo &info = waitEventsContainer.emplace_back();
+        info.waitEvents.assign(phWaitEvents, phWaitEvents + numWaitEvents);
+        info.commandId = commandId;
+        info.executor = executor;
+    }
+    const std::vector<ExternalWaitCbEventsInfo> &getCbWaitEventInfos() const {
+        return waitEventsContainer;
+    }
+    bool externalCbWaitEventsPresent() const {
+        return false == waitEventsContainer.empty();
+    }
+    void refreshExternalCbWaitEvents();
+
   protected:
     std::vector<ExternalCbEventInfo> storage;
+    std::vector<ExternalWaitCbEventsInfo> waitEventsContainer;
     PatchPreambleDataContainer executorStorage;
 };
 

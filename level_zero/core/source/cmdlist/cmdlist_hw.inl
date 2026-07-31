@@ -3642,6 +3642,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                     NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), firstRegister, getLowPart(waitValue), true, copyOnlyWait, &cmdCaptureData);
                     if (noopDispatch) {
                         memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+                        if (cmdCaptureData.commandView) {
+                            memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
+                        }
                     }
                     if (outListCommands != nullptr) {
                         outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{
@@ -3655,6 +3658,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                     NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), secondRegister, getHighPart(waitValue), true, copyOnlyWait, &cmdCaptureData);
                     if (noopDispatch) {
                         memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+                        if (cmdCaptureData.commandView) {
+                            memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
+                        }
                     }
                     if (outListCommands != nullptr) {
                         outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{
@@ -3671,6 +3677,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                                                                            false, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful, useSemaphore64bCmd, &cmdCaptureData);
                 if (noopDispatch) {
                     memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
+                    if (cmdCaptureData.commandView) {
+                        memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
+                    }
                 }
 
                 if (outListCommands != nullptr) {
@@ -4574,7 +4583,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
     uint32_t eventsToWait = numWaitEvents;
 
     for (uint32_t i = 0; i < numWaitEvents; i++) {
-        if (CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(*Event::fromHandle(phWaitEvents[i]), false)) {
+        if (CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(*Event::fromHandle(phWaitEvents[i]), this->allowCbWaitEventsNoopDispatch)) {
             eventsToWait--;
         }
     }

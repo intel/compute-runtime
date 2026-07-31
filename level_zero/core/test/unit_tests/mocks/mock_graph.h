@@ -28,6 +28,7 @@ struct MockExecutableGraph : ExecutableGraph {
     using ExecutableGraph::ExecutableGraph;
     using ExecutableGraph::myCommandLists;
     using ExecutableGraph::myOrderedSegments;
+    using ExecutableGraph::subGraphs;
     using ExecutableGraph::usePatchingPreamble;
 };
 

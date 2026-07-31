@@ -106,7 +106,6 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::initialize(Device *devi
     constexpr size_t estimatedDifferentKernelUsed = 25;
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::initialize(device, engineGroupType, flags);
-    CommandListCoreFamily<gfxCoreFamily>::allowCbWaitEventsNoopDispatch = true;
     this->maxPerThreadDataSize = static_cast<uint32_t>(device->getDeviceInfo().maxWorkGroupSize * 3 * sizeof(uint16_t));
     this->iohAlignment = NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment(this->commandContainer.isIndirectHeapInLocalMemory());
     this->inlineDataSize = getInlineDataSize();
@@ -553,8 +552,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
         auto *loadRegImmCmdToPatch2 = std::get_if<PatchCbWaitEventLoadRegisterImm>(&(*cmdsIterator));
         UNRECOVERABLE_IF(loadRegImmCmdToPatch2 == nullptr);
 
-        loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch->gpuDestination,
-                                                                              loadRegImmCmdToPatch->commandView,
+        loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch2->gpuDestination,
+                                                                              loadRegImmCmdToPatch2->commandView,
                                                                               loadRegImmCmdToPatch2->pDestination,
                                                                               static_cast<uint32_t>(loadRegImmCmdToPatch2->offset));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
@@ -991,11 +990,9 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
 
                 if (CommandList::isInOrderExecutionEnabled() && event->isCounterBased()) {
                     mutableWaitEventDesc.waitEventPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
-                    if (!isCbEventBoundToCmdList(event)) {
-                        mutableEventParams.omitWaitEventResidency = true;
-                        auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
-                        addToResidencyContainer(getDeviceCounterAllocForResidency(deviceCounterAlloc));
-                    }
+                    mutableEventParams.omitWaitEventResidency = true;
+                    auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
+                    addToResidencyContainer(getDeviceCounterAllocForResidency(deviceCounterAlloc));
                 } else {
                     mutableWaitEventDesc.waitEventPackets = event->getPacketsToWait();
                 }
@@ -1010,6 +1007,7 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
 
             this->appendCmdsToPatch.makeCommandView = CommandListCoreFamily<gfxCoreFamily>::isPatchPreambleEnabled();
             mutableEventParams.mutableCmdPatchlistContainer = &this->appendCmdsToPatch;
+            CommandListCoreFamily<gfxCoreFamily>::allowCbWaitEventsNoopDispatch = true;
         }
     }
 }
@@ -1045,6 +1043,7 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::clearMutableAppendData(
     this->nextAppendKernelMutable = false;
     this->nextMutationFlags = 0;
     this->appendKernelMutableComputeWalker = nullptr;
+    CommandListCoreFamily<gfxCoreFamily>::allowCbWaitEventsNoopDispatch = false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

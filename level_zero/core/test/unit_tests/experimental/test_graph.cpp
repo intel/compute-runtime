@@ -16,10 +16,12 @@
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/api/internal/l0_graph.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_semaphore_wait_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_graph.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_cmdlist.h"
 #include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/ze_api.h"
 
@@ -47,9 +49,23 @@ struct GraphFixture : public DeviceFixture {
     L0::CommandList *immCmdList = nullptr;
 };
 
-struct GraphExternalWaitEventFixture : public GraphFixture {
+struct GraphExternalWaitEventFixtureInit : public GraphFixture {
+    void setUp(int32_t contextGroupSize) {
+        debugManager.flags.ContextGroupSize.set(contextGroupSize);
+        GraphFixture::setUp();
+    }
 
+    template <typename FamilyType>
     void testExternalWaitEventRootChild(bool externalWaitRoot, bool externalWaitChild);
+
+    DebugManagerStateRestore dbgRestorer;
+};
+
+template <int32_t contextGroupSize>
+struct GraphExternalWaitEventFixture : public GraphExternalWaitEventFixtureInit {
+    void setUp() {
+        GraphExternalWaitEventFixtureInit::setUp(contextGroupSize);
+    }
 };
 
 using GraphTestApiSubmit = Test<GraphFixture>;
@@ -63,7 +79,8 @@ using GraphTestDebugApis = Test<GraphFixture>;
 using GraphInstantiationValidation = Test<GraphFixture>;
 using GraphTestApiCaptureBeginEnd = Test<GraphFixture>;
 using GraphTestApiPauseResume = Test<GraphFixture>;
-using GraphTestInstantiationExternalWaitEventTest = Test<GraphExternalWaitEventFixture>;
+using GraphTestInstantiationExternalWaitEventNoMultiEngineTest = Test<GraphExternalWaitEventFixture<0>>;
+using GraphTestInstantiationExternalWaitEventMultiEngineTest = Test<GraphExternalWaitEventFixture<64>>;
 
 struct LaunchKernelWithArgumentsVisitorCapture {
     ze_command_list_handle_t hCommandList = nullptr;
@@ -2384,17 +2401,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     event->destroy();
 }
 
-void GraphExternalWaitEventFixture::testExternalWaitEventRootChild(bool externalWaitRoot, bool externalWaitChild) {
+template <typename FamilyType>
+void GraphExternalWaitEventFixtureInit::testExternalWaitEventRootChild(bool externalWaitRoot, bool externalWaitChild) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    alignas(4) uint8_t semWaitCmdRootMemory[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    alignas(4) uint8_t semWaitCmdChildMemory[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    uint32_t *semWaitCmdRootDw = reinterpret_cast<uint32_t *>(semWaitCmdRootMemory);
+    uint32_t *semWaitCmdChildDw = reinterpret_cast<uint32_t *>(semWaitCmdChildMemory);
+    MI_SEMAPHORE_WAIT *semWaitCmdRoot = reinterpret_cast<MI_SEMAPHORE_WAIT *>(semWaitCmdRootMemory);
+    MI_SEMAPHORE_WAIT *semWaitCmdChild = reinterpret_cast<MI_SEMAPHORE_WAIT *>(semWaitCmdChildMemory);
+
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
+    auto whiteBoxRootCmdList = CommandList::whiteboxCast(commandList.get());
+    auto rootStream = whiteBoxRootCmdList->getCmdContainer().getCommandStream();
 
     std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     subCommandList->setOrdinal(0);
     auto subCommandListHandle = subCommandList->toHandle();
+    auto whiteBoxSubCmdList = CommandList::whiteboxCast(subCommandList.get());
+    auto subStream = whiteBoxSubCmdList->getCmdContainer().getCommandStream();
 
     ze_event_pool_desc_t poolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 4};
     ze_event_pool_handle_t hPool = nullptr;
@@ -2425,8 +2457,21 @@ void GraphExternalWaitEventFixture::testExternalWaitEventRootChild(bool external
     auto eventChild = L0::Event::fromHandle(eventHandleChild);
 
     // attach cb events for sake of having them correct in order exec info before recording starts
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandleRoot, 0U, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandleChild, 0U, nullptr));
+    if (externalWaitRoot) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandleRoot, 0U, nullptr));
+    }
+    if (externalWaitChild) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandleChild, 0U, nullptr));
+    }
+
+    uint64_t eventRootGpuAddress = 0;
+    uint64_t eventChildGpuAddress = 0;
+    if (externalWaitRoot) {
+        eventRootGpuAddress = eventRoot->getInOrderExecEventHelper().getBaseDeviceAddress() + eventRoot->getInOrderAllocationOffset();
+    }
+    if (externalWaitChild) {
+        eventChildGpuAddress = eventChild->getInOrderExecEventHelper().getBaseDeviceAddress() + eventChild->getInOrderAllocationOffset();
+    }
 
     ze_event_handle_t eventHandleFork = nullptr;
     eventNonCbDesc.index = 2;
@@ -2454,6 +2499,8 @@ void GraphExternalWaitEventFixture::testExternalWaitEventRootChild(bool external
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
 
+    bool multiEngineGraph = srcGraph->isMultiEngineGraph();
+
     const auto &rootDesc = srcGraph->getCaptureTargetDesc();
     const auto &childs = srcGraph->getSubgraphs();
     ASSERT_NE(0u, childs.size());
@@ -2464,8 +2511,13 @@ void GraphExternalWaitEventFixture::testExternalWaitEventRootChild(bool external
         EXPECT_EQ(reinterpret_cast<const void *>(&rootDesc.mutableExpDesc), rootDesc.desc.pNext);
         EXPECT_TRUE(srcGraph->isMutableCommandList());
     } else {
-        EXPECT_EQ(nullptr, rootDesc.desc.pNext);
-        EXPECT_FALSE(srcGraph->isMutableCommandList());
+        if (multiEngineGraph == false && externalWaitChild) {
+            EXPECT_EQ(reinterpret_cast<const void *>(&rootDesc.mutableExpDesc), rootDesc.desc.pNext);
+            EXPECT_TRUE(srcGraph->isMutableCommandList());
+        } else {
+            EXPECT_EQ(nullptr, rootDesc.desc.pNext);
+            EXPECT_FALSE(srcGraph->isMutableCommandList());
+        }
     }
 
     if (externalWaitChild) {
@@ -2476,6 +2528,178 @@ void GraphExternalWaitEventFixture::testExternalWaitEventRootChild(bool external
         EXPECT_FALSE(childGraph->isMutableCommandList());
     }
 
+    GraphInstatiateSettings settings{nullptr, multiEngineGraph};
+    MockExecutableGraph execGraph;
+    execGraph.instantiateFrom(*srcGraph.get(), settings);
+    auto execGraphHandle = execGraph.toHandle();
+
+    MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *rootCmdList = nullptr;
+    MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *childCmdList = nullptr;
+
+    if (externalWaitRoot || (externalWaitChild && multiEngineGraph == false)) {
+        rootCmdList = static_cast<MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *>(execGraph.myCommandLists[0].get());
+    }
+    if (multiEngineGraph && externalWaitChild) {
+        childCmdList = static_cast<MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *>(static_cast<MockExecutableGraph *>(execGraph.subGraphs[0].get())->myCommandLists[0].get());
+    }
+
+    L0::MCL::MutableSemaphoreWait *rootSemWait = nullptr;
+    L0::MCL::MutableSemaphoreWait *childSemWait = nullptr;
+    uint64_t semWaitGpuAddressForRootEvent = 0;
+    uint64_t semWaitGpuAddressForChildEvent = 0;
+
+    // when external wait event is used, command list is mutable, stores mutable sem_wait object for wait events
+    // and sem wait command gpu address of the command buffer, so the sem wait command can be reprogrammed using async mutable patch list
+    // under patch preamble, these gpu addreses can be used to find patching SDI commands
+    if (externalWaitRoot) {
+        rootSemWait = rootCmdList->mutableSemaphoreWaitCmds[0].get();
+        EXPECT_NE(nullptr, rootSemWait);
+        semWaitGpuAddressForRootEvent = rootSemWait->getGpuDestinationAddress();
+    }
+    if (externalWaitChild) {
+        if (multiEngineGraph) {
+            childSemWait = childCmdList->mutableSemaphoreWaitCmds[1].get();
+            EXPECT_NE(nullptr, childSemWait);
+        } else {
+            childSemWait = rootCmdList->mutableSemaphoreWaitCmds[1 + (externalWaitRoot ? 1 : 0)].get();
+            EXPECT_NE(nullptr, childSemWait);
+        }
+        semWaitGpuAddressForChildEvent = childSemWait->getGpuDestinationAddress();
+    }
+
+    // verify append with external wait events stores information to refresh(mutate) data of wait events
+    auto externalCbEvents = execGraph.getExternalCbEventInfoContainer().get();
+    EXPECT_TRUE(externalCbEvents->externalCbWaitEventsPresent());
+    const auto &waitEventsContainer = externalCbEvents->getCbWaitEventInfos();
+
+    size_t expectedWaitInfoSize = 0;
+    expectedWaitInfoSize += externalWaitRoot ? 1 : 0;
+    expectedWaitInfoSize += externalWaitChild ? 1 : 0;
+    ASSERT_EQ(expectedWaitInfoSize, waitEventsContainer.size());
+    size_t index = 0;
+    uint64_t expectedCmdId = index + 1;
+    if (externalWaitRoot) {
+        EXPECT_EQ(expectedCmdId, waitEventsContainer[index].commandId);
+        EXPECT_EQ(1u, waitEventsContainer[index].waitEvents.size());
+        EXPECT_EQ(eventHandleRoot, waitEventsContainer[index].waitEvents[0]);
+        ++index;
+        if (multiEngineGraph == false) {
+            ++expectedCmdId;
+        }
+    }
+    if (externalWaitChild) {
+        EXPECT_EQ(expectedCmdId, waitEventsContainer[index].commandId);
+        EXPECT_EQ(2u, waitEventsContainer[index].waitEvents.size());
+        EXPECT_EQ(eventHandleFork, waitEventsContainer[index].waitEvents[0]);
+        EXPECT_EQ(eventHandleChild, waitEventsContainer[index].waitEvents[1]);
+    }
+
+    auto sizeBeforeRoot = rootStream->getUsed();
+    auto sizeBeforeChild = subStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExp(commandListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr));
+    auto sizeAfterRoot = rootStream->getUsed();
+    auto sizeAfterChild = subStream->getUsed();
+
+    // parse and find patch preamble sdi commands they actually repatch graph cmdlist command buffers having external cb events
+    GenCmdList cmdListRoot;
+    GenCmdList cmdListChild;
+    auto parseSemWaitFromSdi = [](GenCmdList &cmdListToParse, uint64_t semWaitGpuAddress, uint32_t *semWaitCmdDw) {
+        size_t semWaitCmdSize = sizeof(MI_SEMAPHORE_WAIT);
+        auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdListToParse.begin(), cmdListToParse.end());
+        size_t semWaitParsedSize = 0;
+        for (uint32_t i = 0; i < sdiCmds.size(); ++i) {
+            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiCmds[i]);
+            if (semWaitGpuAddress == sdiCmd->getAddress()) {
+                *semWaitCmdDw = sdiCmd->getDataDword0();
+                semWaitCmdDw++;
+                semWaitParsedSize += sizeof(uint32_t);
+                semWaitGpuAddress += sizeof(uint32_t);
+                if (sdiCmd->getStoreQword()) {
+                    *semWaitCmdDw = sdiCmd->getDataDword1();
+                    semWaitCmdDw++;
+                    semWaitParsedSize += sizeof(uint32_t);
+                    semWaitGpuAddress += sizeof(uint32_t);
+                }
+                if (semWaitParsedSize >= semWaitCmdSize) {
+                    break;
+                }
+            }
+        }
+    };
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdListRoot,
+        ptrOffset(rootStream->getCpuBase(), sizeBeforeRoot),
+        sizeAfterRoot - sizeBeforeRoot));
+
+    // verify patched sem wait commands point to correct in order exec info gpu addresses
+    if (externalWaitRoot) {
+        parseSemWaitFromSdi(cmdListRoot, semWaitGpuAddressForRootEvent, semWaitCmdRootDw);
+        EXPECT_EQ(eventRootGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdRoot));
+    }
+    if (multiEngineGraph == false && externalWaitChild) {
+        parseSemWaitFromSdi(cmdListRoot, semWaitGpuAddressForChildEvent, semWaitCmdChildDw);
+        EXPECT_EQ(eventChildGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdChild));
+    }
+
+    if (multiEngineGraph) {
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdListChild,
+            ptrOffset(subStream->getCpuBase(), sizeBeforeChild),
+            sizeAfterChild - sizeBeforeChild));
+        if (externalWaitChild) {
+            parseSemWaitFromSdi(cmdListChild, semWaitGpuAddressForChildEvent, semWaitCmdChildDw);
+            EXPECT_EQ(eventChildGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdChild));
+        }
+    }
+
+    // reattach cb events to different command list
+    if (externalWaitRoot) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandleRoot, 0U, nullptr));
+        eventRootGpuAddress = eventRoot->getInOrderExecEventHelper().getBaseDeviceAddress() + eventRoot->getInOrderAllocationOffset();
+    }
+    if (externalWaitChild) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandleChild, 0U, nullptr));
+        eventChildGpuAddress = eventChild->getInOrderExecEventHelper().getBaseDeviceAddress() + eventChild->getInOrderAllocationOffset();
+    }
+
+    sizeBeforeRoot = rootStream->getUsed();
+    sizeBeforeChild = subStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExp(commandListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr));
+    sizeAfterRoot = rootStream->getUsed();
+    sizeAfterChild = subStream->getUsed();
+
+    cmdListRoot.clear();
+    cmdListChild.clear();
+
+    memset(semWaitCmdRootMemory, 0, sizeof(MI_SEMAPHORE_WAIT));
+    memset(semWaitCmdChildMemory, 0, sizeof(MI_SEMAPHORE_WAIT));
+
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdListRoot,
+        ptrOffset(rootStream->getCpuBase(), sizeBeforeRoot),
+        sizeAfterRoot - sizeBeforeRoot));
+
+    // verify patched sem wait commands point to correct in order exec info gpu addresses
+    if (externalWaitRoot) {
+        parseSemWaitFromSdi(cmdListRoot, semWaitGpuAddressForRootEvent, semWaitCmdRootDw);
+        EXPECT_EQ(eventRootGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdRoot));
+    }
+    if (multiEngineGraph == false && externalWaitChild) {
+        parseSemWaitFromSdi(cmdListRoot, semWaitGpuAddressForChildEvent, semWaitCmdChildDw);
+        EXPECT_EQ(eventChildGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdChild));
+    }
+
+    if (multiEngineGraph) {
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdListChild,
+            ptrOffset(subStream->getCpuBase(), sizeBeforeChild),
+            sizeAfterChild - sizeBeforeChild));
+        if (externalWaitChild) {
+            parseSemWaitFromSdi(cmdListChild, semWaitGpuAddressForChildEvent, semWaitCmdChildDw);
+            EXPECT_EQ(eventChildGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdChild));
+        }
+    }
+
     srcGraph.reset();
     eventRoot->destroy();
     eventChild->destroy();
@@ -2484,24 +2708,52 @@ void GraphExternalWaitEventFixture::testExternalWaitEventRootChild(bool external
     eventPool->destroy();
 }
 
-TEST_F(GraphTestInstantiationExternalWaitEventTest,
-       GivenExternalWaitEventsUsedOnRootNotUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationExternalWaitEventNoMultiEngineTest,
+            GivenExternalWaitEventsUsedOnRootNotUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
     GraphsCleanupGuard graphCleanup;
 
-    testExternalWaitEventRootChild(true, false);
+    testExternalWaitEventRootChild<FamilyType>(true, false);
 }
 
-TEST_F(GraphTestInstantiationExternalWaitEventTest,
-       GivenExternalWaitEventsNotUsedOnRootUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationExternalWaitEventNoMultiEngineTest,
+            GivenExternalWaitEventsNotUsedOnRootUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
     GraphsCleanupGuard graphCleanup;
 
-    testExternalWaitEventRootChild(false, true);
+    testExternalWaitEventRootChild<FamilyType>(false, true);
 }
 
-TEST_F(GraphTestInstantiationExternalWaitEventTest, GivenExternalWaitEventsUsedOnRootUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationExternalWaitEventNoMultiEngineTest,
+            GivenExternalWaitEventsUsedOnRootUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
     GraphsCleanupGuard graphCleanup;
 
-    testExternalWaitEventRootChild(true, true);
+    testExternalWaitEventRootChild<FamilyType>(true, true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationExternalWaitEventMultiEngineTest,
+            GivenExternalWaitEventsUsedOnRootNotUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
+    GraphsCleanupGuard graphCleanup;
+
+    testExternalWaitEventRootChild<FamilyType>(true, false);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationExternalWaitEventMultiEngineTest,
+            GivenExternalWaitEventsNotUsedOnRootUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
+    GraphsCleanupGuard graphCleanup;
+
+    testExternalWaitEventRootChild<FamilyType>(false, true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationExternalWaitEventMultiEngineTest,
+            GivenExternalWaitEventsUsedOnRootUsedOnChildWhenRecordingGraphThenCommandListDescriptorSet) {
+    GraphsCleanupGuard graphCleanup;
+
+    testExternalWaitEventRootChild<FamilyType>(true, true);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
