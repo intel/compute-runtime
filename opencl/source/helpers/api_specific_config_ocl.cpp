@@ -31,11 +31,10 @@ bool ApiSpecificConfig::getBindlessMode(const Device &device) {
     if (device.getCompilerProductHelper().isForceBindlessRequired(device.getHardwareInfo())) {
         return true;
     }
-
     if (debugManager.flags.UseBindlessMode.get() != -1) {
         return debugManager.flags.UseBindlessMode.get();
     }
-    return device.getReleaseHelper().isGlobalBindlessAllocatorEnabled();
+    return false;
 }
 
 bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {

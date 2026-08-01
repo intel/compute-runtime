@@ -425,7 +425,7 @@ typedef struct _cl_kernel_allocation_info_intel {
 /******************************************************
  *   cl_intel_bindless_images extension               *
  ******************************************************/
-#define CL_MEM_BINDLESS_IMAGE_INTEL 0x4220
-#define CL_IMAGE_BINDLESS_HANDLE_INTEL 0x4221
+#define CL_MEM_BINDLESS_IMAGE_INTEL 0x10060
+#define CL_IMAGE_BINDLESS_HANDLE_INTEL 0x10061
 
 #endif
