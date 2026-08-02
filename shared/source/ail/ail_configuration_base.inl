@@ -97,4 +97,14 @@ inline void AILConfigurationHw<product>::checkIfOpenVinoDetected() {
     this->openVinoDetected = isOpenVinoDetected();
 }
 
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::getOldOpenVinoVersionDetected() {
+    return this->oldOpenVinoVersionDetected;
+}
+
+template <PRODUCT_FAMILY product>
+inline void AILConfigurationHw<product>::checkIfOldOpenVinoVersionDetected() {
+    this->oldOpenVinoVersionDetected = isOldOpenVinoVersionDetected();
+}
+
 } // namespace NEO

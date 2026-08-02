@@ -90,7 +90,16 @@ class MockAILConfiguration : public AILConfiguration {
         return isOpenVinoDetected;
     }
 
+    void checkIfOldOpenVinoVersionDetected() override {
+        oldOpenVinoVersionDetected = false;
+    }
+
+    bool getOldOpenVinoVersionDetected() override {
+        return oldOpenVinoVersionDetected;
+    }
+
     bool isOpenVinoDetected = false;
+    bool oldOpenVinoVersionDetected = false;
     uint32_t getMicrosecondResolutionCalledTimes = 0u;
     uint32_t mockMicrosecondResolution = 1000u;
 
