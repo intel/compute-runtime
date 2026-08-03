@@ -1563,6 +1563,44 @@ HWTEST2_F(GfxCoreHelperTest, GivenGfxHelperWhenForceTheoreticalMaxWorkGroupCount
     EXPECT_NE(1u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment));
 }
 
+HWTEST_F(GfxCoreHelperTest, GivenDebugTogglesInfluencingMaxWorkGroupCountSetWhenAdjustMaxWorkGroupCountIsCalledThenDontChangeResult) {
+    struct MockGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
+        bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            return isCooperativeDispatchSupportedValue;
+        }
+        bool isCooperativeDispatchSupportedValue = true;
+    };
+    MockGfxCoreHelper gfxCoreHelper{};
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    for (auto isCooperativeDispatchSupported : ::testing::Bool()) {
+        gfxCoreHelper.isCooperativeDispatchSupportedValue = isCooperativeDispatchSupported;
+        {
+            DebugManagerStateRestore dbgRestorer;
+            debugManager.flags.OverrideMaxWorkGroupCount.set(1);
+            EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, EngineGroupType::renderCompute, rootDeviceEnvironment));
+            EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, EngineGroupType::renderCompute, rootDeviceEnvironment));
+        }
+        {
+            DebugManagerStateRestore dbgRestorer;
+            debugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+            EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, EngineGroupType::renderCompute, rootDeviceEnvironment));
+            EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, EngineGroupType::renderCompute, rootDeviceEnvironment));
+        }
+    }
+}
+
+HWTEST2_F(GfxCoreHelperTest, WhenIsRcsAvailableIsCalledThenTrueIsReturned, IsAtMostXeHpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isRcsAvailable(*defaultHwInfo));
+}
+
 HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
