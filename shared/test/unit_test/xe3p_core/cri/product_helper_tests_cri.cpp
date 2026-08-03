@@ -205,6 +205,30 @@ CRITEST_F(CriProductHelper, givenGrfCount512WhenCallAdjustMaxThreadsPerThreadGro
     }
 }
 
+CRITEST_F(CriProductHelper, givenGrfCount160Or192WhenCallAdjustMaxThreadsPerThreadGroupThenAdjustOnlyForSimd16AndSimd1) {
+    constexpr uint32_t threadsPerThreadGroup = 40u;
+    struct TestCase {
+        uint32_t simt;
+        uint32_t grfCount;
+        uint32_t expectedMaxThreadsPerThreadGroup;
+    };
+    constexpr std::array<TestCase, 12> testCases = {{{1u, 160u, 64u},
+                                                     {16u, 160u, 64u},
+                                                     {32u, 160u, threadsPerThreadGroup},
+                                                     {1u, 192u, 64u},
+                                                     {16u, 192u, 64u},
+                                                     {32u, 192u, threadsPerThreadGroup},
+                                                     {1u, 128u, threadsPerThreadGroup},
+                                                     {16u, 128u, threadsPerThreadGroup},
+                                                     {32u, 128u, threadsPerThreadGroup},
+                                                     {1u, 256u, threadsPerThreadGroup},
+                                                     {16u, 256u, threadsPerThreadGroup},
+                                                     {32u, 256u, threadsPerThreadGroup}}};
+    for (const auto &testCase : testCases) {
+        EXPECT_EQ(testCase.expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, testCase.simt, testCase.grfCount));
+    }
+}
+
 CRITEST_F(CriProductHelper, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenTrueReturned) {
     EXPECT_TRUE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }

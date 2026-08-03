@@ -115,7 +115,7 @@ uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(uint32_t ma
     auto adjustedMaxThreadsPerThreadGroup = maxThreadsPerThreadGroup;
     if (grfCount == 512) {
         adjustedMaxThreadsPerThreadGroup = 32u;
-    } else if (isSimd1(simt) && (grfCount == 160 || grfCount == 192)) {
+    } else if ((isSimd1(simt) || simt == 16u) && (grfCount == 160 || grfCount == 192)) {
         adjustedMaxThreadsPerThreadGroup = 64u;
     }
     return adjustedMaxThreadsPerThreadGroup;

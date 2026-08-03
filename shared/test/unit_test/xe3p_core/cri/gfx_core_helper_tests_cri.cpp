@@ -186,9 +186,9 @@ CRITEST_F(GfxCoreHelperTestsCri, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroup
     std::array<std::array<uint32_t, 3>, 15> values = {{
         {128u, 16u, 1024u}, // Grf Size, SIMT Size, Max Num of threads
         {128u, 32u, 1024u},
-        {160u, 16u, 768u},
+        {160u, 16u, 1024u},
         {160u, 32u, 1024u},
-        {192u, 16u, 640u},
+        {192u, 16u, 1024u},
         {192u, 32u, 1024u},
         {256u, 16u, 512u},
         {256u, 32u, 1024u},
