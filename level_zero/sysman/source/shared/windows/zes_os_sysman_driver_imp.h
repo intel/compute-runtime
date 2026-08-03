@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include "level_zero/sysman/source/driver/os_sysman_driver.h"
 
 namespace L0 {
@@ -14,7 +16,7 @@ namespace Sysman {
 
 struct InfoLogHandleContext;
 
-class WddmSysmanDriverImp : public OsSysmanDriver {
+class WddmSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovableClass {
   public:
     WddmSysmanDriverImp() = default;
     ~WddmSysmanDriverImp() override;
@@ -26,6 +28,8 @@ class WddmSysmanDriverImp : public OsSysmanDriver {
   private:
     InfoLogHandleContext *pInfoLogHandleContext = nullptr;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<WddmSysmanDriverImp>);
 
 } // namespace Sysman
 } // namespace L0
