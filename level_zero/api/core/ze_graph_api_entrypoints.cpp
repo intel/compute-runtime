@@ -134,7 +134,8 @@ ze_result_t ZE_APICALL zeGraphInstantiateExt(ze_graph_handle_t hGraph, const voi
     }
 
     if (false == virtualGraph->validForInstantiation()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return virtualGraph->closed() ? ZE_RESULT_ERROR_INVALID_GRAPH
+                                      : ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     auto execGraph = std::make_unique<ExecutableGraph>();

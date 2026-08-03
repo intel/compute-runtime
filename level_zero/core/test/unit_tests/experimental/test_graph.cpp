@@ -3573,7 +3573,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenGraphWithUnjoinedForksWhenEndGraphCapt
     // try to use graph with unjoined fork
     ze_executable_graph_handle_t execGraph = nullptr;
     err = L0::zeCommandListInstantiateGraphExp(&srcGraph, &execGraph, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GRAPH, err);
     EXPECT_EQ(nullptr, execGraph);
 
     if (nullptr != execGraph) {
