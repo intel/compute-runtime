@@ -4948,7 +4948,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalExternalSemaphores
             pHostFunctionData = &hostFunctionData;
         }
 
-        CmdListHostFunctionParameters parameters{.memorySynchronizationRequired = false};
+        CmdListHostFunctionParameters parameters{.memorySynchronizationRequired = true};
 
         return this->appendHostFunction(semaphoreSignalHostFunction, pHostFunctionData, nullptr, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
     }
