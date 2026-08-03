@@ -831,8 +831,42 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventDestroyFlagWhenHandleE
     client2.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitDestroy)));
     client2.clientHandle = client1.clientHandle;
     EXPECT_EQ(session->clientHandleClosed, session->invalidClientHandle);
+    EXPECT_FALSE(session->detached.load());
+
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client2));
     EXPECT_EQ(session->clientHandleClosed, client2.clientHandle);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventDestroyFlagWhenHandleEventThenAPIEventIsGeneratedCorrectly) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    auto clientHandle = 0x123456789;
+    session->clientHandle = clientHandle;
+
+    auto unknownClientHandle = 0x123456788;
+    NEO::EuDebugEventClient client;
+    client.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitDestroy)));
+    client.clientHandle = unknownClientHandle;
+    EXPECT_EQ(session->clientHandleClosed, session->invalidClientHandle);
+
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client));
+    EXPECT_FALSE(session->detached.load());
+    ASSERT_EQ(0u, session->apiEvents.size());
+
+    client.clientHandle = clientHandle;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client));
+
+    EXPECT_TRUE(session->detached.load());
+    ASSERT_EQ(1u, session->apiEvents.size());
+    const auto detachEvent = session->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, detachEvent.type);
+    EXPECT_EQ(ZET_DEBUG_DETACH_REASON_HOST_EXIT, detachEvent.info.detached.reason);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenEuDebugVmEventWithEventCreateFlagWhenHandleEventThenNewVmIdsIsCreated) {

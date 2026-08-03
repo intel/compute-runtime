@@ -192,6 +192,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::convertToPhysicalWithinDevice;
     using L0::DebugSessionLinuxXe::convertToThreadId;
     using L0::DebugSessionLinuxXe::debugArea;
+    using L0::DebugSessionLinuxXe::detached;
     using L0::DebugSessionLinuxXe::euControlInterruptSeqno;
     using L0::DebugSessionLinuxXe::euDebugInterface;
     using L0::DebugSessionLinuxXe::eventTypeIsAttention;

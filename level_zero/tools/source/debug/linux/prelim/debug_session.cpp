@@ -216,6 +216,15 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
 
         if (event->flags & PRELIM_DRM_I915_DEBUG_EVENT_DESTROY) {
             clientHandleClosed = clientEvent->handle;
+
+            if (clientHandle == clientHandleClosed) {
+                zet_debug_event_t debugEvent = {};
+                debugEvent.type = ZET_DEBUG_EVENT_TYPE_DETACHED;
+                debugEvent.info.detached.reason = ZET_DEBUG_DETACH_REASON_HOST_EXIT;
+                PRINT_DEBUGGER_INFO_LOG("Debugger detached\n", "");
+                pushApiEvent(debugEvent);
+                detached = true;
+            }
         }
 
         PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT type: PRELIM_DRM_I915_DEBUG_EVENT_CLIENT flags = %d size = %llu client.handle = %llu\n",

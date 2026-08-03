@@ -972,6 +972,31 @@ TEST_F(DebugApiLinuxTest, GivenDestroyClientForClientNotSavedWhenHandlingEventTh
     EXPECT_EQ(0u, session->apiEvents.size());
 }
 
+TEST_F(DebugApiLinuxTest, GivenDestroyClientForSavedClientWhenHandlingEventThenDetachEventIsGenerated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = 1;
+
+    prelim_drm_i915_debug_event_client clientDestroy = {};
+
+    clientDestroy.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    clientDestroy.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
+    clientDestroy.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    clientDestroy.handle = 1;
+
+    auto handler = new MockIoctlHandlerI915;
+    session->ioctlHandler.reset(handler);
+
+    session->handleEvent(&clientDestroy.base);
+    EXPECT_EQ(1u, session->apiEvents.size());
+    auto event = session->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, event.type);
+    EXPECT_EQ(ZET_DEBUG_DETACH_REASON_HOST_EXIT, event.info.detached.reason);
+}
+
 TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
