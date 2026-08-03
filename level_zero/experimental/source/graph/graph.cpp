@@ -1578,6 +1578,15 @@ bool usesForkEvents(std::span<ze_event_handle_t> events) {
     return false;
 }
 
+bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent) {
+    for (const auto &event : waitEvents) {
+        if (L0::Event::fromHandle(event)->isCapturedGraphInternalEvent()) {
+            return true;
+        }
+    }
+    return signalEvent && L0::Event::fromHandle(signalEvent)->isCapturedGraphInternalEvent();
+}
+
 bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events) {
     for (const auto &event : events) {
         const auto *signalFromCmdList = L0::Event::fromHandle(event)->getRecordedSignalFrom();

@@ -449,6 +449,10 @@ struct Event : _ze_event_handle_t {
         return externalEvent && (inOrderExecHelper.getPatchPreambleCounter() > 0);
     }
 
+    bool isCapturedGraphInternalEvent() const {
+        return (nullptr != getRecordedSignalFrom()) && isCounterBased() && (false == externalEvent);
+    }
+
     virtual bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) = 0;
 
   protected:

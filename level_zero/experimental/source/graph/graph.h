@@ -468,6 +468,7 @@ void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Gra
 bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList);
 bool usesForkEvents(std::span<ze_event_handle_t> events);
 bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events);
+bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent);
 
 template <CaptureApi api, typename... TArgs>
 ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarget, RecordedApiCommands *flatCaptureTarget, TArgs... apiArgs) {
@@ -480,9 +481,16 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     }
 
     auto eventsWaitList = getCommandsWaitEventsList<api>(apiArgs...);
+    const auto signalEvent = getCommandsSignalEvent<api>(apiArgs...);
     if (false == isGraphCapturingAllowed(srcCmdList)) {
-        // it's an error to try and fork to a cmdlist that doesn't support capturing
-        return usesForkEvents(eventsWaitList) ? ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE : ZE_RESULT_ERROR_NOT_AVAILABLE;
+        if (usesForkEvents(eventsWaitList)) {
+            // it's an error to try and fork to a cmdlist that doesn't support capturing
+            return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
+        }
+        if (usesGraphInternalEvents(eventsWaitList, signalEvent)) {
+            return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     } else if ((false == eventsWaitList.empty()) && (nullptr != graphCaptureTarget)) {
         // it's an error to merge two capture sessions by waiting on an event recorded by a different one
         if (usesForkEventsFromOtherSession(graphCaptureTarget->getRootGraph(), eventsWaitList)) {
@@ -494,6 +502,9 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     }
 
     if (nullptr == graphCaptureTarget) {
+        if (usesGraphInternalEvents(eventsWaitList, signalEvent)) {
+            return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
+        }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -507,8 +518,8 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
         }
     }
 
-    if (getCommandsSignalEvent<api>(apiArgs...)) {
-        recordHandleSignalEventFromPreviousCommand(srcCmdList, *graphCaptureTarget, getCommandsSignalEvent<api>(apiArgs...));
+    if (signalEvent) {
+        recordHandleSignalEventFromPreviousCommand(srcCmdList, *graphCaptureTarget, signalEvent);
     }
     return ZE_RESULT_SUCCESS;
 }
