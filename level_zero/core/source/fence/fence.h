@@ -36,6 +36,9 @@ struct Fence : _ze_fence_handle_t {
     static Fence *fromHandle(ze_fence_handle_t handle) { return static_cast<Fence *>(handle); }
 
     inline ze_fence_handle_t toHandle() { return this; }
+    bool isParentQueue(CommandQueue *cmdQueue) {
+        return cmdQueue == this->cmdQueue;
+    }
 
   protected:
     Fence(CommandQueue *cmdQueueImp) : cmdQueue(cmdQueueImp) {}

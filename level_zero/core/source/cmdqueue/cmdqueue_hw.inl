@@ -76,6 +76,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     auto ret = ZE_RESULT_SUCCESS;
 
+    if (hFence) {
+        if (Fence::fromHandle(hFence)->isParentQueue(this) == false) {
+            return ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT;
+        }
+    }
+
     this->device->activateMetricGroups();
 
     if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
