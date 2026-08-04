@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/os_interface.h"
+
 #include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 
 #include <map>
@@ -28,6 +30,8 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     ~SysmanDriverHandleImp() override;
     SysmanDriverHandleImp();
     ze_result_t initialize(NEO::ExecutionEnvironment &executionEnvironment);
+    virtual ze_result_t performDeferredDiscovery();
+    void initializeDeferredMode(NEO::ExecutionEnvironment *executionEnvironment);
     ze_result_t getDevice(uint32_t *pCount, zes_device_handle_t *phDevices) override;
     ze_result_t getDeviceByUuid(zes_uuid_t uuid, zes_device_handle_t *phDevice, ze_bool_t *onSubdevice, uint32_t *subdeviceId) override;
     ze_result_t getExtensionProperties(uint32_t *pCount, zes_driver_extension_properties_t *pExtensionProperties,
@@ -50,6 +54,9 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     // list of supported extension apis
     static const std::vector<std::pair<std::string, uint32_t>> extensionsSupported;
 
+    bool isDeferredDiscoveryMode() const { return deferredDiscoveryMode; }
+    bool areDevicesDiscovered() const { return devicesDiscovered; }
+
     void updateUuidMap(SysmanDevice *sysmanDevice);
     void updatePciUuidMap(SysmanDevice *sysmanDevice);
     std::map<std::string, std::unique_ptr<NEO::PhysicalDevicePciBusInfo>> pciUuidToPciBusInfoMap;
@@ -65,6 +72,15 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     std::unordered_map<std::string, SysmanDevice *> uuidDeviceMap{};
     std::unordered_map<ze_driver_handle_t, SysmanDriverHandle *> coreToSysmanDriverMap{};
     std::mutex coreToSysmanDriverMapLock;
+
+    // Deferred discovery state
+    bool deferredDiscoveryMode = false;
+    bool devicesDiscovered = false;
+    NEO::ExecutionEnvironment *savedExecutionEnvironment = nullptr;
+    std::mutex deferredDiscoveryMutex;
+
+    using HwDeviceIds = std::vector<std::unique_ptr<NEO::HwDeviceId>>;
+    virtual HwDeviceIds discoverHwDevices(NEO::ExecutionEnvironment &executionEnvironment);
 };
 
 extern struct SysmanDriverHandleImp *globalSysmanDriver;

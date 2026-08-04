@@ -22,6 +22,14 @@ extern "C" {
 #define ZES_INTEL_GPU_SYSMAN_VERSION_MINOR 1
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Experimental init flag to allow zesInit() to succeed when no GPU devices are present.
+/// @details
+///     - Enables deferred device discovery mode.
+///     - Device discovery is deferred until the first call to zesDeviceGet() or related APIs.
+///     - This flag uses bit 16 to avoid conflicts with standard flags (bits 0-15).
+#define ZES_INTEL_INIT_FLAG_EXP_NO_GPUS ZE_BIT(16)
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME
 /// @brief PCI link speed downgrade state extension name
 #define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME "ZES_intel_experimental_pci_link_speed_downgrade_state"

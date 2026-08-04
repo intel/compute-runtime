@@ -22,6 +22,7 @@ struct SysmanDriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
     inline zes_driver_handle_t toHandle() { return this; }
 
     static SysmanDriverHandle *create(NEO::ExecutionEnvironment &executionEnvironment, ze_result_t *returnValue);
+    static SysmanDriverHandle *createDeferred(NEO::ExecutionEnvironment &executionEnvironment, ze_result_t *returnValue);
     virtual ze_result_t getDeviceByUuid(zes_uuid_t uuid, zes_device_handle_t *phDevice, ze_bool_t *onSubdevice, uint32_t *subdeviceId) = 0;
     virtual ze_result_t getDevice(uint32_t *pCount, zes_device_handle_t *phDevices) = 0;
     virtual ze_result_t getExtensionProperties(uint32_t *pCount, zes_driver_extension_properties_t *pExtensionProperties,

@@ -404,9 +404,109 @@ TEST_F(SysmanDriverHandleTest,
 TEST(SysmanDriverInit, GivenValidSysmanImpObjectWhenCallingInitWithSysmanInitFromCoreSetAsTrueThenSysmanInitFails) {
     L0::sysmanInitFromCore = true;
     std::unique_ptr<SysmanDriverImp> pSysmanDriverImp = std::make_unique<SysmanDriverImp>();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pSysmanDriverImp->driverInit());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pSysmanDriverImp->driverInit(0));
     EXPECT_FALSE(L0::Sysman::sysmanOnlyInit);
     L0::sysmanInitFromCore = false;
+}
+
+TEST(SysmanDriverDeferredDiscovery, GivenImmediateInitWithoutDevicesAndNoFlagThenInitFails) {
+    // Mock no devices found
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        return nullptr;
+    });
+
+    MockSysmanDriver driver;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    // Call initialize() without experimental flag - should fail when no devices present
+    driver.initialize(&result, 0);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
+    EXPECT_EQ(nullptr, L0::Sysman::globalSysmanDriverHandle);
+
+    // Cleanup
+    L0::Sysman::globalSysmanDriver = nullptr;
+    L0::Sysman::globalSysmanDriverHandle = nullptr;
+    L0::Sysman::driverCount = 0;
+}
+
+TEST(SysmanDriverDeferredDiscovery, GivenDeferredInitWithoutDevicesWhenDiscoveryFindsZeroDevicesThenDeviceGetFailsWithZeroDevices) {
+    // Mock no devices found during both initial and deferred discovery
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        return nullptr;
+    });
+
+    MockSysmanDriver driver;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, L0::Sysman::globalSysmanDriverHandle);
+    EXPECT_EQ(1u, L0::Sysman::driverCount);
+
+    // Verify deferred mode is active
+    auto driverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
+    ASSERT_NE(nullptr, driverHandleImp);
+
+    // Trigger deferred discovery by enumerating devices - should still find 0 devices
+    uint32_t deviceCount = 0;
+    ze_result_t deviceResult = driverHandleImp->getDevice(&deviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, deviceResult);
+    EXPECT_EQ(0u, deviceCount);
+
+    // Cleanup
+    delete L0::Sysman::globalSysmanDriver;
+    L0::Sysman::globalSysmanDriver = nullptr;
+    L0::Sysman::globalSysmanDriverHandle = nullptr;
+    L0::Sysman::driverCount = 0;
+}
+
+TEST(SysmanDriverDeferredDiscovery, GivenDeferredInitWithoutDevicesWhenDiscoveryFindsDevicesThenDevicesAreEnumerated) {
+    static int callCount = 0;
+    callCount = 0;
+
+    // Mock no devices initially, but devices present during deferred discovery
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        callCount++;
+        if (callCount <= 2) { // First calls during init and survivability check
+            return nullptr;   // No devices during init
+        }
+        // Devices present during deferred discovery
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
+        return buf;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/drm/renderD128";
+        std::memcpy(buf, str.c_str(), str.size());
+        return static_cast<int>(str.size());
+    });
+
+    MockSysmanDriver driver;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, L0::Sysman::globalSysmanDriverHandle);
+    EXPECT_EQ(1u, L0::Sysman::driverCount);
+
+    auto driverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
+    ASSERT_NE(nullptr, driverHandleImp);
+
+    // Trigger deferred discovery by enumerating devices - should find devices now
+    uint32_t deviceCount = 0;
+    ze_result_t deviceResult = driverHandleImp->getDevice(&deviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceResult);
+    EXPECT_GT(deviceCount, 0u);
+
+    // Cleanup
+    delete L0::Sysman::globalSysmanDriver;
+    L0::Sysman::globalSysmanDriver = nullptr;
+    L0::Sysman::globalSysmanDriverHandle = nullptr;
+    L0::Sysman::driverCount = 0;
 }
 
 } // namespace ult

@@ -25,65 +25,95 @@ namespace Sysman {
 _ze_driver_handle_t *globalSysmanDriverHandle = nullptr;
 uint32_t driverCount = 0;
 bool sysmanOnlyInit = false;
+uint32_t SysmanDriverImp::discoverAndInitializeDevices(NEO::ExecutionEnvironment &executionEnvironment, HwDeviceIds &hwDeviceIds,
+                                                       const char *errorPrefix) {
+    if (hwDeviceIds.empty()) {
+        return 0;
+    }
+    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(hwDeviceIds.size()));
+    uint32_t rootDeviceIndex = 0u;
+    for (auto &hwDeviceId : hwDeviceIds) {
 
-void SysmanDriverImp::initialize(ze_result_t *result) {
+        auto sysmanHwDeviceId = createSysmanHwDeviceId(hwDeviceId);
+        auto initStatus = sysmanHwDeviceId != nullptr &&
+                          executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(sysmanHwDeviceId), rootDeviceIndex);
+
+        if (!initStatus) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "%s : initialization failed for device : %d\n", errorPrefix, rootDeviceIndex);
+            continue;
+        }
+        rootDeviceIndex++;
+    }
+
+    executionEnvironment.rootDeviceEnvironments.resize(rootDeviceIndex);
+    return rootDeviceIndex;
+}
+
+void SysmanDriverImp::initialize(ze_result_t *result, zes_init_flags_t flags) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
+
+    // Extract experimental flag (bit 16)
+    bool allowDeferredDiscovery = (flags & ZES_INTEL_INIT_FLAG_EXP_NO_GPUS) != 0;
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
     executionEnvironment->incRefInternal();
 
-    using HwDeviceIds = std::vector<std::unique_ptr<NEO::HwDeviceId>>;
+    HwDeviceIds hwDeviceIds = discoverHwDevices(*executionEnvironment);
+    auto rootDeviceIndex = discoverAndInitializeDevices(*executionEnvironment, hwDeviceIds, "SysmanDriverImp::initialize");
 
-    HwDeviceIds hwDeviceIds = NEO::OSInterface::discoverDevices(*executionEnvironment);
-    if (!hwDeviceIds.empty()) {
-        executionEnvironment->prepareRootDeviceEnvironments(static_cast<uint32_t>(hwDeviceIds.size()));
-        uint32_t rootDeviceIndex = 0u;
-        for (auto &hwDeviceId : hwDeviceIds) {
-
-            auto sysmanHwDeviceId = createSysmanHwDeviceId(hwDeviceId);
-            auto initStatus = sysmanHwDeviceId != nullptr &&
-                              executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(sysmanHwDeviceId), rootDeviceIndex);
-
-            if (!initStatus) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                             "OsInterface initialization failed for device : %d\n", rootDeviceIndex);
-                continue;
-            }
-            rootDeviceIndex++;
-        }
-
-        executionEnvironment->rootDeviceEnvironments.resize(rootDeviceIndex);
-
-        if (rootDeviceIndex > 0) {
-            globalSysmanDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
-            driverCount = 1;
-        } else {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "%s\n", "No devices successfully initialized");
-            *result = ZE_RESULT_ERROR_UNINITIALIZED;
-        }
+    if (rootDeviceIndex > 0) {
+        globalSysmanDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
+        driverCount = 1;
     } else {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "%s\n", "No devices found");
+                     "%s\n", "No devices successfully initialized");
         *result = ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    executionEnvironment->decRefInternal();
 
-    std::unique_ptr<OsDriver> pOsDriverInterface = OsDriver::create();
+    // Check survivability before deciding on deferred mode
+    std::unique_ptr<OsDriver> pOsDriverInterface = createOsDriver();
     if (globalSysmanDriverHandle != nullptr) {
         pOsDriverInterface->initSurvivabilityDevices(globalSysmanDriverHandle, result);
     } else {
         globalSysmanDriverHandle = pOsDriverInterface->initSurvivabilityDevicesWithDriver(result, &driverCount);
     }
+
+    // Check if deferred discovery mode is possible
+    if (globalSysmanDriverHandle == nullptr && allowDeferredDiscovery) {
+        // Deferred discovery mode
+        executionEnvironment->incRefInternal(); // Extra ref for deferred mode
+        globalSysmanDriverHandle = createDeferredHandle(*executionEnvironment, result);
+        driverCount = 1;
+        *result = ZE_RESULT_SUCCESS;
+    } else if (globalSysmanDriverHandle == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s\n", "No devices found");
+        *result = ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    executionEnvironment->decRefInternal();
+}
+
+SysmanDriverImp::HwDeviceIds SysmanDriverImp::discoverHwDevices(NEO::ExecutionEnvironment &executionEnvironment) {
+    return NEO::OSInterface::discoverDevices(executionEnvironment);
+}
+
+SysmanDriverHandle *SysmanDriverImp::createDeferredHandle(NEO::ExecutionEnvironment &executionEnvironment, ze_result_t *result) {
+    return SysmanDriverHandle::createDeferred(executionEnvironment, result);
+}
+
+std::unique_ptr<OsDriver> SysmanDriverImp::createOsDriver() {
+    return OsDriver::create();
 }
 
 ze_result_t SysmanDriverImp::initStatus(ZE_RESULT_ERROR_UNINITIALIZED);
 
-ze_result_t SysmanDriverImp::driverInit() {
-    std::call_once(initDriverOnce, [this]() {
+ze_result_t SysmanDriverImp::driverInit(zes_init_flags_t flags) {
+    std::call_once(initDriverOnce, [this, flags]() {
         ze_result_t result;
-        this->initialize(&result);
+        this->initialize(&result, flags);
         initStatus = result;
         if (result == ZE_RESULT_SUCCESS) {
             sysmanOnlyInit = true;
@@ -121,11 +151,14 @@ static SysmanDriverImp driverImp;
 SysmanDriver *SysmanDriver::driver = &driverImp;
 
 ze_result_t init(zes_init_flags_t flags) {
-    if (flags && !(flags & ZE_INIT_FLAG_GPU_ONLY)) {
+    constexpr auto allowedFlags =
+        ZE_INIT_FLAG_GPU_ONLY | ZES_INTEL_INIT_FLAG_EXP_NO_GPUS;
+
+    if (flags & ~allowedFlags) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
-    } else {
-        return SysmanDriver::get()->driverInit();
     }
+
+    return SysmanDriver::get()->driverInit(flags);
 }
 
 } // namespace Sysman

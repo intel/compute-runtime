@@ -9,13 +9,17 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/driver/extension_function_address.h"
 #include "level_zero/sysman/source/device/os_sysman.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
+#include "level_zero/sysman/source/device/sysman_hw_device_id.h"
 #include "level_zero/sysman/source/driver/os_sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
+#include "level_zero/sysman/source/driver/sysman_driver_imp.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
@@ -131,6 +135,42 @@ ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executi
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t SysmanDriverHandleImp::performDeferredDiscovery() {
+    std::lock_guard<std::mutex> lock(deferredDiscoveryMutex);
+
+    if (devicesDiscovered) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    UNRECOVERABLE_IF(savedExecutionEnvironment == nullptr);
+
+    // Perform device discovery using saved ExecutionEnvironment
+    using HwDeviceIds = std::vector<std::unique_ptr<NEO::HwDeviceId>>;
+    HwDeviceIds hwDeviceIds = discoverHwDevices(*savedExecutionEnvironment);
+    auto rootDeviceIndex = SysmanDriverImp::discoverAndInitializeDevices(*savedExecutionEnvironment, hwDeviceIds, "SysmanDriverImp::performDeferredDiscovery");
+    // Initialize devices
+    if (rootDeviceIndex > 0) {
+        ze_result_t initResult = initialize(*savedExecutionEnvironment);
+        if (initResult != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Deferred discovery: Device initialization failed\n");
+            savedExecutionEnvironment->decRefInternal();
+            savedExecutionEnvironment = nullptr;
+            devicesDiscovered = true;
+            return initResult;
+        }
+    }
+
+    // Release the saved ExecutionEnvironment
+    if (savedExecutionEnvironment != nullptr) {
+        savedExecutionEnvironment->decRefInternal();
+        savedExecutionEnvironment = nullptr;
+    }
+
+    devicesDiscovered = true;
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t SysmanDriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
     *pfunc = getSysmanExtensionFunctionAddress(pFuncName);
     if (*pfunc) {
@@ -157,6 +197,24 @@ SysmanDriverHandle *SysmanDriverHandle::create(NEO::ExecutionEnvironment &execut
 
     globalSysmanDriver = driverHandle;
     *returnValue = res;
+    return driverHandle;
+}
+
+void SysmanDriverHandleImp::initializeDeferredMode(NEO::ExecutionEnvironment *executionEnvironment) {
+    deferredDiscoveryMode = true;
+    devicesDiscovered = false;
+    savedExecutionEnvironment = executionEnvironment;
+}
+
+SysmanDriverHandle *SysmanDriverHandle::createDeferred(NEO::ExecutionEnvironment &executionEnvironment, ze_result_t *returnValue) {
+    SysmanDriverHandleImp *driverHandle = new SysmanDriverHandleImp;
+    UNRECOVERABLE_IF(nullptr == driverHandle);
+
+    // Set deferred discovery mode
+    driverHandle->initializeDeferredMode(&executionEnvironment);
+
+    globalSysmanDriver = driverHandle;
+    *returnValue = ZE_RESULT_SUCCESS;
     return driverHandle;
 }
 
@@ -228,6 +286,15 @@ SysmanDriverHandle *SysmanDriverHandle::fromHandle(zes_driver_handle_t handle) {
 }
 
 ze_result_t SysmanDriverHandleImp::getDevice(uint32_t *pCount, zes_device_handle_t *phDevices) {
+    // Trigger deferred discovery if needed
+    if (deferredDiscoveryMode && !devicesDiscovered) {
+        ze_result_t result = performDeferredDiscovery();
+        if (result != ZE_RESULT_SUCCESS) {
+            *pCount = 0;
+            return result;
+        }
+    }
+
     if (*pCount == 0) {
         *pCount = this->numDevices;
         return ZE_RESULT_SUCCESS;
@@ -293,6 +360,7 @@ ze_result_t SysmanDriverHandleImp::sysmanEventsListenEx(uint64_t timeout, uint32
 };
 
 ze_result_t SysmanDriverHandleImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
+
     if (pOsSysmanDriver == nullptr) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "%s", "Os Sysman Driver Not initialized\n");
@@ -323,6 +391,16 @@ SysmanDriverHandleImp::~SysmanDriverHandleImp() {
         delete pOsSysmanDriver;
         pOsSysmanDriver = nullptr;
     }
+
+    // Clean up saved ExecutionEnvironment if discovery never happened
+    if (savedExecutionEnvironment != nullptr) {
+        savedExecutionEnvironment->decRefInternal();
+        savedExecutionEnvironment = nullptr;
+    }
+}
+
+SysmanDriverHandleImp::HwDeviceIds SysmanDriverHandleImp::discoverHwDevices(NEO::ExecutionEnvironment &executionEnvironment) {
+    return NEO::OSInterface::discoverDevices(executionEnvironment);
 }
 
 } // namespace Sysman

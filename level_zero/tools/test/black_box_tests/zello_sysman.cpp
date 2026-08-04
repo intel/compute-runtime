@@ -29,6 +29,8 @@
 
 bool verbose = true;
 
+bool validateGetenv(const char *name);
+
 typedef struct {
     zes_firmware_handle_t firmwareHandle;
     std::mutex firmwareProgressMutex;
@@ -192,7 +194,14 @@ void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_ha
 }
 
 void getSysmanDeviceHandles(zes_driver_handle_t &sysmanDriverHandle, std::vector<zes_device_handle_t> &sysmanDevices) {
-    VALIDATECALL(zesInit(0));
+
+    if (validateGetenv("ZES_INIT_NO_GPUS")) {
+        std::cout << "ZES_INIT_NO_GPUS is set, calling zesInit() with ZES_INTEL_INIT_FLAG_EXP_NO_GPUS" << std::endl;
+        VALIDATECALL(zesInit(static_cast<zes_init_flags_t>(ZES_INTEL_INIT_FLAG_EXP_NO_GPUS)));
+    } else {
+        std::cout << "ZES_INIT_NO_GPUS is not set, calling zesInit() with 0" << std::endl;
+        VALIDATECALL(zesInit(0));
+    }
 
     uint32_t driverCount = 0;
     VALIDATECALL(zesDriverGet(&driverCount, nullptr));
