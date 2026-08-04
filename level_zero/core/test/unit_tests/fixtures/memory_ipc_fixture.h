@@ -42,6 +42,7 @@ struct DriverHandleGetFdMock : public L0::DriverHandle {
     const int mockFd = 57;
     std::pair<void *, int> allocationMap;
     NEO::AllocationType allocationTypeRequested = NEO::AllocationType::unknown;
+    ze_ipc_memory_flags_t ipcFlagsRequested = 0;
 };
 
 struct ContextFdMock : public L0::Context {

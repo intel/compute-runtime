@@ -1474,6 +1474,7 @@ void *MemoryManager::importFdHandle(Device *neoDevice,
                                                  neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     unifiedMemoryProperties.flags.preferCompressed = compressedMemory;
+    unifiedMemoryProperties.flags.uncacheable = uncachedBias;
     GraphicsAllocation *alloc = this->createGraphicsAllocationFromSharedHandle(osHandleData,
                                                                                unifiedMemoryProperties,
                                                                                false,
@@ -1530,6 +1531,7 @@ void *MemoryManager::importFdHandles(Device *neoDevice,
                                                  neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     unifiedMemoryProperties.flags.preferCompressed = compressedMemory;
+    unifiedMemoryProperties.flags.uncacheable = uncachedBias;
     GraphicsAllocation *alloc = this->createGraphicsAllocationFromMultipleSharedHandles(handles,
                                                                                         unifiedMemoryProperties,
                                                                                         false,

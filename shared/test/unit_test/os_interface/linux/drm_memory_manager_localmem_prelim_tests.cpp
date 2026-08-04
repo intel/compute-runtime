@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/surface_format_info.h"
@@ -2877,6 +2878,33 @@ TEST_F(DrmMemoryManagerMemsetAllocationPrelimTest, givenDrmMemoryManagerWhenMems
 }
 
 typedef Test<DrmMemoryManagerFixturePrelim> DrmMemoryManagerTestPrelim;
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestPrelim, givenUncacheableFlagWhenCreatingAllocationFromMultipleSharedHandlesThenGmmUsageTypeIsUncached) {
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 2;
+
+    std::vector<NEO::osHandle> handles{6, 7};
+    size_t size = 65536u * 2;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::buffer, false, device->getDeviceBitfield());
+    properties.flags.uncacheable = true;
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true, nullptr);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    auto expectedUsageType = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, true, productHelper, gmmHelper->getHardwareInfo());
+
+    for (uint32_t i = 0; i < handles.size(); i++) {
+        auto gmm = graphicsAllocation->getGmm(i);
+        ASSERT_NE(nullptr, gmm);
+        EXPECT_EQ(expectedUsageType, gmm->getResourceUsageType());
+        EXPECT_TRUE(CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType()));
+    }
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTestPrelim, whenSettingNumHandlesThenTheyAreRetrievedCorrectly) {
     mock->ioctlExpected.primeFdToHandle = 2;
