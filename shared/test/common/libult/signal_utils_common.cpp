@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,5 +32,6 @@ void handleTestsTimeout(std::string_view testName, uint32_t elapsedTime) {
     if (xmlGenerator) {
         xmlGenerator->OnTestIterationEnd(*::testing::UnitTest::GetInstance(), ::testing::GTEST_FLAG(repeat));
     }
+    fflush(stdout);
     abort();
 }
