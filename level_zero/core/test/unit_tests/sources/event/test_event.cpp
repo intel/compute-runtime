@@ -5652,6 +5652,8 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeIsCalledThenPreamble
     uint64_t patchPreambleData = 0;
     uint64_t *patchPreambleHostAddress = &patchPreambleData;
     MockGraphicsAllocation preambleAllocation(patchPreambleHostAddress, reinterpret_cast<uint64_t>(patchPreambleHostAddress), sizeof(patchPreambleData));
+    uint64_t preambleDevAddress = 0x1000;
+    MockGraphicsAllocation preambleDevAllocation(nullptr, preambleDevAddress, sizeof(patchPreambleData));
 
     CpuIntrinsicsTests::tpauseCounter = 0u;
 
@@ -5677,7 +5679,7 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeIsCalledThenPreamble
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
     event->externalEvent = true;
 
-    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation);
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation, preambleDevAddress, &preambleDevAllocation);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     result = event->hostSynchronize(timeout);
@@ -5693,7 +5695,7 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeIsCalledThenPreamble
     event2->getInOrderExecEventHelper().initializeLocalTempStorage();
     event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
     event2->externalEvent = true;
-    event2->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation);
+    event2->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation, preambleDevAddress, &preambleDevAllocation);
 
     syncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
     preambleAllocation.updateTaskCount(0u, ultCsr->getOsContext().getContextId());
@@ -5833,6 +5835,8 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeUsesWaitFenceThenPre
     uint64_t patchPreambleData = 0;
     uint64_t *patchPreambleHostAddress = &patchPreambleData;
     MockGraphicsAllocation preambleAllocation(patchPreambleHostAddress, reinterpret_cast<uint64_t>(patchPreambleHostAddress), sizeof(patchPreambleData));
+    uint64_t preambleDevAddress = 0x1000;
+    MockGraphicsAllocation preambleDevAllocation(nullptr, preambleDevAddress, sizeof(patchPreambleData));
 
     CpuIntrinsicsTests::tpauseCounter = 0u;
 
@@ -5858,7 +5862,7 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeUsesWaitFenceThenPre
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
     event->externalEvent = true;
 
-    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation);
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation, preambleDevAddress, &preambleDevAllocation);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     result = event->hostSynchronize(timeout);

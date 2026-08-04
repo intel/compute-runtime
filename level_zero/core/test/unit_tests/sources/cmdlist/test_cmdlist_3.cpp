@@ -706,24 +706,35 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenGettingPatchPreamble
     uint64_t counter = 0;
     uint64_t hostNodeGpuAddress = 0;
     NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
+    uint64_t deviceNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
 
-    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation);
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
     EXPECT_EQ(1u, counter);
     EXPECT_NE(nullptr, hostAddress);
     EXPECT_NE(0u, hostNodeGpuAddress);
     EXPECT_NE(nullptr, hostNodeAllocation);
+    EXPECT_NE(0u, deviceNodeGpuAddress);
+    EXPECT_NE(nullptr, deviceNodeAllocation);
+
     hostNodeGpuAddress = 0;
     hostNodeAllocation = nullptr;
+    deviceNodeGpuAddress = 0;
+    deviceNodeAllocation = nullptr;
 
-    whiteBoxCmdQueue->patchPreambleCounter.getPatchPreambleNodeData(hostNodeAllocation, hostNodeGpuAddress);
+    whiteBoxCmdQueue->patchPreambleCounter.getPatchPreambleNodeData(hostNodeAllocation, hostNodeGpuAddress, deviceNodeAllocation, deviceNodeGpuAddress);
     EXPECT_NE(nullptr, hostNodeAllocation);
     EXPECT_NE(0u, hostNodeGpuAddress);
+    EXPECT_NE(nullptr, deviceNodeAllocation);
+    EXPECT_NE(0u, deviceNodeGpuAddress);
 
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, hostNodeAllocation);
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, hostNodeGpuAddress);
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, hostAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeAllocation, deviceNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, deviceNodeGpuAddress);
 
-    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation);
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
     EXPECT_EQ(2u, counter);
 }
 

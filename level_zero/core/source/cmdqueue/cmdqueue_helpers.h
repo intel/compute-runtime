@@ -105,6 +105,9 @@ struct CommandQueuePatchPreambleCounter {
     uint64_t *hostNodeCpuAddress = nullptr;
     uint64_t hostNodeGpuAddress = 0;
     NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
+    NEO::TagNodeBase *deviceCounterNode = nullptr;
+    uint64_t deviceNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
     std::mutex mutex;
 
     CommandQueuePatchPreambleCounter() = default;
@@ -116,10 +119,15 @@ struct CommandQueuePatchPreambleCounter {
                                   uint64_t &outCounterValue,
                                   uint64_t *&outHostAddress,
                                   uint64_t &outHostGpuAddress,
-                                  NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation);
-    void getPatchPreambleNodeData(NEO::GraphicsAllocation *&outHostNodeAllocation, uint64_t &outHostNodeGpuAddress) {
+                                  NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation,
+                                  uint64_t &outDeviceGpuAddress,
+                                  NEO::GraphicsAllocation *&outDeviceNodeGraphicsAllocation);
+    void getPatchPreambleNodeData(NEO::GraphicsAllocation *&outHostNodeAllocation, uint64_t &outHostNodeGpuAddress,
+                                  NEO::GraphicsAllocation *&outDeviceNodeAllocation, uint64_t &outDeviceNodeGpuAddress) {
         outHostNodeGpuAddress = this->hostNodeGpuAddress;
         outHostNodeAllocation = this->hostNodeAllocation;
+        outDeviceNodeGpuAddress = this->deviceNodeGpuAddress;
+        outDeviceNodeAllocation = this->deviceNodeAllocation;
     }
 };
 

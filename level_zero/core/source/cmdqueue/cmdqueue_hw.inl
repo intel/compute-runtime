@@ -927,20 +927,21 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalCommandListPatchPreamb
 
         auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironmentRef();
         bool usePostSync = ctx.patchPreambleRequiredCounter > 0;
+        uint32_t syncOpMultiplier = usePostSync ? 2 : 1;
 
         // barrier command to pause between patch preamble completion and execution of command lists
         if (this->isCopyOnlyCommandQueue) {
             NEO::EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
-            encodeSize += NEO::EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+            encodeSize += syncOpMultiplier * NEO::EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
         } else {
             if (this->partitionCount > 1) {
-                encodeSize += NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(
-                    rootDeviceEnvironment,
-                    false,
-                    usePostSync);
+                encodeSize += syncOpMultiplier * NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(
+                                                     rootDeviceEnvironment,
+                                                     false,
+                                                     usePostSync);
             } else {
                 if (usePostSync) {
-                    encodeSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
+                    encodeSize += 2 * NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
                 } else {
                     encodeSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
                 }
@@ -994,9 +995,12 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
         auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
         NEO::GraphicsAllocation *counterHostAllocation = nullptr;
         uint64_t counterHostGpuAddress = 0;
+        NEO::GraphicsAllocation *counterDeviceAllocation = nullptr;
+        uint64_t counterDeviceGpuAddress = 0;
         if (usePostSync) {
-            patchPreambleCounter.getPatchPreambleNodeData(counterHostAllocation, counterHostGpuAddress);
+            patchPreambleCounter.getPatchPreambleNodeData(counterHostAllocation, counterHostGpuAddress, counterDeviceAllocation, counterDeviceGpuAddress);
             this->csr->makeResident(*counterHostAllocation);
+            this->csr->makeResident(*counterDeviceAllocation);
         }
         if (this->isCopyOnlyCommandQueue) {
             NEO::EncodeDummyBlitWaArgs waArgs{false, &(rootDeviceEnvironment)};
@@ -1004,6 +1008,9 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
             args.commandWithPostSync = usePostSync;
 
             NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(ctx.currentPatchPreambleBuffer, counterHostGpuAddress, ctx.patchPreambleRequiredCounter, args);
+            if (usePostSync) {
+                NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(ctx.currentPatchPreambleBuffer, counterDeviceGpuAddress, ctx.patchPreambleRequiredCounter, args);
+            }
         } else {
             NEO::PipeControlArgs args;
             if (this->partitionCount > 1) {
@@ -1018,11 +1025,30 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
                     commandBufferCurrentGpuAddress,
                     false,
                     false);
+                if (usePostSync) {
+                    commandBufferCurrentGpuAddress = ctx.basePatchPreambleGpuAddress + ptrDiff(ctx.currentPatchPreambleBuffer, ctx.basePatchPreambleAddress);
+                    NEO::ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(
+                        ctx.currentPatchPreambleBuffer,
+                        neoDevice->getDeviceBitfield(),
+                        args,
+                        rootDeviceEnvironment,
+                        counterDeviceGpuAddress, ctx.patchPreambleRequiredCounter,
+                        commandBufferCurrentGpuAddress,
+                        false,
+                        false);
+                }
             } else {
                 if (usePostSync) {
                     NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(ctx.currentPatchPreambleBuffer,
                                                                                                    NEO::PostSyncMode::immediateData,
                                                                                                    counterHostGpuAddress,
+                                                                                                   ctx.patchPreambleRequiredCounter,
+                                                                                                   rootDeviceEnvironment,
+                                                                                                   args);
+
+                    NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(ctx.currentPatchPreambleBuffer,
+                                                                                                   NEO::PostSyncMode::immediateData,
+                                                                                                   counterDeviceGpuAddress,
                                                                                                    ctx.patchPreambleRequiredCounter,
                                                                                                    rootDeviceEnvironment,
                                                                                                    args);

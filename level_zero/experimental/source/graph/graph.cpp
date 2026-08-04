@@ -485,16 +485,18 @@ void ExternalCbEventInfoContainer::attachExternalCbEventsToExecutableGraph() {
         info.event->getInOrderExecEventHelper().assignPatchPreambleData(currentPreambleData.counter(),
                                                                         currentPreambleData.hostAddress(),
                                                                         currentPreambleData.hostGpuAddress(),
-                                                                        currentPreambleData.hostAllocation());
+                                                                        currentPreambleData.hostAllocation(),
+                                                                        currentPreambleData.deviceGpuAddress(),
+                                                                        currentPreambleData.deviceAllocation());
     }
 }
 void ExternalCbEventInfoContainer::finalizeExecutorContainer() {
     for (auto &info : storage) {
         auto it = getExecutorInfo(info.executorCommandList);
         if (it != executorStorage.end()) {
-            *it = {0, nullptr, 0, nullptr, info.executorCommandList};
+            *it = {0, nullptr, 0, nullptr, 0, nullptr, info.executorCommandList};
         } else {
-            executorStorage.push_back({0, nullptr, 0, nullptr, info.executorCommandList});
+            executorStorage.push_back({0, nullptr, 0, nullptr, 0, nullptr, info.executorCommandList});
         }
     }
 }
@@ -503,15 +505,18 @@ void ExternalCbEventInfoContainer::updateExecutorContainer(L0::CommandList *curr
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
     uint64_t hostGpuAddress = 0;
+    uint64_t deviceGpuAddress = 0;
     NEO::GraphicsAllocation *hostAllocation = nullptr;
+    NEO::GraphicsAllocation *deviceAllocation = nullptr;
+
     for (auto &elem : executorStorage) {
         L0::CommandList *currentKey = elem.key;
         if (currentKey == nullptr) {
-            currentRoot->getPatchPreambleFullData(counter, hostAddress, hostGpuAddress, hostAllocation);
+            currentRoot->getPatchPreambleFullData(counter, hostAddress, hostGpuAddress, hostAllocation, deviceGpuAddress, deviceAllocation);
         } else {
-            currentKey->getPatchPreambleFullData(counter, hostAddress, hostGpuAddress, hostAllocation);
+            currentKey->getPatchPreambleFullData(counter, hostAddress, hostGpuAddress, hostAllocation, deviceGpuAddress, deviceAllocation);
         }
-        elem = {counter, hostAddress, hostGpuAddress, hostAllocation, currentKey};
+        elem = {counter, hostAddress, hostGpuAddress, hostAllocation, deviceGpuAddress, deviceAllocation, currentKey};
     }
 }
 

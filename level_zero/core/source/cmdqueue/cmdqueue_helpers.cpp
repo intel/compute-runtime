@@ -16,6 +16,7 @@ namespace L0 {
 CommandQueuePatchPreambleCounter::~CommandQueuePatchPreambleCounter() {
     if (this->hostCounterNode != nullptr) {
         this->hostCounterNode->returnTag();
+        this->deviceCounterNode->returnTag();
     }
 }
 
@@ -23,7 +24,9 @@ void CommandQueuePatchPreambleCounter::getPatchPreambleFullData(Device *device,
                                                                 uint64_t &outCounterValue,
                                                                 uint64_t *&outHostAddress,
                                                                 uint64_t &outHostGpuAddress,
-                                                                NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation) {
+                                                                NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation,
+                                                                uint64_t &outDeviceGpuAddress,
+                                                                NEO::GraphicsAllocation *&outDeviceNodeGraphicsAllocation) {
     std::lock_guard<std::mutex> lock(this->mutex);
     if (this->hostCounterNode == nullptr) {
         auto tagAllocator = device->getHostInOrderCounterAllocator();
@@ -32,11 +35,18 @@ void CommandQueuePatchPreambleCounter::getPatchPreambleFullData(Device *device,
         this->hostNodeGpuAddress = this->hostCounterNode->getGpuAddress();
         this->hostNodeAllocation = this->hostCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
         memset(this->hostNodeCpuAddress, 0x0, tagAllocator->getTagSize());
+
+        auto deviceTagAllocator = device->getDeviceInOrderCounterAllocator();
+        this->deviceCounterNode = deviceTagAllocator->getTag();
+        this->deviceNodeGpuAddress = this->deviceCounterNode->getGpuAddress();
+        this->deviceNodeAllocation = this->deviceCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
     }
     outCounterValue = ++this->counter;
     outHostAddress = this->hostNodeCpuAddress;
     outHostGpuAddress = this->hostNodeGpuAddress;
     outHostNodeGraphicsAllocation = this->hostNodeAllocation;
+    outDeviceGpuAddress = this->deviceNodeGpuAddress;
+    outDeviceNodeGraphicsAllocation = this->deviceNodeAllocation;
 }
 
 } // namespace L0

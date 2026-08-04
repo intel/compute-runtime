@@ -1221,7 +1221,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
     NEO::GraphicsAllocation *counterHostAllocation = nullptr;
-    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation);
+    uint64_t counterDeviceGpuAddress = 0;
+    NEO::GraphicsAllocation *counterDeviceAllocation = nullptr;
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation, counterDeviceGpuAddress, counterDeviceAllocation);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -1236,6 +1238,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     EXPECT_TRUE(ultCsr->isMadeResident(counterHostAllocation));
+    EXPECT_TRUE(ultCsr->isMadeResident(counterDeviceAllocation));
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1243,7 +1246,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
         ptrOffset(queueCpuBase, usedSpaceBefore),
         usedSpaceAfter - usedSpaceBefore));
 
-    bool foundPostSyncWithCounter = false;
+    bool foundHostPostSyncWithCounter = false;
+    bool foundDevicePostSyncWithCounter = false;
 
     auto pipeControlCmds = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, pipeControlCmds.size());
@@ -1253,13 +1257,20 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
             auto actualAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
             if (counterHostGpuAddress == actualAddress &&
                 pipeControl->getImmediateData() == counter) {
-                foundPostSyncWithCounter = true;
+                foundHostPostSyncWithCounter = true;
+            }
+            if (counterDeviceGpuAddress == actualAddress &&
+                pipeControl->getImmediateData() == counter) {
+                foundDevicePostSyncWithCounter = true;
+            }
+            if (foundHostPostSyncWithCounter && foundDevicePostSyncWithCounter) {
                 break;
             }
         }
     }
 
-    EXPECT_TRUE(foundPostSyncWithCounter);
+    EXPECT_TRUE(foundHostPostSyncWithCounter);
+    EXPECT_TRUE(foundDevicePostSyncWithCounter);
 
     commandList->destroy();
     commandQueue->destroy();
@@ -1358,7 +1369,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
     NEO::GraphicsAllocation *counterHostAllocation = nullptr;
-    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation);
+    uint64_t counterDeviceGpuAddress = 0;
+    NEO::GraphicsAllocation *counterDeviceAllocation = nullptr;
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation, counterDeviceGpuAddress, counterDeviceAllocation);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -1373,6 +1386,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     EXPECT_TRUE(ultCsr->isMadeResident(counterHostAllocation));
+    EXPECT_TRUE(ultCsr->isMadeResident(counterDeviceAllocation));
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1380,7 +1394,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
         ptrOffset(queueCpuBase, usedSpaceBefore),
         usedSpaceAfter - usedSpaceBefore));
 
-    bool foundPostSyncWithCounter = false;
+    bool foundHostPostSyncWithCounter = false;
+    bool foundDevicePostSyncWithCounter = false;
 
     auto miFlushCmds = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, miFlushCmds.size());
@@ -1390,12 +1405,20 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
         if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD &&
             miFlush->getDestinationAddress() == counterHostGpuAddress &&
             miFlush->getImmediateData() == counter) {
-            foundPostSyncWithCounter = true;
+            foundHostPostSyncWithCounter = true;
+        }
+        if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD &&
+            miFlush->getDestinationAddress() == counterDeviceGpuAddress &&
+            miFlush->getImmediateData() == counter) {
+            foundDevicePostSyncWithCounter = true;
+        }
+        if (foundHostPostSyncWithCounter && foundDevicePostSyncWithCounter) {
             break;
         }
     }
 
-    EXPECT_TRUE(foundPostSyncWithCounter);
+    EXPECT_TRUE(foundHostPostSyncWithCounter);
+    EXPECT_TRUE(foundDevicePostSyncWithCounter);
 
     commandList->destroy();
     commandQueue->destroy();

@@ -66,7 +66,7 @@ CommandListExecutionContext::CommandListExecutionContext(
         this->spaceForResidency += residencyContainerSpaceForBtdAllocation;
     }
     if (this->patchPreambleRequiredCounter > 0) {
-        this->spaceForResidency += 1;
+        this->spaceForResidency += 2;
     }
 
     if (this->isMigrationRequested && device->getDriverHandle()->getMemoryManager()->getPageFaultManager() == nullptr) {

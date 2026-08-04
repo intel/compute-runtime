@@ -849,8 +849,10 @@ void CommandList::destroyRecordedBcsSplitResources() {
 void CommandList::getPatchPreambleFullData(uint64_t &outCounterValue,
                                            uint64_t *&outHostAddress,
                                            uint64_t &outHostGpuAddress,
-                                           NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation) {
-    cmdQImmediate->getPatchPreambleFullData(outCounterValue, outHostAddress, outHostGpuAddress, outHostNodeGraphicsAllocation);
+                                           NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation,
+                                           uint64_t &outDeviceGpuAddress,
+                                           NEO::GraphicsAllocation *&outDeviceNodeGraphicsAllocation) {
+    cmdQImmediate->getPatchPreambleFullData(outCounterValue, outHostAddress, outHostGpuAddress, outHostNodeGraphicsAllocation, outDeviceGpuAddress, outDeviceNodeGraphicsAllocation);
 }
 
 } // namespace L0
