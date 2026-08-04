@@ -120,6 +120,12 @@ class WddmMock : public Wddm {
         }
         return verifyAdapterLuidReturnValue;
     }
+    bool isNativeFenceAvailable() override {
+        if (callBaseIsNativeFenceAvailable) {
+            return Wddm::isNativeFenceAvailable();
+        }
+        return isNativeFenceAvailableReturnValue;
+    }
     LUID getAdapterLuid() { return hwDeviceId->getAdapterLuid(); }
     bool setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority) override;
 
@@ -211,6 +217,8 @@ class WddmMock : public Wddm {
     bool callBaseSetAllocationPriority = true;
     bool callBaseWaitFromCpu = true;
     bool failFreeGpuVirtualAddress = false;
+    bool callBaseIsNativeFenceAvailable = true;
+    bool isNativeFenceAvailableReturnValue = false;
     bool failReserveGpuVirtualAddress = false;
     bool failCreateAllocation = false;
 };

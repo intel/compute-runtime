@@ -985,6 +985,64 @@ struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectS
     uint32_t lastNotifyKmdParamValue = false;
 };
 
+namespace {
+constexpr uint32_t flushMonitorFenceCallsPerWaitFromCpu = 2u;
+
+bool hasRenderEngine(MockDevice &device) {
+    for (auto &engine : device.allEngines) {
+        if (engine.osContext->getEngineType() == aub_stream::EngineType::ENGINE_RCS) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template <typename FamilyType>
+MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, RenderDispatcher<FamilyType>> *setUpDirectSubmissionRecordingNotifyKmd(MockDevice &device, CommandStreamReceiver *csr) {
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, RenderDispatcher<FamilyType>>;
+
+    if (!hasRenderEngine(device)) {
+        return nullptr;
+    }
+
+    debugManager.flags.EnableDirectSubmission.set(1);
+
+    auto hwInfo = device.getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+    mockCsr->callParentInitDirectSubmission = false;
+
+    EXPECT_TRUE(csr->initDirectSubmission());
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+
+    mockCsr->directSubmission = std::make_unique<MockSubmission>(*csr);
+    return static_cast<MockSubmission *>(mockCsr->directSubmission.get());
+}
+
+void waitFromCpuOnDefaultEngineMonitoredFence(MockDevice &device, WddmMock *wddm) {
+    constexpr D3DKMT_HANDLE defaultMonitoredFenceHandle = 1;
+    constexpr uint64_t signalledFenceValue = 0u;
+    constexpr uint64_t fenceValueToWaitFor = 1u;
+    constexpr bool busyWait = false;
+
+    D3DKMT_HANDLE monitoredFenceHandle = defaultMonitoredFenceHandle;
+    uint64_t fenceCpuValue = signalledFenceValue;
+    D3DGPU_VIRTUAL_ADDRESS fenceGpuAddress = castToUint64(&fenceCpuValue);
+
+    NEO::MonitoredFence monitoredFence = {};
+    monitoredFence.fenceHandle = monitoredFenceHandle;
+    monitoredFence.gpuAddress = fenceGpuAddress;
+    monitoredFence.cpuAddress = &fenceCpuValue;
+    monitoredFence.currentFenceValue = fenceValueToWaitFor;
+
+    auto osContext = static_cast<OsContextWin *>(device.getDefaultEngine().osContext);
+    osContext->resetMonitoredFenceParams(monitoredFenceHandle, &fenceCpuValue, fenceGpuAddress);
+
+    wddm->waitFromCpu(fenceValueToWaitFor, monitoredFence, busyWait);
+}
+} // namespace
+
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenResetDirectSubmissionThenObjectDeleted) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, Dispatcher>;
@@ -1059,51 +1117,43 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     device.reset();
 }
 
-HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerThanFenceValueToWaitWhenWaitFromCpuThenFlushMonitorFenceWithNotifyEnabledFlag) {
-    using Dispatcher = RenderDispatcher<FamilyType>;
-    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, Dispatcher>;
-    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
-
-    debugManager.flags.EnableDirectSubmission.set(1);
-
-    bool renderStreamerFound = false;
-    for (auto &engine : device->allEngines) {
-        if (engine.osContext->getEngineType() == aub_stream::EngineType::ENGINE_RCS) {
-            renderStreamerFound = true;
-            break;
-        }
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenNativeFenceAvailableWhenWaitFromCpuThenFlushMonitorFenceWithNotifyEnabledFlag) {
+    auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
+    if (directSubmission == nullptr) {
+        GTEST_SKIP();
     }
-    if (!renderStreamerFound) {
+    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
+
+    wddm->callBaseWaitFromCpu = true;
+    wddm->callBaseIsNativeFenceAvailable = false;
+    wddm->isNativeFenceAvailableReturnValue = true;
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 0u);
+
+    waitFromCpuOnDefaultEngineMonitoredFence(*device, wddm);
+
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, flushMonitorFenceCallsPerWaitFromCpu);
+    EXPECT_TRUE(directSubmission->lastNotifyKmdParamValue);
+
+    static_cast<MockWddmCsr<FamilyType> *>(csr)->directSubmission.reset();
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenNativeFenceNotAvailableWhenWaitFromCpuThenFlushMonitorFenceWithoutNotifyEnabledFlag) {
+    auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
+    if (directSubmission == nullptr) {
         GTEST_SKIP();
     }
 
-    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
-
-    mockCsr->callParentInitDirectSubmission = false;
-
-    bool ret = csr->initDirectSubmission();
-    EXPECT_TRUE(ret);
-    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
-    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
-
-    mockCsr->directSubmission = std::make_unique<MockSubmission>(*device->getDefaultEngine().commandStreamReceiver);
-    auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
     wddm->callBaseWaitFromCpu = true;
+    wddm->callBaseIsNativeFenceAvailable = false;
+    wddm->isNativeFenceAvailableReturnValue = false;
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 0u);
 
-    D3DKMT_HANDLE handle = 1;
-    uint64_t value = 0u;
-    NEO::MonitoredFence monitorFence = {};
-    monitorFence.cpuAddress = &value;
-    auto gpuVa = castToUint64(&value);
+    waitFromCpuOnDefaultEngineMonitoredFence(*device, wddm);
 
-    static_cast<OsContextWin *>(device->getDefaultEngine().osContext)->resetMonitoredFenceParams(handle, &value, gpuVa);
-    wddm->waitFromCpu(1, monitorFence, false);
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, flushMonitorFenceCallsPerWaitFromCpu);
+    EXPECT_FALSE(directSubmission->lastNotifyKmdParamValue);
 
-    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 2u);
-    EXPECT_TRUE(directSubmission->lastNotifyKmdParamValue);
-    mockCsr->directSubmission.reset();
+    static_cast<MockWddmCsr<FamilyType> *>(csr)->directSubmission.reset();
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {

@@ -1237,7 +1237,7 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
             if (csr != nullptr) {
                 // Flush monitor fence to emit KMD interrupt.
                 auto lock = csr->obtainUniqueOwnership();
-                csr->flushMonitorFence(true);
+                csr->flushMonitorFence(isNativeFenceAvailable());
             }
             D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
             waitFromCpu.ObjectCount = 1;
