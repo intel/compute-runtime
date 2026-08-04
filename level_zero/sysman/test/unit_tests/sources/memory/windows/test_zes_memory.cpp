@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/test/unit_tests/sources/memory/windows/mock_memory.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
+
+#include <cstring>
 
 namespace L0 {
 namespace Sysman {
@@ -60,7 +63,7 @@ TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenCallingGett
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
-        zes_mem_properties_t properties;
+        zes_mem_properties_t properties = {};
 
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
 
@@ -200,6 +203,79 @@ TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountZeroWhenEnumeratingMe
         }
     } else {
         EXPECT_EQ(count, 0u);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenMemoryVendorIdExtensionAndVendorIdQueryIsNotSupportedWhenCallingZesMemoryGetPropertiesThenZeroVendorIdAndSuccessIsReturned) {
+    pKmdSysManager->mockMemoryDomains = 1;
+    clearMemHandleListAndReinit();
+
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    ASSERT_EQ(handles.size(), memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_properties_t properties = {};
+        zes_intel_memory_vendor_id_exp_properties_t vendorIdProperties = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP};
+        vendorIdProperties.vendorId = mockMemoryVendorIdValue;
+        vendorIdProperties.length = 0xBEEFu;
+        std::strncpy(vendorIdProperties.vendorName, "unexpected", ZES_INTEL_MEMORY_VENDOR_NAME_SIZE);
+        properties.pNext = &vendorIdProperties;
+
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(properties.pNext, &vendorIdProperties);
+        EXPECT_EQ(vendorIdProperties.vendorId, 0u);
+        EXPECT_EQ(vendorIdProperties.length, 0u);
+        EXPECT_STREQ(vendorIdProperties.vendorName, "");
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenMemoryVendorIdExtensionAndVendorIdQueryIsSupportedWhenCallingZesMemoryGetPropertiesThenZeroVendorIdAndSuccessIsReturned) {
+    pKmdSysManager->mockMemoryDomains = 1;
+    clearMemHandleListAndReinit();
+
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    ASSERT_EQ(handles.size(), memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        auto pMemoryImp = static_cast<L0::Sysman::MemoryImp *>(L0::Sysman::Memory::fromHandle(handle));
+        std::unique_ptr<L0::Sysman::OsMemory> pOsMemory = std::make_unique<MockOsMemory>();
+        auto pMockOsMemory = static_cast<MockOsMemory *>(pOsMemory.get());
+        std::swap(pMemoryImp->pOsMemory, pOsMemory);
+
+        zes_mem_properties_t properties = {};
+        zes_intel_memory_vendor_id_exp_properties_t vendorIdProperties = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP};
+        properties.pNext = &vendorIdProperties;
+
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(properties.pNext, &vendorIdProperties);
+        EXPECT_EQ(pMockOsMemory->getVendorIdCalled, 1u);
+        EXPECT_EQ(vendorIdProperties.vendorId, 0u);
+        EXPECT_EQ(vendorIdProperties.length, 0u);
+        EXPECT_STREQ(vendorIdProperties.vendorName, "");
+
+        std::swap(pMemoryImp->pOsMemory, pOsMemory);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenUnsupportedExtensionStypeWhenCallingZesMemoryGetPropertiesThenExtensionIsIgnoredAndSuccessIsReturned) {
+    pKmdSysManager->mockMemoryDomains = 1;
+    clearMemHandleListAndReinit();
+
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    ASSERT_EQ(handles.size(), memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_properties_t properties = {};
+        zes_intel_memory_vendor_id_exp_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_FORCE_UINT32};
+        vendorIdProperties.vendorId = mockMemoryVendorIdValue;
+        vendorIdProperties.length = 0xBEEFu;
+        std::strncpy(vendorIdProperties.vendorName, "untouched", ZES_INTEL_MEMORY_VENDOR_NAME_SIZE);
+        properties.pNext = &vendorIdProperties;
+
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(vendorIdProperties.vendorId, mockMemoryVendorIdValue);
+        EXPECT_EQ(vendorIdProperties.length, 0xBEEFu);
+        EXPECT_STREQ(vendorIdProperties.vendorName, "untouched");
     }
 }
 

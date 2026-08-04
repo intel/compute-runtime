@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ constexpr uint32_t mockMemoryMaxBandwidth = 2;
 constexpr uint32_t mockMemoryCurrentBandwidthRead = 3840;
 constexpr uint32_t mockMemoryCurrentBandwidthWrite = 2560;
 constexpr uint32_t mockMemoryBandwidthTimestamp = 1230000;
+constexpr uint32_t mockMemoryVendorIdValue = 0xADu;
 
 struct MockMemoryManagerSysman : public MemoryManagerMock {
     MockMemoryManagerSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
@@ -202,6 +203,14 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 class PublicWddmPowerImp : public L0::Sysman::WddmMemoryImp {
   public:
     using WddmMemoryImp::pKmdSysManager;
+};
+
+struct MockOsMemory : public L0::Sysman::OsMemory {
+    ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (zes_mem_properties_t * pProperties));
+    ADDMETHOD_NOBASE(getBandwidth, ze_result_t, ZE_RESULT_SUCCESS, (zes_mem_bandwidth_t * pBandwidth));
+    ADDMETHOD_NOBASE(getState, ze_result_t, ZE_RESULT_SUCCESS, (zes_mem_state_t * pState));
+    ADDMETHOD_NOBASE(isMemoryModuleSupported, bool, true, ());
+    ADDMETHOD_NOBASE(getVendorId, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t *pVendorId));
 };
 
 struct MockSysmanProductHelperMemory : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {

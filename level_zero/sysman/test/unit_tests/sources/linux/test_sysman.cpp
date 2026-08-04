@@ -861,6 +861,21 @@ TEST_F(SysmanDeviceFixture, GivenValidSysFsAccessWhenCallingGetDevicePciBdfWithI
     EXPECT_EQ("", bdf);
 }
 
+TEST_F(SysmanDeviceFixture, GivenSysfsPathWhenCallingCreateForSurvivabilityThenBdfIsExtractedFromPath) {
+    auto pSysFsAccess = SysFsAccessInterface::createForSurvivability("/sys/bus/pci/devices/0000:03:00.0");
+    ASSERT_NE(nullptr, pSysFsAccess);
+
+    // The bdf is cached during creation, so no symlink resolution is needed here.
+    EXPECT_EQ("0000:03:00.0", pSysFsAccess->getDevicePciBdf());
+    EXPECT_EQ("/sys/bus/pci/devices/0000:03:00.0", pSysFsAccess->getDevicePciPath());
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsPathWithoutSlashWhenCallingCreateForSurvivabilityThenWholePathIsUsedAsBdf) {
+    auto pSysFsAccess = SysFsAccessInterface::createForSurvivability("0000:03:00.0");
+    ASSERT_NE(nullptr, pSysFsAccess);
+    EXPECT_EQ("0000:03:00.0", pSysFsAccess->getDevicePciBdf());
+}
+
 class PublicSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
   public:
     PublicSysFsAccessInterface() = default;

@@ -14,8 +14,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-using IsNotCRI = IsNoneProducts<IGFX_CRI>;
-
 TEST_F(SysmanDeviceFrequencyFixtureXe, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfFrequencyFilesThenFalseValueIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_FALSE(pSysmanKmdInterface->isDefaultFrequencyAvailable());

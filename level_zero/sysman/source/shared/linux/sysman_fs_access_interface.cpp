@@ -478,8 +478,9 @@ std::unique_ptr<SysFsAccessInterface> SysFsAccessInterface::create(const std::st
 
 std::unique_ptr<SysFsAccessInterface> SysFsAccessInterface::createForSurvivability(std::string_view sysfsPath) {
     auto pSysfsInterface = std::unique_ptr<SysFsAccessInterface>(new SysFsAccessInterface());
-    pSysfsInterface->dirname = std::string(sysfsPath) + "/";
-    pSysfsInterface->devicePciBdf = sysfsPath.substr(sysfsPath.find_last_of('/') + 1);
+    const std::string path(sysfsPath);
+    pSysfsInterface->dirname = path + "/";
+    pSysfsInterface->devicePciBdf = pSysfsInterface->getBaseName(path);
     return pSysfsInterface;
 }
 

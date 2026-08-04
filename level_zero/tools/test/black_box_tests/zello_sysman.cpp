@@ -1551,6 +1551,8 @@ void testSysmanMemory(ze_device_handle_t &device) {
         zes_mem_properties_t memoryProperties = {};
         zes_mem_state_t memoryState = {};
         zes_mem_bandwidth_t memoryBandwidth = {};
+        zes_intel_memory_vendor_id_exp_properties_t memoryVendorId = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP};
+        memoryProperties.pNext = &memoryVendorId;
 
         VALIDATECALL(zesMemoryGetProperties(handle, &memoryProperties));
         if (verbose) {
@@ -1561,6 +1563,19 @@ void testSysmanMemory(ze_device_handle_t &device) {
             std::cout << "Memory Size = " << memoryProperties.physicalSize << std::endl;
             std::cout << "Number of channels = " << memoryProperties.numChannels << std::endl;
             std::cout << "Memory busWidth = " << memoryProperties.busWidth << std::endl;
+            // A vendor ID of 0 indicates that the memory vendor ID could not be determined
+            if (memoryVendorId.vendorId != 0) {
+                std::cout << "Memory Vendor Id = 0x" << std::hex << memoryVendorId.vendorId << std::dec << std::endl;
+            } else {
+                std::cout << "Memory Vendor Id = not available" << std::endl;
+            }
+            // A vendor name length of 0 indicates that the memory vendor name could not be determined
+            if (memoryVendorId.length != 0) {
+                std::cout << "Memory Vendor Name = " << memoryVendorId.vendorName << std::endl;
+                std::cout << "Memory Vendor Name Length = " << memoryVendorId.length << std::endl;
+            } else {
+                std::cout << "Memory Vendor Name = not available" << std::endl;
+            }
         }
 
         VALIDATECALL(zesMemoryGetState(handle, &memoryState));

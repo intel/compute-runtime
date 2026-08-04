@@ -397,6 +397,42 @@ typedef struct _zes_intel_mem_page_offline_properties_exp_t {
 #define ZES_INTEL_MEM_TYPE_LPDDR5X 500 ///< LPDDR5X Memory Type
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_MEMORY_VENDOR_ID_EXP_PROPERTY_NAME
+/// @brief Memory vendor ID property extension name
+#define ZES_INTEL_MEMORY_VENDOR_ID_EXP_PROPERTY_NAME "ZES_intel_experimental_memory_vendor_id_property"
+#endif // ZES_INTEL_MEMORY_VENDOR_ID_EXP_PROPERTY_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_MEMORY_VENDOR_NAME_SIZE
+/// @brief Maximum memory vendor name string size
+#define ZES_INTEL_MEMORY_VENDOR_NAME_SIZE 256
+#endif // ZES_INTEL_MEMORY_VENDOR_NAME_SIZE
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query memory vendor ID extension Version(s)
+typedef enum _zes_intel_memory_vendor_id_exp_properties_version_t {
+    ZES_INTEL_MEMORY_VENDOR_ID_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                     ///< version 1.0
+    ZES_INTEL_MEMORY_VENDOR_ID_EXP_PROPERTIES_VERSION_CURRENT = ZES_INTEL_MEMORY_VENDOR_ID_EXP_PROPERTIES_VERSION_1_0, ///< latest known version
+    ZES_INTEL_MEMORY_VENDOR_ID_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_memory_vendor_id_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query memory vendor ID.
+/// This structure can be passed in the 'pNext' of zes_mem_properties_t
+typedef struct _zes_intel_memory_vendor_id_exp_properties_t {
+    zes_structure_type_ext_t stype;                     ///< [in] type of this structure
+    void *pNext;                                        ///< [in][optional] must be null or a pointer to an extension-specific
+                                                        ///< structure (i.e. contains stype and pNext).
+    uint32_t vendorId;                                  ///< [out] Memory vendor ID for the device. A value of 0 indicates that
+                                                        ///< the memory vendor ID could not be determined.
+    uint16_t length;                                    ///< [out] Length of the memory vendor name, excluding the null
+                                                        ///< terminator. A value of 0 indicates that the memory vendor name
+                                                        ///< could not be determined.
+    char vendorName[ZES_INTEL_MEMORY_VENDOR_NAME_SIZE]; ///< [out] Memory vendor name for the device (NULL terminated string
+                                                        ///< value).
+} zes_intel_memory_vendor_id_exp_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_DEVICE_HEALTH_EXP_NAME
 /// @brief Device Health Extension Name
 #define ZES_INTEL_DEVICE_HEALTH_EXP_NAME "ZES_intel_experimental_device_health"

@@ -28,6 +28,11 @@ ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     return pSysmanProductHelper->getMemoryProperties(pProperties, pLinuxSysmanImp, pDrm, pSysmanKmdInterface, subdeviceId, isSubdevice);
 }
 
+ze_result_t LinuxMemoryImp::getVendorId(uint32_t *pVendorId) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getMemoryVendorId(pLinuxSysmanImp, pVendorId);
+}
+
 ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     return pSysmanProductHelper->getMemoryBandwidth(pBandwidth, pLinuxSysmanImp, subdeviceId);

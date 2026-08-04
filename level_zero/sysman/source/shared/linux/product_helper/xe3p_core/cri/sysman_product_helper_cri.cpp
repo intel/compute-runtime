@@ -144,7 +144,8 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"MEMSS18_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2160},
       {"MEMSS19_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2240}}},
     {"0x5e2fa270", // CRI GFSP Rev 0
-     {{"ECC_STATE", 52}}}};
+     {{"ECC_STATE", 52},
+      {"MEM_VENDOR_ID", 128}}}};
 
 static ze_result_t getErrorCode(ze_result_t result) {
     if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
@@ -1061,6 +1062,32 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
 
     *pTemperature = std::max({gpuMaxTemperature, memoryMaxTemperature, vrMaxTemperature, gpuBoardMaxTemperature});
     return result;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryVendorId(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pVendorId) {
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    uint32_t memVendorId = 0;
+    uint64_t telemOffset = 0;
+    std::string key("MEM_VENDOR_ID");
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memVendorId);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        return result;
+    }
+
+    *pVendorId = memVendorId;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>

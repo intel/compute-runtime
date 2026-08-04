@@ -287,8 +287,6 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidFrequencyHandleWhenCall
     }
 }
 
-using IsNotCRI = IsNoneProducts<IGFX_CRI>;
-
 HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesThenNonZeroCountIsReturnedAndCallSucceds, IsNotCRI) {
     uint32_t count = 0U;
 

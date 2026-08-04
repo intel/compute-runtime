@@ -16,8 +16,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-using IsNotCRI = IsNoneProducts<IGFX_CRI>;
-
 constexpr uint32_t invalidReasonValue = 0u;
 constexpr uint32_t validReasonValue = 1u;
 constexpr uint32_t handleComponentCount = 1u;
