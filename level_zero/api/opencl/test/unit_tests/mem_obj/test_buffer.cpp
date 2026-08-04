@@ -5,14 +5,21 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/test/common/fixtures/capturing_context.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 #include "CL/cl.h"
+
+#include <memory>
 
 namespace NEO {
 namespace LEO {
@@ -89,6 +96,64 @@ TEST_F(BufferDestructorTest, givenBufferWithExternalHandleWhenDestroyedThenZeMem
     delete buffer;
 
     EXPECT_FALSE(capturingContext->freeMemExtArgs.wasCalled());
+}
+
+struct BufferZeroCopyForHostPtrTest : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        memoryManager = driverHandle->getMemoryManager();
+        hostPtr = alignedMalloc(bufferSize, MemoryConstants::pageSize);
+        ASSERT_NE(nullptr, hostPtr);
+    }
+
+    void TearDown() override {
+        alignedFree(hostPtr);
+        Test<OclFixture>::TearDown();
+    }
+
+    static constexpr size_t bufferSize = 2 * MemoryConstants::pageSize;
+
+    MemoryManager *memoryManager = nullptr;
+    void *hostPtr = nullptr;
+};
+
+TEST_F(BufferZeroCopyForHostPtrTest, givenCacheLineAlignedHostPtrAndSizeThenZeroCopyIsAllowed) {
+    EXPECT_TRUE(Buffer::isZeroCopyAllowedForHostPtr(hostPtr, bufferSize, memoryManager));
+    EXPECT_TRUE(Buffer::isZeroCopyAllowedForHostPtr(hostPtr, MemoryConstants::cacheLineSize, memoryManager));
+
+    auto cacheLineAlignedPtr = ptrOffset(hostPtr, MemoryConstants::cacheLineSize);
+    EXPECT_TRUE(Buffer::isZeroCopyAllowedForHostPtr(cacheLineAlignedPtr, MemoryConstants::cacheLineSize, memoryManager));
+}
+
+TEST_F(BufferZeroCopyForHostPtrTest, givenNullHostPtrThenZeroCopyIsNotAllowed) {
+    EXPECT_FALSE(Buffer::isZeroCopyAllowedForHostPtr(nullptr, bufferSize, memoryManager));
+}
+
+TEST_F(BufferZeroCopyForHostPtrTest, givenHostPtrNotAlignedToCacheLineThenZeroCopyIsNotAllowed) {
+    auto misalignedPtr = ptrOffset(hostPtr, 1u);
+    EXPECT_FALSE(Buffer::isZeroCopyAllowedForHostPtr(misalignedPtr, MemoryConstants::cacheLineSize, memoryManager));
+}
+
+TEST_F(BufferZeroCopyForHostPtrTest, givenSizeNotAlignedToCacheLineThenZeroCopyIsNotAllowed) {
+    EXPECT_FALSE(Buffer::isZeroCopyAllowedForHostPtr(hostPtr, MemoryConstants::cacheLineSize - 1u, memoryManager));
+}
+
+TEST_F(BufferZeroCopyForHostPtrTest, givenZeroCopyForUseHostPtrDisabledThenZeroCopyIsNotAllowed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableZeroCopyForUseHostPtr.set(true);
+
+    EXPECT_FALSE(Buffer::isZeroCopyAllowedForHostPtr(hostPtr, bufferSize, memoryManager));
+}
+
+TEST_F(BufferZeroCopyForHostPtrTest, givenHostPtrBelowMinAddressRestrictionThenZeroCopyIsNotAllowed) {
+    MockAllocSysMemAgnosticMemoryManager restrictedMemoryManager{*neoDevice->getExecutionEnvironment()};
+    restrictedMemoryManager.testRestrictions.minAddress = castToUint64(hostPtr) + MemoryConstants::pageSize;
+    restrictedMemoryManager.ptrRestrictions = &restrictedMemoryManager.testRestrictions;
+
+    EXPECT_FALSE(Buffer::isZeroCopyAllowedForHostPtr(hostPtr, bufferSize, &restrictedMemoryManager));
+
+    restrictedMemoryManager.testRestrictions.minAddress = castToUint64(hostPtr);
+    EXPECT_TRUE(Buffer::isZeroCopyAllowedForHostPtr(hostPtr, bufferSize, &restrictedMemoryManager));
 }
 
 } // namespace ult

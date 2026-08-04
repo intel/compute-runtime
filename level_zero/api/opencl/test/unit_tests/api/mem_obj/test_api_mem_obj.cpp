@@ -5,6 +5,10 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
@@ -17,6 +21,7 @@
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 
 #include "CL/cl.h"
@@ -503,6 +508,137 @@ TEST_F(LeoNv12HostPtrImageTest, givenNV12ImageCreatedWithHostPtrAndRowPitchThenU
     EXPECT_EQ(static_cast<const void *>(hostData.data() + rowPitch * height), capturingCmdList.appendImageCopyFromMemoryExtArgs[1].srcptr);
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+}
+
+struct WhiteBoxHostPtrContext : public Context {
+    using Context::Context;
+    using Context::internalCopyCmdLists;
+};
+
+struct LeoZeroCopyUseHostPtrTest : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        cl_device_id clDeviceId = clDevice;
+        leoContext = std::make_unique<WhiteBoxHostPtrContext>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(), 1, &clDeviceId, true);
+        leoContext->internalCopyCmdLists[clDevice->getRootDeviceIndex()] = capturingCmdList.toHandle();
+        svmManager = leoContext->getL0Object()->getDriverHandle()->getSvmAllocsManager();
+
+        hostPtr = alignedMalloc(bufferSize, MemoryConstants::pageSize);
+        ASSERT_NE(nullptr, hostPtr);
+        setIntegratedDevice(true);
+    }
+
+    void TearDown() override {
+        alignedFree(hostPtr);
+        leoContext->internalCopyCmdLists.clear();
+        leoContext.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    void setIntegratedDevice(bool integrated) {
+        neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = integrated;
+    }
+
+    Buffer *createBufferFromHostPtr(void *ptr, size_t size, cl_mem_flags extraFlags = 0) {
+        cl_int errcode = CL_INVALID_VALUE;
+        auto buffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR | extraFlags, size, ptr, &errcode);
+        EXPECT_EQ(CL_SUCCESS, errcode);
+        return castToObject<Buffer>(buffer);
+    }
+
+    static constexpr size_t bufferSize = 2 * MemoryConstants::pageSize;
+
+    ClDevice *clDevice = nullptr;
+    CapturingCommandList capturingCmdList{};
+    std::unique_ptr<WhiteBoxHostPtrContext> leoContext;
+    SVMAllocsManager *svmManager = nullptr;
+    void *hostPtr = nullptr;
+};
+
+TEST_F(LeoZeroCopyUseHostPtrTest, givenIntegratedDeviceAndAlignedHostPtrWhenCreatingBufferWithUseHostPtrThenHostStorageIsImportedAndNoCopyIsAppended) {
+    auto buffer = createBufferFromHostPtr(hostPtr, bufferSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(hostPtr, buffer->getUsmPtr());
+    EXPECT_EQ(hostPtr, buffer->getCpuPtr());
+    EXPECT_FALSE(buffer->getUsesSvm());
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+
+    auto allocData = svmManager->getSVMAlloc(hostPtr);
+    ASSERT_NE(nullptr, allocData);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(hostPtr), allocData->allocationFlagsProperty.hostptr);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoZeroCopyUseHostPtrTest, givenForceHostMemoryOnDiscreteDeviceWhenCreatingBufferWithUseHostPtrThenHostStorageIsImported) {
+    setIntegratedDevice(false);
+
+    auto buffer = createBufferFromHostPtr(hostPtr, bufferSize, CL_MEM_FORCE_HOST_MEMORY_INTEL);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(hostPtr, buffer->getUsmPtr());
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoZeroCopyUseHostPtrTest, givenIntegratedDeviceAndHostPtrNotAlignedToCacheLineWhenCreatingBufferWithUseHostPtrThenStorageIsAllocatedAndCopied) {
+    auto misalignedPtr = ptrOffset(hostPtr, 1u);
+
+    auto buffer = createBufferFromHostPtr(misalignedPtr, MemoryConstants::cacheLineSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_NE(misalignedPtr, buffer->getUsmPtr());
+    EXPECT_EQ(misalignedPtr, buffer->getCpuPtr());
+
+    ASSERT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(static_cast<const void *>(misalignedPtr), capturingCmdList.appendMemoryCopyArgs[0].srcptr);
+    EXPECT_EQ(buffer->getUsmPtr(), capturingCmdList.appendMemoryCopyArgs[0].dstptr);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoZeroCopyUseHostPtrTest, givenIntegratedDeviceAndSizeNotAlignedToCacheLineWhenCreatingBufferWithUseHostPtrThenStorageIsAllocatedAndCopied) {
+    auto unalignedSize = MemoryConstants::cacheLineSize - 1u;
+
+    auto buffer = createBufferFromHostPtr(hostPtr, unalignedSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_NE(hostPtr, buffer->getUsmPtr());
+    EXPECT_EQ(hostPtr, buffer->getCpuPtr());
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoZeroCopyUseHostPtrTest, givenDiscreteDeviceWhenCreatingBufferWithUseHostPtrThenStorageIsAllocatedAndCopied) {
+    setIntegratedDevice(false);
+
+    auto buffer = createBufferFromHostPtr(hostPtr, bufferSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_NE(hostPtr, buffer->getUsmPtr());
+    EXPECT_EQ(hostPtr, buffer->getCpuPtr());
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(hostPtr));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoZeroCopyUseHostPtrTest, givenZeroCopyForUseHostPtrDisabledWhenCreatingBufferWithUseHostPtrThenStorageIsAllocatedAndCopied) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableZeroCopyForUseHostPtr.set(true);
+
+    auto buffer = createBufferFromHostPtr(hostPtr, bufferSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_NE(hostPtr, buffer->getUsmPtr());
+    EXPECT_EQ(hostPtr, buffer->getCpuPtr());
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
 } // namespace ult

@@ -23,6 +23,7 @@
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_imp.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
@@ -81,6 +82,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     if (inputMemObjFound) {
         ptr = reinterpret_cast<void *>(inputMemObjHandle);
     } else {
+        auto pCtx = NEO::LEO::castToObject<NEO::LEO::Context>(context);
         ze_memory_compression_hints_ext_desc_t compressionHints{ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC, nullptr};
         if (memoryProperties.flags.compressedHint) {
             compressionHints.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
@@ -88,9 +90,12 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
             compressionHints.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED;
         }
 
-        auto allocData = NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(hostPtr);
+        const bool preferHostMemory = memoryProperties.flags.forceHostMemory ||
+                                      pCtx->getClDevice()->getHardwareInfo().capabilityTable.isIntegratedDevice;
+
+        auto allocData = pCtx->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(hostPtr);
         if (memoryProperties.flags.useHostPtr && allocData) {
-            auto rootDeviceIndex = NEO::LEO::castToObject<NEO::LEO::Context>(context)->getClDevice()->getRootDeviceIndex();
+            auto rootDeviceIndex = pCtx->getClDevice()->getRootDeviceIndex();
             auto allocationEndAddress = allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + allocData->size;
             auto bufferEndAddress = castToUint64(hostPtr) + size;
 
@@ -101,18 +106,43 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                 ptr = cpuPtr = hostPtr;
                 copyFromHostPtr = false;
             }
-        } else if (memoryProperties.flags.forceHostMemory || (NEO::LEO::castToObject<NEO::LEO::Context>(context)->getClDevice()->getHardwareInfo().capabilityTable.isIntegratedDevice && !memoryProperties.flags.useHostPtr)) {
-            ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0};
-            ret = zeMemAllocHost(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0ContextHandle(), &hostAllocDesc, size, 0, &ptr);
-            cpuPtr = ptr;
         } else {
-            auto pCtx = NEO::LEO::castToObject<NEO::LEO::Context>(context);
-            ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0, 0};
-            if (pCtx->isSingleDeviceContext()) {
-                ret = zeMemAllocDevice(pCtx->getL0ContextHandle(), &deviceAllocDesc, size, 0, pCtx->getL0Object()->getDevices().begin()->second, &ptr);
-            } else {
-                ze_host_mem_alloc_desc_t sharedHostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, 0};
-                ret = zeMemAllocShared(pCtx->getL0ContextHandle(), &deviceAllocDesc, &sharedHostDesc, size, 0, nullptr, &ptr);
+            if (memoryProperties.flags.useHostPtr && preferHostMemory &&
+                NEO::LEO::Buffer::isZeroCopyAllowedForHostPtr(hostPtr, size, pCtx->getL0Object()->getDriverHandle()->getMemoryManager())) {
+                // Let the driver wrap the application storage instead of allocating and copying. The pointer is
+                // passed in through *ptr, as required by ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR.
+                ptr = hostPtr;
+                ze_host_mem_alloc_desc_t importHostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR};
+                if ((ZE_RESULT_SUCCESS == zeMemAllocHost(pCtx->getL0ContextHandle(), &importHostDesc, size, 0, &ptr)) &&
+                    (ptr == hostPtr)) {
+                    cpuPtr = ptr;
+                    copyFromHostPtr = false;
+                } else {
+                    // The driver would not wrap this pointer - drop whatever it handed back and take the
+                    // regular allocate and copy path below.
+                    if (ptr != nullptr && ptr != hostPtr) {
+                        zeMemFree(pCtx->getL0ContextHandle(), ptr);
+                    }
+                    ptr = nullptr;
+                }
+            }
+
+            if (nullptr == ptr) {
+                const bool allocateHostMemory = memoryProperties.flags.forceHostMemory ||
+                                                (preferHostMemory && !memoryProperties.flags.useHostPtr);
+                if (allocateHostMemory) {
+                    ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0};
+                    ret = zeMemAllocHost(pCtx->getL0ContextHandle(), &hostAllocDesc, size, 0, &ptr);
+                    cpuPtr = ptr;
+                } else {
+                    ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0, 0};
+                    if (pCtx->isSingleDeviceContext()) {
+                        ret = zeMemAllocDevice(pCtx->getL0ContextHandle(), &deviceAllocDesc, size, 0, pCtx->getL0Object()->getDevices().begin()->second, &ptr);
+                    } else {
+                        ze_host_mem_alloc_desc_t sharedHostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, 0};
+                        ret = zeMemAllocShared(pCtx->getL0ContextHandle(), &deviceAllocDesc, &sharedHostDesc, size, 0, nullptr, &ptr);
+                    }
+                }
             }
         }
     }

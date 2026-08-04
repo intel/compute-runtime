@@ -7,7 +7,9 @@
 
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
@@ -71,6 +73,30 @@ Buffer *Buffer::createSharedBuffer(Context *context, cl_mem_flags flags, Sharing
 
     sharedBuffer->setSharingHandler(sharingHandler);
     return sharedBuffer;
+}
+
+bool Buffer::isZeroCopyAllowedForHostPtr(const void *hostPtr, size_t size, MemoryManager *memoryManager) {
+    if (nullptr == hostPtr) {
+        return false;
+    }
+
+    if (debugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
+        return false;
+    }
+
+    // Sharing memory with the GPU requires cache line granularity, otherwise the buffer edges would
+    // share cache lines with unrelated CPU data.
+    if (!isL3Capable(hostPtr, size)) {
+        return false;
+    }
+
+    if (auto memRestrictions = memoryManager->getAlignedMallocRestrictions()) {
+        if (memRestrictions->minAddress > reinterpret_cast<uintptr_t>(hostPtr)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 Buffer::~Buffer() {

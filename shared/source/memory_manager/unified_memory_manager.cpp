@@ -76,7 +76,8 @@ UsmReuseInfo &SVMAllocsManager::SvmAllocationCache::getUsmReuseInfo(SvmAllocatio
 bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAllocationData *svmData, CompletionCheckPolicy completionPolicy) {
     if (false == sizeAllowed(size) ||
         svmData->isInternalAllocation ||
-        svmData->isImportedAllocation) {
+        svmData->isImportedAllocation ||
+        svmData->allocationFlagsProperty.hostptr != 0u) {
         return false;
     }
 
@@ -153,6 +154,9 @@ bool SVMAllocsManager::SvmAllocationCache::isInUse(SvmCacheAllocationInfo &cache
 
 void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties) {
     if (false == sizeAllowed(size)) {
+        return nullptr;
+    }
+    if (unifiedMemoryProperties.allocationFlags.hostptr != 0u) {
         return nullptr;
     }
     std::lock_guard<std::mutex> lock(this->mtx);

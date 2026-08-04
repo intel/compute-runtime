@@ -19,6 +19,7 @@ class Buffer : public MemObj {
 
     static cl_mem_flags inheritFlags(cl_mem_flags flags, cl_mem_flags parentFlags);
     static Buffer *createSharedBuffer(Context *context, cl_mem_flags flags, SharingHandler *sharingHandler, MultiGraphicsAllocation &&multiGraphicsAllocation);
+    static bool isZeroCopyAllowedForHostPtr(const void *hostPtr, size_t size, MemoryManager *memoryManager);
 
     cl_mem_object_type getClObjectType() final;
     size_t getApiSize() const final;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -3182,5 +3183,64 @@ TEST_F(SvmSharedAllocationCacheTest, givenDualStorageSharedAllocationWhenReusedW
 
     svmManager->freeSVMAlloc(recycled);
     svmManager->cleanupUSMAllocCaches();
+}
+
+TEST_F(SvmHostAllocationCacheTest, givenAllocationWrappingExternalHostPtrWhenFreedThenItIsNotPutIntoCache) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    memoryManager->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device);
+    ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+
+    auto externalStorage = alignedMalloc(allocationSizeBasis, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, externalStorage);
+
+    auto unifiedMemoryProperties = createMemoryProperties(InternalMemoryType::hostUnifiedMemory, nullptr);
+    unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalStorage);
+
+    auto allocation = svmManager->createHostUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties);
+    ASSERT_EQ(externalStorage, allocation);
+
+    svmManager->freeSVMAlloc(allocation);
+    EXPECT_EQ(0u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    svmManager->cleanupUSMAllocCaches();
+    alignedFree(externalStorage);
+}
+
+TEST_F(SvmHostAllocationCacheTest, givenCachedAllocationWhenAllocatingWithExternalHostPtrThenCacheIsNotUsed) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    memoryManager->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device);
+    ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+
+    auto unifiedMemoryProperties = createMemoryProperties(InternalMemoryType::hostUnifiedMemory, nullptr);
+    auto cachedAllocation = svmManager->createHostUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, cachedAllocation);
+    svmManager->freeSVMAlloc(cachedAllocation);
+    ASSERT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    auto externalStorage = alignedMalloc(allocationSizeBasis, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, externalStorage);
+
+    auto importProperties = createMemoryProperties(InternalMemoryType::hostUnifiedMemory, nullptr);
+    importProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalStorage);
+
+    auto imported = svmManager->createHostUnifiedMemoryAllocation(allocationSizeBasis, importProperties);
+    EXPECT_EQ(externalStorage, imported);
+    EXPECT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    svmManager->freeSVMAlloc(imported);
+    svmManager->cleanupUSMAllocCaches();
+    alignedFree(externalStorage);
 }
 } // namespace NEO
