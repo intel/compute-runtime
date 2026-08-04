@@ -135,6 +135,9 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
     if (lookupTable.isSharedHandle) {
         if (lookupTable.sharedHandleType.isOpaqueFDHandle || lookupTable.sharedHandleType.isDMABUFHandle) {
             ze_ipc_memory_flags_t flags = {};
+            if (hostMemDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+                flags |= ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
+            }
             *ptr = getMemHandlePtr(this->devices.begin()->second,
                                    lookupTable.sharedHandleType.fd,
                                    NEO::AllocationType::bufferHostMemory,
@@ -291,6 +294,9 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
     if (lookupTable.isSharedHandle) {
         if (lookupTable.sharedHandleType.isOpaqueFDHandle || lookupTable.sharedHandleType.isDMABUFHandle) {
             ze_ipc_memory_flags_t flags = {};
+            if (deviceMemDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+                flags |= ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
+            }
             *ptr = getMemHandlePtr(hDevice,
                                    lookupTable.sharedHandleType.fd,
                                    NEO::AllocationType::buffer,

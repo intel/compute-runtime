@@ -1693,6 +1693,36 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenSharedHandleAllocationWithCompress
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenSharedHandleAllocationWithUncacheableFlagThenGmmUsageTypeIsUncachedAndCacheableIsNotOverridden) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    osHandle handle = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::buffer, false, {});
+    properties.flags.uncacheable = true;
+    TestedDrmMemoryManager::OsHandleData osHandleData{handle};
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    auto gmm = graphicsAllocation->getDefaultGmm();
+    ASSERT_NE(nullptr, gmm);
+
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    auto expectedUsageType = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, true, productHelper, gmmHelper->getHardwareInfo());
+    EXPECT_EQ(expectedUsageType, gmm->getResourceUsageType());
+    EXPECT_TRUE(CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType()));
+
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNullptrDrmAllocationWhenTryingToRegisterItThenRegisterSharedBoHandleAllocationDoesNothing) {
     ASSERT_TRUE(memoryManager->sharedBoHandles.empty());
 
@@ -5713,6 +5743,33 @@ TEST_F(DrmAllocationTests, givenForceCoherentTrueWithGmmWhenUncachedThenGmmCache
 
     drm.getPatIndex(gmm.get(), AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, true);
     EXPECT_FALSE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
+}
+
+TEST_F(DrmAllocationTests, givenUncachedCachePolicyWhenGettingPatIndexThenUncachedGmmUsageTypeIsSelected) {
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    drm.vmBindPatIndexProgrammingSupported = true;
+
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+
+    drm.getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false);
+    EXPECT_TRUE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
+
+    drm.getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::uncached, false, false, false);
+    EXPECT_FALSE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
+}
+
+TEST_F(DrmAllocationTests, givenUncachedCachePolicyAndOverridesSetWhenGettingPatIndexThenUncachedOverrideIsUsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverridePatIndexForUncachedTypes.set(3);
+    debugManager.flags.OverridePatIndexForCachedTypes.set(1);
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    drm.vmBindPatIndexProgrammingSupported = true;
+
+    EXPECT_EQ(1u, drm.getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false));
+    EXPECT_EQ(3u, drm.getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::uncached, false, false, false));
 }
 
 TEST_F(DrmAllocationTests, givenBoWhenMarkingForCaptureThenBosAreMarked) {

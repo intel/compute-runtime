@@ -24,6 +24,7 @@ namespace ult {
 
 void *DriverHandleGetFdMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
     this->allocationTypeRequested = allocationType;
+    this->ipcFlagsRequested = flags;
     if (mockFd == allocationMap.second) {
         return allocationMap.first;
     }

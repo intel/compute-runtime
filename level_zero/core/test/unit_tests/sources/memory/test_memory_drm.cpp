@@ -316,6 +316,58 @@ TEST_F(MemoryExportImportTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(driverHandle->allocationTypeRequested, NEO::AllocationType::buffer);
+    EXPECT_EQ(0u, driverHandle->ipcFlagsRequested & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToDeviceAllocWithExtendedImportDescriptorAndUncachedBiasThenUncachedFlagIsPropagated) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_external_memory_export_desc_t extendedDesc = {};
+    extendedDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;
+    extendedDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    deviceDesc.pNext = &extendedDesc;
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_external_memory_export_fd_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    extendedProperties.fd = std::numeric_limits<int>::max();
+    memoryProperties.pNext = &extendedProperties;
+
+    result = context->getMemAllocProperties(ptr, &memoryProperties, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_device_mem_alloc_desc_t importDeviceDesc = {};
+    ze_external_memory_import_fd_t extendedImportDesc = {};
+    extendedImportDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+    extendedImportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    extendedImportDesc.fd = extendedProperties.fd;
+    importDeviceDesc.pNext = &extendedImportDesc;
+    importDeviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    void *importedPtr = nullptr;
+    result = context->allocDeviceMem(device->toHandle(),
+                                     &importDeviceDesc,
+                                     size, alignment, &importedPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(driverHandle->allocationTypeRequested, NEO::AllocationType::buffer);
+    EXPECT_NE(0u, driverHandle->ipcFlagsRequested & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -366,6 +418,14 @@ TEST_F(MemoryExportImportTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(driverHandle->allocationTypeRequested, NEO::AllocationType::bufferHostMemory);
+    EXPECT_EQ(0u, driverHandle->ipcFlagsRequested & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED);
+
+    importHostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+    void *importedUncachedPtr = nullptr;
+    result = context->allocHostMem(&importHostDesc,
+                                   size, alignment, &importedUncachedPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(0u, driverHandle->ipcFlagsRequested & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

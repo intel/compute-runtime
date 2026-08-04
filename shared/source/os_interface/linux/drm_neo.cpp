@@ -1585,7 +1585,8 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
 
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    GmmResourceUsageType usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper, getHardwareInfo());
+    const bool forceUncached = (cachePolicy == CachePolicy::uncached);
+    GmmResourceUsageType usageType = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, productHelper, getHardwareInfo());
     auto isUncachedType = CacheSettingsHelper::isUncachedType(usageType);
 
     if (isUncachedType && debugManager.flags.OverridePatIndexForUncachedTypes.get() != -1) {
