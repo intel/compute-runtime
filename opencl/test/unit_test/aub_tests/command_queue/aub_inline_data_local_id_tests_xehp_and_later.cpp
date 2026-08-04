@@ -79,7 +79,7 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
     }
 
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;
-    TestVariables variables[4] = {};
+    TestVariables variables[3] = {};
     size_t variablesCount;
 
     HardwareParse hwParser;
@@ -90,37 +90,37 @@ struct InlineDataFixture : AubDispatchThreadDataFixture {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         debugManager.flags.EnablePassInlineData.set(true);
 
-        initializeKernel3Variables();
+        initializeKernel1Variables();
 
         AubDispatchThreadDataFixture::setUp();
 
-        setUpKernel3();
+        setUpKernel1();
     }
 
-    void initializeKernel3Variables() {
-        kernelIds |= (1 << 3);
-        variables[3].sizeUserMemory = 4096;
-        variables[3].typeSize = sizeof(unsigned int);
-        variables[3].gwsSize = 128;
-        variables[3].lwsSize = 32;
+    void initializeKernel1Variables() {
+        kernelIds |= (1 << 1);
+        variables[1].sizeUserMemory = 4096;
+        variables[1].typeSize = sizeof(unsigned int);
+        variables[1].gwsSize = 128;
+        variables[1].lwsSize = 32;
     }
 
-    void setUpKernel3() {
-        memset(variables[3].destMemory, 0xFE, variables[3].sizeUserMemory);
+    void setUpKernel1() {
+        memset(variables[1].destMemory, 0xFE, variables[1].sizeUserMemory);
 
-        kernels[3]->setArg(0, variables[3].destBuffer);
+        kernels[1]->setArg(0, variables[1].destBuffer);
 
-        variables[3].sizeWrittenMemory = variables[3].gwsSize * variables[3].typeSize;
-        variables[3].expectedMemory = alignedMalloc(variables[3].sizeWrittenMemory, 4096);
-        memset(variables[3].expectedMemory, 0, variables[3].sizeWrittenMemory);
-        variables[3].sizeRemainderMemory = variables[3].sizeUserMemory - variables[3].sizeWrittenMemory;
-        variables[3].expectedRemainderMemory = alignedMalloc(variables[3].sizeRemainderMemory, 4096);
-        memcpy_s(variables[3].expectedRemainderMemory,
-                 variables[3].sizeRemainderMemory,
-                 variables[3].destMemory,
-                 variables[3].sizeRemainderMemory);
+        variables[1].sizeWrittenMemory = variables[1].gwsSize * variables[1].typeSize;
+        variables[1].expectedMemory = alignedMalloc(variables[1].sizeWrittenMemory, 4096);
+        memset(variables[1].expectedMemory, 0, variables[1].sizeWrittenMemory);
+        variables[1].sizeRemainderMemory = variables[1].sizeUserMemory - variables[1].sizeWrittenMemory;
+        variables[1].expectedRemainderMemory = alignedMalloc(variables[1].sizeRemainderMemory, 4096);
+        memcpy_s(variables[1].expectedRemainderMemory,
+                 variables[1].sizeRemainderMemory,
+                 variables[1].destMemory,
+                 variables[1].sizeRemainderMemory);
 
-        variables[3].remainderDestMemory = static_cast<char *>(variables[3].destMemory) + variables[3].sizeWrittenMemory;
+        variables[1].remainderDestMemory = static_cast<char *>(variables[1].destMemory) + variables[1].sizeWrittenMemory;
     }
 };
 
@@ -129,7 +129,7 @@ using XeHPAndLaterAubInlineDataTest = Test<InlineDataFixture>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitIntoSingleGrfWhenInlineDataAllowedThenCopyAllCrossThreadIntoInline) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
-    auto *kernel = kernels[3].get();
+    auto *kernel = kernels[1].get();
 
     if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernel->getKernelInfo().kernelDescriptor)) {
         return;
@@ -197,15 +197,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSizeMoreThanSingleGrfWhenInlineDataAllowedThenCopyGrfCrossThreadToInline) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
-    auto *kernel = this->kernels[3].get();
+    auto *kernel = this->kernels[1].get();
     if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernel->getKernelInfo().kernelDescriptor)) {
         return;
     }
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t globalWorkSize[3] = {variables[3].gwsSize, 1, 1};
-    size_t localWorkSize[3] = {variables[3].lwsSize, 1, 1};
+    size_t globalWorkSize[3] = {variables[1].gwsSize, 1, 1};
+    size_t localWorkSize[3] = {variables[1].lwsSize, 1, 1};
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
@@ -272,8 +272,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
         EXPECT_EQ(0, memcmp(payloadData, crossThreadData, crossThreadDataSize));
     }
 
-    expectMemory<FamilyType>(variables[3].destMemory, variables[3].expectedMemory, variables[3].sizeWrittenMemory);
-    expectMemory<FamilyType>(variables[3].remainderDestMemory, variables[3].expectedRemainderMemory, variables[3].sizeRemainderMemory);
+    expectMemory<FamilyType>(variables[1].destMemory, variables[1].expectedMemory, variables[1].sizeWrittenMemory);
+    expectMemory<FamilyType>(variables[1].remainderDestMemory, variables[1].expectedRemainderMemory, variables[1].sizeRemainderMemory);
 }
 
 struct HwLocalIdsFixture : AubDispatchThreadDataFixture {
@@ -281,46 +281,46 @@ struct HwLocalIdsFixture : AubDispatchThreadDataFixture {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
-        initializeKernel2Variables();
+        initializeKernel0Variables();
 
         AubDispatchThreadDataFixture::setUp();
 
-        if (kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.flags.passInlineData) {
+        if (kernels[0]->getKernelInfo().kernelDescriptor.kernelAttributes.flags.passInlineData) {
             debugManager.flags.EnablePassInlineData.set(true);
         }
 
-        setUpKernel2();
+        setUpKernel0();
     }
 
-    void initializeKernel2Variables() {
-        kernelIds |= (1 << 2);
-        variables[2].sizeUserMemory = 4096;
-        variables[2].scalarArg = 0xAA;
-        variables[2].typeSize = sizeof(unsigned int);
-        variables[2].gwsSize = 256;
-        variables[2].lwsSize = 32;
+    void initializeKernel0Variables() {
+        kernelIds |= (1 << 0);
+        variables[0].sizeUserMemory = 4096;
+        variables[0].scalarArg = 0xAA;
+        variables[0].typeSize = sizeof(unsigned int);
+        variables[0].gwsSize = 256;
+        variables[0].lwsSize = 32;
     }
 
-    void setUpKernel2() {
-        memset(variables[2].destMemory, 0xFE, variables[2].sizeUserMemory);
+    void setUpKernel0() {
+        memset(variables[0].destMemory, 0xFE, variables[0].sizeUserMemory);
 
-        kernels[2]->setArg(0, sizeof(variables[2].scalarArg), &variables[2].scalarArg);
-        kernels[2]->setArg(1, variables[2].destBuffer);
+        kernels[0]->setArg(0, sizeof(variables[0].scalarArg), &variables[0].scalarArg);
+        kernels[0]->setArg(1, variables[0].destBuffer);
 
-        variables[2].sizeWrittenMemory = variables[2].gwsSize * variables[2].typeSize;
-        variables[2].expectedMemory = alignedMalloc(variables[2].sizeWrittenMemory, 4096);
-        unsigned int *expectedData = static_cast<unsigned int *>(variables[2].expectedMemory);
-        for (size_t i = 0; i < variables[2].gwsSize; i++) {
-            *(expectedData + i) = variables[2].scalarArg;
+        variables[0].sizeWrittenMemory = variables[0].gwsSize * variables[0].typeSize;
+        variables[0].expectedMemory = alignedMalloc(variables[0].sizeWrittenMemory, 4096);
+        unsigned int *expectedData = static_cast<unsigned int *>(variables[0].expectedMemory);
+        for (size_t i = 0; i < variables[0].gwsSize; i++) {
+            *(expectedData + i) = variables[0].scalarArg;
         }
-        variables[2].sizeRemainderMemory = variables[2].sizeUserMemory - variables[2].sizeWrittenMemory;
-        variables[2].expectedRemainderMemory = alignedMalloc(variables[2].sizeRemainderMemory, 4096);
-        memcpy_s(variables[2].expectedRemainderMemory,
-                 variables[2].sizeRemainderMemory,
-                 variables[2].destMemory,
-                 variables[2].sizeRemainderMemory);
+        variables[0].sizeRemainderMemory = variables[0].sizeUserMemory - variables[0].sizeWrittenMemory;
+        variables[0].expectedRemainderMemory = alignedMalloc(variables[0].sizeRemainderMemory, 4096);
+        memcpy_s(variables[0].expectedRemainderMemory,
+                 variables[0].sizeRemainderMemory,
+                 variables[0].destMemory,
+                 variables[0].sizeRemainderMemory);
 
-        variables[2].remainderDestMemory = static_cast<char *>(variables[2].destMemory) + variables[2].sizeWrittenMemory;
+        variables[0].remainderDestMemory = static_cast<char *>(variables[0].destMemory) + variables[0].sizeWrittenMemory;
     }
 };
 
@@ -331,13 +331,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t globalWorkSize[3] = {variables[2].gwsSize, 1, 1};
-    size_t localWorkSize[3] = {variables[2].lwsSize, 1, 1};
+    size_t globalWorkSize[3] = {variables[0].gwsSize, 1, 1};
+    size_t localWorkSize[3] = {variables[0].lwsSize, 1, 1};
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    auto *kernel = this->kernels[2].get();
+    auto *kernel = this->kernels[0].get();
 
     auto retVal = pCmdQ->enqueueKernel(
         kernel,
@@ -386,8 +386,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
 
     pCmdQ->flush();
 
-    expectMemory<FamilyType>(variables[2].destMemory, variables[2].expectedMemory, variables[2].sizeWrittenMemory);
-    expectMemory<FamilyType>(variables[2].remainderDestMemory, variables[2].expectedRemainderMemory, variables[2].sizeRemainderMemory);
+    expectMemory<FamilyType>(variables[0].destMemory, variables[0].expectedMemory, variables[0].sizeWrittenMemory);
+    expectMemory<FamilyType>(variables[0].remainderDestMemory, variables[0].expectedRemainderMemory, variables[0].sizeRemainderMemory);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalWorkSizeButCompatibleWorkOrderWhenLocalIdsAreUsedThenDataVerifiesCorrectly) {
@@ -397,7 +397,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
     size_t globalWorkSize[3] = {200, 1, 1};
     size_t localWorkSize[3] = {200, 1, 1};
 
-    auto *kernel = this->kernels[2].get();
+    auto *kernel = this->kernels[0].get();
 
     auto retVal = pCmdQ->enqueueKernel(
         kernel,
@@ -436,7 +436,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
 
     pCmdQ->flush();
 
-    expectMemory<FamilyType>(variables[2].destMemory, variables[2].expectedMemory, globalWorkSize[0] * variables[2].typeSize);
+    expectMemory<FamilyType>(variables[0].destMemory, variables[0].expectedMemory, globalWorkSize[0] * variables[0].typeSize);
 }
 
 struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
@@ -444,13 +444,13 @@ struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
-        kernelIds |= (1 << 9);
-        variables[0].sizeUserMemory = 16 * MemoryConstants::kiloByte;
+        kernelIds |= (1 << 2);
+        variables[2].sizeUserMemory = 16 * MemoryConstants::kiloByte;
         AubDispatchThreadDataFixture::setUp();
 
-        memset(variables[0].destMemory, 0, variables[0].sizeUserMemory);
-        variables[0].expectedMemory = alignedMalloc(variables[0].sizeUserMemory, 4096);
-        kernels[9]->setArg(0, variables[0].destBuffer);
+        memset(variables[2].destMemory, 0, variables[2].sizeUserMemory);
+        variables[2].expectedMemory = alignedMalloc(variables[2].sizeUserMemory, 4096);
+        kernels[2]->setArg(0, variables[2].destBuffer);
     }
 };
 
@@ -462,7 +462,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     size_t globalWorkSize[3] = {256, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
 
-    auto *kernel = this->kernels[9].get();
+    auto *kernel = this->kernels[2].get();
 
     auto retVal = pCmdQ->enqueueKernel(
         kernel,
@@ -507,7 +507,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     pCmdQ->finish(false);
 
     // we expect sequence of local ids from 0..256
-    auto expectedMemory = reinterpret_cast<uint32_t *>(variables[0].expectedMemory);
+    auto expectedMemory = reinterpret_cast<uint32_t *>(variables[2].expectedMemory);
     auto currentWorkItem = 0u;
 
     while (currentWorkItem < localWorkSize[0]) {
@@ -515,5 +515,5 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
         expectedMemory++;
     }
 
-    expectMemory<FamilyType>(variables[0].destMemory, variables[0].expectedMemory, ptrDiff(expectedMemory, variables[0].expectedMemory));
+    expectMemory<FamilyType>(variables[2].destMemory, variables[2].expectedMemory, ptrDiff(expectedMemory, variables[2].expectedMemory));
 }

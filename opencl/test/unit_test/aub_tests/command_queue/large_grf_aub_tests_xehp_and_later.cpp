@@ -83,7 +83,7 @@ class AUBRunLargeGrfKernelFixture {
             retVal = pProgram->build(pProgram->getDevices(), nullptr);
             ASSERT_EQ(CL_SUCCESS, retVal);
             const KernelInfo *kernelInfoSmallGrf =
-                pProgram->getKernelInfo("simple_kernel_1", rootDeviceIndex);
+                pProgram->getKernelInfo("simple_kernel_4", rootDeviceIndex);
             ASSERT_NE(nullptr, kernelInfoSmallGrf);
             EXPECT_LE(
                 kernelInfoSmallGrf->kernelDescriptor.kernelAttributes.numGrfRequired,

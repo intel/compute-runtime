@@ -164,62 +164,6 @@ function(neo_gen_kernels platform_it_lower device revision_id)
   set(kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile_${platform_it_lower}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
-function(neo_gen_kernels_with_options platform_it_lower device revision_id filepath)
-  set(kernels_to_compile)
-  foreach(filearg ${filepath})
-    get_filename_component(filename ${filearg} NAME)
-    get_filename_component(basename ${filearg} NAME_WE)
-    get_filename_component(workdir ${filearg} DIRECTORY)
-    get_filename_component(absolute_filepath ${filearg} ABSOLUTE)
-
-    set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
-    if("${CORE_TYPE}" IN_LIST XE3P_AND_LATER_CORE_TYPES)
-      set(addrmode "default")
-    else()
-      set(addrmode "bindful")
-    endif()
-
-    foreach(arg ${ARGN})
-      string(REPLACE " " "_" argwospaces ${arg})
-      set(base_filename ${basename}_${argwospaces})
-      set(outputname_base "${base_filename}_${platform_it_lower}")
-      set(outputpath_base "${outputdir}/${outputname_base}")
-      set(output_file "${outputpath_base}.bin")
-      if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-        add_custom_command(
-                           OUTPUT ${output_file}
-                           COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${arg}
-                           WORKING_DIRECTORY ${workdir}
-                           DEPENDS ${filearg} ocloc copy_compiler_files ${PREVIOUS_KERNELS}
-        )
-
-        if(NEO_SERIALIZED_BUILTINS_COMPILATION)
-          set(PREVIOUS_KERNELS ${output_file})
-        endif()
-        list(APPEND kernels_to_compile ${output_file})
-      else()
-        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/${base_filename}_${platform_it_lower}.bin")
-        add_custom_command(
-                           OUTPUT ${output_file}
-                           COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
-                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
-        )
-
-        list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${output_file})
-      endif()
-    endforeach()
-  endforeach()
-  list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile})
-  set(kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile_${platform_it_lower}_${revision_id}} PARENT_SCOPE)
-endfunction()
-
-set(TEST_KERNEL_options
-    "-cl-fast-relaxed-math"
-    "-cl-finite-math-only"
-    "-cl-kernel-arg-info"
-    "-x spir -spir-std=1.2"
-)
-
 file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
 
 macro(macro_for_each_platform)
@@ -232,17 +176,12 @@ macro(macro_for_each_platform)
     list(REMOVE_ITEM PLATFORM_TEST_KERNELS ${KERNEL_TO_REMOVE_PATH})
   endforeach()
 
-  set(PLATFORM_TEST_COPY_KERNELS ${PLATFORM_TEST_KERNELS})
-  list(FILTER PLATFORM_TEST_COPY_KERNELS INCLUDE REGEX "CopyBuffer_simd[0-9]+\\.cl")
-  list(GET PLATFORM_TEST_COPY_KERNELS 0 TEST_KERNEL)
-
   set(PREVIOUS_KERNELS)
 
   if(WIN32 OR CMAKE_SIZEOF_VOID_P EQUAL 8)
     foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
       parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
       neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${PLATFORM_TEST_KERNELS})
-      neo_gen_kernels_with_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL} ${TEST_KERNEL_options})
     endforeach()
 
     #compile gen specific kernels if any were found
