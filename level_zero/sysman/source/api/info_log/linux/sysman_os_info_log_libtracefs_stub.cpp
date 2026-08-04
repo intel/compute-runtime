@@ -6,10 +6,11 @@
  */
 
 #include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_imp.h"
-#include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
 
 namespace L0 {
 namespace Sysman {
+
+struct TraceFsApi {};
 
 std::unique_ptr<TraceFsApi> (*LinuxInfoLogImp::createTraceFsApi)() = []() -> std::unique_ptr<TraceFsApi> { return nullptr; };
 
