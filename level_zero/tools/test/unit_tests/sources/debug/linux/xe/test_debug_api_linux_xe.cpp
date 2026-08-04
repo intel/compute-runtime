@@ -4717,7 +4717,7 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugSyncHostEventWhenReadFifoSucceedButThrea
     EXPECT_EQ(session->updateStoppedThreadsAndCheckTriggerEventsCount, 0);
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenStaleEuDebugSyncHostEventWhenhandlingEventThenEventNotHandled) {
+TEST_F(DebugApiLinuxTestXe, GivenSyncHostEventOlderThanNewestAttentionSeqNoWhenHandlingEventThenEventIsHandled) {
     struct MockDebugSessionLinuxXeExt : public MockDebugSessionLinuxXe {
         MockDebugSessionLinuxXeExt(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd) {}
         ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
@@ -4741,20 +4741,23 @@ TEST_F(DebugApiLinuxTestXe, GivenStaleEuDebugSyncHostEventWhenhandlingEventThenE
     client1.clientHandle = 0x123456789;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
 
-    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[10] = 100u;
+    constexpr uint64_t lrcHandle = 10u;
+    constexpr uint64_t vmHandle = 100u;
+    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[lrcHandle] = vmHandle;
 
     NEO::EuDebugEventSyncHost syncHost = {};
     syncHost.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeSyncHost);
     syncHost.base.len = sizeof(NEO::EuDebugEventSyncHost);
     syncHost.base.seqno = 2;
     syncHost.clientHandle = client1.clientHandle;
-    syncHost.lrcHandle = 10;
+    syncHost.lrcHandle = lrcHandle;
 
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&syncHost.base));
-    EXPECT_EQ(session->readFifoCount, 0);
+    EXPECT_EQ(session->readFifoCount, 1);
+    EXPECT_EQ(session->attentionEventContext.count(vmHandle), 1u);
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenInterruptSentWhenSyncHostEventSeqNoIsLessThanInterruptSeqNoThenEventNotHandled) {
+TEST_F(DebugApiLinuxTestXe, GivenInterruptSentWhenSyncHostEventSeqNoIsLessThanInterruptSeqNoThenEventIsHandled) {
     struct MockDebugSessionLinuxXeExt : public MockDebugSessionLinuxXe {
         MockDebugSessionLinuxXeExt(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd) {}
         ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
@@ -4778,18 +4781,21 @@ TEST_F(DebugApiLinuxTestXe, GivenInterruptSentWhenSyncHostEventSeqNoIsLessThanIn
     client1.clientHandle = 0x123456789;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
 
-    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[10] = 100u;
+    constexpr uint64_t lrcHandle = 10u;
+    constexpr uint64_t vmHandle = 100u;
+    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[lrcHandle] = vmHandle;
 
-    session->euControlInterruptSeqno = 1;
+    session->euControlInterruptSeqno = 137;
     NEO::EuDebugEventSyncHost syncHost = {};
     syncHost.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeSyncHost);
     syncHost.base.len = sizeof(NEO::EuDebugEventSyncHost);
     syncHost.base.seqno = session->euControlInterruptSeqno - 1;
     syncHost.clientHandle = client1.clientHandle;
-    syncHost.lrcHandle = 10;
+    syncHost.lrcHandle = lrcHandle;
 
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&syncHost.base));
-    EXPECT_EQ(session->readFifoCount, 0);
+    EXPECT_EQ(session->readFifoCount, 1);
+    EXPECT_EQ(session->attentionEventContext.count(vmHandle), 1u);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenSyncHostOrAttentionEventWhenCheckingIfEventTypeIsAttentionThenTrueReturnedOtherwiseFalseReturned) {

@@ -164,6 +164,7 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
 struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionImp::allThreads;
     using L0::DebugSessionImp::apiEvents;
+    using L0::DebugSessionImp::attentionEventContext;
     using L0::DebugSessionImp::expectedAttentionEvents;
     using L0::DebugSessionImp::fifoPollInterval;
     using L0::DebugSessionImp::interruptSent;

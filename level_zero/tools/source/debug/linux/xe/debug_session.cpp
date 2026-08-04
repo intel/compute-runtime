@@ -582,24 +582,23 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_SYNC_HOST client_handle = %llu exec_queue_handle = %llu lrc_handle = %llu\n",
                                 (uint64_t)syncHost.clientHandle, (uint64_t)syncHost.execQueueHandle, (uint64_t)syncHost.lrcHandle);
 
-        if (syncHost.base.seqno < newestAttSeqNo.load()) {
-            PRINT_DEBUGGER_INFO_LOG("Dropping stale sync host event seqno=%llu\n", (uint64_t)syncHost.base.seqno);
-        } else if (interruptSent && syncHost.base.seqno <= euControlInterruptSeqno) {
-            PRINT_DEBUGGER_INFO_LOG("Discarding SYNC HOST event for interrupt request. Event seqno == %llu <= %llu == interrupt seqno\n",
-                                    static_cast<uint64_t>(syncHost.base.seqno), euControlInterruptSeqno);
-        } else {
-            AttentionEventFields attentionEventFields{};
-            attentionEventFields.clientHandle = syncHost.clientHandle;
-            attentionEventFields.contextHandle = syncHost.execQueueHandle;
-            attentionEventFields.lrcHandle = syncHost.lrcHandle;
+        // SYNC HOST events are never filtered by seqno. A platform reports stopped threads either through EU ATTENTION
+        // bitmasks or through SYNC HOST plus SW FIFO polling, never both, so there is no attention bitmask here that
+        // could go stale - the event only registers the lrc context for FIFO polling and reads the current FIFO
+        // content. Interrupt all issues one EU CONTROL per lrc, so a SYNC HOST triggered by the interrupt of one lrc is
+        // stamped before the EU CONTROL of the next one. Filtering on seqno would discard that event and leave the
+        // FIFO unpolled for its VM for the rest of the session.
+        AttentionEventFields attentionEventFields{};
+        attentionEventFields.clientHandle = syncHost.clientHandle;
+        attentionEventFields.contextHandle = syncHost.execQueueHandle;
+        attentionEventFields.lrcHandle = syncHost.lrcHandle;
 
-            auto vmHandle = getVmHandleFromClientAndlrcHandle(syncHost.clientHandle, syncHost.lrcHandle);
-            if (vmHandle == invalidHandle) {
-                PRINT_DEBUGGER_ERROR_LOG("%s", "DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_SYNC_HOST invalid vmHandle\n");
-            } else {
-                attentionEventContext[vmHandle] = attentionEventFields;
-                handleStoppedThreads();
-            }
+        auto vmHandle = getVmHandleFromClientAndlrcHandle(syncHost.clientHandle, syncHost.lrcHandle);
+        if (vmHandle == invalidHandle) {
+            PRINT_DEBUGGER_ERROR_LOG("%s", "DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_SYNC_HOST invalid vmHandle\n");
+        } else {
+            attentionEventContext[vmHandle] = attentionEventFields;
+            handleStoppedThreads();
         }
     } else {
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", (uint16_t)event->type, (uint16_t)event->flags, (uint32_t)event->len);
@@ -1176,8 +1175,9 @@ int DebugSessionLinuxXe::threadControlInterruptAll() {
             } else {
                 DEBUG_BREAK_IF(euControlInterruptSeqno >= euControl.seqno);
                 euControlInterruptSeqno = euControl.seqno;
-                PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", static_cast<uint64_t>(euControl.seqno),
-                                        static_cast<uint32_t>(euControl.cmd));
+                PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u, execQueueHandle = %llu lrcHandle = %llu\n",
+                                        static_cast<uint64_t>(euControl.seqno), static_cast<uint32_t>(euControl.cmd),
+                                        static_cast<uint64_t>(euControl.execQueueHandle), static_cast<uint64_t>(euControl.lrcHandle));
             }
         }
     }
