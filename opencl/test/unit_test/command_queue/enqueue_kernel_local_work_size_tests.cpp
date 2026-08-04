@@ -54,10 +54,7 @@ struct EnqueueKernelRequiredWorkSize : public CommandQueueHwFixture,
     MockKernel *pKernel = nullptr;
 };
 
-// Kernel specifies the optional reqd_work_group_size() attribute but it wasn't
-// specified.  We'll permit the user to not specify the local work group size
-// and pick up the correct values instead.
-HWTEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqueueingKernelThenLwsIsSetCorrectly) {
+TEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqueueingKernelThenLwsIsSetCorrectly) {
     size_t globalWorkSize[3] = {32, 32, 32};
     size_t *localWorkSize = nullptr;
 
@@ -82,7 +79,6 @@ HWTEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqueue
     }
 }
 
-// Fully specified
 TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqueueingKernelThenLwsIsSetCorrectly) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 32};
@@ -108,8 +104,7 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqueueingKe
     }
 }
 
-// Underspecified.  Won't permit.
-HWTEST_F(EnqueueKernelRequiredWorkSize, givenKernelRequiringLocalWorkgroupSizeWhen1DimensionIsPassedThatIsCorrectThenNdRangeIsSuccessful) {
+TEST_F(EnqueueKernelRequiredWorkSize, givenKernelRequiringLocalWorkgroupSizeWhen1DimensionIsPassedThatIsCorrectThenNdRangeIsSuccessful) {
     size_t globalWorkOffset[1] = {0};
     size_t globalWorkSize[1] = {32};
     size_t localWorkSize[1] = {8};
@@ -127,8 +122,7 @@ HWTEST_F(EnqueueKernelRequiredWorkSize, givenKernelRequiringLocalWorkgroupSizeWh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-// Incorrectly specified
-HWTEST_F(EnqueueKernelRequiredWorkSize, GivenInvalidRequiredWorkgroupSizeWhenEnqueuingKernelThenInvalidWorkGroupSizeErrorIsReturned) {
+TEST_F(EnqueueKernelRequiredWorkSize, GivenInvalidRequiredWorkgroupSizeWhenEnqueuingKernelThenInvalidWorkGroupSizeErrorIsReturned) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 32};
     size_t localWorkSize[3] = {16, 8, 1};

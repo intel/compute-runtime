@@ -11,9 +11,9 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
-#include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
@@ -142,36 +142,25 @@ TEST(ProgramNonUniform, WhenSettingAllowNonUniformThenGettingAllowNonUniformRetu
     EXPECT_TRUE(program.getAllowNonUniform());
 }
 
-class ProgramNonUniformTest : public ContextFixture,
-                              public PlatformFixture,
+class ProgramNonUniformTest : public ClDeviceFixture,
                               public CommandQueueHwFixture,
                               public testing::Test {
 
-    using ContextFixture::setUp;
-    using PlatformFixture::setUp;
-
   protected:
-    ProgramNonUniformTest() {
-    }
-
     void SetUp() override {
-        PlatformFixture::setUp();
-        device = pPlatform->getClDevice(0);
-        ContextFixture::setUp(1, &device);
-        CommandQueueHwFixture::setUp(pPlatform->getClDevice(0), 0);
+        ClDeviceFixture::setUp();
+        CommandQueueHwFixture::setUp(pClDevice, 0);
     }
 
     void TearDown() override {
         CommandQueueHwFixture::tearDown();
-        ContextFixture::tearDown();
-        PlatformFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
-    cl_device_id device;
     cl_int retVal = CL_SUCCESS;
 };
 
 TEST_F(ProgramNonUniformTest, GivenNonUniformAllowedWhenExecutingKernelWithNonUniformThenEnqueueSucceeds) {
-    MockKernelWithInternals mockKernelWithInternals(*pContext, MockKernelWithInternalsConfig{.addDefaultArgs = true});
+    MockKernelWithInternals mockKernelWithInternals(*context, MockKernelWithInternalsConfig{.addDefaultArgs = true});
     mockKernelWithInternals.mockProgram->setAllowNonUniform(true);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
@@ -191,7 +180,7 @@ TEST_F(ProgramNonUniformTest, GivenNonUniformAllowedWhenExecutingKernelWithNonUn
 }
 
 TEST_F(ProgramNonUniformTest, GivenNonUniformNotAllowedWhenExecutingKernelWithNonUniformThenInvalidWorkGroupSizeIsReturned) {
-    MockKernelWithInternals mockKernelWithInternals(*pContext, MockKernelWithInternalsConfig{.addDefaultArgs = true});
+    MockKernelWithInternals mockKernelWithInternals(*context, MockKernelWithInternalsConfig{.addDefaultArgs = true});
     mockKernelWithInternals.mockProgram->setAllowNonUniform(false);
     auto pKernel = mockKernelWithInternals.mockKernel;
 

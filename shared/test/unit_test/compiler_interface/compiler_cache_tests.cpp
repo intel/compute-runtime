@@ -522,23 +522,14 @@ class CompilerInterfaceOclElfCacheTest : public ::testing::Test, public Compiler
         igcDebugVarsDeviceBinary.forceBuildFailure = false;
         igcDebugVarsDeviceBinary.binaryToReturn = deviceBinaryData.data();
         igcDebugVarsDeviceBinary.binaryToReturnSize = deviceBinaryData.size();
-
-        igcDebugVarsDeviceBinaryDebugData.forceBuildFailure = false;
-        igcDebugVarsDeviceBinaryDebugData.binaryToReturn = deviceBinaryData.data();
-        igcDebugVarsDeviceBinaryDebugData.binaryToReturnSize = deviceBinaryData.size();
-        igcDebugVarsDeviceBinaryDebugData.debugDataToReturn = debugDataToReturn.data();
-        igcDebugVarsDeviceBinaryDebugData.debugDataToReturnSize = debugDataToReturn.size();
     }
 
     MockCompilerDebugVars igcFclDebugVarsForceBuildFailure;
     MockCompilerDebugVars igcDebugVarsDeviceBinary;
-    MockCompilerDebugVars igcDebugVarsDeviceBinaryDebugData;
     std::vector<uint8_t> deviceBinaryData;
-    std::string debugDataToReturn = "dbgdata";
 
     std::unique_ptr<MockCompilerInterface> compilerInterface;
     CompilerCacheMock *mockCompilerCache;
-    std::unique_ptr<VariableBackup<HardwareInfo>> hwInfoBackup;
 };
 
 TEST_F(CompilerInterfaceOclElfCacheTest, givenIncorrectBinaryCausingPackDeviceBinaryToReturnEmptyVectorWhenPackAndCacheBinaryThenBinaryIsNotStoredInCache) {

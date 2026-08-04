@@ -706,19 +706,11 @@ TEST_F(BindlessKernelTests, givenNoStatefulArgsWhenPatchingBindlessOffsetsInCros
     EXPECT_EQ(0u, crossThreadData[0]);
 }
 
-class KernelFromBinaryTest : public ProgramSimpleFixture {
-  public:
-    void setUp() {
-        ProgramSimpleFixture::setUp();
-    }
-    void tearDown() {
-        ProgramSimpleFixture::tearDown();
-    }
-};
-typedef Test<KernelFromBinaryTest> KernelFromBinaryTests;
+using KernelCreationTests = Test<ClDeviceFixture>;
 
-TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsReturned) {
-    MockKernelWithInternals mockKernelWithInternals(*pContext);
+TEST_F(KernelCreationTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsReturned) {
+    MockContext context(pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(context);
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
     kernelInfo.addArgBuffer(0);
     kernelInfo.addArgBuffer(1);
@@ -729,8 +721,7 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
     cl_uint paramValue = 0;
     size_t paramValueSizeRet = 0;
 
-    // get size
-    retVal = kernel->getInfo(
+    auto retVal = kernel->getInfo(
         CL_KERNEL_NUM_ARGS,
         sizeof(cl_uint),
         &paramValue,
@@ -741,17 +732,27 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
     EXPECT_EQ(3u, paramValue);
 }
 
-TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
-    MockKernelWithInternals mockKernelWithInternals(*pContext);
+TEST_F(KernelCreationTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
+    MockContext context(pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(context);
 
-    // get builtIn property
     bool isBuiltIn = mockKernelWithInternals.mockKernel->isBuiltInKernel();
 
     EXPECT_FALSE(isBuiltIn);
 }
 
-TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreatedThenArgumentIsMarkedAsReadOnly) {
-    MockKernelWithInternals mockKernelWithInternals(*pContext);
+TEST_F(KernelCreationTests, WhenBuiltInKernelIsCreatedThenItIsBuiltIn) {
+    MockContext context(pClDevice);
+    MockProgram program(&context, true, toClDeviceVector(*pClDevice));
+    MockKernelInfo kernelInfo;
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+
+    EXPECT_TRUE(kernel.isBuiltInKernel());
+}
+
+TEST_F(KernelCreationTests, GivenArgumentDeclaredAsConstantWhenKernelIsCreatedThenArgumentIsMarkedAsReadOnly) {
+    MockContext context(pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(context);
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
     kernelInfo.addArgBuffer(0);
     kernelInfo.addArgBuffer(1);
