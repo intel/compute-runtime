@@ -108,7 +108,6 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
                traceFsEventEnableEntry != nullptr &&
                traceFsEventDisableEntry != nullptr &&
                traceFsLocalEventsEntry != nullptr &&
-               traceFsLocalEventsFreeEntry != nullptr &&
                traceFsInstanceGetBufferPercentEntry != nullptr &&
                traceFsInstanceSetBufferPercentEntry != nullptr &&
                traceFsInstanceGetBufferSizeEntry != nullptr &&

@@ -28,7 +28,6 @@ static constexpr std::string_view traceFsTraceOffRoutine = "tracefs_trace_off";
 static constexpr std::string_view traceFsEventEnableRoutine = "tracefs_event_enable";
 static constexpr std::string_view traceFsEventDisableRoutine = "tracefs_event_disable";
 static constexpr std::string_view traceFsLocalEventsRoutine = "tracefs_local_events";
-static constexpr std::string_view traceFsLocalEventsFreeRoutine = "tracefs_local_events_free";
 static constexpr std::string_view traceFsInstanceGetBufferPercentRoutine = "tracefs_instance_get_buffer_percent";
 static constexpr std::string_view traceFsInstanceSetBufferPercentRoutine = "tracefs_instance_set_buffer_percent";
 static constexpr std::string_view traceFsInstanceGetBufferSizeRoutine = "tracefs_instance_get_buffer_size";
@@ -65,7 +64,6 @@ bool TraceFsApi::loadEntryPoints() {
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsEventEnableRoutine, traceFsEventEnableEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsEventDisableRoutine, traceFsEventDisableEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsLocalEventsRoutine, traceFsLocalEventsEntry);
-    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsLocalEventsFreeRoutine, traceFsLocalEventsFreeEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetBufferPercentRoutine, traceFsInstanceGetBufferPercentEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceSetBufferPercentRoutine, traceFsInstanceSetBufferPercentEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetBufferSizeRoutine, traceFsInstanceGetBufferSizeEntry);
@@ -172,13 +170,6 @@ struct tep_handle *TraceFsApi::traceFsLocalEvents(const char *tracingDir) {
         return nullptr;
     }
     return (*traceFsLocalEventsEntry)(tracingDir);
-}
-
-void TraceFsApi::traceFsLocalEventsFree(struct tep_handle *tep) {
-    if (nullptr == traceFsLocalEventsFreeEntry) {
-        return;
-    }
-    (*traceFsLocalEventsFreeEntry)(tep);
 }
 
 int TraceFsApi::traceFsInstanceGetBufferPercent(struct tracefs_instance *instance) {

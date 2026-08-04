@@ -56,7 +56,6 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenMissingLibraryEntryPointThenV
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_event_enable"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_event_disable"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_local_events"));
-    EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_local_events_free"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_get_buffer_percent"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_set_buffer_percent"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_get_buffer_size"));
@@ -193,10 +192,6 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenLocalEventsCalledThenVerifyRe
     EXPECT_NE(nullptr, tep);
 }
 
-TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenLocalEventsFreeCalledThenVerifySuccess) {
-    testTraceFsApi.traceFsLocalEventsFree(&MockTraceFsOsLibrary::mockTepHandle);
-}
-
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetBufferPercentCalledThenVerifyReturnValue) {
     int percent = testTraceFsApi.traceFsInstanceGetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, percent);
@@ -279,7 +274,6 @@ TEST_F(SysmanTraceFsApiNullEntryFixture, GivenTraceFsApiWhenAllApisCalledWithNoE
 
     testTraceFsApi.traceFsInstanceDestroy(nullptr);
     testTraceFsApi.traceFsInstanceFree(nullptr);
-    testTraceFsApi.traceFsLocalEventsFree(nullptr);
 }
 
 } // namespace ult

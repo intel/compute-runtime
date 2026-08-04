@@ -106,10 +106,6 @@ struct tep_handle *mockTraceFsLocalEvents(const char *tracingDir) {
     return &MockTraceFsOsLibrary::mockTepHandle;
 }
 
-void mockTraceFsLocalEventsFree(struct tep_handle *tep) {
-    EXPECT_EQ(&MockTraceFsOsLibrary::mockTepHandle, tep);
-}
-
 int mockTraceFsInstanceGetBufferPercent(struct tracefs_instance *instance) {
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, instance);
     return MockTraceFsOsLibrary::mockBufferPercent;
@@ -162,7 +158,6 @@ MockTraceFsOsLibrary::MockTraceFsOsLibrary() {
     funcMap["tracefs_event_enable"] = reinterpret_cast<void *>(mockTraceFsEventEnable);
     funcMap["tracefs_event_disable"] = reinterpret_cast<void *>(mockTraceFsEventDisable);
     funcMap["tracefs_local_events"] = reinterpret_cast<void *>(mockTraceFsLocalEvents);
-    funcMap["tracefs_local_events_free"] = reinterpret_cast<void *>(mockTraceFsLocalEventsFree);
     funcMap["tracefs_instance_get_buffer_percent"] = reinterpret_cast<void *>(mockTraceFsInstanceGetBufferPercent);
     funcMap["tracefs_instance_set_buffer_percent"] = reinterpret_cast<void *>(mockTraceFsInstanceSetBufferPercent);
     funcMap["tracefs_instance_get_buffer_size"] = reinterpret_cast<void *>(mockTraceFsInstanceGetBufferSize);

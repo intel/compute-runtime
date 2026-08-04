@@ -37,7 +37,6 @@ typedef int (*pTraceFsTraceOff)(struct tracefs_instance *);
 typedef int (*pTraceFsEventEnable)(struct tracefs_instance *, const char *, const char *);
 typedef int (*pTraceFsEventDisable)(struct tracefs_instance *, const char *, const char *);
 typedef struct tep_handle *(*pTraceFsLocalEvents)(const char *);
-typedef void (*pTraceFsLocalEventsFree)(struct tep_handle *);
 typedef int (*pTraceFsInstanceGetBufferPercent)(struct tracefs_instance *);
 typedef int (*pTraceFsInstanceSetBufferPercent)(struct tracefs_instance *, int);
 typedef long long (*pTraceFsInstanceGetBufferSize)(struct tracefs_instance *, int);
@@ -65,7 +64,6 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL int traceFsEventDisable(struct tracefs_instance *instance, const char *system, const char *event);
 
     MOCKABLE_VIRTUAL struct tep_handle *traceFsLocalEvents(const char *tracingDir);
-    MOCKABLE_VIRTUAL void traceFsLocalEventsFree(struct tep_handle *tep);
 
     MOCKABLE_VIRTUAL int traceFsInstanceGetBufferPercent(struct tracefs_instance *instance);
     MOCKABLE_VIRTUAL int traceFsInstanceSetBufferPercent(struct tracefs_instance *instance, int val);
@@ -102,7 +100,6 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
     pTraceFsEventEnable traceFsEventEnableEntry = nullptr;
     pTraceFsEventDisable traceFsEventDisableEntry = nullptr;
     pTraceFsLocalEvents traceFsLocalEventsEntry = nullptr;
-    pTraceFsLocalEventsFree traceFsLocalEventsFreeEntry = nullptr;
     pTraceFsInstanceGetBufferPercent traceFsInstanceGetBufferPercentEntry = nullptr;
     pTraceFsInstanceSetBufferPercent traceFsInstanceSetBufferPercentEntry = nullptr;
     pTraceFsInstanceGetBufferSize traceFsInstanceGetBufferSizeEntry = nullptr;
