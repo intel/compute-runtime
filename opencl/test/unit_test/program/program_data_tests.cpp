@@ -72,6 +72,23 @@ class ProgramDataTestBase : public testing::Test,
 
 using ProgramDataTest = ProgramDataTestBase;
 
+class ProgramWithFailedRequiredLibResolution : public MockProgram {
+  public:
+    using MockProgram::MockProgram;
+
+    cl_int resolveRequiredLibs(ClDevice &, const ProgramInfo &) override {
+        return CL_BUILD_PROGRAM_FAILURE;
+    }
+};
+
+TEST_F(ProgramDataTest, givenRequiredLibResolutionFailureWhenProcessingProgramInfoThenReturnsFailure) {
+    ProgramWithFailedRequiredLibResolution program(pContext, false, toClDeviceVector(*pClDevice));
+    ProgramInfo programInfo;
+    programInfo.linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
+
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, program.processProgramInfo(programInfo, *pClDevice));
+}
+
 TEST_F(ProgramDataTest, whenGlobalConstantsAreExportedThenAllocateSurfacesAsSvm) {
     if (this->pContext->getSVMAllocsManager() == nullptr) {
         return;

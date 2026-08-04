@@ -922,4 +922,8 @@ NEO::GraphicsAllocation *Program::getExportedFunctionsSurface(uint32_t rootDevic
     return buildInfos[rootDeviceIndex].exportedFunctionsSurface;
 }
 
+const std::vector<Program *> &Program::getRequiredLibPrograms(uint32_t rootDeviceIndex) const {
+    return buildInfos[rootDeviceIndex].requiredLibPrograms;
+}
+
 } // namespace NEO

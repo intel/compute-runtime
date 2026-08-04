@@ -64,6 +64,26 @@ TEST_F(ModuleRequiredLibsTests, givenRequirementsInProgramInfoWhenDynamicLinking
     EXPECT_FALSE(module->isFullyLinked);
 }
 
+TEST_F(ModuleRequiredLibsTests, givenRequiredLibUnavailableWhenLinkingModuleThenLinkFailsWithoutDynamicLink) {
+    auto mockDevice = MockDevice(neoDevice);
+    mockDevice.getHwInfoResultPtr = defaultHwInfo.get();
+    mockDevice.getGfxCoreHelperResultPtr = execEnv->rootDeviceEnvironments[rootDeviceIndex]->gfxCoreHelper.get();
+
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(&mockDevice, nullptr, ModuleType::user);
+    mockDevice.getRequiredLibModuleCalled = 0;
+    mockDevice.getRequiredLibModuleResult = nullptr;
+
+    module->translationUnit->programInfo.requiredLibs.push_back("libFoo");
+    module->performDynamicLinkCallBase = false;
+    module->performDynamicLinkCalled = 0;
+
+    bool ret = module->linkInternalRequiredLibsModule();
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(1U, mockDevice.getRequiredLibModuleCalled);
+    EXPECT_EQ(0, module->performDynamicLinkCalled);
+    EXPECT_FALSE(module->isFullyLinked);
+}
+
 TEST_F(ModuleRequiredLibsTests, givenNoRequiredLibsInProgramInfoWhenLinkingFunctionCalledThenItReturnsEarly) {
     auto mockDevice = MockDevice(neoDevice);
     mockDevice.getHwInfoResultPtr = defaultHwInfo.get();

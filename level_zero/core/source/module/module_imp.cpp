@@ -1629,6 +1629,11 @@ bool ModuleImp::linkInternalRequiredLibsModule() {
     auto hModules = StackVec<ze_module_handle_t, 4>{this->toHandle()};
     for (const auto &libName : translationUnit->programInfo.requiredLibs) {
         auto libModule = this->device->getRequiredLibModule(libName, moduleBuildLog);
+        if (nullptr == libModule) {
+            this->isFullyLinked = false;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Linking required_libs failed: dependency (%s) unavailable\n", libName.c_str());
+            return false;
+        }
         hModules.push_back(libModule->toHandle());
     }
     ze_module_build_log_handle_t hLinkLog = {};

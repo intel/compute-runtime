@@ -281,6 +281,7 @@ struct Linker {
 
 static_assert(NEO::NonCopyableAndNonMovable<LinkerInput>);
 
+uint32_t addressSizeInBytes(LinkerInput::RelocationInfo::Type relocationType);
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames);
 std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &relocatedSymbols);
 

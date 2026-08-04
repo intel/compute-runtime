@@ -68,6 +68,7 @@ class MockProgram : public Program {
     using Program::isBuiltIn;
     using Program::isCreatedFromBinary;
     using Program::isSpirV;
+    using Program::linkAgainstRequiredLibs;
     using Program::linkBinary;
     using Program::notifyModuleCreate;
     using Program::notifyModuleDestroy;
@@ -76,6 +77,7 @@ class MockProgram : public Program {
     using Program::processGenBinaries;
     using Program::Program;
     using Program::requiresRebuild;
+    using Program::resolveRequiredLibs;
     using Program::setBuildStatus;
     using Program::sourceCode;
     using Program::specConstantsIds;
@@ -197,7 +199,7 @@ class MockProgram : public Program {
         }
         Program::replaceDeviceBinary(std::move(newBinary), newBinarySize, rootDeviceIndex);
     }
-    cl_int processGenBinary(const ClDevice &clDevice) override {
+    cl_int processGenBinary(ClDevice &clDevice) override {
         auto rootDeviceIndex = clDevice.getRootDeviceIndex();
         if (processGenBinaryCalledPerRootDevice.find(rootDeviceIndex) == processGenBinaryCalledPerRootDevice.end()) {
             processGenBinaryCalledPerRootDevice.insert({rootDeviceIndex, 1});

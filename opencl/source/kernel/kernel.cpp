@@ -1317,6 +1317,12 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
         commandStreamReceiver.makeResident(*(program->getExportedFunctionsSurface(rootDeviceIndex)));
     }
 
+    for (const auto *lib : program->getRequiredLibPrograms(rootDeviceIndex)) {
+        if (auto *libSurface = lib->getExportedFunctionsSurface(rootDeviceIndex)) {
+            commandStreamReceiver.makeResident(*libSurface);
+        }
+    }
+
     for (auto gfxAlloc : kernelSvmGfxAllocations) {
         commandStreamReceiver.makeResident(*gfxAlloc);
     }
@@ -1371,6 +1377,12 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
     if (program->getExportedFunctionsSurface(rootDeviceIndex)) {
         GeneralSurface *surface = new GeneralSurface(program->getExportedFunctionsSurface(rootDeviceIndex));
         dst.push_back(surface);
+    }
+
+    for (const auto *lib : program->getRequiredLibPrograms(rootDeviceIndex)) {
+        if (auto *libSurface = lib->getExportedFunctionsSurface(rootDeviceIndex)) {
+            dst.push_back(new GeneralSurface(libSurface));
+        }
     }
 
     for (auto gfxAlloc : kernelSvmGfxAllocations) {
@@ -1434,6 +1446,15 @@ void Kernel::getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &al
                                    .size = exportedFunctionsSurface->getUnderlyingBufferSize(),
                                    .type = CL_MEM_TYPE_UNKNOWN_INTEL,
                                    .arg_index = -1});
+    }
+
+    for (const auto *lib : program->getRequiredLibPrograms(rootDeviceIndex)) {
+        if (auto *libSurface = lib->getExportedFunctionsSurface(rootDeviceIndex)) {
+            allocationsInfo.push_back({.base = reinterpret_cast<void *>(libSurface->getGpuAddress()),
+                                       .size = libSurface->getUnderlyingBufferSize(),
+                                       .type = CL_MEM_TYPE_UNKNOWN_INTEL,
+                                       .arg_index = -1});
+        }
     }
 
     auto internalMemoryTypeToClMemTypeINTEL = [](InternalMemoryType internalType) -> cl_unified_shared_memory_type_intel {

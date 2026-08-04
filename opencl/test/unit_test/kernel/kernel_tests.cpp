@@ -1419,6 +1419,48 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenExportedFun
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
+HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenRequiredLibExportedFunctionsIsaAllocationIsMadeResident) {
+    auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    auto memoryManager = commandStreamReceiver.getMemoryManager();
+    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    MockProgram program(toClDeviceVector(*pClDevice));
+    MockProgram requiredLib(toClDeviceVector(*pClDevice));
+    auto exportedFunctionsSurface = std::make_unique<MockGraphicsAllocation>();
+    requiredLib.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface = exportedFunctionsSurface.get();
+    program.buildInfos[pDevice->getRootDeviceIndex()].requiredLibPrograms.push_back(&requiredLib);
+    MockContext ctx;
+    program.setContext(&ctx);
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
+    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+
+    kernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(exportedFunctionsSurface.get()));
+
+    std::vector<NEO::Surface *> residencySurfaces;
+    kernel->getResidency(residencySurfaces);
+    std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv = std::make_unique<ExecutionEnvironment>();
+    mockCsrExecEnv->prepareRootDeviceEnvironments(1);
+    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    mockCsrExecEnv->initializeMemoryManager();
+    {
+        CommandStreamReceiverMock csrMock(*mockCsrExecEnv.get(), 0, 1);
+        csrMock.passResidencyCallToBaseClass = false;
+        for (const auto &surface : residencySurfaces) {
+            surface->makeResident(csrMock);
+            delete surface;
+        }
+        EXPECT_EQ(1U, csrMock.residency.count(exportedFunctionsSurface->getUnderlyingBuffer()));
+    }
+
+    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+}
+
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBufferIsMadeResident) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
@@ -4370,6 +4412,31 @@ TEST_F(KernelAllocationsInfoTest, givenKernelWithExternalFunctionsSurfaceAndGetA
     EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_UNKNOWN_INTEL), allocsInfo[0].type);
     EXPECT_EQ(-1, allocsInfo[0].arg_index);
     program.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface = nullptr;
+}
+
+TEST_F(KernelAllocationsInfoTest, givenKernelWithRequiredLibExportedFunctionsSurfaceAndGetAllocationsInfoCalledThenCorrectAllocationsInfoIsReturned) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setCrossThreadDataSize(64);
+
+    char buffer[16];
+    MockGraphicsAllocation exportedFunctionsSurface(buffer, sizeof(buffer));
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    MockProgram requiredLib(&context, false, toClDeviceVector(*pClDevice));
+    requiredLib.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface = &exportedFunctionsSurface;
+    program.buildInfos[pDevice->getRootDeviceIndex()].requiredLibPrograms.push_back(&requiredLib);
+    auto kernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo;
+    kernel->getAllocationsInfo(allocsInfo);
+    ASSERT_EQ(1u, allocsInfo.size());
+    EXPECT_EQ(exportedFunctionsSurface.getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[0].base));
+    EXPECT_EQ(exportedFunctionsSurface.getUnderlyingBufferSize(), allocsInfo[0].size);
+    EXPECT_EQ(static_cast<cl_unified_shared_memory_type_intel>(CL_MEM_TYPE_UNKNOWN_INTEL), allocsInfo[0].type);
+    EXPECT_EQ(-1, allocsInfo[0].arg_index);
 }
 
 TEST_F(KernelAllocationsInfoTest, givenKernelWithSvmExecInfoSetAndGetAllocationsInfoCalledThenCorrectAllocationsInfoIsReturned) {
