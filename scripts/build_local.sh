@@ -19,11 +19,12 @@
 # Note: this script is Ubuntu-specific.
 #
 # Usage:
-#   ./build_local.sh <tag> [install_prefix]
+#   ./build_local.sh <tag> [install_prefix] [build_type]
 #
 # Examples:
 #   ./build_local.sh 26.09.37435.1
 #   ./build_local.sh 26.09.37435.1 $HOME/my_prefix
+#   ./build_local.sh 26.09.37435.1 $HOME/my_prefix Debug
 #
 # The latest release tag can be found at:
 #   https://github.com/intel/compute-runtime/releases/latest
@@ -32,14 +33,29 @@
 # any command in a pipeline that fails (not just the last one).
 set -euo pipefail
 
-# Parse arguments: the release tag is required, the install prefix is optional.
+# Parse arguments: the release tag is required, the install prefix and build
+# type are optional.
 # PREFIX is the directory where GmmLib and IGC are installed (no sudo needed).
 # It is used as CMAKE_PREFIX_PATH and PKG_CONFIG_PATH during the build, and
 # must be readable at driver load time (LD_LIBRARY_PATH=${PREFIX}/lib).
 # Defaults to $HOME/local if not specified.
-TAG="${1:?Usage: $0 <tag> [install_prefix]}"
+# BUILD_TYPE (CMAKE_BUILD_TYPE) applies to every component built from source
+# (GmmLib and compute-runtime). Defaults to Release if not specified.
+TAG="${1:?Usage: $0 <tag> [install_prefix] [build_type]}"
 PREFIX="${2:-$HOME/local}"
+BUILD_TYPE="${3:-Release}"
 REPO_URL="https://github.com/intel/compute-runtime"
+
+# Validate the build type: only Release, Debug and RelWithDebInfo are
+# supported (these are CMake's own build type names).
+case "${BUILD_TYPE}" in
+    Release|Debug|RelWithDebInfo) ;;
+    *)
+        echo "ERROR: '${BUILD_TYPE}' is not a valid build type." >&2
+        echo "       Expected one of: Release, Debug, RelWithDebInfo" >&2
+        exit 1
+        ;;
+esac
 
 # Validate the tag format: must be four dot-separated integers (e.g. 26.18.38308.1).
 if ! echo "${TAG}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
@@ -62,6 +78,7 @@ NPROC="$(nproc)"
 
 echo "=== Building compute-runtime tag: ${TAG} ==="
 echo "=== Install prefix: ${PREFIX} ==="
+echo "=== Build type: ${BUILD_TYPE} ==="
 echo "=== Work directory: ${WORKDIR} ==="
 echo ""
 
@@ -194,7 +211,7 @@ cd "${WORKDIR}"
 git clone --depth 1 -b "${GMMLIB_REV}" https://github.com/intel/gmmlib.git
 cd gmmlib
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${PREFIX}" ..
+cmake -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DCMAKE_INSTALL_PREFIX="${PREFIX}" ..
 make -j"${NPROC}"
 make install
 echo "  GmmLib installed to ${PREFIX}"
@@ -348,7 +365,7 @@ else
 fi
 
 cmake \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
     -DNEO_SKIP_UNIT_TESTS=1 \
     ${CMAKE_EXTRA_ARGS} \
     ..
@@ -382,6 +399,7 @@ echo "  Build complete!"
 echo "=========================================="
 echo ""
 echo "  Tag:        ${TAG}"
+echo "  Build type: ${BUILD_TYPE}"
 echo "  GmmLib:     ${GMMLIB_REV}"
 echo "  IGC:        ${IGC_TAG}"
 echo "  level-zero: ${LEVEL_ZERO_REV}"
