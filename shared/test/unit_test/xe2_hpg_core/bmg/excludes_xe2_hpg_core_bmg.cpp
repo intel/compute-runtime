@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,3 +9,4 @@
 
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned, IGFX_BMG);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenAdjustScratchSizeThenSizeIsNotChanged, IGFX_BMG);
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnFalse, IGFX_BMG);
