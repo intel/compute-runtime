@@ -1030,6 +1030,8 @@ set(BUILTINS_SOURCES_LIB_NAME "builtins_sources")
 set(BUILTINS_BINARIES_LIB_NAME "builtins_binaries")
 set(BUILTINS_SPIRV_LIB_NAME "builtins_spirv")
 
+add_custom_target(prepare_kernels)
+
 if(WIN32)
   set(NEO_EXTRA_LIBS Ws2_32 winmm)
 else()

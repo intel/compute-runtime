@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -48,7 +48,7 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
     )
   endif()
 
-  add_dependencies(neo_shared_mt_tests test_dynamic_lib prepare_test_kernels_for_shared)
+  add_dependencies(neo_shared_mt_tests test_dynamic_lib)
   add_subdirectories()
 
   target_link_libraries(neo_shared_mt_tests ${TSAN_LIB})

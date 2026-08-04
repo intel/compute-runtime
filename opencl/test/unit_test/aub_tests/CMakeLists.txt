@@ -27,6 +27,8 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
                  ${IGDRCL_AUB_TESTS__TARGET_OBJECTS}
   )
 
+  add_dependencies(prepare_kernels prepare_test_kernels_for_ocl)
+
   set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
   set_property(TARGET igdrcl_aub_tests PROPERTY ENABLE_EXPORTS TRUE)
 

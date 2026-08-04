@@ -77,7 +77,6 @@ target_sources(neo_shared_tests PRIVATE
                $<TARGET_OBJECTS:neo_unit_tests_config>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
 )
-add_dependencies(unit_tests prepare_test_kernels_for_shared)
 add_dependencies(unit_tests neo_shared_tests)
 
 create_project_source_tree(neo_shared_tests)

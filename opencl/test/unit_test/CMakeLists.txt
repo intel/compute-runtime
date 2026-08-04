@@ -22,7 +22,6 @@ ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
 add_custom_target(prepare_test_kernels_for_ocl)
-add_dependencies(prepare_test_kernels_for_ocl ${BUILTINS_BINARIES_LIB_NAME})
 add_custom_target(run_unit_tests ALL)
 
 add_custom_target(run_ocl_tests)
@@ -97,8 +96,6 @@ set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins")
 
 add_dependencies(unit_tests
                  igdrcl_tests
-                 prepare_test_kernels_for_ocl
-                 prepare_test_kernels_for_shared
 )
 
 set_target_properties(igdrcl_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
