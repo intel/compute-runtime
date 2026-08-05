@@ -89,7 +89,14 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         relaxedOrderingEnabled = (debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
     }
 
-    this->isSwitchOnUnsuccessful = true;
+    this->isSwitchOnUnsuccessful = false;
+    if (!this->osContext.isExclusivelyHpContext()) {
+        if (this->osContext.isHighPriority()) {
+            this->isSwitchOnUnsuccessful = true;
+        } else if (this->osContext.hasPriorityLevel()) {
+            this->isSwitchOnUnsuccessful = this->osContext.getPriorityLevel() == gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getHighestQueuePriorityLevel());
+        }
+    }
     if (debugManager.flags.DirectSubmissionSwitchSemaphoreMode.get() != -1) {
         this->isSwitchOnUnsuccessful = !!debugManager.flags.DirectSubmissionSwitchSemaphoreMode.get();
     }
@@ -890,7 +897,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreForPagin
     EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
                                                           this->gpuVaForPagingFenceSemaphore,
                                                           value,
-                                                          COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, this->isSwitchOnUnsuccessful, this->useSemaphore64bCmd, nullptr);
+                                                          COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, false, this->useSemaphore64bCmd, nullptr);
 }
 
 template <typename GfxFamily, typename Dispatcher>
