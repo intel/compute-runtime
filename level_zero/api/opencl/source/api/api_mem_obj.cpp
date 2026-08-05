@@ -16,6 +16,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj_helper.h"
@@ -27,6 +28,11 @@
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
+
+namespace NEO {
+namespace LEO {
+
+extern "C" {
 
 cl_mem CL_API_CALL clCreateBuffer(cl_context context,
                                   cl_mem_flags flags,
@@ -703,3 +709,8 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
     TRACING_EXIT(ClGetPipeInfo, &tracingRetVal);
     return tracingRetVal;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

@@ -11,6 +11,7 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_api.h"
@@ -18,6 +19,11 @@
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
+
+namespace NEO {
+namespace LEO {
+
+extern "C" {
 
 cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                                     cl_platform_id *platforms,
@@ -46,6 +52,8 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         if (NEO::LEO::platformsImpl->empty()) {
             uint32_t driverCount = 0;
             ze_init_driver_type_desc_t desc{ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC, nullptr, ZE_INIT_DRIVER_TYPE_FLAG_GPU};
+
+            initL0Dispatch();
 
             initResult = zeInitDrivers(&driverCount, nullptr, &desc);
 
@@ -213,3 +221,8 @@ void *CL_API_CALL clGetExtensionFunctionAddressForPlatform(cl_platform_id platfo
     TRACING_EXIT(ClGetExtensionFunctionAddressForPlatform, &ret);
     return ret;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

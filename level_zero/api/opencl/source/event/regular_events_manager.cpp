@@ -7,6 +7,8 @@
 
 #include "level_zero/api/opencl/source/event/regular_events_manager.h"
 
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
+
 #include <utility>
 
 namespace NEO {

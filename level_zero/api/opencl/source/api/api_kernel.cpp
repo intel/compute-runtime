@@ -18,6 +18,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
@@ -30,6 +31,9 @@
 
 #include <limits>
 #include <map>
+
+namespace NEO {
+namespace LEO {
 
 namespace {
 cl_int getKernelSuggestedLocalWorkSizeImpl(NEO::LEO::CommandQueue *commandQueue,
@@ -61,6 +65,8 @@ cl_int getKernelSuggestedLocalWorkSizeImpl(NEO::LEO::CommandQueue *commandQueue,
     return kernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, suggestedLocalWorkSize);
 }
 } // namespace
+
+extern "C" {
 
 cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
                                      const char *kernelName,
@@ -624,3 +630,8 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
     TRACING_EXIT(ClCloneKernel, &tracingRetVal);
     return tracingRetVal;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

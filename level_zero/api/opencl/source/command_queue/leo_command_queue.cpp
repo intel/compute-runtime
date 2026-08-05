@@ -22,6 +22,7 @@
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
 #include "level_zero/core/source/cmdqueue/internal_queue_throttle_ext.h"
 

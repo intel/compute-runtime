@@ -20,6 +20,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/memory/internal_mem_alloc_ext.h"
@@ -27,6 +28,11 @@
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
+
+namespace NEO {
+namespace LEO {
+
+extern "C" {
 
 void *CL_API_CALL clSVMAlloc(cl_context context,
                              cl_svm_mem_flags flags,
@@ -305,3 +311,8 @@ CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
     TRACING_EXIT(ClGetMemAllocInfoINTEL, &tracingRetVal);
     return tracingRetVal;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

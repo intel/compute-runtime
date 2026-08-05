@@ -15,9 +15,13 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
+
+namespace NEO {
+namespace LEO {
 
 namespace {
 
@@ -50,6 +54,8 @@ cl_int validateCommandBufferProperties(const cl_command_buffer_properties_khr *p
 }
 
 } // namespace
+
+extern "C" {
 
 CL_API_ENTRY cl_command_buffer_khr CL_API_CALL clCreateCommandBufferKHR(
     cl_uint numQueues,
@@ -199,3 +205,8 @@ CL_API_ENTRY cl_int CL_API_CALL clGetCommandBufferInfoKHR(
     auto lock = pCommandBuffer->takeOwnership();
     return pCommandBuffer->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

@@ -14,12 +14,18 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/device/device.h"
 
 #include "CL/cl.h"
+
+namespace NEO {
+namespace LEO {
+
+extern "C" {
 
 cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                                   cl_device_type deviceType,
@@ -268,3 +274,8 @@ clSetPerformanceConfigurationINTEL(
     cl_uint *values) {
     return CL_INVALID_OPERATION;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

@@ -1024,7 +1024,6 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemAdviseINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event);
-}
 
 cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
     cl_device_id device,
@@ -1136,3 +1135,7 @@ cl_int CL_API_CALL clEnqueueReleaseExternalMemObjectsKHR(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event);
+
+#ifdef __cplusplus
+}
+#endif

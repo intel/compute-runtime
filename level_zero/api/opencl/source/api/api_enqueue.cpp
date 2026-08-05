@@ -25,6 +25,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/helpers/leo_convert_color.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
@@ -39,6 +40,9 @@
 #include "CL/cl.h"
 
 #include <cstring>
+
+namespace NEO {
+namespace LEO {
 
 inline void applyDefaultRectPitches(const size_t *region, size_t &rowPitch, size_t &slicePitch) {
     if (rowPitch == 0) {
@@ -127,6 +131,8 @@ inline L0::ze_image_region_mip_level_exp_desc_t createZeImageRegionWithMipLevel(
     desc.mipLevel = mipLevel;
     return desc;
 }
+
+extern "C" {
 
 cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
                                        cl_mem buffer,
@@ -2089,3 +2095,8 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueExternalMemObjectsKHR(
     TRACING_EXIT(ClEnqueueExternalMemObjectsKHR, &tracingRetVal);
     return tracingRetVal;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

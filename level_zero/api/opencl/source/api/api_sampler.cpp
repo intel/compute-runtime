@@ -12,6 +12,7 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/sampler/leo_sampler.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
@@ -20,6 +21,11 @@
 #include "CL/cl.h"
 
 #include <limits>
+
+namespace NEO {
+namespace LEO {
+
+extern "C" {
 
 cl_sampler CL_API_CALL clCreateSampler(cl_context context,
                                        cl_bool normalizedCoords,
@@ -216,3 +222,8 @@ cl_int CL_API_CALL clGetSamplerInfo(cl_sampler sampler,
     TRACING_EXIT(ClGetSamplerInfo, &tracingRetVal);
     return tracingRetVal;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

@@ -23,6 +23,7 @@
 #include "level_zero/api/opencl/source/event/leo_async_events_handler.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/driver_experimental/zex_event.h"

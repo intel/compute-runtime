@@ -10,6 +10,7 @@
   Variables are provided for experimentation. Do not use in production deployments. No support provided.*/
 
 DECLARE_RELEASE_VARIABLE(int32_t, EnableLEO, -1, "Enable LEO - Level Zero executing OpenCL. -1: default, 0: disabled, 1: enabled")
+DECLARE_RELEASE_VARIABLE(int32_t, EnableLEOLoaderDispatch, -1, "Dispatch the Level Zero calls made by LEO through the Level Zero loader, so that loader layers can observe them. -1: default (disabled), 0: disabled, 1: enabled")
 DECLARE_RELEASE_VARIABLE(int32_t, OverrideDefaultFP64Settings, -1, "-1: dont override, 0: disable, 1: enable.")
 DECLARE_RELEASE_VARIABLE(bool, NEO_CAL_ENABLED, false, "Set by the Compute Aggregation Layer.")
 DECLARE_RELEASE_VARIABLE(std::string, ZE_AFFINITY_MASK, std::string("default"), "Refer to the Level Zero Specification for a description")
