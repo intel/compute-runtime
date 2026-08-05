@@ -177,7 +177,7 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenCheckingIsInUseThenReturn
     }
 }
 
-TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenInsertingAllocationThenDoNotInsertImportedNorInternal) {
+TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenInsertingAllocationThenDoNotInsertImportedInternalNorExternalMemmap) {
     SVMAllocsManager::SvmAllocationCache allocationCache;
     MockMemoryManager memoryManager;
     MockSVMAllocsManager svmAllocsManager(&memoryManager);
@@ -205,6 +205,12 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenInsertingAllocationThenDo
     {
         svmAllocData.isImportedAllocation = false;
         svmAllocData.isInternalAllocation = true;
+        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+        allocationCache.allocations.clear();
+    }
+    {
+        svmAllocData.isInternalAllocation = false;
+        svmAllocData.isExternalMemmapAllocation = true;
         EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
         allocationCache.allocations.clear();
     }

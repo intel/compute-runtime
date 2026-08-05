@@ -185,6 +185,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
 
     if (lookupTable.isExternalMemmapSystem) {
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(lookupTable.externalMemmapSystem.systemMemory);
+        unifiedMemoryProperties.isExternalMemmapAllocation = true;
         auto usmPtr = this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(lookupTable.externalMemmapSystem.size,
                                                                                           unifiedMemoryProperties);
         if (usmPtr) {
@@ -1295,6 +1296,9 @@ ze_result_t Context::getMemAllocProperties(const void *ptr,
     }
 
     pMemAllocProperties->type = Context::parseUSMType(alloc->memoryType);
+    if (alloc->isExternalMemmapAllocation && ZE_MEMORY_TYPE_HOST == pMemAllocProperties->type) {
+        pMemAllocProperties->type = ZE_MEMORY_TYPE_HOST_IMPORTED;
+    }
     pMemAllocProperties->pageSize = alloc->pageSizeForAlignment;
     pMemAllocProperties->id = alloc->getAllocId();
 

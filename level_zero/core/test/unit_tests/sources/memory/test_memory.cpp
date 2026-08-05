@@ -643,7 +643,7 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenAllocatingHostMemThe
 
     result = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
+    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST_IMPORTED);
 
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
@@ -655,6 +655,59 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenAllocatingHostMemThe
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     free(memory);
+}
+
+TEST_F(MemoryTest,
+       givenExternalMemmapSystemExtensionAndHostAllocationCacheEnabledWhenFreeingMemThenAllocationIsNotCached) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+    neoDevice->getMemoryManager()->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    auto svmManager = context->getDriverHandle()->getSvmAllocsManager();
+    svmManager->initUsmAllocationsCaches(*neoDevice);
+
+    size_t size = 4096;
+    size_t alignment = 4096;
+    auto memory = malloc(size);
+    void *ptr = nullptr;
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
+                                                       nullptr, memory, size};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.pNext = &sysMemDesc;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, alignment, &ptr));
+    ASSERT_EQ(memory, ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+
+    free(memory);
+}
+
+TEST_F(MemoryTest,
+       givenExternalMemmapAllocationFlagOnNonHostAllocationWhenGettingMemAllocPropertiesThenTypeIsNotOverridden) {
+    size_t size = 4096;
+    size_t alignment = 4096;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, alignment, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, alloc);
+
+    alloc->isExternalMemmapAllocation = true;
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_device_handle_t deviceHandle;
+    result = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_MEMORY_TYPE_DEVICE, memoryProperties.type);
+
+    alloc->isExternalMemmapAllocation = false;
+    result = context->freeMem(ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenMemoryAllocationFailsThenErrorIsReturned) {

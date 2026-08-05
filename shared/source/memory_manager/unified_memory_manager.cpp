@@ -77,7 +77,9 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
     if (false == sizeAllowed(size) ||
         svmData->isInternalAllocation ||
         svmData->isImportedAllocation ||
+        svmData->isExternalMemmapAllocation ||
         svmData->allocationFlagsProperty.hostptr != 0u) {
+
         return false;
     }
 
@@ -607,6 +609,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.device = memoryProperties.device;
     allocData.setAllocId(++this->allocationsCounter);
     allocData.isInternalAllocation = memoryProperties.isInternalAllocation;
+    allocData.isExternalMemmapAllocation = memoryProperties.isExternalMemmapAllocation;
     allocData.ipcHandleTypeFlags = memoryProperties.ipcHandleTypeFlags;
 
     auto retPtr = reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
