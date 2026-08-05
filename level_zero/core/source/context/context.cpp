@@ -1577,7 +1577,7 @@ ze_result_t Context::reserveVirtualMem(const void *pStart,
     if (this->driverHandle->getMemoryManager()->peek32bit()) {
         maxCpuVa = maxNBitValue(32);
     } else {
-        maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+        maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     }
 
     uint64_t requiredStartAddress = castToUint64(pStart);

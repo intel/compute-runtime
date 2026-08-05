@@ -2101,7 +2101,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryFreeWithInvalidValuesThenFailuresRet
     res = contextImp->freeVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    const auto maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
 
     res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
@@ -2370,7 +2370,7 @@ TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartAboveSvmRangeWithSucce
     reserveMemoryManager->failReserveGpuAddress = false;
     driverHandle->setMemoryManager(reserveMemoryManager.get());
 
-    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    const auto maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     void *pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
     size_t size = 4096u;
     void *ptr = nullptr;
@@ -2553,7 +2553,7 @@ HWTEST2_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOut
     res = contextImp->reserveVirtualMem(pStart, pageSize, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
 
-    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    const auto maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
     res = contextImp->reserveVirtualMem(pStart, pageSize, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
@@ -2857,16 +2857,20 @@ class MockCpuInfoOverrideVirtualAddressSize {
         using CpuInfo::virtualAddressSize;
     } *mockCpuInfo = reinterpret_cast<MockCpuInfo *>(const_cast<CpuInfo *>(&CpuInfo::getInstance()));
 
-    MockCpuInfoOverrideVirtualAddressSize(uint32_t newCpuVirtualAddressSize) {
+    MockCpuInfoOverrideVirtualAddressSize(uint32_t newCpuVirtualAddressSize, bool la57Present = false) {
         virtualAddressSizeSave = mockCpuInfo->getVirtualAddressSize();
+        cpuFlagsSave = mockCpuInfo->cpuFlags;
         mockCpuInfo->virtualAddressSize = newCpuVirtualAddressSize;
+        mockCpuInfo->cpuFlags = la57Present ? "la57" : "lm";
     }
 
     ~MockCpuInfoOverrideVirtualAddressSize() {
         mockCpuInfo->virtualAddressSize = virtualAddressSizeSave;
+        mockCpuInfo->cpuFlags = cpuFlagsSave;
     }
 
     uint32_t virtualAddressSizeSave = 0;
+    std::string cpuFlagsSave;
 };
 
 HWTEST2_F(ContextTest, Given32BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
@@ -2941,7 +2945,7 @@ HWTEST2_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservat
     res = contextImp->freeVirtualMem(ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    pStart = addrToPtr(maxNBitValue(47) + 0x1234);
+    pStart = addrToPtr(NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress() + 0x1234);
 
     res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
@@ -2960,7 +2964,7 @@ HWTEST2_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservat
 
 HWTEST2_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
 
-    MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(57);
+    MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(57, true);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -2986,7 +2990,7 @@ HWTEST2_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservat
     res = contextImp->freeVirtualMem(ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    pStart = addrToPtr(maxNBitValue(56) + 0x1234);
+    pStart = addrToPtr(NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress() + 0x1234);
     res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
 
@@ -3023,7 +3027,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithUnAlignedPstartThenNe
     size_t size = MemoryConstants::pageSize;
     void *ptr = nullptr;
 
-    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    const auto maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     void *pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
 
     // pStart is not aligned to any pagesize. The reserveVirtualMem will properly align it.

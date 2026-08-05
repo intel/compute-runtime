@@ -75,4 +75,11 @@ void CpuInfo::detect() const {
                  "CPUFlags:\nCLFlush: %d Avx2: %d Avx512: %d WaitPkg: %d\nVirtual Address Size %u\n",
                  !!(features & featureClflush), !!(features & featureAvX2), !!(features & featureAvX512), !!(features & featureWaitPkg), virtualAddressSize);
 }
+
+uint64_t CpuInfo::getMaxCpuVirtualAddress() const {
+    if (getVirtualAddressSize() == 57u && isCpuFlagPresent("la57")) {
+        return maxNBitValue(56);
+    }
+    return maxNBitValue(47);
+}
 } // namespace NEO

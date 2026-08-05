@@ -41,6 +41,7 @@
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/utilities/destructor_counted.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
@@ -998,6 +999,15 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelAndHostPointerC
     auto allocation = device->allocateMemoryFromHostPtr(buffer, size, false);
     EXPECT_EQ(nullptr, allocation);
     delete[] buffer;
+}
+
+TEST_F(DeviceHostPointerTest, givenPointerOutsideCpuVirtualAddressRangeThenAllocationIsNullAndHostCopyIsNotAttempted) {
+    REQUIRE_64BIT_OR_SKIP();
+
+    auto foreignDeviceUsmPtr = reinterpret_cast<void *>(maxNBitValue(56) + 1);
+
+    auto allocation = device->allocateMemoryFromHostPtr(foreignDeviceUsmPtr, MemoryConstants::pageSize, true);
+    EXPECT_EQ(nullptr, allocation);
 }
 
 TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemandAndHandleDestruction) {

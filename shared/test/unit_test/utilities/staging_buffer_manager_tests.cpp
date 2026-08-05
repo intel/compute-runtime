@@ -249,6 +249,10 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForCopyThenRe
         auto cpuVirtualAddressSize = CpuInfo::getInstance().getVirtualAddressSize();
         auto invalidCpuPtr = reinterpret_cast<void *>((1ull << cpuVirtualAddressSize));
         EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, invalidCpuPtr, 1024, false));
+        stagingBufferManager->resetDetectedPtrs();
+
+        auto gpuOnlyPtr = reinterpret_cast<void *>(CpuInfo::getInstance().getMaxCpuVirtualAddress() + 1);
+        EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, gpuOnlyPtr, 1024, false));
     }
     svmAllocsManager->freeSVMAlloc(usmBuffer);
 }

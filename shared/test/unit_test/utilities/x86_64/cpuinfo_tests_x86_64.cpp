@@ -154,3 +154,32 @@ TEST_F(CpuInfoTest, GivenAvx512FeatureBitsSetButOsXcr0MaskUnsetWhenDetectingThen
 
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvX512));
 }
+
+namespace {
+void setPagingMode(MockCpuInfo &cpuInfo, uint32_t virtualAddressSize, bool la57Present) {
+    cpuInfo.featuresDetected = true;
+    cpuInfo.virtualAddressSize = virtualAddressSize;
+    cpuInfo.cpuFlags = la57Present ? "la57" : "lm";
+}
+} // namespace
+
+TEST(CpuInfoMaxCpuVirtualAddressTest, given4LevelPagingThenUserSpaceEndsAt47Bits) {
+    MockCpuInfo cpuInfo;
+    setPagingMode(cpuInfo, 48u, false);
+
+    EXPECT_EQ(maxNBitValue(47), cpuInfo.getMaxCpuVirtualAddress());
+}
+
+TEST(CpuInfoMaxCpuVirtualAddressTest, given5LevelPagingEnabledThenUserSpaceEndsAt56Bits) {
+    MockCpuInfo cpuInfo;
+    setPagingMode(cpuInfo, 57u, true);
+
+    EXPECT_EQ(maxNBitValue(56), cpuInfo.getMaxCpuVirtualAddress());
+}
+
+TEST(CpuInfoMaxCpuVirtualAddressTest, given5LevelPagingCapableCpuWhenLa57IsNotEnabledThenUserSpaceEndsAt47Bits) {
+    MockCpuInfo cpuInfo;
+    setPagingMode(cpuInfo, 57u, false);
+
+    EXPECT_EQ(maxNBitValue(47), cpuInfo.getMaxCpuVirtualAddress());
+}

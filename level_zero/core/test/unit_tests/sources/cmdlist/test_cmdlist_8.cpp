@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
@@ -210,6 +211,30 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWh
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, copySize, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_FALSE(dstFound);
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndPtrOutsideCpuVirtualAddressRangeWhenPreferCopyThroughLockedPtrCalledThenReturnFalse) {
+    REQUIRE_64BIT_OR_SKIP();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    auto foreignDeviceUsmPtr = reinterpret_cast<void *>(maxNBitValue(56) + 1);
+
+    CpuMemCopyInfo hostToDeviceCopyInfo(devicePtr, foreignDeviceUsmPtr, 1024);
+    ASSERT_FALSE(device->getDriverHandle()->findAllocationDataForRange(foreignDeviceUsmPtr, 1024, hostToDeviceCopyInfo.srcAllocInfo.svmAlloc));
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, hostToDeviceCopyInfo.dstAllocInfo.svmAlloc));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(hostToDeviceCopyInfo, 0, nullptr));
+
+    CpuMemCopyInfo deviceToHostCopyInfo(foreignDeviceUsmPtr, devicePtr, 1024);
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, deviceToHostCopyInfo.srcAllocInfo.svmAlloc));
+    ASSERT_FALSE(device->getDriverHandle()->findAllocationDataForRange(foreignDeviceUsmPtr, 1024, deviceToHostCopyInfo.dstAllocInfo.svmAlloc));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(deviceToHostCopyInfo, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DThenReturnTrue) {

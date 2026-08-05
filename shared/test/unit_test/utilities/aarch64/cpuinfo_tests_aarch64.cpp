@@ -9,6 +9,7 @@
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/unit_test/mocks/mock_cpuid_functions.h"
 
 #include "gtest/gtest.h"
 
@@ -49,4 +50,15 @@ TEST(CpuInfo, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidVal
     EXPECT_FALSE(testCpuInfo.isCpuFlagPresent("nonExistingCpuFlag"));
 
     removeVirtualFile(cpuinfoFile.c_str());
+}
+
+TEST(CpuInfoMaxCpuVirtualAddressTest, givenReportedVirtualAddressSizeThenWholeLowRangeBelongsToUserSpace) {
+    MockCpuInfo cpuInfo;
+    cpuInfo.featuresDetected = true;
+
+    cpuInfo.virtualAddressSize = 48u;
+    EXPECT_EQ(maxNBitValue(48), cpuInfo.getMaxCpuVirtualAddress());
+
+    cpuInfo.virtualAddressSize = 39u;
+    EXPECT_EQ(maxNBitValue(39), cpuInfo.getMaxCpuVirtualAddress());
 }

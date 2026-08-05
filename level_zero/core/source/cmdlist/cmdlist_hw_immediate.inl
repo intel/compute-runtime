@@ -28,6 +28,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/performance_counters.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
@@ -1583,8 +1584,10 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         break;
     }
     case TransferType::hostNonUsmToDeviceUsm:
+        cpuMemCopyEnabled = NEO::isValidCpuVirtualAddressRange(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size);
+        break;
     case TransferType::deviceUsmToHostNonUsm:
-        cpuMemCopyEnabled = true;
+        cpuMemCopyEnabled = NEO::isValidCpuVirtualAddressRange(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size);
         break;
     default:
         cpuMemCopyEnabled = false;

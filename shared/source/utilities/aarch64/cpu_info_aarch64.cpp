@@ -17,4 +17,8 @@ void CpuInfo::detect() const {
     features |= cpuInfo[0] & HWCAP_ASIMD ? featureNeon : featureNone;
     featuresDetected = true;
 }
+
+uint64_t CpuInfo::getMaxCpuVirtualAddress() const {
+    return maxNBitValue(getVirtualAddressSize());
+}
 } // namespace NEO

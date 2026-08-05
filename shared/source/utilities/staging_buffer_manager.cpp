@@ -423,11 +423,7 @@ bool StagingBufferManager::isValidForStaging(const Device &device, const void *p
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
     }
-    auto cpuVirtualAddressSize = CpuInfo::getInstance().getVirtualAddressSize();
-    auto isValidCpuVirtualAddress = true;
-    if constexpr (is64bit) {
-        isValidCpuVirtualAddress = (reinterpret_cast<uint64_t>(ptr) + size) < (1ull << cpuVirtualAddressSize);
-    }
+    auto isValidCpuVirtualAddress = isValidCpuVirtualAddressRange(ptr, size);
     auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
     bool sizeWithinThreshold = osInterface ? osInterface->isSizeWithinThresholdForStaging(ptr, size) : true;
     return stagingCopyEnabled && isValidCpuVirtualAddress && !hasDependencies && sizeWithinThreshold && !this->registerHostPtr(ptr);

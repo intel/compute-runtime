@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
@@ -51,6 +52,8 @@ struct CpuInfo {
         return virtualAddressSize;
     }
 
+    uint64_t getMaxCpuVirtualAddress() const;
+
     bool isCpuFlagPresent(const char *cpuFlag) const {
         if (cpuFlags.empty()) {
             getCpuFlagsFunc(cpuFlags);
@@ -75,5 +78,15 @@ struct CpuInfo {
     mutable std::string cpuFlags;
     static const CpuInfo instance;
 };
+
+inline bool isValidCpuVirtualAddressRange(const void *ptr, size_t size) {
+    if constexpr (is32bit) {
+        return true;
+    } else {
+        const uint64_t maxCpuVirtualAddress = CpuInfo::getInstance().getMaxCpuVirtualAddress();
+        const uint64_t address = reinterpret_cast<uint64_t>(ptr);
+        return (address <= maxCpuVirtualAddress) && (size <= (maxCpuVirtualAddress - address + 1u));
+    }
+}
 
 } // namespace NEO

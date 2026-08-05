@@ -2403,6 +2403,20 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     }
 }
 
+TEST_F(CreateAllocationForHostSurfaceTest, givenPointerOutsideCpuVirtualAddressRangeWhenAllocationForHostSurfaceWithPtrCopyAllowedIsCreatedThenCopyAllocationIsNotCreated) {
+    REQUIRE_64BIT_OR_SKIP();
+
+    auto foreignDeviceUsmPtr = reinterpret_cast<void *>(maxNBitValue(56) + 1);
+    HostPtrSurface surface(foreignDeviceUsmPtr, MemoryConstants::pageSize, true);
+    mockMemoryManager->callBasePopulateOsHandles = false;
+    mockMemoryManager->callBaseAllocateGraphicsMemoryForNonSvmHostPtr = false;
+    mockMemoryManager->populateOsHandlesResult = MemoryManager::AllocationStatus::InvalidHostPointer;
+
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, false);
+    EXPECT_FALSE(result);
+    EXPECT_EQ(nullptr, surface.getAllocation());
+}
+
 struct ReducedAddrSpaceCommandStreamReceiverTest : public CreateAllocationForHostSurfaceTest {
     void SetUp() override {
         hwInfo.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
