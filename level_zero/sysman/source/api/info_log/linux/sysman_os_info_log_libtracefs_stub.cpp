@@ -10,7 +10,7 @@
 namespace L0 {
 namespace Sysman {
 
-struct TraceFsApi {};
+class TraceFsApi {};
 
 std::unique_ptr<TraceFsApi> (*LinuxInfoLogImp::createTraceFsApi)() = []() -> std::unique_ptr<TraceFsApi> { return nullptr; };
 
