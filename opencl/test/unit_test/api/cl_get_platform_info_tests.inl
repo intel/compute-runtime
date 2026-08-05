@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,10 @@ TEST_F(ClGetPlatformInfoTests, GivenClPlatformVersionWhenGettingPlatformInfoStri
 
 TEST_F(ClGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_NAME);
-    EXPECT_STREQ(paramValue, "Intel(R) OpenCL Graphics");
+
+    std::string expectedName = "Intel(R) OpenCL Graphics ";
+    expectedName += pPlatform->getClDevice(0)->getHardwareInfo().capabilityTable.isIntegratedDevice ? "(integrated)" : "(discrete)";
+    EXPECT_STREQ(expectedName.c_str(), paramValue);
 }
 
 class ClGetPlatformInfoOverridePlatformNameTests : public ClGetPlatformInfoTests {

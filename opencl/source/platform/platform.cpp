@@ -180,9 +180,11 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
 
     this->platformInfo->extensions = this->clDevices[0]->getDeviceInfo().deviceExtensions;
 
-    auto preferredPlatformName = this->clDevices[0]->getHardwareInfo().capabilityTable.preferredPlatformName;
-    if (preferredPlatformName != nullptr) {
-        this->platformInfo->name = preferredPlatformName;
+    const auto &capabilityTable = this->clDevices[0]->getHardwareInfo().capabilityTable;
+    if (capabilityTable.preferredPlatformName != nullptr) {
+        this->platformInfo->name = capabilityTable.preferredPlatformName;
+    } else {
+        this->platformInfo->name += capabilityTable.isIntegratedDevice ? " (integrated)" : " (discrete)";
     }
 
     if (debugManager.flags.OverridePlatformName.get() != "unk") {

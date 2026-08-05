@@ -398,6 +398,30 @@ TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDevice
     cleanupPlatform(executionEnvironment);
 }
 
+TEST(PlatformInitTest, givenPlatformInitializationThenPlatformNameContainsCorectSuffix) {
+    std::vector<std::unique_ptr<Device>> devices;
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
+    constructPlatform(executionEnvironment);
+    devices.push_back(std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0)));
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    auto status = platform(executionEnvironment)->initialize(std::move(devices));
+    EXPECT_TRUE(status);
+    EXPECT_STREQ("Intel(R) OpenCL Graphics (integrated)", platform(executionEnvironment)->getPlatformInfo().name.c_str());
+    cleanupPlatform(executionEnvironment);
+}
+
+TEST(PlatformInitTest, givenDiscreteDeviceWhenPlatformIsInitializedThenPlatformNameContainsDiscreteSuffix) {
+    std::vector<std::unique_ptr<Device>> devices;
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
+    constructPlatform(executionEnvironment);
+    devices.push_back(std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0)));
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    auto status = platform(executionEnvironment)->initialize(std::move(devices));
+    EXPECT_TRUE(status);
+    EXPECT_STREQ("Intel(R) OpenCL Graphics (discrete)", platform(executionEnvironment)->getPlatformInfo().name.c_str());
+    cleanupPlatform(executionEnvironment);
+}
+
 TEST(PlatformInitTest, GivenPreferredPlatformNameWhenPlatformIsInitializedThenOverridePlatformName) {
     std::vector<std::unique_ptr<Device>> devices;
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);

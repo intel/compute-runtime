@@ -45,9 +45,11 @@ Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformI
 
     this->platformInfo->extensions = this->clDevices[0]->getDeviceInfo().deviceExtensions;
 
-    auto preferredPlatformName = this->clDevices[0]->getL0Object()->getHwInfo().capabilityTable.preferredPlatformName;
-    if (preferredPlatformName != nullptr) {
-        this->platformInfo->name = preferredPlatformName;
+    const auto &capabilityTable = this->clDevices[0]->getHardwareInfo().capabilityTable;
+    if (capabilityTable.preferredPlatformName != nullptr) {
+        this->platformInfo->name = capabilityTable.preferredPlatformName;
+    } else {
+        this->platformInfo->name += capabilityTable.isIntegratedDevice ? " (integrated)" : " (discrete)";
     }
 
     if (debugManager.flags.OverridePlatformName.get() != "unk") {
