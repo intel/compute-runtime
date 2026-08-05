@@ -6,14 +6,11 @@
 
 function(level_zero_generate_kernels target_list platform_name device revision_id options)
 
-  list(APPEND results copy_compiler_files)
-
   set(relativeDir "level_zero/${platform_name}/${revision_id}/test_files/${NEO_ARCH}")
 
   set(outputdir "${TargetDir}/${relativeDir}/")
 
   foreach(filepath ${ARGN})
-    get_filename_component(filename ${filepath} NAME)
     get_filename_component(basename ${filepath} NAME_WE)
     get_filename_component(workdir ${filepath} DIRECTORY)
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
@@ -52,14 +49,11 @@ endfunction()
 
 function(level_zero_generate_kernels_with_internal_options target_list platform_name prefix device revision_id options internal_options)
 
-  list(APPEND results copy_compiler_files)
-
   set(relativeDir "level_zero/${platform_name}/${revision_id}/test_files/${NEO_ARCH}")
 
   set(outputdir "${TargetDir}/${relativeDir}/")
 
   foreach(filepath ${ARGN})
-    get_filename_component(filename ${filepath} NAME)
     get_filename_component(basename ${filepath} NAME_WE)
     get_filename_component(workdir ${filepath} DIRECTORY)
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)

@@ -32,7 +32,9 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
                  ${L0_AUB_TESTS__TARGET_OBJECTS}
   )
 
-  add_dependencies(prepare_kernels prepare_test_kernels_for_l0)
+  if(TARGET prepare_test_kernels_for_l0)
+    add_dependencies(prepare_kernels prepare_test_kernels_for_l0)
+  endif()
 
   set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
 

@@ -21,7 +21,9 @@ if(NOT TARGET aub_tests)
   add_custom_target(aub_tests)
 endif()
 
-add_dependencies(aub_tests prepare_kernels)
+if(TARGET prepare_kernels)
+  add_dependencies(aub_tests prepare_kernels)
+endif()
 
 add_custom_target(run_${product}_${revision_id}_aub_tests ALL)
 add_dependencies(run_${product}_${revision_id}_aub_tests aub_tests)

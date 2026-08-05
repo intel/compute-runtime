@@ -21,7 +21,6 @@ endfunction()
 ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
-add_custom_target(prepare_test_kernels_for_ocl)
 add_custom_target(run_unit_tests ALL)
 
 add_custom_target(run_ocl_tests)
@@ -92,8 +91,6 @@ target_include_directories(igdrcl_tests PRIVATE
 )
 target_link_libraries(igdrcl_tests neo_gtest ${NEO_EXTRA_LIBS})
 
-set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins")
-
 add_dependencies(unit_tests
                  igdrcl_tests
 )
@@ -106,7 +103,6 @@ endif()
 set_property(TARGET igdrcl_tests PROPERTY ENABLE_EXPORTS TRUE)
 
 set_target_properties(unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
-set_target_properties(prepare_test_kernels_for_ocl PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 
 target_include_directories(igdrcl_tests BEFORE PRIVATE
@@ -114,112 +110,114 @@ target_include_directories(igdrcl_tests BEFORE PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
 )
 
-function(neo_gen_kernels platform_it_lower device revision_id)
-  set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
+if(NOT NEO_SKIP_AUB_TESTS_RUN)
+  function(neo_gen_kernels platform_it_lower device revision_id)
+    set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
 
-  if("${CORE_TYPE}" IN_LIST XE3P_AND_LATER_CORE_TYPES)
-    set(addrmode "default")
-  else()
-    set(addrmode "bindful")
-  endif()
-
-  set(kernels_to_compile)
-  foreach(filepath ${ARGN})
-    get_filename_component(filename ${filepath} NAME)
-    get_filename_component(basename ${filepath} NAME_WE)
-    get_filename_component(workdir ${filepath} DIRECTORY)
-    get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
-
-    set(outputname_base "${basename}_${platform_it_lower}")
-    set(outputpath_base "${outputdir}${outputname_base}")
-    set(output_file "${outputpath_base}.bin")
-    if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-      add_custom_command(
-                         OUTPUT ${output_file}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -revision_id ${revision_id} -out_dir ${outputdir} ${formatArgument} -output_no_suffix -output ${outputname_base}
-                         WORKING_DIRECTORY ${workdir}
-                         DEPENDS ${filepath} ocloc copy_compiler_files ${PREVIOUS_KERNELS}
-      )
-
-      if(NEO_SERIALIZED_BUILTINS_COMPILATION)
-        set(PREVIOUS_KERNELS ${output_file})
-      endif()
-
-      list(APPEND kernels_to_compile ${output_file})
+    if("${CORE_TYPE}" IN_LIST XE3P_AND_LATER_CORE_TYPES)
+      set(addrmode "default")
     else()
-      set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${platform_it_lower}.bin")
-      add_custom_command(
-                         OUTPUT ${output_file}
-                         COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
-                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
-      )
-
-      list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${output_file})
+      set(addrmode "bindful")
     endif()
-  endforeach()
-  list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile})
-  set(kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile_${platform_it_lower}_${revision_id}} PARENT_SCOPE)
-endfunction()
 
-file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
+    set(kernels_to_compile)
+    foreach(filepath ${ARGN})
+      get_filename_component(basename ${filepath} NAME_WE)
+      get_filename_component(workdir ${filepath} DIRECTORY)
+      get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
-macro(macro_for_each_platform)
-  set(PLATFORM_TEST_KERNELS ${TEST_KERNELS})
-  set(IMAGE_SUPPORT FALSE)
-  CORE_CONTAINS_PLATFORM("SUPPORTED_IMAGES" ${CORE_TYPE} ${PLATFORM_IT} IMAGE_SUPPORT)
+      set(outputname_base "${basename}_${platform_it_lower}")
+      set(outputpath_base "${outputdir}${outputname_base}")
+      set(output_file "${outputpath_base}.bin")
+      if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+        add_custom_command(
+                           OUTPUT ${output_file}
+                           COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -revision_id ${revision_id} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base}
+                           WORKING_DIRECTORY ${workdir}
+                           DEPENDS ${filepath} ocloc copy_compiler_files ${PREVIOUS_KERNELS}
+        )
 
-  foreach(KERNEL_TO_REMOVE ${${CORE_TYPE}_TEST_KERNELS_BLOCKLIST})
-    set(KERNEL_TO_REMOVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/test_files/${KERNEL_TO_REMOVE}")
-    list(REMOVE_ITEM PLATFORM_TEST_KERNELS ${KERNEL_TO_REMOVE_PATH})
-  endforeach()
+        if(NEO_SERIALIZED_BUILTINS_COMPILATION)
+          set(PREVIOUS_KERNELS ${output_file})
+        endif()
 
-  set(PREVIOUS_KERNELS)
+        list(APPEND kernels_to_compile ${output_file})
+      else()
+        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${platform_it_lower}.bin")
+        add_custom_command(
+                           OUTPUT ${output_file}
+                           COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
+        )
 
-  if(WIN32 OR CMAKE_SIZEOF_VOID_P EQUAL 8)
-    foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-      parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-      neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${PLATFORM_TEST_KERNELS})
+        list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${output_file})
+      endif()
+    endforeach()
+    list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile})
+    set(kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile_${platform_it_lower}_${revision_id}} PARENT_SCOPE)
+  endfunction()
+
+  add_custom_target(prepare_test_kernels_for_ocl)
+  set_target_properties(prepare_test_kernels_for_ocl PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
+
+  file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
+
+  macro(macro_for_each_platform)
+    set(PLATFORM_TEST_KERNELS ${TEST_KERNELS})
+
+    foreach(KERNEL_TO_REMOVE ${${CORE_TYPE}_TEST_KERNELS_BLOCKLIST})
+      set(KERNEL_TO_REMOVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/test_files/${KERNEL_TO_REMOVE}")
+      list(REMOVE_ITEM PLATFORM_TEST_KERNELS ${KERNEL_TO_REMOVE_PATH})
     endforeach()
 
-    #compile gen specific kernels if any were found
-    file(GLOB_RECURSE ${CORE_TYPE_LOWER}_TEST_KERNELS test_files/*.${CORE_TYPE_LOWER})
-    if(NOT "${${CORE_TYPE_LOWER}_TEST_KERNELS}" STREQUAL "")
+    set(PREVIOUS_KERNELS)
+
+    if(WIN32 OR CMAKE_SIZEOF_VOID_P EQUAL 8)
       foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
         parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${${CORE_TYPE_LOWER}_TEST_KERNELS})
+        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${PLATFORM_TEST_KERNELS})
       endforeach()
+
+      #compile gen specific kernels if any were found
+      file(GLOB_RECURSE ${CORE_TYPE_LOWER}_TEST_KERNELS test_files/*.${CORE_TYPE_LOWER})
+      if(NOT "${${CORE_TYPE_LOWER}_TEST_KERNELS}" STREQUAL "")
+        foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+          parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+          neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${${CORE_TYPE_LOWER}_TEST_KERNELS})
+        endforeach()
+      endif()
+
+      # Compile platform specific kernels if any were found
+      file(GLOB_RECURSE ${PLATFORM_IT_LOWER}_TEST_KERNELS test_files/*.${PLATFORM_IT_LOWER})
+      if(NOT "${${PLATFORM_IT_LOWER}_TEST_KERNELS}" STREQUAL "")
+        foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+          parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+          neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${${PLATFORM_IT_LOWER}_TEST_KERNELS})
+        endforeach()
+      endif()
+
     endif()
 
-    # Compile platform specific kernels if any were found
-    file(GLOB_RECURSE ${PLATFORM_IT_LOWER}_TEST_KERNELS test_files/*.${PLATFORM_IT_LOWER})
-    if(NOT "${${PLATFORM_IT_LOWER}_TEST_KERNELS}" STREQUAL "")
-      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${${PLATFORM_IT_LOWER}_TEST_KERNELS})
-      endforeach()
-    endif()
+    foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+      parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+      add_custom_target(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${kernels_to_compile_${PLATFORM_IT_LOWER}_${REVISION_ID}} copy_compiler_files ${PREVIOUS_TARGET})
+      add_dependencies(prepare_test_kernels_for_ocl prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
+      set_target_properties(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}/${REVISION_ID}")
 
-  endif()
+      if(NEO_SERIALIZED_BUILTINS_COMPILATION)
+        set(PREVIOUS_TARGET "prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}")
+      endif()
 
-  foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-    parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-    add_custom_target(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${kernels_to_compile_${PLATFORM_IT_LOWER}_${REVISION_ID}} copy_compiler_files ${PREVIOUS_TARGET})
-    add_dependencies(prepare_test_kernels_for_ocl prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
-    set_target_properties(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}/${REVISION_ID}")
+    endforeach()
+  endmacro()
 
-    if(NEO_SERIALIZED_BUILTINS_COMPILATION)
-      set(PREVIOUS_TARGET "prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}")
-    endif()
+  macro(macro_for_each_core_type)
+    apply_macro_for_each_platform("TESTED")
+  endmacro()
 
-  endforeach()
-endmacro()
-
-macro(macro_for_each_core_type)
-  apply_macro_for_each_platform("TESTED")
-endmacro()
-
-set(PREVIOUS_TARGET "")
-apply_macro_for_each_core_type("TESTED")
+  set(PREVIOUS_TARGET "")
+  apply_macro_for_each_core_type("TESTED")
+endif()
 add_subdirectories()
 create_project_source_tree(igdrcl_tests)
 

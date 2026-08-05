@@ -323,6 +323,9 @@ if(NOT "${OUTPUT_LIST_CPP_FILES}" STREQUAL "")
                         FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}"
 
   )
+  if(TARGET prepare_kernels)
+    add_dependencies(prepare_kernels ${BUILTINS_SPIRV_LIB_NAME})
+  endif()
 endif()
 
 apply_macro_for_each_core_type("SUPPORTED")

@@ -19,15 +19,3 @@ endif()
 add_library(neo_libult_common OBJECT EXCLUDE_FROM_ALL ${NEO_LIBULT_COMMON_SRCS})
 
 add_subdirectories()
-
-add_custom_target(prepare_test_kernels_for_shared)
-add_dependencies(prepare_test_kernels_for_shared ${BUILTINS_BINARIES_LIB_NAME})
-if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
-  add_dependencies(prepare_test_kernels_for_shared ${BUILTINS_SPIRV_LIB_NAME})
-endif()
-set_target_properties(prepare_test_kernels_for_shared PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/prepare test files")
-
-add_dependencies(prepare_kernels ${BUILTINS_BINARIES_LIB_NAME})
-if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
-  add_dependencies(prepare_kernels ${BUILTINS_SPIRV_LIB_NAME})
-endif()

@@ -289,12 +289,17 @@ if(NOT "${NEO_BITS}" STREQUAL "64")
   message(STATUS "32-bit build: skipping AUB stream detection, AUB tests disabled")
 endif()
 
+if(NOT NEO_PREPARE_KERNELS AND NOT NEO_SKIP_AUB_TESTS_RUN)
+  set(NEO_PREPARE_KERNELS TRUE)
+endif()
+
 if(NEO_IGNORE_INVALID_TEST_EXCLUDES)
   add_definitions(-DNEO_IGNORE_INVALID_TEST_EXCLUDES)
 endif()
 
 message(STATUS "NEO_SKIP_AUB_TESTS: ${NEO_SKIP_AUB_TESTS}")
 message(STATUS "NEO_SKIP_AUB_TESTS_RUN: ${NEO_SKIP_AUB_TESTS_RUN}")
+message(STATUS "NEO_PREPARE_KERNELS: ${NEO_PREPARE_KERNELS}")
 
 # Set our build directory
 if(NOT DEFINED NEO_BUILD_DIR)
@@ -1030,7 +1035,9 @@ set(BUILTINS_SOURCES_LIB_NAME "builtins_sources")
 set(BUILTINS_BINARIES_LIB_NAME "builtins_binaries")
 set(BUILTINS_SPIRV_LIB_NAME "builtins_spirv")
 
-add_custom_target(prepare_kernels)
+if(NEO_PREPARE_KERNELS)
+  add_custom_target(prepare_kernels)
+endif()
 
 if(WIN32)
   set(NEO_EXTRA_LIBS Ws2_32 winmm)
