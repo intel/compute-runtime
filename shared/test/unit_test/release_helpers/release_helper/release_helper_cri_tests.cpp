@@ -14,6 +14,10 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
+#include <limits>
+#include <utility>
+
 struct ReleaseHelperCriTests : public ReleaseHelperTests<35, 11> {
 
     std::vector<uint32_t> getRevisions() override {
@@ -127,8 +131,28 @@ TEST_F(ReleaseHelperCriTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorre
     }
 }
 
-TEST_F(ReleaseHelperCriTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
-    whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
+TEST_F(ReleaseHelperCriTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturnedBasedOnGrfCount) {
+    constexpr auto grfTestInputs = std::to_array<std::pair<uint32_t, uint32_t>>({{32u, 8u},
+                                                                                 {64u, 8u},
+                                                                                 {96u, 8u},
+                                                                                 {128u, 8u},
+                                                                                 {160u, 8u},
+                                                                                 {192u, 8u},
+                                                                                 {256u, 8u},
+                                                                                 {512u, 4u}});
+
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        for (const auto &[grfCount, expectedMaxThreadsPerEuCount] : grfTestInputs) {
+            for (uint32_t maxThreadsPerEuCount : {1u, 4u, 8u, 10u, 17u}) {
+                EXPECT_EQ(expectedMaxThreadsPerEuCount, releaseHelper->adjustMaxThreadsPerEuCount(maxThreadsPerEuCount, grfCount))
+                    << "grfCount: " << grfCount << ", maxThreadsPerEuCount: " << maxThreadsPerEuCount;
+            }
+        }
+    }
 }
 
 TEST_F(ReleaseHelperCriTests, whenShouldQueryPeerAccessCalledThenFalseReturned) {

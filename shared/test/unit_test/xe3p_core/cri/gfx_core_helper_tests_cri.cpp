@@ -207,6 +207,69 @@ CRITEST_F(GfxCoreHelperTestsCri, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroup
     }
 }
 
+CRITEST_F(GfxCoreHelperTestsCri, givenVariousGrfCountsWhenCallingCalculateAvailableThreadCountAndThreadCountAvailableIsBiggerThenCorrectValueIsReturned) {
+    setUpImpl();
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    constexpr auto grfTestInputs = std::to_array<std::pair<uint32_t, uint32_t>>({{32u, 8u},
+                                                                                 {64u, 8u},
+                                                                                 {96u, 8u},
+                                                                                 {128u, 8u},
+                                                                                 {160u, 8u},
+                                                                                 {192u, 8u},
+                                                                                 {256u, 8u},
+                                                                                 {512u, 4u}});
+
+    auto hwInfo = hardwareInfo;
+    for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
+        auto expectedThreadCount = expectedThreadCountPerEu * hwInfo.gtSystemInfo.EUCount;
+        // force thread count bigger than calculation
+        hwInfo.gtSystemInfo.ThreadCount = expectedThreadCount * 2;
+        EXPECT_EQ(expectedThreadCount, gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount, rootDeviceEnvironment)) << "grfCount: " << grfCount;
+    }
+}
+
+CRITEST_F(GfxCoreHelperTestsCri, givenVariousGrfCountsWhenCallingCalculateAvailableThreadCountAndThreadCountAvailableIsSmallerThenCorrectValueIsReturned) {
+    setUpImpl();
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    constexpr auto grfTestInputs = std::to_array<std::pair<uint32_t, uint32_t>>({{32u, 8u},
+                                                                                 {64u, 8u},
+                                                                                 {96u, 8u},
+                                                                                 {128u, 8u},
+                                                                                 {160u, 8u},
+                                                                                 {192u, 8u},
+                                                                                 {256u, 8u},
+                                                                                 {512u, 4u}});
+
+    auto hwInfo = hardwareInfo;
+    for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
+        // force thread count smaller than calculation
+        hwInfo.gtSystemInfo.ThreadCount = expectedThreadCountPerEu * hwInfo.gtSystemInfo.EUCount / 2;
+        EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount, rootDeviceEnvironment)) << "grfCount: " << grfCount;
+    }
+}
+
+CRITEST_F(GfxCoreHelperTestsCri, givenModifiedGtSystemInfoWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
+    setUpImpl();
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    constexpr auto testInputs = std::to_array<std::pair<uint32_t, uint32_t>>({{32u, 256u},
+                                                                              {48u, 384u},
+                                                                              {64u, 512u}});
+
+    auto hwInfo = hardwareInfo;
+    for (const auto &[euCount, expectedThreadCount] : testInputs) {
+        hwInfo.gtSystemInfo.EUCount = euCount;
+        // force thread count bigger than calculation
+        hwInfo.gtSystemInfo.ThreadCount = expectedThreadCount * 2;
+        EXPECT_EQ(expectedThreadCount, gfxCoreHelper.calculateAvailableThreadCount(hwInfo, 256u, rootDeviceEnvironment)) << "euCount: " << euCount;
+    }
+}
+
 struct GfxCoreHelperTestsCriWithEnginesCheck : public GfxCoreHelperTestWithEnginesCheck {
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;

@@ -21,6 +21,11 @@ const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
 }
 
 template <>
+uint32_t ReleaseHelperHw<release>::adjustMaxThreadsPerEuCount([[maybe_unused]] uint32_t maxThreadsPerEuCount, uint32_t grfCount) const {
+    return 512u == grfCount ? 4u : 8u;
+}
+
+template <>
 uint64_t ReleaseHelperHw<release>::getTotalMemBankSize() const {
     return 8ull * MemoryConstants::gigaByte;
 }
