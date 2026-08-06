@@ -460,9 +460,10 @@ struct CommandListCoreFamily : public CommandList {
 
     bool isKernelUncachedMocsRequired(bool kernelState);
 
-    bool isUsingSystemAllocation(const NEO::AllocationType &allocType) const {
+    static bool isUsingSystemAllocation(const NEO::AllocationType &allocType) {
         return ((allocType == NEO::AllocationType::bufferHostMemory) ||
                 (allocType == NEO::AllocationType::svmCpu) ||
+                (allocType == NEO::AllocationType::svmZeroCopy) ||
                 (allocType == NEO::AllocationType::externalHostPtr));
     }
 

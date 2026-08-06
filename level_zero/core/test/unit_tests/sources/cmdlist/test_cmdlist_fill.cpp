@@ -38,6 +38,30 @@ HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillThenSuccessIsReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST_F(AppendFillTest, givenZeroCopySvmAllocationWhenAppendMemoryFillCalledThenDestinationIsTreatedAsSystemMemory) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    driverHandle->allocationTypeToReturn = NEO::AllocationType::svmZeroCopy;
+
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+}
+
+HWTEST_F(AppendFillTest, givenDeviceStorageSvmAllocationWhenAppendMemoryFillCalledThenDestinationIsNotTreatedAsSystemMemory) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    driverHandle->allocationTypeToReturn = NEO::AllocationType::svmGpu;
+
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+}
+
 HWTEST_F(AppendFillTest, givenZeroPatternSizeWhenAppendMemoryFillCalledThenInvalidSizeIsReturned) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);

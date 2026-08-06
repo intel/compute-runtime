@@ -41,6 +41,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
     using BaseClass::addHostFunctionToPatchCommands;
     using BaseClass::addPatchScratchAddressInImplicitArgs;
+    using BaseClass::alignSvmAllocationData;
     using BaseClass::allocateOrReuseKernelPrivateMemoryIfNeeded;
     using BaseClass::allowCbWaitEventsNoopDispatch;
     using BaseClass::appendBlitFill;
@@ -120,6 +121,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::isTimestampEventForMultiTile;
+    using BaseClass::isUsingSystemAllocation;
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::latestOperationHasHeapfullCbEventWithProfiling;

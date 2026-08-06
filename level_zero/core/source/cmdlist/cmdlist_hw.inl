@@ -254,7 +254,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handlePostSubmissionState() {
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::containsSystemAllocation(const NEO::ResidencyContainer &residencyContainer) {
     for (const auto &allocation : residencyContainer) {
-        if (allocation != nullptr && allocation->getAllocationType() == NEO::AllocationType::bufferHostMemory) {
+        if (allocation != nullptr && isUsingSystemAllocation(allocation->getAllocationType())) {
             return true;
         }
     }
@@ -2879,7 +2879,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, allocData);
     if (dstAllocFound) {
         if (allocData->memoryType == InternalMemoryType::hostUnifiedMemory ||
-            allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
+            allocData->memoryType == InternalMemoryType::sharedUnifiedMemory ||
+            isUsingSystemAllocation(allocData->gpuAllocations.getAllocationType())) {
             hostPointerNeedsFlush = true;
         }
 
@@ -3364,7 +3365,8 @@ AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::alignSvmAllocationDa
 
     bool hostPointerNeedsFlush = false;
     if (svmAlloc->memoryType == InternalMemoryType::hostUnifiedMemory ||
-        svmAlloc->memoryType == InternalMemoryType::sharedUnifiedMemory) {
+        svmAlloc->memoryType == InternalMemoryType::sharedUnifiedMemory ||
+        isUsingSystemAllocation(svmAlloc->gpuAllocations.getAllocationType())) {
         hostPointerNeedsFlush = true;
     }
     addVirtualReservationToResidency(svmAlloc, buffer);

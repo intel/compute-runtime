@@ -13,6 +13,7 @@
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/thread_data_hash.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -3133,7 +3134,7 @@ HWTEST2_F(CommandListSystemMemoryFenceCacheTest, givenCommandListWhenInitialized
 
 using ContainsAllocationHelpersTest = Test<DeviceFixture>;
 
-HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForSystemAllocationThenReturnsTrueOnlyWhenBufferHostMemoryPresent, IsAtLeastXeCore) {
+HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForSystemAllocationThenReturnsTrueOnlyWhenSystemMemoryAllocationPresent, IsAtLeastXeCore) {
     using CommandListType = WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
 
     NEO::ResidencyContainer emptyContainer;
@@ -3141,14 +3142,60 @@ HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForS
 
     NEO::MockGraphicsAllocation deviceAllocation{};
     deviceAllocation.setAllocationType(NEO::AllocationType::buffer);
-    NEO::MockGraphicsAllocation hostAllocation{};
-    hostAllocation.setAllocationType(NEO::AllocationType::bufferHostMemory);
+    NEO::MockGraphicsAllocation svmGpuAllocation{};
+    svmGpuAllocation.setAllocationType(NEO::AllocationType::svmGpu);
 
-    NEO::ResidencyContainer containerWithoutHost{&deviceAllocation, nullptr};
-    EXPECT_FALSE(CommandListType::containsSystemAllocation(containerWithoutHost));
+    NEO::ResidencyContainer containerWithoutSystemMemory{&deviceAllocation, nullptr, &svmGpuAllocation};
+    EXPECT_FALSE(CommandListType::containsSystemAllocation(containerWithoutSystemMemory));
 
-    NEO::ResidencyContainer containerWithHost{&deviceAllocation, nullptr, &hostAllocation};
-    EXPECT_TRUE(CommandListType::containsSystemAllocation(containerWithHost));
+    for (auto systemAllocationType : {NEO::AllocationType::bufferHostMemory,
+                                      NEO::AllocationType::svmCpu,
+                                      NEO::AllocationType::svmZeroCopy,
+                                      NEO::AllocationType::externalHostPtr}) {
+        NEO::MockGraphicsAllocation systemAllocation{};
+        systemAllocation.setAllocationType(systemAllocationType);
+
+        NEO::ResidencyContainer containerWithSystemMemory{&deviceAllocation, nullptr, &systemAllocation};
+        EXPECT_TRUE(CommandListType::containsSystemAllocation(containerWithSystemMemory));
+    }
+}
+
+HWTEST2_F(ContainsAllocationHelpersTest, givenAllocationTypeWhenCheckingIsUsingSystemAllocationThenOnlyCpuVisibleTypesAreReported, IsAtLeastXeCore) {
+    using CommandListType = WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+
+    EXPECT_TRUE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::bufferHostMemory));
+    EXPECT_TRUE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::svmCpu));
+    EXPECT_TRUE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::svmZeroCopy));
+    EXPECT_TRUE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::externalHostPtr));
+
+    EXPECT_FALSE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::buffer));
+    EXPECT_FALSE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::svmGpu));
+    EXPECT_FALSE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::image));
+}
+
+HWTEST2_F(ContainsAllocationHelpersTest, givenZeroCopySvmAllocationWhenAligningSvmAllocationDataThenHostPointerFlushIsRequested, IsAtLeastXeCore) {
+    using CommandListType = WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+
+    auto commandList = std::make_unique<CommandListType>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    uint8_t storage[MemoryConstants::pageSize] = {};
+    NEO::MockGraphicsAllocation svmAllocation{storage, sizeof(storage)};
+    NEO::SvmAllocationData allocData{device->getRootDeviceIndex()};
+    allocData.gpuAllocations.addAllocation(&svmAllocation);
+    allocData.memoryType = InternalMemoryType::svm;
+    allocData.size = sizeof(storage);
+
+    auto buffer = svmAllocation.getUnderlyingBuffer();
+    auto sourcePtr = static_cast<uintptr_t>(svmAllocation.getGpuAddress());
+
+    svmAllocation.setAllocationType(NEO::AllocationType::svmGpu);
+    auto deviceStorageData = commandList->alignSvmAllocationData(device, &allocData, buffer, sourcePtr, 0u);
+    EXPECT_FALSE(deviceStorageData.needsFlush);
+
+    svmAllocation.setAllocationType(NEO::AllocationType::svmZeroCopy);
+    auto zeroCopyData = commandList->alignSvmAllocationData(device, &allocData, buffer, sourcePtr, 0u);
+    EXPECT_TRUE(zeroCopyData.needsFlush);
 }
 
 HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForExternalAllocationThenReturnsTrueOnlyWhenImportedAllocationPresent, IsAtLeastXeCore) {

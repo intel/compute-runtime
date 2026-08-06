@@ -450,6 +450,7 @@ bool AppendFillFixture::MockDriverFillHandle::findAllocationDataForRange(const v
         return false;
     }
     mockAllocation.reset(new NEO::MockGraphicsAllocation(const_cast<void *>(buffer), size));
+    mockAllocation->setAllocationType(allocationTypeToReturn);
     data.gpuAllocations.addAllocation(mockAllocation.get());
     allocData = &data;
     return true;
