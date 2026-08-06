@@ -135,7 +135,7 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricProgrammableI
     EXPECT_EQ(properties.samplingType, METRICS_SAMPLING_TYPE_TIME_EVENT_BASED);
 }
 
-TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricProgrammableThenCorrectParamerterInfoIsReturned) {
+TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricProgrammableThenCorrectParameterInfoIsReturned) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricProgrammableGetExp(rootDevice->toHandle(), &count, nullptr));
     EXPECT_EQ(count, 1u);
@@ -172,7 +172,7 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricProgrammableT
     EXPECT_EQ(parameterInfo[3].valueInfoType, ZET_VALUE_INFO_TYPE_EXP_UINT64_RANGE);
 }
 
-TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricProgrammableThenCorrectParamerterValueInfoIsReturned) {
+TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricProgrammableThenCorrectParameterValueInfoIsReturned) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricProgrammableGetExp(rootDevice->toHandle(), &count, nullptr));
     EXPECT_EQ(count, 1u);

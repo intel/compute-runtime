@@ -122,7 +122,7 @@ TEST_F(OaMetricProgrammableTests, givenEnableProgrammableMetricsSupportIsNotSetW
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContextTest->metricProgrammableGet(&count, nullptr));
 }
 
-TEST_F(OaMetricProgrammableTests, givenEnumerationHasErroreWhenmetricProgrammableGetIsCalledThenErrorIsReturned) {
+TEST_F(OaMetricProgrammableTests, givenEnumerationHasErrorWhenMetricProgrammableGetIsCalledThenErrorIsReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
@@ -197,7 +197,7 @@ TEST_F(OaMetricProgrammableTests, whenRetrievingConcurrentGroupFromAdapterGroupT
     EXPECT_NE(concurrentGroup, nullptr);
 }
 
-TEST_F(OaMetricProgrammableTests, givenMetricProgrammableIsSupportedWhenCachingForMulitpleConcurrentGroupsThenValidHandlesAreReturned) {
+TEST_F(OaMetricProgrammableTests, givenMetricProgrammableIsSupportedWhenCachingForMultipleConcurrentGroupsThenValidHandlesAreReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
@@ -221,7 +221,7 @@ TEST_F(OaMetricProgrammableTests, givenMetricProgrammableIsSupportedWhenCachingF
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
-TEST_F(OaMetricProgrammableTests, givenMetricsProgrammableSupportIsDisabledWhenmetricProgrammableGetIsCalledThenErrorIsReturned) {
+TEST_F(OaMetricProgrammableTests, givenMetricsProgrammableSupportIsDisabledWhenMetricProgrammableGetIsCalledThenErrorIsReturned) {
     disableProgrammableMetricsSupport();
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
@@ -285,7 +285,7 @@ TEST_F(OaMetricProgrammableTests, givenMetricProgrammableIsSupportedAndApiMaskIs
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
-TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableThenCorrectParamerterInfoIsReturned) {
+TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableThenCorrectParameterInfoIsReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
@@ -412,7 +412,7 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableWhenGetOptionDescr
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
-TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableThenCorrectParamerterValueInfoIsReturned) {
+TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableThenCorrectParameterValueInfoIsReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
@@ -466,7 +466,7 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableWhenUnsupportedVal
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
-TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableThenCorrectParamerterValueInfoDescIsReturned) {
+TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableThenCorrectParameterValueInfoDescIsReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
@@ -763,7 +763,7 @@ TEST_F(OaMetricProgrammableTests, givenValidCreatedMetricGroupWhenQueryingProper
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
-TEST_F(OaMetricProgrammableTests, givenInvalidMeticWhenMetricGroupIsCreatedThenErrorIsReturned) {
+TEST_F(OaMetricProgrammableTests, givenInvalidMetricWhenMetricGroupIsCreatedThenErrorIsReturned) {
     MockMetricSource mockMetricSource{};
     mockMetricSource.isAvailableReturn = true;
     MockMetric mockMetric(mockMetricSource, mockMetricScopes);
@@ -994,7 +994,7 @@ TEST_F(OaMetricProgrammableTests, givenActivatedValidMetricGroupWhenAddingOrRemo
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
-TEST_F(OaMetricProgrammableTests, givenErrorDuingActivationOfMetricsTheActivationStatusIsNotChanged) {
+TEST_F(OaMetricProgrammableTests, givenErrorDuringActivationOfMetricsThenTheActivationStatusIsNotChanged) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
@@ -1523,7 +1523,7 @@ TEST_F(OaMetricProgrammableTests, givenEnableProgrammableMetricsSupportIsNotSetW
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
-TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenUnembargoedMetricSourceIsUsedThenSuccessIsReturned) {
+TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenMetricSourceReturnsUnsupportedThenSuccessWithZeroMetricGroupCountIsReturned) {
     MockMetricSource mockMetricSource{};
     mockMetricSource.isAvailableReturn = true;
     MockMetric mockMetric(mockMetricSource, mockMetricScopes);
@@ -1681,7 +1681,7 @@ void MultiSourceOaMetricProgrammableFixture::SetUp() {
     mockMetricScopes.push_back(mockMetricScope);
 }
 
-TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetricsIsCalledAndOneMetricSourcesReturnsUnsupportedThenSuccessIsReturned) {
+TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetricsIsCalledAndOneMetricSourceReturnsUnsupportedThenSuccessIsReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     ASSERT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
@@ -1724,7 +1724,7 @@ TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetric
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
-TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetricsIsCalledAndOneMetricSourcesFailsThenFailureIsReturned) {
+TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetricsIsCalledAndOneMetricSourceFailsThenFailureIsReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     ASSERT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
@@ -1777,7 +1777,7 @@ TEST_F(MultiSourceOaMetricProgrammableFixture, givenMetricProgrammableGetReturns
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
-TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetricsIsCalledAndOneMetricSourcesFailsDuringCountCalculationThenFailureIsReturned) {
+TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetricsIsCalledAndOneMetricSourceFailsDuringCountCalculationThenFailureIsReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     ASSERT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
