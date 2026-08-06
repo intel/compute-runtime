@@ -37,24 +37,30 @@ template <typename GfxFamily>
 void MutableSemaphoreWaitHw<GfxFamily>::restoreWithSemaphoreAddress(GpuAddress semaphoreAddress) {
     using CompareOperation = typename SemaphoreWait::COMPARE_OPERATION;
 
+    constexpr bool registerPollMode = false;
+    constexpr bool waitMode = true;
+    constexpr bool switchOnUnsuccessful = false;
+
     semaphoreAddress &= MutableSemaphoreWaitHw<GfxFamily>::commandAddressRange;
     semaphoreAddress += this->offset;
 
     void *targetPointer = this->commandView ? this->commandView : this->semWait;
 
     if (type == Type::regularEventWait || type == Type::cbEventTimestampSyncWait) {
+        constexpr bool useQwordData = false;
+        constexpr bool indirect = false;
         NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<SemaphoreWait *>(targetPointer),
                                                                 semaphoreAddress,
                                                                 Event::STATE_CLEARED,
                                                                 CompareOperation::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                                false, true, false, false, false, this->useSemaphore64bCmd);
-    } else if (type == Type::cbEventWait) {
+                                                                registerPollMode, waitMode, useQwordData, indirect, switchOnUnsuccessful, this->useSemaphore64bCmd);
+    } else if (type == Type::cbEventWait || type == Type::cbEventWaitPatchPreambleCounter) {
         bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->qwordData, this->useSemaphore64bCmd);
         NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<SemaphoreWait *>(targetPointer),
                                                                 semaphoreAddress,
                                                                 0,
                                                                 CompareOperation::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                false, true, this->qwordData, qwordIndirect, false, this->useSemaphore64bCmd);
+                                                                registerPollMode, waitMode, this->qwordData, qwordIndirect, switchOnUnsuccessful, this->useSemaphore64bCmd);
     }
 }
 

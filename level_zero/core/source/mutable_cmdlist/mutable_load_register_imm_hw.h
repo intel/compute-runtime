@@ -14,8 +14,8 @@ template <typename GfxFamily>
 struct MutableLoadRegisterImmHw : public MutableLoadRegisterImm {
     using LoadRegisterImm = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-    MutableLoadRegisterImmHw(uint64_t gpuDestination, void *cmdView, void *loadRegImm, uint32_t registerAddress)
-        : MutableLoadRegisterImm(gpuDestination, cmdView, sizeof(LoadRegisterImm)),
+    MutableLoadRegisterImmHw(uint64_t gpuDestination, void *cmdView, void *loadRegImm, uint32_t registerAddress, Type type)
+        : MutableLoadRegisterImm(gpuDestination, cmdView, sizeof(LoadRegisterImm), type),
           loadRegImm(loadRegImm),
           registerAddress(registerAddress) {}
 

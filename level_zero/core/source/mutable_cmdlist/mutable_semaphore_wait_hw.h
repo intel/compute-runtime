@@ -15,10 +15,9 @@ struct MutableSemaphoreWaitHw : public MutableSemaphoreWait {
     using SemaphoreWait = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
     MutableSemaphoreWaitHw(uint64_t gpuDestination, void *cmdView, void *semWait, size_t offset, Type type, bool qwordData, bool useSemaphore64bCmd)
-        : MutableSemaphoreWait(gpuDestination, cmdView, sizeof(SemaphoreWait)),
+        : MutableSemaphoreWait(gpuDestination, cmdView, sizeof(SemaphoreWait), type),
           semWait(semWait),
           offset(offset),
-          type(type),
           qwordData(qwordData),
           useSemaphore64bCmd(useSemaphore64bCmd) {}
     ~MutableSemaphoreWaitHw() override;
@@ -31,7 +30,6 @@ struct MutableSemaphoreWaitHw : public MutableSemaphoreWait {
   protected:
     void *semWait;
     size_t offset;
-    Type type;
     bool qwordData = false;
     bool useSemaphore64bCmd = false;
 

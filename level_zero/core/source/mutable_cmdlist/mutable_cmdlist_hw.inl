@@ -542,7 +542,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
         auto loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch->gpuDestination,
                                                                                    loadRegImmCmdToPatch->commandView,
                                                                                    loadRegImmCmdToPatch->pDestination,
-                                                                                   static_cast<uint32_t>(loadRegImmCmdToPatch->offset));
+                                                                                   static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
+                                                                                   MutableLoadRegisterImm::cbEventWaitLoadCounter);
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         auto loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -555,7 +556,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
         loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch2->gpuDestination,
                                                                               loadRegImmCmdToPatch2->commandView,
                                                                               loadRegImmCmdToPatch2->pDestination,
-                                                                              static_cast<uint32_t>(loadRegImmCmdToPatch2->offset));
+                                                                              static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
+                                                                              MutableLoadRegisterImm::cbEventWaitLoadCounter);
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);

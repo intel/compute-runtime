@@ -33,7 +33,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // initialize command and mutable object
     NEO::LriHelper<FamilyType>::program(&this->commandStream, registerAddress, value, true, false);
-    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0, nullptr, this->cmdBufferGpuPtr, registerAddress);
+    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0, nullptr, this->cmdBufferGpuPtr, registerAddress, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
 
     mutableLoadRegisterImm.noop();
 
@@ -55,7 +55,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // noop command buffer and create mutable object
     memset(this->cmdBufferGpuPtr, 0, sizeof(MI_LOAD_REGISTER_IMM));
-    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0, nullptr, this->cmdBufferGpuPtr, registerAddress);
+    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0, nullptr, this->cmdBufferGpuPtr, registerAddress, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
 
     mutableLoadRegisterImm.restore();
 
@@ -76,7 +76,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto lriCommand = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(this->cmdBufferGpuPtr);
     EXPECT_EQ(value, lriCommand->getDataDword());
 
-    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0, nullptr, this->cmdBufferGpuPtr, registerAddress);
+    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0, nullptr, this->cmdBufferGpuPtr, registerAddress, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
 
     value = 0x8;
     mutableLoadRegisterImm.setValue(value);
@@ -99,7 +99,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // initialize command and mutable object
     NEO::LriHelper<FamilyType>::program(reinterpret_cast<MI_LOAD_REGISTER_IMM *>(cmdView), registerAddress, value, true, false);
-    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0x1000, cmdView, this->cmdBufferGpuPtr, registerAddress);
+    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0x1000, cmdView, this->cmdBufferGpuPtr, registerAddress, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
 
     EXPECT_EQ(cmdView, mutableLoadRegisterImm.getCommandView());
     EXPECT_EQ(0x1000u, mutableLoadRegisterImm.getGpuDestinationAddress());
@@ -126,7 +126,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // noop command buffer and create mutable object
     memset(cmdView, 0, sizeof(MI_LOAD_REGISTER_IMM));
-    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0x1000, cmdView, this->cmdBufferGpuPtr, registerAddress);
+    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0x1000, cmdView, this->cmdBufferGpuPtr, registerAddress, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
 
     mutableLoadRegisterImm.restore();
 
@@ -149,7 +149,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto lriCommand = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(cmdView);
     EXPECT_EQ(value, lriCommand->getDataDword());
 
-    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0, cmdView, this->cmdBufferGpuPtr, registerAddress);
+    L0::MCL::MutableLoadRegisterImmHw<FamilyType> mutableLoadRegisterImm(0, cmdView, this->cmdBufferGpuPtr, registerAddress, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
 
     value = 0x8;
     mutableLoadRegisterImm.setValue(value);

@@ -26,6 +26,7 @@ struct WhiteBox<::L0::MCL::MutableLoadRegisterImmHw<GfxFamily>>
     using BaseClass::gpuDestinationAddress;
     using BaseClass::loadRegImm;
     using BaseClass::registerAddress;
+    using BaseClass::type;
 };
 
 template <typename GfxFamily>

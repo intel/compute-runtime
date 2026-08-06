@@ -106,7 +106,7 @@ struct VariableFixture : public MutableCommandListFixtureInit {
     }
 
     template <typename FamilyType>
-    void createMutableLoadRegisterImm(uint32_t registerAddress, bool allocateCommanView) {
+    void createMutableLoadRegisterImm(uint32_t registerAddress, bool allocateCommanView, L0::MCL::MutableLoadRegisterImm::Type type) {
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
         auto loadRegisterImmBuffer = this->cmdBuffer->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
         *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(loadRegisterImmBuffer) = FamilyType::cmdInitLoadRegisterImm;
@@ -117,7 +117,9 @@ struct VariableFixture : public MutableCommandListFixtureInit {
         }
 
         this->loadRegisterImmBuffers.push_back(loadRegisterImmBuffer);
-        this->mutableLoadRegisterImms.push_back(std::make_unique<L0::MCL::MutableLoadRegisterImmHw<FamilyType>>(this->gpuDestAddress, commandView, loadRegisterImmBuffer, registerAddress));
+        this->mutableLoadRegisterImms.push_back(std::make_unique<L0::MCL::MutableLoadRegisterImmHw<FamilyType>>(this->gpuDestAddress, commandView, loadRegisterImmBuffer, registerAddress, type));
+        auto mutableLriType = this->mutableLoadRegisterImms.back()->getType();
+        EXPECT_EQ(type, mutableLriType);
 
         this->gpuDestAddress += sizeof(MI_LOAD_REGISTER_IMM);
     }
@@ -140,6 +142,8 @@ struct VariableFixture : public MutableCommandListFixtureInit {
                                                                                                    type,
                                                                                                    qwordData,
                                                                                                    HasSemaphore64bCmd<FamilyType>);
+        auto mutableSemWaitType = this->mutableSemaphoreWait->getType();
+        EXPECT_EQ(type, mutableSemWaitType);
 
         this->gpuDestAddress += sizeof(MI_SEMAPHORE_WAIT);
     }
@@ -252,8 +256,8 @@ struct VariableInOrderFixture : public VariableFixture {
     template <typename FamilyType>
     void prepareInOrderWaitCommands() {
         if (this->qwordIndirect) {
-            createMutableLoadRegisterImm<FamilyType>(0x2600, this->asyncMutation);
-            createMutableLoadRegisterImm<FamilyType>(0x2604, this->asyncMutation);
+            createMutableLoadRegisterImm<FamilyType>(0x2600, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
+            createMutableLoadRegisterImm<FamilyType>(0x2604, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
         }
 
         createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, L0::MCL::MutableSemaphoreWait::Type::cbEventWait, this->qwordIndirect, this->asyncMutation);

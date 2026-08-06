@@ -3597,17 +3597,16 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
     if (noopDispatch == true && this->allowCbWaitEventsNoopDispatch == false) {
         return;
     }
-    bool indirectMode = false;
     const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
     const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(isQwordInOrderCounter(), useSemaphore64bCmd);
     const bool copyOnlyWait = isCopyOnly(dualStreamCopyOffloadOperation);
-    bool switchOnUnsuccessful = true;
+    constexpr bool switchOnUnsuccessful = false;
 
     NEO::GraphicsAllocation *devicePatchPreambleCounterAlloc = eventInOrderHelper.getPatchPreambleDeviceAllocation();
     uint64_t devicePatchPreambleCounterGpuAddress = eventInOrderHelper.getPatchPreambleDeviceGpuAddress();
 
     const uint32_t immWriteOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
-    uint32_t devicePartitionCount = eventInOrderHelper.getEventData()->devicePartitions;
+    const uint32_t devicePartitionCount = eventInOrderHelper.getEventData()->devicePartitions;
 
     NEO::EncodeCaptureCommandData cmdCaptureData = {};
 
@@ -3617,8 +3616,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
 
     for (uint32_t i = 0; i < devicePartitionCount; i++) {
         if (qwordIndirect) {
-            indirectMode = true;
-
             constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
             constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
 
@@ -3634,7 +3631,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
         }
 
         NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), devicePatchPreambleCounterGpuAddress, counter, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                   false, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful, useSemaphore64bCmd, &cmdCaptureData);
+                                                                   false, isQwordInOrderCounter(), qwordIndirect, switchOnUnsuccessful, useSemaphore64bCmd, &cmdCaptureData);
         if (noopDispatch) {
             memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
         }

@@ -40,6 +40,7 @@ void CommandQueuePatchPreambleCounter::getPatchPreambleFullData(Device *device,
         this->deviceCounterNode = deviceTagAllocator->getTag();
         this->deviceNodeGpuAddress = this->deviceCounterNode->getGpuAddress();
         this->deviceNodeAllocation = this->deviceCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
+        memset(this->deviceCounterNode->getCpuBase(), 0x0, deviceTagAllocator->getTagSize());
     }
     outCounterValue = ++this->counter;
     outHostAddress = this->hostNodeCpuAddress;
