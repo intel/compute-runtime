@@ -9,4 +9,3 @@
 
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned, IGFX_BMG);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenAdjustScratchSizeThenSizeIsNotChanged, IGFX_BMG);
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnFalse, IGFX_BMG);

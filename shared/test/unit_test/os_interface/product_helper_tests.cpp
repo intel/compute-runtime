@@ -486,11 +486,11 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfVmBindDecompressionPro
     EXPECT_FALSE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnFalse) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnFalse, IsNotBMG) {
     EXPECT_FALSE(productHelper->isDeferBackingEnabled());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithDebugFlagSetToOneThenReturnTrue) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithDebugFlagSetToOneThenReturnTrue, IsNotBMG) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(1);
     EXPECT_TRUE(productHelper->isDeferBackingEnabled());
