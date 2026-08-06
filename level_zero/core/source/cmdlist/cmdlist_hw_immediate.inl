@@ -669,7 +669,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     }
 
     if (!isInOrderExecutionEnabled() && isDualStreamCopyOffloadOperation(true) && this->cmdQImmediateCopyOffload != nullptr) {
-        return appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters.relaxedOrderingAllowed, isStallingOperation);
+        return appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, isStallingOperation);
     }
 
     checkAvailableSpace(numWaitEvents, waitEventsParameters.relaxedOrderingAllowed, commonImmediateCommandSize, false);
@@ -698,7 +698,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::programCrossEngineTaskCountW
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrierWithCopyOffloadSynchronization(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                                                                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool isStallingOperation) {
+                                                                                                       ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters, bool isStallingOperation) {
     checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
 
     auto copyOffloadCsr = getCsr(true);
@@ -708,18 +708,22 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrierWithCopy
         programCrossEngineTaskCountWait(copyOffloadCsr, copyOffloadTaskCount);
     }
 
-    CmdListWaitEventParameters waitEventsParameters = {
-        .outWaitCmds = nullptr,
-        .relaxedOrderingAllowed = relaxedOrderingDispatch,
-        .trackDependencies = true,
-        .waitForImplicitInOrderDependency = true,
-        .skipAddingWaitEventsToResidency = false,
-        .dualStreamCopyOffloadOperation = false,
-    };
-    const auto ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 
     this->dependenciesPresent = true;
-    return flushImmediate(ret, true, isStallingOperation, relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
+    ret = flushImmediate(ret, true, isStallingOperation, waitEventsParameters.relaxedOrderingAllowed, NEO::AppendOperations::nonKernel, false, nullptr, true, nullptr, nullptr);
+
+    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
+
+    auto csr = getCsr(false);
+    auto taskCount = this->cmdQImmediate->getTaskCount();
+
+    if (taskCount > 0) {
+        programCrossEngineTaskCountWait(csr, taskCount);
+    }
+
+    this->dependenciesPresent = true;
+    return flushImmediate(ret, true, isStallingOperation, waitEventsParameters.relaxedOrderingAllowed, NEO::AppendOperations::nonKernel, true, hSignalEvent, false, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
