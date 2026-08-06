@@ -184,7 +184,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     l0d3dTextureExtDesc.arrayIndex = arrayIndex;
 
     ze_image_desc_t l0imageDesc{ZE_STRUCTURE_TYPE_IMAGE_DESC};
-    l0imageDesc.miplevels = textureDesc.MipLevels;
+    l0imageDesc.miplevels = 0;
     l0imageDesc.pNext = &l0d3dTextureExtDesc;
     l0imageDesc.type = ze_image_type_t::ZE_IMAGE_TYPE_2D;
     l0imageDesc.width = textureDesc.Width;

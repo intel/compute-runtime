@@ -531,7 +531,7 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
         if (memObject->acquireCount == 0) {
             return CL_D3D11_RESOURCE_NOT_ACQUIRED_KHR;
         }
-        if (!static_cast<D3DSharing<D3DTypesHelper::D3D10> *>(memObject->peekSharingHandler())->isSharedResource()) {
+        if (!static_cast<D3DSharing<D3DTypesHelper::D3D11> *>(memObject->peekSharingHandler())->isSharedResource()) {
             clFinish(commandQueue);
             break;
         }
