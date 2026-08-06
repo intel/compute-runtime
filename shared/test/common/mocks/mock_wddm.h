@@ -210,6 +210,7 @@ class WddmMock : public Wddm {
     bool shutdownStatus = false;
     bool callBaseSetAllocationPriority = true;
     bool callBaseWaitFromCpu = true;
+    bool failFreeGpuVirtualAddress = false;
     bool failReserveGpuVirtualAddress = false;
     bool failCreateAllocation = false;
 };

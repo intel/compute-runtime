@@ -1336,25 +1336,311 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalDeviceMemoryAndVirtualMemoryThe
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalHostMemoryAndVirtualMemoryThenMapFails) {
+TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalHostMemoryAndVirtualMemoryThenMapSucceeds) {
+    if (rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily == IGFX_DG1) {
+        GTEST_SKIP();
+    }
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     AllocationData allocationData;
     allocationData.allFlags = 0;
-    allocationData.size = MemoryConstants::pageSize;
+    allocationData.size = MemoryConstants::pageSize64k;
     allocationData.flags.allocateMemory = true;
     allocationData.flags.useSystemMemory = true;
     allocationData.flags.isUSMHostAllocation = true;
-    uint64_t gpuRange = 0x1234;
+    auto requestedGpuAddress = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB) + MemoryConstants::pageSize64k;
+    uint64_t gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(requestedGpuAddress);
     MemoryManager::AllocationStatus status;
     auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
-    EXPECT_EQ(nullptr, allocation);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
 
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(0);
-    rootDeviceIndices.pushUnique(1);
-    MultiGraphicsAllocation multiGraphicsAllocations{2};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
     EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenCreatePhysicalAllocationFailureWhenAllocatingPhysicalHostMemoryThenNullptrIsReturned) {
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+
+    wddm->failCreateAllocation = true;
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    EXPECT_EQ(nullptr, allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenLockResourceFailureWhenAllocatingPhysicalHostMemoryThenNullptrIsReturned) {
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+
+    wddm->callBaseDestroyAllocations = false;
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeAboveHeapLimitWhenMapThenMapFails) {
+    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+
+    auto heapLimit = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
+    auto outOfRangeGpuAddress = heapLimit + MemoryConstants::pageSize64k;
+    auto gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(outOfRangeGpuAddress);
+
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
+
+    memoryManager->freeGraphicsMemory(allocation);
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeBelowHeapMinimumWhenMapThenMapFails) {
+    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+
+    auto heapBase = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB);
+    if (heapBase <= MemoryConstants::pageSize64k) {
+        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+        GTEST_SKIP();
+    }
+    auto outOfRangeGpuAddress = heapBase - MemoryConstants::pageSize64k;
+    auto gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(outOfRangeGpuAddress);
+
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
+
+    memoryManager->freeGraphicsMemory(allocation);
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeAboveHeapLimitOnNonFullRangeSvmWhenMapThenMapFails) {
+    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(40);
+    if (rootDeviceEnvironment->isFullRangeSvm()) {
+        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+        GTEST_SKIP();
+    }
+
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+
+    auto heapLimit = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
+    auto outOfRangeGpuAddress = heapLimit + MemoryConstants::pageSize64k;
+    auto gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(outOfRangeGpuAddress);
+
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
+
+    memoryManager->freeGraphicsMemory(allocation);
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeInsideHeapOnFullRangeSvmWhenMapThenBaseAddressIsNotForcedToZero) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    ASSERT_TRUE(rootDeviceEnvironment->isFullRangeSvm());
+
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+
+    auto heapBase = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB);
+    auto heapLimit = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
+    if (heapLimit <= heapBase || (heapLimit - heapBase) < MemoryConstants::pageSize64k) {
+        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+        GTEST_SKIP();
+    }
+
+    auto inRangeGpuAddress = heapBase + MemoryConstants::pageSize64k;
+    auto gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(inRangeGpuAddress);
+
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
+
+    auto mapGpuVaArg = getLastCallMapGpuVaArg();
+    ASSERT_NE(nullptr, mapGpuVaArg);
+    EXPECT_EQ(inRangeGpuAddress, mapGpuVaArg->BaseAddress);
+    EXPECT_NE(0u, mapGpuVaArg->BaseAddress);
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size));
+
+    memoryManager->freeGraphicsMemory(allocation);
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeInsideHeapOnNonFullRangeSvmWhenMapThenBaseAddressMatchesRequestedAddress) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(40);
+    if (rootDeviceEnvironment->isFullRangeSvm()) {
+        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+        GTEST_SKIP();
+    }
+
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+
+    auto heapBase = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB);
+    auto heapLimit = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
+    if (heapLimit <= heapBase || (heapLimit - heapBase) < MemoryConstants::pageSize64k) {
+        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+        GTEST_SKIP();
+    }
+
+    auto inRangeGpuAddress = heapBase + MemoryConstants::pageSize64k;
+    auto gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(inRangeGpuAddress);
+
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
+
+    auto mapGpuVaArg = getLastCallMapGpuVaArg();
+    ASSERT_NE(nullptr, mapGpuVaArg);
+    EXPECT_EQ(inRangeGpuAddress, mapGpuVaArg->BaseAddress);
+    EXPECT_NE(0u, mapGpuVaArg->BaseAddress);
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size));
+
+    memoryManager->freeGraphicsMemory(allocation);
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndVirtualMemoryWhenUnmapReserveFailsThenUnmapFails) {
+    if (rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily == IGFX_DG1) {
+        GTEST_SKIP();
+    }
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+    auto requestedGpuAddress = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB) + MemoryConstants::pageSize64k;
+    uint64_t gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(requestedGpuAddress);
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
+
+    wddm->failReserveGpuVirtualAddress = true;
+    EXPECT_FALSE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size));
+    wddm->failReserveGpuVirtualAddress = false;
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndVirtualMemoryWhenUnmapFreeFailsThenUnmapFails) {
+    if (rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily == IGFX_DG1) {
+        GTEST_SKIP();
+    }
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+    auto requestedGpuAddress = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB) + MemoryConstants::pageSize64k;
+    uint64_t gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(requestedGpuAddress);
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
+
+    wddm->failFreeGpuVirtualAddress = true;
+    EXPECT_FALSE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size));
+    EXPECT_EQ(1u, wddm->reserveGpuVirtualAddressResult.called);
+    wddm->failFreeGpuVirtualAddress = false;
+
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenZeroFenceValueOnSingleEngineRegisteredWhenHandleFenceCompletionIsCalledThenDoNotWaitOnCpu) {
@@ -3332,6 +3618,36 @@ TEST_F(WddmMemoryManagerTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalle
     allocationData.hostPtr = hostPtr;
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
     EXPECT_EQ(nullptr, allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerTest, givenPhysicalHostMemoryMappingFailureWhenMultiGraphicsAllocationHasAllocationsThenCleanupLoopRemovesThem) {
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.allocateMemory = true;
+    allocationData.flags.useSystemMemory = true;
+    allocationData.flags.isUSMHostAllocation = true;
+    auto requestedGpuAddress = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB) + MemoryConstants::pageSize64k;
+    uint64_t gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(requestedGpuAddress);
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+
+    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    auto staleAllocation = std::make_unique<MockWddmAllocation>(rootDeviceEnvironment->getGmmHelper());
+    staleAllocation->setCpuPtrAndGpuAddress(nullptr, MemoryConstants::pageSize64k);
+    multiGraphicsAllocations.addAllocation(staleAllocation.release());
+    ASSERT_NE(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
+
+    setMapGpuVaFailConfigFcn(0, 1);
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u));
+    EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
+
     memoryManager->freeGraphicsMemory(allocation);
 }
 
