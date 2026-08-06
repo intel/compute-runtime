@@ -241,9 +241,11 @@ bool IoctlHelperXe::initialize() {
 
     maxExecQueuePriority = config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] & 0xffff;
     isLowLatencyHintAvailable = config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_LOW_LATENCY;
+    noCompressionHintAvailable = config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_NO_COMPRESSION_HINT;
     if (debugManager.flags.ForceLowLatencyHint.get() != -1) {
         isLowLatencyHintAvailable = !!debugManager.flags.ForceLowLatencyHint.get();
     }
+    XELOG("  NO_COMPRESSION GEM create hint capability\t%s\n", noCompressionHintAvailable ? "ON" : "OFF");
 
     memset(&queryConfig, 0, sizeof(queryConfig));
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
@@ -718,7 +720,7 @@ uint16_t IoctlHelperXe::getCpuCachingMode(std::optional<bool> isCoherent, bool a
     return cpuCachingMode;
 }
 
-int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) {
+int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint) {
     struct drm_xe_gem_create create = {};
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
 
@@ -742,6 +744,9 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
 
     if (this->isDeferBackingEnabled()) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
+    }
+    if (hint == GemCreateExtHint::noCompression) {
+        create.flags |= DRM_XE_GEM_CREATE_FLAG_NO_COMPRESSION;
     }
 
     PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",

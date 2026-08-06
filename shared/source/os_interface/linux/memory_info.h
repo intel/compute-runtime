@@ -26,7 +26,10 @@ class MemoryInfo {
 
     void assignRegionsFromDistances(const std::vector<DistanceInfo> &distances);
 
-    MOCKABLE_VIRTUAL int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation);
+    MOCKABLE_VIRTUAL int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, GemCreateExtHint hint);
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) {
+        return createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, isUSMHostAllocation, GemCreateExtHint::none);
+    }
 
     MemoryClassInstance getMemoryRegionClassAndInstance(DeviceBitfield deviceBitfield, const HardwareInfo &hwInfo);
 
@@ -38,7 +41,10 @@ class MemoryInfo {
 
     uint32_t getLocalMemoryRegionIndex(DeviceBitfield deviceBitfield) const;
 
-    MOCKABLE_VIRTUAL int createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation);
+    MOCKABLE_VIRTUAL int createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation, GemCreateExtHint hint);
+    int createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation) {
+        return createGemExtWithSingleRegion(memoryBanks, allocSize, handle, patIndex, pairHandle, isUSMHostAllocation, GemCreateExtHint::none);
+    }
     MOCKABLE_VIRTUAL int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation);
     MOCKABLE_VIRTUAL int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation);
     void populateTileToLocalMemoryRegionIndexMap();

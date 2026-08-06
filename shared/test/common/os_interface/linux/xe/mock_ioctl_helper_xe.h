@@ -26,6 +26,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::isLowLatencyHintAvailable;
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;
+    using IoctlHelperXe::noCompressionHintAvailable;
     using IoctlHelperXe::queryGtListData;
     using IoctlHelperXe::queryHwIpVersion;
     using IoctlHelperXe::setContextProperties;

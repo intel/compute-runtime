@@ -24,6 +24,8 @@
 #include "shared/test/common/os_interface/linux/xe/xe_config_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include <array>
+
 using namespace NEO;
 
 using IoctlHelperXeTest = Test<XeConfigFixture>;
@@ -185,6 +187,30 @@ TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeAndDeferBackingIsEnable
 
     EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, allocSize, handle, patIndex, std::nullopt, pairHandle, isChunked, numOfChunks, std::nullopt, std::nullopt, isCoherent));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING), (drm->createParamsFlags & DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING));
+}
+
+TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeWhenCallingGemCreateExtWithNoCompressionThenNoCompressionFlagIsSet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(0);
+    MemRegionsVec memRegions = {systemMemory};
+
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, allocSize, handle, patIndex, std::nullopt, pairHandle, isChunked, numOfChunks, std::nullopt, std::nullopt, isCoherent, GemCreateExtHint::noCompression));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_GEM_CREATE_FLAG_NO_COMPRESSION), drm->createParamsFlags);
+}
+
+TEST_F(IoctlHelperXeGemCreateExtTests, givenMemoryInfoWhenCreatingSingleRegionGemThenNoCompressionHintIsPassedThroughToTheKernel) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(0);
+    MemoryInfo::RegionContainer regionInfo(1);
+    regionInfo[0].region = systemMemory;
+    MemoryInfo memoryInfo(regionInfo, *drm);
+
+    EXPECT_NE(0, memoryInfo.createGemExtWithSingleRegion(0, allocSize, handle, patIndex, pairHandle, false, GemCreateExtHint::noCompression));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_GEM_CREATE_FLAG_NO_COMPRESSION), drm->createParamsFlags);
+
+    drm->createParamsFlags = 0u;
+    EXPECT_NE(0, memoryInfo.createGemExtWithSingleRegion(0, allocSize, handle, patIndex, pairHandle, false));
+    EXPECT_EQ(0u, drm->createParamsFlags);
 }
 
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenProperValuesSet) {
@@ -4156,6 +4182,27 @@ TEST_F(IoctlHelperXeTest, whenInitializeIoctlHelperAndLowLatencyAvailableThenFla
     xeQueryConfig->info[DRM_XE_QUERY_CONFIG_FLAGS] = DRM_XE_QUERY_CONFIG_FLAG_HAS_LOW_LATENCY;
     xeIoctlHelper->initialize();
     EXPECT_TRUE(static_cast<MockIoctlHelperXe *>(xeIoctlHelper)->isLowLatencyHintAvailable);
+}
+
+TEST_F(IoctlHelperXeTest, givenNoCompressionHintCapabilityWhenInitializingThenKmdAllocationForIsaFollowsIt) {
+    struct TestCase {
+        bool kernelCapability;
+        bool expectedKmdAllocationForIsa;
+    };
+    constexpr std::array<TestCase, 2> testCases = {{{false, false}, {true, true}}};
+
+    for (const auto &testCase : testCases) {
+        auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+        auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+        auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+        auto xeQueryConfig = reinterpret_cast<drm_xe_query_config *>(drm->queryConfig);
+        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_FLAGS] = testCase.kernelCapability ? DRM_XE_QUERY_CONFIG_FLAG_HAS_NO_COMPRESSION_HINT : 0;
+
+        xeIoctlHelper->initialize();
+
+        EXPECT_EQ(testCase.kernelCapability, xeIoctlHelper->noCompressionHintAvailable);
+        EXPECT_EQ(testCase.expectedKmdAllocationForIsa, xeIoctlHelper->useKmdAllocationForIsa());
+    }
 }
 
 TEST_F(IoctlHelperXeTest, whenInitializeIoctlHelperAndLowLatencyAvailableButDebugFlagEnabledThenFlagNotSet) {

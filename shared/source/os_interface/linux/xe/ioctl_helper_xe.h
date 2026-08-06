@@ -35,6 +35,7 @@ class IoctlHelperXe : public IoctlHelper {
   public:
     using GtIdContainer = StackVec<int, 4>;
 
+    using IoctlHelper::createGemExt;
     using IoctlHelper::IoctlHelper;
     static std::unique_ptr<IoctlHelperXe> create(Drm &drmArg);
     static bool queryDeviceIdAndRevision(Drm &drm);
@@ -47,7 +48,8 @@ class IoctlHelperXe : public IoctlHelper {
     bool isChunkingAvailable() override;
     bool isVmBindAvailable() override;
     bool isVmBindDecompressAvailable(uint32_t vmId) override;
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) override;
+    bool useKmdAllocationForIsa() const override { return noCompressionHintAvailable; }
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint) override;
     uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override;
     CacheRegion closAlloc(CacheLevel cacheLevel) override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
@@ -215,6 +217,7 @@ class IoctlHelperXe : public IoctlHelper {
 
     bool isLowLatencyHintAvailable = false;
     bool noVmOvercommitFlagAllowed = false;
+    bool noCompressionHintAvailable = false;
     int maxExecQueuePriority = 0;
     std::mutex xeLock;
     std::mutex gemCloseLock;
