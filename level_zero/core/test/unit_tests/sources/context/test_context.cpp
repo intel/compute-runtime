@@ -2193,7 +2193,7 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
             return true;
         }
     };
-    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override {
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override {
         if (failMapVirtualMemory) {
             return false;
         } else {
@@ -5110,6 +5110,97 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndPtrNotIn
     res = ctx->destroyPhysicalMem(mem);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = ctx->freeVirtualMem(reservationBase, pageSize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndUnmapFailsThenErrorIsReturned) {
+    auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
+    ctx->createPhysicalMemCallBase = true;
+    ctx->queryVirtualMemPageSizeCallBase = true;
+    ctx->reserveVirtualMemCallBase = true;
+    ctx->queryVirtualMemPageSizeWithStartAddressCallBase = true;
+    ctx->mapVirtualMemCallBase = true;
+    ctx->setVirtualMemAccessAttributeCallBase = true;
+    ctx->unMapVirtualMemCallBase = true;
+    ctx->destroyPhysicalMemCallBase = true;
+    ctx->freeVirtualMemCallBase = true;
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    ze_result_t res = ctx->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = ctx->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = ctx->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    res = ctx->mapVirtualMem(ptr, pagesize, mem, 0, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ctx->unMapVirtualMemCallBase = false;
+    ctx->unMapVirtualMemResult = ZE_RESULT_ERROR_UNKNOWN;
+
+    ze_memory_access_attribute_t newAccess = {ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY};
+    res = ctx->setVirtualMemAccessAttribute(ptr, pagesize, newAccess);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+
+    ctx->unMapVirtualMemCallBase = true;
+    res = ctx->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = ctx->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = ctx->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndRemapFailsThenErrorIsReturned) {
+    auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
+    ctx->createPhysicalMemCallBase = true;
+    ctx->queryVirtualMemPageSizeCallBase = true;
+    ctx->reserveVirtualMemCallBase = true;
+    ctx->queryVirtualMemPageSizeWithStartAddressCallBase = true;
+    ctx->mapVirtualMemCallBase = true;
+    ctx->setVirtualMemAccessAttributeCallBase = true;
+    ctx->unMapVirtualMemCallBase = true;
+    ctx->destroyPhysicalMemCallBase = true;
+    ctx->freeVirtualMemCallBase = true;
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    ze_result_t res = ctx->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = ctx->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = ctx->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    res = ctx->mapVirtualMem(ptr, pagesize, mem, 0, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ctx->mapVirtualMemCallBase = false;
+    ctx->mapVirtualMemResult = ZE_RESULT_ERROR_UNKNOWN;
+
+    ze_memory_access_attribute_t newAccess = {ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY};
+    res = ctx->setVirtualMemAccessAttribute(ptr, pagesize, newAccess);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+
+    EXPECT_EQ(ctx->unMapVirtualMemCalled, 1u);
+
+    res = ctx->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = ctx->freeVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 

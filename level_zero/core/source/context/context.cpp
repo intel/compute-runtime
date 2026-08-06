@@ -1932,6 +1932,9 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
 
     if (allocationNode->allocation->getAllocationType() == NEO::AllocationType::buffer) {
         if (!this->driverHandle->getMemoryManager()->mapPhysicalDeviceMemoryToVirtualMemory(allocationNode->allocation, reinterpret_cast<uint64_t>(ptr), size, &virtualMemoryReservation->flags, offset)) {
+            if (access == ZE_MEMORY_ACCESS_ATTRIBUTE_NONE) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
         NEO::SvmAllocationData allocData(allocationNode->allocation->getRootDeviceIndex());
@@ -1959,7 +1962,10 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         RootDeviceIndicesContainer rootDeviceIndicesVector(this->rootDeviceIndices);
         auto maxRootDeviceIndex = *std::max_element(rootDeviceIndicesVector.begin(), rootDeviceIndicesVector.end(), std::less<uint32_t const>());
         NEO::SvmAllocationData allocData(maxRootDeviceIndex);
-        if (!this->driverHandle->getMemoryManager()->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, allocData.gpuAllocations, allocationNode->allocation, castToUint64(ptr), size, offset)) {
+        if (!this->driverHandle->getMemoryManager()->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, allocData.gpuAllocations, allocationNode->allocation, castToUint64(ptr), size, &virtualMemoryReservation->flags, offset)) {
+            if (access == ZE_MEMORY_ACCESS_ATTRIBUTE_NONE) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         allocData.cpuAllocation = nullptr;
@@ -2108,8 +2114,14 @@ ze_result_t Context::setVirtualMemAccessAttribute(const void *ptr,
             if (physicalMapIt != virtualMemoryReservation->mappedAllocations.end()) {
                 auto allocation = physicalMapIt->second->mappedAllocation.allocation;
                 lockVirtual.unlock();
-                unMapVirtualMem(ptr, size);
-                mapVirtualMem(ptr, size, reinterpret_cast<ze_physical_mem_handle_t>(allocation), 0, access);
+                auto unmapResult = unMapVirtualMem(ptr, size);
+                if (unmapResult != ZE_RESULT_SUCCESS) {
+                    return unmapResult;
+                }
+                auto mapResult = mapVirtualMem(ptr, size, reinterpret_cast<ze_physical_mem_handle_t>(allocation), 0, access);
+                if (mapResult != ZE_RESULT_SUCCESS) {
+                    return mapResult;
+                }
             }
         }
         return ZE_RESULT_SUCCESS;

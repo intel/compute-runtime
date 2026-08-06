@@ -165,7 +165,7 @@ bool WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocatio
     return wddmAllocation->isMappedPhysicalMemoryReservation();
 }
 
-bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) {
+bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
     auto wddmPhysical = static_cast<WddmAllocation *>(physicalAllocation);
     D3DKMT_HANDLE physicalHandle = wddmPhysical->getDefaultHandle();
     Gmm *physicalGmm = wddmPhysical->getDefaultGmm();
@@ -195,7 +195,12 @@ bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCo
         // Build the D3DDDI_MAPGPUVIRTUALADDRESS request directly to control SizeInPages independently of the GMM size
         D3DDDI_MAPGPUVIRTUALADDRESS mapGPUVA = {};
         D3DDDIGPUVIRTUALADDRESS_PROTECTION_TYPE protectionType = {};
-        protectionType.Write = TRUE;
+        if (memoryflags) {
+            protectionType.Write = memoryflags->readWrite;
+            protectionType.NoAccess = memoryflags->noAccess;
+        } else {
+            protectionType.Write = TRUE;
+        }
 
         mapGPUVA.hPagingQueue = wddm.getPagingQueue();
         mapGPUVA.hAllocation = physicalHandle;
