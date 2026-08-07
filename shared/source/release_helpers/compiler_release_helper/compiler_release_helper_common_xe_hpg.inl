@@ -14,4 +14,9 @@ bool CompilerReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
     return false;
 }
 
+template <>
+bool CompilerReleaseHelperHw<release>::isSplitMatrixMultiplyAccumulateSupported() const {
+    return true;
+}
+
 } // namespace NEO

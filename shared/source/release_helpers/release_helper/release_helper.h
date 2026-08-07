@@ -39,14 +39,11 @@ class ReleaseHelper {
     virtual ~ReleaseHelper() = default;
 
     virtual bool isAdjustWalkOrderAvailable() const = 0;
-    virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
     virtual bool isDotProductAccumulateSystolicSupported() const = 0;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const = 0;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const = 0;
     virtual bool isPipeControlPriorToPipelineSelectWaRequired() const = 0;
     virtual bool isProgramAllStateComputeCommandFieldsWARequired() const = 0;
-    virtual bool isSplitMatrixMultiplyAccumulateSupported() const = 0;
-    virtual bool isBFloat16ConversionSupported() const = 0;
     virtual bool isAuxSurfaceModeOverrideRequired() const = 0;
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
     virtual bool isRcsExposureDisabled() const = 0;
@@ -98,14 +95,11 @@ class ReleaseHelperHw : public ReleaseHelper {
     }
 
     bool isAdjustWalkOrderAvailable() const override;
-    bool isMatrixMultiplyAccumulateSupported() const override;
     bool isDotProductAccumulateSystolicSupported() const override;
     bool isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const override;
     bool isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const override;
     bool isPipeControlPriorToPipelineSelectWaRequired() const override;
     bool isProgramAllStateComputeCommandFieldsWARequired() const override;
-    bool isSplitMatrixMultiplyAccumulateSupported() const override;
-    bool isBFloat16ConversionSupported() const override;
     bool isAuxSurfaceModeOverrideRequired() const override;
     bool isResolvingSubDeviceIDNeeded() const override;
     bool isRcsExposureDisabled() const override;

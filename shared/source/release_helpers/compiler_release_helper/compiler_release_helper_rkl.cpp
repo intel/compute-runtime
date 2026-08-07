@@ -19,5 +19,6 @@ bool CompilerReleaseHelperHw<release>::isForceEmuInt32DivRemSPRequired() const {
 }
 
 } // namespace NEO
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper_common_gen12lp.inl"
 
 template class NEO::CompilerReleaseHelperHw<NEO::release>;

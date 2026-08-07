@@ -8,13 +8,12 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/kernel_properties.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -216,38 +215,38 @@ HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuil
 TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressThenReportsClKhrSubgroupExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    const auto &releaseHelper = getReleaseHelper();
+    const auto &compilerReleaseHelper = getCompilerReleaseHelper();
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsIndependentForwardProgress = true;
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, compilerReleaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 
     hwInfo.capabilityTable.supportsIndependentForwardProgress = false;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, compilerReleaseHelper);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 }
 
 TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClExtFloatAtomicsExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    const auto &releaseHelper = getReleaseHelper();
+    const auto &compilerReleaseHelper = getCompilerReleaseHelper();
     auto hwInfo = *defaultHwInfo;
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, compilerReleaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }
 
 TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClKhrExternalMemoryExtension) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    const auto &releaseHelper = getReleaseHelper();
+    const auto &compilerReleaseHelper = getCompilerReleaseHelper();
     auto hwInfo = *defaultHwInfo;
 
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, compilerReleaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ClKhrExternalMemoryExtension.set(0);
 
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, compilerReleaseHelper);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 }
 

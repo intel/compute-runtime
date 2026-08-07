@@ -26,11 +26,6 @@ inline bool ReleaseHelperHw<release>::isDotProductAccumulateSystolicSupported() 
 }
 
 template <>
-inline bool ReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
     return true;
 }

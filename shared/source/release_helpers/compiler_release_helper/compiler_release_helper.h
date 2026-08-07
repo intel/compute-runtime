@@ -27,6 +27,9 @@ class CompilerReleaseHelper {
 
     virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isBindlessAddressingDisabled() const = 0;
+    virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
+    virtual bool isSplitMatrixMultiplyAccumulateSupported() const = 0;
+    virtual bool isBFloat16ConversionSupported() const = 0;
 
   protected:
     CompilerReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -43,6 +46,9 @@ class CompilerReleaseHelperHw : public CompilerReleaseHelper {
 
     bool isForceEmuInt32DivRemSPRequired() const override;
     bool isBindlessAddressingDisabled() const override;
+    bool isMatrixMultiplyAccumulateSupported() const override;
+    bool isSplitMatrixMultiplyAccumulateSupported() const override;
+    bool isBFloat16ConversionSupported() const override;
 };
 
 template <uint32_t architecture>

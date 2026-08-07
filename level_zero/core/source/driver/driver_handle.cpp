@@ -21,7 +21,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -169,7 +169,7 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
     bool isBfloat16Supported = false;
     bool isBindlessHeapsSupported = false;
     for (const auto device : devices) {
-        if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper().isBFloat16ConversionSupported()) {
+        if (device->getNEODevice()->getRootDeviceEnvironment().getCompilerReleaseHelper().isBFloat16ConversionSupported()) {
             isBfloat16Supported = true;
         }
         if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {

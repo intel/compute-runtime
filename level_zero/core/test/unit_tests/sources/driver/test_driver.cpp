@@ -17,6 +17,7 @@
 #include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -24,7 +25,6 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -188,11 +188,11 @@ TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensio
     if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
         additionalExtensions.emplace_back(ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT);
     }
-    auto mockReleaseHelperVal = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
-    mockReleaseHelperVal->bFloat16Support = true;
+    auto mockCompilerReleaseHelperVal = std::unique_ptr<MockCompilerReleaseHelper>(new MockCompilerReleaseHelper());
+    mockCompilerReleaseHelperVal->bFloat16Support = true;
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
-    rootDeviceEnvironment.releaseHelper.reset(mockReleaseHelperVal.release());
-    if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper().isBFloat16ConversionSupported()) {
+    rootDeviceEnvironment.compilerReleaseHelper.reset(mockCompilerReleaseHelperVal.release());
+    if (device->getNEODevice()->getRootDeviceEnvironment().getCompilerReleaseHelper().isBFloat16ConversionSupported()) {
         additionalExtensions.emplace_back(ZE_BFLOAT16_CONVERSIONS_EXT_NAME, ZE_BFLOAT16_CONVERSIONS_EXT_VERSION_CURRENT);
     }
 

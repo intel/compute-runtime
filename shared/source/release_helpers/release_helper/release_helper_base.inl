@@ -13,10 +13,6 @@
 namespace NEO {
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isMatrixMultiplyAccumulateSupported() const {
-    return true;
-}
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isDotProductAccumulateSystolicSupported() const {
     return true;
 }
@@ -46,16 +42,6 @@ bool ReleaseHelperHw<releaseType>::isPipeControlPriorToPipelineSelectWaRequired(
 template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isProgramAllStateComputeCommandFieldsWARequired() const {
     return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isSplitMatrixMultiplyAccumulateSupported() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isBFloat16ConversionSupported() const {
-    return true;
 }
 
 template <ReleaseType releaseType>

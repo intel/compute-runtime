@@ -12,6 +12,7 @@
 #include "shared/source/helpers/cache_policy_option_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include <cstdint>
@@ -142,7 +143,8 @@ void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::st
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     UNRECOVERABLE_IF(!compilerProductHelper);
     auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *releaseHelper);
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *compilerReleaseHelper);
 
     if (requiresAdditionalExtensions(options)) {
         extensionsList += "cl_khr_3d_image_writes ";

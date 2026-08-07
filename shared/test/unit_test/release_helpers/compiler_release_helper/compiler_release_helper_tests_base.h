@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/hw_ip_version.h"
 
 #include "gtest/gtest.h"
@@ -20,11 +21,6 @@ class CompilerReleaseHelper;
 using namespace NEO;
 
 struct CompilerReleaseHelperTestsBase : public ::testing::Test {
-
-    CompilerReleaseHelperTestsBase();
-    ~CompilerReleaseHelperTestsBase() override;
-    void whenIsForceEmuInt32DivRemSPRequiredCalledThenFalseReturned();
-    void whenIsForceEmuInt32DivRemSPRequiredCalledThenTrueReturned();
     virtual std::vector<uint32_t> getRevisions() = 0;
 
     std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;

@@ -11,7 +11,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/os_inc_base.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 namespace NEO {
 
@@ -34,7 +34,7 @@ bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithBufferStatefulAcce
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper) const {
+std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const HardwareInfo &hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) const {
     std::string extensions = "cl_khr_byte_addressable_store "
                              "cl_khr_device_uuid "
                              "cl_khr_fp16 "
@@ -121,7 +121,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_media_block_io ";
     }
 
-    if (releaseHelper.isBFloat16ConversionSupported()) {
+    if (compilerReleaseHelper.isBFloat16ConversionSupported()) {
         extensions += "cl_intel_bfloat16_conversions ";
     }
 
@@ -133,7 +133,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_subgroup_local_block_io ";
     }
 
-    if (releaseHelper.isMatrixMultiplyAccumulateSupported()) {
+    if (compilerReleaseHelper.isMatrixMultiplyAccumulateSupported()) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
     }
 
@@ -141,7 +141,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate_tf32 ";
     }
 
-    if (releaseHelper.isSplitMatrixMultiplyAccumulateSupported()) {
+    if (compilerReleaseHelper.isSplitMatrixMultiplyAccumulateSupported()) {
         extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
     }
 

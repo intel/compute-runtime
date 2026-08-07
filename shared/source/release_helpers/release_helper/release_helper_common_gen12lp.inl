@@ -29,11 +29,6 @@ bool ReleaseHelperHw<release>::isRayTracingSupported() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isDotProductAccumulateSystolicSupported() const {
     return false;
 }

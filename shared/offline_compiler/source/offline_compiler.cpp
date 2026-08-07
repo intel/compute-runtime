@@ -167,7 +167,7 @@ std::vector<NameVersionPair> OfflineCompiler::getExtensions(ConstStringRef produ
     if (nullptr == compiler) {
         return {};
     }
-    auto extensionsStr = compiler->compilerProductHelper->getDeviceExtensions(compiler->hwInfo, *compiler->releaseHelper);
+    auto extensionsStr = compiler->compilerProductHelper->getDeviceExtensions(compiler->hwInfo, *compiler->compilerReleaseHelper);
     auto extensions = NEO::CompilerOptions::tokenize(extensionsStr, ' ');
     ret.reserve(extensions.size());
     for (const auto &ext : extensions) {

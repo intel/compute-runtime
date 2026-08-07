@@ -42,11 +42,6 @@ bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
     return true;
 }
 
-template <>
-bool ReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() const {
-    return false;
-}
-
 } // namespace NEO
 #include "shared/source/release_helpers/release_helper/release_helper_common_xe_lpg.inl"
 #include "shared/source/release_helpers/release_helper/release_helper_preferred_slm_xe_hpg_96k.inl"

@@ -30,8 +30,8 @@ DG2TEST_F(GfxCoreHelperTestDg2, whenGetExtensionsIsCalledThenMatrixMultiplyAccum
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, compilerReleaseHelper);
 
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));

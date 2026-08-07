@@ -16,11 +16,6 @@ bool ReleaseHelperHw<release>::isProgramAllStateComputeCommandFieldsWARequired()
 }
 
 template <>
-bool ReleaseHelperHw<release>::isSplitMatrixMultiplyAccumulateSupported() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
     return true;
 }

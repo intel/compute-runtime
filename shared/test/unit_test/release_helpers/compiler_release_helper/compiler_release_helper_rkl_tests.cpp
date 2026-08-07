@@ -11,7 +11,6 @@
 #include "gtest/gtest.h"
 
 struct CompilerReleaseHelperRklTests : public CompilerReleaseHelperTests<12, 1> {
-
     std::vector<uint32_t> getRevisions() override {
         return {0};
     }
@@ -24,9 +23,9 @@ TEST_F(CompilerReleaseHelperRklTests, whenGettingCapabilitiesThenCorrectProperti
         ASSERT_NE(nullptr, compilerReleaseHelper);
 
         EXPECT_TRUE(compilerReleaseHelper->isBindlessAddressingDisabled());
+        EXPECT_TRUE(compilerReleaseHelper->isForceEmuInt32DivRemSPRequired());
+        EXPECT_FALSE(compilerReleaseHelper->isMatrixMultiplyAccumulateSupported());
+        EXPECT_FALSE(compilerReleaseHelper->isSplitMatrixMultiplyAccumulateSupported());
+        EXPECT_TRUE(compilerReleaseHelper->isBFloat16ConversionSupported());
     }
-}
-
-TEST_F(CompilerReleaseHelperRklTests, whenIsForceEmuInt32DivRemSPRequiredCalledThenTrueReturned) {
-    whenIsForceEmuInt32DivRemSPRequiredCalledThenTrueReturned();
 }

@@ -26,14 +26,11 @@ TEST_F(ReleaseHelperArlHTests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         ASSERT_NE(nullptr, releaseHelper);
 
         EXPECT_TRUE(releaseHelper->isAdjustWalkOrderAvailable());
-        EXPECT_TRUE(releaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isDotProductAccumulateSystolicSupported());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
         EXPECT_TRUE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
         EXPECT_FALSE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
-        EXPECT_FALSE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
-        EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_FALSE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_FALSE(releaseHelper->isRcsExposureDisabled());

@@ -28,14 +28,11 @@ TEST_F(ReleaseHelperDg2G10Tests, whenGettingCapabilitiesThenCorrectPropertiesAre
         ASSERT_NE(nullptr, releaseHelper);
 
         EXPECT_FALSE(releaseHelper->isAdjustWalkOrderAvailable());
-        EXPECT_TRUE(releaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isDotProductAccumulateSystolicSupported());
         EXPECT_TRUE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
         EXPECT_TRUE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
-        EXPECT_TRUE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
-        EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_FALSE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());

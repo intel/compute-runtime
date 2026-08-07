@@ -13,7 +13,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device_get_cap.inl"
@@ -296,8 +296,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     }
     case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
-        const auto &releaseHelper = getDevice().getRootDeviceEnvironment().getReleaseHelper();
-        if (releaseHelper.isMatrixMultiplyAccumulateSupported()) {
+        const auto &compilerReleaseHelper = getDevice().getRootDeviceEnvironment().getCompilerReleaseHelper();
+        if (compilerReleaseHelper.isMatrixMultiplyAccumulateSupported()) {
             param.bitfield = CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
         } else {
             param.bitfield = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;

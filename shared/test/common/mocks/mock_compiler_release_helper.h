@@ -16,6 +16,13 @@ class MockCompilerReleaseHelper : public CompilerReleaseHelper {
     MockCompilerReleaseHelper() : CompilerReleaseHelper(0) {}
     ADDMETHOD_CONST_NOBASE(isForceEmuInt32DivRemSPRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isBindlessAddressingDisabled, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(isMatrixMultiplyAccumulateSupported, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isSplitMatrixMultiplyAccumulateSupported, bool, false, ());
+
+    bool isBFloat16ConversionSupported() const override {
+        return bFloat16Support;
+    }
+    bool bFloat16Support = false;
 };
 
 } // namespace NEO
