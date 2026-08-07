@@ -16,6 +16,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/options.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/topology.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -2062,6 +2063,14 @@ bool IoctlHelperXe::isDeferBackingEnabled() const {
     std::call_once(checkDeferBackingOnce, [this]() {
         const auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
         deferBackingEnabled = productHelper.isDeferBackingEnabled();
+
+        if (deferBackingEnabled) {
+            const auto csrType = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(),
+                                                               CommandStreamReceiverType::hardware);
+            if (csrType == CommandStreamReceiverType::hardwareWithAub) {
+                deferBackingEnabled = false;
+            }
+        }
     });
     return deferBackingEnabled;
 }

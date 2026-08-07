@@ -22,6 +22,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::getPrimaryContextId;
     using IoctlHelperXe::ioctl;
     using IoctlHelperXe::IoctlHelperXe;
+    using IoctlHelperXe::isDeferBackingEnabled;
     using IoctlHelperXe::isLowLatencyHintAvailable;
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;

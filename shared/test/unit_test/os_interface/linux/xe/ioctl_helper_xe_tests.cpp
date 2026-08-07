@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -4689,4 +4690,55 @@ TEST_F(IoctlHelperXeTest, givenNoMemoryAvailableWhenHasEnoughDeviceMemoryCalledT
     vramRegionTile1.used = vramRegionTile1.total_size;
 
     EXPECT_FALSE(xeIoctlHelper->hasEnoughDeviceMemory(1u, 0b10u));
+}
+
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeHardwareWithAubWhenMakeResidentBeforeLockNeededIsCalledThenReturnsFalse) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::hardwareWithAub));
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabled());
+    EXPECT_FALSE(xeIoctlHelper->makeResidentBeforeLockNeeded());
+}
+
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeHardwareWhenMakeResidentBeforeLockNeededIsCalledThenReturnsTrue) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::hardware));
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabled());
+    EXPECT_TRUE(xeIoctlHelper->makeResidentBeforeLockNeeded());
+}
+
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeDefaultWhenMakeResidentBeforeLockNeededIsCalledThenReturnsTrue) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(-1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabled());
+    EXPECT_TRUE(xeIoctlHelper->makeResidentBeforeLockNeeded());
+}
+
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingDisabledWhenMakeResidentBeforeLockNeededIsCalledThenReturnsFalse) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(0);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabled());
+    EXPECT_FALSE(xeIoctlHelper->makeResidentBeforeLockNeeded());
 }
