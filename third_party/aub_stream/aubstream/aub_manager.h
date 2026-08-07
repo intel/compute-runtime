@@ -33,7 +33,7 @@ struct AubManagerOptions {
     bool throwOnError{};
     uint64_t dataStolenMemorySize{};
     bool programAdditionalEngineMMIO{};
-    bool supportsPs64{};
+    uint64_t wopcmMemorySize{};
 };
 
 class AubManager {
