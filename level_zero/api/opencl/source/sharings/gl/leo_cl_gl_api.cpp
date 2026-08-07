@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
@@ -178,6 +179,14 @@ cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_u
         cl_int tracingRetVal = CL_INVALID_CONTEXT;
         TRACING_EXIT(ClEnqueueReleaseGlObjects, &tracingRetVal);
         return tracingRetVal;
+    }
+
+    if (CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_RELEASE_GL_OBJECTS)) {
+        cl_int finishRetVal = clFinish(commandQueue);
+        if (finishRetVal != CL_SUCCESS) {
+            TRACING_EXIT(ClEnqueueReleaseGlObjects, &finishRetVal);
+            return finishRetVal;
+        }
     }
 
     cl_int tracingRetVal = pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event, CL_COMMAND_RELEASE_GL_OBJECTS);

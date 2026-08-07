@@ -5,11 +5,14 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 
 namespace NEO {
 namespace LEO {
@@ -60,6 +63,36 @@ TEST(GetCmdQueuePropertiesTests, givenEmptyPropertiesWhenGetCmdQueuePropertiesTh
     cl_queue_properties props[] = {0};
     auto result = CommandQueue::getCmdQueueProperties<cl_command_queue_properties>(props);
     EXPECT_EQ(0u, result);
+}
+
+TEST(InPlaceSharingAcquireReleaseTests, givenDefaultDebugFlagWhenCheckingInPlaceModeThenOnlyGlSharingUsesItInPlace) {
+    DebugManagerStateRestore debugRestorer;
+    debugManager.flags.LeoInPlaceSharingAcquireRelease.set(-1);
+
+    EXPECT_TRUE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_ACQUIRE_GL_OBJECTS));
+    EXPECT_TRUE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_RELEASE_GL_OBJECTS));
+
+    EXPECT_FALSE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_ACQUIRE_EXTERNAL_MEM_OBJECTS_KHR));
+    EXPECT_FALSE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_RELEASE_EXTERNAL_MEM_OBJECTS_KHR));
+}
+
+TEST(InPlaceSharingAcquireReleaseTests, givenDebugFlagSetToZeroWhenCheckingInPlaceModeThenNoSharingUsesItInPlace) {
+    DebugManagerStateRestore debugRestorer;
+    debugManager.flags.LeoInPlaceSharingAcquireRelease.set(0);
+
+    EXPECT_FALSE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_ACQUIRE_GL_OBJECTS));
+    EXPECT_FALSE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_RELEASE_GL_OBJECTS));
+    EXPECT_FALSE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_ACQUIRE_EXTERNAL_MEM_OBJECTS_KHR));
+}
+
+TEST(InPlaceSharingAcquireReleaseTests, givenDebugFlagSetToOneWhenCheckingInPlaceModeThenEverySharingUsesItInPlace) {
+    DebugManagerStateRestore debugRestorer;
+    debugManager.flags.LeoInPlaceSharingAcquireRelease.set(1);
+
+    EXPECT_TRUE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_ACQUIRE_GL_OBJECTS));
+    EXPECT_TRUE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_RELEASE_GL_OBJECTS));
+    EXPECT_TRUE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_ACQUIRE_EXTERNAL_MEM_OBJECTS_KHR));
+    EXPECT_TRUE(CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_RELEASE_EXTERNAL_MEM_OBJECTS_KHR));
 }
 
 } // namespace ult
