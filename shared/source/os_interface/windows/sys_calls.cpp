@@ -25,6 +25,29 @@ unsigned int getCurrentProcessId() {
     return GetCurrentProcessId();
 }
 
+std::string getProcessName() {
+    WCHAR pathW[MAX_PATH] = {0};
+    auto length = GetModuleFileNameW(nullptr, pathW, MAX_PATH);
+    if (length == 0) {
+        return "";
+    }
+
+    std::wstring executablePath(pathW, length);
+    auto lastSeparator = executablePath.find_last_of(L"\\/");
+    if (lastSeparator != std::wstring::npos) {
+        executablePath = executablePath.substr(lastSeparator + 1u);
+    }
+
+    auto lastDot = executablePath.rfind(L".exe");
+    if (lastDot != std::wstring::npos) {
+        executablePath = executablePath.substr(0, lastDot);
+    }
+
+    std::string processName(executablePath.size(), '\0');
+    std::wcstombs(processName.data(), executablePath.c_str(), executablePath.size());
+    return processName;
+}
+
 BOOL duplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) {
     return DuplicateHandle(hSourceProcessHandle, hSourceHandle, hTargetProcessHandle, lpTargetHandle, dwDesiredAccess, bInheritHandle, dwOptions);
 }

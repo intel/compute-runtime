@@ -52,6 +52,22 @@ unsigned int getCurrentProcessId() {
     return getpid();
 }
 
+std::string getProcessName() {
+    char path[512] = {0};
+    auto result = ::readlink("/proc/self/exe", path, sizeof(path) - 1);
+    if (result == -1) {
+        return "";
+    }
+    path[result] = '\0';
+
+    std::string executablePath(path);
+    auto lastSeparator = executablePath.find_last_of('/');
+    if (lastSeparator != std::string::npos) {
+        return executablePath.substr(lastSeparator + 1u);
+    }
+    return executablePath;
+}
+
 unsigned long getNumThreads() {
     struct stat taskStat;
     if (stat("/proc/self/task", &taskStat) == 0) {

@@ -7,6 +7,8 @@
 
 #include "level_zero/core/test/unit_tests/experimental/test_graph_export.h"
 
+#include "shared/source/os_interface/sys_calls_common.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 
@@ -21,6 +23,12 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
+
+namespace NEO {
+namespace SysCalls {
+extern std::string getProcessNameResult; // backing value of the ULT getProcessName() stub
+} // namespace SysCalls
+} // namespace NEO
 
 namespace L0 {
 namespace ult {
@@ -796,6 +804,45 @@ TEST_F(GraphDotExporterFileTest, GivenFailedFileWriteWhenExportToFileThenReturns
     auto errorMessage = capture.getCapturedStderr();
     auto expectedErrorMessage = "Failed to write graph content to file " + testFilePath + "\n";
     EXPECT_EQ(expectedErrorMessage, errorMessage);
+}
+
+TEST_F(GraphDotExporterFileTest, WhenGetGraphDumpDefaultFileNameThenComposedFromApplicationNamePidGraphIdAndHandles) {
+    VariableBackup<std::string> processNameBackup(&NEO::SysCalls::getProcessNameResult, "myApp");
+    Graph testGraph{&ctx, true};
+    ExecutableGraph execGraph;
+    auto expectedFileName = "myApp_" +
+                            std::to_string(NEO::SysCalls::getProcessId()) + "_" +
+                            std::to_string(testGraph.getId()) + "_" +
+                            GraphDumpHelper::formatPointer(&testGraph) + "_" +
+                            GraphDumpHelper::formatPointer(&execGraph) + ".dot";
+    EXPECT_EQ(expectedFileName, getGraphDumpDefaultFileName(testGraph, execGraph));
+}
+
+TEST_F(GraphDotExporterFileTest, GivenEmptyApplicationNameWhenGetGraphDumpDefaultFileNameThenFallsBackToUnknownPrefix) {
+    VariableBackup<std::string> processNameBackup(&NEO::SysCalls::getProcessNameResult, std::string{});
+    Graph testGraph{&ctx, true};
+    ExecutableGraph execGraph;
+    auto expectedFileName = "unknown_" +
+                            std::to_string(NEO::SysCalls::getProcessId()) + "_" +
+                            std::to_string(testGraph.getId()) + "_" +
+                            GraphDumpHelper::formatPointer(&testGraph) + "_" +
+                            GraphDumpHelper::formatPointer(&execGraph) + ".dot";
+    EXPECT_EQ(expectedFileName, getGraphDumpDefaultFileName(testGraph, execGraph));
+}
+
+TEST_F(GraphDotExporterFileTest, WhenDumpGraphOnInstantiateThenGraphContentWrittenToFile) {
+    Graph testGraph{&ctx, true};
+    ExecutableGraph execGraph;
+    setupSuccessfulWrite(testGraph, GraphExportStyle::detailed);
+
+    dumpGraphOnInstantiate(testGraph, execGraph);
+
+    EXPECT_EQ(mockFopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(mockFwriteCalledBefore + 1, NEO::IoFunctions::mockFwriteCalled);
+    EXPECT_EQ(mockFcloseCalledBefore + 1, NEO::IoFunctions::mockFcloseCalled);
+
+    std::string writtenContent = getWrittenContent();
+    EXPECT_NE(writtenContent.find("digraph \"graph\" {"), std::string::npos);
 }
 
 TEST(GraphDumpHelperTest, GivenNullptrAndPtrWhenFormatPointerIsCalledThenReturnsFormattedString) {

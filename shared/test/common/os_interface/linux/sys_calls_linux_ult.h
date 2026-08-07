@@ -139,6 +139,7 @@ extern std::atomic<int> lseekCalledCount;
 extern bool captureDlOpenFilePath;
 extern std::string dlOpenFilePathPassed;
 extern std::string mkfifoPathNamePassed;
+extern std::string getProcessNameResult;
 
 extern long sysconfReturn;
 char **getEnviron();

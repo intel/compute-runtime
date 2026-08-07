@@ -7,6 +7,7 @@
 
 #include "level_zero/experimental/source/graph/graph_export.h"
 
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/io_functions.h"
 
@@ -45,6 +46,21 @@ ze_result_t GraphDotExporter::exportToFile(const Graph &graph, const char *fileP
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+std::string getGraphDumpDefaultFileName(const Graph &graph, const ExecutableGraph &executableGraph) {
+    auto processName = NEO::SysCalls::getProcessName();
+    if (processName.empty()) {
+        processName = "unknown";
+    }
+    return processName + "_" + std::to_string(NEO::SysCalls::getProcessId()) + "_" + std::to_string(graph.getId()) +
+           "_" + GraphDumpHelper::formatPointer(&graph) + "_" + GraphDumpHelper::formatPointer(&executableGraph) + ".dot";
+}
+
+void dumpGraphOnInstantiate(const Graph &graph, const ExecutableGraph &executableGraph) {
+    const auto fileName = getGraphDumpDefaultFileName(graph, executableGraph);
+    GraphDotExporter exporter{GraphExportStyle::detailed};
+    exporter.exportToFile(graph, fileName.c_str());
 }
 
 std::string GraphDotExporter::exportToString(const Graph &graph) const {

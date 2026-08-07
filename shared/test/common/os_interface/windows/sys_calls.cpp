@@ -27,6 +27,12 @@ unsigned int getCurrentProcessId() {
     return 0xABCEDF;
 }
 
+std::string getProcessNameResult = "process_name";
+
+std::string getProcessName() {
+    return getProcessNameResult;
+}
+
 unsigned long getNumThreads() {
     return 1;
 }

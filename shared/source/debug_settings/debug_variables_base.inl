@@ -47,6 +47,7 @@ DECLARE_DEBUG_VARIABLE(bool, TbxDownloadAllAllocations, false, "Download all all
 /*DEBUG FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableSWTags, false, "Enable software tagging in batch buffer")
 DECLARE_DEBUG_VARIABLE(bool, DumpSWTagsBXML, false, "Dump software tags BXML into a file")
+DECLARE_DEBUG_VARIABLE(bool, DumpGraphOnInstantiate, false, "Dump graph contents to a file during graph instantiation; file name is composed of application name, process id, graph id, source graph handle and executable graph handle")
 DECLARE_DEBUG_VARIABLE(bool, DisableTimestampPacketOptimizations, false, "Allocate new allocation per node + don't reuse old nodes")
 DECLARE_DEBUG_VARIABLE(bool, DisableCachingForStatefulBufferAccess, false, "Disable caching for stateful buffer access")
 DECLARE_DEBUG_VARIABLE(bool, EnableDebugBreak, true, "Enable DEBUG_BREAKs")

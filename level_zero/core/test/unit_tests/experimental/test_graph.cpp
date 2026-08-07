@@ -8,7 +8,10 @@
 #include "level_zero/core/test/unit_tests/experimental/test_graph.h"
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/core/ze_graph_api_entrypoints.h"
@@ -550,6 +553,61 @@ TEST_F(GraphTestApiInstantiate, GivenValidSourceGraphThenInstantiateReturnsValid
     auto err = L0::zeCommandListInstantiateGraphExp(srcGraphHandle, &execGraphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
     EXPECT_NE(nullptr, execGraphHandle);
+
+    err = L0::zeExecutableGraphDestroyExp(execGraphHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
+}
+
+TEST_F(GraphTestApiInstantiate, GivenDumpGraphOnInstantiateFlagSetWhenInstantiatingThenGraphIsDumpedToFile) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DumpGraphOnInstantiate.set(true);
+
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> fopenBackup(&NEO::IoFunctions::fopenPtr, NEO::IoFunctions::mockFopen);
+    VariableBackup<decltype(NEO::IoFunctions::fwritePtr)> fwriteBackup(&NEO::IoFunctions::fwritePtr, NEO::IoFunctions::mockFwrite);
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> fcloseBackup(&NEO::IoFunctions::fclosePtr, NEO::IoFunctions::mockFclose);
+    VariableBackup<FILE *> fopenReturnedBackup(&NEO::IoFunctions::mockFopenReturned, reinterpret_cast<FILE *>(0x1234));
+    VariableBackup<size_t> fwriteReturnBackup(&NEO::IoFunctions::mockFwriteReturn, static_cast<size_t>(1));
+
+    const auto fopenCalledBefore = NEO::IoFunctions::mockFopenCalled;
+
+    L0::Graph srcGraph(&ctx, true);
+    srcGraph.startCapturingFrom(*immCmdList, false);
+    auto srcGraphHandle = srcGraph.toHandle();
+    srcGraph.stopCapturing();
+
+    ze_executable_graph_handle_t execGraphHandle = nullptr;
+    auto err = L0::zeCommandListInstantiateGraphExp(srcGraphHandle, &execGraphHandle, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
+    EXPECT_EQ(fopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
+
+    err = L0::zeExecutableGraphDestroyExp(execGraphHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
+}
+
+TEST_F(GraphTestApiInstantiate, GivenDumpGraphOnInstantiateFlagNotSetWhenInstantiatingThenGraphIsNotDumped) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DumpGraphOnInstantiate.set(false);
+
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> fopenBackup(&NEO::IoFunctions::fopenPtr, NEO::IoFunctions::mockFopen);
+    VariableBackup<FILE *> fopenReturnedBackup(&NEO::IoFunctions::mockFopenReturned, reinterpret_cast<FILE *>(0x1234));
+
+    const auto fopenCalledBefore = NEO::IoFunctions::mockFopenCalled;
+
+    L0::Graph srcGraph(&ctx, true);
+    srcGraph.startCapturingFrom(*immCmdList, false);
+    auto srcGraphHandle = srcGraph.toHandle();
+    srcGraph.stopCapturing();
+
+    ze_executable_graph_handle_t execGraphHandle = nullptr;
+    auto err = L0::zeCommandListInstantiateGraphExp(srcGraphHandle, &execGraphHandle, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
+    EXPECT_EQ(fopenCalledBefore, NEO::IoFunctions::mockFopenCalled);
 
     err = L0::zeExecutableGraphDestroyExp(execGraphHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);

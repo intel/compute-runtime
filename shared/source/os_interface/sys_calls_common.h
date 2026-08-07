@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ namespace SysCalls {
 
 unsigned int getProcessId();
 unsigned int getCurrentProcessId();
+std::string getProcessName();
 
 unsigned long getNumThreads();
 

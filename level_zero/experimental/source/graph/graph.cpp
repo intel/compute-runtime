@@ -20,6 +20,7 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
+#include "level_zero/experimental/source/graph/graph_export.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include <type_traits>
@@ -1406,6 +1407,11 @@ ze_result_t ExecutableGraph::instantiateFrom(Graph &rootSrc, const GraphInstatia
     if (this->getExternalCbEventInfoContainer()->externalCbEventsPresent()) {
         this->getExternalCbEventInfoContainer()->finalizeExecutorContainer();
     }
+
+    if (NEO::debugManager.flags.DumpGraphOnInstantiate.get()) {
+        dumpGraphOnInstantiate(rootSrc, *this);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

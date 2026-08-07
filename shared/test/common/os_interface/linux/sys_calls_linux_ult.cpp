@@ -149,6 +149,7 @@ long sysconfReturn = 1ull << 30;
 std::string dlOpenFilePathPassed;
 bool captureDlOpenFilePath = false;
 std::string mkfifoPathNamePassed;
+std::string getProcessNameResult = "process_name";
 
 int mkdir(const std::string &path) {
     if (sysCallsMkdir != nullptr) {
@@ -272,6 +273,10 @@ unsigned int getProcessId() {
 
 unsigned int getCurrentProcessId() {
     return 0xABCEDF;
+}
+
+std::string getProcessName() {
+    return getProcessNameResult;
 }
 
 unsigned long getNumThreads() {
