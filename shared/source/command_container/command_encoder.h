@@ -241,14 +241,13 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 
     template <typename InterfaceDescriptorType>
-    static void encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
-                                         const uint32_t threadsPerThreadGroup, const uint32_t totalDispatchedThreadGroupCount, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy);
+    static void encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs);
 
     template <typename InterfaceDescriptorType>
     static void encodeSlmSizePerThreadGroup(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled);
 
     static uint32_t getThreadCountPerSubslice(const HardwareInfo &hwInfo);
-    static uint32_t calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t totalDispatchedThreadGroupCount);
+    static uint32_t calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t workloadThreadGroupCount);
 
     template <typename InterfaceDescriptorType>
     static void encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy);

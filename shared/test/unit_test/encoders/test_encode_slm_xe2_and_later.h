@@ -63,7 +63,7 @@ class CommandEncodeStatesSlmTestXe2AndLater
         auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
         auto threadCountPerSubslice = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
         uint32_t threadsPerThreadGroupValues[] = {1, 2, 3, 4, 5, 10, 15, 20};
-        uint32_t totalDispatchedThreadGroupCounts[] = {1, 2, 3, 4, 5, 8, 10, 15, 16, 20, 32, 64, 96, 128};
+        uint32_t workloadThreadGroupCounts[] = {1, 2, 3, 4, 5, 8, 10, 15, 16, 20, 32, 64, 96, 128};
 
         auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
         EXPECT_EQ(0u, idd.getPreferredSlmAllocationSize());
@@ -79,9 +79,9 @@ class CommandEncodeStatesSlmTestXe2AndLater
             const auto &programmableSlmSizePerThreadGroup = programmableSlmSizesPerThreadGroup[index];
             const bool isLastProgrammableSlmSizePerThreadGroup = (index + 1 == programmableSlmSizesPerThreadGroup.size());
             for (auto slmPolicy : slmPolicies) {
-                for (auto totalDispatchedThreadGroupCount : totalDispatchedThreadGroupCounts) {
+                for (auto workloadThreadGroupCount : workloadThreadGroupCounts) {
                     for (auto threadsPerThreadGroup : threadsPerThreadGroupValues) {
-                        auto threadGroupCountPerSubsliceFromWorkload = this->calculateThreadGroupCountPerSubslice(hwInfo, totalDispatchedThreadGroupCount);
+                        auto threadGroupCountPerSubsliceFromWorkload = this->calculateThreadGroupCountPerSubslice(hwInfo, workloadThreadGroupCount);
                         auto maxThreadGroupCountPerSubslice = threadCountPerSubslice / threadsPerThreadGroup;
                         auto threadGroupCountPerSubsliceRequired = std::min(threadGroupCountPerSubsliceFromWorkload, maxThreadGroupCountPerSubslice);
                         auto slmTotalSizePerThreadGroupEdges = this->getSlmTotalSizePerThreadGroupEdgeValues(programmableSlmSizePerThreadGroup.slmSize, threadGroupCountPerSubsliceRequired, slmPolicy, isLastProgrammableSlmSizePerThreadGroup);
@@ -90,19 +90,20 @@ class CommandEncodeStatesSlmTestXe2AndLater
                             auto expectedSlmPerSubslice = this->calculateExpectedSlmPerSubsliceFromSlmTotalSizePerThreadGroup(slmTotalSizePerThreadGroup, threadGroupCountPerSubsliceRequired, slmPolicy, slmTestHelper);
                             auto expectedValue = this->getExpectedProgrammableValue<FamilyType>(expectedSlmPerSubslice, slmTestHelper, rootDeviceEnvironment);
 
-                            NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd,
-                                                                                            rootDeviceEnvironment,
-                                                                                            threadsPerThreadGroup,
-                                                                                            totalDispatchedThreadGroupCount,
-                                                                                            slmTotalSizePerThreadGroup,
-                                                                                            slmPolicy);
+                            NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+                                .threadsPerThreadGroup = threadsPerThreadGroup,
+                                .workloadThreadGroupCount = workloadThreadGroupCount,
+                                .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+                                .slmPolicy = slmPolicy};
+
+                            NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
 
                             EXPECT_EQ(static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(expectedValue), idd.getPreferredSlmAllocationSize())
                                 << ", programmableSlmSizePerThreadGroup: " << programmableSlmSizePerThreadGroup.slmSize
                                 << ", isLastProgrammableSlmSizePerThreadGroup: " << isLastProgrammableSlmSizePerThreadGroup
                                 << ", slmPolicy: " << static_cast<uint32_t>(slmPolicy)
                                 << ", availableSlmSizePerSubslice: " << rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment)
-                                << ", totalDispatchedThreadGroupCount: " << totalDispatchedThreadGroupCount
+                                << ", workloadThreadGroupCount: " << workloadThreadGroupCount
                                 << ", threadsPerThreadGroup: " << threadsPerThreadGroup
                                 << ", threadCountPerSubslice: " << threadCountPerSubslice
                                 << ", threadGroupCountPerSubsliceFromWorkload: " << threadGroupCountPerSubsliceFromWorkload
@@ -119,8 +120,8 @@ class CommandEncodeStatesSlmTestXe2AndLater
     }
 
   private:
-    uint32_t calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t totalDispatchedThreadGroupCount) {
-        return static_cast<uint32_t>(Math::divideAndRoundUp(totalDispatchedThreadGroupCount, hwInfo.gtSystemInfo.SubSliceCount));
+    uint32_t calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t workloadThreadGroupCount) {
+        return static_cast<uint32_t>(Math::divideAndRoundUp(workloadThreadGroupCount, hwInfo.gtSystemInfo.SubSliceCount));
     }
 
     std::array<uint32_t, 3> getSlmTotalSizePerThreadGroupEdgeValues(uint32_t programmableSlmSizePerThreadGroup, uint32_t threadGroupCountPerSubsliceRequired, SlmPolicy slmPolicy, bool isMaxProgrammableSlmSizePerThreadGroup) {

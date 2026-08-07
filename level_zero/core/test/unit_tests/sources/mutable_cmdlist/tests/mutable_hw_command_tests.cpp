@@ -512,12 +512,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     fillWalkerFields<WalkerType>(controlWalkerBuffer);
 
-    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&controlIdd,
-                                                                    neoDevice->getRootDeviceEnvironment(),
-                                                                    walkerArgs.threadsPerThreadGroup,
-                                                                    walkerArgs.threadGroupCount,
-                                                                    walkerArgs.slmTotalSizePerThreadGroup,
-                                                                    static_cast<NEO::SlmPolicy>(walkerArgs.slmPolicy));
+    NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+        .threadsPerThreadGroup = walkerArgs.threadsPerThreadGroup,
+        .workloadThreadGroupCount = walkerArgs.threadGroupCount,
+        .slmTotalSizePerThreadGroup = walkerArgs.slmTotalSizePerThreadGroup,
+        .slmPolicy = static_cast<NEO::SlmPolicy>(walkerArgs.slmPolicy)};
+
+    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&controlIdd, neoDevice->getRootDeviceEnvironment(), slmArgs);
 
     fillWalkerFields<WalkerType>(this->cmdBufferCpuPtr);
 

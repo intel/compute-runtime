@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 
 #include <array>
 #include <cstdint>
@@ -27,6 +29,13 @@ struct MiFlushArgs {
 
     EncodeDummyBlitWaArgs &waArgs;
     MiFlushArgs(EncodeDummyBlitWaArgs &args) : waArgs(args) {}
+};
+
+struct EncodeSlmSizePerSubSliceArgs {
+    uint32_t threadsPerThreadGroup = 0;
+    uint32_t workloadThreadGroupCount = 0;
+    uint32_t slmTotalSizePerThreadGroup = 0;
+    SlmPolicy slmPolicy = SlmPolicy::slmPolicyNone;
 };
 
 enum class RequiredPartitionDim : uint32_t {

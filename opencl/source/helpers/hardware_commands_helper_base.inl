@@ -162,8 +162,13 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                                 sizeCrossThreadData, sizePerThreadData, device.getRootDeviceEnvironment());
 
-    EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&interfaceDescriptor, device.getRootDeviceEnvironment(),
-                                                              threadsPerThreadGroup, threadGroupCount, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
+    EncodeSlmSizePerSubSliceArgs slmArgs{
+        .threadsPerThreadGroup = threadsPerThreadGroup,
+        .workloadThreadGroupCount = threadGroupCount,
+        .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+        .slmPolicy = SlmPolicy::slmPolicyNone};
+
+    EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmArgs);
 
     if constexpr (heaplessModeEnabled == false) {
         interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));

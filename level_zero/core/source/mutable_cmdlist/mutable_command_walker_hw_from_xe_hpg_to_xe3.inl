@@ -287,12 +287,13 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
     }
 
     if (args.isSlmKernel && (args.updateGroupSize || args.updateSlm)) {
-        NEO::EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&idd,
-                                                                       device.getRootDeviceEnvironment(),
-                                                                       args.threadsPerThreadGroup,
-                                                                       args.threadGroupCount,
-                                                                       args.slmTotalSizePerThreadGroup,
-                                                                       static_cast<NEO::SlmPolicy>(args.slmPolicy));
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = args.threadsPerThreadGroup,
+            .workloadThreadGroupCount = args.threadGroupCount,
+            .slmTotalSizePerThreadGroup = args.slmTotalSizePerThreadGroup,
+            .slmPolicy = static_cast<NEO::SlmPolicy>(args.slmPolicy)};
+
+        NEO::EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&idd, device.getRootDeviceEnvironment(), slmArgs);
     }
 
     if (args.updateGroupCount || args.updateGroupSize) {

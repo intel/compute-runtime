@@ -28,33 +28,35 @@ uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareI
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t totalDispatchedThreadGroupCount) {
-    return static_cast<uint32_t>(Math::divideAndRoundUp(totalDispatchedThreadGroupCount, hwInfo.gtSystemInfo.SubSliceCount));
+uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t workloadThreadGroupCount) {
+    return static_cast<uint32_t>(Math::divideAndRoundUp(workloadThreadGroupCount, hwInfo.gtSystemInfo.SubSliceCount));
 }
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, const uint32_t totalDispatchedThreadGroupCount, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {
+void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
+    UNRECOVERABLE_IF(slmArgs.threadsPerThreadGroup == 0u);
+
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const uint32_t threadCountPerSubslice = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
-    const uint32_t maxThreadGroupCountPerSubslice = threadCountPerSubslice / threadsPerThreadGroup;
-    const uint32_t threadGroupCountPerSubsliceFromWorkload = EncodeDispatchKernel<Family>::calculateThreadGroupCountPerSubslice(hwInfo, totalDispatchedThreadGroupCount);
+    const uint32_t maxThreadGroupCountPerSubslice = threadCountPerSubslice / slmArgs.threadsPerThreadGroup;
+    const uint32_t threadGroupCountPerSubsliceFromWorkload = EncodeDispatchKernel<Family>::calculateThreadGroupCountPerSubslice(hwInfo, slmArgs.workloadThreadGroupCount);
     const uint32_t threadGroupCountPerSubsliceRequired = std::min(threadGroupCountPerSubsliceFromWorkload, maxThreadGroupCountPerSubslice);
 
     const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    slmTotalSizePerThreadGroup = EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(slmTotalSizePerThreadGroup, releaseHelper);
+    const uint32_t alignedSlmSizePerThreadGroup = EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(slmArgs.slmTotalSizePerThreadGroup, releaseHelper);
 
     uint32_t slmSizePerSubslice = 0u;
 
-    switch (slmPolicy) {
+    switch (slmArgs.slmPolicy) {
     case SlmPolicy::slmPolicyLargeData:
-        slmSizePerSubslice = slmTotalSizePerThreadGroup;
+        slmSizePerSubslice = alignedSlmSizePerThreadGroup;
         break;
     case SlmPolicy::slmPolicyLargeSlm:
         [[fallthrough]];
     default:
-        slmSizePerSubslice = slmTotalSizePerThreadGroup * threadGroupCountPerSubsliceRequired;
+        slmSizePerSubslice = alignedSlmSizePerThreadGroup * threadGroupCountPerSubsliceRequired;
         break;
     }
 

@@ -30,7 +30,13 @@ GEN12LPTEST_F(Gen12LpCommandEncodeTest, givenGen12LpPlatformWhenEncodeSlmSizePer
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
     const INTERFACE_DESCRIPTOR_DATA expectedIdd = FamilyType::cmdInitInterfaceDescriptorData;
 
-    EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, 8u, 1024u, 16 * MemoryConstants::kiloByte, SlmPolicy::slmPolicyLargeSlm);
+    EncodeSlmSizePerSubSliceArgs slmArgs{
+        .threadsPerThreadGroup = 8u,
+        .workloadThreadGroupCount = 1024u,
+        .slmTotalSizePerThreadGroup = 16 * MemoryConstants::kiloByte,
+        .slmPolicy = SlmPolicy::slmPolicyLargeSlm};
+
+    EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
 
     EXPECT_EQ(0, memcmp(&expectedIdd, &idd, sizeof(INTERFACE_DESCRIPTOR_DATA)));
 }

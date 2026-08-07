@@ -29,20 +29,18 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmTotalSizeAboveActualHwL
 
     auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
 
-    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd,
-                                                                    rootDeviceEnvironment,
-                                                                    1,
-                                                                    128,
-                                                                    slmAtLimit,
-                                                                    NEO::SlmPolicy::slmPolicyLargeData);
+    NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+        .threadsPerThreadGroup = 1,
+        .workloadThreadGroupCount = 128,
+        .slmTotalSizePerThreadGroup = slmAtLimit,
+        .slmPolicy = NEO::SlmPolicy::slmPolicyLargeData};
+
+    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
     const auto valueAtLimit = idd.getPreferredSlmAllocationSize();
 
-    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd,
-                                                                    rootDeviceEnvironment,
-                                                                    1,
-                                                                    128,
-                                                                    slmAboveLimit,
-                                                                    NEO::SlmPolicy::slmPolicyLargeData);
+    slmArgs.slmTotalSizePerThreadGroup = slmAboveLimit;
+
+    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
 
     EXPECT_EQ(valueAtLimit, idd.getPreferredSlmAllocationSize());
 }

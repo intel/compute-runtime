@@ -434,9 +434,13 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  walkerCmd.getThreadGroupIdZDimension(),
                  idd.getThreadGroupDispatchSize());
 
-    EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, threadGroupCount,
-                                                           args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
-                                                           args.dispatchInterface->getSlmPolicy());
+    EncodeSlmSizePerSubSliceArgs slmArgs{
+        .threadsPerThreadGroup = threadsPerThreadGroup,
+        .workloadThreadGroupCount = threadGroupCount,
+        .slmTotalSizePerThreadGroup = args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
+        .slmPolicy = args.dispatchInterface->getSlmPolicy()};
+
+    EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
 
     auto kernelExecutionType = args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType;
 

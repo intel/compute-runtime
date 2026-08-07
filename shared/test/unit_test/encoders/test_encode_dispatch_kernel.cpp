@@ -1563,7 +1563,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCou
     EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenTotalDispatchedThreadGroupCountWhenCalculateThreadGroupCountPerSubsliceThenDivideByDualSubSliceCountAndRoundUp, IsAtMostXeCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenWorkloadThreadGroupCountWhenCalculateThreadGroupCountPerSubsliceThenDivideByDualSubSliceCountAndRoundUp, IsAtMostXeCore) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();

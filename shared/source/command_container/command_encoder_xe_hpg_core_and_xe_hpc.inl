@@ -54,24 +54,26 @@ void EncodeWA<Family>::adjustCompressionFormatForPlanarImage(uint32_t &compressi
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, const uint32_t totalDispatchedThreadGroupCount, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {
+void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
+    UNRECOVERABLE_IF(slmArgs.threadsPerThreadGroup == 0u);
+
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
-    const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
+    const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, slmArgs.threadsPerThreadGroup));
 
     const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    slmTotalSizePerThreadGroup = EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(slmTotalSizePerThreadGroup, releaseHelper);
+    const uint32_t alignedSlmSizePerThreadGroup = EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(slmArgs.slmTotalSizePerThreadGroup, releaseHelper);
 
     uint32_t slmSize = 0u;
 
-    switch (slmPolicy) {
+    switch (slmArgs.slmPolicy) {
     case SlmPolicy::slmPolicyLargeData:
-        slmSize = slmTotalSizePerThreadGroup;
+        slmSize = alignedSlmSizePerThreadGroup;
         break;
     case SlmPolicy::slmPolicyLargeSlm:
     default:
-        slmSize = slmTotalSizePerThreadGroup * workGroupCountPerDss;
+        slmSize = alignedSlmSizePerThreadGroup * workGroupCountPerDss;
         break;
     }
 

@@ -50,12 +50,13 @@ void verifyPreferredSlmValuesPreXe2(std::vector<PreferredSlmTestValuesPreXe2<Fam
                                                       ? valueToTest.preferredSlmAllocationSizePerDss
                                                       : valueToTest.preferredSlmAllocationSizePerDss / localWorkGroupsPerDssCount;
 
-                NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd,
-                                                                                rootDeviceEnvironment,
-                                                                                threadsPerThreadGroup,
-                                                                                1024,
-                                                                                slmTotalSizePerThreadGroup,
-                                                                                slmPolicy);
+                NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+                    .threadsPerThreadGroup = threadsPerThreadGroup,
+                    .workloadThreadGroupCount = 1024,
+                    .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+                    .slmPolicy = slmPolicy};
+
+                NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
 
                 EXPECT_EQ(valueToTest.expectedValueInIdd, idd.getPreferredSlmAllocationSize());
             }
