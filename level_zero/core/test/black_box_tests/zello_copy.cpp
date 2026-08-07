@@ -10,6 +10,47 @@
 #include <cstring>
 #include <iomanip>
 
+void testSimpleCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
+    constexpr size_t allocSize = 4096;
+    alignas(64) char stackBuffer[allocSize];
+    void *zeBuffer = nullptr;
+
+    ze_command_queue_handle_t cmdQueue;
+    ze_command_list_handle_t cmdList;
+
+    cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, false);
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.flags = 0;
+    hostDesc.pNext = nullptr;
+
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &zeBuffer));
+
+    for (size_t i = 0; i < allocSize; ++i) {
+        stackBuffer[i] = static_cast<char>(i + 1);
+    }
+    memset(zeBuffer, 0, allocSize);
+
+    // Copy from heap to host-allocated memory
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, stackBuffer, 64,
+                                                       nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+
+    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+
+    // Validate host and ze buffers have the original data from stackBuffer
+    validRet = LevelZeroBlackBoxTests::validate(stackBuffer, zeBuffer, 64);
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+}
+
 void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096;
     char *heapBuffer = new char[allocSize];
@@ -506,7 +547,10 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
-    testAppendMemoryCopyFromHeapToDeviceToStack(context, device, outputValidationSuccessful);
+    testSimpleCopy(context, device, outputValidationSuccessful);
+    if (outputValidationSuccessful || aubMode) {
+        testAppendMemoryCopyFromHeapToDeviceToStack(context, device, outputValidationSuccessful);
+    }
     if (outputValidationSuccessful || aubMode) {
         testAppendMemoryCopyFromHostToDeviceToStack(context, device, outputValidationSuccessful);
     }

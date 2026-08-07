@@ -50,6 +50,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendDispatchOffsetRegister;
     using BaseClass::appendEventForProfiling;
     using BaseClass::appendEventForProfilingCopyCommand;
+    using BaseClass::appendFrontEndCopy;
     using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::appendMemoryCopyBlit;
     using BaseClass::appendMemoryCopyBlitRegion;

@@ -912,6 +912,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool inOrderWaitsDisabled = false;
     bool swTagsEnabled = false;
     bool patchPreambleEnabled = false;
+    bool frontEndControllerEnabled = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

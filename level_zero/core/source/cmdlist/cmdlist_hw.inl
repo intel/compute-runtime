@@ -321,6 +321,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->defaultBuiltInMode = compilerProductHelper.getDefaultBuiltInAddressingMode(
         NEO::ApiSpecificConfig::getBindlessMode(*neoDevice));
     this->swTagsEnabled = NEO::debugManager.flags.EnableSWTags.get();
+    this->frontEndControllerEnabled = productHelper.isFrontEndControllerEnabled();
     this->setupPatchPreambleEnabled(false);
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
@@ -2255,6 +2256,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     if ((dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) && (size != 0u) && (sharedSystemEnabled == false)) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    if (this->frontEndControllerEnabled) {
+        auto result = appendFrontEndCopy(dstAllocationStruct.alloc, dstAllocationStruct.offset,
+                                         srcAllocationStruct.alloc, srcAllocationStruct.offset,
+                                         size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+        if (result != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+            return result;
+        }
     }
 
     if (this->isImmediateType()) {

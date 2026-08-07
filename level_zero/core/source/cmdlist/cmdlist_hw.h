@@ -316,6 +316,12 @@ struct CommandListCoreFamily : public CommandList {
                                                       Event *signalEvent,
                                                       CmdListMemoryCopyParams &memoryCopyParams);
 
+    MOCKABLE_VIRTUAL ze_result_t appendFrontEndCopy(NEO::GraphicsAllocation *dstAlloc, size_t dstOffset,
+                                                    NEO::GraphicsAllocation *srcAlloc, size_t srcOffset,
+                                                    size_t size, ze_event_handle_t hSignalEvent,
+                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                    CmdListMemoryCopyParams &memoryCopyParams);
+
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
                                                             AlignedAllocationData *dstAllocationData,
                                                             ze_copy_region_t srcRegion,
