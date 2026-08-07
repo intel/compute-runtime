@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,13 @@ TEST_F(PageFaultManagerWindowsTest, whenPageFaultIsRaisedThenHandlerIsInvoked) {
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
     EXPECT_FALSE(raiseException(EXCEPTION_ACCESS_VIOLATION));
     EXPECT_TRUE(pageFaultManager->handlerInvoked);
+}
+
+TEST(PageFaultManagerWindowsHandlerTest, whenPageFaultManagerIsDestroyedThenHandlerContinuesExceptionSearch) {
+    auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
+    pageFaultManager.reset();
+
+    EXPECT_EQ(EXCEPTION_CONTINUE_SEARCH, PageFaultManagerWindows::pageFaultHandlerWrapper(nullptr));
 }
 
 TEST_F(PageFaultManagerWindowsTest, whenExceptionAccessViolationIsRaisedButPointerIsNotKnownThenExceptionIsRethrown) {
