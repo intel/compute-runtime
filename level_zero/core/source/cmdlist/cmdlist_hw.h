@@ -506,6 +506,7 @@ struct CommandListCoreFamily : public CommandList {
     bool transferDirectionRequiresBcsSplit(NEO::TransferDirection direction) const;
     std::optional<SWTagScope<GfxFamily>> emplaceSWTagScope(const char *callName);
     size_t getDefaultMinBcsSplitSize() const;
+    void calculateHostFunctionsPatchSize();
 
     template <typename Container>
     void addResidency(const Container &allocs) {

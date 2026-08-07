@@ -167,6 +167,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->totalNoopSpace = 0;
     this->latesTagGpuAllocation = nullptr;
     this->latestTaskCount = 0;
+    this->hostFunctionsPatchSize = 0;
 
     destroyRecordedBcsSplitResources();
 
@@ -434,6 +435,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     for (auto &cmdList : this->subCmdListsForRecordedBcsSplit) {
         cmdList->close();
     }
+    calculateHostFunctionsPatchSize();
 
     closedCmdList = true;
 
@@ -5598,6 +5600,28 @@ void CommandListCoreFamily<gfxCoreFamily>::patchKernelProperties(CmdListKernelLa
         }
         launchParams.isKernelPatched = true;
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::calculateHostFunctionsPatchSize() {
+    size_t encodeSize = 0;
+
+    uint32_t withMemorySyncCount = this->getHostFunctionWithMemorySynchronizationCount();
+    uint32_t withoutMemorySyncCount = this->getHostFunctionWithoutMemorySynchronizationCount();
+    uint32_t hostFunctionsCount = withMemorySyncCount + withoutMemorySyncCount;
+
+    if (hostFunctionsCount > 0) {
+        auto semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
+        auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(semaphoreSize);
+
+        auto encodedIdSizeWithMemorySync = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(true, this->dcFlushSupport));
+        auto encodedIdSizeWithoutMemorySync = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(false, this->dcFlushSupport));
+
+        encodeSize = (encodedIdSizeWithMemorySync * withMemorySyncCount) +
+                     (encodedIdSizeWithoutMemorySync * withoutMemorySyncCount) +
+                     (this->partitionCount * encodedMiSemaphoreSize * hostFunctionsCount);
+    }
+    hostFunctionsPatchSize = encodeSize;
 }
 
 } // namespace L0

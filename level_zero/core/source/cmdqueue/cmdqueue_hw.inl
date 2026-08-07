@@ -884,25 +884,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleHostFunctions(CommandListExecutionContext &ctx, CommandList *commandList) {
     size_t encodeSize = 0;
     if (ctx.patchPreambleEnabled) {
-
-        bool dcFlushRequired = csr->getDcFlushSupport();
-
-        uint32_t withMemorySyncCount = commandList->getHostFunctionWithMemorySynchronizationCount();
-        uint32_t withoutMemorySyncCount = commandList->getHostFunctionWithoutMemorySynchronizationCount();
-        uint32_t hostFunctionsCount = withMemorySyncCount + withoutMemorySyncCount;
-
-        if (hostFunctionsCount > 0) {
-            auto semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
-            auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(semaphoreSize);
-
-            auto encodedIdSizeWithMemorySync = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(true, dcFlushRequired));
-            auto encodedIdSizeWithoutMemorySync = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(false, dcFlushRequired));
-
-            encodeSize = (encodedIdSizeWithMemorySync * withMemorySyncCount) +
-                         (encodedIdSizeWithoutMemorySync * withoutMemorySyncCount) +
-                         (this->partitionCount * encodedMiSemaphoreSize * hostFunctionsCount);
-            ctx.bufferSpaceForPatchPreamble += encodeSize;
-        }
+        encodeSize = commandList->getHostFunctionsPatchSize();
+        ctx.bufferSpaceForPatchPreamble += encodeSize;
     }
 
     return encodeSize;
