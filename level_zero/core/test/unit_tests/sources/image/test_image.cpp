@@ -465,12 +465,6 @@ HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgs
         imageImplicitArgs.channelType = clChannelType;
         imageImplicitArgs.channelOrder = clChannelOrder;
         imageImplicitArgs.numMipLevels = imgInfo.imgDesc.numMipLevels;
-        imageImplicitArgs.flatBaseOffset = imageHW->getImplicitArgsAllocation()->getGpuAddress();
-
-        auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
-        imageImplicitArgs.flatWidth = (imgInfo.imgDesc.imageWidth * pixelSize) - 1u;
-        imageImplicitArgs.flagHeight = (imgInfo.imgDesc.imageHeight * pixelSize) - 1u;
-        imageImplicitArgs.flatPitch = imgInfo.imgDesc.imageRowPitch - 1u;
 
         EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, structSize)), &imageImplicitArgs.structSize, ImageImplicitArgs::getSize()));
         EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, structVersion)), &imageImplicitArgs.structVersion, sizeof(imageImplicitArgs.structVersion)));
@@ -482,10 +476,6 @@ HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgs
         EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, channelType)), &imageImplicitArgs.channelType, sizeof(imageImplicitArgs.channelType)));
         EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, channelOrder)), &imageImplicitArgs.channelOrder, sizeof(imageImplicitArgs.channelOrder)));
         EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, numMipLevels)), &imageImplicitArgs.numMipLevels, sizeof(imageImplicitArgs.numMipLevels)));
-        EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, flatBaseOffset)), &imageImplicitArgs.flatBaseOffset, sizeof(imageImplicitArgs.flatBaseOffset)));
-        EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, flatWidth)), &imageImplicitArgs.flatWidth, sizeof(imageImplicitArgs.flatWidth)));
-        EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, flagHeight)), &imageImplicitArgs.flagHeight, sizeof(imageImplicitArgs.flagHeight)));
-        EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, flatPitch)), &imageImplicitArgs.flatPitch, sizeof(imageImplicitArgs.flatPitch)));
     }
     {
         auto implicitArgsSurfaceState = &imageHW->implicitArgsSurfaceState;

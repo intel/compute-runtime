@@ -310,15 +310,11 @@ struct ImageImplicitArgs {
     cl_channel_type channelType;
     cl_channel_order channelOrder;
     uint32_t numMipLevels;
-    uint64_t flatBaseOffset;
-    uint64_t flatWidth;
-    uint64_t flagHeight;
-    uint64_t flatPitch;
 
     static constexpr uint8_t getSize() { return sizeof(ImageImplicitArgs); }
 };
 
-static_assert(ImageImplicitArgs::getSize() == 88);
+static_assert(ImageImplicitArgs::getSize() == 56);
 
 struct McsSurfaceInfo {
     uint32_t pitch;

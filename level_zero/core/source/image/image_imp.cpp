@@ -352,12 +352,6 @@ void ImageImp::populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitAr
     imageImplicitArgs.channelType = overrideChannelTypeForDepthInt24Image(imageImplicitArgs.channelType,
                                                                           this->isDepthStencil(),
                                                                           this->allocation);
-
-    auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
-    imageImplicitArgs.flatBaseOffset = implicitArgsAllocation->getGpuAddress();
-    imageImplicitArgs.flatWidth = (imgInfo.imgDesc.imageWidth * pixelSize) - 1u;
-    imageImplicitArgs.flagHeight = (imgInfo.imgDesc.imageHeight * pixelSize) - 1u;
-    imageImplicitArgs.flatPitch = imgInfo.imgDesc.imageRowPitch - 1u;
 }
 
 void ImageImp::applyGlTextureExtOverrides(NEO::GraphicsAllocation *allocation,

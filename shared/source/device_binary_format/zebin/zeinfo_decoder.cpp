@@ -1506,18 +1506,6 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
     case Types::Kernel::argTypeImageMipLevels:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.numMipLevels);
 
-    case Types::Kernel::argTypeImageFlatBaseOffset:
-        return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatBaseOffset);
-
-    case Types::Kernel::argTypeImageFlatWidth:
-        return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatWidth);
-
-    case Types::Kernel::argTypeImageFlatHeight:
-        return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatHeight);
-
-    case Types::Kernel::argTypeImageFlatPitch:
-        return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatPitch);
-
     case Types::Kernel::argTypeSamplerAddrMode:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescSampler>(true).metadataPayload.samplerAddressingMode);
 

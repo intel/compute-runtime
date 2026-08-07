@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,32 +48,6 @@ TEST_F(KernelImageArgTest, GivenKernelWithImageArgsWhenCheckingDifferentScenario
 
     auto imgDepthOffset = ptrOffset(crossThreadData, 0x30);
     EXPECT_EQ(imageDepth, *imgDepthOffset);
-}
-
-TEST_F(KernelImageArgTest, givenKernelWithFlatImageTokensWhenArgIsSetThenPatchAllParams) {
-    size_t imageWidth = image->getImageDesc().image_width;
-    size_t imageHeight = image->getImageDesc().image_height;
-    size_t imageRowPitch = image->getImageDesc().image_row_pitch;
-    uint64_t imageBaseAddress = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getGpuAddress();
-
-    cl_mem memObj = image.get();
-
-    pKernel->setArg(0, sizeof(memObj), &memObj);
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
-    auto pixelSize = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
-
-    const auto &metadata = pKernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescImage>().metadataPayload;
-    auto offsetFlatBaseOffset = ptrOffset(crossThreadData, metadata.flatBaseOffset);
-    EXPECT_EQ(imageBaseAddress, *reinterpret_cast<uint64_t *>(offsetFlatBaseOffset));
-
-    auto offsetFlatWidth = ptrOffset(crossThreadData, metadata.flatWidth);
-    EXPECT_EQ(static_cast<uint32_t>((imageWidth * pixelSize) - 1), *offsetFlatWidth);
-
-    auto offsetFlatHeight = ptrOffset(crossThreadData, metadata.flatHeight);
-    EXPECT_EQ(static_cast<uint32_t>((imageHeight * pixelSize) - 1), *offsetFlatHeight);
-
-    auto offsetFlatPitch = ptrOffset(crossThreadData, metadata.flatPitch);
-    EXPECT_EQ(imageRowPitch - 1, *offsetFlatPitch);
 }
 
 TEST_F(KernelImageArgTest, givenKernelWithValidOffsetNumMipLevelsWhenImageArgIsSetThenCrossthreadDataIsProperlyPatched) {

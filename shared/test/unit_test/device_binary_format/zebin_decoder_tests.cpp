@@ -6252,22 +6252,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidImageArgumentWithImageMetadataThen
                   offset:          28
                   size:            4
                   arg_index:       1
-                - arg_type:        flat_image_baseoffset
-                  offset:          32
-                  size:            8
-                  arg_index:       1
-                - arg_type:        flat_image_width
-                  offset:          40
-                  size:            4
-                  arg_index:       1
-                - arg_type:        flat_image_height
-                  offset:          44
-                  size:            4
-                  arg_index:       1
-                - arg_type:        flat_image_pitch
-                  offset:          48
-                  size:            4
-                  arg_index:       1
               binding_table_indices:
                 - bti_value:       1
                   arg_index:       0
@@ -6297,10 +6281,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidImageArgumentWithImageMetadataThen
     EXPECT_EQ(20U, imgMetadata.arraySize);
     EXPECT_EQ(24U, imgMetadata.numSamples);
     EXPECT_EQ(28U, imgMetadata.numMipLevels);
-    EXPECT_EQ(32U, imgMetadata.flatBaseOffset);
-    EXPECT_EQ(40U, imgMetadata.flatWidth);
-    EXPECT_EQ(44U, imgMetadata.flatHeight);
-    EXPECT_EQ(48U, imgMetadata.flatPitch);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPopulatesKernelDescriptor) {

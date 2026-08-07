@@ -530,11 +530,6 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
     imageArg.metadataPayload.channelOrder = 0x4;
     imageArg.metadataPayload.numMipLevels = 0x0;
 
-    imageArg.metadataPayload.flatWidth = 0x30;
-    imageArg.metadataPayload.flatHeight = 0x2c;
-    imageArg.metadataPayload.flatPitch = 0x28;
-    imageArg.metadataPayload.flatBaseOffset = 0x20;
-
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -556,7 +551,6 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
 
     auto handle = imageHW->toHandle();
     auto imgInfo = imageHW->getImageInfo();
-    auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
 
     kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
 
@@ -580,18 +574,6 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
     auto pNumMipLevels = ptrOffset(crossThreadData, imageArg.metadataPayload.numMipLevels);
     EXPECT_EQ(imgInfo.imgDesc.numMipLevels, *pNumMipLevels);
 
-    auto pFlatBaseOffset = ptrOffset(crossThreadData, imageArg.metadataPayload.flatBaseOffset);
-    EXPECT_EQ(imageHW->getAllocation()->getGpuAddress(), *reinterpret_cast<const uint64_t *>(pFlatBaseOffset));
-
-    auto pFlatWidth = ptrOffset(crossThreadData, imageArg.metadataPayload.flatWidth);
-    EXPECT_EQ((imgInfo.imgDesc.imageWidth * pixelSize) - 1u, *pFlatWidth);
-
-    auto pFlatHeight = ptrOffset(crossThreadData, imageArg.metadataPayload.flatHeight);
-    EXPECT_EQ((imgInfo.imgDesc.imageHeight * pixelSize) - 1u, *pFlatHeight);
-
-    auto pFlatPitch = ptrOffset(crossThreadData, imageArg.metadataPayload.flatPitch);
-    EXPECT_EQ(imgInfo.imgDesc.imageRowPitch - 1u, *pFlatPitch);
-
     auto pChannelDataType = ptrOffset(crossThreadData, imageArg.metadataPayload.channelDataType);
     EXPECT_EQ(getClChannelDataType(desc.format), *reinterpret_cast<const cl_channel_type *>(pChannelDataType));
 
@@ -612,11 +594,6 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelFromNativeWhenSetArgImageCalledThenSu
     imageArg.metadataPayload.channelDataType = 0x8;
     imageArg.metadataPayload.channelOrder = 0x4;
     imageArg.metadataPayload.numMipLevels = 0x0;
-
-    imageArg.metadataPayload.flatWidth = 0x30;
-    imageArg.metadataPayload.flatHeight = 0x2c;
-    imageArg.metadataPayload.flatPitch = 0x28;
-    imageArg.metadataPayload.flatBaseOffset = 0x20;
 
     ze_image_desc_t desc = {};
 
@@ -663,11 +640,6 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelFromSPIRvWhenSetArgImageCalledThenUns
     imageArg.metadataPayload.channelDataType = 0x8;
     imageArg.metadataPayload.channelOrder = 0x4;
     imageArg.metadataPayload.numMipLevels = 0x0;
-
-    imageArg.metadataPayload.flatWidth = 0x30;
-    imageArg.metadataPayload.flatHeight = 0x2c;
-    imageArg.metadataPayload.flatPitch = 0x28;
-    imageArg.metadataPayload.flatBaseOffset = 0x20;
 
     ze_image_desc_t desc = {};
 
@@ -771,11 +743,6 @@ HWTEST2_F(SetKernelArg, givenBindlessImageAndKernelFromNativeWhenSetArgImageCall
     imageArg.metadataPayload.channelDataType = 0x8;
     imageArg.metadataPayload.channelOrder = 0x4;
     imageArg.metadataPayload.numMipLevels = 0x0;
-
-    imageArg.metadataPayload.flatWidth = 0x30;
-    imageArg.metadataPayload.flatHeight = 0x2c;
-    imageArg.metadataPayload.flatPitch = 0x28;
-    imageArg.metadataPayload.flatBaseOffset = 0x20;
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
 

@@ -1039,12 +1039,6 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     NEO::patchNonPointer<cl_channel_order, cl_channel_order>(getCrossThreadDataSpan(), arg.metadataPayload.channelOrder, clChannelOrder);
     NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(), arg.metadataPayload.numMipLevels, imageInfo.imgDesc.numMipLevels);
 
-    auto pixelSize = imageInfo.surfaceFormat->imageElementSizeInBytes;
-    NEO::patchNonPointer<uint64_t, uint64_t>(getCrossThreadDataSpan(), arg.metadataPayload.flatBaseOffset, image->getAllocation()->getGpuAddress());
-    NEO::patchNonPointer<uint32_t, size_t>(getCrossThreadDataSpan(), arg.metadataPayload.flatWidth, (imageInfo.imgDesc.imageWidth * pixelSize) - 1u);
-    NEO::patchNonPointer<uint32_t, size_t>(getCrossThreadDataSpan(), arg.metadataPayload.flatHeight, (imageInfo.imgDesc.imageHeight * pixelSize) - 1u);
-    NEO::patchNonPointer<uint32_t, size_t>(getCrossThreadDataSpan(), arg.metadataPayload.flatPitch, imageInfo.imgDesc.imageRowPitch - 1u);
-
     return ZE_RESULT_SUCCESS;
 }
 
