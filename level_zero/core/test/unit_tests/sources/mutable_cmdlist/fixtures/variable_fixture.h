@@ -264,6 +264,16 @@ struct VariableInOrderFixture : public VariableFixture {
     }
 
     template <typename FamilyType>
+    void preparePatchPreambleWaitCommands() {
+        if (this->qwordIndirect) {
+            createMutableLoadRegisterImm<FamilyType>(0x2600, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter);
+            createMutableLoadRegisterImm<FamilyType>(0x2604, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter);
+        }
+
+        createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, L0::MCL::MutableSemaphoreWait::Type::cbEventWaitPatchPreambleCounter, this->qwordIndirect, this->asyncMutation);
+    }
+
+    template <typename FamilyType>
     void testAsyncMutationWaitEventTest(bool indirect);
 
     uint64_t cmdListInOrderCounterValue = 0;

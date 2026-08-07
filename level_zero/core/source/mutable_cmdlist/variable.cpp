@@ -149,26 +149,41 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     if (false == isType(VariableType::waitEvent)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+
+    uint32_t semWaitReserve = 0;
     this->desc.eventValue.event = event;
     this->desc.eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
     this->desc.eventValue.counterBasedEvent = event->isCounterBased();
     this->desc.eventValue.kernelCount = event->getKernelCount();
     this->desc.eventValue.packetCount = event->getPacketsInUse();
     if (this->desc.eventValue.counterBasedEvent) {
-        this->desc.eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
-        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(event);
-        bool useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
-        if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(cmdList->isQwordInOrderCounter(), useSemaphore64bCmd)) {
-            this->desc.eventValue.loadRegImmCmds.reserve(2 * this->desc.eventValue.waitPackets);
-        }
-        this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
+        const bool lriUsed = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(cmdList->isQwordInOrderCounter(), cmdList->isSemaphore64bCmdSupported());
+        uint32_t lriMultiplier = lriUsed ? 2 : 0;
+
         auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
         this->desc.eventValue.cbEventDeviceCounterAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
+
+        this->desc.eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
+        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(event);
+        this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
         this->desc.eventValue.isExternalFlag = event->isExternalEvent();
+        if (this->desc.eventValue.isExternalFlag) {
+            semWaitReserve += this->desc.eventValue.waitPackets;
+            this->desc.eventValue.patchPreambleCounterValue = event->getInOrderExecEventHelper().getPatchPreambleCounter();
+            this->desc.eventValue.patchPreambleCounterDeviceAllocation = event->getInOrderExecEventHelper().getPatchPreambleDeviceAllocation();
+            this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
+            this->desc.eventValue.patchPreambleNoopState = this->desc.eventValue.patchPreambleCounterValue == 0;
+
+            lriMultiplier += lriUsed ? 2 : 0;
+        }
+        if (lriMultiplier > 0) {
+            this->desc.eventValue.loadRegImmCmds.reserve(lriMultiplier * this->desc.eventValue.waitPackets);
+        }
     } else {
         this->desc.eventValue.waitPackets = event->getPacketsToWait();
     }
-    this->desc.eventValue.semWaitCmds.reserve(this->desc.eventValue.waitPackets);
+    semWaitReserve += this->desc.eventValue.waitPackets;
+    this->desc.eventValue.semWaitCmds.reserve(semWaitReserve);
     this->desc.size = 0;
     return ZE_RESULT_SUCCESS;
 }
@@ -667,9 +682,15 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     NEO::GraphicsAllocation *newInOrderAllocation = nullptr;
     NEO::GraphicsAllocation *oldInOrderAllocation = nullptr;
 
+    NEO::GraphicsAllocation *newPatchPreambleCounterAllocation = nullptr;
+    NEO::GraphicsAllocation *oldPatchPreambleCounterAllocation = nullptr;
+
     NEO::InOrderExecEventHelper *newInOrderEventHelper = nullptr;
     bool newCbEventBoundToCmdList = false;
     bool newNooped = true;
+    bool newPatchPreambleNooped = true;
+    uint64_t newPatchPreambleCounterValue = 0;
+    uint64_t newPatchPreambleCounterGpuAddress = 0;
     if (newEvent != nullptr) {
         newInOrderEventHelper = &newEvent->getInOrderExecEventHelper();
         newNooped = false;
@@ -681,6 +702,12 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
             } else {
                 auto deviceCounterAlloc = newInOrderEventHelper->getDeviceCounterAllocation();
                 newInOrderAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
+                if (this->desc.eventValue.isExternalFlag) {
+                    newPatchPreambleCounterAllocation = newInOrderEventHelper->getPatchPreambleDeviceAllocation();
+                    newPatchPreambleCounterValue = newInOrderEventHelper->getPatchPreambleCounter();
+                    newPatchPreambleCounterGpuAddress = newInOrderEventHelper->getPatchPreambleDeviceGpuAddress();
+                    newPatchPreambleNooped = newInOrderEventHelper->getPatchPreambleCounter() == 0;
+                }
             }
         }
     }
@@ -689,14 +716,16 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     if (this->desc.eventValue.event != nullptr) {
         oldEventAllocation = this->desc.eventValue.eventPoolAllocation;
         if (this->desc.eventValue.counterBasedEvent) {
-            if (!this->desc.eventValue.isCbEventBoundToCmdList) {
-                oldInOrderAllocation = this->desc.eventValue.cbEventDeviceCounterAllocation;
+            oldInOrderAllocation = this->desc.eventValue.cbEventDeviceCounterAllocation;
+            if (this->desc.eventValue.isExternalFlag) {
+                oldPatchPreambleCounterAllocation = this->desc.eventValue.patchPreambleCounterDeviceAllocation;
             }
         }
     }
 
     updateAllocationResidency(oldEventAllocation, newEventAllocation);
     updateAllocationResidency(oldInOrderAllocation, newInOrderAllocation);
+    updateAllocationResidency(oldPatchPreambleCounterAllocation, newPatchPreambleCounterAllocation);
 
     if (this->desc.eventValue.counterBasedEvent && (this->cmdList->getBase()->isHeaplessModeEnabled() || !(newEvent ? newEvent->hasInOrderTimestampNode() : false))) {
         if (oldNooped) {
@@ -753,6 +782,12 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     if (this->desc.eventValue.counterBasedEvent) {
         this->desc.eventValue.isCbEventBoundToCmdList = newCbEventBoundToCmdList;
         this->desc.eventValue.cbEventDeviceCounterAllocation = newInOrderAllocation;
+        if (this->desc.eventValue.isExternalFlag) {
+            this->desc.eventValue.patchPreambleCounterDeviceAllocation = newPatchPreambleCounterAllocation;
+            this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = newPatchPreambleCounterGpuAddress;
+            this->desc.eventValue.patchPreambleCounterValue = newPatchPreambleCounterValue;
+            this->desc.eventValue.patchPreambleNoopState = newPatchPreambleNooped;
+        }
     }
     desc.state = State::initialized;
     return ZE_RESULT_SUCCESS;
@@ -763,34 +798,109 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
     bool useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
     bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, useSemaphore64bCmd);
 
-    for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
-        if (operation == CbWaitEventOperationType::set) {
-            mutableSemWait->setSemaphoreAddress(waitAddress);
-        } else if (operation == CbWaitEventOperationType::noop) {
-            mutableSemWait->noop();
-        } else if (operation == CbWaitEventOperationType::restore) {
-            mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
-        }
+    auto newPatchPreambleCounter = eventInOrderHelper == nullptr ? 0u : eventInOrderHelper->getPatchPreambleCounter();
+    auto newPatchPreambleCounterAddress = eventInOrderHelper == nullptr ? 0u : eventInOrderHelper->getPatchPreambleDeviceGpuAddress();
+    bool newPatchPreambleNooped = newPatchPreambleCounter == 0;
 
-        if (!qwordIndirect && eventInOrderHelper) {
-            if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                mutableSemWait->setSemaphoreValue(eventInOrderHelper->getEventData()->counterValue);
+    for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
+        if (mutableSemWait->getType() == MutableSemaphoreWait::cbEventWait) {
+            if (operation == CbWaitEventOperationType::set) {
+                mutableSemWait->setSemaphoreAddress(waitAddress);
+            } else if (operation == CbWaitEventOperationType::noop) {
+                mutableSemWait->noop();
+            } else if (operation == CbWaitEventOperationType::restore) {
+                mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
+            }
+
+            if (!qwordIndirect && eventInOrderHelper) {
+                if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
+                    mutableSemWait->setSemaphoreValue(eventInOrderHelper->getEventData()->counterValue);
+                }
+            }
+        } else {
+            if (mutableSemWait->getType() == MutableSemaphoreWait::cbEventWaitPatchPreambleCounter) {
+                if (operation == CbWaitEventOperationType::set) {
+                    // general order to set
+                    if (this->desc.eventValue.patchPreambleNoopState) {
+                        if (newPatchPreambleNooped == false) {
+                            // was patch preamble nooped -> can patch preamble set: restore + set value
+                            mutableSemWait->restoreWithSemaphoreAddress(newPatchPreambleCounterAddress);
+                            if (qwordIndirect == false) {
+                                mutableSemWait->setSemaphoreValue(newPatchPreambleCounter);
+                            }
+                        }
+                    } else {
+                        if (newPatchPreambleNooped == false) {
+                            // was patch preamble set -> can patch preamble set: just update address and value
+                            mutableSemWait->setSemaphoreAddress(newPatchPreambleCounterAddress);
+                            if (qwordIndirect == false) {
+                                mutableSemWait->setSemaphoreValue(newPatchPreambleCounter);
+                            }
+                        } else {
+                            // was patch preamble set -> needs patch preamble nooped: noop
+                            mutableSemWait->noop();
+                        }
+                    }
+                } else if (operation == CbWaitEventOperationType::noop) {
+                    mutableSemWait->noop();
+                } else if (operation == CbWaitEventOperationType::restore) {
+                    // general order to restore, can patch preamble restore only if new patch preamble counter is not 0, otherwise noop
+                    if (newPatchPreambleNooped == false) {
+                        mutableSemWait->restoreWithSemaphoreAddress(newPatchPreambleCounterAddress);
+                        if (qwordIndirect == false) {
+                            mutableSemWait->setSemaphoreValue(newPatchPreambleCounter);
+                        }
+                    }
+                }
             }
         }
     }
     if (qwordIndirect) {
         uint32_t cmdIndex = 0;
         for (auto &mutableLoadRegImm : this->desc.eventValue.loadRegImmCmds) {
-            if (operation == CbWaitEventOperationType::noop) {
-                mutableLoadRegImm->noop();
-            } else if (operation == CbWaitEventOperationType::restore) {
-                mutableLoadRegImm->restore();
-            }
+            if (mutableLoadRegImm->getType() == MutableLoadRegisterImm::cbEventWaitLoadCounter) {
+                if (operation == CbWaitEventOperationType::noop) {
+                    mutableLoadRegImm->noop();
+                } else if (operation == CbWaitEventOperationType::restore) {
+                    mutableLoadRegImm->restore();
+                }
 
-            if (eventInOrderHelper) {
-                if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                    uint32_t waitValue = cmdIndex == 0 ? getLowPart(eventInOrderHelper->getEventData()->counterValue) : getHighPart(eventInOrderHelper->getEventData()->counterValue);
-                    mutableLoadRegImm->setValue(waitValue);
+                if (eventInOrderHelper) {
+                    if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
+                        // check if cmdIndex is even - there can be multiple lri pairs, even takes lower, odd takes higher part of 64b value
+                        uint32_t waitValue = ((cmdIndex & 1u) == 0u) ? getLowPart(eventInOrderHelper->getEventData()->counterValue) : getHighPart(eventInOrderHelper->getEventData()->counterValue);
+                        mutableLoadRegImm->setValue(waitValue);
+                    }
+                }
+            } else {
+                if (mutableLoadRegImm->getType() == MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter) {
+                    // check if cmdIndex is even - there can be multiple lri pairs, even takes lower, odd takes higher part of 64b value
+                    uint32_t waitValue = ((cmdIndex & 1u) == 0u) ? getLowPart(newPatchPreambleCounter) : getHighPart(newPatchPreambleCounter);
+                    if (operation == CbWaitEventOperationType::set) {
+                        // was patch preamble nooped -> can patch preamble set: restore + set value
+                        if (this->desc.eventValue.patchPreambleNoopState) {
+                            if (newPatchPreambleNooped == false) {
+                                mutableLoadRegImm->restore();
+                                mutableLoadRegImm->setValue(waitValue);
+                            }
+                        } else {
+                            if (newPatchPreambleNooped == false) {
+                                // was patch preamble set -> can patch preamble set: just update address and value
+                                mutableLoadRegImm->setValue(waitValue);
+                            } else {
+                                // was patch preamble set -> needs patch preamble nooped: noop
+                                mutableLoadRegImm->noop();
+                            }
+                        }
+                    } else if (operation == CbWaitEventOperationType::noop) {
+                        mutableLoadRegImm->noop();
+                    } else if (operation == CbWaitEventOperationType::restore) {
+                        // general order to restore, can patch preamble restore only if new patch preamble counter is not 0, otherwise remain noop
+                        if (newPatchPreambleNooped == false) {
+                            mutableLoadRegImm->restore();
+                            mutableLoadRegImm->setValue(waitValue);
+                        }
+                    }
                 }
             }
             cmdIndex++;

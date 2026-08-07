@@ -74,7 +74,10 @@ struct EventValueProperties {
     Event *event = nullptr;
     NEO::GraphicsAllocation *eventPoolAllocation = nullptr;
     NEO::GraphicsAllocation *cbEventDeviceCounterAllocation = nullptr;
+    NEO::GraphicsAllocation *patchPreambleCounterDeviceAllocation = nullptr;
     uint64_t inOrderExecBaseSignalValue = 0;
+    uint64_t patchPreambleCounterValue = 0;
+    uint64_t patchPreambleCounterDeviceGpuAddress = 0;
 
     MutableComputeWalker *walkerCmd = nullptr;
     MutablePipeControl *postSyncCmd = nullptr;
@@ -94,6 +97,7 @@ struct EventValueProperties {
     bool isCbEventBoundToCmdList = false;
     bool hasStandaloneProfilingNode = false;
     bool isExternalFlag = false;
+    bool patchPreambleNoopState = false;
 };
 
 struct SlmValueProperties {
