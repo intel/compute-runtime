@@ -154,7 +154,7 @@ void usage() {
                  "\n  -L,   --infolog                                                                                 selectively run info log EXP API black box test"
                  "\n        [--enable <true|false>]                                                                   optionally enable/disable info log collection (requires root)"
                  "\n"
-                 "\n  All L0 Syman APIs that set values require root privileged execution"
+                 "\n  All L0 Sysman APIs that set values require root privileged execution"
                  "\n"
                  "\n";
 }
