@@ -267,6 +267,40 @@ HWTEST_F(CommandListCreateTests, givenExplicitAllocationWhenResolveAlignedAlloca
     EXPECT_TRUE(foundInResidency);
 }
 
+HWTEST_F(CommandListCreateTests, givenSharedSystemAllocationUsedWhenGetRegionOffsetForAppendMemoryCopyBlitRegionCalledThenRetrieveProperOffset) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    size_t cmdListHostPtrSize = MemoryConstants::pageSize;
+    void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
+    void *startMemory = cmdListHostBuffer;
+
+    void *ptr = static_cast<void *>(reinterpret_cast<uint8_t *>(startMemory) + 1);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, ptr, cmdListHostPtrSize, nullptr, {.sharedSystemEnabled = true});
+    uint32_t offset = commandList->getRegionOffsetForAppendMemoryCopyBlitRegion(&outData);
+    EXPECT_EQ(1u, outData.offset);
+    EXPECT_EQ(1u, offset);
+    device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
+}
+
+HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenGetRegionOffsetForAppendMemoryCopyBlitRegionCalledThenRetrieveProperOffset) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    size_t cmdListHostPtrSize = MemoryConstants::pageSize;
+    void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
+    void *startMemory = cmdListHostBuffer;
+
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, startMemory, cmdListHostPtrSize, nullptr, {});
+    ASSERT_NE(nullptr, outData.alloc);
+    uint32_t offset = commandList->getRegionOffsetForAppendMemoryCopyBlitRegion(&outData);
+    uint64_t ptr = outData.alignedAllocationPtr + outData.offset;
+    uint64_t allocPtr = outData.alloc->getGpuAddress();
+    EXPECT_EQ(static_cast<uint32_t>(ptr - allocPtr), offset);
+    commandList->removeHostPtrAllocations();
+    device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
+}
+
 HWTEST_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsInMapThenAllocationReturned) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -351,6 +385,37 @@ HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenResolveAlignedAl
     EXPECT_EQ((expectedOffset & (EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment() - 1)), outData.offset);
 
     commandList->removeHostPtrAllocations();
+    device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
+}
+
+HWTEST_F(CommandListCreateTests, givenSharedSystemAllocationUsedWhenResolveAlignedAllocationCalledThenRetrieveProperOffsetAndAddress) {
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    size_t cmdListHostPtrSize = MemoryConstants::pageSize;
+    void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
+    void *startMemory = cmdListHostBuffer;
+
+    void *ptr = static_cast<void *>(reinterpret_cast<uint8_t *>(startMemory));
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, startMemory, cmdListHostPtrSize, nullptr, {.sharedSystemEnabled = true});
+    EXPECT_EQ(nullptr, outData.alloc);
+    EXPECT_EQ(0u, outData.offset);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr), outData.alignedAllocationPtr + outData.offset);
+    EXPECT_TRUE(isAligned(outData.alignedAllocationPtr, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment()));
+
+    ptr = static_cast<void *>(reinterpret_cast<uint8_t *>(startMemory) + 1);
+    outData = commandList->resolveAlignedAllocation(device, ptr, cmdListHostPtrSize, nullptr, {.sharedSystemEnabled = true});
+    EXPECT_EQ(nullptr, outData.alloc);
+    EXPECT_NE(0u, outData.offset);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr), outData.alignedAllocationPtr + outData.offset);
+    EXPECT_TRUE(isAligned(outData.alignedAllocationPtr, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment()));
+
+    ptr = static_cast<void *>(reinterpret_cast<uint8_t *>(startMemory) + 15);
+    outData = commandList->resolveAlignedAllocation(device, ptr, cmdListHostPtrSize, nullptr, {.sharedSystemEnabled = true});
+    EXPECT_EQ(nullptr, outData.alloc);
+    EXPECT_NE(0u, outData.offset);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr), outData.alignedAllocationPtr + outData.offset);
+    EXPECT_TRUE(isAligned(outData.alignedAllocationPtr, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment()));
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
 }
 

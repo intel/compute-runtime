@@ -60,8 +60,8 @@ struct AlignedAllocationData {
         return {};
     }
 
-    static AlignedAllocationData forSystemPointer(const void *ptr) {
-        return {nullptr, reinterpret_cast<uintptr_t>(ptr), 0u, nullptr, true};
+    static AlignedAllocationData forSystemPointer(uintptr_t alignPtr, size_t offset) {
+        return {nullptr, alignPtr, offset, nullptr, true};
     }
 
     static AlignedAllocationData fromAllocation(NEO::SvmAllocationData *svmAllocData, uintptr_t alignedAllocationPtr, size_t offset, NEO::GraphicsAllocation *alloc, bool needsFlush) {
@@ -425,7 +425,7 @@ struct CommandListCoreFamily : public CommandList {
     AlignedAllocationData alignCachedHostAllocationData(NEO::GraphicsAllocation *cachedHostAlloc, uintptr_t sourcePtr, size_t sshAlignmentOffset);
     void addVirtualReservationToResidency(NEO::SvmAllocationData *svmAlloc, const void *buffer);
     size_t getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation);
-    uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);
+    MOCKABLE_VIRTUAL uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);
     void handlePostSubmissionState();
 
     MOCKABLE_VIRTUAL void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint64_t forceAggregatedEventIncValue, bool useAdditionalTimestamp);

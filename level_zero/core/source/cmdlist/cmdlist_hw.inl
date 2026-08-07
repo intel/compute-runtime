@@ -1823,13 +1823,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     uint64_t srcPtr = srcAllocationData->alignedAllocationPtr;
     uint64_t dstPtr = dstAllocationData->alignedAllocationPtr;
     if (srcAllocationData->alloc) {
-        srcRegion.originX += getRegionOffsetForAppendMemoryCopyBlitRegion(srcAllocationData);
         srcPtr = srcAllocationData->alloc->getGpuAddress();
     }
+    srcRegion.originX += getRegionOffsetForAppendMemoryCopyBlitRegion(srcAllocationData);
     if (dstAllocationData->alloc) {
-        dstRegion.originX += getRegionOffsetForAppendMemoryCopyBlitRegion(dstAllocationData);
         dstPtr = dstAllocationData->alloc->getGpuAddress();
     }
+    dstRegion.originX += getRegionOffsetForAppendMemoryCopyBlitRegion(dstAllocationData);
     uint32_t bytesPerPixel = NEO::BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(copySize.x, srcRegion.originX, dstRegion.originX, srcSize.x, dstSize.x);
     Vec3<size_t> srcPtrOffset = {srcRegion.originX / bytesPerPixel, srcRegion.originY, srcRegion.originZ};
     Vec3<size_t> dstPtrOffset = {dstRegion.originX / bytesPerPixel, dstRegion.originY, dstRegion.originZ};
@@ -2053,7 +2053,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSharedSystemEnabled() const {
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::emitMemAdviseForSystemCopy(const AlignedAllocationData &allocationStruct, size_t size) {
     if ((allocationStruct.alloc == nullptr) && (NEO::debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.get() == 1)) {
-        appendMemAdvise(device, reinterpret_cast<void *>(allocationStruct.alignedAllocationPtr), size,
+        appendMemAdvise(device, reinterpret_cast<void *>(allocationStruct.alignedAllocationPtr + allocationStruct.offset), size,
                         static_cast<ze_memory_advice_t>(ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
     }
 }
@@ -3201,6 +3201,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
             if (NEO::debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.get() == 1) {
                 appendMemAdvise(device, ptr, size, static_cast<ze_memory_advice_t>(ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
             }
+            // The 4-byte base alignment requirement comes from ALIGNED4() in the fill builtin kernel;
+            // the blitter has no such constraint, so the unaligned pointer is passed as-is with zero offset.
             blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(ptr), size, patternToCommand, patternSize, 0ul);
         } else if (neoDevice->areSharedSystemAllocationsAllowed()) {
             gpuAllocation = getHostPtrAlloc(ptr, size, false, false);
@@ -3335,7 +3337,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::resolveAligne
     }
 
     if (flags.sharedSystemEnabled || bufferSize == 0u) {
-        return AlignedAllocationData::forSystemPointer(ptr);
+        return AlignedAllocationData::forSystemPointer(sourcePtr, sshAlignmentOffset);
     }
 
     if (!cachedHostAlloc) {
@@ -3433,9 +3435,13 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::getAllocationOffsetForAppend
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData) {
-    uint64_t ptr = allocationData->alignedAllocationPtr + allocationData->offset;
-    uint64_t allocPtr = allocationData->alloc->getGpuAddress();
-    return static_cast<uint32_t>(ptr - allocPtr);
+    if (allocationData->alloc) {
+        uint64_t ptr = allocationData->alignedAllocationPtr + allocationData->offset;
+        uint64_t allocPtr = allocationData->alloc->getGpuAddress();
+        return static_cast<uint32_t>(ptr - allocPtr);
+    } else {
+        return static_cast<uint32_t>(allocationData->offset);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

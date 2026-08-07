@@ -48,11 +48,28 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
 
     AlignedAllocationData resolveAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, const L0::MemAllocInfo *bufferAllocInfo, const L0::ResolveAlignedAllocationFlags &flags) override {
         auto allocationData = BaseClass::resolveAlignedAllocation(device, buffer, bufferSize, bufferAllocInfo, flags);
-        if (allocationData.alloc) {
+        if ((allocationData.alloc) || (flags.sharedSystemEnabled)) {
+            resolveAlignedAllocationCalledTimes++;
+            if ((allocationData.alloc == nullptr) && (flags.sharedSystemEnabled)) {
+                sharedSystemUsmSeen++;
+                if (allocationData.offset) {
+                    sharedSystemUsmNonZeroOffset++;
+                }
+            }
             return allocationData;
         }
         return {nullptr, 0, 0, nullptr, true};
     }
+
+    uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData) override {
+        uint32_t offset = BaseClass::getRegionOffsetForAppendMemoryCopyBlitRegion(allocationData);
+        getRegionOffsetForAppendMemoryCopyBlitRegionCalledTimes++;
+        if ((allocationData->alloc == nullptr) && (offset)) {
+            sharedSystemUsmNonZeroBlitRegionOffset++;
+        }
+        return offset;
+    }
+
     ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
                                      NEO::GraphicsAllocation *dstPtrAlloc,
                                      uint64_t dstOffset, uintptr_t srcPtr,
@@ -63,6 +80,11 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
         return ZE_RESULT_SUCCESS;
     }
     uint32_t appendMemoryCopyBlitCalledTimes = 0;
+    uint32_t resolveAlignedAllocationCalledTimes = 0;
+    uint32_t sharedSystemUsmSeen = 0;
+    uint32_t sharedSystemUsmNonZeroOffset = 0;
+    uint32_t getRegionOffsetForAppendMemoryCopyBlitRegionCalledTimes = 0;
+    uint32_t sharedSystemUsmNonZeroBlitRegionOffset = 0;
 };
 class MockDriverHandle : public L0::DriverHandle {
   public:
@@ -313,6 +335,56 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemor
     itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
 
     EXPECT_EQ(genCmdList.end(), itor);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndSharedSystemUsmInputWithEvenAlignmentWhenMemoryCopyRegionCalledThenVerifyZeroOffset) {
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
+
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1000);
+    void *dstPtr = reinterpret_cast<void *>(0x2000);
+    ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+    CmdListMemoryCopyParams copyParams = {};
+    commandList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(2u, commandList.resolveAlignedAllocationCalledTimes);
+    EXPECT_EQ(2u, commandList.sharedSystemUsmSeen);
+    EXPECT_EQ(0u, commandList.sharedSystemUsmNonZeroOffset);
+    EXPECT_EQ(2u, commandList.getRegionOffsetForAppendMemoryCopyBlitRegionCalledTimes);
+    EXPECT_EQ(0u, commandList.sharedSystemUsmNonZeroBlitRegionOffset);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndSharedSystemUsmInputWithOddAlignmentWhenMemoryCopyRegionCalledThenVerifyNonzeroOffset) {
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
+
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1237);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+    CmdListMemoryCopyParams copyParams = {};
+    commandList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(2u, commandList.resolveAlignedAllocationCalledTimes);
+    EXPECT_EQ(2u, commandList.sharedSystemUsmSeen);
+    EXPECT_EQ(2u, commandList.sharedSystemUsmNonZeroOffset);
+    EXPECT_EQ(2u, commandList.getRegionOffsetForAppendMemoryCopyBlitRegionCalledTimes);
+    EXPECT_EQ(2u, commandList.sharedSystemUsmNonZeroBlitRegionOffset);
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlitCalledWithZeroDepthThenCopyRegionPathSelected) {
