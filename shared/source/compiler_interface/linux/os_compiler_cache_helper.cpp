@@ -81,14 +81,4 @@ size_t getFileSize(const std::string &path) {
     }
     return 0u;
 }
-
-bool isAnyIgcEnvVarSet() {
-    char **envp = NEO::SysCalls::getEnviron();
-    for (int i = 0; envp && envp[i] != nullptr; i++) {
-        if (strncmp(envp[i], "IGC_", 4) == 0) {
-            return true;
-        }
-    }
-    return false;
-}
 } // namespace NEO

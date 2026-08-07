@@ -49,7 +49,7 @@ class CompilerCache : NEO::NonCopyableAndNonMovableClass {
     const std::string getCachedFileName(const HardwareInfo &hwInfo, ArrayRef<const char> input,
                                         ArrayRef<const char> options, ArrayRef<const char> internalOptions,
                                         ArrayRef<const char> specIds, ArrayRef<const char> specValues,
-                                        ArrayRef<const char> igcRevision, size_t igcLibSize, time_t igcLibMTime);
+                                        ArrayRef<const char> igcRevision, ArrayRef<const char> igcRegKeys, size_t igcLibSize, time_t igcLibMTime);
 
     enum class StatsResult {
         success = 0,

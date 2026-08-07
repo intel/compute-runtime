@@ -125,6 +125,9 @@ IgcOptionsAndCapabilitiesBase *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 5)::GetI
     return nullptr;
 }
 
+void CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 6)::GetIGCRegKeys(CIF::Builtins::BufferSimple *outIgcRegKeysBuffer) {
+}
+
 OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 1)::TranslateImpl(
     CIF::Version_t outVersion,
     CIF::Builtins::BufferSimple *src,

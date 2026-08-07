@@ -31,13 +31,15 @@ std::mutex CompilerCache::cacheAccessMtx;
 const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
                                                    const ArrayRef<const char> options, const ArrayRef<const char> internalOptions,
                                                    const ArrayRef<const char> specIds, const ArrayRef<const char> specValues,
-                                                   const ArrayRef<const char> igcRevision, size_t igcLibSize, time_t igcLibMTime) {
+                                                   const ArrayRef<const char> igcRevision, const ArrayRef<const char> igcRegKeys, size_t igcLibSize, time_t igcLibMTime) {
     Hash hash;
 
     hash.update("----", 4);
     hash.update(&*igcRevision.begin(), igcRevision.size());
     hash.update(safePodCast<const char *>(&igcLibSize), sizeof(igcLibSize));
     hash.update(safePodCast<const char *>(&igcLibMTime), sizeof(igcLibMTime));
+    hash.update("----", 4);
+    hash.update(&*igcRegKeys.begin(), igcRegKeys.size());
 
     hash.update("----", 4);
     hash.update(&*input.begin(), input.size());
@@ -79,6 +81,8 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
             NEO::IoFunctions::fprintf(fp, "%s\n", &*igcRevision.begin());
             NEO::IoFunctions::fprintf(fp, "  libSize=%llu\n", igcLibSize);
             NEO::IoFunctions::fprintf(fp, "  libMTime=%llu\n", igcLibMTime);
+            NEO::IoFunctions::fprintf(fp, "---- igcRegKeys ----\n");
+            NEO::IoFunctions::fprintf(fp, "%s\n", igcRegKeys.size() > 0 ? &*igcRegKeys.begin() : "");
             NEO::IoFunctions::fprintf(fp, "---- input ----\n");
             NEO::IoFunctions::fprintf(fp, "<%s>\n", inputFilePath.c_str());
             NEO::IoFunctions::fprintf(fp, "---- options ----\n");

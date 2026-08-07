@@ -46,11 +46,16 @@ Identifying the compiler's unique version
 - IGC Library Size
 - IGC Library Modification Time
 
+Compiler configuration
+- IGC Registry/Debug Keys
+
 Additional information
 - Hardware Info
 
 The resulting hash is identical for a particular set of variables, which means that the same variables always generate the same hash.
 This ensures that we always read/write the right binary file under the given conditions.
+
+The *IGC Registry/Debug Keys* attribute captures the IGC registry and debug keys that can change the generated binary. IGC is queried for these keys once, when the compiler is loaded, so there is no per-compilation cost. Since the keys are part of the hash, changing any of them produces a new cache entry instead of reusing an outdated binary.
 
 # Configuration
 
@@ -147,7 +152,7 @@ Additionally, the `BinaryCacheTrace` flag can be used to provide deeper insights
 
 - cl_cache relies on the *last access time* of files to manage its eviction process effectively. If *last access time* updates are not enabled in the filesystem, cl_cache will assume that the *last access time* is set to *creation time*.
 
-- When generating a unique hash, Compiler Cache does not take into account the environment variables of external components. Changes in these variables may not trigger cache invalidation, which can lead to unexpected behavior and difficult to debug errors.
+- When generating a unique hash, Compiler Cache does not take into account the environment variables of external components, with the exception of IGC registry/debug keys, which are queried from IGC and included in the hash. Changes in other external variables may not trigger cache invalidation, which can lead to unexpected behavior and difficult to debug errors.
 
 - When files are evicted, any resulting empty directories are intentionally left in place. This supports the *stats* mechanism, which relies on a consistent directory structure.
 
