@@ -19,11 +19,37 @@
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include <mutex>
+#include <pthread.h>
 
 namespace L0 {
 
 std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 bool levelZeroDriverInitialized = false;
+std::mutex driverInitMutex;
+
+// Fork safety: reset driver state in child process
+static void driverForkChildHandler() {
+    // Reset the PID to force re-initialization
+    if (Driver::get()) {
+        Driver::get()->setPid(0);
+    }
+
+    // Mark all inherited driver handles as orphaned
+    // They contain stale DRM file descriptors that belong to the parent
+    if (globalDriverHandles) {
+        for (auto *handle : *globalDriverHandles) {
+            if (handle) {
+                auto *driverHandle = DriverHandle::fromHandle(handle);
+                if (driverHandle) {
+                    driverHandle->isOrphanedFromFork = true;
+                }
+            }
+        }
+    }
+
+    // Reset initialization state to allow re-init in child
+    levelZeroDriverInitialized = false;
+}
 
 void Driver::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -60,6 +86,19 @@ void Driver::initialize(ze_result_t *result) {
 
     executionEnvironment->setMetricsEnabled(envVariables.metrics);
     executionEnvironment->setOneApiPvcWaEnv(oneApiPvcWa);
+
+    // Fork safety: drop handles inherited from the parent before creating new ones.
+    // They are intentionally leaked, never deleted: the child shares the parent's DRM
+    // file descriptions, so destructor teardown (GEM close, context destroy ioctls)
+    // would destroy the parent's GPU objects. Same policy as globalDriverTeardown(),
+    // which only deletes handles whose pid matches the current process.
+    if (globalDriverHandles && !globalDriverHandles->empty()) {
+        auto currentPid = NEO::SysCalls::getCurrentProcessId();
+        std::erase_if(*globalDriverHandles, [currentPid](_ze_driver_handle_t *handle) {
+            auto *driverHandle = DriverHandle::fromHandle(handle);
+            return driverHandle && (driverHandle->isOrphanedFromFork || driverHandle->pid != currentPid);
+        });
+    }
 
     executionEnvironment->incRefInternal();
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
@@ -120,11 +159,35 @@ ze_result_t Driver::driverInit() {
 }
 
 ze_result_t Driver::driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandles) {
+    // Fork safety: the loader's zeInit() is a process-lifetime std::call_once, so in a
+    // forked child it returns the parent's cached result without ever calling into this
+    // driver again. zeDriverGet is the first driver entry point the child actually
+    // reaches, so detect the pid change here and re-initialize.
+    auto currentPid = NEO::SysCalls::getCurrentProcessId();
+    if (this->pid != currentPid && initStatus == ZE_RESULT_SUCCESS) {
+        std::lock_guard<std::mutex> lock(driverInitMutex);
+        if (this->pid != currentPid) {
+            ze_result_t reinitResult;
+            this->initialize(&reinitResult);
+            levelZeroDriverInitialized = (reinitResult == ZE_RESULT_SUCCESS);
+        }
+    }
+
     // Only attempt to Init GtPin when driverHandleGet is called requesting handles.
     if (phDriverHandles != nullptr && *pCount > 0) {
         Driver::get()->tryInitGtpin();
     }
-    auto driverCount = static_cast<uint32_t>(globalDriverHandles->size());
+
+    // Filter out orphaned handles from fork
+    std::vector<ze_driver_handle_t> validHandles;
+    for (auto *handle : *globalDriverHandles) {
+        auto *driverHandle = DriverHandle::fromHandle(handle);
+        if (driverHandle && !driverHandle->isOrphanedFromFork) {
+            validHandles.push_back(handle);
+        }
+    }
+
+    auto driverCount = static_cast<uint32_t>(validHandles.size());
     if (*pCount == 0) {
         *pCount = driverCount;
         return ZE_RESULT_SUCCESS;
@@ -139,7 +202,7 @@ ze_result_t Driver::driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriv
     }
 
     for (uint32_t i = 0; i < *pCount; i++) {
-        phDriverHandles[i] = (*globalDriverHandles)[i];
+        phDriverHandles[i] = validHandles[i];
     }
 
     return ZE_RESULT_SUCCESS;
@@ -159,12 +222,19 @@ void Driver::tryInitGtpin() {
 
 static Driver driverInstance;
 Driver *Driver::driver = &driverInstance;
-std::mutex driverInitMutex;
 
 ze_result_t initDriver() {
     auto pid = NEO::SysCalls::getCurrentProcessId();
 
     ze_result_t result = Driver::get()->driverInit();
+
+    // Register fork handler on first successful init
+    static std::once_flag forkHandlerOnce;
+    if (result == ZE_RESULT_SUCCESS) {
+        std::call_once(forkHandlerOnce, []() {
+            pthread_atfork(nullptr, nullptr, driverForkChildHandler);
+        });
+    }
 
     if (Driver::get()->getPid() != pid) {
         std::lock_guard<std::mutex> lock(driverInitMutex);
