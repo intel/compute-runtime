@@ -8,7 +8,9 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -16,6 +18,19 @@
 using namespace NEO;
 
 using GfxCoreHelperXe3pAndLaterTests = GfxCoreHelperTest;
+
+HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenHwQueuesSupportFlagWhenInitializeFromProductHelperThenSecondaryContextsFollowIt, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore restore;
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
+
+    gfxCoreHelper.initializeFromProductHelper(productHelper, false);
+    EXPECT_FALSE(gfxCoreHelper.areSecondaryContextsSupported());
+    EXPECT_EQ(0u, gfxCoreHelper.getContextGroupContextsCount());
+
+    gfxCoreHelper.initializeFromProductHelper(productHelper, true);
+    EXPECT_TRUE(gfxCoreHelper.areSecondaryContextsSupported());
+}
 
 HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes, IsAtLeastXe3pCore) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();

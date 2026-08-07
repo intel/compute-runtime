@@ -2891,7 +2891,7 @@ HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitia
     DebugManagerStateRestore restore;
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
 
-        void initializeFromProductHelper(const ProductHelper &productHelper) override {
+        void initializeFromProductHelper(const ProductHelper &productHelper, [[maybe_unused]] bool hwQueuesSupported) override {
             initFromProductHelperCalled = true;
         }
         bool initFromProductHelperCalled = false;

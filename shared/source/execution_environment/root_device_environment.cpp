@@ -196,7 +196,7 @@ SipExternalLib *RootDeviceEnvironment::getSipExternalLibInterface() {
 void RootDeviceEnvironment::initHelpers() {
     initProductHelper();
     initGfxCoreHelper();
-    initializeGfxCoreHelperFromProductHelper();
+    initializeGfxCoreHelperFromProductHelper(true);
     initializeGfxCoreHelperFromHwInfo();
     initApiGfxCoreHelper();
     initCompilerProductHelper();
@@ -212,9 +212,9 @@ void RootDeviceEnvironment::initializeGfxCoreHelperFromHwInfo() {
     }
 }
 
-void RootDeviceEnvironment::initializeGfxCoreHelperFromProductHelper() {
+void RootDeviceEnvironment::initializeGfxCoreHelperFromProductHelper(bool hwQueuesSupported) {
     if (this->productHelper) {
-        gfxCoreHelper->initializeFromProductHelper(*this->productHelper.get());
+        gfxCoreHelper->initializeFromProductHelper(*this->productHelper.get(), hwQueuesSupported);
     }
 }
 

@@ -183,7 +183,7 @@ class GfxCoreHelper {
     virtual void adjustCopyEngineRegularContextCount(const size_t enginesCount, uint32_t &contextCount) const = 0;
     virtual aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const = 0;
     virtual void initializeDefaultHpCopyEngine(const HardwareInfo &hwInfo) = 0;
-    virtual void initializeFromProductHelper(const ProductHelper &productHelper) = 0;
+    virtual void initializeFromProductHelper(const ProductHelper &productHelper, bool hwQueuesSupported) = 0;
 
     virtual bool is48ResourceNeededForCmdBuffer() const = 0;
     virtual bool isStateSipRequired() const = 0;
@@ -453,7 +453,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     void adjustCopyEngineRegularContextCount(const size_t enginesCount, uint32_t &contextCount) const override;
     aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const override;
     void initializeDefaultHpCopyEngine(const HardwareInfo &hwInfo) override;
-    void initializeFromProductHelper(const ProductHelper &productHelper) override;
+    void initializeFromProductHelper(const ProductHelper &productHelper, bool hwQueuesSupported) override;
 
     bool is48ResourceNeededForCmdBuffer() const override;
     bool isStateSipRequired() const override;

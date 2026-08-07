@@ -120,7 +120,8 @@ bool Wddm::init() {
     productHelper.adjustPlatformForProductFamily(hardwareInfo);
     rootDeviceEnvironment.initApiGfxCoreHelper();
     rootDeviceEnvironment.initGfxCoreHelper();
-    rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper();
+    bool hwQueuesSupported = featureTable->flags.ftrWddmHwQueues;
+    rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper(hwQueuesSupported);
     rootDeviceEnvironment.initializeGfxCoreHelperFromHwInfo();
     rootDeviceEnvironment.initAilConfigurationHelper();
     if (false == rootDeviceEnvironment.initAilConfiguration()) {

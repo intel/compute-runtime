@@ -823,8 +823,8 @@ void GfxCoreHelperHw<GfxFamily>::initializeDefaultHpCopyEngine(const HardwareInf
 }
 
 template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::initializeFromProductHelper(const ProductHelper &productHelper) {
-    secondaryContextsEnabled = productHelper.areSecondaryContextsSupported();
+void GfxCoreHelperHw<GfxFamily>::initializeFromProductHelper(const ProductHelper &productHelper, bool hwQueuesSupported) {
+    secondaryContextsEnabled = productHelper.areSecondaryContextsSupported() && hwQueuesSupported;
 }
 
 template <typename GfxFamily>
