@@ -6171,6 +6171,25 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
     EXPECT_NE(std::string::npos, output.find(expectedPart));
 }
 
+TEST_F(ModuleTests, givenSlmSizeExceedingLocalMemorySizeWhenProcessingUnpackedBinaryThenRejectionReasonIsAppendedToBuildLog) {
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+
+    constexpr uint32_t slmNeeded = 64u;
+    constexpr uint32_t slmAvailable = 32u;
+    neoDevice->deviceInfo.localMemSize = slmAvailable;
+
+    L0::ModuleTranslationUnit moduleTu(this->device);
+    moduleTu.unpackedDeviceBinarySize = src.size();
+    moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+    memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize, src.data(), src.size());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, moduleTu.processUnpackedBinary());
+
+    const std::string expectedPart = "Size of SLM (" + std::to_string(slmNeeded) + ") larger than available (" + std::to_string(slmAvailable) + ")";
+    EXPECT_NE(std::string::npos, moduleTu.buildLog.find(expectedPart));
+}
+
 TEST_F(ModuleTests, givenFullyLinkedModuleWhenCreatingKernelThenDebugMsgOnPrivateAndScratchUsageIsPrinted) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.PrintDebugMessages.set(true);

@@ -574,8 +574,8 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     if (slmNeeded > slmAvailable) {
         CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         driverHandle->setErrorDescription(std::string(str.get()));
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
-                     static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        this->updateBuildLog(std::string(str.get()));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 

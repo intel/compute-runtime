@@ -25,6 +25,7 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_initialization.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/time_measure_wrapper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -296,8 +297,9 @@ cl_int Program::processProgramInfo(ProgramInfo &src, ClDevice &clDevice) {
     setLinkerInput(rootDeviceIndex, std::move(src.linkerInput));
 
     if (slmNeeded > slmAvailable) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
-                     static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        this->updateBuildLog(rootDeviceIndex, str.get(), static_cast<size_t>(maxErrorDescriptionSize));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         return CL_OUT_OF_RESOURCES;
     }
 

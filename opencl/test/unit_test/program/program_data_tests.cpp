@@ -72,6 +72,22 @@ class ProgramDataTestBase : public testing::Test,
 
 using ProgramDataTest = ProgramDataTestBase;
 
+TEST_F(ProgramDataTest, givenSlmSizeExceedingLocalMemorySizeWhenProcessingProgramInfoThenRejectionReasonIsAppendedToBuildLog) {
+    const auto slmAvailable = static_cast<uint32_t>(pClDevice->getSharedDeviceInfo().localMemSize);
+    const auto slmNeeded = slmAvailable + 1024u;
+
+    ProgramInfo programInfo;
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize = slmNeeded;
+    programInfo.kernelInfos.push_back(kernelInfo.release());
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, this->pProgram->processProgramInfo(programInfo, *pClDevice));
+
+    const std::string buildLog = this->pProgram->getBuildLog(rootDeviceIndex);
+    const std::string expectedPart = "Size of SLM (" + std::to_string(slmNeeded) + ") larger than available (" + std::to_string(slmAvailable) + ")";
+    EXPECT_NE(std::string::npos, buildLog.find(expectedPart));
+}
+
 class ProgramWithFailedRequiredLibResolution : public MockProgram {
   public:
     using MockProgram::MockProgram;
