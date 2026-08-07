@@ -805,6 +805,32 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                                                                deps);
 }
 
+NEO::GraphicsAllocation *DriverHandle::findPeerAllocation(Device *device, const void *ptr) {
+    std::unique_lock<NEO::SpinLock> lock(device->peerAllocations.mutex);
+    auto peerAllocationIt = device->peerAllocations.allocations.find(ptr);
+    if (peerAllocationIt == device->peerAllocations.allocations.end()) {
+        return nullptr;
+    }
+    return peerAllocationIt->second.gpuAllocations.getDefaultGraphicsAllocation();
+}
+
+NEO::GraphicsAllocation *DriverHandle::resolveMemoryAllocation(Device *device, void *ptr, size_t size, bool allowImport) {
+    auto allocation = this->getDriverSystemMemoryAllocation(ptr, size, device->getNEODevice()->getRootDeviceIndex(), nullptr);
+    if (allocation != nullptr) {
+        return allocation;
+    }
+    allocation = this->findPeerAllocation(device, ptr);
+    if (allocation != nullptr || !allowImport) {
+        return allocation;
+    }
+    NEO::SvmAllocationData *allocData = nullptr;
+    if (this->findAllocationDataForRange(ptr, size, allocData)) {
+        uintptr_t alignedPtr = reinterpret_cast<uintptr_t>(ptr);
+        allocation = this->getPeerAllocation(device, allocData, ptr, &alignedPtr, nullptr, false);
+    }
+    return allocation;
+}
+
 std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 

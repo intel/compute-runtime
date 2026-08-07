@@ -246,6 +246,152 @@ TEST_F(MultiDeviceContextTests,
 }
 
 TEST_F(MultiDeviceContextTests,
+       GivenDeviceMemoryMadeResidentOnPeerDeviceWhenEvictMemoryCalledThenSuccessReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    res = context->allocDeviceMem(driverHandle->devices[0], &deviceDesc, size, 0, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->makeMemoryResident(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Device *l0Device1 = static_cast<Device *>(driverHandle->devices[1]);
+    {
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        EXPECT_NE(iter, l0Device1->peerAllocations.allocations.end());
+    }
+
+    res = contextImp->evictMemory(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto mockMemIface = static_cast<NEO::MockMemoryOperations *>(
+        driverHandle->devices[1]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    EXPECT_EQ(1, mockMemIface->evictCalledCount.load());
+
+    res = contextImp->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultiDeviceContextTests,
+       GivenPeerAllocationCachedByMakeMemoryResidentWhenFindPeerAllocationCalledThenCachedAllocationReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    res = context->allocDeviceMem(driverHandle->devices[0], &deviceDesc, size, 0, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Device *l0Device1 = static_cast<Device *>(driverHandle->devices[1]);
+
+    EXPECT_EQ(nullptr, driverHandle->findPeerAllocation(l0Device1, ptr));
+
+    res = contextImp->makeMemoryResident(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+    ASSERT_NE(iter, l0Device1->peerAllocations.allocations.end());
+    auto cachedAllocation = iter->second.gpuAllocations.getDefaultGraphicsAllocation();
+    ASSERT_NE(nullptr, cachedAllocation);
+    EXPECT_EQ(cachedAllocation, driverHandle->findPeerAllocation(l0Device1, ptr));
+
+    res = contextImp->evictMemory(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultiDeviceContextTests,
+       GivenUnknownPointerWhenEvictMemoryCalledOnPeerDeviceThenInvalidArgumentReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    const size_t size = 4096;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    res = contextImp->evictMemory(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultiDeviceContextTests,
+       GivenPeerAllocationEntryWithNullGraphicsAllocationWhenEvictMemoryCalledThenInvalidArgumentReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    const size_t size = 4096;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    Device *l0Device1 = static_cast<Device *>(driverHandle->devices[1]);
+    l0Device1->peerAllocations.allocations.try_emplace(ptr, l0Device1->getNEODevice()->getRootDeviceIndex());
+
+    {
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        ASSERT_NE(iter, l0Device1->peerAllocations.allocations.end());
+        ASSERT_EQ(nullptr, iter->second.gpuAllocations.getDefaultGraphicsAllocation());
+    }
+
+    res = contextImp->evictMemory(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+TEST_F(MultiDeviceContextTests,
        GivenInvalidDeviceMemoryWhenMakeResidentCalledOnPeerDeviceThenSuccessReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};

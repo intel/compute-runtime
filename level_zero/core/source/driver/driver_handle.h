@@ -112,6 +112,8 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
                                                uintptr_t *peerGpuAddress,
                                                NEO::SvmAllocationData **peerAllocData,
                                                bool decompressP2PAllocation);
+    NEO::GraphicsAllocation *findPeerAllocation(Device *device, const void *ptr);
+    NEO::GraphicsAllocation *resolveMemoryAllocation(Device *device, void *ptr, size_t size, bool allowImport);
     bool peerRequiresReservedHandleData(Device *srcDevice, Device *peerDevice);
 
     MOCKABLE_VIRTUAL bool isFabricAccessSupported();

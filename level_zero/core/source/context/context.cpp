@@ -672,21 +672,9 @@ ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, s
             return changeMemoryOperationStatusToL0ResultType(result);
         }
     }
-    auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(
-        ptr,
-        size,
-        neoDevice->getRootDeviceIndex(),
-        nullptr);
+    auto allocation = device->getDriverHandle()->resolveMemoryAllocation(device, ptr, size, true);
     if (allocation == nullptr) {
-        NEO::SvmAllocationData *allocData = nullptr;
-        bool foundBuffer = this->driverHandle->findAllocationDataForRange(ptr, size, allocData);
-        if (foundBuffer) {
-            uintptr_t alignedPtr = reinterpret_cast<uintptr_t>(ptr);
-            allocation = this->driverHandle->getPeerAllocation(device, allocData, ptr, &alignedPtr, nullptr, false);
-        }
-        if (allocation == nullptr) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     if (allocation->isLockedMemory()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -725,11 +713,7 @@ ze_result_t Context::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t s
             return changeMemoryOperationStatusToL0ResultType(result);
         }
     }
-    auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(
-        ptr,
-        size,
-        neoDevice->getRootDeviceIndex(),
-        nullptr);
+    auto allocation = device->getDriverHandle()->resolveMemoryAllocation(device, ptr, size, false);
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
