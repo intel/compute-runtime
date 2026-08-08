@@ -214,3 +214,4 @@ void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, 
         NEO::writeDataToFile(filename.c_str(), std::string_view(static_cast<const char *>(pData), dataSize), false);
     }
 }
+// Note: addOutput/clear* are provided inline in the header; avoid duplicate definitions here.
