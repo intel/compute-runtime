@@ -32,7 +32,6 @@ namespace NEO {
 DrmAllocation::DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool pool, uint64_t canonizedGpuAddress)
     : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, sizeIn, sharedHandle, pool, MemoryManager::maxOsContextCount, canonizedGpuAddress) {
     bufferObjects.push_back(bo);
-    this->numHandles = (bo != nullptr) ? 1u : 0u;
     resizeBufferObjects(EngineLimits::maxHandleCount);
     handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
 }
@@ -40,7 +39,6 @@ DrmAllocation::DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, Allocatio
 DrmAllocation::DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
     : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount) {
     bufferObjects.push_back(bo);
-    this->numHandles = (bo != nullptr) ? 1u : 0u;
     resizeBufferObjects(EngineLimits::maxHandleCount);
     handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
 }
@@ -48,7 +46,6 @@ DrmAllocation::DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, Allocatio
 DrmAllocation::DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
     : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount),
       bufferObjects(bos) {
-    this->numHandles = static_cast<uint32_t>(bufferObjects.size());
     handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
 }
 

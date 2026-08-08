@@ -3451,21 +3451,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGr
     memoryManager->freeGraphicsMemoryImpl(alloc);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenAllocationBackedBySingleBufferObjectThenNumHandlesIsOne) {
-    mock->ioctlExpected.gemUserptr = 1;
-    mock->ioctlExpected.gemClose = 1;
-
-    AllocationData allocationData;
-    allocationData.size = 16384;
-    allocationData.rootDeviceIndex = rootDeviceIndex;
-    auto alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
-
-    ASSERT_NE(nullptr, alloc);
-    EXPECT_EQ(1u, alloc->getNumHandles());
-
-    memoryManager->freeGraphicsMemoryImpl(alloc);
-}
-
 HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenMmapPtrWhenFreeGraphicsMemoryImplThenPtrIsDeallocated) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
