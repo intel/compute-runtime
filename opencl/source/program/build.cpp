@@ -55,7 +55,14 @@ cl_int Program::build(
                     options = "";
                 }
             }
-
+            const bool hasBindlessImages = CompilerOptions::extract(CompilerOptions::bindlessImages, options);
+            const bool hasBindlessAdvancedMode = CompilerOptions::extract(CompilerOptions::bindlessAdvancedMode, options);
+            if (hasBindlessImages) {
+                CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
+            }
+            if (hasBindlessAdvancedMode) {
+                CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessAdvancedMode);
+            }
             const bool shouldSuppressRebuildWarning{CompilerOptions::extract(CompilerOptions::noRecompiledFromIr, options)};
             extractInternalOptions(options, internalOptions);
             CompilerOptions::applyAdditionalApiOptions(options);

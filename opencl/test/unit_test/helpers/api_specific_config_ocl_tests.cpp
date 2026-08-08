@@ -8,7 +8,11 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
@@ -57,4 +61,24 @@ TEST(ApiSpecificConfigOclTests, WhenCheckingIfDeviceUsmPoolingIsEnabledThenRetur
     EXPECT_TRUE(ApiSpecificConfig::isDeviceUsmPoolingEnabled());
 }
 
+TEST(ApiSpecificConfigOclTests, WhenGettingGlobalBindlessHeapConfigurationWithDebugFlagThenReturnDebugFlagValue) {
+    DebugManagerStateRestore restorer;
+    MockReleaseHelper releaseHelper;
+
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    EXPECT_TRUE(ApiSpecificConfig::getGlobalBindlessHeapConfiguration(releaseHelper));
+
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
+    EXPECT_FALSE(ApiSpecificConfig::getGlobalBindlessHeapConfiguration(releaseHelper));
+}
+
+TEST(ApiSpecificConfigOclTests, WhenGettingBindlessModeThenQueryHardwareCapability) {
+    DebugManagerStateRestore restorer;
+    UltDeviceFactory deviceFactory{1, 0};
+    auto *device = deviceFactory.rootDevices[0];
+
+    debugManager.flags.UseBindlessMode.set(-1);
+    auto result = ApiSpecificConfig::getBindlessMode(static_cast<const Device &>(*device));
+    EXPECT_EQ(result, device->getReleaseHelper().isGlobalBindlessAllocatorEnabled());
+}
 } // namespace NEO
