@@ -847,17 +847,11 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPrimaryStart(bool requi
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList) {
+inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList) {
     size_t encodeSize = 0;
     if (ctx.patchPreambleEnabled) {
-        uint32_t feCmdCount = commandList->getFrontEndPatchListCount();
-        if (feCmdCount > 0) {
-            const size_t feCmdSize = NEO::PreambleHelper<GfxFamily>::getVFECommandsSize();
-            size_t singleFeCmdEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(feCmdSize);
-
-            encodeSize = singleFeCmdEncodeSize * feCmdCount;
-            ctx.bufferSpaceForPatchPreamble += encodeSize;
-        }
+        encodeSize = commandList->getFrontEndPatchSize();
+        ctx.bufferSpaceForPatchPreamble += encodeSize;
     }
     return encodeSize;
 }

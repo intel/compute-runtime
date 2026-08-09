@@ -2003,6 +2003,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenHeapfulSupportWhenAppendVfeStateCm
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
         auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         EXPECT_EQ(0u, commandList->getFrontEndPatchListCount());
+        EXPECT_EQ(0u, commandList->getFrontEndPatchSize());
 
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         auto expectedGpuAddress = commandList->getCmdContainer().getCommandStream()->getCurrentGpuAddressPosition();
@@ -2010,9 +2011,13 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenHeapfulSupportWhenAppendVfeStateCm
         ASSERT_NE(0u, commandList->commandsToPatch.size());
         EXPECT_EQ(expectedGpuAddress, std::get<PatchFrontEndState>(commandList->commandsToPatch[0]).gpuAddress);
         EXPECT_EQ(1u, commandList->getFrontEndPatchListCount());
+        commandList->close();
+        size_t expectedSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(typename FamilyType::CFE_STATE));
+        EXPECT_EQ(expectedSize, commandList->getFrontEndPatchSize());
 
         commandList->reset();
         EXPECT_EQ(0u, commandList->getFrontEndPatchListCount());
+        EXPECT_EQ(0u, commandList->getFrontEndPatchSize());
     }
 }
 
@@ -2057,6 +2062,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExecutingCo
         EXPECT_EQ(2u, commandList->getFrontEndPatchListCount());
 
         commandList->close();
+        size_t expectedSize = 2 * NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(typename FamilyType::CFE_STATE));
+        EXPECT_EQ(expectedSize, commandList->getFrontEndPatchSize());
 
         void *cfeInputPtr = std::get<PatchFrontEndState>(commandList->commandsToPatch[0]).pCommand;
         void *cfeInputPtr2 = std::get<PatchFrontEndState>(commandList->commandsToPatch[1]).pCommand;
