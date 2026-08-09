@@ -696,6 +696,10 @@ struct CommandList : _ze_command_list_handle_t {
         asyncPatchlistPatchSize = 0;
     }
 
+    size_t getActiveScratchPatchElemsPatchSize() const {
+        return activeScratchPatchElemsPatchSize;
+    }
+
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
@@ -807,6 +811,7 @@ struct CommandList : _ze_command_list_handle_t {
     size_t totalNoopSpace = 0;
     size_t hostFunctionsPatchSize = 0;
     size_t asyncPatchlistPatchSize = 0;
+    size_t activeScratchPatchElemsPatchSize = 0;
 
     static constexpr bool cmdListDefaultCoherency = false;
     static constexpr bool cmdListDefaultDisableOverdispatch = true;

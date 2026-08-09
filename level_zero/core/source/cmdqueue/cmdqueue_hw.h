@@ -105,6 +105,7 @@ struct CommandQueueHw : public CommandQueue {
     size_t estimateCommandListPatchPreambleWaitSync(CommandListExecutionContext &ctx, CommandList *commandList);
     size_t estimateCommandListPatchPreambleHostFunctions(CommandListExecutionContext &ctx, CommandList *commandList);
     size_t estimateCommandListPatchPreambleAsyncPatchElems(CommandListExecutionContext &ctx, CommandList *commandList);
+    size_t estimateCommandListPatchPreambleRequiredSize(CommandListExecutionContext &ctx, CommandList *commandList);
     inline size_t estimateTotalCommandListPatchPreambleData(CommandListExecutionContext &ctx, uint32_t numCommandLists);
     inline void retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream);
     inline void dispatchPatchPreambleEnding(CommandListExecutionContext &ctx);

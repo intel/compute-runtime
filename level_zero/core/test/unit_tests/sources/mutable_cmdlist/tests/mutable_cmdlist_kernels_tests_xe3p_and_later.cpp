@@ -86,6 +86,9 @@ HWTEST2_F(MutableCommandListKernelTest,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    size_t expectedSize = 1 * NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(uint64_t));
+    EXPECT_EQ(expectedSize, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
+
     // override scratch address - in regular execution set by patchCommands
     overridePatchedScratchAddress(scratchAddress1);
 
@@ -154,6 +157,9 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWhenAppendLaunchKernel
     EXPECT_EQ(scratchPatchNum, 2);
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 2u);
 
+    size_t expectedSize = 2 * NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(uint64_t));
+    EXPECT_EQ(expectedSize, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
+
     auto scratchPatchIndex1 = mutableCommandList->kernelMutations[0].kernelGroup->getScratchAddressPatchIndex();
     EXPECT_TRUE(isDefined(scratchPatchIndex1));
     EXPECT_TRUE(cmdsToPatch.size() > scratchPatchIndex1);
@@ -199,6 +205,9 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
 
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 0u);
 
+    size_t expectedSize = 0;
+    EXPECT_EQ(expectedSize, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
+
     // Patch command should contain undefined values
     auto baseCommandList = mutableCommandList->base;
     auto scratchPatchIndex = mutableCommandList->kernelMutations[0].kernelGroup->getScratchAddressPatchIndex();
@@ -226,6 +235,9 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
     EXPECT_EQ(expectedScratchPtrSize, static_cast<uint8_t>(scratchPatchCommandAfterMutate->patchSize));
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 1u);
 
+    expectedSize = 1 * NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(uint64_t));
+    EXPECT_EQ(expectedSize, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
+
     // Mutate kernel back to kernel with undefined scratch offset
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[0]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -236,6 +248,9 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
     EXPECT_TRUE(isUndefined(scratchPatchCommandAfterBack->offset));
     EXPECT_TRUE(isUndefined(scratchPatchCommandAfterBack->patchSize));
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 0u);
+
+    expectedSize = 0;
+    EXPECT_EQ(expectedSize, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
 }
 
 HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelGroupWhenMutatingFromNonScratchKerneToOtherNonScratchKernelThenScratchPatchCommandIsPresentAndRemainsUndefined,

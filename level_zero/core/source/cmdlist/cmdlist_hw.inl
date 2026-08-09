@@ -169,6 +169,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->latestTaskCount = 0;
     this->hostFunctionsPatchSize = 0;
     this->asyncPatchlistPatchSize = 0;
+    this->activeScratchPatchElemsPatchSize = 0;
 
     destroyRecordedBcsSplitResources();
 
@@ -436,6 +437,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     }
     calculateHostFunctionsPatchSize();
     calculateAsyncPatchlistPatchSize();
+    calculateActiveScratchPatchElemsPatchSize();
 
     closedCmdList = true;
 
@@ -5685,6 +5687,17 @@ void CommandListCoreFamily<gfxCoreFamily>::calculateAsyncPatchlistPatchSize() {
         encodeSize += NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(patchElem.size);
     }
     asyncPatchlistPatchSize = encodeSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::calculateActiveScratchPatchElemsPatchSize() {
+    size_t encodeSize = 0;
+    uint32_t elemsCount = this->getActiveScratchPatchElements();
+    if (elemsCount > 0) {
+        const size_t qwordEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeof(uint64_t));
+        encodeSize = qwordEncodeSize * elemsCount;
+    }
+    activeScratchPatchElemsPatchSize = encodeSize;
 }
 
 } // namespace L0

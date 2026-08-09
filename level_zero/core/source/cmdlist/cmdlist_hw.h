@@ -510,6 +510,7 @@ struct CommandListCoreFamily : public CommandList {
     size_t getDefaultMinBcsSplitSize() const;
     void calculateHostFunctionsPatchSize();
     void calculateAsyncPatchlistPatchSize();
+    void calculateActiveScratchPatchElemsPatchSize();
 
     template <typename Container>
     void addResidency(const Container &allocs) {

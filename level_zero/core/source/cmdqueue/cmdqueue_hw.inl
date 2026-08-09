@@ -768,6 +768,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedPerCmdList(C
     linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, commandList);
     linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, commandList);
     linearStreamSizeEstimate += estimateCommandListPatchPreambleAsyncPatchElems(ctx, commandList);
+    linearStreamSizeEstimate += estimateCommandListPatchPreambleRequiredSize(ctx, commandList);
 
     return linearStreamSizeEstimate;
 }
@@ -892,14 +893,23 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleHostFuncti
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleAsyncPatchElems(CommandListExecutionContext &ctx, CommandList *commandList) {
-
+inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleAsyncPatchElems(CommandListExecutionContext &ctx, CommandList *commandList) {
     size_t encodeSize = 0;
     if (ctx.patchPreambleEnabled) {
         encodeSize = commandList->getAsyncPatchlistPatchSize();
         ctx.bufferSpaceForPatchPreamble += encodeSize;
     }
 
+    return encodeSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleRequiredSize(CommandListExecutionContext &ctx, CommandList *commandList) {
+    size_t encodeSize = 0;
+    if (ctx.patchPreambleEnabled) {
+        encodeSize = commandList->getActiveScratchPatchElemsPatchSize();
+        ctx.bufferSpaceForPatchPreamble += encodeSize;
+    }
     return encodeSize;
 }
 
@@ -939,12 +949,6 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalCommandListPatchPreamb
             encodeSize += NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(ctx.totalNoopSpaceForPatchPreamble);
         }
 
-        if (ctx.totalActiveScratchPatchElements > 0) {
-            const size_t qwordEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeof(uint64_t));
-            size_t patchScratchElemsEncodeSize = qwordEncodeSize * ctx.totalActiveScratchPatchElements;
-
-            encodeSize += patchScratchElemsEncodeSize;
-        }
         ctx.bufferSpaceForPatchPreamble += encodeSize;
 
         // patch preamble dispatched into queue's buffer forces not to use cmdlist as a starting buffer
@@ -957,7 +961,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 inline void CommandQueueHw<gfxCoreFamily>::getCommandListPatchPreambleData(CommandListExecutionContext &ctx, CommandList *commandList) {
     if (ctx.patchPreambleEnabled) {
         ctx.totalNoopSpaceForPatchPreamble += commandList->getTotalNoopSpace();
-        ctx.totalActiveScratchPatchElements += commandList->getActiveScratchPatchElements();
     }
 }
 

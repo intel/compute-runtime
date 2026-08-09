@@ -69,7 +69,6 @@ struct CommandListExecutionContext {
     NEO::PreemptionMode statePreemption{};
     uint32_t perThreadScratchSpaceSlot0Size = 0;
     uint32_t perThreadScratchSpaceSlot1Size = 0;
-    uint32_t totalActiveScratchPatchElements = 0;
     UnifiedMemoryControls unifiedMemoryControls{};
 
     bool anyCommandListWithCooperativeKernels = false;

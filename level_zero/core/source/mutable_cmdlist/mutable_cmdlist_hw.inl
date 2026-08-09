@@ -471,6 +471,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::close() {
         this->cooperativeKernelVariableDispatches.clear();
         processResidencyContainer(baseClosed);
         this->calculateAsyncPatchlistPatchSize();
+        this->calculateActiveScratchPatchElemsPatchSize();
         this->updatedCommandList = false;
     }
     return result;
