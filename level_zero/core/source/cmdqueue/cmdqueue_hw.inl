@@ -763,7 +763,6 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedPerCmdList(C
     linearStreamSizeEstimate += estimateCommandListSecondaryStart(commandList);
 
     // per command list patch preamble
-    getCommandListPatchPreambleData(ctx, commandList);
     linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, commandList);
     linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, commandList);
     linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, commandList);
@@ -901,7 +900,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleRequiredSize(CommandListExecutionContext &ctx, CommandList *commandList) {
     size_t encodeSize = 0;
     if (ctx.patchPreambleEnabled) {
-        encodeSize = commandList->getActiveScratchPatchElemsPatchSize();
+        encodeSize += commandList->getActiveScratchPatchElemsPatchSize();
+        encodeSize += commandList->getTotalNoopSpacePatchSize();
+
         ctx.bufferSpaceForPatchPreamble += encodeSize;
     }
     return encodeSize;
@@ -939,23 +940,11 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalCommandListPatchPreamb
         }
         encodeSize += 2 * NEO::EncodeMiArbCheck<GfxFamily>::getCommandSize();
 
-        if (ctx.totalNoopSpaceForPatchPreamble > 0) {
-            encodeSize += NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(ctx.totalNoopSpaceForPatchPreamble);
-        }
-
         ctx.bufferSpaceForPatchPreamble += encodeSize;
-
         // patch preamble dispatched into queue's buffer forces not to use cmdlist as a starting buffer
         this->forceBbStartJump = true;
     }
     return encodeSize;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-inline void CommandQueueHw<gfxCoreFamily>::getCommandListPatchPreambleData(CommandListExecutionContext &ctx, CommandList *commandList) {
-    if (ctx.patchPreambleEnabled) {
-        ctx.totalNoopSpaceForPatchPreamble += commandList->getTotalNoopSpace();
-    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2123,8 +2112,6 @@ void CommandQueueHw<gfxCoreFamily>::prepareInOrderCommandList(CommandList *comma
     if (ctx.patchPreambleEnabled) {
         inOrderExecInfo.resetLastWaitedCounterValue();
         inOrderExecInfo.uploadAllocationsToSimulation();
-        ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecDeviceRequiredSize();
-        ctx.totalNoopSpaceForPatchPreamble += commandList->getInOrderExecHostRequiredSize();
     } else {
         commandList->clearInOrderExecCounterAllocation();
     }

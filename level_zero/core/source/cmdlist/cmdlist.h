@@ -586,7 +586,7 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
     size_t getTotalNoopSpace() const {
-        return totalNoopSpace;
+        return totalNoopSpace + this->getInOrderExecDeviceRequiredSize() + this->getInOrderExecHostRequiredSize();
     }
 
     void forceDisableInOrderWaits() { inOrderWaitsDisabled = true; }
@@ -704,6 +704,10 @@ struct CommandList : _ze_command_list_handle_t {
         return frontEndPatchSize;
     }
 
+    size_t getTotalNoopSpacePatchSize() const {
+        return totalNoopSpacePatchSize;
+    }
+
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
@@ -817,6 +821,7 @@ struct CommandList : _ze_command_list_handle_t {
     size_t asyncPatchlistPatchSize = 0;
     size_t activeScratchPatchElemsPatchSize = 0;
     size_t frontEndPatchSize = 0;
+    size_t totalNoopSpacePatchSize = 0;
 
     static constexpr bool cmdListDefaultCoherency = false;
     static constexpr bool cmdListDefaultDisableOverdispatch = true;

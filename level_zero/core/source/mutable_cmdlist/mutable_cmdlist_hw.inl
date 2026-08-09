@@ -472,6 +472,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::close() {
         processResidencyContainer(baseClosed);
         this->calculateAsyncPatchlistPatchSize();
         this->calculateActiveScratchPatchElemsPatchSize();
+        this->calculateTotalNoopSpacePatchSize();
         this->updatedCommandList = false;
     }
     return result;
@@ -951,6 +952,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListNoopPatchData(siz
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
     auto &totalNoopSpace = CommandListCoreFamily<gfxCoreFamily>::totalNoopSpace;
     UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
+    UNRECOVERABLE_IF(!isAligned(newGpuAddress, sizeof(uint64_t)));
+    UNRECOVERABLE_IF(!isAligned(newPatchSize, sizeof(uint64_t)));
     auto &noopPatch = std::get<PatchNoopSpace>(commandsToPatch[noopPatchIndex]);
 
     if (noopPatch.pDestination == nullptr) {
@@ -973,7 +976,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t MutableCommandListCoreFamily<gfxCoreFamily>::createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) {
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
     auto &totalNoopSpace = CommandListCoreFamily<gfxCoreFamily>::totalNoopSpace;
-
+    UNRECOVERABLE_IF(!isAligned(newGpuAddress, sizeof(uint64_t)));
+    UNRECOVERABLE_IF(!isAligned(newPatchSize, sizeof(uint64_t)));
     size_t noopPatchIndex = commandsToPatch.size();
 
     totalNoopSpace += newPatchSize;

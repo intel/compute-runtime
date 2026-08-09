@@ -1147,6 +1147,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     size_t noopSpace = NEO::KernelHelper::getSyncBufferSize(4);
     EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
+    size_t expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(noopSpace);
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     auto syncBufferAllocation = mutationPrivateFirst.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBuffer;
 
@@ -1168,6 +1170,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
@@ -1198,6 +1201,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, specialKernelGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1210,6 +1214,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     syncBufferAllocation = mutationSlmFirst.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBuffer;
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
@@ -1230,6 +1239,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
@@ -1249,6 +1259,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
@@ -1268,6 +1279,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
@@ -1315,6 +1327,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto requiredSize = NEO::KernelHelper::getSyncBufferSize(4);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
+    size_t expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(requiredSize);
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     size_t oldOffset = offset;
     void *oldCpuPtr = cpuPtr;
@@ -1357,6 +1371,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(oldOffset, offset);
     EXPECT_NE(oldCpuPtr, cpuPtr);
     EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(requiredSize);
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1804,6 +1824,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(oldPatchSize, patchSize);
     EXPECT_EQ(oldOffset, offset);
     EXPECT_EQ(oldPatchSize, mutableCommandList->base->getTotalNoopSpace());
+
+    size_t expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(oldPatchSize);
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     // old offset and old gpu sync address in cross-thread data
     memcpy(&syncBufferGpuPatchAddress, syncBufferAddress, sizeof(uint64_t));

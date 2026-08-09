@@ -829,6 +829,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSync
     EXPECT_EQ(requiredSize2, noopParam2.patchSize);
 
     EXPECT_EQ((requiredSize1 + requiredSize2), commandList->getTotalNoopSpace());
+    size_t expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(requiredSize1 + requiredSize2);
+    EXPECT_EQ(expectedPatchSize, commandList->getTotalNoopSpacePatchSize());
 
     commandQueue->setPatchingPreamble(true);
 

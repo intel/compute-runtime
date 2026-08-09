@@ -512,6 +512,7 @@ struct CommandListCoreFamily : public CommandList {
     void calculateAsyncPatchlistPatchSize();
     void calculateActiveScratchPatchElemsPatchSize();
     void calculateFrontEndPatchSize();
+    void calculateTotalNoopSpacePatchSize();
 
     template <typename Container>
     void addResidency(const Container &allocs) {

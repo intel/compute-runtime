@@ -739,6 +739,7 @@ uint64_t CommandList::getInOrderExecDeviceGpuAddress() const {
     uint64_t gpuAddress = 0;
     if (isInOrderExecutionEnabled()) {
         gpuAddress = inOrderExecInfo->getDeviceNodeGpuAddress();
+        UNRECOVERABLE_IF(!isAligned(gpuAddress, sizeof(uint64_t)));
     }
     return gpuAddress;
 }
@@ -755,6 +756,7 @@ uint64_t CommandList::getInOrderExecHostGpuAddress() const {
     uint64_t gpuAddress = 0;
     if (isInOrderExecutionEnabled()) {
         gpuAddress = inOrderExecInfo->getHostNodeGpuAddress();
+        UNRECOVERABLE_IF(!isAligned(gpuAddress, sizeof(uint64_t)));
     }
     return gpuAddress;
 }

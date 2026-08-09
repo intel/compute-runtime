@@ -2170,20 +2170,14 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
         size_t singleBbStartEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(bbStartSize);
         additionalSize = singleBbStartEncodeSize * numCommandLists;
 
-        size_t totalNoopSpace = 0;
         for (uint32_t i = 0; i < numCommandLists; i++) {
             auto cmdList = CommandList::fromHandle(phCommandLists[i]);
-            totalNoopSpace += cmdList->getTotalNoopSpace();
-            totalNoopSpace += cmdList->getInOrderExecDeviceRequiredSize();
-            totalNoopSpace += cmdList->getInOrderExecHostRequiredSize();
 
             additionalSize += cmdList->getHostFunctionsPatchSize();
             additionalSize += cmdList->getAsyncPatchlistPatchSize();
             additionalSize += cmdList->getActiveScratchPatchElemsPatchSize();
             additionalSize += cmdList->getFrontEndPatchSize();
-        }
-        if (totalNoopSpace > 0) {
-            additionalSize += NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(totalNoopSpace);
+            additionalSize += cmdList->getTotalNoopSpacePatchSize();
         }
     }
     return additionalSize;

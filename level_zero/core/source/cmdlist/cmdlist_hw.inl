@@ -171,6 +171,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->asyncPatchlistPatchSize = 0;
     this->activeScratchPatchElemsPatchSize = 0;
     this->frontEndPatchSize = 0;
+    this->totalNoopSpacePatchSize = 0;
 
     destroyRecordedBcsSplitResources();
 
@@ -440,6 +441,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     calculateAsyncPatchlistPatchSize();
     calculateActiveScratchPatchElemsPatchSize();
     calculateFrontEndPatchSize();
+    calculateTotalNoopSpacePatchSize();
 
     closedCmdList = true;
 
@@ -4013,6 +4015,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
         syncBufferSpace.patchSize = NEO::KernelHelper::getSyncBufferSize(requestedNumberOfWorkgroups);
         syncBufferSpace.gpuAddress = gfxAllocation->getGpuAddressToPatch() + bufferOffset;
 
+        UNRECOVERABLE_IF(!isAligned(syncBufferSpace.gpuAddress, sizeof(uint64_t)));
+        UNRECOVERABLE_IF(!isAligned(syncBufferSpace.patchSize, sizeof(uint64_t)));
+
         this->totalNoopSpace += syncBufferSpace.patchSize;
     }
 
@@ -5717,6 +5722,16 @@ void CommandListCoreFamily<gfxCoreFamily>::calculateFrontEndPatchSize() {
         encodeSize = singleFeCmdEncodeSize * feCmdCount;
     }
     frontEndPatchSize = encodeSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::calculateTotalNoopSpacePatchSize() {
+    size_t encodeSize = 0;
+    size_t currentNoopSpace = getTotalNoopSpace();
+    if (currentNoopSpace > 0) {
+        encodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(currentNoopSpace);
+    }
+    totalNoopSpacePatchSize = encodeSize;
 }
 
 } // namespace L0

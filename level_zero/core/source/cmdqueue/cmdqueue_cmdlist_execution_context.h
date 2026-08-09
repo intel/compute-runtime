@@ -52,7 +52,6 @@ struct CommandListExecutionContext {
 
     size_t spaceForResidency = 10;
     size_t bufferSpaceForPatchPreamble = 0;
-    size_t totalNoopSpaceForPatchPreamble = 0;
     CommandList *firstCommandList = nullptr;
     CommandList *lastCommandList = nullptr;
     void *currentPatchForChainedBbStart = nullptr;
