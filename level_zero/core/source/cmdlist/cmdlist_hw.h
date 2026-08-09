@@ -507,6 +507,7 @@ struct CommandListCoreFamily : public CommandList {
     std::optional<SWTagScope<GfxFamily>> emplaceSWTagScope(const char *callName);
     size_t getDefaultMinBcsSplitSize() const;
     void calculateHostFunctionsPatchSize();
+    void calculateAsyncPatchlistPatchSize();
 
     template <typename Container>
     void addResidency(const Container &allocs) {

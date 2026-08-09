@@ -896,10 +896,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleAsyncPatch
 
     size_t encodeSize = 0;
     if (ctx.patchPreambleEnabled) {
-        auto &cmdListAsyncPatchContainer = commandList->getAsyncPatchContainer();
-        for (const auto &patchElem : cmdListAsyncPatchContainer) {
-            encodeSize += NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(patchElem.size);
-        }
+        encodeSize = commandList->getAsyncPatchlistPatchSize();
         ctx.bufferSpaceForPatchPreamble += encodeSize;
     }
 
@@ -1081,7 +1078,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleAsyncPatchElems(Command
         for (const auto &patchElem : cmdListAsyncPatchContainer) {
             NEO::EncodeDataMemory<GfxFamily>::programDataMemory(ctx.currentPatchPreambleBuffer, patchElem.gpuDestinationAddress, patchElem.hostSourceAddress, patchElem.size);
         }
-        cmdListAsyncPatchContainer.clear();
+        commandList->resetAsyncPatchlist();
     }
 }
 

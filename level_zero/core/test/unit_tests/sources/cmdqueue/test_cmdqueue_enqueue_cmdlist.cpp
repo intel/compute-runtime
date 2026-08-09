@@ -1387,18 +1387,25 @@ void CommandQueueExecuteCommandListsFixtureInit::testPatchPreambleAsyncPatchList
     auto commandList = CommandList::create(productFamily, device, engineType, 0u, returnValue, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    commandList->close();
-
+    size_t expectedEncodePatchSize = 0;
     alignas(4) uint8_t patchSource1[4] = {0xFA, 0xFB, 0xFC, 0xFD};
     constexpr uint64_t gpuDest1 = 0x1000;
 
+    expectedEncodePatchSize += NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(patchSource1));
+
     alignas(4) uint8_t patchSource2[12] = {0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5};
     constexpr uint64_t gpuDest2 = 0x2000;
+
+    expectedEncodePatchSize += NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(patchSource2));
 
     auto &asyncPatchListContainer = commandList->getAsyncPatchContainer();
 
     asyncPatchListContainer.push_back({gpuDest1, patchSource1, sizeof(patchSource1)});
     asyncPatchListContainer.push_back({gpuDest2, patchSource2, sizeof(patchSource2)});
+
+    commandList->close();
+
+    EXPECT_EQ(expectedEncodePatchSize, commandList->getAsyncPatchlistPatchSize());
 
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
 
@@ -1436,6 +1443,7 @@ void CommandQueueExecuteCommandListsFixtureInit::testPatchPreambleAsyncPatchList
     EXPECT_EQ(3u, foundPatchingSdi);
 
     EXPECT_EQ(0u, asyncPatchListContainer.size());
+    EXPECT_EQ(0u, commandList->getAsyncPatchlistPatchSize());
 
     commandList->destroy();
     commandQueue->destroy();

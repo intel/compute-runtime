@@ -1824,6 +1824,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(expectedAsyncPatchListGpuDst, asyncPatchContainer[0].gpuDestinationAddress);
     EXPECT_EQ(expectedAsyncPatchListHostSrc, asyncPatchContainer[0].hostSourceAddress);
 
+    size_t expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(MI_SEMAPHORE_WAIT));
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->getBase()->getAsyncPatchlistPatchSize());
+
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.ordinal = 0u;
     queueDesc.index = 0u;
@@ -1882,6 +1885,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(semWaitPtr);
     ASSERT_NE(nullptr, semWaitCmd);
     EXPECT_EQ(waitAddress, UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+
+    EXPECT_EQ(0u, mutableCommandList->getBase()->getAsyncPatchlistPatchSize());
 
     commandQueue->destroy();
 }

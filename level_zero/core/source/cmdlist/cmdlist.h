@@ -688,6 +688,14 @@ struct CommandList : _ze_command_list_handle_t {
         return hostFunctionsPatchSize;
     }
 
+    size_t getAsyncPatchlistPatchSize() const {
+        return asyncPatchlistPatchSize;
+    }
+    void resetAsyncPatchlist() {
+        asyncPatchContainer.clear();
+        asyncPatchlistPatchSize = 0;
+    }
+
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
@@ -798,6 +806,7 @@ struct CommandList : _ze_command_list_handle_t {
     size_t maxFillPatternSizeForCopyEngine = 0;
     size_t totalNoopSpace = 0;
     size_t hostFunctionsPatchSize = 0;
+    size_t asyncPatchlistPatchSize = 0;
 
     static constexpr bool cmdListDefaultCoherency = false;
     static constexpr bool cmdListDefaultDisableOverdispatch = true;
@@ -813,7 +822,6 @@ struct CommandList : _ze_command_list_handle_t {
 
     CommandListType cmdListType = CommandListType::typeRegular;
     CopyOffloadMode copyOffloadMode = CopyOffloadModes::disabled;
-    uint8_t powerHint = 0u;
     BcsSplitParams::BcsSplitMode bcsSplitMode = BcsSplitParams::BcsSplitMode::disabled;
     NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
     uint32_t partitionCount = 1;
@@ -826,7 +834,10 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t hostFunctionWithoutMemorySynchronizationCount = 0;
     uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();
     uint32_t estimatedNumberOfCommands = 0;
+    NEO::BuiltIn::AddressingMode defaultBuiltInMode;
+    NEO::QueueThrottle queueThrottle = NEO::QueueThrottle::MEDIUM;
 
+    uint8_t powerHint = 0u;
     bool isSyncModeQueue = false;
     bool isTbxMode = false;
     bool commandListSLMEnabled = false;
@@ -855,7 +866,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool isSmallBarConfigPresent = false;
     bool useOnlyGlobalTimestamps = false;
     bool heaplessModeEnabled = false;
-    NEO::BuiltIn::AddressingMode defaultBuiltInMode;
     bool scratchAddressPatchingEnabled = false;
     bool taskCountUpdateFenceRequired = false;
     bool statelessBuiltinsEnabled = false;
@@ -868,8 +878,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool inOrderWaitsDisabled = false;
     bool swTagsEnabled = false;
     bool patchPreambleEnabled = false;
-
-    NEO::QueueThrottle queueThrottle = NEO::QueueThrottle::MEDIUM;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

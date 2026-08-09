@@ -168,6 +168,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->latesTagGpuAllocation = nullptr;
     this->latestTaskCount = 0;
     this->hostFunctionsPatchSize = 0;
+    this->asyncPatchlistPatchSize = 0;
 
     destroyRecordedBcsSplitResources();
 
@@ -436,6 +437,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
         cmdList->close();
     }
     calculateHostFunctionsPatchSize();
+    calculateAsyncPatchlistPatchSize();
 
     closedCmdList = true;
 
@@ -5622,6 +5624,15 @@ void CommandListCoreFamily<gfxCoreFamily>::calculateHostFunctionsPatchSize() {
                      (this->partitionCount * encodedMiSemaphoreSize * hostFunctionsCount);
     }
     hostFunctionsPatchSize = encodeSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::calculateAsyncPatchlistPatchSize() {
+    size_t encodeSize = 0;
+    for (const auto &patchElem : asyncPatchContainer) {
+        encodeSize += NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(patchElem.size);
+    }
+    asyncPatchlistPatchSize = encodeSize;
 }
 
 } // namespace L0

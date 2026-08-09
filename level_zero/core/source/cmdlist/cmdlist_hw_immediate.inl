@@ -2180,6 +2180,7 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
             totalNoopSpace += cmdList->getInOrderExecHostRequiredSize();
 
             additionalSize += cmdList->getHostFunctionsPatchSize();
+            additionalSize += cmdList->getAsyncPatchlistPatchSize();
         }
         if (totalNoopSpace > 0) {
             additionalSize += NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(totalNoopSpace);
