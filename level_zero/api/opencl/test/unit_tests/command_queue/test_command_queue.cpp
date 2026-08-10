@@ -65,7 +65,7 @@ TEST(GetCmdQueuePropertiesTests, givenEmptyPropertiesWhenGetCmdQueuePropertiesTh
     EXPECT_EQ(0u, result);
 }
 
-TEST(InPlaceSharingAcquireReleaseTests, givenDefaultDebugFlagWhenCheckingInPlaceModeThenOnlyGlSharingUsesItInPlace) {
+TEST(InPlaceSharingAcquireReleaseTests, givenDefaultDebugFlagWhenCheckingInPlaceModeThenGlSharingUsesItInPlace) {
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.LeoInPlaceSharingAcquireRelease.set(-1);
 

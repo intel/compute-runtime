@@ -157,7 +157,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, MediaVfeStateMaxSubSlices, -1, ">=0: Programs Me
 DECLARE_DEBUG_VARIABLE(int32_t, ForceBtpPrefetchMode, -1, "-1: default, 0: disable, 1: enable, Enables Btp prefetching")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPointerImport, -1, "-1: default - enabled, 0: disabled, 1: enabled, L0 extension implementation to import host pointers")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableClKhrCommandBuffer, -1, "-1: default - disabled, 0: disabled, 1: enabled, Advertise incomplete cl_khr_command_buffer support in LEO")
-DECLARE_DEBUG_VARIABLE(int32_t, LeoInPlaceSharingAcquireRelease, -1, "-1: default - enabled for OpenGL sharing only, 0: disabled, 1: enabled for all sharings, Execute LEO shared object acquire/release in place instead of appending a command list host function")
+DECLARE_DEBUG_VARIABLE(int32_t, LeoInPlaceSharingAcquireRelease, -1, "-1: default - enabled for OpenGL and Direct3D sharings, 0: disabled, 1: enabled for all sharings, Execute LEO shared object acquire/release in place instead of appending a command list host function")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideProfilingTimerResolution, -1, "-1: default - disabled, 0<=: Override deviceInfo.profilingTimerResolution")
 DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteAfterWalker, -1, "-1: disabled, x: add GPU scratch register write after x walker")
 DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteRegisterOffset, 0, "register offset for GPU scratch register write after walker")

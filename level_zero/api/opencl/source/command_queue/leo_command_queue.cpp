@@ -241,7 +241,23 @@ bool CommandQueue::isInPlaceSharingAcquireReleaseEnabled(cl_uint cmdType) {
         return inPlaceMode != 0;
     }
 
-    return (cmdType == CL_COMMAND_ACQUIRE_GL_OBJECTS) || (cmdType == CL_COMMAND_RELEASE_GL_OBJECTS);
+    switch (cmdType) {
+    case CL_COMMAND_ACQUIRE_GL_OBJECTS:
+    case CL_COMMAND_RELEASE_GL_OBJECTS:
+#if defined(_WIN32)
+    case CL_COMMAND_ACQUIRE_D3D10_OBJECTS_KHR:
+    case CL_COMMAND_RELEASE_D3D10_OBJECTS_KHR:
+    case CL_COMMAND_ACQUIRE_D3D11_OBJECTS_KHR:
+    case CL_COMMAND_RELEASE_D3D11_OBJECTS_KHR:
+    case CL_COMMAND_ACQUIRE_DX9_MEDIA_SURFACES_KHR:
+    case CL_COMMAND_RELEASE_DX9_MEDIA_SURFACES_KHR:
+    case CL_COMMAND_ACQUIRE_DX9_OBJECTS_INTEL:
+    case CL_COMMAND_RELEASE_DX9_OBJECTS_INTEL:
+#endif
+        return true;
+    default:
+        return false;
+    }
 }
 
 cl_int CommandQueue::acquireSharedObjectsInPlace(cl_uint numObjects,
