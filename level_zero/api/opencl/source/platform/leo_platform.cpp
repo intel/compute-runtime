@@ -24,6 +24,8 @@ namespace LEO {
 
 std::vector<std::unique_ptr<Platform>> *platformsImpl = nullptr;
 
+std::mutex Platform::platformsMutex;
+
 Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformInfo), asyncEventsHandler(new AsyncEventsHandler), driverHandle(driverHandle) {
     const auto &deviceHandles = L0::DriverHandle::fromHandle(driverHandle)->devicesToExpose;
     clDevices.reserve(deviceHandles.size());

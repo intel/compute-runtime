@@ -52,24 +52,33 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         return retVal;
     }
 
-    if (NEO::LEO::platformsImpl->empty()) {
-        uint32_t driverCount = 0;
-        ze_init_driver_type_desc_t desc{ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC, nullptr, ZE_INIT_DRIVER_TYPE_FLAG_GPU};
+    ze_result_t initResult = ZE_RESULT_SUCCESS;
+    {
+        std::lock_guard<std::mutex> lock(NEO::LEO::Platform::platformsMutex);
 
-        ze_result_t ret = zeInitDrivers(&driverCount, nullptr, &desc);
+        if (NEO::LEO::platformsImpl->empty()) {
+            uint32_t driverCount = 0;
+            ze_init_driver_type_desc_t desc{ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC, nullptr, ZE_INIT_DRIVER_TYPE_FLAG_GPU};
 
-        if (ret != ZE_RESULT_SUCCESS) {
-            cl_int retVal = L0ToClResultMapper(ret);
-            TRACING_EXIT(ClGetPlatformIDs, &retVal);
-            return retVal;
+            initResult = zeInitDrivers(&driverCount, nullptr, &desc);
+
+            if (initResult == ZE_RESULT_SUCCESS) {
+                std::vector<ze_driver_handle_t> driverHandles(driverCount);
+                initResult = zeInitDrivers(&driverCount, driverHandles.data(), &desc);
+
+                if (initResult == ZE_RESULT_SUCCESS) {
+                    for (int i = 0; i < std::ssize(driverHandles); ++i) {
+                        NEO::LEO::platformsImpl->push_back(std::make_unique<NEO::LEO::Platform>(driverHandles[i]));
+                    }
+                }
+            }
         }
+    }
 
-        std::vector<ze_driver_handle_t> driverHandles(driverCount);
-        zeInitDrivers(&driverCount, driverHandles.data(), &desc);
-
-        for (int i = 0; i < std::ssize(driverHandles); ++i) {
-            NEO::LEO::platformsImpl->push_back(std::make_unique<NEO::LEO::Platform>(driverHandles[i]));
-        }
+    if (initResult != ZE_RESULT_SUCCESS) {
+        cl_int retVal = L0ToClResultMapper(initResult);
+        TRACING_EXIT(ClGetPlatformIDs, &retVal);
+        return retVal;
     }
 
     if (enableLEOFlag != 1 && NEO::LEO::platformsImpl) {

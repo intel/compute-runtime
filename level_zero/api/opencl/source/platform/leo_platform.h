@@ -18,6 +18,7 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 
 #include <map>
+#include <mutex>
 #include <vector>
 
 namespace NEO {
@@ -31,6 +32,7 @@ struct OpenCLObjectMapper<_cl_platform_id> {
 class Platform : public BaseObject<_cl_platform_id> {
   public:
     static constexpr cl_ulong objectMagic = 0x8873ACDEF2342133LL;
+    static std::mutex platformsMutex;
 
     Platform(ze_driver_handle_t driverHandle);
     Platform() = delete;
