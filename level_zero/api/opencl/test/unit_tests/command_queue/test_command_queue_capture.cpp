@@ -14,6 +14,7 @@
 #include "level_zero/api/opencl/test/common/fixtures/leo_capture_fixture.h"
 
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 
 #include <array>
 #include <cstring>
@@ -123,6 +124,29 @@ TEST_F(LeoCommandQueueCaptureTest, givenFillBufferWhenEnqueuedThenMemoryFillCapt
     EXPECT_EQ(fillSize, params.size);
     ASSERT_EQ(sizeof(patternValue), params.pattern.size());
     EXPECT_EQ(0, memcmp(params.pattern.data(), &patternValue, sizeof(patternValue)));
+
+    clReleaseMemObject(buffer);
+}
+
+TEST_F(LeoCommandQueueCaptureTest, givenMemsetIntelWhenEnqueuedThenMemoryFillCapturedWithSingleBytePattern) {
+    constexpr size_t bufferSize = 64u;
+    constexpr size_t fillSize = 32u;
+    auto buffer = createBuffer(bufferSize);
+    auto pBuffer = castToObject<Buffer>(buffer);
+    ASSERT_NE(nullptr, pBuffer);
+
+    const cl_int value = 0xFF;
+
+    auto retVal = clEnqueueMemsetINTEL(getCommandQueue(), pBuffer->getUsmPtr(), value, fillSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_EQ(1u, capturingCmdList.appendMemoryFillArgs.count());
+    const auto &params = capturingCmdList.appendMemoryFillArgs[0];
+    EXPECT_EQ(pBuffer->getUsmPtr(), params.ptr);
+    EXPECT_EQ(1u, params.patternSize);
+    EXPECT_EQ(fillSize, params.size);
+    ASSERT_EQ(1u, params.pattern.size());
+    EXPECT_EQ(0xFFu, params.pattern[0]);
 
     clReleaseMemObject(buffer);
 }

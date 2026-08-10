@@ -1441,7 +1441,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemsetINTEL(
     cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendMemoryFill(pCommandQueue->getL0Handle(),
                                                                             dstPtr,
                                                                             &value,
-                                                                            sizeof(cl_int),
+                                                                            1u,
                                                                             size,
                                                                             hSignalEvent,
                                                                             waitEvents.size(),
