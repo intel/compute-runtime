@@ -544,7 +544,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWai
                                                                                    loadRegImmCmdToPatch->commandView,
                                                                                    loadRegImmCmdToPatch->pDestination,
                                                                                    static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
-                                                                                   MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter);
+                                                                                   MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter,
+                                                                                   this->isCopyOnly(false));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         auto loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -558,7 +559,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWai
                                                                               loadRegImmCmdToPatch2->commandView,
                                                                               loadRegImmCmdToPatch2->pDestination,
                                                                               static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
-                                                                              MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter);
+                                                                              MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter,
+                                                                              this->isCopyOnly(false));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -597,7 +599,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
                                                                                    loadRegImmCmdToPatch->commandView,
                                                                                    loadRegImmCmdToPatch->pDestination,
                                                                                    static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
-                                                                                   MutableLoadRegisterImm::cbEventWaitLoadCounter);
+                                                                                   MutableLoadRegisterImm::cbEventWaitLoadCounter,
+                                                                                   this->isCopyOnly(false));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         auto loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -611,7 +614,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
                                                                               loadRegImmCmdToPatch2->commandView,
                                                                               loadRegImmCmdToPatch2->pDestination,
                                                                               static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
-                                                                              MutableLoadRegisterImm::cbEventWaitLoadCounter);
+                                                                              MutableLoadRegisterImm::cbEventWaitLoadCounter,
+                                                                              this->isCopyOnly(false));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);

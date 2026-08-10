@@ -14,10 +14,11 @@ template <typename GfxFamily>
 struct MutableLoadRegisterImmHw : public MutableLoadRegisterImm {
     using LoadRegisterImm = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-    MutableLoadRegisterImmHw(uint64_t gpuDestination, void *cmdView, void *loadRegImm, uint32_t registerAddress, Type type)
+    MutableLoadRegisterImmHw(uint64_t gpuDestination, void *cmdView, void *loadRegImm, uint32_t registerAddress, Type type, bool isCopy)
         : MutableLoadRegisterImm(gpuDestination, cmdView, sizeof(LoadRegisterImm), type),
           loadRegImm(loadRegImm),
-          registerAddress(registerAddress) {}
+          registerAddress(registerAddress),
+          isCopy(isCopy) {}
 
     ~MutableLoadRegisterImmHw() override;
 
@@ -28,6 +29,7 @@ struct MutableLoadRegisterImmHw : public MutableLoadRegisterImm {
   protected:
     void *loadRegImm;
     uint32_t registerAddress;
+    bool isCopy;
 };
 
 } // namespace L0::MCL

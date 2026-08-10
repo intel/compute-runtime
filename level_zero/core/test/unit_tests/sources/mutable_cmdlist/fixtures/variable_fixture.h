@@ -106,7 +106,7 @@ struct VariableFixture : public MutableCommandListFixtureInit {
     }
 
     template <typename FamilyType>
-    void createMutableLoadRegisterImm(uint32_t registerAddress, bool allocateCommanView, L0::MCL::MutableLoadRegisterImm::Type type) {
+    void createMutableLoadRegisterImm(uint32_t registerAddress, bool allocateCommanView, L0::MCL::MutableLoadRegisterImm::Type type, bool isCopy) {
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
         auto loadRegisterImmBuffer = this->cmdBuffer->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
         *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(loadRegisterImmBuffer) = FamilyType::cmdInitLoadRegisterImm;
@@ -117,7 +117,7 @@ struct VariableFixture : public MutableCommandListFixtureInit {
         }
 
         this->loadRegisterImmBuffers.push_back(loadRegisterImmBuffer);
-        this->mutableLoadRegisterImms.push_back(std::make_unique<L0::MCL::MutableLoadRegisterImmHw<FamilyType>>(this->gpuDestAddress, commandView, loadRegisterImmBuffer, registerAddress, type));
+        this->mutableLoadRegisterImms.push_back(std::make_unique<L0::MCL::MutableLoadRegisterImmHw<FamilyType>>(this->gpuDestAddress, commandView, loadRegisterImmBuffer, registerAddress, type, isCopy));
         auto mutableLriType = this->mutableLoadRegisterImms.back()->getType();
         EXPECT_EQ(type, mutableLriType);
 
@@ -256,8 +256,8 @@ struct VariableInOrderFixture : public VariableFixture {
     template <typename FamilyType>
     void prepareInOrderWaitCommands() {
         if (this->qwordIndirect) {
-            createMutableLoadRegisterImm<FamilyType>(0x2600, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
-            createMutableLoadRegisterImm<FamilyType>(0x2604, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter);
+            createMutableLoadRegisterImm<FamilyType>(0x2600, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, false);
+            createMutableLoadRegisterImm<FamilyType>(0x2604, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, false);
         }
 
         createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, L0::MCL::MutableSemaphoreWait::Type::cbEventWait, this->qwordIndirect, this->asyncMutation);
@@ -266,8 +266,8 @@ struct VariableInOrderFixture : public VariableFixture {
     template <typename FamilyType>
     void preparePatchPreambleWaitCommands() {
         if (this->qwordIndirect) {
-            createMutableLoadRegisterImm<FamilyType>(0x2600, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter);
-            createMutableLoadRegisterImm<FamilyType>(0x2604, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter);
+            createMutableLoadRegisterImm<FamilyType>(0x2600, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter, false);
+            createMutableLoadRegisterImm<FamilyType>(0x2604, this->asyncMutation, L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter, false);
         }
 
         createMutableSemaphoreWait<FamilyType>(this->semWaitOffset, L0::MCL::MutableSemaphoreWait::Type::cbEventWaitPatchPreambleCounter, this->qwordIndirect, this->asyncMutation);

@@ -24,6 +24,7 @@ struct WhiteBox<::L0::MCL::MutableLoadRegisterImmHw<GfxFamily>>
     using BaseClass::commandSize;
     using BaseClass::commandView;
     using BaseClass::gpuDestinationAddress;
+    using BaseClass::isCopy;
     using BaseClass::loadRegImm;
     using BaseClass::registerAddress;
     using BaseClass::type;

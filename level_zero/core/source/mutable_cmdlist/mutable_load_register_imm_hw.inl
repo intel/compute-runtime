@@ -32,9 +32,9 @@ void MutableLoadRegisterImmHw<GfxFamily>::noop() {
 template <typename GfxFamily>
 void MutableLoadRegisterImmHw<GfxFamily>::restore() {
     if (this->commandView) {
-        NEO::LriHelper<GfxFamily>::program(reinterpret_cast<LoadRegisterImm *>(this->commandView), this->registerAddress, 0, true, false);
+        NEO::LriHelper<GfxFamily>::program(reinterpret_cast<LoadRegisterImm *>(this->commandView), this->registerAddress, 0, true, this->isCopy);
     } else {
-        NEO::LriHelper<GfxFamily>::program(reinterpret_cast<LoadRegisterImm *>(this->loadRegImm), this->registerAddress, 0, true, false);
+        NEO::LriHelper<GfxFamily>::program(reinterpret_cast<LoadRegisterImm *>(this->loadRegImm), this->registerAddress, 0, true, this->isCopy);
     }
 }
 
