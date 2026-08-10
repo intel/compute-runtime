@@ -168,7 +168,9 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
                IGC::CodeType::CodeType_t outType = IGC::CodeType::undefined) {
     MockCompilerDebugVars &debugVars = (usingIgc) ? *NEO::igcDebugVars : *fclDebugVars;
 
-    if (debugVars.receivedInput != nullptr) {
+    // Only the first call's input is captured - a build may invoke translate() more than
+    // once, and callers generally want the earliest one, not whichever ran last.
+    if (debugVars.receivedInput != nullptr && debugVars.receivedInput->empty()) {
         if (src != nullptr) {
             debugVars.receivedInput->assign(src->GetMemory<char>(),
                                             src->GetMemory<char>() + src->GetSizeRaw());

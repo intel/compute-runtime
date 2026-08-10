@@ -92,6 +92,27 @@ bool compilerOutputExists(const std::string &fileName, const std::string &type) 
     return NEO::virtualFileList.find(getCompilerOutputFileName(fileName, type)) != NEO::virtualFileList.end();
 }
 
+template <typename Predicate>
+bool matchesKnownIrExtension(Predicate matches) {
+    if (matches("bc") || matches("spv")) {
+        return true;
+    }
+    for (const auto &extension : NEO::getAdditionalIrFileExtensions()) {
+        if (matches(extension)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool compilerIrOutputExists(const std::string &fileName) {
+    return matchesKnownIrExtension([&](const std::string &extension) { return compilerOutputExists(fileName, extension); });
+}
+
+bool isIrOutputFileName(const std::string &fileName) {
+    return matchesKnownIrExtension([&](const std::string &extension) { return fileName.find("." + extension) != std::string::npos; });
+}
+
 template <typename SectionHeaders>
 bool isAnyIrSectionDefined(const SectionHeaders &sectionHeaders) {
     const auto isIrSection = [](const auto &section) {
@@ -156,7 +177,7 @@ TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsRe
 
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = pMultiCommand->outDirForBuilds + "/build_no_" + std::to_string(i + 1);
-        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerIrOutputExists(outFileName));
         EXPECT_TRUE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
@@ -193,7 +214,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuc
 
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = "offline_compiler_test/build_no_" + std::to_string(i + 1);
-        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerIrOutputExists(outFileName));
         EXPECT_FALSE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
@@ -244,7 +265,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
 
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = "offline_compiler_test/build_no_" + std::to_string(i + 1);
-        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerIrOutputExists(outFileName));
         EXPECT_FALSE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
@@ -334,7 +355,7 @@ TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuc
 
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = pMultiCommand->outDirForBuilds + "/build_no_" + std::to_string(i + 1);
-        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerIrOutputExists(outFileName));
         EXPECT_FALSE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
@@ -2182,7 +2203,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
     retVal = pOfflineCompiler->build();
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(compilerOutputExists("some_kernel", "bc") || compilerOutputExists("some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("some_kernel"));
     EXPECT_FALSE(compilerOutputExists("some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("some_kernel", "bin"));
 
@@ -2223,7 +2244,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
     retVal = pOfflineCompiler->build();
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(compilerOutputExists("some_kernel", "bc") || compilerOutputExists("some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("some_kernel"));
     EXPECT_FALSE(compilerOutputExists("some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("some_kernel", "bin"));
 
@@ -2264,7 +2285,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceIpVersionValueThenBu
     retVal = pOfflineCompiler->build();
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(compilerOutputExists("some_kernel", "bc") || compilerOutputExists("some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("some_kernel"));
     EXPECT_FALSE(compilerOutputExists("some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("some_kernel", "bin"));
 
@@ -2338,7 +2359,7 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated
     uint8_t **dataOutputs = nullptr;
     char **nameOutputs = nullptr;
 
-    bool isSpvFile = false;
+    bool isIrFile = false;
     bool isGenFile = false;
     bool isBinFile = false;
     std::string filePath = "copybuffer.cl";
@@ -2362,8 +2383,8 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated
 
     for (unsigned int i = 0; i < numOutputs; i++) {
         std::string nameOutput(nameOutputs[i]);
-        if (nameOutput.find(".spv") != std::string::npos) {
-            isSpvFile = true;
+        if (isIrOutputFileName(nameOutput)) {
+            isIrFile = true;
         }
         if (nameOutput.find(".gen") != std::string::npos) {
             isGenFile = true;
@@ -2373,7 +2394,7 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated
         }
     }
 
-    EXPECT_TRUE(isSpvFile);
+    EXPECT_TRUE(isIrFile);
     EXPECT_FALSE(isGenFile);
     EXPECT_TRUE(isBinFile);
 
@@ -2422,7 +2443,7 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
     char **nameOutputs = nullptr;
     std::string filePath = "copybuffer.cl";
 
-    bool isSpvFile = false;
+    bool isIrFile = false;
     bool isGenFile = false;
     bool isBinFile = false;
 
@@ -2446,8 +2467,8 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
 
     for (unsigned int i = 0; i < numOutputs; i++) {
         std::string nameOutput(nameOutputs[i]);
-        if (nameOutput.find(".spv") != std::string::npos) {
-            isSpvFile = true;
+        if (isIrOutputFileName(nameOutput)) {
+            isIrFile = true;
         }
         if (nameOutput.find(".gen") != std::string::npos) {
             isGenFile = true;
@@ -2457,7 +2478,7 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
         }
     }
 
-    EXPECT_TRUE(isSpvFile);
+    EXPECT_TRUE(isIrFile);
     EXPECT_TRUE(isGenFile);
     EXPECT_TRUE(isBinFile);
 
@@ -2542,7 +2563,7 @@ TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingThenBuildSucceeds) {
     retVal = pOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(compilerOutputExists("some_kernel", "cpp"));
-    EXPECT_TRUE(compilerOutputExists("some_kernel", "bc") || compilerOutputExists("some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("some_kernel"));
     EXPECT_FALSE(compilerOutputExists("some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("some_kernel", "bin"));
 
@@ -2567,7 +2588,7 @@ TEST_F(OfflineCompilerTests, GivenOutputDirWhenBuildingThenBuildSucceeds) {
 
     retVal = pOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/some_kernel", "bc") || compilerOutputExists("offline_compiler_test/some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("offline_compiler_test/some_kernel"));
     EXPECT_FALSE(compilerOutputExists("offline_compiler_test/some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("offline_compiler_test/some_kernel", "bin"));
 

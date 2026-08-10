@@ -21,6 +21,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace NEO {
 class MultiCommand;
@@ -30,6 +32,8 @@ class OfflineCompiler;
 extern Environment *gEnvironment;
 
 namespace NEO {
+
+std::vector<std::string> getAdditionalIrFileExtensions();
 
 class OfflineCompilerTests : public ::testing::Test {
   public:

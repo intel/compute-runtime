@@ -680,10 +680,16 @@ TEST_F(OclocApiTest, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPacke
     VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
 
     auto prevFclDebugVars = NEO::getFclDebugVars();
-    auto debugVars = prevFclDebugVars;
+    auto prevIgcDebugVars = NEO::getIgcDebugVars();
     std::string receivedInput;
+    auto debugVars = prevFclDebugVars;
     debugVars.receivedInput = &receivedInput;
     setFclDebugVars(debugVars);
+    // Devices whose compilerProductHelper::useIgcAsFcl() is true route the front-end
+    // (FCL-role) translation through the IGC mock instead of the FCL mock.
+    auto igcDebugVarsForFcl = prevIgcDebugVars;
+    igcDebugVarsForFcl.receivedInput = &receivedInput;
+    setIgcDebugVars(igcDebugVarsForFcl);
 
     const char *argv[] = {
         "ocloc",
@@ -730,6 +736,7 @@ __kernel void k(){
                 &numOutputs, &outputs, &outputsLen, &ouputsNames);
 
     NEO::setFclDebugVars(prevFclDebugVars);
+    NEO::setIgcDebugVars(prevIgcDebugVars);
 
     std::string decodeErr, decodeWarn;
     ArrayRef<const uint8_t> rawElf(reinterpret_cast<const uint8_t *>(receivedInput.data()), receivedInput.size());
