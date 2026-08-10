@@ -625,13 +625,15 @@ include(cmake${BRANCH_DIR_SUFFIX}/find_drm.cmake)
 # Enable/Disable BuiltIns compilation during build
 set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
 if(NOT DEFINED NEO_KERNELS_BIN_DIR)
-  string(REPLACE "internal" "" NEO_KERNELS_BUILD_TYPE_DIR "${BUILD_TYPE_lower}")
-  message(STATUS "Neo kernels build type dir: ${NEO_KERNELS_BUILD_TYPE_DIR}")
   if(WIN32)
-    get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/windows/${NEO_KERNELS_BUILD_TYPE_DIR}" ABSOLUTE)
+    get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/windows" ABSOLUTE)
+    if(NOT EXISTS "${NEO_KERNELS_BIN_DIR}/built_ins")
+      set(NEO_KERNELS_BIN_DIR "${NEO_KERNELS_BIN_DIR}/release")
+    endif()
   else()
     get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/linux" ABSOLUTE)
   endif()
+  message(STATUS "Neo kernels dir: ${NEO_KERNELS_BIN_DIR}")
 endif()
 
 # Changing the default executable and library output directories
