@@ -432,8 +432,7 @@ cl_int Kernel::setIndirectAccess(cl_kernel_exec_info flag, cl_bool val) {
 }
 
 cl_int Kernel::setThreadArbitrationPolicy(uint32_t flag) {
-    ze_scheduling_hint_exp_desc_t schedulingDesc;
-    schedulingDesc.flags = NEO::LEO::Kernel::schedulingHintToL0(flag);
+    ze_scheduling_hint_exp_desc_t schedulingDesc{ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC, nullptr, NEO::LEO::Kernel::schedulingHintToL0(flag)};
     cl_int result = CL_SUCCESS;
     for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
         auto ret = L0ToClResultMapper(zeKernelSchedulingHintExp(kernelHandle, &schedulingDesc));

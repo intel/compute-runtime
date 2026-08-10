@@ -693,6 +693,57 @@ TEST_F(ImmediateArgKernelFixture, givenArgIndexOutOfRangeWhenSetKernelArgThenRet
     EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
 }
 
+struct MockL0KernelForSchedulingHint : public L0::ult::Mock<L0::KernelImp> {
+    ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) override {
+        passedHint = *pHint;
+        setSchedulingHintExpCalledTimes++;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_scheduling_hint_exp_desc_t passedHint = {};
+    uint32_t setSchedulingHintExpCalledTimes = 0u;
+};
+
+struct SchedulingHintKernelFixture : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        cl_device_id clDeviceId = clDevice;
+        context = std::make_unique<Context>(nullptr, nullptr, 1, &clDeviceId, true);
+        program = std::make_unique<Program>(context.get());
+
+        l0Kernel = std::make_unique<MockL0KernelForSchedulingHint>();
+        std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
+        kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
+    }
+
+    void TearDown() override {
+        kernel.reset();
+        l0Kernel.release();
+        program.reset();
+        context.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    ClDevice *clDevice = nullptr;
+    std::unique_ptr<Context> context;
+    std::unique_ptr<Program> program;
+    std::unique_ptr<MockL0KernelForSchedulingHint> l0Kernel;
+    std::unique_ptr<Kernel> kernel;
+};
+
+TEST_F(SchedulingHintKernelFixture, givenThreadArbitrationPolicyWhenSetKernelExecInfoThenFullyInitializedDescriptorIsPassedToL0) {
+    uint32_t policy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, sizeof(policy), &policy);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, l0Kernel->setSchedulingHintExpCalledTimes);
+    EXPECT_EQ(ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC, l0Kernel->passedHint.stype);
+    EXPECT_EQ(nullptr, l0Kernel->passedHint.pNext);
+    EXPECT_EQ(static_cast<ze_scheduling_hint_exp_flags_t>(ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN), l0Kernel->passedHint.flags);
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO
