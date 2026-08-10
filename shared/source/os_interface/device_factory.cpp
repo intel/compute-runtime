@@ -67,6 +67,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         rootDeviceEnvironment.initProductHelper();
         quitOclInitIfLeoEnabled(rootDeviceEnvironment);
         rootDeviceEnvironment.initGfxCoreHelper();
+        rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper(true);
         rootDeviceEnvironment.initApiGfxCoreHelper();
         rootDeviceEnvironment.initCompilerProductHelper();
         rootDeviceEnvironment.initAilConfigurationHelper();

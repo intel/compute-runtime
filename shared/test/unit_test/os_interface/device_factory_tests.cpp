@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/device_caps_reader_test_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -318,6 +319,28 @@ TEST_F(DeviceFactoryOverrideTest, givenDebugFlagWithZeroXWhenPrepareDeviceEnviro
 
     EXPECT_TRUE(success);
     EXPECT_EQ(0x1234u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
+}
+
+HWTEST_F(DeviceFactoryOverrideTest, givenProductFamilyOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenGfxCoreHelperIsInitializedFromProductHelperWithHwQueuesSupported) {
+    struct MockGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
+        using GfxCoreHelperHw<FamilyType>::secondaryContextsEnabled;
+        void initializeFromProductHelper(const ProductHelper &productHelper, bool hwQueuesSupported) override {
+            initializeFromProductHelperCalled = true;
+            passedHwQueuesSupported = hwQueuesSupported;
+            GfxCoreHelperHw<FamilyType>::initializeFromProductHelper(productHelper, hwQueuesSupported);
+        }
+        bool initializeFromProductHelperCalled = false;
+        bool passedHwQueuesSupported = false;
+    };
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*executionEnvironment.rootDeviceEnvironments[0]);
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(raii.mockGfxCoreHelper->initializeFromProductHelperCalled);
+    EXPECT_TRUE(raii.mockGfxCoreHelper->passedHwQueuesSupported);
+    EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[0]->productHelper->areSecondaryContextsSupported(), raii.mockGfxCoreHelper->secondaryContextsEnabled);
 }
 
 TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideSlmSize) {
