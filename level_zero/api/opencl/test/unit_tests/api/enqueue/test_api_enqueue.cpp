@@ -14,11 +14,14 @@
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
+#include "level_zero/api/opencl/test/common/fixtures/leo_capture_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
+
+#include <array>
 
 namespace NEO {
 namespace LEO {
@@ -98,6 +101,62 @@ TEST_F(EnqueueKernelExecutionTypeFixture, givenKernelUsingSyncBufferAndNotConcur
     auto retVal = clEnqueueNDCountKernelINTEL(commandQueue.get(), kernel.get(), 1, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+}
+
+struct EnqueueSvmFixture : public Test<LeoCaptureFixture> {
+    cl_command_type queryCommandType(cl_event event) {
+        cl_command_type commandType = 0u;
+        EXPECT_EQ(CL_SUCCESS, clGetEventInfo(event, CL_EVENT_COMMAND_TYPE, sizeof(commandType), &commandType, nullptr));
+        return commandType;
+    }
+
+    // Stands in for a caller variable that the API must leave untouched when the enqueue fails.
+    cl_event notAnEvent() { return reinterpret_cast<cl_event>(eventStorage.data()); }
+
+    std::array<uint8_t, 64> eventStorage{};
+    std::array<uint8_t, 32> dstStorage{};
+    std::array<uint8_t, 32> srcStorage{};
+    uint32_t pattern = 0u;
+};
+
+TEST_F(EnqueueSvmFixture, givenUserProvidedEventWhenClEnqueueSVMMemcpyThenCommandTypeIsSvmMemcpy) {
+    cl_event event = nullptr;
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMemcpy(getCommandQueue(), CL_FALSE, dstStorage.data(), srcStorage.data(), dstStorage.size(), 0, nullptr, &event));
+    ASSERT_NE(nullptr, event);
+
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_MEMCPY), queryCommandType(event));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
+}
+
+TEST_F(EnqueueSvmFixture, givenInvalidDstPtrWhenClEnqueueSVMMemcpyThenUserProvidedEventIsNotDereferenced) {
+    cl_event event = notAnEvent();
+
+    EXPECT_EQ(CL_INVALID_VALUE, clEnqueueSVMMemcpy(getCommandQueue(), CL_FALSE, nullptr, srcStorage.data(), dstStorage.size(), 0, nullptr, &event));
+
+    EXPECT_EQ(notAnEvent(), event);
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+}
+
+TEST_F(EnqueueSvmFixture, givenUserProvidedEventWhenClEnqueueSVMMemFillThenCommandTypeIsSvmMemFill) {
+    cl_event event = nullptr;
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMemFill(getCommandQueue(), dstStorage.data(), &pattern, sizeof(pattern), dstStorage.size(), 0, nullptr, &event));
+    ASSERT_NE(nullptr, event);
+
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_MEMFILL), queryCommandType(event));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
+}
+
+TEST_F(EnqueueSvmFixture, givenInvalidSvmPtrWhenClEnqueueSVMMemFillThenUserProvidedEventIsNotDereferenced) {
+    cl_event event = notAnEvent();
+
+    EXPECT_EQ(CL_INVALID_VALUE, clEnqueueSVMMemFill(getCommandQueue(), nullptr, &pattern, sizeof(pattern), dstStorage.size(), 0, nullptr, &event));
+
+    EXPECT_EQ(notAnEvent(), event);
+    EXPECT_FALSE(capturingCmdList.appendMemoryFillArgs.wasCalled());
 }
 
 } // namespace ult
