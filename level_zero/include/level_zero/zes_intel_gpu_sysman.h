@@ -679,6 +679,25 @@ ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(
                                           ///< else info log collection is disabled.
 );
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_TEMP_COMPOSITE_EXP_NAME
+/// @brief Composite temperature sensor extension name
+#define ZES_INTEL_TEMP_COMPOSITE_EXP_NAME "ZES_intel_experimental_temperature_composite"
+#endif // ZES_INTEL_TEMP_COMPOSITE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Composite temperature sensor extension Version(s)
+typedef enum _zes_intel_temp_composite_exp_version_t {
+    ZES_INTEL_TEMP_COMPOSITE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0), ///< version 1.0
+    ZES_INTEL_TEMP_COMPOSITE_EXP_VERSION_CURRENT = ZES_INTEL_TEMP_COMPOSITE_EXP_VERSION_1_0,
+    ZES_INTEL_TEMP_COMPOSITE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_temp_composite_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Vendor-extension sensor type for firmware-computed composite temperature.
+/// Composite single temperature is required for host fan modulation
+#define ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP ((zes_temp_sensors_t)0x00010000)
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

@@ -40,6 +40,7 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     ze_result_t getMemoryMaxTemperature(double *pTemperature);
     ze_result_t getVoltageRegulatorMaxTemperature(double *pTemperature);
     ze_result_t getGpuBoardMaxTemperature(double *pTemperature);
+    ze_result_t getCompositeTemperature(double *pTemperature);
     ze_result_t getMaxTemperature(double &temperature);
     bool isIntelGraphicsHwmonDir(const std::string &name);
     void init();

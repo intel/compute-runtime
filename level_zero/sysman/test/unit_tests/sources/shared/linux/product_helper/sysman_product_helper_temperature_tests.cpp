@@ -1377,9 +1377,9 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    // CRI: 1 Global + 1 GPU + 1 Memory + 1 VR + 1 GPU Board = 5 handles
+    // CRI: 1 Global + 1 GPU + 1 Memory + 1 VR + 1 GPU Board + 1 Composite = 6 handles
     // BMG: 1 Global + 1 GPU + 1 Memory + 1 VR = 4 handles
-    uint32_t expectedCount = (defaultHwInfo->platform.eProductFamily == IGFX_CRI) ? 5u : 4u;
+    uint32_t expectedCount = (defaultHwInfo->platform.eProductFamily == IGFX_CRI) ? 6u : 4u;
     EXPECT_EQ(count, expectedCount);
 
     uint32_t testcount = count + 1;
@@ -1438,6 +1438,8 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
             uint32_t expectedBoardTempUpper = (gpuBoardTemperature >> 16) & 0xFF;
             uint32_t expectedMaxBoardTemp = std::max(expectedBoardTempLower, expectedBoardTempUpper);
             EXPECT_EQ(temperature, static_cast<double>(expectedMaxBoardTemp));
+        } else if (properties.type == ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
         }
     }
 }
@@ -1793,7 +1795,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     static uint32_t vr1Temperature = 48;
     static uint32_t vr2Temperature = 43;
     static uint32_t vr3Temperature = 50;
-    static uint32_t validTemperatureHandleCount = 5u;
+    static uint32_t validTemperatureHandleCount = 6u;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -1867,7 +1869,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZesGetTemperatureStateIsCalledForGpuBoardThenValidTemperatureValueIsReturned, IsCRI) {
     VariableBackup<int> mockErrno(&errno);
     static uint32_t gpuBoardTempRegister = 0x00370000 | 0x002E;
-    static uint32_t validTemperatureHandleCount = 5u;
+    static uint32_t validTemperatureHandleCount = 6u;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -1940,6 +1942,67 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     double temperature = 0;
     ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGetSupportedSensorsIsCalledThenCompositeTemperatureSensorIsIncluded, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    std::map<zes_temp_sensors_t, uint32_t> supportedSensorTypeMap;
+    pSysmanProductHelper->getSupportedSensors(supportedSensorTypeMap);
+    EXPECT_NE(supportedSensorTypeMap.find(ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP), supportedSensorTypeMap.end());
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingCompositeTemperatureThenUnsupportedFeatureIsReturned, IsCRI) {
+    uint32_t subdeviceId = 0;
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    double temperature = 0;
+    ze_result_t result = pSysmanProductHelper->getCompositeTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenReadingCompositeTemperatureOnAnUnsupportedPlatformThenErrorIsReturned, IsAtMostBMG) {
+    uint32_t subdeviceId = 0;
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    double temperature = 0;
+    ze_result_t result = pSysmanProductHelper->getCompositeTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZesGetTemperatureStateIsCalledForCompositeTemperatureThenUnsupportedFeatureIsReturned, IsCRI) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telemOffset = 0;
+        std::string validGuid = "0x1e2fa030";
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5) {
+            memset(buf, 0, count);
+            memcpy(buf, validGuid.data(), validGuid.size());
+        }
+        return count;
+    });
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, NULL));
+    EXPECT_EQ(count, 6u);
+
+    std::vector<zes_temp_handle_t> handles(count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, handles.data()));
+
+    uint32_t compositeCount = 0;
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_temp_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
+        if (properties.type == ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP) {
+            double temperature = 0;
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
+            compositeCount++;
+        }
+    }
+    EXPECT_EQ(compositeCount, 1u);
 }
 
 } // namespace ult

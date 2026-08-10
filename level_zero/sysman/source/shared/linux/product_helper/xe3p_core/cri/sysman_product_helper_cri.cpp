@@ -736,6 +736,7 @@ void SysmanProductHelperHw<gfxProduct>::getSupportedSensors(std::map<zes_temp_se
     supportedSensorTypeMap[ZES_TEMP_SENSORS_MEMORY] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU_BOARD] = 1;
+    supportedSensorTypeMap[ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP] = 1;
 }
 
 template <>

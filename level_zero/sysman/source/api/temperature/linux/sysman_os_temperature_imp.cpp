@@ -73,9 +73,14 @@ ze_result_t LinuxTemperatureImp::getGpuBoardMaxTemperature(double *pTemperature)
     return pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
 }
 
+ze_result_t LinuxTemperatureImp::getCompositeTemperature(double *pTemperature) {
+    return pSysmanProductHelper->getCompositeTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
+}
+
 ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    switch (type) {
+
+    switch (static_cast<int32_t>(type)) {
     case ZES_TEMP_SENSORS_GLOBAL:
         result = getGlobalMaxTemperature(pTemperature);
         break;
@@ -91,6 +96,9 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     case ZES_TEMP_SENSORS_GPU_BOARD:
         result = getGpuBoardMaxTemperature(pTemperature);
         break;
+    case ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP:
+        result = getCompositeTemperature(pTemperature);
+        break;
     default:
         *pTemperature = 0;
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -103,11 +111,13 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
 bool LinuxTemperatureImp::isTempModuleSupported() {
 
     bool result = PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
-    switch (type) {
+
+    switch (static_cast<int32_t>(type)) {
     case ZES_TEMP_SENSORS_GLOBAL:
     case ZES_TEMP_SENSORS_GPU:
     case ZES_TEMP_SENSORS_VOLTAGE_REGULATOR:
     case ZES_TEMP_SENSORS_GPU_BOARD:
+    case ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP:
         break;
     case ZES_TEMP_SENSORS_MEMORY:
         result &= pSysmanProductHelper->isMemoryMaxTemperatureSupported();
