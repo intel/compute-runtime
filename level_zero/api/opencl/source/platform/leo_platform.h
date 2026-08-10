@@ -12,6 +12,7 @@
 
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
+#include "level_zero/api/opencl/source/event/leo_async_events_handler.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/platform/leo_platform_info.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -33,6 +34,7 @@ class Platform : public BaseObject<_cl_platform_id> {
 
     Platform(ze_driver_handle_t driverHandle);
     Platform() = delete;
+    ~Platform() override;
 
     cl_int getInfo(cl_platform_info paramName,
                    size_t paramValueSize,
@@ -48,8 +50,11 @@ class Platform : public BaseObject<_cl_platform_id> {
 
     void tryNotifyGtpinInit();
 
+    AsyncEventsHandler &getAsyncEventsHandler() const;
+
   protected:
     std::unique_ptr<PlatformInfo> platformInfo{};
+    std::unique_ptr<AsyncEventsHandler> asyncEventsHandler{};
     std::once_flag initializeExtensionsWithVersionOnce;
     std::once_flag oclInitGtpinOnce;
 

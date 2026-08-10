@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/profiling_info.h"
+#include "shared/source/utilities/iflist.h"
 
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
@@ -15,8 +16,12 @@
 #include "level_zero/core/source/event/event.h"
 
 #include <array>
+#include <atomic>
+#include <limits>
+#include <mutex>
 #include <span>
 #include <variant>
+#include <vector>
 
 namespace NEO {
 class TagNodeBase;
@@ -66,22 +71,34 @@ static_assert(std::is_nothrow_move_assignable_v<EventHandleSpan>);
 class Event : public BaseObject<_cl_event> {
   public:
     static const cl_ulong objectMagic = 0x80134213A43C981ALL;
+    static constexpr cl_int executionAbortedDueToGpuHang = -777;
+    static constexpr cl_int executionTerminatedOnDestruction = -1;
+    static constexpr uint64_t asyncCompletionWaitTimeoutNs = 100'000'000ull;
 
-    using ProfilingInfo = NEO::ProfilingInfo;
+    struct Callback {
+        typedef void(CL_CALLBACK *ClbFuncT)(cl_event, cl_int, void *);
 
-    struct ClUserData {
-        cl_event event = nullptr;
-        cl_int commandExecCallbackType{};
-        void(CL_CALLBACK *funcNotify)(cl_event, cl_int, void *) = nullptr;
-        void *userData = nullptr;
+        Callback(cl_event event, ClbFuncT clb, cl_int type, void *data)
+            : event(event), callbackFunction(clb), callbackExecutionStatusTarget(type), userData(data) {
+        }
+
+        void execute() {
+            callbackFunction(event, callbackExecutionStatusTarget, userData);
+        }
+
+        void overrideCallbackExecutionStatusTarget(cl_int newCallbackExecutionStatusTarget) {
+            DEBUG_BREAK_IF(newCallbackExecutionStatusTarget >= 0);
+            callbackExecutionStatusTarget = newCallbackExecutionStatusTarget;
+        }
+
+      private:
+        cl_event event;
+        ClbFuncT callbackFunction;
+        cl_int callbackExecutionStatusTarget;
+        void *userData;
     };
 
-    static void clCallbackWrapper(void *userData) {
-        auto clUserData = static_cast<ClUserData *>(userData);
-        clUserData->funcNotify(clUserData->event, clUserData->commandExecCallbackType, clUserData->userData);
-        NEO::LEO::castToObject<NEO::LEO::Event>(clUserData->event)->decRefInternal();
-        delete clUserData;
-    }
+    using ProfilingInfo = NEO::ProfilingInfo;
 
     explicit Event(cl_command_type commandType, NEO::LEO::CommandQueue *commandQueue);
     explicit Event(NEO::LEO::Context *context);
@@ -102,10 +119,20 @@ class Event : public BaseObject<_cl_event> {
                         void *paramValue,
                         size_t *paramValueSizeRet);
 
-    MOCKABLE_VIRTUAL ze_result_t wait();
-    ze_result_t signal();
+    ze_result_t wait() {
+        return this->wait(std::numeric_limits<uint64_t>::max());
+    }
+    MOCKABLE_VIRTUAL ze_result_t wait(uint64_t timeout);
+    ze_result_t signal(cl_int executionStatus);
     cl_int queryAndUpdateEventStatus();
     MOCKABLE_VIRTUAL ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t &result);
+
+    cl_int peekExecutionStatus() const { return this->eventStatus.load(); };
+
+    void addCallback(Callback::ClbFuncT fn, cl_int type, void *data);
+    bool peekHasCallbacks();
+    void updateExecutionStatus();
+    void abortExecutionDueToGpuHang();
 
     void updateCommandType(cl_command_type newType) { this->commandType = newType; };
     cl_command_type getCommandType() const { return this->commandType; };
@@ -131,6 +158,11 @@ class Event : public BaseObject<_cl_event> {
     void setSubmitTimeStamp();
     void setupRelativeProfilingInfo(ProfilingInfo &profilingInfo);
 
+    void executeCallbacks(cl_int executionStatus);
+
+    std::mutex callbacksMtx;
+    std::vector<Callback> callbacks;
+
     ProfilingInfo queueTimeStamp{};
     ProfilingInfo submitTimeStamp{};
     ProfilingInfo startTimeStamp{};
@@ -139,7 +171,7 @@ class Event : public BaseObject<_cl_event> {
     bool dataCalculated = false;
 
     cl_command_type commandType = 0;
-    cl_int eventStatus = CL_SUBMITTED;
+    std::atomic<cl_int> eventStatus = CL_SUBMITTED;
 
     std::unique_ptr<GlArbSyncEvent> arbEvent = nullptr;
 

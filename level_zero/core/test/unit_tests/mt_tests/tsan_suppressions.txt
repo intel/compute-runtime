@@ -1,0 +1,9 @@
+# This file describes excludes for false-positive issues reported by TSAN.
+
+# assignKernelEventCompletionData re-copies the event's host-visible packet memory into
+# kernelEventCompletionData on every queryStatus. The async events handler thread polls
+# zeEventQueryStatus while the application thread queries the same event (clWaitForEvents,
+# clSetEventCallback, clGetEventProfilingInfo), so both threads run that copy concurrently.
+# Each writes the same values read from the same completed packets, so the resulting
+# timestamps are identical regardless of interleaving.
+race:L0::EventImp*::assignKernelEventCompletionData

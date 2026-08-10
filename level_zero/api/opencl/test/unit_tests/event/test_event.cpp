@@ -60,8 +60,9 @@ struct MockCmdListWithPrintf : public L0::ult::Mock<L0::ult::CommandList> {
 
 struct MockEventWithWait : public NEO::LEO::Event {
     using NEO::LEO::Event::Event;
+    using NEO::LEO::Event::wait;
 
-    ADDMETHOD_NOBASE(wait, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(wait, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
 };
 
 struct QueryAndUpdateEventStatusFixture : public OclFixture {

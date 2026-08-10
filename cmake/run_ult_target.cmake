@@ -237,6 +237,11 @@ if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
       add_custom_target(run_${product}_${revision_id}_l0_mt_tests)
       set_target_properties(run_${product}_${revision_id}_l0_mt_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
 
+      set(NEO_L0_MT_TESTS_CMD_PREFIX)
+      if(USE_TSAN)
+        set(NEO_L0_MT_TESTS_CMD_PREFIX ${CMAKE_COMMAND} -E env "TSAN_OPTIONS=suppressions=${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mt_tests/tsan_suppressions.txt")
+      endif()
+
       add_custom_command(
                          TARGET run_${product}_${revision_id}_l0_mt_tests
                          POST_BUILD
@@ -244,11 +249,11 @@ if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
                          COMMAND echo create working directory ${TargetDir}/level_zero/${product}/${revision_id}
                          COMMAND ${CMAKE_COMMAND} -E make_directory ${TargetDir}/level_zero/${product}/${revision_id}
                          COMMAND echo Running ze_intel_gpu_core_mt_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}
-                         COMMAND echo Cmd line: ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_core_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT_L0MT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
-                         COMMAND ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_core_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT_L0MT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
+                         COMMAND echo Cmd line: ${NEO_L0_MT_TESTS_CMD_PREFIX} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_core_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT_L0MT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
+                         COMMAND ${NEO_L0_MT_TESTS_CMD_PREFIX} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_core_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT_L0MT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
                          COMMAND echo Running ze_intel_gpu_tools_mt_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}
-                         COMMAND echo Cmd line: ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_tools_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT_TOOLS_MT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
-                         COMMAND ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_tools_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT_TOOLS_MT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
+                         COMMAND echo Cmd line: ${NEO_L0_MT_TESTS_CMD_PREFIX} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_tools_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT_TOOLS_MT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
+                         COMMAND ${NEO_L0_MT_TESTS_CMD_PREFIX} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_tools_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT_TOOLS_MT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
       )
 
       add_dependencies(run_l0_mt_tests run_${product}_${revision_id}_l0_mt_tests)

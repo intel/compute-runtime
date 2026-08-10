@@ -17,6 +17,7 @@
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
+#include "level_zero/api/opencl/test/common/fixtures/leo_event_callbacks_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -423,11 +424,6 @@ TEST_F(ClEnqueueSvmMapTest, givenWriteInvalidateMappedSvmBufferWhenUnmappedThenH
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
-struct WhiteBoxLeoContext : public Context {
-    using Context::Context;
-    using Context::internalComputeCmdLists;
-};
-
 struct SvmFreeCallbackRecord {
     cl_command_queue commandQueue = nullptr;
     cl_uint numSvmPointers = 0u;
@@ -444,33 +440,34 @@ struct ClEnqueueSvmFreeTest : public Test<OclFixture> {
         clDevice = clDevices[0].get();
         cl_device_id clDeviceId = clDevice;
 
-        leoContext = std::make_unique<WhiteBoxLeoContext>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(),
-                                                          1, &clDeviceId, true);
-        // Intercept the completion callback LEO defers onto the internal cmdlist, it cannot be executed by the GPU here.
-        leoContext->internalComputeCmdLists[clDevice->getRootDeviceIndex()] = capturingInternalCmdList.toHandle();
+        mockHandler = installMockHandler();
+
+        leoContext = std::make_unique<Context>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(),
+                                               1, &clDeviceId, true);
 
         commandQueue = new CommandQueue(leoContext.get(), clDevice, nullptr, capturingQueueCmdList.toHandle());
     }
 
     void TearDown() override {
-        drainHostFunctions();
+        installMockHandler();
+
         commandQueue->decRefApi();
         otherContext.reset();
-        if (leoContext) {
-            leoContext->internalComputeCmdLists.clear();
-            leoContext.reset();
-        }
+        leoContext.reset();
         Test<OclFixture>::TearDown();
     }
 
-    // Executes the pending deferred callbacks, they own the callback user data and an event reference.
-    void drainHostFunctions() {
-        const auto captured = capturingInternalCmdList.appendHostFunctionArgs.count();
-        for (auto i = drainedHostFunctions; i < captured; ++i) {
-            const auto &hostFunctionArgs = capturingInternalCmdList.appendHostFunctionArgs[i];
-            hostFunctionArgs.hostFunction(hostFunctionArgs.userData);
-        }
-        drainedHostFunctions = captured;
+    MockAsyncEventsHandler *installMockHandler() {
+        auto handler = new MockAsyncEventsHandler(false);
+        static_cast<WhiteBoxPlatform *>(platform)->asyncEventsHandler.reset(handler);
+        return handler;
+    }
+
+    void completeEvent(cl_event event) {
+        auto pEvent = castToObject<Event>(event);
+        ASSERT_NE(nullptr, pEvent);
+        L0::Event::fromHandle(pEvent->getL0Handle())->hostSignal(false);
+        pEvent->updateExecutionStatus();
     }
 
     cl_command_type queryCommandType(cl_event event) {
@@ -489,13 +486,12 @@ struct ClEnqueueSvmFreeTest : public Test<OclFixture> {
     }
 
     ClDevice *clDevice = nullptr;
-    std::unique_ptr<WhiteBoxLeoContext> leoContext;
-    std::unique_ptr<WhiteBoxLeoContext> otherContext;
+    std::unique_ptr<Context> leoContext;
+    std::unique_ptr<Context> otherContext;
     CommandQueue *commandQueue = nullptr;
     CapturingCommandList capturingQueueCmdList{};
-    CapturingCommandList capturingInternalCmdList{};
+    MockAsyncEventsHandler *mockHandler = nullptr;
     SvmFreeCallbackRecord freeRecord{};
-    size_t drainedHostFunctions = 0u;
     uint32_t firstStorage = 0u;
     uint32_t secondStorage = 0u;
     void *svmPointers[2] = {&firstStorage, &secondStorage};
@@ -506,19 +502,21 @@ TEST_F(ClEnqueueSvmFreeTest, givenUserProvidedEventWhenClEnqueueSVMFreeThenComma
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMFree(commandQueue, 2, svmPointers, svmFreeCallback, &freeRecord, 0, nullptr, &event));
     ASSERT_NE(nullptr, event);
 
-    EXPECT_EQ(1u, capturingInternalCmdList.appendHostFunctionArgs.count());
+    EXPECT_TRUE(castToObject<Event>(event)->peekHasCallbacks());
+    EXPECT_FALSE(mockHandler->peekIsRegisterListEmpty());
     EXPECT_EQ(0u, freeRecord.callCount);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_FREE), queryCommandType(event));
 
+    completeEvent(event);
     EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
 }
 
-TEST_F(ClEnqueueSvmFreeTest, givenDeferredCallbackWhenHostFunctionRunsThenUserFreeCallbackIsInvoked) {
+TEST_F(ClEnqueueSvmFreeTest, givenDeferredCallbackWhenEventCompletesThenUserFreeCallbackIsInvoked) {
     cl_event event = nullptr;
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMFree(commandQueue, 2, svmPointers, svmFreeCallback, &freeRecord, 0, nullptr, &event));
     ASSERT_NE(nullptr, event);
 
-    drainHostFunctions();
+    completeEvent(event);
 
     EXPECT_EQ(1u, freeRecord.callCount);
     EXPECT_EQ(static_cast<cl_command_queue>(commandQueue), freeRecord.commandQueue);
@@ -529,6 +527,22 @@ TEST_F(ClEnqueueSvmFreeTest, givenDeferredCallbackWhenHostFunctionRunsThenUserFr
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_FREE), queryCommandType(event));
 
     EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
+}
+
+TEST_F(ClEnqueueSvmFreeTest, givenEventThatNeverCompletesWhenTheHandlerShutsDownThenTheFreeCallbackStillRuns) {
+    cl_event event = nullptr;
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMFree(commandQueue, 2, svmPointers, svmFreeCallback, &freeRecord, 0, nullptr, &event));
+    ASSERT_NE(nullptr, event);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
+    ASSERT_EQ(0u, freeRecord.callCount);
+
+    // Handler teardown drops the last reference to the never-completed event. Its destructor has to
+    // drain the pending callback, otherwise the wrapper's user data and the SVM pointers are leaked.
+    mockHandler = installMockHandler();
+
+    EXPECT_EQ(1u, freeRecord.callCount);
+    EXPECT_EQ(2u, freeRecord.numSvmPointers);
 }
 
 TEST_F(ClEnqueueSvmFreeTest, givenMarkerEnqueuedWhenQueryingCommandTypeThenMarkerIsReported) {
@@ -543,8 +557,8 @@ TEST_F(ClEnqueueSvmFreeTest, givenMarkerEnqueuedWhenQueryingCommandTypeThenMarke
 
 TEST_F(ClEnqueueSvmFreeTest, givenWaitListEventFromOtherContextWhenClEnqueueSVMFreeThenInvalidContextIsReturned) {
     cl_device_id clDeviceId = clDevice;
-    otherContext = std::make_unique<WhiteBoxLeoContext>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(),
-                                                        1, &clDeviceId, true);
+    otherContext = std::make_unique<Context>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(),
+                                             1, &clDeviceId, true);
 
     cl_int errcode = CL_SUCCESS;
     auto userEvent = clCreateUserEvent(otherContext.get(), &errcode);
@@ -555,7 +569,7 @@ TEST_F(ClEnqueueSvmFreeTest, givenWaitListEventFromOtherContextWhenClEnqueueSVMF
     EXPECT_EQ(CL_INVALID_CONTEXT, clEnqueueSVMFree(commandQueue, 1, svmPointers, svmFreeCallback, &freeRecord, 1, &userEvent, &event));
 
     EXPECT_EQ(nullptr, event);
-    EXPECT_FALSE(capturingInternalCmdList.appendHostFunctionArgs.wasCalled());
+    EXPECT_TRUE(mockHandler->peekIsRegisterListEmpty());
     EXPECT_EQ(0u, freeRecord.callCount);
 
     EXPECT_EQ(CL_SUCCESS, clReleaseEvent(userEvent));

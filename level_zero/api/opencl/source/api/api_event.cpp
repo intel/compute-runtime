@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/get_info.h"
 
-#include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
@@ -123,7 +122,7 @@ cl_int CL_API_CALL clSetUserEventStatus(cl_event event,
     if (executionStatus != CL_COMPLETE) {
         pEvent->getContext()->terminateExecution();
     }
-    cl_int tracingRetVal = pEvent->signal();
+    cl_int tracingRetVal = L0ToClResultMapper(pEvent->signal(executionStatus));
     TRACING_EXIT(ClSetUserEventStatus, &tracingRetVal);
     return tracingRetVal;
 }
@@ -156,30 +155,14 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
     case CL_COMPLETE: {
         if (pEvent->queryAndUpdateEventStatus() == CL_COMPLETE) {
             funcNotify(event, commandExecCallbackType, userData);
-            cl_int tracingRetVal = CL_SUCCESS;
-            TRACING_EXIT(ClSetEventCallback, &tracingRetVal);
-            return tracingRetVal;
         } else {
-            NEO::LEO::EventHandleSpan waitEvents{1, &event};
-            auto clUserData = new NEO::LEO::Event::ClUserData{event, commandExecCallbackType, funcNotify, userData};
-
-            pEvent->incRefInternal();
-
-            auto internalLock = pEvent->getContext()->lockInternalCompute();
-            ze_command_list_handle_t cmdList = pEvent->getContext()->getInternalComputeCmdList();
-
-            cl_int tracingRetVal = L0ToClResultMapper(L0::zeCommandListAppendHostFunction(cmdList,
-                                                                                          reinterpret_cast<ze_host_function_callback_t>(NEO::LEO::Event::clCallbackWrapper),
-                                                                                          clUserData,
-                                                                                          nullptr,
-                                                                                          nullptr,
-                                                                                          waitEvents.size(),
-                                                                                          waitEvents.data()));
-            TRACING_EXIT(ClSetEventCallback, &tracingRetVal);
-            return tracingRetVal;
+            pEvent->addCallback(funcNotify, commandExecCallbackType, userData);
         }
     }
     }
+    cl_int tracingRetVal = CL_SUCCESS;
+    TRACING_EXIT(ClSetEventCallback, &tracingRetVal);
+    return tracingRetVal;
 }
 
 cl_int CL_API_CALL clGetEventProfilingInfo(cl_event event,

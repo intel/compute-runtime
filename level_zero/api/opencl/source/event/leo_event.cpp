@@ -20,8 +20,10 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/api/internal/l0_event.h"
+#include "level_zero/api/opencl/source/event/leo_async_events_handler.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/driver_experimental/zex_event.h"
 
@@ -86,6 +88,15 @@ Event::Event(NEO::LEO::Context *context) : commandType(CL_COMMAND_USER), oclObj(
 }
 
 Event::~Event() {
+    auto lastStatus = this->eventStatus.load();
+    if (lastStatus > CL_COMPLETE) {
+        lastStatus = executionTerminatedOnDestruction;
+        this->eventStatus.store(lastStatus);
+    }
+    if (this->peekHasCallbacks()) {
+        this->executeCallbacks(lastStatus);
+    }
+
     this->arbEvent.reset(nullptr);
 
     if (perfCounterNode != nullptr) {
@@ -223,28 +234,94 @@ cl_int Event::getEventInfo(cl_event_info paramName, size_t paramValueSize, void 
     }
 }
 
-ze_result_t Event::wait() {
-    return zeEventHostSynchronize(this->eventHandle, std::numeric_limits<uint64_t>::max());
+ze_result_t Event::wait(uint64_t timeout) {
+    return zeEventHostSynchronize(this->eventHandle, timeout);
 }
 
-ze_result_t Event::signal() {
-    return zeEventHostSignal(this->eventHandle);
+ze_result_t Event::signal(cl_int executionStatus) {
+    auto ret = zeEventHostSignal(this->eventHandle);
+    if (ret == ZE_RESULT_SUCCESS) {
+        this->eventStatus = executionStatus;
+        this->executeCallbacks(executionStatus);
+    }
+    return ret;
+}
+
+void Event::updateExecutionStatus() {
+    auto status = this->queryAndUpdateEventStatus();
+    if (status <= CL_COMPLETE) {
+        this->executeCallbacks(status);
+    }
+}
+
+void Event::abortExecutionDueToGpuHang() {
+    this->eventStatus = executionAbortedDueToGpuHang;
+    this->executeCallbacks(executionAbortedDueToGpuHang);
+}
+
+bool Event::peekHasCallbacks() {
+    auto lock = std::unique_lock<std::mutex>(callbacksMtx);
+    return !callbacks.empty();
+}
+
+void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
+    DEBUG_BREAK_IF((type != CL_RUNNING) && (type != CL_COMPLETE));
+    {
+        auto lock = std::unique_lock<std::mutex>(callbacksMtx);
+        callbacks.emplace_back(this, fn, type, data);
+    }
+
+    auto status = this->peekExecutionStatus();
+    if (status <= CL_COMPLETE) {
+        this->executeCallbacks(status);
+    }
+
+    if (!isUserEvent()) {
+        getContext()->getClDevice()->getPlatform()->getAsyncEventsHandler().registerEvent(this);
+    }
+}
+
+void Event::executeCallbacks(cl_int executionStatus) {
+    bool terminated = executionStatus < 0;
+
+    std::vector<Callback> detachedCallbacks;
+    {
+        auto lock = std::unique_lock<std::mutex>(callbacksMtx);
+        detachedCallbacks.swap(callbacks);
+    }
+
+    for (auto &callback : detachedCallbacks) {
+        if (terminated) {
+            callback.overrideCallbackExecutionStatusTarget(executionStatus);
+        }
+        callback.execute();
+    }
 }
 
 cl_int Event::queryAndUpdateEventStatus() {
-    if (zeEventQueryStatus(this->eventHandle) == ZE_RESULT_SUCCESS) {
-        if (!this->isUserEvent()) {
-            auto cmdList = this->getCommandQueue()->getL0Object();
-
-            if (!cmdList->getPrintfKernelContainer().empty()) {
-
-                auto ret = this->wait();
-                this->getCommandQueue()->getL0Object()->handlePostSyncPrintfAndAssert(ret != ZE_RESULT_SUCCESS);
-            }
-        }
-        this->eventStatus = CL_COMPLETE;
+    auto status = this->eventStatus.load();
+    if (status <= CL_COMPLETE) {
+        return status;
     }
-    return this->eventStatus;
+
+    if (zeEventQueryStatus(this->eventHandle) != ZE_RESULT_SUCCESS) {
+        return this->eventStatus.load();
+    }
+
+    if (!this->eventStatus.compare_exchange_strong(status, CL_COMPLETE)) {
+        return status;
+    }
+
+    if (!this->isUserEvent()) {
+        auto cmdList = this->getCommandQueue()->getL0Object();
+
+        if (!cmdList->getPrintfKernelContainer().empty()) {
+
+            auto ret = this->wait();
+            cmdList->handlePostSyncPrintfAndAssert(ret != ZE_RESULT_SUCCESS);
+        }
+    }
+    return CL_COMPLETE;
 }
 
 void Event::setQueueTimeStamp() {

@@ -8,6 +8,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/event/leo_event.h"
+#include "level_zero/api/opencl/test/common/fixtures/leo_event_callbacks_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 
 #include "CL/cl.h"
@@ -44,6 +45,41 @@ TEST(GetEventProfilingInfoTests, givenNullEventWhenGetEventProfilingInfoThenRetu
 TEST(SetEventCallbackTests, givenNullFuncNotifyWhenSetEventCallbackThenReturnsCLInvalidValue) {
     auto retVal = clSetEventCallback(nullptr, CL_COMPLETE, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+void CL_CALLBACK dummyEventCallback(cl_event, cl_int, void *) {
+}
+
+TEST(SetEventCallbackTests, givenNullEventWhenSetEventCallbackThenReturnsCLInvalidEvent) {
+    auto retVal = clSetEventCallback(nullptr, CL_COMPLETE, &dummyEventCallback, nullptr);
+    EXPECT_EQ(CL_INVALID_EVENT, retVal);
+}
+
+using SetEventCallbackWithContextTests = Test<EventCallbacksFixture>;
+
+TEST_F(SetEventCallbackWithContextTests, givenUnsupportedCallbackTypeWhenSetEventCallbackThenReturnsCLInvalidValue) {
+    cl_int errcode = CL_SUCCESS;
+    auto userEvent = clCreateUserEvent(clContext, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    EXPECT_EQ(CL_INVALID_VALUE, clSetEventCallback(userEvent, CL_COMPLETE - 1, &dummyEventCallback, nullptr));
+    EXPECT_EQ(CL_INVALID_VALUE, clSetEventCallback(userEvent, CL_QUEUED + 1, &dummyEventCallback, nullptr));
+
+    clReleaseEvent(userEvent);
+}
+
+TEST_F(SetEventCallbackWithContextTests, givenSupportedCallbackTypesWhenSetEventCallbackThenReturnsSuccess) {
+    cl_int errcode = CL_SUCCESS;
+    auto userEvent = clCreateUserEvent(clContext, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    EXPECT_EQ(CL_SUCCESS, clSetEventCallback(userEvent, CL_QUEUED, &dummyEventCallback, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clSetEventCallback(userEvent, CL_SUBMITTED, &dummyEventCallback, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clSetEventCallback(userEvent, CL_RUNNING, &dummyEventCallback, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clSetEventCallback(userEvent, CL_COMPLETE, &dummyEventCallback, nullptr));
+
+    clSetUserEventStatus(userEvent, CL_COMPLETE);
+    clReleaseEvent(userEvent);
 }
 
 TEST(CreateUserEventTests, givenNullContextWhenCreateUserEventThenReturnsCLInvalidContext) {

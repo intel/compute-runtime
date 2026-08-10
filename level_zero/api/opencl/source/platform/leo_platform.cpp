@@ -24,7 +24,7 @@ namespace LEO {
 
 std::vector<std::unique_ptr<Platform>> *platformsImpl = nullptr;
 
-Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformInfo), driverHandle(driverHandle) {
+Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformInfo), asyncEventsHandler(new AsyncEventsHandler), driverHandle(driverHandle) {
     const auto &deviceHandles = L0::DriverHandle::fromHandle(driverHandle)->devicesToExpose;
     clDevices.reserve(deviceHandles.size());
     for (const auto &deviceHandle : deviceHandles) {
@@ -60,6 +60,14 @@ Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformI
     this->platformInfo->numericVersion = CL_MAKE_VERSION(3, 0, 0);
 
     sharingFactory.fillGlobalDispatchTable();
+}
+
+Platform::~Platform() {
+    this->asyncEventsHandler->closeThread();
+}
+
+AsyncEventsHandler &Platform::getAsyncEventsHandler() const {
+    return *this->asyncEventsHandler;
 }
 
 cl_int Platform::getInfo(cl_platform_info paramName,
