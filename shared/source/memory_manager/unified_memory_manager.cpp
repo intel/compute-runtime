@@ -47,6 +47,7 @@ void SVMAllocsManager::MapBasedAllocationTracker::insert(const SvmAllocationData
 void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData &allocationsPair) {
     SvmAllocationContainer::iterator iter;
     iter = allocations.find(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()));
+    UNRECOVERABLE_IF(iter == allocations.end());
     allocations.erase(iter);
 }
 
