@@ -800,15 +800,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const Allocatio
     return nullptr;
 }
 
-// Translate a virtual reservation's software access attribute into the GPU page-table protection
-// applied at vm_bind time. The KMD bind interface exposes only a read-only bit
-// (Xe DRM_XE_VM_BIND_FLAG_READONLY, prelim-i915 PRELIM_I915_GEM_VM_BIND_READONLY). A separate
-// no-access bind flag is not available, so noAccess must be rejected by the caller before mapping.
-// readWrite, and a null/default flags pointer, leave the mapping writable.
-static bool isReadOnlyVirtualMapping(const MemoryFlags *memoryflags) {
-    return memoryflags != nullptr && memoryflags->readOnly;
-}
-
 bool DrmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
     bool result = true;
 
@@ -876,10 +867,6 @@ bool DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAll
 }
 
 bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
-    if (memoryflags != nullptr && memoryflags->noAccess) {
-        return false;
-    }
-
     DrmAllocation *drmAllocation = reinterpret_cast<DrmAllocation *>(physicalAllocation);
     const bool vmBindAvailable = getDrm(drmAllocation->getRootDeviceIndex()).isVmBindAvailable();
     auto bufferObjects = drmAllocation->getBOs();
@@ -900,15 +887,8 @@ bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation
         return false;
     }
 
-    // The reservation's access attribute is latched onto the BO here and consumed when the
-    // subsequent makeResident drives the vm_bind (changeBufferObjectBinding reads
-    // isReadOnlyGpuResource()). Set unconditionally so a physical handle remapped read-write
-    // after an earlier read-only mapping is not left stale.
-    const bool readOnlyMapping = isReadOnlyVirtualMapping(memoryflags);
-
     for (auto bufferObject : bufferObjects) {
         if (bufferObject) {
-            bufferObject->setAsReadOnly(readOnlyMapping);
             // Each device BO holds a single active mapping; remapping without an
             // intervening unMap would clobber peekAddress() and the bind params.
             DEBUG_BREAK_IF(bufferObject->getVirtualMappingSize() != 0u);
@@ -938,11 +918,7 @@ bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation
     return true;
 }
 
-bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
-    if (memoryflags != nullptr && memoryflags->noAccess) {
-        return false;
-    }
-
+bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) {
     auto drmPhysicalAllocation = static_cast<DrmAllocation *>(physicalAllocation);
     auto &drm = this->getDrm(drmPhysicalAllocation->getRootDeviceIndex());
     BufferObject *physicalBo = drmPhysicalAllocation->getBO();
@@ -977,9 +953,6 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
     bo->setAddress(baseAddress);
     bo->setPhysicalMemoryOffset(offset);
     bo->setVirtualMappingSize(bufferSize);
-    // Latch the reservation's access attribute before the bind below so the vm_bind carries the
-    // read-only protection for host physical memory too.
-    bo->setAsReadOnly(isReadOnlyVirtualMapping(memoryflags));
 
     auto drmAllocation = new DrmAllocation(drmPhysicalAllocation->getRootDeviceIndex(), 1u, AllocationType::bufferHostMemory, bo, addrToPtr(bo->peekAddress()), bo->peekSize(),
                                            static_cast<osHandle>(internalHandle), memoryPool, getGmmHelper(drmPhysicalAllocation->getRootDeviceIndex())->canonize(bo->peekAddress()));
@@ -1029,7 +1002,6 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
         bo->setAddress(baseAddress);
         bo->setPhysicalMemoryOffset(offset);
         bo->setVirtualMappingSize(bufferSize);
-        bo->setAsReadOnly(isReadOnlyVirtualMapping(memoryflags));
 
         auto canonizedGpuAddress = getGmmHelper(rootDeviceIndices[i])->canonize(bo->peekAddress());
         auto allocation = new DrmAllocation(rootDeviceIndices[i], 1u, AllocationType::bufferHostMemory, bo, addrToPtr(bo->peekAddress()), bo->peekSize(),
