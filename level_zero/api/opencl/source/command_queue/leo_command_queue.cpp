@@ -425,21 +425,19 @@ void CommandQueue::storeDependencies(cl_uint numEvents, const cl_event *eventWai
         return;
     }
 
-    for (cl_uint i = 0; i < numEvents; ++i) {
-        NEO::LEO::castToObject<NEO::LEO::Event>(eventWaitList[i])->incRefInternal();
-    }
-
     auto lock = this->takeOwnership();
     for (cl_uint i = 0; i < numEvents; ++i) {
-        this->dependencyEvents.push_back(NEO::LEO::castToObject<NEO::LEO::Event>(eventWaitList[i]));
+        auto *pEvent = NEO::LEO::castToObject<NEO::LEO::Event>(eventWaitList[i]);
+        pEvent->incRefInternal();
+        this->dependencyEvents.push_back(pEvent);
     }
 }
 
 void CommandQueue::clearDependencies() {
+    auto lock = this->takeOwnership();
     for (auto *pEvent : this->dependencyEvents) {
         pEvent->decRefInternal();
     }
-    auto lock = this->takeOwnership();
     this->dependencyEvents.clear();
 }
 

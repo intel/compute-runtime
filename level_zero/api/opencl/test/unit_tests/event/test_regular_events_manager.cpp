@@ -23,6 +23,9 @@ struct WhiteBoxRegularEventsManager : public RegularEventsManager {
     size_t hostVisibleFreeCount() const { return this->hostVisibleGroup.freeEvents.size(); }
     size_t timestampFreeCount() const { return this->timestampGroup.freeEvents.size(); }
     size_t hostVisiblePoolCount() const { return this->hostVisibleGroup.pools.size(); }
+    size_t hostVisiblePendingCount() const { return this->hostVisibleGroup.pendingEvents.size(); }
+    size_t timestampPendingCount() const { return this->timestampGroup.pendingEvents.size(); }
+    void exhaustHostVisiblePool() { this->hostVisibleGroup.createdFromLatestPool = eventCountInPool; }
 };
 
 using RegularEventsManagerTests = Test<OclFixture>;
@@ -48,7 +51,7 @@ TEST_F(RegularEventsManagerTests, givenCompletedEventWhenReturnedThenItIsPooledA
     manager.returnEvent(secondEvent, false);
 }
 
-TEST_F(RegularEventsManagerTests, givenIncompleteEventWhenReturnedThenItIsNotPooled) {
+TEST_F(RegularEventsManagerTests, givenIncompleteEventWhenReturnedThenItIsKeptAsPendingAndNotPooled) {
     WhiteBoxRegularEventsManager manager(context->toHandle(), {device->toHandle()});
 
     auto event = manager.obtainEvent(false);
@@ -59,6 +62,116 @@ TEST_F(RegularEventsManagerTests, givenIncompleteEventWhenReturnedThenItIsNotPoo
 
     manager.returnEvent(event, false);
     EXPECT_EQ(0u, manager.hostVisibleFreeCount());
+    EXPECT_EQ(1u, manager.hostVisiblePendingCount());
+    EXPECT_EQ(ZE_RESULT_NOT_READY, zeEventQueryStatus(event));
+}
+
+TEST_F(RegularEventsManagerTests, givenIncompleteTimestampEventWhenReturnedThenItIsKeptAsPending) {
+    WhiteBoxRegularEventsManager manager(context->toHandle(), {device->toHandle()});
+
+    auto event = manager.obtainEvent(true);
+    ASSERT_NE(nullptr, event);
+
+    zeEventHostReset(event);
+    ASSERT_EQ(ZE_RESULT_NOT_READY, zeEventQueryStatus(event));
+
+    manager.returnEvent(event, true);
+    EXPECT_EQ(0u, manager.timestampFreeCount());
+    EXPECT_EQ(1u, manager.timestampPendingCount());
+}
+
+TEST_F(RegularEventsManagerTests, givenFreeIndexInPoolWhenObtainingEventThenCompletedPendingEventIsNotReused) {
+    WhiteBoxRegularEventsManager manager(context->toHandle(), {device->toHandle()});
+
+    auto pendingEvent = manager.obtainEvent(false);
+    ASSERT_NE(nullptr, pendingEvent);
+    zeEventHostReset(pendingEvent);
+    manager.returnEvent(pendingEvent, false);
+    ASSERT_EQ(1u, manager.hostVisiblePendingCount());
+    ASSERT_EQ(1u, manager.hostVisiblePoolCount());
+
+    zeEventHostSignal(pendingEvent);
+
+    auto event = manager.obtainEvent(false);
+    ASSERT_NE(nullptr, event);
+    EXPECT_NE(pendingEvent, event);
+    EXPECT_EQ(1u, manager.hostVisiblePendingCount());
+    EXPECT_EQ(1u, manager.hostVisiblePoolCount());
+
+    zeEventHostSignal(event);
+    manager.returnEvent(event, false);
+}
+
+TEST_F(RegularEventsManagerTests, givenExhaustedPoolAndCompletedPendingEventWhenObtainingEventThenPendingEventIsReusedWithoutNewPool) {
+    WhiteBoxRegularEventsManager manager(context->toHandle(), {device->toHandle()});
+
+    auto pendingEvent = manager.obtainEvent(false);
+    ASSERT_NE(nullptr, pendingEvent);
+    zeEventHostReset(pendingEvent);
+    manager.returnEvent(pendingEvent, false);
+    ASSERT_EQ(1u, manager.hostVisiblePendingCount());
+    ASSERT_EQ(1u, manager.hostVisiblePoolCount());
+
+    zeEventHostSignal(pendingEvent);
+    manager.exhaustHostVisiblePool();
+
+    auto event = manager.obtainEvent(false);
+    EXPECT_EQ(pendingEvent, event);
+    EXPECT_EQ(0u, manager.hostVisiblePendingCount());
+    EXPECT_EQ(1u, manager.hostVisiblePoolCount());
+    EXPECT_EQ(ZE_RESULT_NOT_READY, zeEventQueryStatus(event));
+
+    zeEventHostSignal(event);
+    manager.returnEvent(event, false);
+}
+
+TEST_F(RegularEventsManagerTests, givenExhaustedPoolAndStillIncompletePendingEventWhenObtainingEventThenNewPoolIsCreated) {
+    WhiteBoxRegularEventsManager manager(context->toHandle(), {device->toHandle()});
+
+    auto pendingEvent = manager.obtainEvent(false);
+    ASSERT_NE(nullptr, pendingEvent);
+    zeEventHostReset(pendingEvent);
+    manager.returnEvent(pendingEvent, false);
+    ASSERT_EQ(1u, manager.hostVisiblePendingCount());
+
+    manager.exhaustHostVisiblePool();
+
+    auto event = manager.obtainEvent(false);
+    ASSERT_NE(nullptr, event);
+    EXPECT_NE(pendingEvent, event);
+    EXPECT_EQ(1u, manager.hostVisiblePendingCount());
+    EXPECT_EQ(2u, manager.hostVisiblePoolCount());
+
+    zeEventHostSignal(event);
+    manager.returnEvent(event, false);
+}
+
+TEST_F(RegularEventsManagerTests, givenFreeEventAndCompletedPendingEventWhenObtainingEventThenFreeEventIsPreferred) {
+    WhiteBoxRegularEventsManager manager(context->toHandle(), {device->toHandle()});
+
+    auto pendingEvent = manager.obtainEvent(false);
+    ASSERT_NE(nullptr, pendingEvent);
+    zeEventHostReset(pendingEvent);
+    manager.returnEvent(pendingEvent, false);
+    zeEventHostSignal(pendingEvent);
+
+    auto freeEvent = manager.obtainEvent(false);
+    ASSERT_NE(nullptr, freeEvent);
+    zeEventHostSignal(freeEvent);
+    manager.returnEvent(freeEvent, false);
+
+    ASSERT_EQ(1u, manager.hostVisibleFreeCount());
+    ASSERT_EQ(1u, manager.hostVisiblePendingCount());
+
+    manager.exhaustHostVisiblePool();
+
+    auto event = manager.obtainEvent(false);
+    EXPECT_EQ(freeEvent, event);
+    EXPECT_EQ(0u, manager.hostVisibleFreeCount());
+    EXPECT_EQ(1u, manager.hostVisiblePendingCount());
+
+    zeEventHostSignal(event);
+    manager.returnEvent(event, false);
 }
 
 TEST_F(RegularEventsManagerTests, givenTimestampAndHostVisibleRequestsThenSeparatePoolsAreUsed) {
