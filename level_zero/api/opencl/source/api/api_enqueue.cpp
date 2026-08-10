@@ -829,7 +829,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
     NEO::LEO::MemObjSizeArray sizes{cb, 0, 0};
     NEO::LEO::MemObjOffsetArray offsets{offset, 0, 0};
     if (!pBuffer->getMapOperationsHandler().add(ptrOffset(pBuffer->getCpuPtr(), offset), cb, mapFlags, sizes, offsets)) {
-        errcodeHelper.set(CL_OUT_OF_HOST_MEMORY);
+        errcodeHelper.set(CL_INVALID_OPERATION);
         void *tracingRetVal = nullptr;
         TRACING_EXIT(ClEnqueueMapBuffer, &tracingRetVal);
         return tracingRetVal;
@@ -941,7 +941,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
     }
 
     if (!pImage->getMapOperationsHandler().add(ptrOffset(pImage->getCpuPtr(), offset), size, mapFlags, sizes, offsets, getOclMipLevel(pImage, origin))) {
-        errcodeHelper.set(CL_OUT_OF_HOST_MEMORY);
+        errcodeHelper.set(CL_INVALID_OPERATION);
         void *tracingRetVal = nullptr;
         TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
         return tracingRetVal;

@@ -111,6 +111,48 @@ TEST(MapOperationsHandlerTests, givenWriteMappingsWithNoOverlapWhenAddThenBothSu
     EXPECT_EQ(2u, handler.size());
 }
 
+TEST(MapOperationsHandlerTests, givenWriteMappingWhenAddWriteStartingAtItsEndThenReturnsTrue) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0xE000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, writeFlags, size, offset);
+
+    void *adjacentPtr = reinterpret_cast<void *>(0xE040);
+    MemObjSizeArray size2 = {16, 1, 1};
+    EXPECT_TRUE(handler.add(adjacentPtr, 16, writeFlags, size2, offset));
+    EXPECT_EQ(2u, handler.size());
+}
+
+TEST(MapOperationsHandlerTests, givenWriteMappingWhenAddWriteEndingAtItsStartThenReturnsTrue) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0xF000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, writeFlags, size, offset);
+
+    void *adjacentPtr = reinterpret_cast<void *>(0xEFF0);
+    MemObjSizeArray size2 = {16, 1, 1};
+    EXPECT_TRUE(handler.add(adjacentPtr, 16, writeFlags, size2, offset));
+    EXPECT_EQ(2u, handler.size());
+}
+
+TEST(MapOperationsHandlerTests, givenWriteMappingWhenAddWriteOverlappingItsFirstByteThenReturnsFalse) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0xF000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, writeFlags, size, offset);
+
+    void *overlappingPtr = reinterpret_cast<void *>(0xEFF0);
+    MemObjSizeArray size2 = {17, 1, 1};
+    EXPECT_FALSE(handler.add(overlappingPtr, 17, writeFlags, size2, offset));
+    EXPECT_EQ(1u, handler.size());
+}
+
 TEST(MapOperationsHandlerTests, givenReadOnlyMappingWhenAddedThenFindReturnsReadOnlyFlag) {
     MapOperationsHandler handler;
     void *ptr = reinterpret_cast<void *>(0xC000);

@@ -40,8 +40,8 @@ bool MapOperationsHandler::isOverlapping(MapInfo &inputMapInfo) {
         auto mappedStartPtr = mapInfo.ptr;
         auto mappedEndPtr = ptrOffset(mappedStartPtr, mapInfo.ptrLength);
 
-        // Requested ptr starts before or inside existing ptr range and overlapping end
-        if (inputStartPtr < mappedEndPtr && inputEndPtr >= mappedStartPtr) {
+        // Both ranges are half open, so touching endpoints are adjacent, not overlapping
+        if (inputStartPtr < mappedEndPtr && inputEndPtr > mappedStartPtr) {
             return true;
         }
     }
