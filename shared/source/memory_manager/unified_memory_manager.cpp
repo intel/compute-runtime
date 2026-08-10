@@ -41,12 +41,12 @@ uint32_t UnifiedMemoryProperties::getRootDeviceIndex() const {
 }
 
 void SVMAllocsManager::MapBasedAllocationTracker::insert(const SvmAllocationData &allocationsPair) {
-    allocations.emplace(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), allocationsPair);
+    allocations.emplace(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()), allocationsPair);
 }
 
 void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData &allocationsPair) {
     SvmAllocationContainer::iterator iter;
-    iter = allocations.find(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
+    iter = allocations.find(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()));
     allocations.erase(iter);
 }
 
@@ -759,13 +759,13 @@ void SVMAllocsManager::removeFromAllocsForIndirectAccess(SvmAllocationData &svmD
 }
 
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
-    insertSVMAlloc(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), svmAllocData);
+    insertSVMAlloc(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()), svmAllocData);
 }
 
 void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
     ContainerReadWriteLockType lock(mtx);
     internalAllocationsMap.erase(svmAllocData.getAllocId());
-    svmAllocs.remove(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
+    svmAllocs.remove(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()));
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
@@ -896,17 +896,17 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
 }
 
 void SVMAllocsManager::freeSVMAllocDeferImpl(FreePolicyType policy) {
-    std::vector<void *> freedPtr;
+    std::vector<const void *> freedKeys;
     for (auto iter = svmDeferFreeAllocs.allocations.begin(); iter != svmDeferFreeAllocs.allocations.end(); ++iter) {
         void *ptr = reinterpret_cast<void *>(iter->second.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
         this->freeSVMAllocImpl(ptr, policy, this->getSVMAlloc(ptr));
 
         if (this->getSVMAlloc(ptr) == nullptr) {
-            freedPtr.push_back(ptr);
+            freedKeys.push_back(iter->first);
         }
     }
-    for (uint32_t i = 0; i < freedPtr.size(); ++i) {
-        svmDeferFreeAllocs.allocations.erase(freedPtr[i]);
+    for (const auto &key : freedKeys) {
+        svmDeferFreeAllocs.allocations.erase(key);
     }
 }
 
@@ -1061,7 +1061,7 @@ void SVMAllocsManager::freeSVMData(SvmAllocationData *svmData) {
     std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
     ContainerReadWriteLockType lock(mtx);
     internalAllocationsMap.erase(svmData->getAllocId());
-    svmAllocs.remove(reinterpret_cast<void *>(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
+    svmAllocs.remove(reinterpret_cast<void *>(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()));
 }
 
 void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {

@@ -182,6 +182,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     void setGpuBaseAddress(uint64_t baseAddress) {
         gpuBaseAddress = baseAddress;
     }
+    uint64_t getGpuAddressWithoutOffset() const {
+        return gpuAddress;
+    }
     uint64_t getGpuAddress() const {
         DEBUG_BREAK_IF(gpuAddress < gpuBaseAddress);
         return gpuAddress + allocationOffset;
