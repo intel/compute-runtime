@@ -452,8 +452,10 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
             }
         }
     }
-    const size_t pageSizeForAlignment = isDiscrete ? MemoryConstants::pageSize2M : MemoryConstants::pageSize;
-    const size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
+    auto externalPtr = reinterpret_cast<void *>(memoryProperties.allocationFlags.hostptr);
+    bool useExternalHostPtrForCpu = externalPtr != nullptr;
+    const size_t pageSizeForAlignment = (isDiscrete && !useExternalHostPtrForCpu) ? MemoryConstants::pageSize2M : MemoryConstants::pageSize;
+    const size_t alignedSize = useExternalHostPtrForCpu ? size : alignUp<size_t>(size, pageSizeForAlignment);
 
     bool compressionEnabled = false;
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
@@ -464,7 +466,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     auto &deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
 
     AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
-                                                 true,
+                                                 !useExternalHostPtrForCpu,
                                                  alignedSize,
                                                  allocationType,
                                                  false,
@@ -493,13 +495,12 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
 
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndicesVector.begin(), rootDeviceIndicesVector.end(), std::less<uint32_t const>());
     SvmAllocationData allocData(maxRootDeviceIndex);
-    void *externalHostPointer = reinterpret_cast<void *>(memoryProperties.allocationFlags.hostptr);
 
-    void *usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalHostPointer);
+    void *usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalPtr);
     if (!usmPtr) {
         if (this->usmHostAllocationsCache) {
             this->trimUSMHostAllocCache();
-            usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalHostPointer);
+            usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalPtr);
         }
         if (!usmPtr) {
             return nullptr;

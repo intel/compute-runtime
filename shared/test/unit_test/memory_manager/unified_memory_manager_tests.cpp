@@ -488,6 +488,24 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenHostUnifiedMemoryAllocatio
     } while (alignment != 0);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, givenExternalHostPointerWhenCreatingHostUnifiedMemoryAllocationThenRequestedSizeIsNotAlignedUpAndAlignmentIsNotSet) {
+    constexpr size_t requestedSize = MemoryConstants::pageSize + 1;
+    auto externalHostPointer = alignedMalloc(requestedSize, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, externalHostPointer);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalHostPointer);
+
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(requestedSize, unifiedMemoryProperties);
+    ASSERT_EQ(externalHostPointer, ptr);
+
+    ASSERT_NE(nullptr, memoryManager->lastAllocationProperties);
+    EXPECT_EQ(requestedSize, memoryManager->lastAllocationProperties->size);
+
+    svmManager->freeSVMAlloc(ptr);
+    alignedFree(externalHostPointer);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenUncachedHostAllocationThenSetAllocationAsUncached) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];
