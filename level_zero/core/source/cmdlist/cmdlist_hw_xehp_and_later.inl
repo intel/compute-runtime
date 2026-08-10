@@ -296,6 +296,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool isCounterBasedEvent = false;
 
     uint64_t inOrderCounterValue = 0;
+    uint64_t inOrderAtomicSignallingValue = 1;
     uint64_t inOrderIncrementValue = 0;
     uint64_t inOrderIncrementGpuAddress = 0;
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
@@ -315,7 +316,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             } else {
                 if (!skipWalkerPostSync) {
                     inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+                    if (this->inOrderAtomicSignalingEnabled) {
+                        inOrderAtomicSignallingValue = getInOrderAtomicSignallingValue(true);
+                    }
                     inOrderExecInfo = this->inOrderExecInfo.get();
+                    this->inOrderExecInfo->setProgrammedCounterValue(inOrderCounterValue);
                 }
                 if (event && event->isCounterBased()) {
                     isCounterBasedEvent = true;
@@ -367,6 +372,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .eventAddress = eventAddress,
             .postSyncImmValue = static_cast<uint64_t>(Event::STATE_SIGNALED),
             .inOrderCounterValue = inOrderCounterValue,
+            .inOrderAtomicSignallingValue = inOrderAtomicSignallingValue,
             .inOrderIncrementGpuAddress = inOrderIncrementGpuAddress,
             .inOrderIncrementValue = inOrderIncrementValue,
             .device = neoDevice,
@@ -486,9 +492,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         } else {
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
         }
-    }
-    if (skipWalkerPostSync) {
-        this->isPostSyncSkippedOnLatestInOrderOperation = true;
     }
 
     if (textureFlushRequired) {

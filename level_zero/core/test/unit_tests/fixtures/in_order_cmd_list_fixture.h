@@ -339,15 +339,6 @@ template <typename GfxFamily>
 bool InOrderCmdListFixture::verifyInOrderDependency(GenCmdList::iterator &cmd, uint64_t counter, uint64_t syncVa, bool qwordCounter, bool isBcs) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-    using StallingBarrierType = typename GfxFamily::StallingBarrierType;
-
-    if (counter == 0) {
-        auto barrierCmd = genCmdCast<StallingBarrierType *>(*cmd);
-        if (barrierCmd) {
-            cmd++;
-            return true;
-        }
-    }
 
     const bool useSemaphore64bCmd = this->device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
     const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordCounter, useSemaphore64bCmd);
@@ -420,6 +411,7 @@ struct MultiTileInOrderCmdListFixture : public InOrderCmdListFixture {
     void SetUp() override {
         NEO::debugManager.flags.CreateMultipleSubDevices.set(partitionCount);
         NEO::debugManager.flags.EnableImplicitScaling.set(4);
+        NEO::debugManager.flags.EnableWalkerPostSyncSkip.set(0);
 
         InOrderCmdListFixture::SetUp();
     }

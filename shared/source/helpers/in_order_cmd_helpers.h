@@ -91,6 +91,10 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
     void resetCounterValue();
 
+    uint64_t getProgrammedCounterValue() const { return programmedCounterValue; }
+    void setProgrammedCounterValue(uint64_t value) { programmedCounterValue = value; }
+    bool isCounterSignalPending() const { return programmedCounterValue < counterValue; }
+
     bool isHostStorageDuplicated() const { return duplicatedHostStorage; }
     bool isAtomicDeviceSignalling() const { return atomicDeviceSignalling; }
 
@@ -138,6 +142,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     std::atomic<uint64_t> lastWaitedCounterValue[2] = {0, 0}; // [0] for offset == 0, [1] for offset != 0
 
     uint64_t counterValue = 0;
+    uint64_t programmedCounterValue = 0;
     uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint32_t numDevicePartitionsToWait = 0;

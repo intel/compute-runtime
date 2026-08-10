@@ -323,6 +323,35 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenSetLastCounterValueIs
     EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(1, 0));
 }
 
+HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenProgrammedCounterValueIsSetThenReportPendingCounterSignalUntilItMatchesCounterValue) {
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, mockDevice.getMemoryManager());
+    auto node = tagAllocator.getTag();
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(node, nullptr, mockDevice, 1, false);
+
+    const uint64_t initialValue = inOrderExecInfo->getInitialCounterValue();
+
+    EXPECT_EQ(initialValue, inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_FALSE(inOrderExecInfo->isCounterSignalPending());
+
+    inOrderExecInfo->addCounterValue(2u);
+    EXPECT_EQ(initialValue, inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_TRUE(inOrderExecInfo->isCounterSignalPending());
+
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(initialValue + 2, inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_FALSE(inOrderExecInfo->isCounterSignalPending());
+
+    inOrderExecInfo->addCounterValue(1u);
+    EXPECT_TRUE(inOrderExecInfo->isCounterSignalPending());
+
+    inOrderExecInfo->resetCounterValue();
+    EXPECT_EQ(initialValue, inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_FALSE(inOrderExecInfo->isCounterSignalPending());
+}
+
 HWTEST_F(CommandEncoderTests, whenResetingInOrderExecInfoCounterValueThenAlsoResetInterruptFence) {
     MockDevice mockDevice;
     auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();

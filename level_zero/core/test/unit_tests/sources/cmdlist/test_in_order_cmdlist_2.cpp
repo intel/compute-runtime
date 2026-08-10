@@ -2470,8 +2470,8 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     EXPECT_EQ(0u, regularCmdList->inOrderExecInfo->getCounterValue());
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    const uint32_t expectedCounterAfterFirst = regularCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u;
-    EXPECT_EQ(expectedCounterAfterFirst, regularCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(1u, regularCmdList->inOrderExecInfo->getCounterValue());
+    const bool counterSignalPending = regularCmdList->isInOrderCounterSignalPending();
 
     {
         GenCmdList cmdList;
@@ -2499,18 +2499,22 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     offset = cmdStream->getUsed();
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    const uint32_t expectedCounterAfterSecond = regularCmdList->isWalkerPostSyncSkipEnabled ? expectedCounterAfterFirst : 2u;
-    EXPECT_EQ(expectedCounterAfterSecond, regularCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->getCounterValue());
 
     {
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
-        auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-        EXPECT_NE(cmdList.end(), semaphoreItor);
+        auto dependencyItor = cmdList.begin();
+        if (counterSignalPending) {
+            dependencyItor = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
+        } else {
+            dependencyItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        }
+        ASSERT_NE(cmdList.end(), dependencyItor);
 
-        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(semaphoreItor, cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(dependencyItor, cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto walker = genCmdCast<WalkerType *>(*walkerItor);
@@ -4120,7 +4124,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignalli
     auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd));
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_INCREMENT, atomicCmd->getAtomicOpcode());
+    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, atomicCmd->getAtomicOpcode());
+    EXPECT_EQ(1u, atomicCmd->getOperand1DataDword0());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
     EXPECT_EQ(0u, atomicCmd->getReturnDataControl());
     EXPECT_EQ(0u, atomicCmd->getCsStall());
@@ -4175,7 +4180,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSi
     auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd));
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_INCREMENT, atomicCmd->getAtomicOpcode());
+    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, atomicCmd->getAtomicOpcode());
+    EXPECT_EQ(1u, atomicCmd->getOperand1DataDword0());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
     EXPECT_EQ(0u, atomicCmd->getReturnDataControl());
     EXPECT_EQ(0u, atomicCmd->getCsStall());
@@ -4292,15 +4298,14 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingF
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
     auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    ASSERT_GE(semaphores.size(), 1u);
+    ASSERT_EQ(2u + (ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired() ? 1 : 0), semaphores.size());
 
     auto itor = cmdList.begin();
     UnitTestHelper<FamilyType>::skipStatePrefetch(itor);
 
     // implicit dependency
     auto gpuAddress = immCmdList2->inOrderExecInfo->getBaseDeviceAddress();
-    const uint64_t expectedImplicitWait = immCmdList2->isWalkerPostSyncSkipEnabled ? 0u : partitionCount;
-    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, expectedImplicitWait, gpuAddress, immCmdList2->isQwordInOrderCounter(), false));
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, gpuAddress, immCmdList2->isQwordInOrderCounter(), false));
 
     // event
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, events[0]->getInOrderExecEventHelper().getBaseDeviceAddress(), immCmdList2->isQwordInOrderCounter(), false));

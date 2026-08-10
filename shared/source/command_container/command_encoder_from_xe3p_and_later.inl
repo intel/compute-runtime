@@ -152,8 +152,8 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
     const bool deviceInterrupt = (args.interruptEvent && !args.inOrderExecInfo->isHostStorageDuplicated());
 
     if (args.inOrderExecInfo->isAtomicDeviceSignalling()) {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, deviceGpuVa, 0, static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B),
-                        mocs, deviceInterrupt, requiresSystemMemoryFence);
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, deviceGpuVa, args.inOrderAtomicSignallingValue,
+                        static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), mocs, deviceInterrupt, requiresSystemMemoryFence);
     } else {
         setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, deviceGpuVa, data, 0, mocs, deviceInterrupt, requiresSystemMemoryFence);
     }

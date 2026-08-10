@@ -1357,7 +1357,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     auto tempAllocsCleanupRequired = handlePostWaitOperations && (mainStorageCleanupNeeded || copyOffloadStorageCleanupNeeded);
 
-    bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !this->inOrderWaitsDisabled && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible && (this->heaplessModeEnabled || !this->latestOperationHasHeapfullCbEventWithProfiling));
+    bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !this->inOrderWaitsDisabled && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible && !this->isInOrderCounterSignalPending());
 
     uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
 
@@ -1410,7 +1410,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     if (status != ZE_RESULT_NOT_READY) {
         if (isInOrderExecutionEnabled()) {
             inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue, inOrderExecInfo->getAllocationOffset());
-            this->isPostSyncSkippedOnLatestInOrderOperation = false;
         }
 
         if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
@@ -1600,7 +1599,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushInOrderCounterSignal() {
     ze_result_t ret = ZE_RESULT_SUCCESS;
-    if ((!this->isHeaplessModeEnabled() && this->latestOperationHasHeapfullCbEventWithProfiling) || this->isPostSyncSkippedOnLatestInOrderOperation) {
+    if ((!this->isHeaplessModeEnabled() && this->latestOperationHasHeapfullCbEventWithProfiling) || this->isInOrderCounterSignalPending()) {
         this->appendSignalInOrderDependencyCounter(nullptr, false, true, false, false);
         this->inOrderExecInfo->addCounterValue(this->getInOrderIncrementValue());
         this->handleInOrderCounterOverflow(false);
@@ -2126,7 +2125,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
     if (event && !isSingleTransfer) {
         if (this->isInOrderExecutionEnabled()) {
             this->flushInOrderCounterSignal();
-            this->isPostSyncSkippedOnLatestInOrderOperation = false;
         }
         if (event->isCounterBased() && event->getInOrderIncrementValue(this->partitionCount) == 0) {
             this->assignInOrderExecInfoToEvent(event);

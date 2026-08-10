@@ -400,7 +400,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndDefaultArgs
 
     auto &postSyncData = walkerCmd.getPostSync();
     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, postSyncData.getOperation());
-    EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B, postSyncData.getAtomicOpcode());
+    EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, postSyncData.getAtomicOpcode());
 }
 
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndInterruptFenceWhencallingSetupPostSyncForInOrderExecThenCorrectValuesAreSet, IsAtLeastXe3pCore) {
@@ -460,7 +460,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2WithVariousAto
                 auto &postSyncData = walkerCmd.getPostSync();
                 if (atomicSignalling) {
                     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, postSyncData.getOperation());
-                    EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B, postSyncData.getAtomicOpcode());
+                    EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, postSyncData.getAtomicOpcode());
                 } else {
                     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, postSyncData.getOperation());
                 }

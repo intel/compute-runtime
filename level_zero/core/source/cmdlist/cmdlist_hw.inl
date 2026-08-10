@@ -198,9 +198,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     this->handleInOrderCounterOverflow(copyOffloadOperation);
 
-    if (!this->isPostSyncSkippedOnLatestInOrderOperation) {
-        inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
-    }
+    inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
 
     this->addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
 
@@ -3454,7 +3452,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
     }
 
     if (hasInOrderDependencies()) {
-        if (!this->isPostSyncSkippedOnLatestInOrderOperation && inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
+        if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
             this->latestOperationHasHeapfullCbEventWithProfiling = false;
             return false;
         }
@@ -3467,12 +3465,10 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
                                                                             nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), relaxedOrderingAllowed, true, false, false, dualStreamCopyOffloadOperation);
 
         this->latestOperationHasHeapfullCbEventWithProfiling = false;
-        this->isPostSyncSkippedOnLatestInOrderOperation = false;
         return true;
     }
 
     this->latestOperationHasHeapfullCbEventWithProfiling = false;
-    this->isPostSyncSkippedOnLatestInOrderOperation = false;
     return false;
 }
 
@@ -3582,8 +3578,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::isResolveIoqDependencyWithBarrier(boo
     }
 
     const bool heapfulProfilingEvent = !this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling;
-    auto resolveIoqDependencyWithBarrier = (this->dcFlushSupport || heapfulProfilingEvent);
-    const auto isBarrierRequired = (this->isPostSyncSkippedOnLatestInOrderOperation || heapfulProfilingEvent);
+    const auto isBarrierRequired = (this->isInOrderCounterSignalPending() || heapfulProfilingEvent);
+    auto resolveIoqDependencyWithBarrier = (this->dcFlushSupport || isBarrierRequired);
     if (this->isImmediateType() && resolveIoqDependencyWithBarrier && !isBarrierRequired) {
         // Use semaphore to avoid serialization if different cmd list submitted workload between previous and current submission.
         // Semaphore is not allowed if previous submission used HP event or post sync was skipped.
@@ -3592,7 +3588,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isResolveIoqDependencyWithBarrier(boo
     }
     DEBUG_BREAK_IF(!resolveIoqDependencyWithBarrier && isBarrierRequired);
 
-    if (NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+    if (!isBarrierRequired && NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         resolveIoqDependencyWithBarrier = NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get();
     }
     return resolveIoqDependencyWithBarrier;
@@ -3717,7 +3713,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                     args.textureCacheInvalidationEnable = true;
                 } else {
                     args.csStallOnly = true;
-                    if (this->isPostSyncSkippedOnLatestInOrderOperation) {
+                    // Pending counter signal caused by skipped walker post sync means that kernel writes were not flushed yet
+                    if (this->isInOrderCounterSignalPending() && !this->latestOperationHasHeapfullCbEventWithProfiling) {
                         args.isL1FlushRequired = true;
                     }
                 }
@@ -3961,20 +3958,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
         encodeMiFlush(deviceAllocGpuVa + inOrderExecInfo->getAllocationOffset(), signalValue, args);
 
     } else if (this->inOrderAtomicSignalingEnabled) {
-        ATOMIC_OPCODES opcode = ATOMIC_OPCODES::ATOMIC_8B_INCREMENT;
-        uint64_t operand1Data = 0;
-
-        if (copyOffloadOperation && this->partitionCount > 1) {
-            opcode = ATOMIC_OPCODES::ATOMIC_8B_ADD;
-            operand1Data = this->partitionCount;
-        }
-
-        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, deviceAllocGpuVa, opcode,
-                                                      DATA_SIZE::DATA_SIZE_QWORD, 0, 0, operand1Data, 0);
+        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, deviceAllocGpuVa, ATOMIC_OPCODES::ATOMIC_8B_ADD,
+                                                      DATA_SIZE::DATA_SIZE_QWORD, 0, 0, getInOrderAtomicSignallingValue(!copyOffloadOperation), 0);
 
     } else {
         appendSdiInOrderCounterSignalling(deviceAllocGpuVa, signalValue, copyOffloadOperation);
     }
+
+    inOrderExecInfo->setProgrammedCounterValue(signalValue);
 
     if (inOrderExecInfo->isHostStorageDuplicated()) {
         appendSdiInOrderCounterSignalling(inOrderExecInfo->getBaseHostGpuAddress(), signalValue, copyOffloadOperation);
@@ -4708,7 +4699,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 
     if (signalEvent) {
         const bool dcFLushEvent = getDcFlushRequired(signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-        return !(dcFLushEvent || signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() || this->isPostSyncSkippedOnLatestInOrderOperation || Event::isAggregatedEvent(signalEvent));
+        return !(dcFLushEvent || signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() || this->isInOrderCounterSignalPending() || Event::isAggregatedEvent(signalEvent));
     }
 
     return true;
@@ -5279,7 +5270,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::hasInOrderDependencies() const {
     const bool skip = (NEO::debugManager.flags.SkipImplicitInOrderDependencies.get() == 1);
 
-    return (!skip && inOrderExecInfo.get() && (inOrderExecInfo->getCounterValue() > inOrderExecInfo->getInitialCounterValue() || this->isPostSyncSkippedOnLatestInOrderOperation));
+    return (!skip && inOrderExecInfo.get() && inOrderExecInfo->getCounterValue() > inOrderExecInfo->getInitialCounterValue());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -5350,6 +5341,24 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
 template <GFXCORE_FAMILY gfxCoreFamily>
 uint64_t CommandListCoreFamily<gfxCoreFamily>::getInOrderIncrementValue() const {
     return (this->inOrderAtomicSignalingEnabled ? this->getPartitionCount() : 1);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+uint64_t CommandListCoreFamily<gfxCoreFamily>::getInOrderAtomicSignallingValue(bool executedByEachPartition) const {
+    const uint64_t signalValue = inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+    const uint64_t pendingValue = signalValue - inOrderExecInfo->getProgrammedCounterValue();
+
+    if (executedByEachPartition && this->partitionCount > 1) {
+        UNRECOVERABLE_IF((pendingValue != 0) && (pendingValue != this->partitionCount));
+        return (pendingValue == 0) ? 0 : 1;
+    }
+
+    return pendingValue;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isInOrderCounterSignalPending() const {
+    return (isInOrderExecutionEnabled() && inOrderExecInfo->isCounterSignalPending());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

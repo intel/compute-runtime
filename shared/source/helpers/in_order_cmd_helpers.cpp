@@ -157,6 +157,7 @@ void InOrderExecInfo::reset() {
 
 void InOrderExecInfo::resetCounterValue() {
     counterValue = getInitialCounterValue();
+    programmedCounterValue = counterValue;
     resetLastWaitedCounterValue();
 
     if (getInterruptFence() != nullptr) {

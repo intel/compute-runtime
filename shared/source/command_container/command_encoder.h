@@ -67,6 +67,7 @@ struct EncodePostSyncArgs {
     uint64_t eventAddress = 0;
     uint64_t postSyncImmValue = 0;
     uint64_t inOrderCounterValue = 0;
+    uint64_t inOrderAtomicSignallingValue = 1;
     uint64_t inOrderIncrementGpuAddress = 0;
     uint64_t inOrderIncrementValue = 0;
     Device *device = nullptr;
