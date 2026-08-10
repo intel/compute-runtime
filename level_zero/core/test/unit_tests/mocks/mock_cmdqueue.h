@@ -94,8 +94,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass = ::L0::CommandQueueHw<gfxCoreFamily>;
     using BaseClass::commandStream;
-    using BaseClass::estimateCommandListPatchPreambleHostFunctions;
-    using BaseClass::estimateCommandListPatchPreambleWaitSync;
+    using BaseClass::estimateCommandListPatchPreambleWaitSyncSize;
     using BaseClass::estimateFrontEndCmdSizeForMultipleCommandLists;
     using BaseClass::executeCommandListsRegularHeapless;
     using BaseClass::forceBbStartJump;

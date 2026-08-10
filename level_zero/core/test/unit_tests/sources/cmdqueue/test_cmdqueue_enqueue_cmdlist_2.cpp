@@ -1685,7 +1685,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(0u, commandList->getLatestTaskCount());
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
     EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
     mockCmdQHw->setPatchingPreamble(true);
@@ -1693,7 +1693,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     mockCmdQHw->saveWaitForPreamble = true;
     EXPECT_TRUE(mockCmdQHw->getSaveWaitForPreamble());
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
     EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
     mockCmdQHw->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAllocation, expectedTaskCount);
@@ -1701,13 +1701,13 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(expectedGpuAddress, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(expectedTaskCount, commandList->getLatestTaskCount());
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
     EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
     MockGraphicsAllocation otherTagAllocation(nullptr, expectedGpuAddress + 0x1000, 1);
 
     mockCmdQHw->saveTagAndTaskCountForCommandLists(1, &commandListHandle, &otherTagAllocation, expectedTaskCount);
-    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
     EXPECT_TRUE(ctx.patchPreambleWaitSyncNeeded);
 
     commandList->reset();
@@ -1731,7 +1731,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    CommandListExecutionContext ctx{};
+
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     returnValue = mockCmdQHw->initialize(false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1739,10 +1739,12 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
 
-    ctx.patchPreambleEnabled = true;
     mockCmdQHw->setPatchingPreamble(true);
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    commandList->close();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
+    commandList->reset();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
 
     uint64_t hostFunctionAddress = 0xABCDEF00;
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(hostFunctionAddress);
@@ -1757,7 +1759,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(semaphoreSize);
     size_t expectedSize = encodedMiStoreSize + encodedMiSemaphoreSize;
 
-    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    EXPECT_EQ(expectedSize, commandList->getHostFunctionsPatchSize());
 
     auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
     CommandListExecutionInternalOptions internalOptions = {};
@@ -1836,17 +1838,19 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenHostF
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    CommandListExecutionContext ctx{};
+
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     returnValue = mockCmdQHw->initialize(false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    ctx.patchPreambleEnabled = true;
     mockCmdQHw->setPatchingPreamble(true);
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    commandList->close();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
+    commandList->reset();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
 
     uint64_t hostFunctionAddress = 0xABCDEF00;
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(hostFunctionAddress);
@@ -1872,7 +1876,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenHostF
 
     size_t expectedSize = encodedIdSizeWithSync + encodedIdSizeWithoutSync + (2 * encodedMiSemaphoreSize);
 
-    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    EXPECT_EQ(expectedSize, commandList->getHostFunctionsPatchSize());
 
     commandList->destroy();
 }
@@ -1894,7 +1898,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    CommandListExecutionContext ctx{};
+
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     returnValue = mockCmdQHw->initialize(false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1902,10 +1906,12 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
 
-    ctx.patchPreambleEnabled = true;
     mockCmdQHw->setPatchingPreamble(true);
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    commandList->close();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
+    commandList->reset();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
 
     uint64_t hostFunctionAddress = 0xABCDEF00;
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(hostFunctionAddress);
@@ -1920,7 +1926,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(semaphoreSize);
     size_t expectedSize = encodedPcSize + encodedMiSemaphoreSize;
 
-    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    EXPECT_EQ(expectedSize, commandList->getHostFunctionsPatchSize());
 
     auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
     CommandListExecutionInternalOptions internalOptions = {};

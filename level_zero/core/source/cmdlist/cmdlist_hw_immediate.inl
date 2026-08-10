@@ -2004,7 +2004,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     std::unique_lock<std::mutex> mainLockForIndirect;
 
     if (this->dispatchCmdListBatchBufferAsPrimary) {
-        // check if wait event preamble or implicit synchronization is present and force bb start jump in queue, even when no preamble is required there
+        // check if wait event preamble or implicit synchronization is present and force bb start jump in queue, even when no queue's internal preamble is required
         if (this->commandContainer.getCommandStream()->getUsed() != this->cmdListCurrentStartOffset) {
             this->cmdQImmediate->triggerBbStartJump();
         }

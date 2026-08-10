@@ -100,12 +100,9 @@ struct CommandQueueHw : public CommandQueue {
     inline size_t estimateLinearStreamSizeSharedInitial(CommandListExecutionContext &ctx);
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
     inline size_t estimateCommandListPrimaryStart(bool required);
-    inline size_t estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList);
-    size_t estimateCommandListPatchPreambleWaitSync(CommandListExecutionContext &ctx, CommandList *commandList);
-    size_t estimateCommandListPatchPreambleHostFunctions(CommandListExecutionContext &ctx, CommandList *commandList);
-    size_t estimateCommandListPatchPreambleAsyncPatchElems(CommandListExecutionContext &ctx, CommandList *commandList);
-    size_t estimateCommandListPatchPreambleRequiredSize(CommandListExecutionContext &ctx, CommandList *commandList);
-    inline size_t estimateTotalCommandListPatchPreambleData(CommandListExecutionContext &ctx, uint32_t numCommandLists);
+    size_t estimateCommandListPatchPreambleWaitSyncSize(CommandListExecutionContext &ctx, CommandList *commandList);
+    inline size_t estimateCommandListPatchPreambleRequiredSize(CommandListExecutionContext &ctx, CommandList *commandList);
+    inline size_t estimateCommandListPatchPreambleInitialSize(CommandListExecutionContext &ctx, uint32_t numCommandLists);
     inline void retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream);
     inline void dispatchPatchPreambleEnding(CommandListExecutionContext &ctx);
     inline void dispatchPatchPreambleInOrderNoop(CommandListExecutionContext &ctx, CommandList *commandList);

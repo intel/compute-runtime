@@ -168,7 +168,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->latesTagGpuAllocation = nullptr;
     this->latestTaskCount = 0;
     this->hostFunctionsPatchSize = 0;
-    this->asyncPatchlistPatchSize = 0;
+    resetAsyncPatchlist();
     this->activeScratchPatchElemsPatchSize = 0;
     this->frontEndPatchSize = 0;
     this->totalNoopSpacePatchSize = 0;

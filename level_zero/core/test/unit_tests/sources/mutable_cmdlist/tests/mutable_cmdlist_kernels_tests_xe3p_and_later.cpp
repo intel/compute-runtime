@@ -249,8 +249,15 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
     EXPECT_TRUE(isUndefined(scratchPatchCommandAfterBack->patchSize));
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 0u);
 
-    expectedSize = 0;
+    EXPECT_EQ(0u, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
+
+    // Now mutate to kernel2 which has a defined scratch offset and then reset command list
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
     EXPECT_EQ(expectedSize, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
+
+    mutableCommandList->reset();
+    EXPECT_EQ(0u, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
 }
 
 HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelGroupWhenMutatingFromNonScratchKerneToOtherNonScratchKernelThenScratchPatchCommandIsPresentAndRemainsUndefined,

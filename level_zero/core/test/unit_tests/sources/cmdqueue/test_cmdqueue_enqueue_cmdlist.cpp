@@ -1404,7 +1404,16 @@ void CommandQueueExecuteCommandListsFixtureInit::testPatchPreambleAsyncPatchList
     asyncPatchListContainer.push_back({gpuDest2, patchSource2, sizeof(patchSource2)});
 
     commandList->close();
+    EXPECT_EQ(expectedEncodePatchSize, commandList->getAsyncPatchlistPatchSize());
 
+    commandList->reset();
+    EXPECT_EQ(0u, commandList->getAsyncPatchlistPatchSize());
+    EXPECT_EQ(0u, asyncPatchListContainer.size());
+
+    asyncPatchListContainer.push_back({gpuDest1, patchSource1, sizeof(patchSource1)});
+    asyncPatchListContainer.push_back({gpuDest2, patchSource2, sizeof(patchSource2)});
+
+    commandList->close();
     EXPECT_EQ(expectedEncodePatchSize, commandList->getAsyncPatchlistPatchSize());
 
     ze_command_list_handle_t commandListHandle = commandList->toHandle();

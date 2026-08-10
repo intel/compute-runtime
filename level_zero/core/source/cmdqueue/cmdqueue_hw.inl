@@ -763,10 +763,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedPerCmdList(C
     linearStreamSizeEstimate += estimateCommandListSecondaryStart(commandList);
 
     // per command list patch preamble
-    linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, commandList);
-    linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSync(ctx, commandList);
-    linearStreamSizeEstimate += estimateCommandListPatchPreambleHostFunctions(ctx, commandList);
-    linearStreamSizeEstimate += estimateCommandListPatchPreambleAsyncPatchElems(ctx, commandList);
+    linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList);
     linearStreamSizeEstimate += estimateCommandListPatchPreambleRequiredSize(ctx, commandList);
 
     return linearStreamSizeEstimate;
@@ -846,17 +843,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPrimaryStart(bool requi
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList) {
-    size_t encodeSize = 0;
-    if (ctx.patchPreambleEnabled) {
-        encodeSize = commandList->getFrontEndPatchSize();
-        ctx.bufferSpaceForPatchPreamble += encodeSize;
-    }
-    return encodeSize;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSync(CommandListExecutionContext &ctx, CommandList *commandList) {
+size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSyncSize(CommandListExecutionContext &ctx, CommandList *commandList) {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     size_t waitSize = 0;
     if (ctx.patchPreambleEnabled && this->saveWaitForPreamble) {
@@ -875,31 +862,12 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSync(C
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleHostFunctions(CommandListExecutionContext &ctx, CommandList *commandList) {
-    size_t encodeSize = 0;
-    if (ctx.patchPreambleEnabled) {
-        encodeSize = commandList->getHostFunctionsPatchSize();
-        ctx.bufferSpaceForPatchPreamble += encodeSize;
-    }
-
-    return encodeSize;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleAsyncPatchElems(CommandListExecutionContext &ctx, CommandList *commandList) {
-    size_t encodeSize = 0;
-    if (ctx.patchPreambleEnabled) {
-        encodeSize = commandList->getAsyncPatchlistPatchSize();
-        ctx.bufferSpaceForPatchPreamble += encodeSize;
-    }
-
-    return encodeSize;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleRequiredSize(CommandListExecutionContext &ctx, CommandList *commandList) {
     size_t encodeSize = 0;
     if (ctx.patchPreambleEnabled) {
+        encodeSize += commandList->getFrontEndPatchSize();
+        encodeSize += commandList->getHostFunctionsPatchSize();
+        encodeSize += commandList->getAsyncPatchlistPatchSize();
         encodeSize += commandList->getActiveScratchPatchElemsPatchSize();
         encodeSize += commandList->getTotalNoopSpacePatchSize();
 
@@ -909,7 +877,7 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleReq
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalCommandListPatchPreambleData(CommandListExecutionContext &ctx, uint32_t numCommandLists) {
+inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleInitialSize(CommandListExecutionContext &ctx, uint32_t numCommandLists) {
     size_t encodeSize = 0;
     if (ctx.patchPreambleEnabled) {
         constexpr size_t bbStartSize = NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
@@ -1242,7 +1210,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedPostCmdList(CommandListExecutionContext &ctx, uint32_t numCommandLists) {
     size_t linearStreamSizeEstimate = 0u;
 
-    linearStreamSizeEstimate += this->estimateTotalCommandListPatchPreambleData(ctx, numCommandLists);
+    linearStreamSizeEstimate += this->estimateCommandListPatchPreambleInitialSize(ctx, numCommandLists);
 
     bool additionalCondition = true;
     if (ctx.regularHeapful) {
