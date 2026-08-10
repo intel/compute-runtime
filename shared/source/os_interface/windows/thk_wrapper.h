@@ -15,7 +15,6 @@
 #include "shared/source/utilities/api_intercept.h"
 
 #include <chrono>
-#include <iostream>
 #include <string>
 
 namespace NEO {

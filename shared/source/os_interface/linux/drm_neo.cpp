@@ -58,6 +58,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
+#include <iostream>
 #include <limits>
 #include <map>
 #include <sstream>

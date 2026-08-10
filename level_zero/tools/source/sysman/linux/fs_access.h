@@ -14,12 +14,9 @@
 #include "level_zero/zet_api.h"
 
 #include <fcntl.h>
-#include <iostream>
-#include <list>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <sys/stat.h>

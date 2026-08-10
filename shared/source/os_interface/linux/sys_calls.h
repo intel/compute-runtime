@@ -10,7 +10,6 @@
 
 #include <dirent.h>
 #include <fcntl.h>
-#include <iostream>
 #include <poll.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>

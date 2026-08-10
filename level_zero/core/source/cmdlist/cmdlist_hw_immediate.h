@@ -15,7 +15,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 
 #include <atomic>
-#include <functional>
 #include <mutex>
 
 namespace NEO {

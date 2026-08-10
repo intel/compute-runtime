@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/driver/extension_function_address.h"
 
+#include "level_zero/api/core/ze_graph_api_entrypoints.h"
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/api/internal/l0_internal.h"
 #include "level_zero/driver_experimental/mcl_ext/zex_mutable_cmdlist_ext.h"

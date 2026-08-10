@@ -10,7 +10,6 @@
 #include "level_zero/core/source/mutable_cmdlist/usage.h"
 #include "level_zero/core/source/mutable_cmdlist/variable_handle.h"
 
-#include <memory>
 #include <string>
 
 namespace L0::MCL::Program::Decoder {

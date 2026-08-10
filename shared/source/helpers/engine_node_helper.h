@@ -13,7 +13,6 @@
 #include "aubstream/engine_node.h"
 
 #include <atomic>
-#include <bitset>
 
 namespace NEO {
 enum PreemptionMode : uint32_t;

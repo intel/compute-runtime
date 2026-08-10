@@ -17,7 +17,6 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <queue>
 #include <set>
 
 namespace NEO {

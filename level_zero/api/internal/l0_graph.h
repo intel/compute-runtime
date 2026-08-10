@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "level_zero/api/core/ze_graph_api_entrypoints.h"
 #include "level_zero/driver_experimental/zex_api.h"
 #include "level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>

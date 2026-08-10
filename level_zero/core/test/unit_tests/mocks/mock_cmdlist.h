@@ -20,8 +20,6 @@
 
 #include "encode_dispatch_kernel_args_ext.h"
 
-#include <unordered_map>
-
 namespace NEO {
 class GraphicsAllocation;
 }

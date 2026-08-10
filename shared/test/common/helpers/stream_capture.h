@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,13 @@
 
 #pragma once
 
+#include <cstdio>
 #include <fcntl.h>
-#include <iostream>
 #include <string>
 
 #ifdef _WIN32
 #include <io.h>
 #else
-#include <cstdio>
 #include <cstring>
 #include <unistd.h>
 #endif

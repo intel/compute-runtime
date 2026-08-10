@@ -9,8 +9,6 @@
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 
-#include <memory>
-
 namespace NEO {
 class GraphicsAllocation;
 class InOrderExecInfo;

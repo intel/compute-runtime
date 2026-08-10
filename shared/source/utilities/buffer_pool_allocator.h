@@ -10,7 +10,6 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include <functional>
-#include <iterator>
 #include <memory>
 #include <mutex>
 #include <vector>

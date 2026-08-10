@@ -11,7 +11,6 @@
 #include <atomic>
 #include <cstdint>
 #include <dirent.h>
-#include <iostream>
 #include <poll.h>
 #include <sys/resource.h>
 #include <sys/socket.h>

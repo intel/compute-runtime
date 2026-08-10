@@ -20,12 +20,10 @@
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
-#include <array>
 #include <atomic>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <span>
 #include <unordered_map>
 
 static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);

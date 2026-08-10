@@ -13,8 +13,6 @@
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
-#include <functional>
-#include <map>
 #include <optional>
 #include <string>
 

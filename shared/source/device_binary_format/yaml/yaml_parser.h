@@ -12,7 +12,6 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include <array>
-#include <iterator>
 #include <string>
 
 namespace NEO {
