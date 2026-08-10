@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ enum class CommandStreamReceiverType {
 };
 
 inline CommandStreamReceiverType obtainCsrTypeFromIntegerValue(int32_t selectedCsrType, CommandStreamReceiverType defaultType) {
-    if (selectedCsrType >= 0 && selectedCsrType <= static_cast<int32_t>(CommandStreamReceiverType::typesNum)) {
+    if (selectedCsrType >= 0 && selectedCsrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum)) {
         return static_cast<CommandStreamReceiverType>(selectedCsrType);
     }
     return defaultType;
