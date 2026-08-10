@@ -121,6 +121,8 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
         return CL_PROFILING_INFO_NOT_AVAILABLE;
     }
 
+    auto lock = this->takeOwnership();
+
     const void *src = nullptr;
     size_t srcSize = GetInfo::invalidSourceSize;
     uint64_t timestamp = 0;
@@ -384,6 +386,7 @@ std::pair<EventHandleSpan, ze_event_handle_t> Event::setupEvents(cl_uint numEven
 }
 
 TagNodeBase *Event::getHwPerfCounterNode() {
+    auto lock = this->takeOwnership();
     if (!perfCounterNode) {
         auto cmdQ = getCommandQueue();
         auto perfCounters = cmdQ->getPerfCounters();

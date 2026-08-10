@@ -14,6 +14,8 @@
 
 #include "CL/cl.h"
 
+#include <atomic>
+
 namespace NEO {
 namespace LEO {
 
@@ -70,6 +72,7 @@ class MemObj : public BaseObject<_cl_mem> {
     void setUsesSvm(bool usesSvm) { this->usesSvm = usesSvm; }
     bool getUsesSvm() const { return this->usesSvm; }
     void addCallback(CallbackT callback, void *userData) {
+        auto lock = this->takeOwnership();
         this->callbacks.emplace_back(callback, userData);
     }
 
@@ -98,7 +101,7 @@ class MemObj : public BaseObject<_cl_mem> {
     SharingHandler *peekSharingHandler() const { return sharingHandler.get(); };
     void setSharingHandler(SharingHandler *sharingHandler) { this->sharingHandler.reset(sharingHandler); };
     void setParentSharingHandler(std::shared_ptr<SharingHandler> &handler) { sharingHandler = handler; };
-    unsigned int acquireCount = 0;
+    std::atomic<unsigned int> acquireCount{0};
     bool mapMemObjFlagsInvalid(cl_map_flags mapFlags);
     bool readMemObjFlagsInvalid();
     bool writeMemObjFlagsInvalid();

@@ -83,7 +83,10 @@ class Context : public BaseObject<_cl_context> {
     ze_event_handle_t obtainRegularEvent(bool timestamp);
     void returnRegularEvent(ze_event_handle_t event, bool timestamp);
 
-    void registerCallback(CallbackT func, void *userData) { this->callbacks.emplace_back(func, userData); };
+    void registerCallback(CallbackT func, void *userData) {
+        auto lock = this->takeOwnership();
+        this->callbacks.emplace_back(func, userData);
+    };
 
     template <typename Sharing>
     Sharing *getSharing() {

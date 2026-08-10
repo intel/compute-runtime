@@ -19,6 +19,8 @@
 
 #include "CL/cl.h"
 
+#include <thread>
+
 namespace NEO {
 namespace LEO {
 namespace ult {
@@ -231,6 +233,41 @@ TEST_F(ProfilingInfoWiringTests, givenProfilingInfoAlreadyCalculatedWhenQueriedA
     EXPECT_EQ(CL_SUCCESS, event.getProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(second), &second, nullptr));
 
     EXPECT_EQ(first, second);
+}
+
+struct MockEventProbingProfilingLock : public MockEventForProfilingWiring {
+    MockEventProbingProfilingLock(cl_command_type commandType, NEO::LEO::CommandQueue *commandQueue)
+        : MockEventForProfilingWiring(commandType, commandQueue) {}
+
+    using NEO::LEO::Event::mtx;
+
+    ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t &result) override {
+        std::thread probe([this] {
+            lockWasAvailableToAnotherThread = this->mtx.try_lock();
+            if (lockWasAvailableToAnotherThread) {
+                this->mtx.unlock();
+            }
+        });
+        probe.join();
+
+        return MockEventForProfilingWiring::queryKernelTimestamp(result);
+    }
+
+    bool lockWasAvailableToAnotherThread = true;
+};
+
+TEST_F(ProfilingInfoWiringTests, givenProfilingInfoQueriedWhenDataIsDerivedThenObjectLockIsHeld) {
+    MockEventProbingProfilingLock event{CL_COMMAND_NDRANGE_KERNEL, commandQueue};
+    event.setQueueTimeStamp();
+    event.setSubmitTimeStamp();
+    event.injectedKernelStart = event.submitTimeStamp.gpuTimeStamp + 0x1000;
+    event.injectedKernelEnd = event.injectedKernelStart + 0x500;
+
+    cl_ulong value = 0;
+    EXPECT_EQ(CL_SUCCESS, event.getProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(value), &value, nullptr));
+
+    ASSERT_NE(0u, event.queryKernelTimestampCalled);
+    EXPECT_FALSE(event.lockWasAvailableToAnotherThread);
 }
 
 } // namespace ult
