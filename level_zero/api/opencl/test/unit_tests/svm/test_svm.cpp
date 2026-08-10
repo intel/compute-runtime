@@ -529,6 +529,28 @@ TEST_F(ClEnqueueSvmFreeTest, givenDeferredCallbackWhenEventCompletesThenUserFree
     EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
 }
 
+TEST_F(ClEnqueueSvmFreeTest, givenCallerArrayOverwrittenAfterEnqueueWhenDeferredCallbackRunsThenOriginalPointersAreReported) {
+    void *callerSvmPointers[2] = {&firstStorage, &secondStorage};
+
+    cl_event event = nullptr;
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMFree(commandQueue, 2, callerSvmPointers, svmFreeCallback, &freeRecord, 0, nullptr, &event));
+    ASSERT_NE(nullptr, event);
+
+    // The caller owns its array and may reuse it as soon as the call returns.
+    callerSvmPointers[0] = nullptr;
+    callerSvmPointers[1] = nullptr;
+
+    completeEvent(event);
+
+    EXPECT_EQ(1u, freeRecord.callCount);
+    EXPECT_EQ(2u, freeRecord.numSvmPointers);
+    ASSERT_EQ(2u, freeRecord.svmPointers.size());
+    EXPECT_EQ(static_cast<void *>(&firstStorage), freeRecord.svmPointers[0]);
+    EXPECT_EQ(static_cast<void *>(&secondStorage), freeRecord.svmPointers[1]);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
+}
+
 TEST_F(ClEnqueueSvmFreeTest, givenEventThatNeverCompletesWhenTheHandlerShutsDownThenTheFreeCallbackStillRuns) {
     cl_event event = nullptr;
     EXPECT_EQ(CL_SUCCESS, clEnqueueSVMFree(commandQueue, 2, svmPointers, svmFreeCallback, &freeRecord, 0, nullptr, &event));

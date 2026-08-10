@@ -12,6 +12,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
@@ -1392,12 +1393,13 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
                                        void *userData) = nullptr;
         void *userData = nullptr;
 
-        cl_uint numSvmPointers = 0;
-        void **svmPointers = nullptr;
+        StackVec<void *, 8> svmPointers{};
 
         bool ownsEventDeletion = false;
     };
-    auto clEnqueueSVMFreeUserData = new ClEnqueueSVMFreeUserData{commandQueue, pfnFreeFunc, userData, numSvmPointers, svmPointers, ownsEventDeletion};
+    auto clEnqueueSVMFreeUserData = new ClEnqueueSVMFreeUserData{commandQueue, pfnFreeFunc, userData,
+                                                                 StackVec<void *, 8>(svmPointers, svmPointers + numSvmPointers),
+                                                                 ownsEventDeletion};
 
     auto clEnqueueSVMFreeCallbackWrapper = [](cl_event event, cl_int, void *userData) {
         auto clEnqueueSVMFreeUserData = static_cast<ClEnqueueSVMFreeUserData *>(userData);
@@ -1405,10 +1407,10 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
         auto pEvent = NEO::LEO::castToObject<NEO::LEO::Event>(event);
 
         if (clEnqueueSVMFreeUserData->pfnFreeFunc) {
-            clEnqueueSVMFreeUserData->pfnFreeFunc(clEnqueueSVMFreeUserData->commandQueue, clEnqueueSVMFreeUserData->numSvmPointers, clEnqueueSVMFreeUserData->svmPointers, clEnqueueSVMFreeUserData->userData);
+            clEnqueueSVMFreeUserData->pfnFreeFunc(clEnqueueSVMFreeUserData->commandQueue, static_cast<cl_uint>(clEnqueueSVMFreeUserData->svmPointers.size()), clEnqueueSVMFreeUserData->svmPointers.begin(), clEnqueueSVMFreeUserData->userData);
         } else {
-            for (cl_uint i = 0; i < clEnqueueSVMFreeUserData->numSvmPointers; ++i) {
-                clSVMFree(pEvent->getContext(), clEnqueueSVMFreeUserData->svmPointers[i]);
+            for (auto svmPointer : clEnqueueSVMFreeUserData->svmPointers) {
+                clSVMFree(pEvent->getContext(), svmPointer);
             }
         }
 
