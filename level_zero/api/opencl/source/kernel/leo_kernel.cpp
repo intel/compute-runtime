@@ -360,6 +360,7 @@ cl_int Kernel::getSuggestedLocalWorkSize(cl_uint workDim, const size_t *globalWo
     if (this->kernelHandles.empty()) {
         return CL_INVALID_KERNEL;
     }
+    auto lock = this->takeOwnership();
     auto kernelHandle = this->getL0Handle();
 
     Vec3<uint32_t> globalSize{1, 1, 1};
@@ -435,6 +436,7 @@ cl_int Kernel::validateImmediateArgSize(uint32_t argIndex, size_t argSize) const
 }
 
 cl_int Kernel::setIndirectAccess(cl_kernel_exec_info flag, cl_bool val) {
+    auto lock = this->takeOwnership();
     cl_int result = CL_SUCCESS;
     if (CL_TRUE == val) {
         for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
@@ -448,6 +450,7 @@ cl_int Kernel::setIndirectAccess(cl_kernel_exec_info flag, cl_bool val) {
 }
 
 cl_int Kernel::setThreadArbitrationPolicy(uint32_t flag) {
+    auto lock = this->takeOwnership();
     ze_scheduling_hint_exp_desc_t schedulingDesc{ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC, nullptr, NEO::LEO::Kernel::schedulingHintToL0(flag)};
     cl_int result = CL_SUCCESS;
     for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
@@ -487,6 +490,7 @@ ze_scheduling_hint_exp_flags_t Kernel::schedulingHintToL0(uint32_t arbitrationPo
 }
 
 cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel type) {
+    auto lock = this->takeOwnership();
     switch (type) {
     case CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL:
         this->executionType = NEO::KernelExecutionType::defaultType;

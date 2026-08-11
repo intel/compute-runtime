@@ -1195,6 +1195,8 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     auto kernelHandle = pKernel->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex());
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
+    auto kernelLock = pKernel->takeOwnership();
+
     if (!pKernel->areAllArgsSet()) [[unlikely]] {
         cl_int tracingRetVal = CL_INVALID_KERNEL_ARGS;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
@@ -1214,13 +1216,16 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
     auto cmdlistHandle = pCommandQueue->getL0Handle();
-    auto lock = pCommandQueue->takeOwnership();
 
     if (!globalWorkSize || globalWorkSize[0] == 0) {
+        kernelLock.unlock();
+        auto lock = pCommandQueue->takeOwnership();
         cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendBarrier(cmdlistHandle, hSignalEvent, waitEvents.size(), waitEvents.data()));
         TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
         return tracingRetVal;
     }
+
+    auto lock = pCommandQueue->takeOwnership();
 
     uint32_t gwo[3] = {globalWorkOffset ? static_cast<uint32_t>(globalWorkOffset[0]) : 0,
                        workDim > 1 ? static_cast<uint32_t>(globalWorkOffset ? globalWorkOffset[1] : 0) : 0,
@@ -1934,6 +1939,8 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
     }
 
     auto kernelHandle = pKernel->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex());
+
+    auto kernelLock = pKernel->takeOwnership();
 
     if (!pKernel->areAllArgsSet()) [[unlikely]] {
         cl_int tracingRetVal = CL_INVALID_KERNEL_ARGS;
