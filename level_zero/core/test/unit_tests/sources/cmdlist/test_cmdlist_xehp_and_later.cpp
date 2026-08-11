@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/thread_data_hash.h"
+#include "shared/source/utilities/thread_data_map.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -3218,6 +3219,7 @@ HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForE
 struct IOHCacheCommandListFixture : public Test<ModuleFixture> {
     struct MockContainerIOHCacheAccessor : public NEO::CommandContainer {
         using NEO::CommandContainer::extractCommonThreadData;
+        using NEO::CommandContainer::threadDataTracker;
     };
 
     void SetUp() override {
@@ -3248,11 +3250,13 @@ HWTEST2_F(IOHCacheCommandListTest,
 
     EXPECT_FALSE(commandList->commandContainer.getIOHCacheEnabled());
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, false);
+    bool threadDataCacheMiss = false;
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, false, threadDataCacheMiss);
 
     auto regularIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
     ASSERT_NE(nullptr, regularIoh);
     EXPECT_EQ(regularIoh->getGraphicsAllocation(), iohAllocation);
+    EXPECT_FALSE(threadDataCacheMiss);
 }
 
 HWTEST2_F(IOHCacheCommandListTest,
@@ -3267,12 +3271,14 @@ HWTEST2_F(IOHCacheCommandListTest,
 
     EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+    bool threadDataCacheMiss = false;
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true, threadDataCacheMiss);
 
     auto regularIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
     ASSERT_NE(nullptr, regularIoh);
     EXPECT_EQ(regularIoh->getGraphicsAllocation(), iohAllocation);
     EXPECT_EQ(regularIoh->getUsed(), iohOffset);
+    EXPECT_FALSE(threadDataCacheMiss);
 }
 
 HWTEST2_F(IOHCacheCommandListTest,
@@ -3294,12 +3300,14 @@ HWTEST2_F(IOHCacheCommandListTest,
     commandList->commandContainer.registerThreadData(hash, crossThreadSpan);
     static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer).extractCommonThreadData();
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+    bool threadDataCacheMiss = true;
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true, threadDataCacheMiss);
 
     auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
     ASSERT_NE(nullptr, cacheStorage);
     EXPECT_EQ(cacheStorage->getGraphicsAllocation(), iohAllocation);
     EXPECT_NE(cacheStorage->getGraphicsAllocation(), commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation());
+    EXPECT_TRUE(threadDataCacheMiss);
 }
 
 HWTEST2_F(IOHCacheCommandListTest,
@@ -3330,12 +3338,14 @@ HWTEST2_F(IOHCacheCommandListTest,
     originalIoh->getSpace(originalIoh->getAvailableSpace());
     ASSERT_LT(originalIoh->getAvailableSpace(), kernel.getIndirectSize());
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+    bool threadDataCacheMiss = true;
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true, threadDataCacheMiss);
 
     auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
     ASSERT_NE(nullptr, cacheStorage);
     EXPECT_EQ(cacheStorage->getGraphicsAllocation(), iohAllocation);
     EXPECT_NE(commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation(), iohAllocation);
+    EXPECT_TRUE(threadDataCacheMiss);
 }
 
 HWTEST2_F(IOHCacheCommandListTest,
@@ -3498,6 +3508,72 @@ HWTEST2_F(IOHCacheCommandListTest,
     commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
     EXPECT_FALSE(commandList->isKernelPatchedWhenWithParamsCalled);
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          giventhreadDataCacheMissOnPrefetchWhenEncoderFindsThreadDataInCacheThenCachedOffsetIsDiscardedAndIohSpaceIsConsumed,
+          IsAtLeastXeCore) {
+    class MockCmdListPatchingCrossThreadData : public WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> {
+      public:
+        ze_result_t appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions,
+                                                 Event *event, CmdListKernelLaunchParams &launchParams) override {
+            auto &crossThreadData = static_cast<KernelImp *>(kernel)->getPrivateState().crossThreadData;
+            std::copy(patchedCrossThreadData.begin(), patchedCrossThreadData.end(), crossThreadData.begin() + patchOffset);
+            return WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>::appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
+        }
+        std::vector<uint8_t> patchedCrossThreadData;
+        size_t patchOffset = 0u;
+    };
+
+    debugManager.flags.EnableMemoryPrefetch.set(1);
+
+    createKernel();
+
+    auto commandList = std::make_unique<MockCmdListPatchingCrossThreadData>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    ASSERT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    kernel->patchGlobalOffset();
+    kernel->setGroupCount(groupCount.groupCountX, groupCount.groupCountY, groupCount.groupCountZ);
+
+    uint32_t inlineDataProgrammingOffset = 0u;
+    if (NEO::EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernel->getKernelDescriptor())) {
+        constexpr uint32_t inlineDataSize = FamilyType::DefaultWalkerType::getInlineDataSize();
+        inlineDataProgrammingOffset = std::min(inlineDataSize, kernel->getCrossThreadDataSize());
+    }
+    ASSERT_LT(inlineDataProgrammingOffset, kernel->getCrossThreadDataSize());
+
+    commandList->patchedCrossThreadData.assign(kernel->getCrossThreadData() + inlineDataProgrammingOffset,
+                                               kernel->getCrossThreadData() + kernel->getCrossThreadDataSize());
+    commandList->patchedCrossThreadData.back() = static_cast<uint8_t>(~commandList->patchedCrossThreadData.back());
+    commandList->patchOffset = inlineDataProgrammingOffset;
+
+    const std::span<const uint8_t> crossThreadSpan(commandList->patchedCrossThreadData);
+    const std::span<const uint8_t> perThreadSpan(kernel->getPerThreadData(), kernel->getPerThreadDataSizeForWholeThreadGroup());
+    const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
+
+    std::vector<uint8_t> combinedData(crossThreadSpan.size() + perThreadSpan.size());
+    std::copy(crossThreadSpan.begin(), crossThreadSpan.end(), combinedData.begin());
+    std::copy(perThreadSpan.begin(), perThreadSpan.end(), combinedData.begin() + crossThreadSpan.size());
+
+    auto &containerAccessor = static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer);
+    commandList->commandContainer.registerThreadData(hash, std::span<const uint8_t>(combinedData));
+    containerAccessor.extractCommonThreadData();
+    ASSERT_TRUE(commandList->commandContainer.getCachedIohOffset(crossThreadSpan, perThreadSpan).has_value());
+    ASSERT_TRUE(containerAccessor.threadDataTracker->isEmpty());
+
+    auto ioh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+    ASSERT_NE(nullptr, ioh);
+    const auto iohUsedBeforeAppend = ioh->getUsed();
+
+    CmdListKernelLaunchParams launchParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    EXPECT_FALSE(launchParams.threadDataCacheHitOnPrefetch);
+    ASSERT_EQ(ioh, commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject));
+    EXPECT_GT(ioh->getUsed(), iohUsedBeforeAppend);
+    EXPECT_FALSE(containerAccessor.threadDataTracker->isEmpty());
 }
 
 } // namespace ult

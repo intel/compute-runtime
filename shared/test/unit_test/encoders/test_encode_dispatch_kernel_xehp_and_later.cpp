@@ -1913,6 +1913,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, IOHCacheCommandEncodeStatesTest, givenIOHCacheEnabl
 
     // Simulate cmd buffer return: extracts common thread data from tracker into the cache map
     iohCmdContainer->extractCommonThreadData();
+    dispatchArgs.threadDataCacheHitOnPrefetch = true;
 
     // Second dispatch with same data: cache hit, IOH space must not be allocated again
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*iohCmdContainer.get(), dispatchArgs);

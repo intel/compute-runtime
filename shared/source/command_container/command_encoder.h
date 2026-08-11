@@ -158,6 +158,7 @@ struct EncodeDispatchKernelArgs {
     bool isFlushL3AfterPostSyncForExternalAllocationRequired = false;
     bool isFlushL3AfterPostSyncForHostUsmRequired = false;
     bool kernelUsesRayTracing = false;
+    bool threadDataCacheHitOnPrefetch = false;
 };
 
 struct EncodeStoreMMIOParams {

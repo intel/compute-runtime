@@ -263,7 +263,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 const std::span<const uint8_t> crossThreadSpan(crossThreadData, sizeCrossThreadData);
                 const std::span<const uint8_t> perThreadSpan(perThreadDataPtr, sizePerThreadDataForWholeGroup);
                 threadDataHash = ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
-                cachedThreadDataOffset = container.getCachedIohOffset(threadDataHash, crossThreadSpan, perThreadSpan);
+                if (args.threadDataCacheHitOnPrefetch) {
+                    cachedThreadDataOffset = container.getCachedIohOffset(threadDataHash, crossThreadSpan, perThreadSpan);
+                }
                 if (cachedThreadDataOffset) {
                     offsetThreadData = *cachedThreadDataOffset;
                     container.makeThreadDataMapResident();
