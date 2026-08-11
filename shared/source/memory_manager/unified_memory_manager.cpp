@@ -359,7 +359,7 @@ SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *
     }
     if (iter != end) {
         svmAllocData = &iter->second;
-        char *charPtr = reinterpret_cast<char *>(svmAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+        const char *charPtr = reinterpret_cast<const char *>(iter->first);
         if (ptr < (charPtr + svmAllocData->size)) {
             return svmAllocData;
         }
@@ -764,10 +764,18 @@ void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
     insertSVMAlloc(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()), svmAllocData);
 }
 
+void SVMAllocsManager::removeFromSvmAllocs(const SvmAllocationData &svmAllocData) {
+    auto graphicsAllocation = svmAllocData.gpuAllocations.getDefaultGraphicsAllocation();
+    const auto removed = svmAllocs.remove(reinterpret_cast<void *>(graphicsAllocation->getGpuAddressWithoutOffset()));
+    if (0u != graphicsAllocation->getAllocationOffset() && !removed) {
+        svmAllocs.remove(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()));
+    }
+}
+
 void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
     ContainerReadWriteLockType lock(mtx);
     internalAllocationsMap.erase(svmAllocData.getAllocId());
-    svmAllocs.remove(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()));
+    removeFromSvmAllocs(svmAllocData);
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
@@ -1063,7 +1071,7 @@ void SVMAllocsManager::freeSVMData(SvmAllocationData *svmData) {
     std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
     ContainerReadWriteLockType lock(mtx);
     internalAllocationsMap.erase(svmData->getAllocId());
-    svmAllocs.remove(reinterpret_cast<void *>(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()));
+    removeFromSvmAllocs(*svmData);
 }
 
 void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {

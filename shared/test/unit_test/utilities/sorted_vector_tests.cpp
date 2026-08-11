@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,4 +37,22 @@ TEST(SortedVectorTest, givenBaseSortedVectorWhenCallingExtractThenCorrectValueIs
 
     valuePtr = testedVector.extract(reinterpret_cast<void *>(0x1));
     EXPECT_EQ(1u, valuePtr->size);
+}
+
+TEST(SortedVectorTest, givenBaseSortedVectorWhenRemovingNotStoredPointerThenStoredEntriesAreKept) {
+    TestedSortedVector testedVector;
+    testedVector.insert(reinterpret_cast<void *>(0x1000), Data{0x10u});
+    testedVector.insert(reinterpret_cast<void *>(0x2000), Data{0x10u});
+
+    EXPECT_FALSE(testedVector.remove(reinterpret_cast<void *>(0x3000)));
+
+    EXPECT_EQ(2u, testedVector.getNumAllocs());
+    EXPECT_NE(nullptr, testedVector.get(reinterpret_cast<void *>(0x1000)));
+    EXPECT_NE(nullptr, testedVector.get(reinterpret_cast<void *>(0x2000)));
+
+    EXPECT_TRUE(testedVector.remove(reinterpret_cast<void *>(0x1000)));
+
+    EXPECT_EQ(1u, testedVector.getNumAllocs());
+    EXPECT_EQ(nullptr, testedVector.get(reinterpret_cast<void *>(0x1000)));
+    EXPECT_NE(nullptr, testedVector.get(reinterpret_cast<void *>(0x2000)));
 }

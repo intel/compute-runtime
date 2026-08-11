@@ -334,6 +334,7 @@ class SVMAllocsManager {
     void initUsmSharedAllocationsCache(Device &device);
     void freeSVMData(SvmAllocationData *svmData);
     void insertSVMAlloc(void *ptr, const SvmAllocationData &allocData);
+    void removeFromSvmAllocs(const SvmAllocationData &svmAllocData);
     void makeResidentForAllocationsWithId(uint32_t allocationId, CommandStreamReceiver &csr);
 
     SortedVectorBasedAllocationTracker svmAllocs;

@@ -98,6 +98,33 @@ TEST_F(SvmAllocsTrackingTest, givenAllocationOffsetWhenGettingSvmAllocThenAlloca
     EXPECT_EQ(0u, svmManager->getNumAllocs());
 }
 
+TEST_F(SvmAllocsTrackingTest, givenAllocationOffsetSetBeforeInsertWhenFreeingSvmDataThenOnlyMatchingEntryIsErased) {
+    MockGraphicsAllocation offsetAllocation(nullptr, 0xFFFF800600EE0000ull, 0x1000);
+    offsetAllocation.setAllocationOffset(0x480);
+    SvmAllocationData offsetSvmData(mockRootDeviceIndex);
+    offsetSvmData.gpuAllocations.addAllocation(&offsetAllocation);
+    offsetSvmData.size = 0x1000;
+    offsetSvmData.setAllocId(1u);
+    svmManager->insertSVMAlloc(reinterpret_cast<void *>(offsetAllocation.getGpuAddress()), offsetSvmData);
+
+    MockGraphicsAllocation higherAllocation(nullptr, 0xFFFF800600EF0000ull, 0x1000);
+    SvmAllocationData higherSvmData(mockRootDeviceIndex);
+    higherSvmData.gpuAllocations.addAllocation(&higherAllocation);
+    higherSvmData.size = 0x1000;
+    higherSvmData.setAllocId(2u);
+    svmManager->insertSVMAlloc(reinterpret_cast<void *>(higherAllocation.getGpuAddress()), higherSvmData);
+    ASSERT_EQ(2u, svmManager->getNumAllocs());
+
+    auto insertedData = svmManager->getSVMAlloc(reinterpret_cast<void *>(offsetAllocation.getGpuAddress()));
+    ASSERT_NE(nullptr, insertedData);
+
+    svmManager->freeSVMData(insertedData);
+
+    EXPECT_EQ(1u, svmManager->getNumAllocs());
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(reinterpret_cast<void *>(offsetAllocation.getGpuAddress())));
+    EXPECT_NE(nullptr, svmManager->getSVMAlloc(reinterpret_cast<void *>(higherAllocation.getGpuAddress())));
+}
+
 using SvmDeferFreeTrackingTest = Test<SVMMemoryAllocatorFixture<true, 1u>>;
 
 TEST_F(SvmDeferFreeTrackingTest, givenAllocationOffsetWhenDeferredFreeIsProcessedThenDeferFreeEntryIsErased) {
