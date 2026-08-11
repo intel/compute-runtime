@@ -103,6 +103,16 @@ ze_result_t LinuxSysmanImp::getResult(int err) {
     }
 }
 
+ze_result_t LinuxSysmanImp::getPmtResult(int err) {
+    auto result = getResult(err);
+    if (ZE_RESULT_ERROR_UNKNOWN == result) {
+        if (ENODATA == err) {
+            return ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE;
+        }
+    }
+    return result;
+}
+
 std::string &LinuxSysmanImp::getDriverName() {
     return driverName;
 }
