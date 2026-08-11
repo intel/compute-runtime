@@ -204,6 +204,42 @@ TEST(IsNV12ImageTests, givenRgbaFormatWhenIsNV12ImageThenReturnsFalse) {
     EXPECT_FALSE(isNV12Image(&fmt));
 }
 
+constexpr size_t uint32Max = std::numeric_limits<uint32_t>::max();
+constexpr size_t aboveUint32Max = uint32Max + 1u;
+
+TEST(FitsInUint32Tests, givenValueUpToUint32MaxWhenCheckingThenReturnsTrue) {
+    EXPECT_TRUE(fitsInUint32(0u));
+    EXPECT_TRUE(fitsInUint32(uint32Max));
+}
+
+TEST(FitsInUint32Tests, givenValueAboveUint32MaxWhenCheckingThenReturnsFalse) {
+    EXPECT_FALSE(fitsInUint32(aboveUint32Max));
+    EXPECT_FALSE(fitsInUint32(std::numeric_limits<size_t>::max()));
+}
+
+TEST(RectArgsFitInUint32Tests, givenAllArgumentsWithinUint32WhenCheckingThenReturnsTrue) {
+    const size_t origin[3] = {1u, 2u, 3u};
+    const size_t region[3] = {uint32Max, 5u, 6u};
+    EXPECT_TRUE(rectArgsFitInUint32(origin, region, uint32Max, uint32Max));
+}
+
+TEST(RectArgsFitInUint32Tests, givenOriginOrRegionComponentAboveUint32MaxWhenCheckingThenReturnsFalse) {
+    for (uint32_t fieldIndex = 0; fieldIndex < 6u; fieldIndex++) {
+        size_t origin[3] = {1u, 2u, 3u};
+        size_t region[3] = {4u, 5u, 6u};
+        auto &field = fieldIndex < 3u ? origin[fieldIndex] : region[fieldIndex - 3u];
+        field = aboveUint32Max;
+        EXPECT_FALSE(rectArgsFitInUint32(origin, region, 16u, 64u)) << "field index " << fieldIndex;
+    }
+}
+
+TEST(RectArgsFitInUint32Tests, givenPitchAboveUint32MaxWhenCheckingThenReturnsFalse) {
+    const size_t origin[3] = {1u, 2u, 3u};
+    const size_t region[3] = {4u, 5u, 6u};
+    EXPECT_FALSE(rectArgsFitInUint32(origin, region, aboveUint32Max, 64u));
+    EXPECT_FALSE(rectArgsFitInUint32(origin, region, 16u, aboveUint32Max));
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO

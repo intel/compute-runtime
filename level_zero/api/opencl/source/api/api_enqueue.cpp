@@ -8,6 +8,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -205,6 +206,9 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
     applyDefaultRectPitches(region, bufferRowPitch, bufferSlicePitch);
     applyDefaultRectPitches(region, hostRowPitch, hostSlicePitch);
 
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(bufferOrigin, region, bufferRowPitch, bufferSlicePitch));
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(hostOrigin, region, hostRowPitch, hostSlicePitch));
+
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(bufferOrigin[0]), static_cast<uint32_t>(bufferOrigin[1]), static_cast<uint32_t>(bufferOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(hostOrigin[0]), static_cast<uint32_t>(hostOrigin[1]), static_cast<uint32_t>(hostOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
 
@@ -308,6 +312,9 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
 
     applyDefaultRectPitches(region, bufferRowPitch, bufferSlicePitch);
     applyDefaultRectPitches(region, hostRowPitch, hostSlicePitch);
+
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(bufferOrigin, region, bufferRowPitch, bufferSlicePitch));
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(hostOrigin, region, hostRowPitch, hostSlicePitch));
 
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(bufferOrigin[0]), static_cast<uint32_t>(bufferOrigin[1]), static_cast<uint32_t>(bufferOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(hostOrigin[0]), static_cast<uint32_t>(hostOrigin[1]), static_cast<uint32_t>(hostOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
@@ -427,6 +434,9 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
     applyDefaultRectPitches(region, srcRowPitch, srcSlicePitch);
     applyDefaultRectPitches(region, dstRowPitch, dstSlicePitch);
 
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(srcOrigin, region, srcRowPitch, srcSlicePitch));
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(dstOrigin, region, dstRowPitch, dstSlicePitch));
+
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(dstOrigin[0]), static_cast<uint32_t>(dstOrigin[1]), static_cast<uint32_t>(dstOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(srcOrigin[0]), static_cast<uint32_t>(srcOrigin[1]), static_cast<uint32_t>(srcOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
 
@@ -481,6 +491,8 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
     auto l0Image = pImage->getL0Object();
     resolveHostPitchesForCustomPitchImage(l0Image->hasCustomPitch(), l0Image->getImageInfo().surfaceFormat->imageElementSizeInBytes, region, rowPitch, slicePitch);
 
+    UNRECOVERABLE_IF(!NEO::LEO::fitsInUint32(rowPitch) || !NEO::LEO::fitsInUint32(slicePitch));
+
     auto lock = pCommandQueue->takeOwnership();
     pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     ze_result_t ret = zeCommandListAppendImageCopyToMemoryExt(pCommandQueue->getL0Handle(),
@@ -533,6 +545,8 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
     auto mipDesc = createZeImageRegionWithMipLevel(pImage, origin, region);
     auto l0Image = pImage->getL0Object();
     resolveHostPitchesForCustomPitchImage(l0Image->hasCustomPitch(), l0Image->getImageInfo().surfaceFormat->imageElementSizeInBytes, region, inputRowPitch, inputSlicePitch);
+
+    UNRECOVERABLE_IF(!NEO::LEO::fitsInUint32(inputRowPitch) || !NEO::LEO::fitsInUint32(inputSlicePitch));
 
     auto lock = pCommandQueue->takeOwnership();
     pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
@@ -1199,11 +1213,13 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
                          workDim > 2 ? static_cast<uint32_t>(globalWorkSize[2] / lws[2]) : 1u};
 
     for (cl_uint i = 0; i < workDim; ++i) {
-        if (static_cast<uint32_t>(globalWorkSize[i]) % lws[i] != 0) [[unlikely]] {
+        if (globalWorkSize[i] % lws[i] != 0) [[unlikely]] {
             cl_int tracingRetVal = CL_INVALID_WORK_GROUP_SIZE;
             TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
             return tracingRetVal;
         }
+        // ze_group_count_t is 32 bit, so a group count that does not fit cannot be dispatched
+        UNRECOVERABLE_IF(!NEO::LEO::fitsInUint32(globalWorkSize[i] / lws[i]));
     }
 
     if (pCommandQueue->isPerfCountersEnabled() && event) {

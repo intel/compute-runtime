@@ -9,6 +9,9 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_error_mappers.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <span>
 #include <tuple>
 #include <type_traits>
@@ -200,6 +203,21 @@ template <typename... CastObjs, typename... NonCastObjs>
 template <typename... CastObjs>
 [[nodiscard]] inline auto validateAndCast(std::tuple<CastObjs...> castObjs) noexcept {
     return std::apply([](auto &&...args) { return detail::validateAndCastImpl(std::forward<decltype(args)>(args)...); }, castObjs);
+}
+
+// Level Zero expresses copy regions and pitches in 32 bits (ze_copy_region_t and the pitch arguments of
+// zeCommandListAppendMemoryCopyRegion / zeCommandListAppendImageCopy*Ext), while OpenCL passes them as size_t.
+// A value that does not fit cannot be forwarded, so it has to be rejected instead of being silently truncated
+// into a transfer at the wrong offset.
+[[nodiscard]] inline constexpr bool fitsInUint32(size_t value) noexcept {
+    return value <= std::numeric_limits<uint32_t>::max();
+}
+
+[[nodiscard]] inline constexpr bool rectArgsFitInUint32(const size_t *origin, const size_t *region,
+                                                        size_t rowPitch, size_t slicePitch) noexcept {
+    return fitsInUint32(origin[0]) && fitsInUint32(origin[1]) && fitsInUint32(origin[2]) &&
+           fitsInUint32(region[0]) && fitsInUint32(region[1]) && fitsInUint32(region[2]) &&
+           fitsInUint32(rowPitch) && fitsInUint32(slicePitch);
 }
 
 [[nodiscard]] cl_int validateYuvOperation(const size_t *origin, const size_t *region) noexcept;

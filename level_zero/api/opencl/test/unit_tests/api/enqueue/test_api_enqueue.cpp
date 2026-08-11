@@ -22,6 +22,7 @@
 #include "CL/cl_ext.h"
 
 #include <array>
+#include <limits>
 
 namespace NEO {
 namespace LEO {
@@ -101,6 +102,22 @@ TEST_F(EnqueueKernelExecutionTypeFixture, givenKernelUsingSyncBufferAndNotConcur
     auto retVal = clEnqueueNDCountKernelINTEL(commandQueue.get(), kernel.get(), 1, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+}
+
+TEST_F(EnqueueKernelExecutionTypeFixture, givenGlobalWorkSizeAboveUint32MaxNotDivisibleByLocalWorkSizeWhenEnqueueNDRangeKernelThenReturnsCLInvalidWorkGroupSize) {
+    constexpr uint32_t groupSize = 3u; // does not divide 2^32, so a truncated range would look divisible
+    // pre-set the group size so that zeKernelSetGroupSize takes its no-change early return
+    l0Kernel->privateState.groupSize[0] = groupSize;
+    l0Kernel->privateState.groupSize[1] = 1u;
+    l0Kernel->privateState.groupSize[2] = 1u;
+
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {static_cast<size_t>(std::numeric_limits<uint32_t>::max()) + 1u, 1, 1};
+    size_t localWorkSize[3] = {groupSize, 1, 1};
+
+    auto retVal = clEnqueueNDRangeKernel(commandQueue.get(), kernel.get(), 1, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+
+    EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
 }
 
 struct EnqueueSvmFixture : public Test<LeoCaptureFixture> {
