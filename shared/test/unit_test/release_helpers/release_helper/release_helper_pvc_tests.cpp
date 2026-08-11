@@ -46,14 +46,6 @@ TEST_F(ReleaseHelperPvcTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelperPvcTests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
-    whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
-}
-
-TEST_F(ReleaseHelperPvcTests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
-    whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
-}
-
 TEST_F(ReleaseHelperPvcTests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
     whenIsLocalOnlyAllowedCalledThenTrueReturned();
 }

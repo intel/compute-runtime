@@ -2168,7 +2168,7 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
 
         OpenClCFeaturesContainer openclCFeatures;
         auto compilerProductHelper = CompilerProductHelper::create(mockOfflineCompiler->hwInfo.platform.eProductFamily);
-        getOpenclCFeaturesList(mockOfflineCompiler->hwInfo, openclCFeatures, *compilerProductHelper.get(), *mockOfflineCompiler->releaseHelper);
+        getOpenclCFeaturesList(mockOfflineCompiler->hwInfo, openclCFeatures, *compilerProductHelper.get(), *mockOfflineCompiler->compilerReleaseHelper);
         for (auto &feature : openclCFeatures) {
             if (clStdOptionValue == "-cl-std=CL3.0") {
                 EXPECT_TRUE(hasSubstr(internalOptions, std::string{feature.name}));

@@ -100,16 +100,6 @@ bool ReleaseHelperHw<releaseType>::isRayTracingSupported() const {
 }
 
 template <ReleaseType releaseType>
-uint32_t ReleaseHelperHw<releaseType>::getAdditionalFp16Caps() const {
-    return 0u;
-}
-
-template <ReleaseType releaseType>
-uint32_t ReleaseHelperHw<releaseType>::getAdditionalExtraCaps() const {
-    return 0u;
-}
-
-template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::getStackSizePerRay() const {
     return 0u;
 }

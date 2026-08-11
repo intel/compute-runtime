@@ -30,8 +30,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isDeviceConfigStringTileCountIncluded, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDeviceConfigStringXeCuSegmentIncluded, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isRayTracingSupported, bool, true, ());
-    ADDMETHOD_CONST_NOBASE(getAdditionalFp16Caps, uint32_t, {}, ());
-    ADDMETHOD_CONST_NOBASE(getAdditionalExtraCaps, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(getStackSizePerRay, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(isLocalOnlyAllowed, bool, {}, ());
     ADDMETHOD_CONST_NOBASE(isDummyBlitWaRequired, bool, false, ());

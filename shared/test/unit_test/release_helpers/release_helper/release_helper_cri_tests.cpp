@@ -61,14 +61,6 @@ TEST_F(ReleaseHelperCriTests, whenGettingTotalMemBankSizeThenReturn8GB) {
     }
 }
 
-TEST_F(ReleaseHelperCriTests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities) {
-    whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities();
-}
-
-TEST_F(ReleaseHelperCriTests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities) {
-    whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities();
-}
-
 TEST_F(ReleaseHelperCriTests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
     whenIsLocalOnlyAllowedCalledThenFalseReturned();
 }

@@ -17,7 +17,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
@@ -91,7 +90,6 @@ void ClDevice::initializeCaps() {
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
@@ -142,7 +140,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.halfFpAtomicCapabilities = 0;
     uint32_t fp16Caps = 0u;
     uint32_t fp32Caps = 0u;
-    releaseHelper.getKernelFp16AtomicCapabilities(fp16Caps);
+    compilerReleaseHelper.getKernelFp16AtomicCapabilities(fp16Caps);
     compilerProductHelper.getKernelFp32AtomicCapabilities(fp32Caps);
     deviceInfo.halfFpAtomicCapabilities = fp16Caps;
     deviceInfo.singleFpAtomicCapabilities = fp32Caps;
@@ -366,7 +364,7 @@ void ClDevice::initializeCaps() {
         CL_TRUE}; // accumulating_saturating_mixed_signedness_accelerated;
 
     this->initializeOsSpecificCaps();
-    getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures, getDevice().getCompilerProductHelper(), releaseHelper);
+    getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures, getDevice().getCompilerProductHelper(), compilerReleaseHelper);
 }
 
 void ClDevice::initializeExtensionsWithVersion() {

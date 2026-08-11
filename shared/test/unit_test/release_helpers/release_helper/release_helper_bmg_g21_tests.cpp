@@ -55,14 +55,6 @@ TEST_F(ReleaseHelperBmgG21Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelperBmgG21Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
-    whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
-}
-
-TEST_F(ReleaseHelperBmgG21Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
-    whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
-}
-
 TEST_F(ReleaseHelperBmgG21Tests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
     whenIsLocalOnlyAllowedCalledThenFalseReturned();
 }

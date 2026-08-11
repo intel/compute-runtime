@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
@@ -1145,10 +1145,10 @@ struct DeviceAttributeQueryTest : public ::testing::Test {
     DebugManagerStateRestore restorer;
 };
 
-TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFromReleaseHelperIsReturnedOrNone) {
+TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFromCompilerReleaseHelperIsReturnedOrNone) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    const auto &releaseHelper = device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getReleaseHelper();
-    uint32_t extraKernelCapabilities = releaseHelper.getAdditionalExtraCaps();
+    const auto &compilerReleaseHelper = device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getCompilerReleaseHelper();
+    uint32_t extraKernelCapabilities = compilerReleaseHelper.getAdditionalExtraCaps();
     uint64_t value = 0u;
     size_t retSize = 0u;
 

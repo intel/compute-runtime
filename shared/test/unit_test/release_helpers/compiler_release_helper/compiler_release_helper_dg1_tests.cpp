@@ -27,5 +27,8 @@ TEST_F(CompilerReleaseHelperDg1Tests, whenGettingCapabilitiesThenCorrectProperti
         EXPECT_FALSE(compilerReleaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_FALSE(compilerReleaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(compilerReleaseHelper->isBFloat16ConversionSupported());
+
+        EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalFp16Caps());
+        EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalExtraCaps());
     }
 }

@@ -41,16 +41,6 @@ bool ReleaseHelperHw<release>::isRayTracingSupported() const {
 }
 
 template <>
-uint32_t ReleaseHelperHw<release>::getAdditionalFp16Caps() const {
-    return FpAtomicExtFlags::addAtomicCaps;
-}
-
-template <>
-uint32_t ReleaseHelperHw<release>::getAdditionalExtraCaps() const {
-    return (FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps);
-}
-
-template <>
 bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
     return false;
 }

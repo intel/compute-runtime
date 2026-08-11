@@ -26,8 +26,6 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenGettingSupportedNumGrfsThenValues128And256Returned();
     void whenGettingThreadsPerEuConfigsThen4And8AreReturned();
     void whenGettingTotalMemBankSizeThenReturn32GB();
-    void whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
-    void whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
     void whenIsDummyBlitWaRequiredCalledThenTrueReturned();
     void whenIsDummyBlitWaRequiredCalledThenFalseReturned();
     void whenIsLocalOnlyAllowedCalledThenTrueReturned();
@@ -49,8 +47,6 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenTrueOnlyForImmediateAndImageOrSampler();
     void whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
-    void whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities();
-    void whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities();
     void whenGettingSupportedNumGrfsThenValuesUpTo512Returned();
     virtual std::vector<uint32_t> getRevisions() = 0;
 

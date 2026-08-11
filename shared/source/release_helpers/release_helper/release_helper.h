@@ -54,9 +54,6 @@ class ReleaseHelper {
     virtual bool isDeviceConfigStringTileCountIncluded() const = 0;
     virtual bool isDeviceConfigStringXeCuSegmentIncluded() const = 0;
     virtual bool isRayTracingSupported() const = 0;
-    virtual uint32_t getAdditionalFp16Caps() const = 0;
-    virtual uint32_t getAdditionalExtraCaps() const = 0;
-    void getKernelFp16AtomicCapabilities(uint32_t &fp16Caps) const;
     virtual uint32_t getStackSizePerRay() const = 0;
     virtual bool isLocalOnlyAllowed() const = 0;
     virtual bool isDummyBlitWaRequired() const = 0;
@@ -110,8 +107,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isDeviceConfigStringTileCountIncluded() const override;
     bool isDeviceConfigStringXeCuSegmentIncluded() const override;
     bool isRayTracingSupported() const override;
-    uint32_t getAdditionalFp16Caps() const override;
-    uint32_t getAdditionalExtraCaps() const override;
     uint32_t getStackSizePerRay() const override;
     bool isLocalOnlyAllowed() const override;
     bool isDummyBlitWaRequired() const override;

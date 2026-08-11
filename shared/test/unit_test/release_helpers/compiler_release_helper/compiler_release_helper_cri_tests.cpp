@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/unit_test/release_helpers/compiler_release_helper/compiler_release_helper_tests_base.h"
 
@@ -27,5 +28,8 @@ TEST_F(CompilerReleaseHelperCriTests, whenGettingCapabilitiesThenCorrectProperti
         EXPECT_TRUE(compilerReleaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_FALSE(compilerReleaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(compilerReleaseHelper->isBFloat16ConversionSupported());
+
+        EXPECT_EQ(FpAtomicExtFlags::addAtomicCaps, compilerReleaseHelper->getAdditionalFp16Caps());
+        EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, compilerReleaseHelper->getAdditionalExtraCaps());
     }
 }

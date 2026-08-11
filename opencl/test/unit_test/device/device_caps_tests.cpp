@@ -14,7 +14,7 @@
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -79,7 +79,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         }
 
         auto &hwInfo = clDevice.getHardwareInfo();
-        const auto &releaseHelper = clDevice.getDevice().getReleaseHelper();
+        const auto &compilerReleaseHelper = clDevice.getDevice().getCompilerReleaseHelper();
         auto openclCFeatureIterator = clDevice.getDeviceInfo().openclCFeatures.begin();
 
         EXPECT_STREQ("__opencl_c_int64", openclCFeatureIterator->name);
@@ -115,8 +115,8 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit", (++openclCFeatureIterator)->name);
         EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit_packed", (++openclCFeatureIterator)->name);
 
-        uint32_t fp16AdditionalCaps = releaseHelper.getAdditionalFp16Caps();
-        uint32_t fpExtraAdditionalCaps = releaseHelper.getAdditionalExtraCaps();
+        uint32_t fp16AdditionalCaps = compilerReleaseHelper.getAdditionalFp16Caps();
+        uint32_t fpExtraAdditionalCaps = compilerReleaseHelper.getAdditionalExtraCaps();
 
         if (isValueSet(fp16AdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
             EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_add", (++openclCFeatureIterator)->name);

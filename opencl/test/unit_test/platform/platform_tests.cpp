@@ -11,7 +11,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -45,7 +44,6 @@ struct PlatformTest : public ::testing::Test {
 
         pPlatform.reset(new MockPlatform());
         compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
-        releaseHelper = ReleaseHelper::create(defaultHwInfo->ipVersion);
         compilerReleaseHelper = CompilerReleaseHelper::create(defaultHwInfo->ipVersion);
     }
     void TearDown() override {
@@ -54,7 +52,6 @@ struct PlatformTest : public ::testing::Test {
     std::unique_ptr<MockPlatform> pPlatform;
     std::unique_ptr<VariableBackup<bool>> backupSipInitType;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
-    std::unique_ptr<ReleaseHelper> releaseHelper;
     std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
 
     cl_int retVal = CL_SUCCESS;
@@ -271,7 +268,7 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
     hwInfo = defaultHwInfo.get();
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo, *compilerReleaseHelper);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*hwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*hwInfo, features, *compilerProductHelper.get(), *compilerReleaseHelper);
 
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string(" -cl-ext=-all,+cl")));
@@ -302,7 +299,7 @@ TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchi
     hwInfo = defaultHwInfo.get();
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo, *compilerReleaseHelper);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*hwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*hwInfo, features, *compilerProductHelper.get(), *compilerReleaseHelper);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_int64_base_atomics")));
@@ -314,7 +311,7 @@ TEST_F(PlatformTest, givenSupportedMediaBlockWhenCreateExtentionsListThenDeviceR
     hwInfo.capabilityTable.supportsMediaBlock = true;
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *compilerReleaseHelper);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *compilerReleaseHelper);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
@@ -325,7 +322,7 @@ TEST_F(PlatformTest, givenNotSupportedMediaBlockWhenCreateExtentionsListThenDevi
     hwInfo.capabilityTable.supportsMediaBlock = false;
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *compilerReleaseHelper);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *compilerReleaseHelper);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
@@ -336,7 +333,7 @@ TEST_F(PlatformTest, givenSupportedImagesWhenCreateExtentionsListThenDeviceNotRe
     hwInfo.capabilityTable.supportsImages = true;
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *compilerReleaseHelper);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *compilerReleaseHelper);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_3d_image_writes")));
@@ -347,7 +344,7 @@ TEST_F(PlatformTest, givenNotSupportedImagesWhenCreateExtentionsListThenDeviceNo
     hwInfo.capabilityTable.supportsImages = false;
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *compilerReleaseHelper);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *compilerReleaseHelper);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_khr_3d_image_writes")));

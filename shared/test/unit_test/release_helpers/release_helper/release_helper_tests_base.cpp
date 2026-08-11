@@ -8,9 +8,7 @@
 #include "shared/test/unit_test/release_helpers/release_helper/release_helper_tests_base.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
@@ -60,26 +58,6 @@ void ReleaseHelperTestsBase::whenGettingTotalMemBankSizeThenReturn32GB() {
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
         EXPECT_EQ(32u * MemoryConstants::gigaByte, releaseHelper->getTotalMemBankSize());
-    }
-}
-
-void ReleaseHelperTestsBase::whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-
-        EXPECT_EQ(0u, releaseHelper->getAdditionalFp16Caps());
-    }
-}
-
-void ReleaseHelperTestsBase::whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-
-        EXPECT_EQ(0u, releaseHelper->getAdditionalExtraCaps());
     }
 }
 
@@ -322,29 +300,6 @@ void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledWithDeb
                 }
             }
         }
-    }
-}
-
-void ReleaseHelperTestsBase::whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-
-        EXPECT_EQ(FpAtomicExtFlags::addAtomicCaps, releaseHelper->getAdditionalFp16Caps());
-    }
-}
-
-void ReleaseHelperTestsBase::whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-
-        uint32_t extraCaps = releaseHelper->getAdditionalExtraCaps();
-        EXPECT_TRUE(isValueSet(extraCaps, FpAtomicExtFlags::addAtomicCaps));
-        EXPECT_TRUE(isValueSet(extraCaps, FpAtomicExtFlags::minMaxAtomicCaps));
-        EXPECT_TRUE(isValueSet(extraCaps, FpAtomicExtFlags::loadStoreAtomicCaps));
     }
 }
 

@@ -30,6 +30,9 @@ class CompilerReleaseHelper {
     virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
     virtual bool isSplitMatrixMultiplyAccumulateSupported() const = 0;
     virtual bool isBFloat16ConversionSupported() const = 0;
+    virtual uint32_t getAdditionalFp16Caps() const = 0;
+    virtual uint32_t getAdditionalExtraCaps() const = 0;
+    void getKernelFp16AtomicCapabilities(uint32_t &fp16Caps) const;
 
   protected:
     CompilerReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -49,6 +52,8 @@ class CompilerReleaseHelperHw : public CompilerReleaseHelper {
     bool isMatrixMultiplyAccumulateSupported() const override;
     bool isSplitMatrixMultiplyAccumulateSupported() const override;
     bool isBFloat16ConversionSupported() const override;
+    uint32_t getAdditionalFp16Caps() const override;
+    uint32_t getAdditionalExtraCaps() const override;
 };
 
 template <uint32_t architecture>

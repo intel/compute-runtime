@@ -13,14 +13,14 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_properties.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 #include <sstream>
 #include <string>
 
 namespace NEO {
 
-void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures, const CompilerProductHelper &compilerProductHelper, const ReleaseHelper &releaseHelper) {
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures, const CompilerProductHelper &compilerProductHelper, const CompilerReleaseHelper &compilerReleaseHelper) {
     cl_name_version openClCFeature;
     openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
 
@@ -110,8 +110,8 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
     strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit_packed");
     openclCFeatures.push_back(openClCFeature);
 
-    uint32_t fp16AdditionalCaps = releaseHelper.getAdditionalFp16Caps();
-    uint32_t fpExtraAdditionalCaps = releaseHelper.getAdditionalExtraCaps();
+    uint32_t fp16AdditionalCaps = compilerReleaseHelper.getAdditionalFp16Caps();
+    uint32_t fpExtraAdditionalCaps = compilerReleaseHelper.getAdditionalExtraCaps();
 
     if (isValueSet(fp16AdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_add");

@@ -23,7 +23,7 @@
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -140,13 +140,13 @@ TEST_F(ModuleTest, GivenKernelRegisterFileDescriptorWhenGetPropertiesIsCalledThe
     EXPECT_EQ(kernelDescriptor.kernelAttributes.numGrfRequired, descriptor.registerFileSize);
 }
 
-TEST_F(ModuleTest, GivenBfloat16AtomicPropertiesWhenGetKernelPropertiesIsCalledThenCorrectPropertiesFromReleaseHelperAreReturnedOrNone) {
+TEST_F(ModuleTest, GivenBfloat16AtomicPropertiesWhenGetKernelPropertiesIsCalledThenCorrectPropertiesFromCompilerReleaseHelperAreReturnedOrNone) {
     zex_bfloat16_atomic_ext_properties_t bfloat16Properties{ZEX_STRUCTURE_TYPE_BFLOAT16_ATOMIC_EXT_PROPERTIES};
     ze_device_module_properties_t properties{};
     properties.pNext = &bfloat16Properties;
 
-    const auto &releaseHelper = device->getNEODevice()->getReleaseHelper();
-    uint32_t extraCaps = releaseHelper.getAdditionalExtraCaps();
+    const auto &compilerReleaseHelper = device->getNEODevice()->getCompilerReleaseHelper();
+    uint32_t extraCaps = compilerReleaseHelper.getAdditionalExtraCaps();
 
     ze_result_t result = device->getKernelProperties(&properties);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);

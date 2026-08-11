@@ -13,7 +13,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
@@ -372,8 +372,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = deviceInfo.spirvCapabilities.size() * sizeof(cl_uint);
         break;
     case CL_DEVICE_BFLOAT16_FP_ATOMIC_CAPABILITIES_EXT: {
-        const auto &releaseHelper = this->getDevice().getReleaseHelper();
-        param.bitfield = releaseHelper.getAdditionalExtraCaps();
+        const auto &compilerReleaseHelper = this->getDevice().getCompilerReleaseHelper();
+        param.bitfield = compilerReleaseHelper.getAdditionalExtraCaps();
         src = &param.bitfield;
         srcSize = retSize = sizeof(cl_device_atomic_capabilities);
     } break;

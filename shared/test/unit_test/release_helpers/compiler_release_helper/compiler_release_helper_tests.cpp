@@ -5,27 +5,33 @@
  *
  */
 
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
+#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
+using CompilerReleaseHelperKernelCapabilitiesTests = ::testing::Test;
 
-TEST(CompilerReleaseHelperCreateTest, givenArchitectureWithoutRegisteredReleaseTableWhenCreatingCompilerReleaseHelperThenNullptrIsReturned) {
-    HardwareIpVersion ipVersion{};
-    ipVersion.architecture = compilerReleaseMaxArchitecture - 1;
-    ipVersion.release = 0;
+TEST(CompilerReleaseHelperKernelCapabilitiesTests, givenNoAdditionalFp16CapsWhenGettingKernelFp16AtomicCapabilitiesThenReturnMinMaxAndLoadStoreCapabilities) {
+    MockCompilerReleaseHelper compilerReleaseHelper;
+    compilerReleaseHelper.getAdditionalFp16CapsResult = 0u;
 
-    ASSERT_EQ(nullptr, compilerReleaseHelperFactory[ipVersion.architecture]);
-    EXPECT_EQ(nullptr, CompilerReleaseHelper::create(ipVersion));
+    uint32_t fp16Caps = 0u;
+    compilerReleaseHelper.getKernelFp16AtomicCapabilities(fp16Caps);
+
+    EXPECT_EQ(1u, compilerReleaseHelper.getAdditionalFp16CapsCalled);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, fp16Caps);
 }
 
-TEST(CompilerReleaseHelperCreateTest, givenRegisteredArchitectureButUnregisteredReleaseWhenCreatingCompilerReleaseHelperThenNullptrIsReturned) {
-    HardwareIpVersion ipVersion{};
-    ipVersion.architecture = 12;
-    ipVersion.release = 5;
+TEST(CompilerReleaseHelperKernelCapabilitiesTests, givenAdditionalFp16CapsWhenGettingKernelFp16AtomicCapabilitiesThenAdditionalCapsAreOredIn) {
+    MockCompilerReleaseHelper compilerReleaseHelper;
+    compilerReleaseHelper.getAdditionalFp16CapsResult = FpAtomicExtFlags::addAtomicCaps;
 
-    ASSERT_NE(nullptr, compilerReleaseHelperFactory[ipVersion.architecture]);
-    ASSERT_EQ(nullptr, compilerReleaseHelperFactory[ipVersion.architecture][ipVersion.release]);
-    EXPECT_EQ(nullptr, CompilerReleaseHelper::create(ipVersion));
+    uint32_t fp16Caps = 0u;
+    compilerReleaseHelper.getKernelFp16AtomicCapabilities(fp16Caps);
+
+    EXPECT_EQ(1u, compilerReleaseHelper.getAdditionalFp16CapsCalled);
+    EXPECT_EQ(FpAtomicExtFlags::addAtomicCaps | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, fp16Caps);
 }
