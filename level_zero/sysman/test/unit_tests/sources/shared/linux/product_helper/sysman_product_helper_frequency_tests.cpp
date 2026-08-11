@@ -287,7 +287,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidFrequencyHandleWhenCall
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesThenNonZeroCountIsReturnedAndCallSucceds, IsNotCRI) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesThenNonZeroCountIsReturnedAndCallSucceeds, IsNotCriOrBmg) {
     uint32_t count = 0U;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
@@ -303,7 +303,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFr
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroAndValidPtrWhenEnumeratingFrequencyHandlesThenNonZeroCountAndNoHandlesAreReturnedAndCallSucceds, IsNotCRI) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroAndValidPtrWhenEnumeratingFrequencyHandlesThenNonZeroCountAndNoHandlesAreReturnedAndCallSucceeds, IsNotCriOrBmg) {
     uint32_t count = 0U;
     zes_freq_handle_t handle = static_cast<zes_freq_handle_t>(0UL);
 
@@ -312,7 +312,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroAndValidPtrWhenEn
     EXPECT_EQ(handle, static_cast<zes_freq_handle_t>(0UL));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesAndMediaFreqDomainIsPresentThenNonZeroCountIsReturnedAndCallSucceds, IsNotCRI) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesAndMediaFreqDomainIsPresentThenNonZeroCountIsReturnedAndCallSucceeds, IsNotCriOrBmg) {
     pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.supportsImages = true;
     uint32_t count = 0U;
 
@@ -329,7 +329,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFr
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesAndMediaDomainIsAbsentThenNonZeroCountIsReturnedAndCallSucceds, IsNotCRI) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesAndMediaDomainIsAbsentThenNonZeroCountIsReturnedAndCallSucceeds, IsNotCriOrBmg) {
     pSysfsAccess->directoryExistsResult = false;
     pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.supportsImages = true;
     uint32_t count = 0U;
@@ -521,7 +521,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingZesF
     }
 }
 
-HWTEST2_F(FreqMultiDeviceFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetPropertiesThenSuccessIsReturned, IsNotCRI) {
+HWTEST2_F(FreqMultiDeviceFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetPropertiesThenSuccessIsReturned, IsNotCriOrBmg) {
     uint32_t count = 0U;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
     EXPECT_EQ(count, multiHandleComponentCount);

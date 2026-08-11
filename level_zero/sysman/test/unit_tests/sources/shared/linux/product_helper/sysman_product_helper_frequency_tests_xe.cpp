@@ -46,7 +46,9 @@ class SysmanProductHelperFrequencyTestFixture : public SysmanDeviceFixture {
     }
 };
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetStateAndFrequencyStatePnextPointerIsNotValidThenNoThrottleReasonsAreReturned, IsCRI) {
+using IsBmgOrCri = IsAnyProducts<IGFX_BMG, IGFX_CRI>;
+
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetStateAndFrequencyStatePnextPointerIsNotValidThenNoThrottleReasonsAreReturned, IsBmgOrCri) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_freq_state_t state{ZES_STRUCTURE_TYPE_FREQ_STATE};
@@ -56,7 +58,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
     }
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetStateAndStatusReasonFileReadFailedThenVerifyCallSucceedsWithProperValuesReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetStateAndStatusReasonFileReadFailedThenVerifyCallSucceedsWithProperValuesReturned, IsBmgOrCri) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_intel_freq_throttle_detailed_reason_exp_t throttleReasons = {};
@@ -73,7 +75,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
     }
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetStateAndThrottleReasonStatusIsInvalidThenVerifyCallSucceedsWithProperValuesReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingZesFrequencyGetStateAndThrottleReasonStatusIsInvalidThenVerifyCallSucceedsWithProperValuesReturned, IsBmgOrCri) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_intel_freq_throttle_detailed_reason_exp_t throttleReasons = {};
@@ -237,7 +239,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonIsSetWhenCalli
     EXPECT_EQ(expectedReasons, throttleReason);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonIsZeroWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonIsZeroWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsBmgOrCri) {
     pSysfsAccess->setValU32(detailedThrottleReasonStatusFile, validReasonValue);
     pSysfsAccess->setValU32(ratlReasonFile, invalidReasonValue);
 
@@ -246,7 +248,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonIsZeroWhenCall
     EXPECT_EQ(0u, throttleReason & ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonReadFailsWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonReadFailsWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsBmgOrCri) {
     pSysfsAccess->setValU32(detailedThrottleReasonStatusFile, validReasonValue);
     pSysfsAccess->mockRatlReasonReadError = true;
 
@@ -255,7 +257,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonReadFailsWhenC
     EXPECT_EQ(0u, throttleReason & ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstanceWhenQueryingMediaDomainSupportThenCapabilityTableImageSupportIsReturned, IsNotCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstanceWhenQueryingMediaDomainSupportThenCapabilityTableImageSupportIsReturned, IsNotCriOrBmg) {
     auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
 
     rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
@@ -272,7 +274,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenCriProductHelperInstance
     EXPECT_TRUE(pSysmanProductHelper->isMediaDomainSupported(pLinuxSysmanImp));
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstanceWhenQueryingMemoryDomainSupportThenMemoryDomainIsSupported, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstanceWhenQueryingMemoryDomainSupportThenMemoryDomainIsSupported, IsBmgOrCri) {
     EXPECT_TRUE(pSysmanProductHelper->isMemoryDomainSupported());
 }
 
@@ -315,7 +317,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnu
     EXPECT_TRUE(hasMediaDomain);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnumeratingFrequencyDomainsWithImageSupportAndNoMediaDirectoryThenMemoryDomainIsIncluded, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnumeratingFrequencyDomainsWithImageSupportAndNoMediaDirectoryThenMemoryDomainIsIncluded, IsBmgOrCri) {
     auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = true;
 
@@ -356,7 +358,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnu
     EXPECT_FALSE(hasMediaDomain);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnumeratingFrequencyDomainsWithImageSupportAndMediaDirectoryThenAllDomainsAreIncluded, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnumeratingFrequencyDomainsWithImageSupportAndMediaDirectoryThenAllDomainsAreIncluded, IsBmgOrCri) {
     auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = true;
 
@@ -397,7 +399,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidDeviceHandleWhenEnu
     EXPECT_TRUE(hasMediaDomain);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingGetPropertiesOnMemoryDomainThenCorrectPropertiesAreReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingGetPropertiesOnMemoryDomainThenCorrectPropertiesAreReturned, IsBmgOrCri) {
     auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
 
@@ -427,7 +429,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
     EXPECT_NE(nullptr, memoryHandle);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingFrequencyGetRangeOnMemoryDomainThenUnsupportedValuesAreReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingFrequencyGetRangeOnMemoryDomainThenUnsupportedValuesAreReturned, IsBmgOrCri) {
     auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
 
@@ -453,7 +455,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
     }
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingFrequencySetRangeOnMemoryDomainThenUnsupportedFeatureIsReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingFrequencySetRangeOnMemoryDomainThenUnsupportedFeatureIsReturned, IsBmgOrCri) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
@@ -603,13 +605,13 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetState(handle, &state));
 
             EXPECT_EQ(-1.0, state.actual);
-            EXPECT_EQ(0.0, state.currentVoltage);
+            EXPECT_EQ(-1.0, state.currentVoltage);
             break;
         }
     }
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenBuildKeyOffsetMapFailsForMemoryDomainThenActualFrequencyAndVoltageReturnErrorValues, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenBuildKeyOffsetMapFailsForMemoryDomainThenActualFrequencyAndVoltageReturnErrorValues, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         return -1;
     });
@@ -635,13 +637,157 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetState(handle, &state));
 
             EXPECT_EQ(-1.0, state.actual);
-            EXPECT_EQ(0.0, state.currentVoltage);
+            EXPECT_EQ(-1.0, state.currentVoltage);
             break;
         }
     }
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstanceWhenCallingFrequencyMethodsDirectlyForMemoryDomainThenUnsupportedFeatureIsReturned, IsNotCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenCallingFrequencyGetStateOnMemoryDomainThenValidValuesAreReturnedForBmg, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::map<std::string, std::string> fileNameLinkMap = {
+            {"/sys/class/intel_pmt/telem1", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
+        };
+        auto it = fileNameLinkMap.find(std::string(path));
+        if (it != fileNameLinkMap.end()) {
+            std::memcpy(buf, it->second.c_str(), it->second.size());
+            return static_cast<int>(it->second.size());
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::string strPathName(pathname);
+        if (strPathName == "/sys/class/intel_pmt/telem1/offset") {
+            return 4;
+        } else if (strPathName == "/sys/class/intel_pmt/telem1/guid") {
+            return 5;
+        } else if (strPathName == "/sys/class/intel_pmt/telem1/telem") {
+            return 6;
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        if (fd == 4) {
+            std::string offsetValue = "0";
+            memcpy(buf, offsetValue.data(), count);
+            return count;
+        } else if (fd == 5) {
+            std::string guidValue = "0x1e2f8201";
+            memcpy(buf, guidValue.data(), count);
+            return count;
+        } else if (fd == 6) {
+            if (offset == 56) {
+                uint32_t frequencyData = 2000;
+                memcpy(buf, &frequencyData, count);
+                return count;
+            } else if (offset == 60) {
+                uint32_t voltageData = 0x100; // 256 decimal = 1.0V in U1.8 format (256/256.0)
+                memcpy(buf, &voltageData, count);
+                return count;
+            }
+        }
+        return -1;
+    });
+
+    auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
+
+    for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
+
+    uint32_t count = 0U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(pSysmanDevice->toHandle(), &count, nullptr));
+    auto handles = getFreqHandles(count);
+
+    for (auto handle : handles) {
+        zes_freq_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handle, &properties));
+        if (properties.type == ZES_FREQ_DOMAIN_MEMORY) {
+            zes_freq_state_t state = {};
+            state.stype = ZES_STRUCTURE_TYPE_FREQ_STATE;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetState(handle, &state));
+
+            EXPECT_GT(state.actual, 0.0);
+            EXPECT_GT(state.currentVoltage, 0.0);
+            EXPECT_EQ(-1.0, state.request);
+            EXPECT_EQ(-1.0, state.tdp);
+            EXPECT_EQ(-1.0, state.efficient);
+            EXPECT_EQ(0u, state.throttleReasons);
+            break;
+        }
+    }
+}
+
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhenPmtReadValueFailsForMemoryDomainThenActualFrequencyAndVoltageReturnErrorValuesForBmg, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::map<std::string, std::string> fileNameLinkMap = {
+            {"/sys/class/intel_pmt/telem1", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
+        };
+        auto it = fileNameLinkMap.find(std::string(path));
+        if (it != fileNameLinkMap.end()) {
+            std::memcpy(buf, it->second.c_str(), it->second.size());
+            return static_cast<int>(it->second.size());
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::string strPathName(pathname);
+        if (strPathName == "/sys/class/intel_pmt/telem1/offset") {
+            return 4;
+        } else if (strPathName == "/sys/class/intel_pmt/telem1/guid") {
+            return 5;
+        } else if (strPathName == "/sys/class/intel_pmt/telem1/telem") {
+            return 6;
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        if (fd == 4) {
+            std::string offsetValue = "0";
+            memcpy(buf, offsetValue.data(), count);
+            return count;
+        } else if (fd == 5) {
+            std::string guidValue = "0x1e2f8201";
+            memcpy(buf, guidValue.data(), count);
+            return count;
+        }
+        return -1;
+    });
+
+    auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
+
+    for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
+
+    uint32_t count = 0U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(pSysmanDevice->toHandle(), &count, nullptr));
+    auto handles = getFreqHandles(count);
+
+    for (auto handle : handles) {
+        zes_freq_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handle, &properties));
+        if (properties.type == ZES_FREQ_DOMAIN_MEMORY) {
+            zes_freq_state_t state = {};
+            state.stype = ZES_STRUCTURE_TYPE_FREQ_STATE;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetState(handle, &state));
+
+            EXPECT_EQ(-1.0, state.actual);
+            EXPECT_EQ(-1.0, state.currentVoltage);
+            break;
+        }
+    }
+}
+
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstanceWhenCallingFrequencyMethodsDirectlyForMemoryDomainThenUnsupportedFeatureIsReturned, IsNotCriOrBmg) {
     double actual = 0.0;
     double voltage = 0.0;
     uint32_t subdeviceId = 0;
@@ -653,7 +799,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstan
               pSysmanProductHelper->getCurrentVoltage(pLinuxSysmanImp, ZES_FREQ_DOMAIN_MEMORY, subdeviceId, &voltage));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesThenNonZeroCountIsReturnedAndCallSucceds, IsNotCRI) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesThenNonZeroCountIsReturnedAndCallSucceeds, IsNotCriOrBmg) {
     uint32_t count = 0U;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
@@ -669,7 +815,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenComponentCountZeroWhenEnumerating
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenComponentCountZeroAndValidPtrWhenEnumeratingFrequencyHandlesThenNonZeroCountAndNoHandlesAreReturnedAndCallSucceds, IsNotCRI) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenComponentCountZeroAndValidPtrWhenEnumeratingFrequencyHandlesThenNonZeroCountAndNoHandlesAreReturnedAndCallSucceeds, IsNotCriOrBmg) {
     uint32_t count = 0U;
     zes_freq_handle_t handle = static_cast<zes_freq_handle_t>(0UL);
 
