@@ -397,8 +397,6 @@ bool Device::createEngines() {
     }
 
     if (gfxCoreHelper.areSecondaryContextsSupported()) {
-        auto &hwInfo = this->getHardwareInfo();
-
         auto hpCopyEngine = getHpCopyEngine();
 
         for (auto engineGroupType : {EngineGroupType::compute, EngineGroupType::copy, EngineGroupType::linkedCopy}) {
@@ -424,11 +422,6 @@ bool Device::createEngines() {
                 highPriorityContextCount = std::max(contextCount / 2, 1u);
 
             } else {
-                if (engineGroupType == EngineGroupType::compute && hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1) {
-                    contextCount = contextCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-                    highPriorityContextCount = highPriorityContextCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-                }
-
                 if (engineGroupType == EngineGroupType::copy || engineGroupType == EngineGroupType::linkedCopy) {
                     gfxCoreHelper.adjustCopyEngineRegularContextCount(engineGroup->engines.size(), contextCount);
                 }

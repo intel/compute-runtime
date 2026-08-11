@@ -4233,7 +4233,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
 
         auto &secondaryEngines = neoMockDevice->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(index)];
 
-        ASSERT_EQ(8u / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, secondaryEngines.engines.size());
+        ASSERT_EQ(8u, secondaryEngines.engines.size());
 
         auto highPriorityIndex = secondaryEngines.regularEnginesTotal;
         ASSERT_LT(highPriorityIndex, static_cast<uint32_t>(secondaryEngines.engines.size()));

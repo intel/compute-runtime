@@ -1766,12 +1766,12 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
         }
 
         ASSERT_EQ(computeEnginesCount, device->secondaryEngines.size());
-        ASSERT_EQ(contextGroupSize / numOfCCS[i], device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
+        ASSERT_EQ(contextGroupSize, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
 
         auto defaultEngine = device->getDefaultEngine();
         EXPECT_EQ(defaultEngine.commandStreamReceiver, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines[0].commandStreamReceiver);
 
-        const uint32_t regularContextCount = std::min(contextGroupSize / 2, 4u) / numOfCCS[i];
+        const uint32_t regularContextCount = std::min(contextGroupSize / 2, 4u);
 
         for (uint32_t ccsIndex = 0; ccsIndex < computeEnginesCount; ccsIndex++) {
             auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(ccsIndex)];
@@ -1788,7 +1788,7 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
             EXPECT_EQ(0u, secondaryEngines.highPriorityCounter.load());
 
             EXPECT_EQ(regularContextCount, secondaryEngines.regularEnginesTotal);
-            EXPECT_EQ(contextGroupSize / numOfCCS[i] - regularContextCount, secondaryEngines.highPriorityEnginesTotal);
+            EXPECT_EQ(contextGroupSize - regularContextCount, secondaryEngines.highPriorityEnginesTotal);
 
             for (size_t contextId = 0; contextId < regularContextCount + 1; contextId++) {
                 auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, std::nullopt);
@@ -1800,7 +1800,7 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
                 }
             }
 
-            auto hpCount = contextGroupSize / numOfCCS[i] - regularContextCount;
+            auto hpCount = contextGroupSize - regularContextCount;
             for (size_t contextId = 0; contextId < hpCount + 1; contextId++) {
                 auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, std::nullopt);
                 ASSERT_NE(nullptr, engine);
