@@ -27,6 +27,7 @@ class Buffer : public MemObj {
     GraphicsAllocation *getGraphicsAllocation(uint32_t rootDeviceIndex) final { return static_cast<GraphicsAllocation *>(this->getAllocData()->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)); };
     void resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) final;
     void removeGraphicsAllocation(uint32_t rootDeviceIndex) final;
+    void refreshDeviceAddress(uint32_t rootDeviceIndex) final;
     bool isSubBuffer() const;
     bool isValidSubBufferOffset(size_t offset);
     SvmAllocationData *getAllocData();

@@ -1140,6 +1140,10 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
+    if (pKernel->isUsingSharedObjArgs()) {
+        pKernel->resetSharedObjectsPatchAddresses();
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
     auto cmdlistHandle = pCommandQueue->getL0Handle();
     auto lock = pCommandQueue->takeOwnership();
@@ -1878,6 +1882,10 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
         cl_int tracingRetVal = CL_INVALID_KERNEL;
         TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
         return tracingRetVal;
+    }
+
+    if (pKernel->isUsingSharedObjArgs()) {
+        pKernel->resetSharedObjectsPatchAddresses();
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);

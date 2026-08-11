@@ -92,6 +92,8 @@ class MemObj : public BaseObject<_cl_mem> {
     virtual void resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) = 0;
     virtual void removeGraphicsAllocation(uint32_t rootDeviceIndex) = 0;
 
+    virtual void refreshDeviceAddress(uint32_t rootDeviceIndex) {}
+
     std::shared_ptr<SharingHandler> &getSharingHandler() { return sharingHandler; };
     SharingHandler *peekSharingHandler() const { return sharingHandler.get(); };
     void setSharingHandler(SharingHandler *sharingHandler) { this->sharingHandler.reset(sharingHandler); };

@@ -18,6 +18,7 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel_info_cl.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 
 namespace NEO {
 namespace LEO {
@@ -28,7 +29,7 @@ Kernel::Kernel(std::map<uint32_t, ze_kernel_handle_t> kernelHandles, Program *pr
     program->incRefInternal();
 }
 
-Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), program(sourceKernel->program), executionType(sourceKernel->executionType) {
+Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), sharedObjArgs(sourceKernel->sharedObjArgs), program(sourceKernel->program), executionType(sourceKernel->executionType) {
     for (const auto &[rootDeviceIndex, kernelHandle] : sourceKernel->kernelHandles) {
         this->kernelHandles[rootDeviceIndex] = static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle))->makeDependentClone().release();
     }
@@ -399,6 +400,21 @@ cl_int Kernel::setArgumentValue(uint32_t argIndex, size_t argSize, const void *a
         }
     }
     return result;
+}
+
+void Kernel::setSharedObjArg(uint32_t argIndex, Buffer *buffer) {
+    if (buffer->peekSharingHandler()) {
+        this->sharedObjArgs[argIndex] = buffer;
+    } else {
+        this->sharedObjArgs.erase(argIndex);
+    }
+}
+
+void Kernel::resetSharedObjectsPatchAddresses() {
+    for (const auto &[argIndex, buffer] : this->sharedObjArgs) {
+        const auto ptr = buffer->getUsmPtr();
+        this->setArgumentValue(argIndex, sizeof(ptr), &ptr);
+    }
 }
 
 cl_int Kernel::validateImmediateArgSize(uint32_t argIndex, size_t argSize) const {

@@ -8,11 +8,14 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
+#include "level_zero/api/opencl/source/sharings/leo_sharing.h"
 #include "level_zero/api/opencl/test/common/fixtures/capturing_context.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -154,6 +157,126 @@ TEST_F(BufferZeroCopyForHostPtrTest, givenHostPtrBelowMinAddressRestrictionThenZ
 
     restrictedMemoryManager.testRestrictions.minAddress = castToUint64(hostPtr);
     EXPECT_TRUE(Buffer::isZeroCopyAllowedForHostPtr(hostPtr, bufferSize, &restrictedMemoryManager));
+}
+
+struct SharedBufferDeviceAddressTest : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        cl_device_id clDeviceId = clDevice;
+        capturingContext = std::make_unique<CapturingContext>(driverHandle.get(), clDevice->getL0Handle());
+        capturingContext->getDriverHandleCallBase = true;
+        leoContext = std::make_unique<Context>(nullptr, capturingContext->toHandle(), 1, &clDeviceId, true);
+        rootDeviceIndex = clDevice->getRootDeviceIndex();
+        memoryManager = driverHandle->getMemoryManager();
+    }
+
+    void TearDown() override {
+        leoContext.reset();
+        capturingContext.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    GraphicsAllocation *allocate() {
+        return memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, allocationSize});
+    }
+
+    Buffer *createSharedBuffer(GraphicsAllocation *graphicsAllocation) {
+        return Buffer::createSharedBuffer(leoContext.get(), CL_MEM_READ_WRITE, new SharingHandler(),
+                                          GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAllocation));
+    }
+
+    static constexpr size_t allocationSize = 2 * MemoryConstants::pageSize;
+
+    ClDevice *clDevice = nullptr;
+    uint32_t rootDeviceIndex = 0u;
+    MemoryManager *memoryManager = nullptr;
+    std::unique_ptr<CapturingContext> capturingContext;
+    std::unique_ptr<Context> leoContext;
+};
+
+TEST_F(SharedBufferDeviceAddressTest, givenAllocationOffsetSetAfterCreationWhenRefreshingDeviceAddressThenUsmPtrIncludesTheOffset) {
+    auto graphicsAllocation = allocate();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    const auto baseAddress = graphicsAllocation->getGpuAddress();
+
+    auto buffer = createSharedBuffer(graphicsAllocation);
+    ASSERT_NE(nullptr, buffer);
+    EXPECT_EQ(baseAddress, castToUint64(buffer->getUsmPtr()));
+
+    graphicsAllocation->setAllocationOffset(0x40u);
+    buffer->refreshDeviceAddress(rootDeviceIndex);
+    EXPECT_EQ(baseAddress + 0x40u, castToUint64(buffer->getUsmPtr()));
+
+    graphicsAllocation->setAllocationOffset(0x80u);
+    buffer->refreshDeviceAddress(rootDeviceIndex);
+    EXPECT_EQ(baseAddress + 0x80u, castToUint64(buffer->getUsmPtr()));
+
+    graphicsAllocation->setAllocationOffset(0u);
+    buffer->refreshDeviceAddress(rootDeviceIndex);
+    EXPECT_EQ(baseAddress, castToUint64(buffer->getUsmPtr()));
+
+    delete buffer;
+}
+
+TEST_F(SharedBufferDeviceAddressTest, givenGraphicsAllocationReplacedWhenResettingItThenUsmPtrAndAllocDataFollowTheNewAllocation) {
+    auto firstAllocation = allocate();
+    ASSERT_NE(nullptr, firstAllocation);
+    auto buffer = createSharedBuffer(firstAllocation);
+    ASSERT_NE(nullptr, buffer);
+    ASSERT_EQ(firstAllocation, buffer->getGraphicsAllocation(rootDeviceIndex));
+
+    auto secondAllocation = allocate();
+    ASSERT_NE(nullptr, secondAllocation);
+    ASSERT_NE(firstAllocation->getGpuAddress(), secondAllocation->getGpuAddress());
+
+    buffer->resetGraphicsAllocation(secondAllocation);
+
+    EXPECT_EQ(castToUint64(buffer->getUsmPtr()), secondAllocation->getGpuAddress());
+    EXPECT_EQ(secondAllocation, buffer->getGraphicsAllocation(rootDeviceIndex));
+
+    delete buffer;
+}
+
+TEST_F(SharedBufferDeviceAddressTest, givenSubBufferWhenParentAddressChangesThenGetUsmPtrFollowsItWithoutExplicitRefresh) {
+    auto graphicsAllocation = allocate();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    const auto baseAddress = graphicsAllocation->getGpuAddress();
+
+    auto buffer = createSharedBuffer(graphicsAllocation);
+    ASSERT_NE(nullptr, buffer);
+
+    constexpr size_t regionOrigin = 0x100u;
+    cl_buffer_region region{regionOrigin, MemoryConstants::pageSize};
+    auto subBuffer = buffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &region);
+    ASSERT_NE(nullptr, subBuffer);
+    EXPECT_EQ(baseAddress + regionOrigin, castToUint64(subBuffer->getUsmPtr()));
+
+    graphicsAllocation->setAllocationOffset(0x40u);
+    buffer->refreshDeviceAddress(rootDeviceIndex);
+
+    EXPECT_EQ(baseAddress + 0x40u, castToUint64(buffer->getUsmPtr()));
+    EXPECT_EQ(baseAddress + 0x40u + regionOrigin, castToUint64(subBuffer->getUsmPtr()));
+
+    graphicsAllocation->setAllocationOffset(0x80u);
+    buffer->refreshDeviceAddress(rootDeviceIndex);
+
+    EXPECT_EQ(baseAddress + 0x80u + regionOrigin, castToUint64(subBuffer->getUsmPtr()));
+    EXPECT_EQ(baseAddress + 0x80u + regionOrigin, castToUint64(*subBuffer->getUsmPtrRef()));
+
+    delete subBuffer;
+    delete buffer;
+}
+
+TEST_F(SharedBufferDeviceAddressTest, givenBufferWithoutRegisteredAllocationWhenRefreshingDeviceAddressThenUsmPtrIsLeftUntouched) {
+    uint64_t dummyStorage = 0u;
+    void *usmPtr = &dummyStorage;
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &clDevice->getDevice());
+    auto buffer = std::make_unique<Buffer>(leoContext.get(), memoryProperties, CL_MEM_READ_WRITE, usmPtr, nullptr, 64u, true);
+
+    buffer->refreshDeviceAddress(rootDeviceIndex);
+
+    EXPECT_EQ(usmPtr, buffer->getUsmPtr());
 }
 
 } // namespace ult

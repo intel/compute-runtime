@@ -9,6 +9,7 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -17,8 +18,11 @@
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
+#include "level_zero/api/opencl/source/sharings/leo_sharing.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/module/module.h"
@@ -691,6 +695,166 @@ TEST_F(ImmediateArgKernelFixture, givenArgIndexOutOfRangeWhenSetKernelArgThenRet
     auto retVal = clSetKernelArg(kernel.get(), 1, sizeof(argValue), &argValue);
 
     EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
+}
+
+struct SharedObjKernelArgFixture : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        cl_device_id clDeviceId = clDevice;
+        rootDeviceIndex = clDevice->getRootDeviceIndex();
+        memoryManager = driverHandle->getMemoryManager();
+        l0Context = std::make_unique<DriverBackedL0Context>(driverHandle.get());
+        context = std::make_unique<Context>(nullptr, l0Context->toHandle(), 1, &clDeviceId, true);
+        program = std::make_unique<Program>(context.get());
+
+        l0Kernel = std::make_unique<L0::ult::Mock<L0::KernelImp>>();
+        l0Kernel->privateState.kernelArgHandlers.resize(numArgs);
+        l0Kernel->checkPassedArgumentValues = true;
+        l0Kernel->passedArgumentValues.resize(numArgs);
+        auto &explicitArgs = l0Kernel->descriptor.payloadMappings.explicitArgs;
+        explicitArgs.resize(numArgs);
+        for (auto &explicitArg : explicitArgs) {
+            explicitArg = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+            explicitArg.getTraits().addressQualifier = NEO::KernelArgMetadata::AddrGlobal;
+        }
+
+        std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
+        kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
+    }
+
+    void TearDown() override {
+        kernel.reset();
+        l0Kernel.release();
+        program.reset();
+        context.reset();
+        l0Context.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    GraphicsAllocation *allocate() {
+        return memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
+    }
+
+    Buffer *createSharedBuffer(GraphicsAllocation *graphicsAllocation) {
+        return Buffer::createSharedBuffer(context.get(), CL_MEM_READ_WRITE, new SharingHandler(),
+                                          GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAllocation));
+    }
+
+    Buffer *createPlainBuffer(void *usmPtr) {
+        auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &clDevice->getDevice());
+        return new Buffer(context.get(), memoryProperties, CL_MEM_READ_WRITE, usmPtr, nullptr, MemoryConstants::pageSize, true);
+    }
+
+    uint64_t getPassedArgAddress(uint32_t argIndex) {
+        EXPECT_EQ(sizeof(uint64_t), l0Kernel->passedArgumentValues[argIndex].size());
+        return *reinterpret_cast<uint64_t *>(l0Kernel->passedArgumentValues[argIndex].data());
+    }
+
+    static constexpr uint32_t numArgs = 2u;
+
+    ClDevice *clDevice = nullptr;
+    uint32_t rootDeviceIndex = 0u;
+    MemoryManager *memoryManager = nullptr;
+    std::unique_ptr<DriverBackedL0Context> l0Context;
+    std::unique_ptr<Context> context;
+    std::unique_ptr<Program> program;
+    std::unique_ptr<L0::ult::Mock<L0::KernelImp>> l0Kernel;
+    std::unique_ptr<Kernel> kernel;
+};
+
+TEST_F(SharedObjKernelArgFixture, givenBufferWithoutSharingHandlerWhenSetKernelArgThenKernelIsNotUsingSharedObjArgs) {
+    uint64_t dummyStorage = 0u;
+    std::unique_ptr<Buffer> buffer{createPlainBuffer(&dummyStorage)};
+    cl_mem clMem = buffer.get();
+
+    EXPECT_EQ(CL_SUCCESS, clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &clMem));
+
+    EXPECT_FALSE(kernel->isUsingSharedObjArgs());
+}
+
+TEST_F(SharedObjKernelArgFixture, givenBufferWithSharingHandlerWhenSetKernelArgThenKernelIsUsingSharedObjArgs) {
+    auto graphicsAllocation = allocate();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    std::unique_ptr<Buffer> buffer{createSharedBuffer(graphicsAllocation)};
+    cl_mem clMem = buffer.get();
+
+    EXPECT_EQ(CL_SUCCESS, clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &clMem));
+
+    EXPECT_TRUE(kernel->isUsingSharedObjArgs());
+}
+
+TEST_F(SharedObjKernelArgFixture, givenSharedBufferArgWhenSameIndexIsReboundToSvmPointerThenSharedObjArgIsDropped) {
+    auto graphicsAllocation = allocate();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    std::unique_ptr<Buffer> buffer{createSharedBuffer(graphicsAllocation)};
+    cl_mem clMem = buffer.get();
+
+    ASSERT_EQ(CL_SUCCESS, clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &clMem));
+    ASSERT_TRUE(kernel->isUsingSharedObjArgs());
+
+    uint64_t svmStorage = 0u;
+    EXPECT_EQ(CL_SUCCESS, clSetKernelArgSVMPointer(kernel.get(), 0, &svmStorage));
+
+    EXPECT_FALSE(kernel->isUsingSharedObjArgs());
+}
+
+TEST_F(SharedObjKernelArgFixture, givenSharedBufferArgWhoseAddressChangedWhenResetSharedObjectsPatchAddressesThenNewAddressIsPassedToL0) {
+    auto graphicsAllocation = allocate();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    const auto baseAddress = graphicsAllocation->getGpuAddress();
+
+    std::unique_ptr<Buffer> buffer{createSharedBuffer(graphicsAllocation)};
+    cl_mem clMem = buffer.get();
+
+    ASSERT_EQ(CL_SUCCESS, clSetKernelArg(kernel.get(), 1, sizeof(cl_mem), &clMem));
+    ASSERT_EQ(baseAddress, getPassedArgAddress(1));
+
+    graphicsAllocation->setAllocationOffset(0x40u);
+    buffer->refreshDeviceAddress(rootDeviceIndex);
+
+    ASSERT_TRUE(kernel->isUsingSharedObjArgs());
+    kernel->resetSharedObjectsPatchAddresses();
+
+    EXPECT_EQ(baseAddress + 0x40u, getPassedArgAddress(1));
+}
+
+TEST_F(SharedObjKernelArgFixture, givenSubBufferOfSharedBufferWhenResetSharedObjectsPatchAddressesThenArgFollowsTheParentAddress) {
+    auto graphicsAllocation = allocate();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    const auto baseAddress = graphicsAllocation->getGpuAddress();
+
+    std::unique_ptr<Buffer> buffer{createSharedBuffer(graphicsAllocation)};
+    ASSERT_NE(nullptr, buffer);
+
+    constexpr size_t regionOrigin = 0x100u;
+    cl_buffer_region region{regionOrigin, 0x100u};
+    std::unique_ptr<Buffer> subBuffer{buffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &region)};
+    ASSERT_NE(nullptr, subBuffer);
+
+    cl_mem clMem = subBuffer.get();
+    ASSERT_EQ(CL_SUCCESS, clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &clMem));
+    ASSERT_EQ(baseAddress + regionOrigin, getPassedArgAddress(0));
+
+    ASSERT_TRUE(kernel->isUsingSharedObjArgs());
+    graphicsAllocation->setAllocationOffset(0x40u);
+    buffer->refreshDeviceAddress(rootDeviceIndex);
+    kernel->resetSharedObjectsPatchAddresses();
+
+    EXPECT_EQ(baseAddress + 0x40u + regionOrigin, getPassedArgAddress(0));
+}
+
+TEST_F(SharedObjKernelArgFixture, givenNoSharedObjArgsWhenResetSharedObjectsPatchAddressesThenNothingIsPassedToL0) {
+    uint64_t dummyStorage = 0u;
+    std::unique_ptr<Buffer> buffer{createPlainBuffer(&dummyStorage)};
+    cl_mem clMem = buffer.get();
+    ASSERT_EQ(CL_SUCCESS, clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &clMem));
+    ASSERT_FALSE(kernel->isUsingSharedObjArgs());
+
+    l0Kernel->passedArgumentValues[0].clear();
+    kernel->resetSharedObjectsPatchAddresses();
+
+    EXPECT_TRUE(l0Kernel->passedArgumentValues[0].empty());
 }
 
 struct MockL0KernelForSchedulingHint : public L0::ult::Mock<L0::KernelImp> {

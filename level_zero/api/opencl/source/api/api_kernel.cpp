@@ -204,6 +204,7 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
 
     pKernel->markArgAsSet(argIndex);
     pKernel->clearImageArg(argIndex);
+    pKernel->clearSharedObjArg(argIndex);
 
     if (isImmediateArg) {
         cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, argSize, argValue);
@@ -218,12 +219,14 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
                 return tracingRetVal;
             }
 
-            auto pBuffer = NEO::LEO::castToObject<const NEO::LEO::Buffer>(*reinterpret_cast<const cl_mem *>(argValue));
+            auto pBuffer = NEO::LEO::castToObject<NEO::LEO::Buffer>(*reinterpret_cast<const cl_mem *>(argValue));
             if (!pBuffer) {
                 cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
                 TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
                 return tracingRetVal;
             }
+
+            pKernel->setSharedObjArg(argIndex, pBuffer);
 
             const auto ptr = pBuffer->getUsmPtr();
             cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, sizeof(ptr), &ptr);
@@ -338,6 +341,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
 
     pKernel->markArgAsSet(argIndex);
     pKernel->clearImageArg(argIndex);
+    pKernel->clearSharedObjArg(argIndex);
 
     cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, sizeof(argValue), &argValue);
     TRACING_EXIT(ClSetKernelArgSvmPointer, &tracingRetVal);

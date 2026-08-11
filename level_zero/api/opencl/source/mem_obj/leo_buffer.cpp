@@ -40,6 +40,25 @@ void Buffer::resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) 
     newAllocData.gpuAllocations.addAllocation(newGraphicsAllocation);
     newAllocData.setAllocId(++context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
     context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->insertSVMAlloc(newAllocData);
+
+    this->allocData = nullptr;
+    this->usmPtr = reinterpret_cast<void *>(newGraphicsAllocation->getGpuAddress());
+}
+
+void Buffer::refreshDeviceAddress(uint32_t rootDeviceIndex) {
+    auto lock = this->takeOwnership();
+
+    auto allocData = this->getAllocData();
+    if (nullptr == allocData) {
+        return;
+    }
+
+    auto graphicsAllocation = allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    if (nullptr == graphicsAllocation) {
+        return;
+    }
+
+    this->usmPtr = reinterpret_cast<void *>(graphicsAllocation->getGpuAddress());
 }
 
 void Buffer::removeGraphicsAllocation(uint32_t rootDeviceIndex) {
@@ -119,7 +138,7 @@ cl_mem_object_type Buffer::getClObjectType() {
 
 NEO::SvmAllocationData *Buffer::getAllocData() {
     if (!allocData) {
-        allocData = this->context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(this->usmPtr);
+        allocData = this->context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(this->getUsmPtr());
     }
     return allocData;
 }
@@ -149,10 +168,15 @@ cl_int Buffer::createMapAllocation() {
 }
 
 void *Buffer::getUsmPtr() const {
+    if (this->isSubBuffer()) {
+        auto parentPtr = static_cast<const Buffer *>(this->associatedMemObject)->getUsmPtr();
+        return parentPtr ? ptrOffset(parentPtr, this->offset) : nullptr;
+    }
     return usmPtr;
 }
 
 void **Buffer::getUsmPtrRef() {
+    this->usmPtr = this->getUsmPtr();
     return &this->usmPtr;
 }
 

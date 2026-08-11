@@ -19,6 +19,7 @@
 namespace NEO {
 namespace LEO {
 
+class Buffer;
 class Image;
 
 template <>
@@ -74,6 +75,11 @@ class Kernel : public BaseObject<_cl_kernel> {
     void clearImageArg(uint32_t argIndex) { this->imageArgs.erase(argIndex); }
     const std::map<uint32_t, Image *> &getImageArgs() const { return this->imageArgs; }
 
+    void setSharedObjArg(uint32_t argIndex, Buffer *buffer);
+    void clearSharedObjArg(uint32_t argIndex) { this->sharedObjArgs.erase(argIndex); }
+    bool isUsingSharedObjArgs() const { return !this->sharedObjArgs.empty(); }
+    void resetSharedObjectsPatchAddresses();
+
     ze_kernel_handle_t getL0Handle() const { return this->kernelHandles.begin()->second; };
     ze_kernel_handle_t getL0Handle(uint32_t rootDeviceIndex) const {
         auto it = this->kernelHandles.find(rootDeviceIndex);
@@ -89,6 +95,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::vector<bool> argsSet{};
     std::map<uint32_t, ze_kernel_handle_t> kernelHandles{};
     std::map<uint32_t, Image *> imageArgs{};
+    std::map<uint32_t, Buffer *> sharedObjArgs{};
     Program *program = nullptr;
     NEO::KernelExecutionType executionType = NEO::KernelExecutionType::defaultType;
 };
