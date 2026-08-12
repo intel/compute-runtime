@@ -473,6 +473,31 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForCompletionWithT
     EXPECT_TRUE(tbxCsr.flushBatchedSubmissionsCalled);
 }
 
+HWTEST_F(TbxCommandSteamSimpleTest, givenPendingAllocationsWhenFlushingTbxCsrThenOnlyCompletedAllocationsAreDownloaded) {
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+
+    tbxCsr.setupContext(osContext);
+    tbxCsr.initializeTagAllocation();
+    *tbxCsr.getTagAddress() = 0u;
+    tbxCsr.latestFlushedTaskCount = 1u;
+
+    MockGraphicsAllocation completedAllocation;
+    MockGraphicsAllocation pendingAllocation;
+    MockGraphicsAllocation unusedAllocation;
+    const auto contextId = tbxCsr.getOsContext().getContextId();
+    completedAllocation.updateTaskCount(1u, contextId);
+    pendingAllocation.updateTaskCount(2u, contextId);
+
+    tbxCsr.allocationsForDownload = {&completedAllocation, &pendingAllocation, &unusedAllocation};
+
+    tbxCsr.flushSubmissionsAndDownloadAllocations(1u, false);
+
+    std::set<GraphicsAllocation *> expectedDownloadedAllocations = {tbxCsr.getTagAllocation(), &completedAllocation, &unusedAllocation};
+    EXPECT_EQ(expectedDownloadedAllocations, tbxCsr.downloadedAllocations);
+    EXPECT_EQ(std::set<GraphicsAllocation *>({&pendingAllocation}), tbxCsr.allocationsForDownload);
+}
+
 HWTEST_F(TbxCommandSteamSimpleTest, givenLatestFlushedTaskCountLowerThanTagWhenFlushSubmissionsAndDownloadAllocationsThenFlushTagUpdate) {
     MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
@@ -501,16 +526,39 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenDownloadAllocatoinsCalledThen
     MockGraphicsAllocation allocation1, allocation2, allocation3;
     tbxCsr.allocationsForDownload = {&allocation1, &allocation2, &allocation3};
 
-    allocation1.updateTaskCount(0, tbxCsr.getOsContext().getContextId());
-    allocation2.updateTaskCount(0, tbxCsr.getOsContext().getContextId());
-    allocation3.updateTaskCount(0, tbxCsr.getOsContext().getContextId());
-
     EXPECT_EQ(0u, tbxCsr.obtainUniqueOwnershipCalled);
     tbxCsr.downloadAllocations(true);
     EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
 
     std::set<GraphicsAllocation *> expectedDownloadedAllocations = {tbxCsr.getTagAllocation(), &allocation1, &allocation2, &allocation3};
     EXPECT_EQ(0u, tbxCsr.allocationsForDownload.size());
+}
+
+HWTEST_F(TbxCommandSteamSimpleTest, givenPendingAllocationsWhenDownloadingAllocationsThenOnlyCompletedAllocationsAreDownloaded) {
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+
+    tbxCsr.setupContext(osContext);
+    tbxCsr.initializeTagAllocation();
+    *tbxCsr.getTagAddress() = 1u;
+    tbxCsr.latestFlushedTaskCount = 1u;
+
+    MockGraphicsAllocation completedAllocation;
+    MockGraphicsAllocation pendingAllocation;
+    MockGraphicsAllocation unusedAllocation;
+    const auto contextId = tbxCsr.getOsContext().getContextId();
+    completedAllocation.updateTaskCount(1u, contextId);
+    pendingAllocation.updateTaskCount(2u, contextId);
+
+    tbxCsr.allocationsForDownload = {&completedAllocation, &pendingAllocation, &unusedAllocation};
+
+    tbxCsr.downloadAllocations(false, 1u);
+
+    // the tag allocation is repeatedly (re-)downloaded while polling for pendingAllocation's task
+    // to catch up, even though that poll ultimately times out without succeeding
+    std::set<GraphicsAllocation *> expectedDownloadedAllocations = {tbxCsr.getTagAllocation(), &completedAllocation, &unusedAllocation};
+    EXPECT_EQ(expectedDownloadedAllocations, tbxCsr.downloadedAllocations);
+    EXPECT_EQ(std::set<GraphicsAllocation *>({&pendingAllocation}), tbxCsr.allocationsForDownload);
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenUpdatingTaskCountDuringWaitThenDontRemoveFromContainer) {
@@ -543,7 +591,9 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenUpdatingTaskCountDuringWaitTh
     *tagAddress = 1u;
 
     tbxCsr.downloadAllocations(false);
-    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
+    // one lock for downloadAllocations itself, one for the forced tag update it triggers when
+    // trying to catch up on allocation2's task, which was never actually flushed
+    EXPECT_EQ(2u, tbxCsr.obtainUniqueOwnershipCalled);
     EXPECT_EQ(1u, tbxCsr.allocationsForDownload.size());
     EXPECT_NE(tbxCsr.allocationsForDownload.find(&allocation2), tbxCsr.allocationsForDownload.end());
 }
@@ -560,19 +610,16 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenAllocationWithBiggerTaskCountThanWaitin
     MockGraphicsAllocation allocation1, allocation2, allocation3;
     tbxCsr.allocationsForDownload = {&allocation1, &allocation2, &allocation3};
 
-    tbxCsr.makeResident(allocation1);
-    tbxCsr.makeResident(allocation2);
-    tbxCsr.makeResident(allocation3);
-
-    auto contextId = tbxCsr.getOsContext().getContextId();
-
+    const auto contextId = tbxCsr.getOsContext().getContextId();
     allocation1.updateTaskCount(2, contextId);
     allocation2.updateTaskCount(1, contextId);
     allocation3.updateTaskCount(2, contextId);
 
     *tbxCsr.getTagAddress() = 1u;
     tbxCsr.downloadAllocations(false, 1);
-    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
+    // one lock for downloadAllocations itself, one for the forced tag update it triggers when
+    // trying to catch up on allocation1/allocation3's task, which was never actually flushed
+    EXPECT_EQ(2u, tbxCsr.obtainUniqueOwnershipCalled);
     EXPECT_EQ(2u, tbxCsr.allocationsForDownload.size());
 
     EXPECT_NE(tbxCsr.allocationsForDownload.find(&allocation1), tbxCsr.allocationsForDownload.end());

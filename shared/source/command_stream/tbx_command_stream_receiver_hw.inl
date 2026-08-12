@@ -374,6 +374,86 @@ void TbxCommandStreamReceiverHw<GfxFamily>::writePooledMemory(SharedPoolAllocati
 }
 
 template <typename GfxFamily>
+TaskCountType TbxCommandStreamReceiverHw<GfxFamily>::peekCompletedTaskCount() const {
+    if (this->getTagAllocation() == nullptr) {
+        return 0u;
+    }
+
+    auto completedTaskCount = std::numeric_limits<TaskCountType>::max();
+    volatile TagAddressType *pollAddress = this->getTagAddress();
+    for (uint32_t i = 0; i < this->activePartitions; i++) {
+        completedTaskCount = std::min(completedTaskCount, static_cast<TaskCountType>(*pollAddress));
+        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
+    }
+    return completedTaskCount;
+}
+
+template <typename GfxFamily>
+TaskCountType TbxCommandStreamReceiverHw<GfxFamily>::waitForCompletionOfTaskCount(TaskCountType taskCountToWait) {
+    this->flushTagUpdateIfRequired(taskCountToWait);
+
+    volatile TagAddressType *pollAddress = this->getTagAddress();
+    auto startTime = std::chrono::high_resolution_clock::now();
+    for (uint32_t i = 0; i < this->activePartitions; i++) {
+        while (*pollAddress < taskCountToWait) {
+            this->downloadAllocation(*this->getTagAllocation());
+            auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
+            if (static_cast<uint64_t>(elapsedMs) > this->getNonBlockingDownloadTimeoutMs()) {
+                break;
+            }
+        }
+        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
+    }
+    return this->peekCompletedTaskCount();
+}
+
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::executeDownloadAllocations(TaskCountType taskCountToWait) {
+    const uint32_t contextId = this->osContext->getContextId();
+    TaskCountType highestPendingAllocationTaskCount = 0u;
+
+    // download allocations that are completed, and remove them from the list
+    for (auto it = this->allocationsForDownload.begin(); it != this->allocationsForDownload.end();) {
+        auto graphicsAllocation = *it;
+        const auto allocationTaskCount = graphicsAllocation->getTaskCount(contextId);
+        const bool isAllocationTaskCompleted = !graphicsAllocation->isUsedByOsContext(contextId) ||
+                                               (allocationTaskCount <= taskCountToWait);
+
+        if (isAllocationTaskCompleted) {
+            this->downloadAllocation(*graphicsAllocation);
+            it = this->allocationsForDownload.erase(it);
+        } else {
+            // not completed yet, move to the next allocation
+            ++it;
+            if (allocationTaskCount > highestPendingAllocationTaskCount) {
+                highestPendingAllocationTaskCount = allocationTaskCount;
+            }
+        }
+    }
+
+    if (!this->allocationsForDownload.empty()) {
+        const auto completedTaskCount = this->waitForCompletionOfTaskCount(highestPendingAllocationTaskCount);
+
+        for (auto it = this->allocationsForDownload.begin(); it != this->allocationsForDownload.end();) {
+            auto graphicsAllocation = *it;
+            const auto allocationTaskCount = graphicsAllocation->getTaskCount(contextId);
+            const bool isAllocationTaskCompleted = !graphicsAllocation->isUsedByOsContext(contextId) ||
+                                                   (allocationTaskCount <= completedTaskCount);
+
+            if (isAllocationTaskCompleted) {
+                this->downloadAllocation(*graphicsAllocation);
+                it = this->allocationsForDownload.erase(it);
+            } else {
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "Allocation %p is not completed yet and in effect not downloaded, taskCount: %llu, completedTaskCount: %llu\n",
+                             graphicsAllocation, allocationTaskCount, completedTaskCount);
+                DEBUG_BREAK_IF(true);
+                ++it;
+            }
+        }
+    }
+}
+
+template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocations(TaskCountType taskCountToWait, bool skipAllocationsDownload) {
     this->flushBatchedSubmissions();
 
@@ -394,10 +474,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocatio
     }
 
     auto lockCSR = this->obtainUniqueOwnership();
-    for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
-        this->downloadAllocation(*graphicsAllocation);
-    }
-    this->allocationsForDownload.clear();
+    this->executeDownloadAllocations(taskCountToWait);
 }
 
 template <typename GfxFamily>
@@ -500,19 +577,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations(bool blockingWai
         pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
     }
     auto lockCSR = this->obtainUniqueOwnership();
-
-    std::vector<GraphicsAllocation *> notReadyAllocations;
-
-    for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
-        this->downloadAllocation(*graphicsAllocation);
-
-        // Used again while waiting for completion. Another download will be needed.
-        if (graphicsAllocation->getTaskCount(this->osContext->getContextId()) > taskCount) {
-            notReadyAllocations.push_back(graphicsAllocation);
-        }
-    }
-    this->allocationsForDownload.clear();
-    this->allocationsForDownload = std::set<GraphicsAllocation *>(notReadyAllocations.begin(), notReadyAllocations.end());
+    this->executeDownloadAllocations(waitTaskCount);
 }
 
 template <typename GfxFamily>
