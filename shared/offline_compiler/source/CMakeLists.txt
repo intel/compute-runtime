@@ -10,8 +10,8 @@ set(OCLOC_NAME "ocloc")
 set(OCLOC_FOLDER_NAME "offline_compiler")
 
 append_sources_from_properties(RELEASE_HELPER_SOURCES
-                               NEO_CORE_RELEASE_HELPER
-                               NEO_CORE_ENABLE_RELEASE_HELPER
+                               NEO_CORE_COMPILER_RELEASE_HELPER
+                               NEO_CORE_ENABLE_COMPILER_RELEASE_HELPER
 )
 
 set(CLOC_LIB_SRCS_LIB

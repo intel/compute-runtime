@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 namespace NEO {
 
 enum PreemptionMode : uint32_t;
-class ReleaseHelper;
+class CompilerReleaseHelper;
 
 struct RuntimeCapabilityTable {
     DirectSubmissionPropertiesPerEngine directSubmissionEngines;
@@ -73,8 +73,8 @@ struct HardwareInfo { // NOLINT(clang-analyzer-optin.performance.Padding)
 extern bool familyEnabled[NEO::maxCoreEnumValue];
 extern const char *hardwarePrefix[NEO::maxProductEnumValue];
 extern const HardwareInfo *hardwareInfoTable[NEO::maxProductEnumValue];
-extern void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper);
-extern void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
+extern void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper);
+extern void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
 
 template <GFXCORE_FAMILY gfxFamily>
 struct EnableGfxFamilyHw {
@@ -88,7 +88,7 @@ void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfo
 bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 void setupDefaultGtSysInfo(HardwareInfo *hwInfo);
-void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper);
+void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper);
 uint32_t getNumSubSlicesPerSlice(const HardwareInfo &hwInfo);
 void applyDebugOverrides(HardwareInfo &hwInfo);
 

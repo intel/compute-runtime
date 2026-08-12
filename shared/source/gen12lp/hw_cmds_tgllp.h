@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,14 +21,14 @@ struct TGLLP : public Gen12LpFamily {
     static const uint32_t maxSubslicesSupported = 6;
     static const uint32_t maxDualSubslicesSupported = 6;
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper);
+    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
-    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
 };
 
 class TgllpHw1x6x16 : public TGLLP {
   public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
     static const HardwareInfo hwInfo;
 
   private:
@@ -37,7 +37,7 @@ class TgllpHw1x6x16 : public TGLLP {
 
 class TgllpHw1x2x16 : public TGLLP {
   public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
     static const HardwareInfo hwInfo;
 
   private:

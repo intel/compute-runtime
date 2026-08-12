@@ -44,4 +44,14 @@ uint32_t CompilerReleaseHelperHw<releaseType>::getAdditionalExtraCaps() const {
     return 0u;
 }
 
+template <ReleaseType releaseType>
+bool CompilerReleaseHelperHw<releaseType>::getFtrXe2Compression() const {
+    return true;
+}
+
+template <ReleaseType releaseType>
+bool CompilerReleaseHelperHw<releaseType>::isAvailableSemaphore64Base() const {
+    return false;
+}
+
 } // namespace NEO

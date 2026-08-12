@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
@@ -79,8 +79,8 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     .l0DebuggerSupported = true,
 };
 
-void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);
+void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrLocalMemory = true;
@@ -94,7 +94,7 @@ void PVC::adjustHardwareInfo(HardwareInfo *hwInfo) {
     hwInfo->capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 }
 
-void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
     setupDefaultGtSysInfo(hwInfo);
     setupHardwareInfoMultiTileBase(hwInfo, true);
 
@@ -104,7 +104,7 @@ void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     PVC::adjustHardwareInfo(hwInfo);
 
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
+        setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
     applyDebugOverrides(*hwInfo);
@@ -131,15 +131,15 @@ const HardwareInfo PvcHwConfig::hwInfo = {
     PVC::capabilityTable};
 
 GT_SYSTEM_INFO PvcHwConfig::gtSystemInfo = {0};
-void PvcHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    PVC::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void PvcHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+    PVC::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 };
 
 const HardwareInfo PVC::hwInfo = PvcHwConfig::hwInfo;
 
-void setupPVCHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
-    PvcHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void setupPVCHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
+    PvcHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
-void (*PVC::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupPVCHardwareInfoImpl;
+void (*PVC::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupPVCHardwareInfoImpl;
 } // namespace NEO

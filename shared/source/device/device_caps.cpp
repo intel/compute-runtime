@@ -22,6 +22,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {
@@ -167,7 +168,7 @@ void Device::initializeCaps() {
         deviceInfo.maxParameterSize = maxParameterSizeFromIgc;
     }
 
-    deviceInfo.semaphore64bCmdSupport = releaseHelper.isAvailableSemaphore64(hwInfo);
+    deviceInfo.semaphore64bCmdSupport = this->getRootDeviceEnvironment().getCompilerReleaseHelper().isAvailableSemaphore64(hwInfo);
 }
 
 bool Device::initializeSpirvQueriesFromIGC() {

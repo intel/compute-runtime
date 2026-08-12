@@ -11,6 +11,7 @@ set(NEO_CORE_COMPILER_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_gen12lp.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe_hpg.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe_hpc.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe_lpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe3p_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_tgl.cpp
@@ -39,13 +40,15 @@ set(NEO_CORE_COMPILER_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_cri.cpp
 )
 
-set_property(GLOBAL APPEND PROPERTY NEO_CORE_ENABLE_RELEASE_HELPER
-             ${CMAKE_CURRENT_SOURCE_DIR}/enable_compiler_release_helper_xe.cpp
-             ${CMAKE_CURRENT_SOURCE_DIR}/enable_compiler_release_helper_xe2.cpp
-             ${CMAKE_CURRENT_SOURCE_DIR}/enable_compiler_release_helper_xe3.cpp
-             ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_compiler_release_helper_xe3p.cpp
+set(NEO_CORE_ENABLE_COMPILER_RELEASE_HELPER
+    ${CMAKE_CURRENT_SOURCE_DIR}/enable_compiler_release_helper_xe.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/enable_compiler_release_helper_xe2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/enable_compiler_release_helper_xe3.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_compiler_release_helper_xe3p.cpp
 )
 
-set_property(GLOBAL APPEND PROPERTY NEO_CORE_RELEASE_HELPER ${NEO_CORE_COMPILER_RELEASE_HELPER})
+set_property(GLOBAL APPEND PROPERTY NEO_CORE_ENABLE_COMPILER_RELEASE_HELPER ${NEO_CORE_ENABLE_COMPILER_RELEASE_HELPER})
+
+set_property(GLOBAL APPEND PROPERTY NEO_CORE_COMPILER_RELEASE_HELPER ${NEO_CORE_COMPILER_RELEASE_HELPER})
 
 add_subdirectories()

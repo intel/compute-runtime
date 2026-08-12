@@ -15,6 +15,7 @@ namespace NEO {
 
 class CompilerReleaseHelper;
 enum class ReleaseType;
+struct HardwareInfo;
 
 inline constexpr uint32_t compilerReleaseMaxArchitecture = 64;
 using createCompilerReleaseHelperFunctionType = std::unique_ptr<CompilerReleaseHelper> (*)(HardwareIpVersion hardwareIpVersion);
@@ -32,7 +33,10 @@ class CompilerReleaseHelper {
     virtual bool isBFloat16ConversionSupported() const = 0;
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
+    virtual bool getFtrXe2Compression() const = 0;
+    virtual bool isAvailableSemaphore64Base() const = 0;
     void getKernelFp16AtomicCapabilities(uint32_t &fp16Caps) const;
+    bool isAvailableSemaphore64(const HardwareInfo &hwInfo) const;
 
   protected:
     CompilerReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -54,6 +58,8 @@ class CompilerReleaseHelperHw : public CompilerReleaseHelper {
     bool isBFloat16ConversionSupported() const override;
     uint32_t getAdditionalFp16Caps() const override;
     uint32_t getAdditionalExtraCaps() const override;
+    bool getFtrXe2Compression() const override;
+    bool isAvailableSemaphore64Base() const override;
 };
 
 template <uint32_t architecture>

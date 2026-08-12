@@ -126,11 +126,6 @@ bool ReleaseHelperHw<releaseType>::isNumRtStacksPerDssFixedValue() const {
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::getFtrXe2Compression() const {
-    return true;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::programmAdditionalStallPriorToBarrierWithTimestamp() const {
     return false;
 }
@@ -180,11 +175,6 @@ bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired(bool isImm
     if (enableStateCacheInvalidationWa != -1) {
         return enableStateCacheInvalidationWa;
     }
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isAvailableSemaphore64Base() const {
     return false;
 }
 

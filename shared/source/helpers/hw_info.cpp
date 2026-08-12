@@ -11,7 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 #include <algorithm>
 
@@ -32,11 +32,11 @@ bool familyEnabled[NEO::maxCoreEnumValue] = {
 };
 
 const HardwareInfo *hardwareInfoTable[NEO::maxProductEnumValue] = {};
-void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = {
+void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = {
     0x0,
 };
 
-void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, const ReleaseHelper *) = {
+void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, const CompilerReleaseHelper *) = {
     0x0,
 };
 
@@ -156,7 +156,7 @@ void setupDefaultGtSysInfo(HardwareInfo *hwInfo) {
     }
 }
 
-void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
+void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrAstcHdr2D = true;
@@ -177,8 +177,8 @@ void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const Rele
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
 
-    featureTable->flags.ftrXe2Compression = releaseHelper.getFtrXe2Compression();
-    featureTable->flags.ftrHwSemaphore64 = releaseHelper.isAvailableSemaphore64Base();
+    featureTable->flags.ftrXe2Compression = compilerReleaseHelper.getFtrXe2Compression();
+    featureTable->flags.ftrHwSemaphore64 = compilerReleaseHelper.isAvailableSemaphore64Base();
 
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 

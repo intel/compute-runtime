@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_bmg.h"
 
 #include "aubstream/engine_node.h"
@@ -69,8 +69,8 @@ const RuntimeCapabilityTable BMG::capabilityTable{
     .l0DebuggerSupported = true,
 };
 
-void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);
+void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrLocalMemory = true;
@@ -99,7 +99,7 @@ GT_SYSTEM_INFO BmgHwConfig::gtSystemInfo = {};
 
 const HardwareInfo BMG::hwInfo = BmgHwConfig::hwInfo;
 
-void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
@@ -107,19 +107,19 @@ void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 
     BMG::adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        BMG::setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
+        BMG::setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
     applyDebugOverrides(*hwInfo);
 }
 
-void BmgHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    BMG::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void BmgHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+    BMG::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
-void setupBMGHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
-    BmgHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void setupBMGHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
+    BmgHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
-void (*BMG::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupBMGHardwareInfoImpl;
+void (*BMG::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupBMGHardwareInfoImpl;
 } // namespace NEO

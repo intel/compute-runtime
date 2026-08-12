@@ -20,6 +20,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -34,6 +35,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -1458,8 +1460,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebuggableOsContextWhenDeviceCrea
     ultHwConfig.useFirstSubmissionInitDevice = true;
 
     auto hwInfo = *defaultHwInfo;
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, releaseHelper.get());
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.memoryManager.reset(new MockMemoryManagerWithDebuggableOsContext(executionEnvironment));
@@ -1477,8 +1479,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, whenDeviceCreatesEnginesThenDeviceIsIn
     ultHwConfig.useFirstSubmissionInitDevice = true;
 
     auto hwInfo = *defaultHwInfo;
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, releaseHelper.get());
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();
@@ -1501,8 +1503,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCrea
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     auto hwInfo = *defaultHwInfo;
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, releaseHelper.get());
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();
@@ -1527,8 +1529,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCrea
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     auto hwInfo = *defaultHwInfo;
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, releaseHelper.get());
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();
@@ -2812,9 +2814,9 @@ TEST_F(DeviceTests, givenDebuggerRequestedByUserWhenDeviceWithSubDevicesCreatedT
 TEST(DeviceWithoutAILTest, givenNoAILWhenCreateDeviceThenDeviceIsCreated) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.EnableAIL.set(false);
-    MockReleaseHelper mockReleaseHelper;
+    MockCompilerReleaseHelper mockCompilerReleaseHelper;
     auto hwInfo = *defaultHwInfo;
-    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo, mockReleaseHelper);
+    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo, mockCompilerReleaseHelper);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
     EXPECT_NE(nullptr, device.get());

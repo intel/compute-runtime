@@ -52,6 +52,7 @@ ProductHelperTest::ProductHelperTest() {
     productHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     compilerProductHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     releaseHelper = &executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
+    compilerReleaseHelper = &executionEnvironment->rootDeviceEnvironments[0]->getCompilerReleaseHelper();
 }
 
 ProductHelperTest::~ProductHelperTest() = default;

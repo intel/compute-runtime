@@ -9,7 +9,7 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 namespace NEO {
 
@@ -22,7 +22,7 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
     privateData.IsMediaUsage = FALSE;
     privateData.UmdContextType = UMD_OCL;
     privateData.UseHw64bToken = debugManager.flags.WddmUseHw64bToken.get() &&
-                                rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+                                rootDeviceEnvironment.getCompilerReleaseHelper().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
     if (osContext.checkLatePreemptionStartSupport()) {
         osContext.prepareLatePreemptionStart(privateData);
     }

@@ -18,6 +18,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -186,8 +187,8 @@ struct TimestampPacketHelper {
                 cacheFlushTimestampPacketGpuAddress, 0, rootDeviceEnvironment, args);
         }
 
-        const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-        const bool useSemaphore64bCmd = releaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+        const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
+        const bool useSemaphore64bCmd = compilerReleaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
 
         for (auto &node : container.peekNodes()) {
             TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node, useSemaphore64bCmd);

@@ -8,6 +8,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_lnl.h"
 #include "shared/source/xe2_hpg_core/hw_info_lnl.h"
@@ -30,7 +31,7 @@ LNLTEST_F(LnlHwInfoTest, givenBoolWhenCallLnlHardwareInfoSetupThenFeatureTableAn
         true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -40,7 +41,7 @@ LNLTEST_F(LnlHwInfoTest, givenBoolWhenCallLnlHardwareInfoSetupThenFeatureTableAn
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, compilerProductHelper->getHwInfoConfig(hwInfo), releaseHelper.get());
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrLinearCCS);
@@ -76,10 +77,10 @@ LNLTEST_F(LnlHwInfoTest, givenBoolWhenCallLnlHardwareInfoSetupThenFeatureTableAn
 LNLTEST_F(LnlHwInfoTest, whenSetupHardwareInfoBaseThenCorrectValuesOfCCSAndMultiTileInfoAreSet) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    hardwareInfoSetup[productFamily](&hwInfo, false, compilerProductHelper->getHwInfoConfig(hwInfo), releaseHelper.get());
+    hardwareInfoSetup[productFamily](&hwInfo, false, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
     EXPECT_FALSE(gtSystemInfo.MultiTileArchInfo.IsValid);
     EXPECT_TRUE(gtSystemInfo.CCSInfo.IsValid);
     EXPECT_TRUE(1u == gtSystemInfo.CCSInfo.NumberOfCCSEnabled);

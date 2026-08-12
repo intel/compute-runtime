@@ -30,11 +30,6 @@ uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
-    return !(hardwareIpVersion.value == AOT::PTL_H_A0);
-}
-
-template <>
 bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
     return true;
 }

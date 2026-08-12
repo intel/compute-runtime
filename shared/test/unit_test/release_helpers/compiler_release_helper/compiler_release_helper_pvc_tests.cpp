@@ -27,8 +27,9 @@ TEST_F(CompilerReleaseHelperPvcTests, whenGettingCapabilitiesThenCorrectProperti
         EXPECT_TRUE(compilerReleaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_FALSE(compilerReleaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(compilerReleaseHelper->isBFloat16ConversionSupported());
-
         EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalFp16Caps());
         EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalExtraCaps());
+        EXPECT_FALSE(compilerReleaseHelper->getFtrXe2Compression());
+        EXPECT_FALSE(compilerReleaseHelper->isAvailableSemaphore64Base());
     }
 }

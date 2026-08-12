@@ -7,8 +7,7 @@
 
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 namespace NEO {
 
@@ -19,18 +18,6 @@ std::unique_ptr<ReleaseHelper> ReleaseHelper::create(HardwareIpVersion hardwareI
     UNRECOVERABLE_IF(releaseHelperFactory[architecture] == nullptr || releaseHelperFactory[architecture][release] == nullptr);
     auto createFunction = releaseHelperFactory[architecture][release];
     return createFunction(hardwareIpVersion);
-}
-
-bool ReleaseHelper::isAvailableSemaphore64(const HardwareInfo &hwInfo) const {
-    if (debugManager.flags.Enable64BitSemaphore.get() != -1) {
-        return debugManager.flags.Enable64BitSemaphore.get() == 1;
-    }
-
-    if (!hwInfo.featureTable.flags.ftrHwSemaphore64) {
-        return false;
-    }
-
-    return this->isAvailableSemaphore64Base();
 }
 
 } // namespace NEO

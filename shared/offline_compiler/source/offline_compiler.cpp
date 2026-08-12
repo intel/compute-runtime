@@ -34,7 +34,6 @@
 #include "shared/source/helpers/validators.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include "neo_aot_platforms.h"
@@ -1025,7 +1024,7 @@ const HardwareInfo *getHwInfoForDeprecatedAcronym(const std::string &deviceName)
     return nullptr;
 }
 
-int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(const std::string &deviceName, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper) {
+int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(const std::string &deviceName, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::CompilerReleaseHelper> &compilerReleaseHelper) {
     auto foundHwInfo = getHwInfoForDeprecatedAcronym(deviceName);
     if (nullptr == foundHwInfo) {
         return OCLOC_INVALID_DEVICE;
@@ -1041,8 +1040,8 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(const std::string &de
 
     uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
     setHwInfoValuesFromConfig(config, hwInfo);
-    releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, releaseHelper.get());
+    compilerReleaseHelper = NEO::CompilerReleaseHelper::create(hwInfo.ipVersion);
+    hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, compilerReleaseHelper.get());
     UNRECOVERABLE_IF(compilerProductHelper == nullptr);
     productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
 
@@ -1060,7 +1059,7 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
 
     if (isArgumentDeviceId(deviceName)) {
         auto deviceID = static_cast<unsigned short>(std::stoi(deviceName, 0, 16));
-        productConfig = argHelper->getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(hwInfo, deviceID, revisionId, compilerProductHelper, releaseHelper);
+        productConfig = argHelper->getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(hwInfo, deviceID, revisionId, compilerProductHelper, compilerReleaseHelper);
         if (productConfig == AOT::UNKNOWN_ISA) {
             return OCLOC_INVALID_DEVICE;
         }
@@ -1068,13 +1067,13 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
         argHelper->printf("Auto-detected target based on %s device id: %s\n", deviceName.c_str(), product.c_str());
     } else if (revisionId == -1) {
         productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(deviceName);
-        if (!argHelper->setHwInfoForProductConfig(productConfig, hwInfo, compilerProductHelper, releaseHelper)) {
+        if (!argHelper->setHwInfoForProductConfig(productConfig, hwInfo, compilerProductHelper, compilerReleaseHelper)) {
             return OCLOC_INVALID_DEVICE;
         }
     } else {
         return OCLOC_INVALID_DEVICE;
     }
-    argHelper->setHwInfoForHwInfoConfig(hwInfo, hwInfoConfig, compilerProductHelper, releaseHelper);
+    argHelper->setHwInfoForHwInfoConfig(hwInfo, hwInfoConfig, compilerProductHelper, compilerReleaseHelper);
     deviceConfig = hwInfo.ipVersion.value;
     productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
     return OCLOC_SUCCESS;
@@ -1088,7 +1087,7 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
 
     retVal = initHardwareInfoForProductConfig(deviceName);
     if (retVal != OCLOC_SUCCESS) {
-        retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, compilerProductHelper, releaseHelper);
+        retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, compilerProductHelper, compilerReleaseHelper);
     }
 
     if (retVal != OCLOC_SUCCESS) {

@@ -166,7 +166,7 @@ TEST(DrmTest, givenFailedProductHelperSetupHardwareInfoWhenDrmSetupHardwareInfoC
 
     executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(productHelper);
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -194,7 +194,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndNotSupportedWhenSetupHardwareI
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setPciPath("0000:ab:cd.e");
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
 
     auto mockIoctlHelper = std::make_unique<MockIoctlHelperForSmallBar>(drm);
@@ -216,7 +216,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndSupportedWhenSetupHardwareInfo
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setPciPath("0000:ab:cd.e");
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
 
     auto mockIoctlHelper = std::make_unique<MockIoctlHelperForSmallBar>(drm);
@@ -1023,7 +1023,7 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     drm.storedSSVal = 6;
     hwInfo->gtSystemInfo.SliceCount = 2;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.ioctlHelper.reset();
@@ -1043,7 +1043,7 @@ TEST(DrmQueryTest, GivenForceDeviceIdSetWhenSetupHardwareInfoCalledThenProperlyC
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
     drm.overrideDeviceDescriptor = &device;
 
@@ -2240,7 +2240,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutSystemInfoWhenSettingHwInfoThenCorre
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2296,7 +2296,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithAsymtricTopologyMappingWhenSettingHwInf
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2341,7 +2341,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceWhenSettingHwInfoThenCorrect
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2390,7 +2390,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutTopologyMappingWhenSettingHwInfoThen
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2428,7 +2428,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithIncorrectSliceMaskWhenSettingHwInfoThen
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2462,7 +2462,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndNoCommonSubSliceMaskWhenS
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2499,7 +2499,7 @@ TEST(DrmHwInfoTest, givenOverrideMaxSlicesSupportedIsFalseThenMaxSlicesSupported
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
     hwInfo->gtSystemInfo = {};
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {
         hwInfo->gtSystemInfo.MaxSlicesSupported = 8;
     };
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
@@ -2533,7 +2533,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndMoreSubslicesThanMaxSubsl
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2573,7 +2573,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutL3BankCountWhenSettingHwInfoThenL3Ba
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {
         hwInfo->gtSystemInfo.MaxSubSlicesSupported = 8;
         hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = 8;
     };
@@ -2901,7 +2901,7 @@ HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitia
     NEO::RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*executionEnvironment->rootDeviceEnvironments[0]);
 
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), setupHardwareInfo};
 
     drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
@@ -3048,7 +3048,7 @@ TEST(DrmTest, givenSetupHardwareInfoWhenTopologyDataHasRegionCountThenFeatureTab
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;

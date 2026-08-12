@@ -22,11 +22,6 @@ inline bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
     auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
     if (enableStateCacheInvalidationWa != -1) {

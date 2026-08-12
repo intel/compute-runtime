@@ -26,11 +26,6 @@ bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isPostImageWriteFlushRequired() const {
     return true;
 }

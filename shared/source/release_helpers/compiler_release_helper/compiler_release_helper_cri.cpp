@@ -12,6 +12,12 @@
 
 namespace NEO {
 constexpr auto release = ReleaseType::release3511;
+
+template <>
+bool CompilerReleaseHelperHw<release>::getFtrXe2Compression() const {
+    return false;
+}
+
 } // namespace NEO
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper_common_xe3p_and_later.inl"
 

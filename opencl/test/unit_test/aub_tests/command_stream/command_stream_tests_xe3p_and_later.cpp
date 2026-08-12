@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/test_macros/header/common_matchers.h"
@@ -64,8 +65,8 @@ HWTEST2_F(CommandStreamTestsXe3pAndLater, given64bDataToCompareWhenUsingIndirect
     const uint32_t compareDataMem0Low = static_cast<uint32_t>(compareDataMem0);
     const uint32_t compareDataMem0High = static_cast<uint32_t>(compareDataMem0 >> 32);
 
-    const auto &releaseHelper = this->device->getDevice().getReleaseHelper();
-    const bool useSemaphore64bCmd = releaseHelper.isAvailableSemaphore64(this->device->getHardwareInfo());
+    const auto &compilerReleaseHelper = this->device->getDevice().getRootDeviceEnvironment().getCompilerReleaseHelper();
+    const bool useSemaphore64bCmd = compilerReleaseHelper.isAvailableSemaphore64(this->device->getHardwareInfo());
 
     LriHelper<FamilyType>::program(taskStream.get(), RegisterOffsets::csGprR0, compareDataGpr0Low, true, false);
     LriHelper<FamilyType>::program(taskStream.get(), RegisterOffsets::csGprR0 + 4, compareDataGpr0High, true, false);

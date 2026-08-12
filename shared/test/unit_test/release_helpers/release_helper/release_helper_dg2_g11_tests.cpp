@@ -39,8 +39,6 @@ TEST_F(ReleaseHelperDg2G11Tests, whenGettingCapabilitiesThenCorrectPropertiesAre
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
-        EXPECT_FALSE(releaseHelper->getFtrXe2Compression());
-        EXPECT_FALSE(releaseHelper->isAvailableSemaphore64Base());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }

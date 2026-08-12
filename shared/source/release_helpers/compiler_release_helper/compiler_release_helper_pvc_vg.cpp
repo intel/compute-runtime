@@ -19,5 +19,6 @@ bool CompilerReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() con
 }
 
 } // namespace NEO
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper_common_xe_hpc.inl"
 
 template class NEO::CompilerReleaseHelperHw<NEO::release>;

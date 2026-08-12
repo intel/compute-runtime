@@ -77,7 +77,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     drm.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     StreamCapture capture;
@@ -115,7 +115,7 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     DrmMockToQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -142,7 +142,7 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenCompilerReleaseHelperIsCreated)
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     DrmMockToQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -308,7 +308,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     drm.ioctlHelper = std::make_unique<IoctlHelperPrelim20>(drm);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     StreamCapture capture;
@@ -344,7 +344,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
 
     hwInfo.capabilityTable.maxProgrammableSlmSize = 0x1234678u;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -383,7 +383,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     auto expectedMaxSubslicesSupported = dummyDeviceBlobData[5];
     auto expectedMaxEusPerSubsliceSupported = dummyDeviceBlobData[8];
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -407,7 +407,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsAndBlob
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.systemInfo.reset(new SystemInfo(inputBlobDataZeros));
@@ -431,7 +431,7 @@ TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubsl
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.L3BankCount = 0;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -458,7 +458,7 @@ TEST(DrmSystemInfoTest, givenNonZeroBankCountWhenCreatingSystemInfoThenUseDualSu
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.L3BankCount = 5;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -483,7 +483,7 @@ TEST(DrmSystemInfoTest, givenL3GroupsInfoWhenCreatingSystemInfoThenUseL3GroupsTo
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -501,7 +501,7 @@ TEST(DrmSystemInfoTest, givenL3GroupsInfoWhenCreatingSystemInfoThenUseL3GroupsTo
 TEST(DrmSystemInfoTest, givenIncompleteL3GroupsInfoWhenCreatingSystemInfoThenDontUseL3GroupsToCalculateL3Size) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.L3BankCount = 5;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -554,7 +554,7 @@ TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopologyDataWhenCreatingSystemInfoTh
 
     uint32_t expectedNumOfL3Banks = 7;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -585,7 +585,7 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoSuccee
     drm.storedEUVal = 0;
     drm.failRetTopology = true;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -615,7 +615,7 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoFailsT
     drm.failRetTopology = true;
     drm.failQueryDeviceBlob = true;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
     drm.overrideDeviceDescriptor = &device;
 
@@ -634,7 +634,7 @@ TEST(DrmSystemInfoTest, givenTopologyWithMoreEuPerDssThanInDeviceBlobWhenSetupHa
     drm.storedSSVal = 2;
     drm.storedEUVal = 200;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -654,7 +654,7 @@ TEST(DrmSystemInfoTest, givenOverrideNumThreadsPerEuSetWhenSetupHardwareInfoThen
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     uint32_t dummyBlobThreadCount = 90;

@@ -39,8 +39,6 @@ TEST_F(ReleaseHelperLnlTests, whenGettingCapabilitiesThenCorrectPropertiesAreRet
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
-        EXPECT_FALSE(releaseHelper->getFtrXe2Compression());
-        EXPECT_FALSE(releaseHelper->isAvailableSemaphore64Base());
         EXPECT_TRUE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }

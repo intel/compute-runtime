@@ -60,7 +60,6 @@ class ReleaseHelper {
     virtual bool isDirectSubmissionLightSupported() const = 0;
     virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const = 0;
     virtual bool isNumRtStacksPerDssFixedValue() const = 0;
-    virtual bool getFtrXe2Compression() const = 0;
     virtual bool programmAdditionalStallPriorToBarrierWithTimestamp() const = 0;
     virtual uint32_t computeSlmValues(uint32_t slmSize) const = 0;
     virtual uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize) const = 0;
@@ -71,8 +70,6 @@ class ReleaseHelper {
     virtual bool shouldQueryPeerAccess() const = 0;
     virtual bool isSingleDispatchRequiredForMultiCCS() const = 0;
     virtual bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const = 0;
-    virtual bool isAvailableSemaphore64Base() const = 0;
-    bool isAvailableSemaphore64(const HardwareInfo &hwInfo) const;
     virtual bool isLatePreemptionStartSupportedHelper() const = 0;
     virtual bool isReducedSurfaceStateSupported() const = 0;
     virtual uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const = 0;
@@ -113,7 +110,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isDirectSubmissionLightSupported() const override;
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const override;
     bool isNumRtStacksPerDssFixedValue() const override;
-    bool getFtrXe2Compression() const override;
     bool programmAdditionalStallPriorToBarrierWithTimestamp() const override;
     uint32_t computeSlmValues(uint32_t slmSize) const override;
     uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize) const override;
@@ -124,7 +120,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool shouldQueryPeerAccess() const override;
     bool isSingleDispatchRequiredForMultiCCS() const override;
     bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const override;
-    bool isAvailableSemaphore64Base() const override;
     bool isLatePreemptionStartSupportedHelper() const override;
     bool isReducedSurfaceStateSupported() const override;
     uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const override;

@@ -19,4 +19,9 @@ bool CompilerReleaseHelperHw<release>::isSplitMatrixMultiplyAccumulateSupported(
     return true;
 }
 
+template <>
+bool CompilerReleaseHelperHw<release>::getFtrXe2Compression() const {
+    return false;
+}
+
 } // namespace NEO

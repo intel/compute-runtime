@@ -8,6 +8,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -26,7 +27,7 @@ XE3_CORETEST_F(Xe3CoreHwInfoTest, givenBoolWhenCallXe3CoreHardwareInfoSetupThenF
     bool boolValue[]{true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -37,7 +38,7 @@ XE3_CORETEST_F(Xe3CoreHwInfoTest, givenBoolWhenCallXe3CoreHardwareInfoSetupThenF
             gtSystemInfo = {0};
             featureTable = {};
             workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, releaseHelper.get());
+            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, compilerReleaseHelper.get());
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrLinearCCS);

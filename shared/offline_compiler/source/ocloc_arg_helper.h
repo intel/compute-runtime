@@ -23,7 +23,7 @@ struct ProductConfigHelper;
 struct FormerProductConfigHelper;
 namespace NEO {
 class CompilerProductHelper;
-class ReleaseHelper;
+class CompilerReleaseHelper;
 struct HardwareInfo;
 } // namespace NEO
 
@@ -77,9 +77,9 @@ class OclocArgHelper {
                    uint64_t **lenOutputs, char ***nameOutputs);
     virtual ~OclocArgHelper();
     MOCKABLE_VIRTUAL bool fileExists(const std::string &filename) const;
-    bool setHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper);
-    uint32_t getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(NEO::HardwareInfo &hwInfo, unsigned short deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper);
-    void setHwInfoForHwInfoConfig(NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper);
+    bool setHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::CompilerReleaseHelper> &compilerReleaseHelper);
+    uint32_t getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(NEO::HardwareInfo &hwInfo, unsigned short deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::CompilerReleaseHelper> &compilerReleaseHelper);
+    void setHwInfoForHwInfoConfig(NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::CompilerReleaseHelper> &compilerReleaseHelper);
     std::vector<std::string> headersToVectorOfStrings();
     MOCKABLE_VIRTUAL void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines);
     MOCKABLE_VIRTUAL std::vector<char> readBinaryFile(const std::string &filename);

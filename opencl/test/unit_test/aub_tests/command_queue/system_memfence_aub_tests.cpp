@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -133,8 +134,8 @@ class SystemMemFenceBlitter : public MulticontextOclAubFixture,
             GTEST_SKIP();
         }
 
-        const auto &releaseHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, releaseHelper.getFtrXe2Compression());
+        const auto &compilerReleaseHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getCompilerReleaseHelper();
+        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, compilerReleaseHelper.getFtrXe2Compression());
     }
     void TearDown() override {
         MulticontextOclAubFixture::tearDown();
@@ -155,7 +156,7 @@ HWTEST2_F(SystemMemFenceBlitter, givenSystemMemFenceWhenGeneratedAsMiMemFenceCmd
     retVal = clEnqueueMemcpyINTEL(commandQueues[0][0].get(), true, deviceMemAlloc, buffer.data(), bufferSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    if (!tileDevices[0]->getDevice().getReleaseHelper().getFtrXe2Compression()) {
+    if (!tileDevices[0]->getDevice().getRootDeviceEnvironment().getCompilerReleaseHelper().getFtrXe2Compression()) {
         expectMemory<FamilyType>(deviceMemAlloc, buffer.data(), bufferSize, 0, 0);
     }
 

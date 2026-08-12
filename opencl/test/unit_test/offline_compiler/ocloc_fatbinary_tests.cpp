@@ -16,7 +16,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -191,11 +191,11 @@ TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
 TEST(OclocFatBinaryRequestedFatBinary, givenHwInfoForProductConfigWhenUnknownIsaIsPassedThenFalseIsReturned) {
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
-    std::unique_ptr<ReleaseHelper> releaseHelper;
+    std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
 
     NEO::HardwareInfo hwInfo;
 
-    EXPECT_FALSE(argHelper->setHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo, compilerProductHelper, releaseHelper));
+    EXPECT_FALSE(argHelper->setHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo, compilerProductHelper, compilerReleaseHelper));
 }
 
 TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronymsForTargetThenCorrectValuesAreReturned) {

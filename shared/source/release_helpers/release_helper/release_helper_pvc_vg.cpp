@@ -30,11 +30,6 @@ bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
     return true;
 }
 
-template <>
-bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
-    return false;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helpers/release_helper/release_helper_preferred_slm_xe_hpc_128k.inl"

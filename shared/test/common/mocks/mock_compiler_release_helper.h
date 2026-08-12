@@ -20,6 +20,8 @@ class MockCompilerReleaseHelper : public CompilerReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isSplitMatrixMultiplyAccumulateSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getAdditionalFp16Caps, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(getAdditionalExtraCaps, uint32_t, {}, ());
+    ADDMETHOD_CONST_NOBASE(getFtrXe2Compression, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isAvailableSemaphore64Base, bool, false, ());
 
     bool isBFloat16ConversionSupported() const override {
         return bFloat16Support;

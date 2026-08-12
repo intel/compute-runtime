@@ -41,6 +41,7 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/hw_timestamps.h"
@@ -892,7 +893,7 @@ void CommandStreamReceiver::createHostFunctionStreamer(HostFunctionAllocator *al
     UNRECOVERABLE_IF(chunk.cpuPtr == nullptr);
     auto hostFunctionIdAddress = chunk.cpuPtr;
 
-    auto useSemaphore64bCmd = getReleaseHelper().isAvailableSemaphore64(peekHwInfo());
+    auto useSemaphore64bCmd = peekRootDeviceEnvironment().getCompilerReleaseHelper().isAvailableSemaphore64(peekHwInfo());
 
     auto dcFlushRequired = this->getDcFlushSupport();
     this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,

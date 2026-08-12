@@ -8,6 +8,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_bmg.h"
@@ -25,9 +26,9 @@ using BmgHwInfoTest = ::testing::Test;
 BMGTEST_F(BmgHwInfoTest, givenBmgHwConfigWhenSetupHardwareInfoThenSharedSystemMemCapabilitiesIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     auto &capabilityTable = hwInfo.capabilityTable;
-    BmgHwConfig::setupHardwareInfo(&hwInfo, false, releaseHelper.get());
+    BmgHwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper.get());
     uint64_t expectedSharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
     EXPECT_EQ(expectedSharedSystemMemCapabilities, capabilityTable.sharedSystemMemCapabilities);
 }

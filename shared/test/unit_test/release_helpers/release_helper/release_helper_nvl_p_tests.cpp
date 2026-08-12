@@ -39,7 +39,6 @@ TEST_F(ReleaseHelperNvlPTests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_EQ(64u, releaseHelper->getStackSizePerRay());
         EXPECT_FALSE(releaseHelper->isNumRtStacksPerDssFixedValue());
-        EXPECT_TRUE(releaseHelper->getFtrXe2Compression());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
@@ -209,22 +208,6 @@ TEST_F(ReleaseHelperNvlPTests, whenIsStateCacheInvalidationWaRequiredCalledThenC
 
 TEST_F(ReleaseHelperNvlPTests, whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
-}
-
-TEST_F(ReleaseHelperNvlPTests, whenIsAvailableSemaphore64CalledThenCorrectValueReturned) {
-    for (const auto &baseIpVersion : {static_cast<uint32_t>(AOT::NVL_P_A0)}) {
-        ipVersion.value = baseIpVersion;
-        for (auto &revision : getRevisions()) {
-            ipVersion.revision = revision;
-            releaseHelper = ReleaseHelper::create(ipVersion);
-            ASSERT_NE(nullptr, releaseHelper);
-            if (revision != 0) {
-                EXPECT_TRUE(releaseHelper->isAvailableSemaphore64Base());
-            } else {
-                EXPECT_FALSE(releaseHelper->isAvailableSemaphore64Base());
-            }
-        }
-    }
 }
 
 TEST_F(ReleaseHelperNvlPTests, whenOverrideSystemMemoryPatIndexIsCalledThenPatIndexIsOverriddenForNvlPA0Revision) {

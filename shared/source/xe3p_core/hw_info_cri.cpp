@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe3p_core/hw_cmds_cri.h"
 
@@ -72,8 +72,8 @@ const RuntimeCapabilityTable CRI::capabilityTable{
     .l0DebuggerSupported = true,
 };
 
-void CRI::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);
+void CRI::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrLocalMemory = true;
@@ -87,7 +87,7 @@ void CRI::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelp
     featureTable->ftrBcsInfo = maxNBitValue(9);
 }
 
-void CRI::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+void CRI::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
@@ -97,7 +97,7 @@ void CRI::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 
     adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
+        setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
     applyDebugOverrides(*hwInfo);
@@ -114,15 +114,15 @@ const HardwareInfo CriHwConfig::hwInfo = {
     CRI::capabilityTable};
 
 GT_SYSTEM_INFO CriHwConfig::gtSystemInfo = {0};
-void CriHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void CriHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
 const HardwareInfo CRI::hwInfo = CriHwConfig::hwInfo;
 
-void setupCRIHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
-    CriHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void setupCRIHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
+    CriHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
-void (*CRI::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupCRIHardwareInfoImpl;
+void (*CRI::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupCRIHardwareInfoImpl;
 } // namespace NEO

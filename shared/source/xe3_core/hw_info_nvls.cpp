@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/xe3_core/hw_cmds_nvls.h"
 
 #include "aubstream/engine_node.h"
@@ -68,8 +68,8 @@ const RuntimeCapabilityTable NVLS::capabilityTable{
     .l0DebuggerSupported = true,
 };
 
-void NVLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);
+void NVLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrE2ECompression = true;
@@ -82,7 +82,7 @@ void NVLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHel
     featureTable->ftrBcsInfo = 1;
 }
 
-void NVLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+void NVLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 10u;
@@ -90,7 +90,7 @@ void NVLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
 
     adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
+        setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
     applyDebugOverrides(*hwInfo);
@@ -107,15 +107,15 @@ const HardwareInfo NvlsHwConfig::hwInfo = {
     NVLS::capabilityTable};
 
 GT_SYSTEM_INFO NvlsHwConfig::gtSystemInfo = {0};
-void NvlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    NVLS::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void NvlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+    NVLS::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
 const HardwareInfo NVLS::hwInfo = NvlsHwConfig::hwInfo;
 
-void setupNVLSHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
-    NvlsHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void setupNVLSHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
+    NvlsHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
-void (*NVLS::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupNVLSHardwareInfoImpl;
+void (*NVLS::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupNVLSHardwareInfoImpl;
 } // namespace NEO

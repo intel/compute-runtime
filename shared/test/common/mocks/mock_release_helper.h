@@ -35,7 +35,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isDummyBlitWaRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isNumRtStacksPerDssFixedValue, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isBlitImageAllowedForDepthFormat, bool, true, ());
-    ADDMETHOD_CONST_NOBASE(getFtrXe2Compression, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDirectSubmissionLightSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(computeSlmValues, uint32_t, {}, (uint32_t slmSize));
     ADDMETHOD_CONST_NOBASE(alignSlmSizePerThreadGroup, uint32_t, {}, (uint32_t slmSize));
@@ -46,7 +45,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(shouldQueryPeerAccess, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isSingleDispatchRequiredForMultiCCS, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationWaRequired, bool, false, (bool isImmediateCmdList, bool kernelUsesImageOrSampler));
-    ADDMETHOD_CONST_NOBASE(isAvailableSemaphore64Base, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isLatePreemptionStartSupportedHelper, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isReducedSurfaceStateSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getIpVersionForGmm, uint32_t, 0, ());

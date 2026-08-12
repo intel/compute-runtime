@@ -549,8 +549,8 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
     rootDeviceEnvironment.initReleaseHelper();
     rootDeviceEnvironment.initCompilerReleaseHelper();
 
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, &releaseHelper);
+    const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
+    deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, &compilerReleaseHelper);
     this->adjustSharedSystemMemCapabilities();
 
     querySystemInfo();

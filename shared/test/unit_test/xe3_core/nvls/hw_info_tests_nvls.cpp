@@ -8,6 +8,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe3_core/hw_cmds_nvls.h"
 #include "shared/source/xe3_core/hw_info_xe3_core.h"
@@ -28,7 +29,7 @@ NVLSTEST_F(NvlsHwInfoTest, WhenGettingHardwareInfoThenNvlsIsReturned) {
 NVLSTEST_F(NvlsHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValues) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
@@ -43,7 +44,7 @@ NVLSTEST_F(NvlsHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
-    NvlsHwConfig::setupHardwareInfo(&hwInfo, false, releaseHelper.get());
+    NvlsHwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper.get());
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
@@ -55,11 +56,11 @@ NVLSTEST_F(NvlsHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
-    NvlsHwConfig::setupHardwareInfo(&hwInfo, true, releaseHelper.get());
+    NvlsHwConfig::setupHardwareInfo(&hwInfo, true, compilerReleaseHelper.get());
     EXPECT_TRUE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
     EXPECT_TRUE(featureTable.flags.ftrE2ECompression);
-    EXPECT_EQ(featureTable.flags.ftrXe2Compression, releaseHelper->getFtrXe2Compression());
+    EXPECT_EQ(featureTable.flags.ftrXe2Compression, compilerReleaseHelper->getFtrXe2Compression());
     EXPECT_TRUE(featureTable.flags.ftrXe2PlusTiling);
     EXPECT_TRUE(featureTable.flags.ftrPml5Support);
     EXPECT_TRUE(featureTable.flags.ftrCCSNode);
