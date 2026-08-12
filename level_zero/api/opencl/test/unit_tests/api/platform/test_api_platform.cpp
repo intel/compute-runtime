@@ -85,21 +85,21 @@ struct GetPlatformIDsWithDeviceTests : public Test<OclFixture> {
     DebugManagerStateRestore restorer;
 };
 
-HWTEST2_F(GetPlatformIDsWithDeviceTests, givenDefaultFlagAndCriProductWhenGetPlatformIDsThenReturnsPlatforms, IsCRI) {
+HWTEST2_F(GetPlatformIDsWithDeviceTests, givenDefaultFlagAndLeoSupportedProductWhenGetPlatformIDsThenReturnsPlatforms, IsLeoSupported) {
     cl_uint numPlatforms = 0;
     auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, numPlatforms);
 }
 
-HWTEST2_F(GetPlatformIDsWithDeviceTests, givenDefaultFlagAndNonCriProductWhenGetPlatformIDsThenReturnsNoPlatforms, IsNotCRI) {
+HWTEST2_F(GetPlatformIDsWithDeviceTests, givenDefaultFlagAndLeoNotSupportedProductWhenGetPlatformIDsThenReturnsNoPlatforms, IsNotLeoSupported) {
     cl_uint numPlatforms = 1u;
     auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0u, numPlatforms);
 }
 
-HWTEST2_F(GetPlatformIDsWithDeviceTests, givenFlag1AndNonCriProductWhenGetPlatformIDsThenReturnsPlatforms, IsNotCRI) {
+HWTEST2_F(GetPlatformIDsWithDeviceTests, givenFlag1AndLeoNotSupportedProductWhenGetPlatformIDsThenReturnsPlatforms, IsNotLeoSupported) {
     debugManager.flags.EnableLEO.set(1);
     cl_uint numPlatforms = 0;
     auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
@@ -107,7 +107,7 @@ HWTEST2_F(GetPlatformIDsWithDeviceTests, givenFlag1AndNonCriProductWhenGetPlatfo
     EXPECT_EQ(1u, numPlatforms);
 }
 
-HWTEST2_F(GetPlatformIDsWithDeviceTests, givenFlag0AndCriProductWhenGetPlatformIDsThenReturnsNoPlatforms, IsCRI) {
+HWTEST2_F(GetPlatformIDsWithDeviceTests, givenFlag0AndLeoSupportedProductWhenGetPlatformIDsThenReturnsNoPlatforms, IsLeoSupported) {
     debugManager.flags.EnableLEO.set(0);
     cl_uint numPlatforms = 1u;
     auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);

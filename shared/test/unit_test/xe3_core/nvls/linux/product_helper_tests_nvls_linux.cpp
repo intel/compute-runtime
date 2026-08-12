@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,4 +59,8 @@ NVLSTEST_F(NvlsHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
+}
+
+NVLSTEST_F(NvlsProductHelperLinux, givenProductHelperWhenCheckingIsLEOSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isLEOSupported());
 }

@@ -1419,6 +1419,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingIsRayTracingWalkerAdjus
     EXPECT_FALSE(productHelper->isRayTracingWalkerAdjustmentRequired());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned, IsNotCRI) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned, IsNotLeoSupported) {
     EXPECT_FALSE(productHelper->isLEOSupported());
 }

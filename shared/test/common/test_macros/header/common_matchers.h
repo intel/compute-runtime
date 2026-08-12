@@ -222,6 +222,24 @@ using IsNotPvcOrDg2 = IsNotWithinProducts<IGFX_DG2, IGFX_PVC>;
 
 using IsNotCriOrBmg = IsNotWithinProducts<IGFX_BMG, IGFX_CRI>;
 
+struct IsLeoSupported {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+#ifdef _WIN32
+        return IsCRI::isMatched<productFamily>() || IsNVLS::isMatched<productFamily>();
+#else
+        return IsCRI::isMatched<productFamily>();
+#endif
+    }
+};
+
+struct IsNotLeoSupported {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return !IsLeoSupported::isMatched<productFamily>();
+    }
+};
+
 using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
 
 using HasNoStatefulSupport = IsAnyGfxCores<IGFX_XE_HPC_CORE>;
