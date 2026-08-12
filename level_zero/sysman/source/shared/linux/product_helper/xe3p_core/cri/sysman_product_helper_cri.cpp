@@ -25,7 +25,7 @@ constexpr static auto gfxProduct = IGFX_CRI;
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 
 constexpr static uint32_t memoryMsuCount = 20;
-constexpr static uint32_t busWidthPerChannelInBits = 16;
+constexpr static uint32_t busWidthPerMsuInBits = 64;
 constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
@@ -1104,7 +1104,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subDeviceId;
     pProperties->numChannels = memoryMsuCount;
-    pProperties->busWidth = pProperties->numChannels * busWidthPerChannelInBits;
+    pProperties->busWidth = pProperties->numChannels * busWidthPerMsuInBits;
     pProperties->physicalSize = physicalMemorySize;
     return ZE_RESULT_SUCCESS;
 }
