@@ -643,7 +643,7 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenAllocatingHostMemThe
 
     result = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST_IMPORTED);
+    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
 
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);

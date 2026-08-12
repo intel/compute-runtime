@@ -1280,9 +1280,6 @@ ze_result_t Context::getMemAllocProperties(const void *ptr,
     }
 
     pMemAllocProperties->type = Context::parseUSMType(alloc->memoryType);
-    if (alloc->isExternalMemmapAllocation && ZE_MEMORY_TYPE_HOST == pMemAllocProperties->type) {
-        pMemAllocProperties->type = ZE_MEMORY_TYPE_HOST_IMPORTED;
-    }
     pMemAllocProperties->pageSize = alloc->pageSizeForAlignment;
     pMemAllocProperties->id = alloc->getAllocId();
 
