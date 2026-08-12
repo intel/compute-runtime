@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -36,12 +35,9 @@ struct GetPlatformIDsMtTests : public Test<OclFixture> {
     }
     std::vector<std::unique_ptr<Platform>> platforms;
     std::unique_ptr<VariableBackup<decltype(platformsImpl)>> platformsImplBackup;
-    DebugManagerStateRestore restorer;
 };
 
 TEST_F(GetPlatformIDsMtTests, givenPlatformsMutexTakenWhenGetPlatformIDsIsCalledOnAnotherThreadThenItWaitsForTheMutex) {
-    debugManager.flags.EnableLEO.set(1);
-
     std::atomic<bool> threadStarted{false};
     std::atomic<bool> callCompleted{false};
     cl_uint numPlatforms = 0;

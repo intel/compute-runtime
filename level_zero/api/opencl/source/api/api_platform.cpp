@@ -5,9 +5,6 @@
  *
  */
 
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/product_helper.h"
-
 #include "level_zero/api/opencl/source/api/leo_additional_extensions.h"
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/command_buffer/leo_command_buffer.h"
@@ -29,16 +26,6 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
     if ((numEntries == 0 && platforms != nullptr) ||
         (numEntries > 0 && platforms == nullptr && numPlatforms == nullptr)) [[unlikely]] {
         cl_int retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClGetPlatformIDs, &retVal);
-        return retVal;
-    }
-
-    auto enableLEOFlag = NEO::debugManager.flags.EnableLEO.get();
-    if (enableLEOFlag == 0) {
-        if (numPlatforms) {
-            *numPlatforms = 0;
-        }
-        cl_int retVal = CL_SUCCESS;
         TRACING_EXIT(ClGetPlatformIDs, &retVal);
         return retVal;
     }
@@ -79,30 +66,6 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         cl_int retVal = L0ToClResultMapper(initResult);
         TRACING_EXIT(ClGetPlatformIDs, &retVal);
         return retVal;
-    }
-
-    if (enableLEOFlag != 1 && NEO::LEO::platformsImpl) {
-        bool leoEnabledForAnyDevice = false;
-        for (const auto &platform : *NEO::LEO::platformsImpl) {
-            for (const auto &device : platform->getDevices()) {
-                auto &productHelper = device->getDevice().getRootDeviceEnvironment().getProductHelper();
-                if (productHelper.isLEOSupported()) {
-                    leoEnabledForAnyDevice = true;
-                    break;
-                }
-            }
-            if (leoEnabledForAnyDevice) {
-                break;
-            }
-        }
-        if (!leoEnabledForAnyDevice) {
-            if (numPlatforms) {
-                *numPlatforms = 0;
-            }
-            cl_int retVal = CL_SUCCESS;
-            TRACING_EXIT(ClGetPlatformIDs, &retVal);
-            return retVal;
-        }
     }
 
     if (numPlatforms) {

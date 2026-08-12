@@ -68,14 +68,28 @@ OpenCL objects such as `cl_command_queue`, `cl_mem`, and `cl_kernel` are interna
 
 ### Enabling LEO
 
-LEO is **off by default** and must be explicitly enabled through the `EnableLEO` release variable. When it is not set to `1`, `igdrcl` services the OpenCL API directly (native NEO) and no calls are forwarded to `ze_intel_gpu`.
+Forwarding is controlled by the `EnableLEO` release variable.
 
 | Value | Meaning |
 |-------|---------|
-| `-1` | Default -- LEO disabled |
-| `0` | Disabled |
-| `1` | Enabled -- OpenCL entry points are forwarded to the Level Zero backend |
+| `-1` | Default -- auto-detect: forwards when the product reports `ProductHelper::isLEOSupported()`, otherwise OpenCL is serviced natively |
+| `0` | Disabled -- `igdrcl` services the OpenCL API directly (native NEO) and no calls are forwarded to `ze_intel_gpu` |
+| `1` | Enabled -- OpenCL entry points are forwarded to the Level Zero backend regardless of product support |
 
+### Where to place the debug variables
+
+On Windows every driver reads its debug variables from its own registry key:
+
+| Driver | Registry key |
+|--------|--------------|
+| `igdrcl` (OpenCL) | `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL` |
+| `ze_intel_gpu` (Level Zero, LEO) | `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\L0` |
+
+`EnableLEO` is consumed by `igdrcl`, so it must be set under the **`OCL`** key. Setting it under the `L0` key has no effect.
+
+Every other debug variable that affects an OpenCL workload running on LEO is consumed by `ze_intel_gpu`, so it must be set under the **`L0`** key. Setting it under the `OCL` key has no effect once the call has been forwarded.
+
+On Linux both drivers read the same environment variables, so the distinction does not apply.
 
 ### Verifying that LEO is active
 

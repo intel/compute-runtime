@@ -7,7 +7,6 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
@@ -85,34 +84,19 @@ struct GetPlatformIDsWithDeviceTests : public Test<OclFixture> {
     DebugManagerStateRestore restorer;
 };
 
-HWTEST2_F(GetPlatformIDsWithDeviceTests, givenDefaultFlagAndLeoSupportedProductWhenGetPlatformIDsThenReturnsPlatforms, IsLeoSupported) {
+TEST_F(GetPlatformIDsWithDeviceTests, givenDefaultFlagWhenGetPlatformIDsThenReturnsPlatforms) {
     cl_uint numPlatforms = 0;
     auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, numPlatforms);
 }
 
-HWTEST2_F(GetPlatformIDsWithDeviceTests, givenDefaultFlagAndLeoNotSupportedProductWhenGetPlatformIDsThenReturnsNoPlatforms, IsNotLeoSupported) {
-    cl_uint numPlatforms = 1u;
-    auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0u, numPlatforms);
-}
-
-HWTEST2_F(GetPlatformIDsWithDeviceTests, givenFlag1AndLeoNotSupportedProductWhenGetPlatformIDsThenReturnsPlatforms, IsNotLeoSupported) {
-    debugManager.flags.EnableLEO.set(1);
-    cl_uint numPlatforms = 0;
-    auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, numPlatforms);
-}
-
-HWTEST2_F(GetPlatformIDsWithDeviceTests, givenFlag0AndLeoSupportedProductWhenGetPlatformIDsThenReturnsNoPlatforms, IsLeoSupported) {
+TEST_F(GetPlatformIDsWithDeviceTests, givenFlag0WhenGetPlatformIDsThenFlagIsIgnoredAndReturnsPlatforms) {
     debugManager.flags.EnableLEO.set(0);
-    cl_uint numPlatforms = 1u;
+    cl_uint numPlatforms = 0;
     auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0u, numPlatforms);
+    EXPECT_EQ(1u, numPlatforms);
 }
 
 } // namespace ult
