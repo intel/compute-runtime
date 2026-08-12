@@ -1408,7 +1408,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     }
 
     if (status != ZE_RESULT_NOT_READY) {
-        if (isInOrderExecutionEnabled()) {
+        if (isInOrderExecutionEnabled() && (status == ZE_RESULT_SUCCESS)) {
+            // on hang the counter was never reached, marking it waited would make later waits succeed immediately
             inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue, inOrderExecInfo->getAllocationOffset());
         }
 

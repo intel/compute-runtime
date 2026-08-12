@@ -3615,6 +3615,57 @@ HWTEST_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchro
     }
 }
 
+HWTEST_F(InOrderCmdListTests, givenGpuHangWhenCallingSynchronizeThenDontMarkCounterValueAsWaited) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    // host visible flush makes the in order counter wait eligible
+    immCmdList->dcFlushSupport = false;
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    ASSERT_TRUE(immCmdList->latestFlushIsHostVisible);
+    const bool inOrderWaitPath = !immCmdList->isInOrderCounterSignalPending();
+
+    auto inOrderExecInfo = immCmdList->inOrderExecInfo;
+
+    auto *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+    for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+        *hostAddress = 0;
+        hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+    }
+
+    ultCsr->forceReturnGpuHang = true;
+    ultCsr->callBaseWaitForCompletionWithTimeout = false;
+    ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::gpuHang;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10, false));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset()));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10, false));
+
+    // a memoized counter value would make this call skip the wait and report success
+    if (inOrderWaitPath) {
+        EXPECT_EQ(2u, immCmdList->synchronizeInOrderExecutionCalled);
+    } else {
+        EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+    }
+
+    ultCsr->forceReturnGpuHang = false;
+    ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+
+    // counter is not memoized as waited, so let the cmd list destructor's in order wait complete
+    hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+    for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+        *hostAddress = std::numeric_limits<uint64_t>::max();
+        hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+    }
+}
+
 HWCMDTEST_F(IGFX_GEN12LP_CORE, InOrderCmdListTests, givenNonPostSyncWalkerWhenAskingForNonWalkerSignalingRequiredThenReturnFalse) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
