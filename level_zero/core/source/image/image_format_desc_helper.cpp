@@ -78,30 +78,11 @@ cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {
         }
         break;
     case ZE_IMAGE_FORMAT_LAYOUT_NV12:
-        if (imgDescription.type == ZE_IMAGE_FORMAT_TYPE_UNORM) {
-            return CL_NV12_INTEL;
-        }
-        break;
     case ZE_IMAGE_FORMAT_LAYOUT_YUYV:
-        if (imgDescription.type == ZE_IMAGE_FORMAT_TYPE_UNORM) {
-            return CL_YUYV_INTEL;
-        }
-        break;
     case ZE_IMAGE_FORMAT_LAYOUT_VYUY:
-        if (imgDescription.type == ZE_IMAGE_FORMAT_TYPE_UNORM) {
-            return CL_VYUY_INTEL;
-        }
-        break;
     case ZE_IMAGE_FORMAT_LAYOUT_YVYU:
-        if (imgDescription.type == ZE_IMAGE_FORMAT_TYPE_UNORM) {
-            return CL_YVYU_INTEL;
-        }
-        break;
     case ZE_IMAGE_FORMAT_LAYOUT_UYVY:
-        if (imgDescription.type == ZE_IMAGE_FORMAT_TYPE_UNORM) {
-            return CL_UYVY_INTEL;
-        }
-        break;
+        return CL_UNORM_INT8;
     default:
         break;
     }
@@ -110,6 +91,22 @@ cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {
 }
 
 cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription, bool srgb) {
+    // Swizzles cannot express the component interleaving of YUV layouts, the layout itself is the channel order.
+    switch (imgDescription.layout) {
+    case ZE_IMAGE_FORMAT_LAYOUT_NV12:
+        return CL_NV12_INTEL;
+    case ZE_IMAGE_FORMAT_LAYOUT_YUYV:
+        return CL_YUYV_INTEL;
+    case ZE_IMAGE_FORMAT_LAYOUT_VYUY:
+        return CL_VYUY_INTEL;
+    case ZE_IMAGE_FORMAT_LAYOUT_YVYU:
+        return CL_YVYU_INTEL;
+    case ZE_IMAGE_FORMAT_LAYOUT_UYVY:
+        return CL_UYVY_INTEL;
+    default:
+        break;
+    }
+
     Swizzles imgSwizzles{imgDescription.x, imgDescription.y, imgDescription.z, imgDescription.w};
 
     if (imgSwizzles == Swizzles{ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_0, ZE_IMAGE_FORMAT_SWIZZLE_0, ZE_IMAGE_FORMAT_SWIZZLE_1}) {

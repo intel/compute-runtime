@@ -204,6 +204,115 @@ TEST(IsNV12ImageTests, givenRgbaFormatWhenIsNV12ImageThenReturnsFalse) {
     EXPECT_FALSE(isNV12Image(&fmt));
 }
 
+TEST(ValidateImageCopyTests, givenDifferentChannelOrdersWhenValidateImageCopyThenReturnsCLImageFormatMismatch) {
+    cl_image_format srcFormat{CL_RGBA, CL_UNORM_INT8};
+    cl_image_format dstFormat{CL_BGRA, CL_UNORM_INT8};
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {4, 2, 1};
+    EXPECT_EQ(CL_IMAGE_FORMAT_MISMATCH, validateImageCopy(srcFormat, dstFormat, origin, origin, region));
+}
+
+TEST(ValidateImageCopyTests, givenDifferentChannelDataTypesWhenValidateImageCopyThenReturnsCLImageFormatMismatch) {
+    cl_image_format srcFormat{CL_RGBA, CL_UNORM_INT8};
+    cl_image_format dstFormat{CL_RGBA, CL_UNORM_INT16};
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {4, 2, 1};
+    EXPECT_EQ(CL_IMAGE_FORMAT_MISMATCH, validateImageCopy(srcFormat, dstFormat, origin, origin, region));
+}
+
+TEST(ValidateImageCopyTests, givenMatchingNonYuvFormatsWithOddOriginWhenValidateImageCopyThenReturnsSuccess) {
+    cl_image_format format{CL_RGBA, CL_UNORM_INT8};
+    size_t origin[3] = {1, 0, 0};
+    size_t region[3] = {3, 2, 1};
+    EXPECT_EQ(CL_SUCCESS, validateImageCopy(format, format, origin, origin, region));
+}
+
+TEST(ValidateImageCopyTests, givenPackedYuvWithOddSrcOriginWhenValidateImageCopyThenReturnsCLInvalidValue) {
+    cl_image_format format{CL_YUYV_INTEL, CL_UNORM_INT8};
+    size_t srcOrigin[3] = {1, 0, 0};
+    size_t dstOrigin[3] = {0, 0, 0};
+    size_t region[3] = {4, 2, 1};
+    EXPECT_EQ(CL_INVALID_VALUE, validateImageCopy(format, format, srcOrigin, dstOrigin, region));
+}
+
+TEST(ValidateImageCopyTests, givenPackedYuvWithOddDstOriginWhenValidateImageCopyThenReturnsCLInvalidValue) {
+    cl_image_format format{CL_UYVY_INTEL, CL_UNORM_INT8};
+    size_t srcOrigin[3] = {0, 0, 0};
+    size_t dstOrigin[3] = {1, 0, 0};
+    size_t region[3] = {4, 2, 1};
+    EXPECT_EQ(CL_INVALID_VALUE, validateImageCopy(format, format, srcOrigin, dstOrigin, region));
+}
+
+TEST(ValidateImageCopyTests, givenPackedYuvWithOddRegionWhenValidateImageCopyThenReturnsCLInvalidValue) {
+    cl_image_format format{CL_YVYU_INTEL, CL_UNORM_INT8};
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {3, 2, 1};
+    EXPECT_EQ(CL_INVALID_VALUE, validateImageCopy(format, format, origin, origin, region));
+}
+
+TEST(ValidateImageCopyTests, givenPackedYuvWithEvenOriginAndRegionWhenValidateImageCopyThenReturnsSuccess) {
+    cl_image_format format{CL_VYUY_INTEL, CL_UNORM_INT8};
+    size_t origin[3] = {2, 0, 0};
+    size_t region[3] = {4, 2, 1};
+    EXPECT_EQ(CL_SUCCESS, validateImageCopy(format, format, origin, origin, region));
+}
+
+TEST(ValidateImageCopyTests, givenPackedYuvWithNonZeroDstSliceOriginWhenValidateImageCopyThenReturnsCLInvalidValue) {
+    cl_image_format format{CL_YUYV_INTEL, CL_UNORM_INT8};
+    size_t srcOrigin[3] = {0, 0, 0};
+    size_t dstOrigin[3] = {0, 0, 1};
+    size_t region[3] = {4, 2, 1};
+    EXPECT_EQ(CL_INVALID_VALUE, validateImageCopy(format, format, srcOrigin, dstOrigin, region));
+}
+
+TEST(ValidateImageCopyTests, givenNonYuvFormatWithNonZeroDstSliceOriginWhenValidateImageCopyThenReturnsSuccess) {
+    cl_image_format format{CL_RGBA, CL_UNORM_INT8};
+    size_t srcOrigin[3] = {0, 0, 0};
+    size_t dstOrigin[3] = {0, 0, 1};
+    size_t region[3] = {4, 2, 1};
+    EXPECT_EQ(CL_SUCCESS, validateImageCopy(format, format, srcOrigin, dstOrigin, region));
+}
+
+TEST(ValidateImageFormatTests, givenNullFormatWhenValidateImageFormatThenReturnsCLInvalidImageFormatDescriptor) {
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, validateImageFormat(nullptr));
+}
+
+TEST(ValidateImageFormatTests, givenLegalChannelOrderAndDataTypePairWhenValidateImageFormatThenReturnsSuccess) {
+    const cl_image_format formats[] = {
+        {CL_R, CL_FLOAT},
+        {CL_RGBA, CL_UNSIGNED_INT32},
+        {CL_INTENSITY, CL_UNORM_INT8},
+        {CL_RGB, CL_UNORM_SHORT_565},
+        {CL_BGRA, CL_SNORM_INT8},
+        {CL_sBGRA, CL_UNORM_INT8},
+        {CL_DEPTH, CL_UNORM_INT16},
+        {CL_DEPTH_STENCIL, CL_UNORM_INT24},
+        {CL_NV12_INTEL, CL_UNORM_INT8},
+        {CL_UYVY_INTEL, CL_UNORM_INT8}};
+
+    for (const auto &format : formats) {
+        EXPECT_EQ(CL_SUCCESS, validateImageFormat(&format))
+            << "channel order " << format.image_channel_order
+            << ", data type " << format.image_channel_data_type;
+    }
+}
+
+TEST(ValidateImageFormatTests, givenIllegalChannelOrderOrDataTypeWhenValidateImageFormatThenReturnsCLInvalidImageFormatDescriptor) {
+    const cl_image_format formats[] = {
+        {CL_RGBA, 0xdeadbeef},
+        {0xdeadbeef, CL_UNORM_INT8},
+        {CL_INTENSITY, CL_SIGNED_INT8},
+        {CL_RGB, CL_FLOAT},
+        {CL_BGRA, CL_UNORM_INT16},
+        {CL_NV12_INTEL, CL_HALF_FLOAT}};
+
+    for (const auto &format : formats) {
+        EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, validateImageFormat(&format))
+            << "channel order " << format.image_channel_order
+            << ", data type " << format.image_channel_data_type;
+    }
+}
+
 constexpr size_t uint32Max = std::numeric_limits<uint32_t>::max();
 constexpr size_t aboveUint32Max = uint32Max + 1u;
 

@@ -75,25 +75,21 @@ bool Image::isSRGB(cl_channel_order clChannelOrder) {
 void Image::clToL0ImageFormat(ze_image_format_t &l0Format, cl_channel_order clChannelOrder, cl_channel_type clChannelType) {
     int channelNumber = 0;
     switch (clChannelOrder) {
+    // Media layouts ignore the format type and the swizzles, the layout alone describes them.
     case CL_NV12_INTEL:
         l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_NV12;
-        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
         return;
     case CL_YUYV_INTEL:
         l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_YUYV;
-        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
         return;
     case CL_VYUY_INTEL:
         l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_VYUY;
-        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
         return;
     case CL_YVYU_INTEL:
         l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_YVYU;
-        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
         return;
     case CL_UYVY_INTEL:
         l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_UYVY;
-        l0Format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
         return;
 
     case CL_R:

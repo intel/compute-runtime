@@ -25,6 +25,7 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
+#include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -377,6 +378,121 @@ HWTEST_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrectS
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
     ASSERT_EQ(surfaceState->getShaderChannelSelectAlpha(),
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
+}
+
+HWTEST_F(ImageCreate, givenYuvFormatWhenImageInitializeThenChannelSelectIsFixedRegardlessOfSwizzles) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    // Zero initialised swizzles read as R in every channel, which would replicate the luma
+    // component instead of mapping Y, U and V to red, green and blue.
+    const ze_image_format_swizzle_t swizzles[] = {ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_A,
+                                                  ZE_IMAGE_FORMAT_SWIZZLE_0, ZE_IMAGE_FORMAT_SWIZZLE_1};
+    const ze_image_format_layout_t layouts[] = {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_LAYOUT_YUYV,
+                                                ZE_IMAGE_FORMAT_LAYOUT_VYUY, ZE_IMAGE_FORMAT_LAYOUT_YVYU,
+                                                ZE_IMAGE_FORMAT_LAYOUT_UYVY};
+
+    for (const auto layout : layouts) {
+        for (const auto swizzle : swizzles) {
+            ze_image_desc_t desc = {};
+            desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+            desc.type = ZE_IMAGE_TYPE_2D;
+            desc.format.layout = layout;
+            desc.format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+            desc.width = 16;
+            desc.height = 16;
+            desc.depth = 1;
+            desc.format.x = swizzle;
+            desc.format.y = swizzle;
+            desc.format.z = swizzle;
+            desc.format.w = swizzle;
+
+            auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+            ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+            auto surfaceState = &imageHW->surfaceState;
+            EXPECT_EQ(surfaceState->getShaderChannelSelectRed(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED)
+                << "layout " << static_cast<uint32_t>(layout) << ", swizzle " << static_cast<uint32_t>(swizzle);
+            EXPECT_EQ(surfaceState->getShaderChannelSelectGreen(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN)
+                << "layout " << static_cast<uint32_t>(layout) << ", swizzle " << static_cast<uint32_t>(swizzle);
+            EXPECT_EQ(surfaceState->getShaderChannelSelectBlue(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE)
+                << "layout " << static_cast<uint32_t>(layout) << ", swizzle " << static_cast<uint32_t>(swizzle);
+            EXPECT_EQ(surfaceState->getShaderChannelSelectAlpha(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE)
+                << "layout " << static_cast<uint32_t>(layout) << ", swizzle " << static_cast<uint32_t>(swizzle);
+        }
+    }
+}
+
+HWTEST_F(ImageCreate, givenOutOfRangeSwizzleWhenImageInitializeThenUnsupportedImageFormatReturned) {
+    // Swizzles index shaderChannelSelect, so an out of range value must be rejected instead
+    // of reading past the end of the table.
+    const auto outOfRange = static_cast<ze_image_format_swizzle_t>(
+        ::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>::zeImageFormatSwizzleMax);
+    ze_image_format_swizzle_t ze_image_format_t::*channels[] = {&ze_image_format_t::x, &ze_image_format_t::y,
+                                                                &ze_image_format_t::z, &ze_image_format_t::w};
+
+    for (const auto channel : channels) {
+        ze_image_desc_t desc = {};
+        desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        desc.type = ZE_IMAGE_TYPE_2D;
+        desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+        desc.format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+        desc.width = 16;
+        desc.height = 16;
+        desc.depth = 1;
+        desc.format.*channel = outOfRange;
+
+        auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, imageHW->initialize(device, &desc));
+    }
+}
+
+HWTEST_F(ImageCreate, givenMediaLayoutWithOutOfRangeFormatTypeWhenImageInitializeThenTypeIsIgnored) {
+    // The format type is ignored for media layouts, so an out of range one must not be rejected.
+    const ze_image_format_layout_t layouts[] = {ZE_IMAGE_FORMAT_LAYOUT_Y8, ZE_IMAGE_FORMAT_LAYOUT_NV12,
+                                                ZE_IMAGE_FORMAT_LAYOUT_YUYV, ZE_IMAGE_FORMAT_LAYOUT_UYVY,
+                                                ZE_IMAGE_FORMAT_LAYOUT_RGBP, ZE_IMAGE_FORMAT_LAYOUT_BRGP};
+
+    for (const auto layout : layouts) {
+        ze_image_desc_t desc = {};
+        desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        desc.type = ZE_IMAGE_TYPE_2D;
+        desc.format.layout = layout;
+        desc.format.type = ZE_IMAGE_FORMAT_TYPE_FORCE_UINT32;
+        desc.width = 16;
+        desc.height = 16;
+        desc.depth = 1;
+
+        auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc)) << "layout " << static_cast<uint32_t>(layout);
+
+        const auto &expected = ImageFormats::formats[layout][ZE_IMAGE_FORMAT_TYPE_UNORM];
+        EXPECT_EQ(expected.gmmSurfaceFormat, imageHW->getImageInfo().surfaceFormat->gmmSurfaceFormat)
+            << "layout " << static_cast<uint32_t>(layout);
+    }
+}
+
+HWTEST_F(ImageCreate, givenOutOfRangeFormatLayoutOrTypeWhenImageInitializeThenUnsupportedImageFormatReturned) {
+    // ImageFormats::formats is indexed by the raw enum values, so an out of range layout, or an out
+    // of range type on a layout that uses it, must be rejected instead of reading past the table.
+    const ze_image_format_t outOfRangeFormats[] = {
+        {ZE_IMAGE_FORMAT_LAYOUT_FORCE_UINT32, ZE_IMAGE_FORMAT_TYPE_UNORM},
+        {ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_FORCE_UINT32},
+        {static_cast<ze_image_format_layout_t>(ImageFormats::maxLayoutCount), ZE_IMAGE_FORMAT_TYPE_UNORM},
+        {ZE_IMAGE_FORMAT_LAYOUT_8, static_cast<ze_image_format_type_t>(ImageFormats::maxTypeCount)}};
+
+    for (const auto &format : outOfRangeFormats) {
+        ze_image_desc_t desc = {};
+        desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        desc.type = ZE_IMAGE_TYPE_2D;
+        desc.format = format;
+        desc.width = 16;
+        desc.height = 16;
+        desc.depth = 1;
+
+        auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, imageHW->initialize(device, &desc))
+            << "layout " << static_cast<uint32_t>(format.layout) << ", type " << static_cast<uint32_t>(format.type);
+    }
 }
 
 HWTEST_F(ImageCreate, givenDepthSwizzleFormatWhenImageInitializeThenCorrectSwizzleInRSSIsSet) {
@@ -1358,7 +1474,6 @@ HWTEST_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThenV
     auto isMediaFormatLayout = imageHW->isMediaFormat(params.first);
     if (isMediaFormatLayout) {
         auto imgInfo = imageHW->getImageInfo();
-        EXPECT_EQ(rss.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
         EXPECT_EQ(rss.getYOffsetForUOrUvPlane(), imgInfo.yOffsetForUVPlane);
         EXPECT_EQ(rss.getXOffsetForUOrUvPlane(), imgInfo.xOffset);
     } else {
@@ -1369,15 +1484,14 @@ HWTEST_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThenV
     EXPECT_EQ(rss.getSurfaceMinLOD(), 0u);
     EXPECT_EQ(rss.getMIPCountLOD(), 0u);
 
-    if (!isMediaFormatLayout) {
-        EXPECT_EQ(rss.getShaderChannelSelectRed(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_RED);
-        EXPECT_EQ(rss.getShaderChannelSelectGreen(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_GREEN);
-        EXPECT_EQ(rss.getShaderChannelSelectBlue(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_BLUE);
-        EXPECT_EQ(rss.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_ALPHA);
+    auto hasFixedChannelSelect = isMediaFormatLayout || imageHW->isPackedYuvFormat(params.first);
+    EXPECT_EQ(rss.getShaderChannelSelectRed(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_RED);
+    EXPECT_EQ(rss.getShaderChannelSelectGreen(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_GREEN);
+    EXPECT_EQ(rss.getShaderChannelSelectBlue(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_BLUE);
+    if (hasFixedChannelSelect) {
+        EXPECT_EQ(rss.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_ONE);
     } else {
-        EXPECT_EQ(rss.getShaderChannelSelectRed(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_RED);
-        EXPECT_EQ(rss.getShaderChannelSelectGreen(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_GREEN);
-        EXPECT_EQ(rss.getShaderChannelSelectBlue(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_BLUE);
+        EXPECT_EQ(rss.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_ALPHA);
     }
 
     EXPECT_EQ(rss.getNumberOfMultisamples(), FamilyType::RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
@@ -1477,26 +1591,23 @@ TEST(ImageFormatDescHelperTest, givenUnsupportedImageFormatLayoutAndTypeThenProp
     EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_4_4_4_4, ZE_IMAGE_FORMAT_TYPE_SINT}), invalid);
     EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_4_4_4_4, ZE_IMAGE_FORMAT_TYPE_SNORM}), invalid);
     EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_4_4_4_4, ZE_IMAGE_FORMAT_TYPE_FLOAT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_SINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_SNORM}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_FLOAT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YUYV, ZE_IMAGE_FORMAT_TYPE_UINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YUYV, ZE_IMAGE_FORMAT_TYPE_SINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YUYV, ZE_IMAGE_FORMAT_TYPE_SNORM}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YUYV, ZE_IMAGE_FORMAT_TYPE_FLOAT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_VYUY, ZE_IMAGE_FORMAT_TYPE_UINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_VYUY, ZE_IMAGE_FORMAT_TYPE_SINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_VYUY, ZE_IMAGE_FORMAT_TYPE_SNORM}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_VYUY, ZE_IMAGE_FORMAT_TYPE_FLOAT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YVYU, ZE_IMAGE_FORMAT_TYPE_UINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YVYU, ZE_IMAGE_FORMAT_TYPE_SINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YVYU, ZE_IMAGE_FORMAT_TYPE_SNORM}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YVYU, ZE_IMAGE_FORMAT_TYPE_FLOAT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_UYVY, ZE_IMAGE_FORMAT_TYPE_UINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_UYVY, ZE_IMAGE_FORMAT_TYPE_SINT}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_UYVY, ZE_IMAGE_FORMAT_TYPE_SNORM}), invalid);
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_UYVY, ZE_IMAGE_FORMAT_TYPE_FLOAT}), invalid);
+}
+
+TEST(ImageFormatDescHelperTest, givenYuvLayoutThenChannelDataTypeIsTakenFromLayoutInsteadOfFormatType) {
+    // The format type is ignored for media layouts, so every type reports the same data type.
+    const ze_image_format_layout_t layouts[] = {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_LAYOUT_YUYV,
+                                                ZE_IMAGE_FORMAT_LAYOUT_VYUY, ZE_IMAGE_FORMAT_LAYOUT_YVYU,
+                                                ZE_IMAGE_FORMAT_LAYOUT_UYVY};
+    const ze_image_format_type_t types[] = {ZE_IMAGE_FORMAT_TYPE_UINT, ZE_IMAGE_FORMAT_TYPE_SINT,
+                                            ZE_IMAGE_FORMAT_TYPE_UNORM, ZE_IMAGE_FORMAT_TYPE_SNORM,
+                                            ZE_IMAGE_FORMAT_TYPE_FLOAT};
+
+    for (const auto layout : layouts) {
+        for (const auto type : types) {
+            EXPECT_EQ(getClChannelDataType({layout, type}), static_cast<cl_channel_type>(CL_UNORM_INT8))
+                << "layout " << static_cast<uint32_t>(layout) << ", type " << static_cast<uint32_t>(type);
+        }
+    }
 }
 
 TEST(ImageFormatDescHelperTest, givenSupportedImageFormatLayoutAndTypeThenProperClEnumIsReturned) {
@@ -1551,11 +1662,36 @@ TEST(ImageFormatDescHelperTest, givenSupportedImageFormatLayoutAndTypeThenProper
     EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_10_10_10_2, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_UNORM_INT_101010_2));
     EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_5_6_5, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_UNORM_SHORT_565));
     EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_5_5_5_1, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_UNORM_SHORT_555));
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_NV12_INTEL));
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YUYV, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_YUYV_INTEL));
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_VYUY, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_VYUY_INTEL));
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YVYU, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_YVYU_INTEL));
-    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_UYVY, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_UYVY_INTEL));
+    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_UNORM_INT8));
+    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YUYV, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_UNORM_INT8));
+    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_VYUY, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_UNORM_INT8));
+    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_YVYU, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_UNORM_INT8));
+    EXPECT_EQ(getClChannelDataType({ZE_IMAGE_FORMAT_LAYOUT_UYVY, ZE_IMAGE_FORMAT_TYPE_UNORM}), static_cast<cl_channel_type>(CL_UNORM_INT8));
+}
+
+TEST(ImageFormatDescHelperTest, givenYuvLayoutThenChannelOrderIsTakenFromLayoutInsteadOfSwizzles) {
+    // Swizzles are irrelevant for YUV layouts, the layout alone determines the channel order.
+    ze_image_format_t format{};
+    format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+    format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.y = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
+
+    format.layout = ZE_IMAGE_FORMAT_LAYOUT_NV12;
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_NV12_INTEL));
+
+    format.layout = ZE_IMAGE_FORMAT_LAYOUT_YUYV;
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_YUYV_INTEL));
+
+    format.layout = ZE_IMAGE_FORMAT_LAYOUT_VYUY;
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_VYUY_INTEL));
+
+    format.layout = ZE_IMAGE_FORMAT_LAYOUT_YVYU;
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_YVYU_INTEL));
+
+    format.layout = ZE_IMAGE_FORMAT_LAYOUT_UYVY;
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_UYVY_INTEL));
 }
 
 TEST(ImageFormatDescHelperTest, givenSwizzlesThenEqualityIsProperlyDetermined) {

@@ -187,11 +187,12 @@ struct CapturingImageL0Context : public L0::ult::ContextStubMock {
             }
         }
         *phImage = nullptr; // null handle -> Image destructor skips zeImageDestroy
-        return ZE_RESULT_SUCCESS;
+        return createImageResult;
     }
 
     bool createImageCalled = false;
     size_t capturedRowPitch = 0;
+    ze_result_t createImageResult = ZE_RESULT_SUCCESS;
 };
 
 struct CreateImageFromBufferWiringTest : LeoMemObjApiFixture {
@@ -299,6 +300,345 @@ TEST_F(CreateImageFromBufferWiringTest, givenImage2dFromBufferWhenCreateImageThe
 
     clReleaseMemObject(image);
     EXPECT_EQ(refCountWithoutImage, buffer.getRefInternalCount());
+}
+
+struct CreateImageValidationTest : LeoMemObjApiFixture {
+    void SetUp() override {
+        LeoMemObjApiFixture::SetUp();
+        setSupportsImages(true);
+        mockL0Context.devices[device->getRootDeviceIndex()] = device->getL0Handle();
+        cl_device_id clDeviceId = device;
+        leoContext = std::make_unique<Context>(nullptr, mockL0Context.toHandle(), 1, &clDeviceId, true);
+        imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        imageDesc.image_width = 4;
+        imageDesc.image_height = 4;
+    }
+
+    void TearDown() override {
+        leoContext.reset();
+        LeoMemObjApiFixture::TearDown();
+    }
+
+    cl_mem createImage(cl_mem_flags flags, void *hostPtr = nullptr) {
+        return clCreateImage(leoContext.get(), flags, &imageFormat, &imageDesc, hostPtr, &retVal);
+    }
+
+    CapturingImageL0Context mockL0Context{};
+    std::unique_ptr<Context> leoContext;
+    cl_image_format imageFormat{CL_RGBA, CL_UNORM_INT8};
+    cl_image_desc imageDesc{};
+    cl_int retVal = CL_SUCCESS;
+};
+
+TEST_F(CreateImageValidationTest, givenPackedYuvFormatWithUnsupportedChannelTypeWhenCreateImageThenInvalidImageFormatDescriptorReturned) {
+    imageFormat = {CL_YUYV_INTEL, CL_UNSIGNED_INT16};
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenZeroWidthWhenCreateImageThenInvalidImageDescriptorReturnedAndLevelZeroNotReached) {
+    imageDesc.image_width = 0;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+}
+
+TEST_F(CreateImageValidationTest, givenZeroHeightWhenCreateImageThenInvalidImageDescriptorReturned) {
+    imageDesc.image_height = 0;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenWidthExceedingDeviceLimitWhenCreateImageThenInvalidImageSizeReturned) {
+    imageDesc.image_width = device->getSharedDeviceInfo().image2DMaxWidth + 1;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+    EXPECT_EQ(CL_INVALID_IMAGE_SIZE, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenHeightExceedingDeviceLimitWhenCreateImageThenInvalidImageSizeReturned) {
+    imageDesc.image_height = device->getSharedDeviceInfo().image2DMaxHeight + 1;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+    EXPECT_EQ(CL_INVALID_IMAGE_SIZE, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenPackedYuvFormatWithOddWidthWhenCreateImageThenInvalidImageDescriptorReturned) {
+    imageFormat = {CL_YUYV_INTEL, CL_UNORM_INT8};
+    imageDesc.image_width = 7;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenPackedYuvFormatWithoutReadOnlyFlagWhenCreateImageThenInvalidValueReturned) {
+    imageFormat = {CL_YUYV_INTEL, CL_UNORM_INT8};
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_WRITE));
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenRowPitchWithoutHostPtrWhenCreateImageThenInvalidImageDescriptorReturned) {
+    imageDesc.image_row_pitch = 64;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenRowPitchNotMultipleOfElementSizeWhenCreateImageThenInvalidImageDescriptorReturned) {
+    imageFormat = {CL_YUYV_INTEL, CL_UNORM_INT8};
+    std::vector<uint8_t> hostMemory(1024, 0);
+    imageDesc.image_row_pitch = 9;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, hostMemory.data()));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenRowPitchSmallerThanRowSizeWhenCreateImageThenInvalidImageDescriptorReturned) {
+    std::vector<uint8_t> hostMemory(1024, 0);
+    imageDesc.image_row_pitch = 4;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, hostMemory.data()));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenPlanarYuvFormatWithoutHostNoAccessFlagWhenCreateImageThenInvalidValueReturned) {
+    imageFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenPlanarYuvFormatWithWidthNotMultipleOfFourWhenCreateImageThenInvalidImageDescriptorReturned) {
+    imageFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
+    imageDesc.image_width = 7;
+    imageDesc.image_height = 8;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenPlanarYuvFormatWithHeightNotMultipleOfFourWhenCreateImageThenInvalidImageDescriptorReturned) {
+    imageFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
+    imageDesc.image_width = 16;
+    imageDesc.image_height = 17;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenPlanarYuvFormatExceedingPlanarYuvLimitWhenCreateImageThenInvalidImageSizeReturned) {
+    imageFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
+    imageDesc.image_width = 4;
+    imageDesc.image_height = static_cast<size_t>(device->getDeviceInfo().planarYuvMaxHeight) + 4;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
+    EXPECT_EQ(CL_INVALID_IMAGE_SIZE, retVal);
+}
+
+TEST_F(CreateImageValidationTest, givenPlaneImageWithAccessFlagsConflictingWithParentWhenCreateImageThenInvalidValueReturned) {
+    imageFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
+    imageDesc.image_width = 8;
+    imageDesc.image_height = 8;
+    auto parent = createImage(CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, parent);
+
+    // A plane of a read only parent cannot be made writable.
+    imageFormat = {CL_R, CL_UNORM_INT8};
+    imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.mem_object = parent;
+
+    EXPECT_EQ(nullptr, createImage(CL_MEM_WRITE_ONLY));
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_WRITE));
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    // Host pointer flags are never allowed on an image created from another mem object.
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR));
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    // A plane of a host-no-access parent cannot widen host access.
+    EXPECT_EQ(nullptr, createImage(CL_MEM_HOST_READ_ONLY));
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    clReleaseMemObject(parent);
+}
+
+TEST_F(CreateImageValidationTest, givenValidPlanarYuvDescriptorWhenCreateImageThenImageIsCreated) {
+    imageFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
+    imageDesc.image_width = 64;
+    imageDesc.image_height = 32;
+
+    auto image = createImage(CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, image);
+    EXPECT_TRUE(mockL0Context.createImageCalled);
+
+    clReleaseMemObject(image);
+}
+
+TEST_F(CreateImageValidationTest, givenValidPackedYuvDescriptorWhenCreateImageThenImageIsCreated) {
+    imageFormat = {CL_YUYV_INTEL, CL_UNORM_INT8};
+    imageDesc.image_width = 64;
+    imageDesc.image_height = 32;
+
+    auto image = createImage(CL_MEM_READ_ONLY);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, image);
+    EXPECT_TRUE(mockL0Context.createImageCalled);
+
+    clReleaseMemObject(image);
+}
+
+TEST_F(CreateImageValidationTest, givenLegalAndHardwareBackedFormatsWhenCreateImageThenImageIsCreated) {
+    const cl_image_format formats[] = {
+        {CL_R, CL_FLOAT},
+        {CL_INTENSITY, CL_UNORM_INT8},
+        {CL_BGRA, CL_UNORM_INT8},
+        {CL_sRGBA, CL_UNORM_INT8}};
+
+    for (const auto &format : formats) {
+        imageFormat = format;
+        auto image = createImage(CL_MEM_READ_ONLY);
+        EXPECT_EQ(CL_SUCCESS, retVal) << "channel order " << format.image_channel_order;
+        ASSERT_NE(nullptr, image) << "channel order " << format.image_channel_order;
+        clReleaseMemObject(image);
+    }
+}
+
+TEST_F(CreateImageValidationTest, givenLegalFormatWithoutHardwareSupportWhenCreateImageThenFormatNotSupportedReturned) {
+    const cl_image_format formats[] = {
+        {CL_RGB, CL_UNORM_SHORT_565},
+        {CL_Rx, CL_UNORM_INT8}};
+
+    for (const auto &format : formats) {
+        imageFormat = format;
+        EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+        EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal) << "channel order " << format.image_channel_order;
+    }
+}
+
+TEST_F(CreateImageValidationTest, givenLevelZeroImageCreationFailureWhenCreateImageThenNoImageIsReturnedAndErrorIsPropagated) {
+    mockL0Context.createImageResult = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+    EXPECT_TRUE(mockL0Context.createImageCalled);
+}
+
+TEST_F(CreateImageValidationTest, givenIllegalChannelOrderAndDataTypeCombinationWhenCreateImageThenInvalidImageFormatDescriptorReturned) {
+    const cl_image_format formats[] = {
+        {CL_INTENSITY, CL_SIGNED_INT8},
+        {CL_LUMINANCE, CL_UNSIGNED_INT32},
+        {CL_RGB, CL_FLOAT},
+        {CL_BGRA, CL_UNORM_INT16},
+        {CL_sRGB, CL_UNORM_INT16},
+        {CL_DEPTH, CL_UNORM_INT8},
+        {CL_DEPTH_STENCIL, CL_UNORM_INT16},
+        {CL_NV12_INTEL, CL_HALF_FLOAT},
+        {0, CL_UNORM_INT8}};
+
+    for (const auto &format : formats) {
+        imageFormat = format;
+        EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY));
+        EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal)
+            << "channel order " << format.image_channel_order
+            << ", data type " << format.image_channel_data_type;
+    }
+}
+
+TEST_F(CreateImageValidationTest, givenNullImageFormatWhenCreateImageThenInvalidImageFormatDescriptorReturned) {
+    retVal = CL_SUCCESS;
+    EXPECT_EQ(nullptr, clCreateImage(leoContext.get(), CL_MEM_READ_ONLY, nullptr, &imageDesc, nullptr, &retVal));
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+}
+
+TEST_F(CreateImageValidationTest, givenNullImageDescriptorWhenCreateImageThenInvalidImageDescriptorReturned) {
+    retVal = CL_SUCCESS;
+    EXPECT_EQ(nullptr, clCreateImage(leoContext.get(), CL_MEM_READ_ONLY, &imageFormat, nullptr, nullptr, &retVal));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+}
+
+TEST_F(CreateImageValidationTest, givenHostPtrFlagWithoutHostPtrWhenCreateImageThenInvalidHostPtrReturned) {
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, nullptr));
+    EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, nullptr));
+    EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+}
+
+TEST_F(CreateImageValidationTest, givenPlanarYuvFormatWithCopyHostPtrFlagAndNoHostPtrWhenCreateImageThenInvalidHostPtrReturnedBeforeAnyPlaneIsWritten) {
+    // Without this check the UV plane write offsets a null host pointer and hands the result to
+    // Level Zero, which cannot reject it as null.
+    imageFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
+    imageDesc.image_width = 64;
+    imageDesc.image_height = 32;
+
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_COPY_HOST_PTR, nullptr));
+    EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+}
+
+TEST_F(CreateImageValidationTest, givenHostPtrWithoutHostPtrFlagWhenCreateImageThenInvalidHostPtrReturned) {
+    std::vector<uint8_t> hostMemory(1024, 0);
+    EXPECT_EQ(nullptr, createImage(CL_MEM_READ_ONLY, hostMemory.data()));
+    EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+}
+
+TEST_F(CreateImageValidationTest, givenUnsupportedPropertyWhenCreateImageWithPropertiesThenInvalidPropertyReturned) {
+    const cl_mem_properties properties[] = {CL_MEM_FLAGS, CL_MEM_READ_ONLY | CL_MEM_WRITE_ONLY, 0};
+    retVal = CL_SUCCESS;
+    EXPECT_EQ(nullptr, clCreateImageWithProperties(leoContext.get(), properties, CL_MEM_READ_ONLY,
+                                                   &imageFormat, &imageDesc, nullptr, &retVal));
+    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+}
+
+struct CreateImageFromBufferValidationTest : CreateImageValidationTest {
+    void SetUp() override {
+        CreateImageValidationTest::SetUp();
+        parentBuffer = std::make_unique<Buffer>(leoContext.get(), bufferProperties, CL_MEM_READ_WRITE,
+                                                &dummyBufferStorage, nullptr, sizeof(dummyBufferStorage), true);
+        imageDesc.mem_object = static_cast<cl_mem>(parentBuffer.get());
+    }
+
+    void TearDown() override {
+        parentBuffer.reset();
+        CreateImageValidationTest::TearDown();
+    }
+
+    MemoryProperties bufferProperties{};
+    uint64_t dummyBufferStorage[64] = {};
+    std::unique_ptr<Buffer> parentBuffer;
+};
+
+TEST_F(CreateImageFromBufferValidationTest, givenIllegalChannelDataTypeWhenCreateImageFromBufferThenInvalidImageFormatDescriptorReturnedAndLevelZeroNotReached) {
+    // An unrecognised pair maps onto no Level Zero layout, so it must be rejected here rather than
+    // reaching zeImageCreate with ZE_IMAGE_FORMAT_LAYOUT_FORCE_UINT32.
+    const cl_image_format formats[] = {
+        {CL_RGBA, 0xdeadbeef},
+        {0xdeadbeef, CL_UNORM_INT8},
+        {CL_INTENSITY, CL_SIGNED_INT8}};
+
+    for (const auto &format : formats) {
+        imageFormat = format;
+        EXPECT_EQ(nullptr, createImage(CL_MEM_READ_WRITE))
+            << "channel order " << format.image_channel_order
+            << ", data type " << format.image_channel_data_type;
+        EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal)
+            << "channel order " << format.image_channel_order
+            << ", data type " << format.image_channel_data_type;
+        EXPECT_FALSE(mockL0Context.createImageCalled);
+    }
+}
+
+TEST_F(CreateImageFromBufferValidationTest, givenLegalFormatWhenCreateImageFromBufferThenDescriptorChecksAreNotApplied) {
+    // The extents come from the parent buffer, so the standalone descriptor rules must not fire.
+    imageDesc.image_width = 8;
+    imageDesc.image_height = 8;
+
+    auto image = createImage(CL_MEM_READ_WRITE);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, image);
+    EXPECT_TRUE(mockL0Context.createImageCalled);
+
+    clReleaseMemObject(image);
 }
 
 using MemObjHelperTest = LeoMemObjApiFixture;
@@ -508,6 +848,21 @@ TEST_F(LeoNv12HostPtrImageTest, givenNV12ImageCreatedWithHostPtrAndRowPitchThenU
     EXPECT_EQ(static_cast<const void *>(hostData.data() + rowPitch * height), capturingCmdList.appendImageCopyFromMemoryExtArgs[1].srcptr);
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+}
+
+TEST_F(LeoNv12HostPtrImageTest, givenHostPtrCopyFailureWhenCreateImageThenNoImageIsReturnedAndErrorIsPropagated) {
+    // A half written image must not escape to the caller alongside an error code.
+    capturingCmdList.appendImageCopyFromMemoryExtResult = ZE_RESULT_ERROR_DEVICE_LOST;
+    std::vector<uint8_t> hostData((width * height * 3) / 2, 0x80);
+
+    cl_int err = CL_SUCCESS;
+    auto parent = clCreateImage(hostPtrContext.get(),
+                                CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_COPY_HOST_PTR,
+                                &nv12Format, &nv12Desc, hostData.data(), &err);
+
+    EXPECT_EQ(nullptr, parent);
+    EXPECT_EQ(CL_DEVICE_NOT_AVAILABLE, err);
+    EXPECT_TRUE(capturingCmdList.appendImageCopyFromMemoryExtArgs.wasCalled());
 }
 
 struct WhiteBoxHostPtrContext : public Context {

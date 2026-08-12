@@ -38,6 +38,25 @@ struct ImageCoreFamily : public ImageImp {
         }
         return false;
     }
+    bool isPackedYuvFormat(const ze_image_format_layout_t layout) {
+        if (layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_YUYV ||
+            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_VYUY ||
+            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_YVYU ||
+            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_UYVY) {
+            return true;
+        }
+        return false;
+    }
+    bool hasIgnoredFormatType(const ze_image_format_layout_t layout) {
+        return layout >= ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_Y8 &&
+               layout <= ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_BRGP;
+    }
+    bool hasValidSwizzles(const ze_image_format_t &format) {
+        return (static_cast<uint32_t>(format.x) < zeImageFormatSwizzleMax) &&
+               (static_cast<uint32_t>(format.y) < zeImageFormatSwizzleMax) &&
+               (static_cast<uint32_t>(format.z) < zeImageFormatSwizzleMax) &&
+               (static_cast<uint32_t>(format.w) < zeImageFormatSwizzleMax);
+    }
     void encodeImplicitArgsSurfaceState() override;
     static constexpr uint32_t zeImageFormatSwizzleMax = ZE_IMAGE_FORMAT_SWIZZLE_D + 1u;
 

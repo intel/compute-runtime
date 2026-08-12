@@ -18,6 +18,9 @@
 #include <utility>
 
 namespace NEO {
+
+struct MemoryProperties;
+
 namespace LEO {
 
 class CommandBuffer;
@@ -223,6 +226,21 @@ template <typename... CastObjs>
 [[nodiscard]] cl_int validateYuvOperation(const size_t *origin, const size_t *region) noexcept;
 [[nodiscard]] bool isPackedYuvImage(const cl_image_format *imageFormat) noexcept;
 [[nodiscard]] bool isNV12Image(const cl_image_format *imageFormat) noexcept;
+
+[[nodiscard]] cl_int validateImageFormat(const cl_image_format *imageFormat) noexcept;
+
+[[nodiscard]] cl_int validateStandaloneImageDescriptor(const ClDevice &device,
+                                                       const MemoryProperties &memoryProperties,
+                                                       cl_mem_flags flags,
+                                                       const cl_image_format *imageFormat,
+                                                       const cl_image_desc *imageDesc,
+                                                       const void *hostPtr) noexcept;
+
+[[nodiscard]] cl_int validateImageCopy(const cl_image_format &srcFormat,
+                                       const cl_image_format &dstFormat,
+                                       const size_t *srcOrigin,
+                                       const size_t *dstOrigin,
+                                       const size_t *region) noexcept;
 
 } // namespace LEO
 } // namespace NEO

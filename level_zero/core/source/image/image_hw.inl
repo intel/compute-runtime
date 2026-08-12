@@ -35,6 +35,9 @@
 
 namespace L0 {
 
+static_assert(ImageFormats::maxTypeCount == static_cast<uint32_t>(ZE_IMAGE_FORMAT_TYPE_FLOAT) + 1u);
+static_assert(ImageFormats::maxLayoutCount == static_cast<uint32_t>(ZE_IMAGE_FORMAT_LAYOUT_32_32_32) + 1u);
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
@@ -51,7 +54,13 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         return parseResult;
     }
 
-    bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
+    const bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
+
+    const bool hasFixedChannelSelect = isMediaFormatLayout || isPackedYuvFormat(desc->format.layout);
+
+    if (!hasFixedChannelSelect && !hasValidSwizzles(desc->format)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+    }
 
     imgInfo.imgDesc = lookupTable.imageProperties.imageDescriptor;
     imgInfo.mipCount = imgInfo.imgDesc.numMipLevels > 1 ? imgInfo.imgDesc.numMipLevels : 0;
@@ -70,7 +79,14 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
         this->depthStencilImage = true;
     } else {
-        imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][desc->format.type];
+        if (static_cast<uint32_t>(desc->format.layout) >= ImageFormats::maxLayoutCount) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+        }
+        const auto formatType = hasIgnoredFormatType(desc->format.layout) ? ZE_IMAGE_FORMAT_TYPE_UNORM : desc->format.type;
+        if (static_cast<uint32_t>(formatType) >= ImageFormats::maxTypeCount) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+        }
+        imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][formatType];
     }
     imageFormatDesc = *const_cast<ze_image_desc_t *>(desc);
 
@@ -343,7 +359,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         surfaceState.setMIPCountLOD(0u);
         NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&surfaceState, gmm);
 
-        if (!isMediaFormatLayout) {
+        if (!hasFixedChannelSelect) {
             surfaceState.setShaderChannelSelectRed(
                 static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
                     shaderChannelSelect[desc->format.x]));
@@ -360,7 +376,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             surfaceState.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
             surfaceState.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
             surfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE);
-            surfaceState.setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
+            surfaceState.setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
         }
 
         programMultisampleSurfaceState(&surfaceState);

@@ -103,8 +103,10 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
                                              ze_event_handle_t *phWaitEvents, L0::CmdListMemoryCopyParams &memoryCopyParams) override {
         return record(this->appendImageCopyFromMemoryExtArgs, ApiId::appendImageCopyFromMemoryExt,
                       AppendImageCopyFromMemoryExtArgs{hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hEvent, numWaitEvents, phWaitEvents},
-                      ZE_RESULT_SUCCESS);
+                      appendImageCopyFromMemoryExtResult);
     }
+
+    ze_result_t appendImageCopyFromMemoryExtResult = ZE_RESULT_SUCCESS;
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                               ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters) override {

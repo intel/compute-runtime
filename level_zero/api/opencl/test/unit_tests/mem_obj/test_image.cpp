@@ -94,6 +94,21 @@ TEST_F(ImageDestructorTest, givenParentBufferWithSharingHandlerWhenImageIsCreate
     delete buffer;
 }
 
+TEST(ImageFormatConversionTest, givenPackedYuvChannelOrderWhenConvertingToL0FormatThenLayoutIsMapped) {
+    const std::pair<cl_channel_order, ze_image_format_layout_t> packedYuvFormats[] = {
+        {CL_YUYV_INTEL, ZE_IMAGE_FORMAT_LAYOUT_YUYV},
+        {CL_UYVY_INTEL, ZE_IMAGE_FORMAT_LAYOUT_UYVY},
+        {CL_YVYU_INTEL, ZE_IMAGE_FORMAT_LAYOUT_YVYU},
+        {CL_VYUY_INTEL, ZE_IMAGE_FORMAT_LAYOUT_VYUY}};
+
+    for (const auto &[channelOrder, expectedLayout] : packedYuvFormats) {
+        ze_image_format_t l0Format{};
+        Image::clToL0ImageFormat(l0Format, channelOrder, CL_UNORM_INT8);
+
+        EXPECT_EQ(expectedLayout, l0Format.layout);
+    }
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO

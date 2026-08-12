@@ -18,6 +18,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_mem_obj_helper.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
@@ -237,21 +238,25 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                                                void *hostPtr,
                                                cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateImageWithProperties, &context, &properties, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
-    if (!pContext) {
-        if (errcodeRet) {
-            *errcodeRet = CL_INVALID_CONTEXT;
-        }
+    if (!pContext) [[unlikely]] {
+        err.set(CL_INVALID_CONTEXT);
         cl_mem tracingRetVal = nullptr;
         TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
         return tracingRetVal;
     }
 
     if (!pContext->getClDevice()->getHardwareInfo().capabilityTable.supportsImages) {
-        if (errcodeRet) {
-            *errcodeRet = CL_INVALID_OPERATION;
-        }
+        err.set(CL_INVALID_OPERATION);
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    if (imageDesc == nullptr) [[unlikely]] {
+        err.set(CL_INVALID_IMAGE_DESCRIPTOR);
         cl_mem tracingRetVal = nullptr;
         TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
         return tracingRetVal;
@@ -262,20 +267,37 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     cl_mem_flags_intel emptyFlagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if ((false == NEO::LEO::ClMemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
-                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext))) {
-        if (errcodeRet) {
-            *errcodeRet = CL_INVALID_VALUE;
-        }
+                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext)) ||
+        (false == NEO::MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, emptyFlagsIntel, imageDesc->mem_object,
+                                                                      *pContext))) [[unlikely]] {
+        err.set(CL_INVALID_VALUE);
         cl_mem tracingRetVal = nullptr;
         TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
         return tracingRetVal;
     }
 
     if ((false == NEO::LEO::ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext))) {
-        if (errcodeRet) {
-            *errcodeRet = CL_INVALID_VALUE;
-        }
+                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext)) ||
+        (false == NEO::MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object,
+                                                                      *pContext))) [[unlikely]] {
+        err.set(CL_INVALID_PROPERTY);
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    const bool isHostPtrUsed = (hostPtr != nullptr);
+    const bool areHostPtrFlagsUsed = memoryProperties.flags.copyHostPtr || memoryProperties.flags.useHostPtr;
+    if (isHostPtrUsed != areHostPtrFlagsUsed) [[unlikely]] {
+        err.set(CL_INVALID_HOST_PTR);
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    const auto formatResult = NEO::LEO::validateImageFormat(imageFormat);
+    if (formatResult != CL_SUCCESS) [[unlikely]] {
+        err.set(formatResult);
         cl_mem tracingRetVal = nullptr;
         TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
         return tracingRetVal;
@@ -289,6 +311,22 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
 
     bool inputMemObjFound = false;
     auto inputMemObjHandle = NEO::LEO::MemObj::getMemObjProperties<uintptr_t>(properties, CL_L0_MEM_OBJ_HANDLE, &inputMemObjFound);
+
+    if (!inputMemObjFound && imageDesc->mem_object == nullptr) {
+        const auto validationResult = NEO::LEO::validateStandaloneImageDescriptor(*pContext->getClDevice(),
+                                                                                  memoryProperties,
+                                                                                  flags,
+                                                                                  imageFormat,
+                                                                                  imageDesc,
+                                                                                  hostPtr);
+        if (validationResult != CL_SUCCESS) [[unlikely]] {
+            err.set(validationResult);
+            cl_mem tracingRetVal = nullptr;
+            TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+            return tracingRetVal;
+        }
+    }
+
     if (inputMemObjFound) {
         imageHandle = reinterpret_cast<ze_image_handle_t>(inputMemObjHandle);
         auto l0Image = static_cast<L0::ImageImp *>(L0::Image::fromHandle(imageHandle));
@@ -302,10 +340,8 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         if (parentMemObj && parentMemObj->isImage()) {
             auto parentImage = static_cast<NEO::LEO::Image *>(parentMemObj);
             const uint32_t planeIndex = static_cast<uint32_t>(imageDesc->image_depth);
-            if (planeIndex > 1) {
-                if (errcodeRet) {
-                    *errcodeRet = CL_INVALID_IMAGE_DESCRIPTOR;
-                }
+            if (planeIndex > 1) [[unlikely]] {
+                err.set(CL_INVALID_IMAGE_DESCRIPTOR);
                 cl_mem tracingRetVal = nullptr;
                 TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
                 return tracingRetVal;
@@ -396,6 +432,13 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         }
     }
 
+    if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
+        err.set(L0ToClResultMapper(ret));
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
     void *cpuPtr = nullptr;
     if (memoryProperties.flags.useHostPtr) {
         cpuPtr = hostPtr;
@@ -454,8 +497,17 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         zeCommandListHostSynchronize(pContext->getInternalCopyCmdList(), std::numeric_limits<uint64_t>::max());
     }
 
-    if (errcodeRet) {
-        *errcodeRet = L0ToClResultMapper(ret);
+    if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
+        if (!inputMemObjFound && imageHandle) {
+            zeImageDestroy(imageHandle);
+        }
+        for (auto &extraImageHandle : extraImageHandles) {
+            zeImageDestroy(extraImageHandle.second);
+        }
+        err.set(L0ToClResultMapper(ret));
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
     }
 
     cl_mem associatedMemObject = inputMemObjFound ? nullptr : imageDesc->mem_object;

@@ -104,6 +104,109 @@ TEST_F(EnqueueKernelExecutionTypeFixture, givenKernelUsingSyncBufferAndNotConcur
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
+struct EnqueueYuvImageFixture : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        device = platform->getDevices()[0].get();
+        if (!device->getHardwareInfo().capabilityTable.supportsImages) {
+            GTEST_SKIP() << "Product does not support images";
+        }
+        cl_device_id clDevice = device;
+        context = std::make_unique<Context>(nullptr, this->L0::ult::DeviceFixture::context->toHandle(), 1, &clDevice, true);
+        ASSERT_EQ(CL_SUCCESS, context->initialize());
+        commandQueue = std::make_unique<CommandQueue>(context.get(), device, nullptr, nullptr);
+
+        packedYuvImage = createImage({CL_YUYV_INTEL, CL_UNORM_INT8});
+        ASSERT_NE(nullptr, packedYuvImage);
+        rgbaImage = createImage({CL_RGBA, CL_UNORM_INT8});
+        ASSERT_NE(nullptr, rgbaImage);
+        buffer = clCreateBuffer(context.get(), CL_MEM_READ_WRITE, width * height * 4, nullptr, nullptr);
+        ASSERT_NE(nullptr, buffer);
+    }
+
+    void TearDown() override {
+        if (buffer) {
+            clReleaseMemObject(buffer);
+        }
+        if (rgbaImage) {
+            clReleaseMemObject(rgbaImage);
+        }
+        if (packedYuvImage) {
+            clReleaseMemObject(packedYuvImage);
+        }
+        commandQueue.reset();
+        context.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    cl_mem createImage(cl_image_format format) {
+        cl_image_desc desc{};
+        desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        desc.image_width = width;
+        desc.image_height = height;
+        cl_int err = CL_INVALID_VALUE;
+        auto image = clCreateImage(context.get(), CL_MEM_READ_ONLY, &format, &desc, nullptr, &err);
+        EXPECT_EQ(CL_SUCCESS, err);
+        return image;
+    }
+
+    static constexpr size_t width = 16;
+    static constexpr size_t height = 16;
+    size_t oddOrigin[3] = {1, 0, 0};
+    size_t evenOrigin[3] = {0, 0, 0};
+    size_t oddRegion[3] = {3, 2, 1};
+    ClDevice *device = nullptr;
+    std::unique_ptr<Context> context;
+    std::unique_ptr<CommandQueue> commandQueue;
+    cl_mem packedYuvImage = nullptr;
+    cl_mem rgbaImage = nullptr;
+    cl_mem buffer = nullptr;
+    char hostBuffer[width * height * 4] = {};
+};
+
+TEST_F(EnqueueYuvImageFixture, givenPackedYuvImageWithOddOriginWhenEnqueueReadImageThenReturnsCLInvalidValue) {
+    size_t region[3] = {2, 2, 1};
+    EXPECT_EQ(CL_INVALID_VALUE, clEnqueueReadImage(commandQueue.get(), packedYuvImage, CL_TRUE, oddOrigin, region,
+                                                   0, 0, hostBuffer, 0, nullptr, nullptr));
+}
+
+TEST_F(EnqueueYuvImageFixture, givenPackedYuvImageWithOddRegionWhenEnqueueWriteImageThenReturnsCLInvalidValue) {
+    EXPECT_EQ(CL_INVALID_VALUE, clEnqueueWriteImage(commandQueue.get(), packedYuvImage, CL_TRUE, evenOrigin, oddRegion,
+                                                    0, 0, hostBuffer, 0, nullptr, nullptr));
+}
+
+TEST_F(EnqueueYuvImageFixture, givenPackedYuvImageWithOddOriginWhenEnqueueCopyImageToBufferThenReturnsCLInvalidValue) {
+    size_t region[3] = {2, 2, 1};
+    EXPECT_EQ(CL_INVALID_VALUE, clEnqueueCopyImageToBuffer(commandQueue.get(), packedYuvImage, buffer, oddOrigin,
+                                                           region, 0, 0, nullptr, nullptr));
+}
+
+TEST_F(EnqueueYuvImageFixture, givenPackedYuvImageWithOddOriginWhenEnqueueCopyBufferToImageThenReturnsCLInvalidValue) {
+    size_t region[3] = {2, 2, 1};
+    EXPECT_EQ(CL_INVALID_VALUE, clEnqueueCopyBufferToImage(commandQueue.get(), buffer, packedYuvImage, 0, oddOrigin,
+                                                           region, 0, nullptr, nullptr));
+}
+
+TEST_F(EnqueueYuvImageFixture, givenPackedYuvImageWithOddOriginWhenEnqueueMapImageThenInvalidValueReportedThroughErrcode) {
+    size_t region[3] = {2, 2, 1};
+    cl_int retVal = CL_SUCCESS;
+    EXPECT_EQ(nullptr, clEnqueueMapImage(commandQueue.get(), packedYuvImage, CL_TRUE, CL_MAP_READ, oddOrigin, region,
+                                         nullptr, nullptr, 0, nullptr, nullptr, &retVal));
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(EnqueueYuvImageFixture, givenMismatchedFormatsWhenEnqueueCopyImageThenReturnsCLImageFormatMismatch) {
+    size_t region[3] = {2, 2, 1};
+    EXPECT_EQ(CL_IMAGE_FORMAT_MISMATCH, clEnqueueCopyImage(commandQueue.get(), packedYuvImage, rgbaImage, evenOrigin,
+                                                           evenOrigin, region, 0, nullptr, nullptr));
+}
+
+TEST_F(EnqueueYuvImageFixture, givenPackedYuvImageWithOddSrcOriginWhenEnqueueCopyImageThenReturnsCLInvalidValue) {
+    size_t region[3] = {2, 2, 1};
+    EXPECT_EQ(CL_INVALID_VALUE, clEnqueueCopyImage(commandQueue.get(), packedYuvImage, packedYuvImage, oddOrigin,
+                                                   evenOrigin, region, 0, nullptr, nullptr));
+}
+
 TEST_F(EnqueueKernelExecutionTypeFixture, givenGlobalWorkSizeAboveUint32MaxNotDivisibleByLocalWorkSizeWhenEnqueueNDRangeKernelThenReturnsCLInvalidWorkGroupSize) {
     constexpr uint32_t groupSize = 3u; // does not divide 2^32, so a truncated range would look divisible
     // pre-set the group size so that zeKernelSetGroupSize takes its no-change early return

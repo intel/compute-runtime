@@ -485,6 +485,15 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
+    const auto readFormat = pImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&readFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(origin, region);
+        if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(ClEnqueueReadImage, &retVal);
+            return retVal;
+        }
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_READ_IMAGE, pCommandQueue);
 
     auto mipDesc = createZeImageRegionWithMipLevel(pImage, origin, region);
@@ -538,6 +547,15 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
         cl_int tracingRetVal = CL_INVALID_OPERATION;
         TRACING_EXIT(ClEnqueueWriteImage, &tracingRetVal);
         return tracingRetVal;
+    }
+
+    const auto writeFormat = pImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&writeFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(origin, region);
+        if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(ClEnqueueWriteImage, &retVal);
+            return retVal;
+        }
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_WRITE_IMAGE, pCommandQueue);
@@ -678,6 +696,12 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
         return retVal;
     }
 
+    retVal = NEO::LEO::validateImageCopy(pSrcImage->getOriginalFormat(), pDstImage->getOriginalFormat(), srcOrigin, dstOrigin, region);
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClEnqueueCopyImage, &retVal);
+        return retVal;
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_IMAGE, pCommandQueue);
 
     auto srcMipDesc = createZeImageRegionWithMipLevel(pSrcImage, srcOrigin, region);
@@ -718,6 +742,15 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
         return retVal;
     }
 
+    const auto srcFormat = pSrcImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&srcFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(srcOrigin, region);
+        if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(ClEnqueueCopyImageToBuffer, &retVal);
+            return retVal;
+        }
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_IMAGE_TO_BUFFER, pCommandQueue);
 
     auto mipDesc = createZeImageRegionWithMipLevel(pSrcImage, srcOrigin, region);
@@ -753,6 +786,15 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
     if (retVal != CL_SUCCESS) [[unlikely]] {
         TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
         return retVal;
+    }
+
+    const auto dstFormat = pDstImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&dstFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(dstOrigin, region);
+        if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
+            return retVal;
+        }
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_BUFFER_TO_IMAGE, pCommandQueue);
@@ -889,6 +931,17 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
         void *tracingRetVal = nullptr;
         TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
         return tracingRetVal;
+    }
+
+    const auto mapFormat = pImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&mapFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(origin, region);
+        if (retVal != CL_SUCCESS) {
+            errcodeHelper.set(retVal);
+            void *tracingRetVal = nullptr;
+            TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
+            return tracingRetVal;
+        }
     }
     if (!pImage->getCpuPtr()) {
         ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, 0};
