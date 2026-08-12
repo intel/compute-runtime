@@ -46,6 +46,11 @@ void Buffer::resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) 
 }
 
 void Buffer::refreshDeviceAddress(uint32_t rootDeviceIndex) {
+    if (this->isSubBuffer()) {
+        static_cast<Buffer *>(this->associatedMemObject)->refreshDeviceAddress(rootDeviceIndex);
+        return;
+    }
+
     auto lock = this->takeOwnership();
 
     auto allocData = this->getAllocData();

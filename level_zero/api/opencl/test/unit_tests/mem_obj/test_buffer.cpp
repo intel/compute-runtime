@@ -268,6 +268,30 @@ TEST_F(SharedBufferDeviceAddressTest, givenSubBufferWhenParentAddressChangesThen
     delete buffer;
 }
 
+TEST_F(SharedBufferDeviceAddressTest, givenSubBufferWhenRefreshingItsDeviceAddressThenParentIsRefreshedAndRegionOriginIsNotDropped) {
+    auto graphicsAllocation = allocate();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    const auto baseAddress = graphicsAllocation->getGpuAddress();
+
+    auto buffer = createSharedBuffer(graphicsAllocation);
+    ASSERT_NE(nullptr, buffer);
+
+    constexpr size_t regionOrigin = 0x100u;
+    cl_buffer_region region{regionOrigin, 0x100u};
+    auto subBuffer = buffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &region);
+    ASSERT_NE(nullptr, subBuffer);
+
+    graphicsAllocation->setAllocationOffset(0x40u);
+    subBuffer->refreshDeviceAddress(rootDeviceIndex);
+
+    EXPECT_EQ(baseAddress + 0x40u, castToUint64(buffer->getUsmPtr()));
+    EXPECT_EQ(baseAddress + 0x40u + regionOrigin, castToUint64(subBuffer->getUsmPtr()));
+    EXPECT_EQ(baseAddress + 0x40u + regionOrigin, castToUint64(*subBuffer->getUsmPtrRef()));
+
+    delete subBuffer;
+    delete buffer;
+}
+
 TEST_F(SharedBufferDeviceAddressTest, givenBufferWithoutRegisteredAllocationWhenRefreshingDeviceAddressThenUsmPtrIsLeftUntouched) {
     uint64_t dummyStorage = 0u;
     void *usmPtr = &dummyStorage;
