@@ -4378,7 +4378,6 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindful
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;
     StreamCapture capture;
@@ -4399,7 +4398,6 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndDefault
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;
     auto result = mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
@@ -4416,7 +4414,6 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindles
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;
     internalOptions = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-legacy-mode";

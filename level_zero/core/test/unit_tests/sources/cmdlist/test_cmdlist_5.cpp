@@ -78,8 +78,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
     {
         auto bindlessEnabled = NEO::ApiSpecificConfig::getBindlessMode(*testDevice->getNEODevice());
-        auto isStateless = testDevice->getCompilerProductHelper().isForceToStatelessRequired();
-        auto mode = NEO::BuiltIn::AddressingMode::getDefaultMode(bindlessEnabled, isStateless);
+        auto mode = testDevice->getCompilerProductHelper().getDefaultBuiltInAddressingMode(bindlessEnabled);
         testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps, mode);
         testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsets, mode);
     }
@@ -160,8 +159,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
     {
         auto bindlessEnabled = NEO::ApiSpecificConfig::getBindlessMode(*testDevice->getNEODevice());
-        auto isStateless = testDevice->getCompilerProductHelper().isForceToStatelessRequired();
-        auto mode = NEO::BuiltIn::AddressingMode::getDefaultMode(bindlessEnabled, isStateless);
+        auto mode = testDevice->getCompilerProductHelper().getDefaultBuiltInAddressingMode(bindlessEnabled);
         testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps, mode);
         testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsets, mode);
     }
@@ -242,8 +240,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
     {
         auto bindlessEnabled = NEO::ApiSpecificConfig::getBindlessMode(*testDevice->getNEODevice());
-        auto isStateless = testDevice->getCompilerProductHelper().isForceToStatelessRequired();
-        auto mode = NEO::BuiltIn::AddressingMode::getDefaultMode(bindlessEnabled, isStateless);
+        auto mode = testDevice->getCompilerProductHelper().getDefaultBuiltInAddressingMode(bindlessEnabled);
         testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps, mode);
     }
 
@@ -318,8 +315,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
     {
         auto bindlessEnabled = NEO::ApiSpecificConfig::getBindlessMode(*testDevice->getNEODevice());
-        auto isStateless = testDevice->getCompilerProductHelper().isForceToStatelessRequired();
-        auto mode = NEO::BuiltIn::AddressingMode::getDefaultMode(bindlessEnabled, isStateless);
+        auto mode = testDevice->getCompilerProductHelper().getDefaultBuiltInAddressingMode(bindlessEnabled);
         testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps, mode);
     }
 

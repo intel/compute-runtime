@@ -32,7 +32,7 @@ void DeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     ASSERT_NE(nullptr, const_cast<TagAddressType *>(pTagMemory));
 
     auto bindlessEnabled = NEO::ApiSpecificConfig::getBindlessMode(*pDevice);
-    if (pDevice->getCompilerProductHelper().isForceBindlessRequired(pDevice->getHardwareInfo())) {
+    if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled(pDevice->getHardwareInfo())) {
         bindlessEnabled = true;
     }
 

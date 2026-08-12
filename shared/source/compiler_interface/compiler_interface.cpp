@@ -657,7 +657,7 @@ const CompilerInterface::CompilerLibraryEntry *CompilerInterface::getFinalizer(c
         return nullptr;
     }
 
-    const char *finalizerLibName = device->getCompilerProductHelper().getFinalizerLibraryName();
+    const char *finalizerLibName = nullptr;
     if (debugManager.flags.FinalizerLibraryName.get() != "unk") {
         finalizerLibName = debugManager.flags.FinalizerLibraryName.getRef().c_str();
     }

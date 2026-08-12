@@ -979,15 +979,9 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewFinalizerTranslationCtxWhenDevic
 }
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewFinalizerTranslationCtxWhenDeviceCtxIsNotAlreadyAvailableThenCreateNewDeviceCtx) {
-    MockCompilerProductHelper *mockCompilerProductHelper = nullptr;
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.FinalizerLibraryName.set("finalzer_lib");
     auto device = this->pDevice;
-    {
-        auto tmp = std::make_unique<MockCompilerProductHelper>();
-        mockCompilerProductHelper = tmp.get();
-        device->getRootDeviceEnvironmentRef().compilerProductHelper = std::move(tmp);
-    }
-
-    mockCompilerProductHelper->getFinalizerLibraryNameResult = "finalzer_lib";
     this->pCompilerInterface->igcLibraryNameOverride = "";
 
     auto ret = this->pCompilerInterface->createFinalizerTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
@@ -995,15 +989,9 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewFinalizerTranslationCtxWhenDevic
 }
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewFinalizerTranslationCtxWhenDeviceCtxIsAlreadyAvailableThenReuseThatDeviceCtx) {
-    MockCompilerProductHelper *mockCompilerProductHelper = nullptr;
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.FinalizerLibraryName.set("finalzer_lib");
     auto device = this->pDevice;
-    {
-        auto tmp = std::make_unique<MockCompilerProductHelper>();
-        mockCompilerProductHelper = tmp.get();
-        device->getRootDeviceEnvironmentRef().compilerProductHelper = std::move(tmp);
-    }
-
-    mockCompilerProductHelper->getFinalizerLibraryNameResult = "finalzer_lib";
     this->pCompilerInterface->igcLibraryNameOverride = "";
 
     auto ret = this->pCompilerInterface->createFinalizerTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);

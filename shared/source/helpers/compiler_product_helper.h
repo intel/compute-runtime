@@ -69,16 +69,14 @@ class CompilerProductHelper {
     virtual uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getDefaultHwIpVersion() const = 0;
     virtual uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const = 0;
-    virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) const = 0;
-    virtual StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const = 0;
+    std::string getDeviceExtensions(const HardwareInfo &hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) const;
+    StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(OclCVersion max) const;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
     virtual bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const = 0;
-    virtual void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const = 0;
-    virtual void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const = 0;
-    virtual bool isForceBindlessRequired(const HardwareInfo &hwInfo) const = 0;
-    virtual BuiltIn::AddressingMode getDefaultBuiltInAddressingMode(bool bindlessImages) const = 0;
+    void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const;
+    void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const;
+    BuiltIn::AddressingMode getDefaultBuiltInAddressingMode(bool bindlessImages) const;
     virtual const char *getCustomIgcLibraryName() const = 0;
-    virtual const char *getFinalizerLibraryName() const = 0;
     virtual bool useIgcAsFcl() const = 0;
     virtual IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const = 0;
 
@@ -112,16 +110,9 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const override;
     uint32_t getDefaultHwIpVersion() const override;
     uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const override;
-    std::string getDeviceExtensions(const HardwareInfo &hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) const override;
-    StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
     bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override;
-    void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const override;
-    void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const override;
-    bool isForceBindlessRequired(const HardwareInfo &hwInfo) const override;
-    BuiltIn::AddressingMode getDefaultBuiltInAddressingMode(bool bindlessImages) const override;
     const char *getCustomIgcLibraryName() const override;
-    const char *getFinalizerLibraryName() const override;
     bool useIgcAsFcl() const override;
     IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const override;
 

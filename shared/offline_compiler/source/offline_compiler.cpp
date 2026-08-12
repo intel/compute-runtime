@@ -190,7 +190,7 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCVersions(ConstStringRef 
         return {};
     }
 
-    auto deviceOpenCLCVersions = compiler->compilerProductHelper->getDeviceOpenCLCVersions(compiler->getHardwareInfo(), {});
+    auto deviceOpenCLCVersions = compiler->compilerProductHelper->getDeviceOpenCLCVersions({});
     NameVersionPair openClCVersion{"OpenCL C", 0};
 
     std::vector<NameVersionPair> allSupportedVersions;
@@ -1546,7 +1546,7 @@ void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
 }
 
 int OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
-    if (addressingMode == "bindful" && compilerProductHelper->isForceBindlessRequired(hwInfo)) {
+    if (addressingMode == "bindful" && compilerProductHelper->isHeaplessModeEnabled(hwInfo)) {
         argHelper->printf("Error: bindful addressing mode is not supported on this device (heapless platform). Use bindless or default mode.\n");
         return OCLOC_INVALID_COMMAND_LINE;
     }
@@ -1558,7 +1558,7 @@ int OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     }
     if ((!compilerReleaseHelper->isBindlessAddressingDisabled() && addressingMode != "bindful") ||
         addressingMode == "bindless" ||
-        compilerProductHelper->isForceBindlessRequired(hwInfo)) {
+        compilerProductHelper->isHeaplessModeEnabled(hwInfo)) {
         if (internalOptions.find("-cl-intel-use-bindless") == std::string::npos) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
         }

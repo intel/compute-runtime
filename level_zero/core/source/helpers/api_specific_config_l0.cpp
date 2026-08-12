@@ -31,7 +31,7 @@ bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper &
 }
 
 bool ApiSpecificConfig::getBindlessMode(const Device &device) {
-    if (device.getCompilerProductHelper().isForceBindlessRequired(device.getHardwareInfo())) {
+    if (device.getCompilerProductHelper().isHeaplessModeEnabled(device.getHardwareInfo())) {
         return true;
     }
 
