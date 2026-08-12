@@ -81,6 +81,17 @@ TEST_F(BufferDestructorTest, givenBufferWithCpuAllocationAndSvmWhenDestroyedThen
     EXPECT_EQ(&dummyCpuStorage, freeMem.ptr);
 }
 
+TEST_F(BufferDestructorTest, givenBufferWithCpuPtrAliasingUsmPtrWhenDestroyedThenZeMemFreeExtIsCalledOnce) {
+    void *usmPtr = &dummyStorage;
+    auto buffer = createBuffer(usmPtr, false, usmPtr);
+    buffer->setUsesSvm(false);
+
+    delete buffer;
+
+    ASSERT_EQ(1u, capturingContext->freeMemExtArgs.count());
+    EXPECT_EQ(usmPtr, capturingContext->freeMemExtArgs[0].ptr);
+}
+
 TEST_F(BufferDestructorTest, givenBufferWithSvmWhenDestroyedThenZeMemFreeExtIsNotCalled) {
     void *usmPtr = &dummyStorage;
     auto buffer = createBuffer(usmPtr);
