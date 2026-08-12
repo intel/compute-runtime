@@ -25,7 +25,6 @@ namespace ult {
 
 class MockGraphDotExporter : public GraphDotExporter {
   public:
-    using GraphDotExporter::collectVisibleCommands;
     using GraphDotExporter::exportToString;
     using GraphDotExporter::findSubgraphIndex;
     using GraphDotExporter::findSubgraphIndexByCommandList;
@@ -53,8 +52,7 @@ struct GraphDotExporterFixture : public DeviceFixture {
 
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraphDotExporter exporter{GraphExportStyle::detailed, GraphExportEventNodes::hideInternal};
-    MockGraphDotExporter exporterWithEventNodes{GraphExportStyle::detailed, GraphExportEventNodes::show};
+    MockGraphDotExporter exporter{GraphExportStyle::detailed};
     const std::string testFilePath = "test_graph_export.gv";
 };
 
@@ -91,8 +89,8 @@ struct GraphDotExporterFileFixture : public GraphDotExporterFixture {
         }
     }
 
-    void setupSuccessfulWrite(Graph &testGraph, GraphExportStyle style, GraphExportEventNodes eventNodes) {
-        MockGraphDotExporter styledExporter(style, eventNodes);
+    void setupSuccessfulWrite(Graph &testGraph, GraphExportStyle style) {
+        MockGraphDotExporter styledExporter(style);
         setupSuccessfulWrite(testGraph, styledExporter);
     }
 
@@ -135,7 +133,7 @@ struct GraphDotExporterSimpleStyleFixture : public DeviceFixture {
 
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraphDotExporter exporter{GraphExportStyle::simple, GraphExportEventNodes::hideInternal};
+    MockGraphDotExporter exporter{GraphExportStyle::simple};
 };
 
 using GraphDotExporterTest = Test<GraphDotExporterFixture>;

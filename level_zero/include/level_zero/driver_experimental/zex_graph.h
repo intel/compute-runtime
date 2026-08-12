@@ -43,11 +43,9 @@ typedef struct _ze_graph_handle_t *ze_graph_handle_t;
 typedef struct _ze_executable_graph_handle_t *ze_executable_graph_handle_t;
 
 typedef enum _ze_record_replay_graph_exp_dump_mode_t {
-    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED = 0x0,                  ///< detailed mode, internal dependency-tracking event operations are not dumped (default)
-    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE = 0x1,                    ///< simple mode, internal dependency-tracking event operations are not dumped
-    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED_WITH_EVENT_NODES = 0x2, ///< detailed mode with all event operations dumped as graph nodes
-    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE_WITH_EVENT_NODES = 0x3,   ///< simple mode with all event operations dumped as graph nodes
-    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_FORCE_UINT32 = 0x7fffffff,       ///< Value marking end of ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_* ENUMs
+    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED = 0x0,            ///< detailed mode (default)
+    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE = 0x1,              ///< simple mode
+    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_FORCE_UINT32 = 0x7fffffff, ///< Value marking end of ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_* ENUMs
 } ze_record_replay_graph_exp_dump_mode_t;
 
 typedef struct _ze_record_replay_graph_exp_dump_desc_t {
