@@ -25,6 +25,18 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
 
 using WddmTests = WddmTestWithMockGdiDll;
 
+TEST_F(WddmTests, givenNonZeroRenderBlockIdAndOverrideHwIpVersionWhenPopulatingIpVersionThenOverrideIsUsed) {
+    DebugManagerStateRestore restorer;
+    constexpr int32_t overrideHwIpVersion = 0x12345678;
+    debugManager.flags.OverrideHwIpVersion.set(overrideHwIpVersion);
+    wddm->gfxPlatform->sRenderBlockID.Value = 0x01020304;
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    wddm->populateIpVersion(hwInfo);
+
+    EXPECT_EQ(static_cast<uint32_t>(overrideHwIpVersion), hwInfo.ipVersion.value);
+}
+
 TEST_F(WddmTests, whenCreatingAllocation64kThenDoNotCreateResource) {
     init();
 

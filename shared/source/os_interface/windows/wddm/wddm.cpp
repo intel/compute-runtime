@@ -1457,6 +1457,11 @@ PhysicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
 }
 
 void Wddm::populateIpVersion(HardwareInfo &hwInfo) {
+    if (debugManager.flags.OverrideHwIpVersion.get() != -1) {
+        hwInfo.ipVersion.value = static_cast<uint32_t>(debugManager.flags.OverrideHwIpVersion.get());
+        return;
+    }
+
     hwInfo.ipVersion.value = gfxPlatform->sRenderBlockID.Value;
     if (hwInfo.ipVersion.value == 0) {
         auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
