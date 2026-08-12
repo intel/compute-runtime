@@ -12,8 +12,7 @@
 /* OpenCL API entries queried by LEO forwarding */
       clGetExtensionFunctionAddress;
       clIcdGetPlatformIDsKHR;
-      clGetPlatformInfo;
-      clGetDeviceIDs;       
+      clGetPlatformInfo;     
       clEnqueueMarkerWithSyncObjectINTEL;
       clGetCLObjectInfoINTEL;
       clGetCLEventInfoINTEL;

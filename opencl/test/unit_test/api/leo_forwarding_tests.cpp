@@ -14,6 +14,8 @@
 
 #include "opencl/source/api/leo_forwarding.h"
 
+#include <cstring>
+
 namespace NEO {
 
 static void resetL0Library() {
@@ -83,16 +85,25 @@ static cl_int CL_API_CALL mockClGetPlatformInfo(cl_platform_id platform, cl_plat
     return CL_SUCCESS;
 }
 
-static cl_int CL_API_CALL mockClGetDeviceIDs(cl_platform_id platform, cl_device_type deviceType,
-                                             cl_uint numEntries, cl_device_id *devices, cl_uint *numDevices) {
-    if (numDevices) {
-        *numDevices = 7u;
+static void *CL_API_CALL mockClGetExtensionFunctionAddress(const char *funcName) {
+    if (0 == strcmp(funcName, "clIcdGetPlatformIDsKHR")) {
+        return reinterpret_cast<void *>(mockClGetPlatformIDs);
     }
-    return CL_SUCCESS;
+    return reinterpret_cast<void *>(0x123);
 }
 
-static void *CL_API_CALL mockClGetExtensionFunctionAddress(const char *funcName) {
-    return reinterpret_cast<void *>(0x123);
+static void *CL_API_CALL mockClGetExtensionFunctionAddressIcdOnly(const char *funcName) {
+    if (0 == strcmp(funcName, "clIcdGetPlatformIDsKHR")) {
+        return reinterpret_cast<void *>(mockClGetPlatformIDs);
+    }
+    return nullptr;
+}
+
+static void *CL_API_CALL mockClGetExtensionFunctionAddressNoPlatforms(const char *funcName) {
+    if (0 == strcmp(funcName, "clIcdGetPlatformIDsKHR")) {
+        return reinterpret_cast<void *>(mockClGetPlatformIDsNoPlatforms);
+    }
+    return nullptr;
 }
 
 static cl_int CL_API_CALL mockClEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue, cl_event *event, cl_context *context) {
@@ -139,9 +150,6 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLoadingLibraryFailsThenForwardFuncti
     retVal = forwardClGetPlatformInfo(nullptr, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
 
-    retVal = forwardClGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_DEVICE_NOT_FOUND, retVal);
-
     auto funcAddr = forwardClGetExtensionFunctionAddress("someName");
     EXPECT_EQ(nullptr, funcAddr);
 
@@ -165,9 +173,7 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLoadingLibrarySucceedsThenForwardFun
     VariableBackup<bool> selfLoadBackup{&ultHwConfig.leoForwardingSelfLoad, false};
 
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
-    mockLibrary->procMap["clIcdGetPlatformIDsKHR"] = reinterpret_cast<void *>(mockClGetPlatformIDs);
     mockLibrary->procMap["clGetPlatformInfo"] = reinterpret_cast<void *>(mockClGetPlatformInfo);
-    mockLibrary->procMap["clGetDeviceIDs"] = reinterpret_cast<void *>(mockClGetDeviceIDs);
     mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockClGetExtensionFunctionAddress);
     mockLibrary->procMap["clEnqueueMarkerWithSyncObjectINTEL"] = reinterpret_cast<void *>(mockClEnqueueMarkerWithSyncObjectINTEL);
     mockLibrary->procMap["clGetCLObjectInfoINTEL"] = reinterpret_cast<void *>(mockClGetCLObjectInfoINTEL);
@@ -187,11 +193,6 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLoadingLibrarySucceedsThenForwardFun
 
     retVal = forwardClGetPlatformInfo(nullptr, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    cl_uint numDevices = 0u;
-    retVal = forwardClGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(7u, numDevices);
 
     auto funcAddr = forwardClGetExtensionFunctionAddress("someName");
     EXPECT_EQ(reinterpret_cast<void *>(0x123), funcAddr);
@@ -216,7 +217,7 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLibraryLoadedButNotAllSymbolsResolve
     VariableBackup<bool> selfLoadBackup{&ultHwConfig.leoForwardingSelfLoad, false};
 
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
-    mockLibrary->procMap["clIcdGetPlatformIDsKHR"] = reinterpret_cast<void *>(mockClGetPlatformIDs);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockClGetExtensionFunctionAddressIcdOnly);
 
     auto savedLoadFunc = OsLibrary::loadFunc;
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
@@ -231,9 +232,6 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLibraryLoadedButNotAllSymbolsResolve
 
     retVal = forwardClGetPlatformInfo(nullptr, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
-
-    retVal = forwardClGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_DEVICE_NOT_FOUND, retVal);
 
     auto funcAddr = forwardClGetExtensionFunctionAddress("someName");
     EXPECT_EQ(nullptr, funcAddr);
@@ -263,7 +261,7 @@ TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenForwardingNotYetActivatedThenIsLEO
 TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenActivateLeoForwardingIsCalledThenIsLEOEnabledReturnsTrueAndLibraryIsLoaded) {
     VariableBackup<bool> selfLoadBackup{&ultHwConfig.leoForwardingSelfLoad, false};
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
-    mockLibrary->procMap["clIcdGetPlatformIDsKHR"] = reinterpret_cast<void *>(mockClGetPlatformIDs);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockClGetExtensionFunctionAddressIcdOnly);
 
     auto savedLoadFunc = OsLibrary::loadFunc;
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
@@ -294,7 +292,7 @@ TEST_F(L0LibraryLoadTest, givenFlagZeroWhenActivateLeoForwardingIsCalledThenIsLE
 
 TEST_F(L0LibraryLoadTest, givenActivatedForwardingWhenLeoIsResetThenForwardingIsDisabledAgain) {
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
-    mockLibrary->procMap["clIcdGetPlatformIDsKHR"] = reinterpret_cast<void *>(mockClGetPlatformIDs);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockClGetExtensionFunctionAddressIcdOnly);
 
     auto savedLoadFunc = OsLibrary::loadFunc;
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
@@ -325,7 +323,7 @@ TEST_F(L0LibraryLoadTest, givenFlag1WhenLibraryReturnsNoPlatformsThenIsLEOEnable
     VariableBackup<bool> selfLoadBackup{&ultHwConfig.leoForwardingSelfLoad, false};
 
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
-    mockLibrary->procMap["clIcdGetPlatformIDsKHR"] = reinterpret_cast<void *>(mockClGetPlatformIDsNoPlatforms);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockClGetExtensionFunctionAddressNoPlatforms);
 
     auto savedLoadFunc = OsLibrary::loadFunc;
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
@@ -333,6 +331,10 @@ TEST_F(L0LibraryLoadTest, givenFlag1WhenLibraryReturnsNoPlatformsThenIsLEOEnable
 
     EXPECT_TRUE(isLEOEnabled());
     EXPECT_NE(nullptr, l0ForwardingState->library.get());
+
+    cl_uint numPlatforms = 5u;
+    EXPECT_EQ(CL_SUCCESS, forwardClGetPlatformIDs(0, nullptr, &numPlatforms));
+    EXPECT_EQ(0u, numPlatforms);
 
     OsLibrary::loadFunc = savedLoadFunc;
 }
@@ -364,7 +366,7 @@ TEST_F(L0LibraryLoadTest, givenSelfLoadWhenLibraryIsLoadedThenForwardFunctionsAr
     VariableBackup<bool> selfLoadBackup{&ultHwConfig.leoForwardingSelfLoad, true};
 
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
-    mockLibrary->procMap["clIcdGetPlatformIDsKHR"] = reinterpret_cast<void *>(mockClGetPlatformIDs);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockClGetExtensionFunctionAddressIcdOnly);
     mockLibrary->procMap["clGetPlatformInfo"] = reinterpret_cast<void *>(mockClGetPlatformInfo);
 
     auto savedLoadFunc = OsLibrary::loadFunc;

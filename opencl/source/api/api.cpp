@@ -216,9 +216,6 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                                   cl_uint numEntries,
                                   cl_device_id *devices,
                                   cl_uint *numDevices) {
-    if (isLEOEnabled()) {
-        return forwardClGetDeviceIDs(platform, deviceType, numEntries, devices, numDevices);
-    }
     TRACING_ENTER(ClGetDeviceIDs, &platform, &deviceType, &numEntries, &devices, &numDevices);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -258,10 +255,6 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         } else {
             cl_uint numPlatforms = 0u;
             retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
-            if (isLEOEnabled()) {
-                retVal = forwardClGetDeviceIDs(platform, deviceType, numEntries, devices, numDevices);
-                break;
-            }
             if (numPlatforms == 0u) {
                 retVal = CL_DEVICE_NOT_FOUND;
                 break;

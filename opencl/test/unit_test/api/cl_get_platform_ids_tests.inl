@@ -23,6 +23,8 @@
 
 #include "cl_api_tests.h"
 
+#include <cstring>
+
 using namespace NEO;
 
 using ClGetPlatformIDsTests = ApiTests;
@@ -403,6 +405,13 @@ static cl_int CL_API_CALL mockLeoClGetPlatformIDs(cl_uint numEntries, cl_platfor
     return CL_SUCCESS;
 }
 
+static void *CL_API_CALL mockLeoClGetExtensionFunctionAddress(const char *funcName) {
+    if (0 == strcmp(funcName, "clIcdGetPlatformIDsKHR")) {
+        return reinterpret_cast<void *>(mockLeoClGetPlatformIDs);
+    }
+    return nullptr;
+}
+
 struct MockProductHelperLeoSupported : MockProductHelper {
     MockProductHelperLeoSupported() {
         isLEOSupportedResult = true;
@@ -424,7 +433,7 @@ TEST(clGetPlatformIDsLeoTest, givenAutoEnableLeoWhenProductSupportsLeoThenClGetP
     RAIIProductHelperFactory<MockProductHelperLeoSupported> raiiProductHelper{*mockExecutionEnvironment.rootDeviceEnvironments[0]};
 
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
-    mockLibrary->procMap["clIcdGetPlatformIDsKHR"] = reinterpret_cast<void *>(mockLeoClGetPlatformIDs);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockLeoClGetExtensionFunctionAddress);
     auto savedLoadFunc = OsLibrary::loadFunc;
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
     OsLibrary::loadFunc = MockOsLibrary::load;
@@ -453,7 +462,7 @@ TEST(clGetPlatformIDsLeoTest, givenLeoForcedOnThenClGetPlatformIDsForwardsToLeve
     leoSetup();
 
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
-    mockLibrary->procMap["clIcdGetPlatformIDsKHR"] = reinterpret_cast<void *>(mockLeoClGetPlatformIDs);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockLeoClGetExtensionFunctionAddress);
     auto savedLoadFunc = OsLibrary::loadFunc;
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
     OsLibrary::loadFunc = MockOsLibrary::load;
