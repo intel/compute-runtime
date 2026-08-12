@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,7 +128,6 @@ TEST_F(SysmanEventsFixture, GivenValidSysmanHandleWhenEventsAreClearedThenDevice
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     zes_event_type_flags_t events = 0;
@@ -169,7 +168,6 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsFailureWhenlisteningForRes
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
@@ -213,7 +211,6 @@ TEST_F(SysmanEventsFixture, GivenPipeSystemCallReturnsFailureWhenlisteningForRes
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -261,7 +258,6 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsOnAllFdsWhenlisteningForRe
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -311,7 +307,6 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsOnPipeFdWhenlisteningForRe
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -342,7 +337,6 @@ TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundWhenListeningForEventsThenEventL
 
     auto pLinuxEventsImp = new PublicLinuxEventsUtil();
     auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
-    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
     pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
@@ -379,12 +373,10 @@ TEST_F(SysmanEventsFixture, GivenNoEventsAreRegisteredWhenListeningForEventsThen
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     auto pLinuxEventsImp = new PublicLinuxEventsUtil();
     auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
-    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
     pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), 0));
@@ -480,7 +472,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -524,7 +515,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     zes_device_handle_t *phDevices = new zes_device_handle_t[2];
@@ -565,7 +555,6 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleAndListeningEventsWhenNullEven
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
@@ -611,7 +600,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -659,7 +647,6 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -686,7 +673,6 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenEventRegisterIsCalledThenS
 
     auto pLinuxEventsImp = new PublicLinuxEventsUtil();
     auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
-    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
     pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
 
     pLinuxEventsImp->pipeFd[0] = mockReadPipeFd;
@@ -705,7 +691,6 @@ TEST_F(SysmanEventsFixture, GivenEventsAreRegisteredWhenEventRegisterWithNoEvent
 
     auto pLinuxEventsImp = new PublicLinuxEventsUtil();
     auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
-    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
     pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
 
     pLinuxEventsImp->pipeFd[0] = mockReadPipeFd;
@@ -750,7 +735,6 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForFabricHealthEv
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -801,7 +785,6 @@ TEST_F(SysmanEventsFixture, GivenImproperDevPathForUeventWhenListeningForFabricH
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -851,7 +834,6 @@ TEST_F(SysmanEventsFixture, GivenInvalidEventTypeWhenListeningForFabricHealthEve
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -902,7 +884,6 @@ TEST_F(SysmanEventsFixture, GivenRealPathSystemCallFailsWhenListeningForFabricHe
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -953,7 +934,6 @@ TEST_F(SysmanEventsFixture, GivenRealPathSystemCallReturnsInvalidDeviceWhenListe
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1003,7 +983,6 @@ TEST_F(SysmanEventsFixture, GivenEventPropertyForTypeKeyIsNullPtrWhenListeningFo
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1053,7 +1032,6 @@ TEST_F(SysmanEventsFixture, GivenEventPropertyForTypeKeyInvalidWhenListeningForF
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1079,7 +1057,6 @@ TEST_F(SysmanEventsFixture, GivenEventsAreRegisteredWhenEventRegisterIsCalledAga
 
     auto pLinuxEventsImp = new PublicLinuxEventsUtil();
     auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
-    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
     pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
 
     pLinuxEventsImp->pipeFd[0] = mockReadPipeFd;
@@ -1105,7 +1082,6 @@ TEST_F(SysmanEventsFixture, GivenWriteSystemCallReturnsFailureWhenEventRegisterI
 
     auto pLinuxEventsImp = new PublicLinuxEventsUtil();
     auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
-    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
     pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
 
     pLinuxEventsImp->pipeFd[0] = mockReadPipeFd;
@@ -1148,7 +1124,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1198,7 +1173,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1248,7 +1222,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1330,7 +1303,6 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1376,7 +1348,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1420,7 +1391,6 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1466,7 +1436,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1510,7 +1479,6 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1554,7 +1522,6 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEvent
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1600,7 +1567,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1645,7 +1611,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
@@ -1690,7 +1655,6 @@ TEST_F(SysmanEventsFixture,
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
