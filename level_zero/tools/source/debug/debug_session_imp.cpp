@@ -1813,7 +1813,7 @@ std::optional<SipRegisterPacker> SipRegisterPacker::create(const NEO::RegsetDesc
         .majorStart = start,
         .majorCount = count,
         .packedOffset = packedOffset.value(),
-        .unpackedIndices = unpackedIndices,
+        .unpackedIndices = std::move(unpackedIndices),
     };
 }
 
