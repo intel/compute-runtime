@@ -14,6 +14,8 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 namespace L0 {
 
@@ -24,13 +26,21 @@ enum class GraphExportStyle : std::uint8_t {
     simple
 };
 
+enum class GraphExportEventNodes : std::uint8_t {
+    hideInternal, // event operations used only for tracking dependencies between graph nodes are not dumped
+    show          // all captured event operations are dumped as graph nodes
+};
+
 class GraphDotExporter {
   public:
-    explicit GraphDotExporter(GraphExportStyle style) : exportStyle(style) {}
+    GraphDotExporter(GraphExportStyle style, GraphExportEventNodes eventNodes)
+        : exportStyle(style), exportEventNodes(eventNodes) {}
 
     ze_result_t exportToFile(const Graph &graph, const char *filePath) const;
 
   protected:
+    using InternalCommandsSet = std::unordered_set<CapturedCommandId>;
+
     std::string exportToString(const Graph &graph) const;
 
     void writeHeader(std::ostringstream &dot) const;
@@ -44,6 +54,11 @@ class GraphDotExporter {
     std::optional<uint32_t> findSubgraphIndex(std::span<Graph *const> subGraphs, const Graph *targetGraph) const;
     std::optional<uint32_t> findSubgraphIndexByCommandList(std::span<Graph *const> subGraphs, const L0::CommandList *cmdList) const;
 
+    InternalCommandsSet collectInternalDependencyCommands(const Graph &graph) const;
+    std::vector<CapturedCommandId> collectVisibleCommands(const Graph &graph) const;
+    static std::optional<CapturedCommandId> findVisibleCommandAtOrBefore(std::span<const CapturedCommandId> visibleCommands, CapturedCommandId cmdId);
+    static std::optional<CapturedCommandId> findVisibleCommandAtOrAfter(std::span<const CapturedCommandId> visibleCommands, CapturedCommandId cmdId);
+
     std::string getCommandNodeLabel(const Graph &graph, CapturedCommandId cmdId, const std::string_view indent) const;
     std::string getCommandNodeAttributes(const Graph &graph, CapturedCommandId cmdId) const;
     std::string generateNodeId(uint32_t level, uint32_t subgraphId, CapturedCommandId cmdId) const;
@@ -52,6 +67,7 @@ class GraphDotExporter {
 
   private:
     GraphExportStyle exportStyle;
+    GraphExportEventNodes exportEventNodes;
 };
 
 std::string getGraphDumpDefaultFileName(const Graph &graph, const ExecutableGraph &executableGraph);
