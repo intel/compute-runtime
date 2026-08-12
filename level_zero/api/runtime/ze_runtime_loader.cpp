@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include <level_zero/zer_api.h>
 #include <level_zero/zer_ddi.h>
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zerGetGlobalProcAddrTable(
     ze_api_version_t version,
     zer_global_dditable_t *pDdiTable) {

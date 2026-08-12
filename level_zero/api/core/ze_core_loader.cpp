@@ -11,7 +11,7 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetDriverProcAddrTable(
     ze_api_version_t version,
     ze_driver_dditable_t *pDdiTable) {
@@ -129,7 +129,7 @@ zeGetVirtualMemProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetGlobalProcAddrTable(
     ze_api_version_t version,
     ze_global_dditable_t *pDdiTable) {
@@ -146,7 +146,7 @@ zeGetGlobalProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetDeviceProcAddrTable(
     ze_api_version_t version,
     ze_device_dditable_t *pDdiTable) {
@@ -189,7 +189,7 @@ zeGetDeviceProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetDeviceExpProcAddrTable(
     ze_api_version_t version,
     ze_device_exp_dditable_t *pDdiTable) {
@@ -205,7 +205,7 @@ zeGetDeviceExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetCommandQueueProcAddrTable(
     ze_api_version_t version,
     ze_command_queue_dditable_t *pDdiTable) {
@@ -230,7 +230,7 @@ zeGetCommandQueueProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetCommandListProcAddrTable(
     ze_api_version_t version,
     ze_command_list_dditable_t *pDdiTable) {
@@ -297,7 +297,7 @@ zeGetCommandListProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetCommandListExpProcAddrTable(
     ze_api_version_t version,
     ze_command_list_exp_dditable_t *pDdiTable) {
@@ -321,7 +321,7 @@ zeGetCommandListExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetGraphProcAddrTable(
     ze_api_version_t version,
     ze_graph_dditable_t *pDdiTable) {
@@ -343,7 +343,7 @@ zeGetGraphProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetExecutableGraphProcAddrTable(
     ze_api_version_t version,
     ze_executable_graph_dditable_t *pDdiTable) {
@@ -360,7 +360,7 @@ zeGetExecutableGraphProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetFenceProcAddrTable(
     ze_api_version_t version,
     ze_fence_dditable_t *pDdiTable) {
@@ -380,7 +380,7 @@ zeGetFenceProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetEventPoolProcAddrTable(
     ze_api_version_t version,
     ze_event_pool_dditable_t *pDdiTable) {
@@ -403,7 +403,7 @@ zeGetEventPoolProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetEventProcAddrTable(
     ze_api_version_t version,
     ze_event_dditable_t *pDdiTable) {
@@ -435,7 +435,7 @@ zeGetEventProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetEventExpProcAddrTable(
     ze_api_version_t version,
     ze_event_exp_dditable_t *pDdiTable) {
@@ -452,7 +452,7 @@ zeGetEventExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetImageProcAddrTable(
     ze_api_version_t version,
     ze_image_dditable_t *pDdiTable) {
@@ -472,7 +472,7 @@ zeGetImageProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetModuleProcAddrTable(
     ze_api_version_t version,
     ze_module_dditable_t *pDdiTable) {
@@ -496,7 +496,7 @@ zeGetModuleProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetModuleBuildLogProcAddrTable(
     ze_api_version_t version,
     ze_module_build_log_dditable_t *pDdiTable) {
@@ -513,7 +513,7 @@ zeGetModuleBuildLogProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetKernelProcAddrTable(
     ze_api_version_t version,
     ze_kernel_dditable_t *pDdiTable) {
@@ -540,7 +540,7 @@ zeGetKernelProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetSamplerProcAddrTable(
     ze_api_version_t version,
     ze_sampler_dditable_t *pDdiTable) {
@@ -557,7 +557,7 @@ zeGetSamplerProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetKernelExpProcAddrTable(
     ze_api_version_t version,
     ze_kernel_exp_dditable_t *pDdiTable) {
@@ -595,7 +595,7 @@ zeGetMemExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetImageExpProcAddrTable(
     ze_api_version_t version,
     ze_image_exp_dditable_t *pDdiTable) {
@@ -613,7 +613,7 @@ zeGetImageExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetFabricVertexExpProcAddrTable(
     ze_api_version_t version,
     ze_fabric_vertex_exp_dditable_t *pDdiTable) {
@@ -633,7 +633,7 @@ zeGetFabricVertexExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetFabricEdgeExpProcAddrTable(
     ze_api_version_t version,
     ze_fabric_edge_exp_dditable_t *pDdiTable) {
@@ -652,7 +652,7 @@ zeGetFabricEdgeExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetDriverExpProcAddrTable(
     ze_api_version_t version,
     ze_driver_exp_dditable_t *pDdiTable) {
@@ -669,7 +669,7 @@ zeGetDriverExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetRTASParallelOperationExpProcAddrTable(
     ze_api_version_t version,
     ze_rtas_parallel_operation_exp_dditable_t *pDdiTable) {
@@ -689,7 +689,7 @@ zeGetRTASParallelOperationExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetRTASBuilderExpProcAddrTable(
     ze_api_version_t version,
     ze_rtas_builder_exp_dditable_t *pDdiTable) {
@@ -709,7 +709,7 @@ zeGetRTASBuilderExpProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetRTASBuilderProcAddrTable(
     ze_api_version_t version,
     ze_rtas_builder_dditable_t *pDdiTable) {
@@ -730,7 +730,7 @@ zeGetRTASBuilderProcAddrTable(
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetRTASParallelOperationProcAddrTable(
     ze_api_version_t version,
     ze_rtas_parallel_operation_dditable_t *pDdiTable) {
