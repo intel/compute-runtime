@@ -920,4 +920,37 @@ VisitApi &loadVisitApi(ze_driver_handle_t driver) {
 }
 } // namespace VisitExtension
 
+TestDuration::TestDuration(int argc, char *argv[]) : TestDuration(static_cast<TestDuration::Units>(getParamValue(argc, argv, "", "--time_units", static_cast<uint32_t>(TestDuration::seconds)))) {
+    if (units >= Units::max) {
+        std::cerr << "Invalid time unit specified." << std::endl;
+        SUCCESS_OR_TERMINATE_BOOL(false);
+    }
+}
+
+TestDuration::TestDuration(Units units) : startTime(std::chrono::high_resolution_clock::now()),
+                                          units(units) {}
+TestDuration::~TestDuration() {
+    std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+    switch (units) {
+    case LevelZeroBlackBoxTests::TestDuration::seconds: {
+        std::chrono::seconds durationTimeSeconds = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime);
+        std::cout << "Test duration: " << durationTimeSeconds.count() << " [seconds]" << std::endl;
+        break;
+    }
+    case LevelZeroBlackBoxTests::TestDuration::milliseconds: {
+        std::chrono::milliseconds durationTimeMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        std::cout << "Test duration: " << durationTimeMilliseconds.count() << " [milliseconds]" << std::endl;
+        break;
+    }
+    case LevelZeroBlackBoxTests::TestDuration::microseconds: {
+        std::chrono::microseconds durationTimeMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+        std::cout << "Test duration: " << durationTimeMicroseconds.count() << " [microseconds]" << std::endl;
+        break;
+    }
+    default:
+        std::cerr << "Unknown time unit for test duration" << std::endl;
+        break;
+    }
+}
+
 } // namespace LevelZeroBlackBoxTests

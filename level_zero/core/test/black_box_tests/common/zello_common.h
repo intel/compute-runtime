@@ -15,6 +15,7 @@
 #include <level_zero/zer_api.h>
 
 #include <bitset>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -417,5 +418,22 @@ struct VisitApi {
 
 VisitApi &loadVisitApi(ze_driver_handle_t driver);
 } // namespace VisitExtension
+
+struct TestDuration {
+    enum Units {
+        seconds,
+        milliseconds,
+        microseconds,
+        max
+    };
+    TestDuration(int argc, char *argv[]);
+    TestDuration() : TestDuration(Units::seconds) {}
+    TestDuration(Units units);
+    ~TestDuration();
+
+  private:
+    std::chrono::high_resolution_clock::time_point startTime;
+    Units units;
+};
 
 } // namespace LevelZeroBlackBoxTests
