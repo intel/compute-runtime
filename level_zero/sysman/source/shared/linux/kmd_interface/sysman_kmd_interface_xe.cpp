@@ -381,8 +381,8 @@ std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubd
     return "xe";
 }
 
-std::string SysmanKmdInterfaceXe::getTemperatureMaxFileName() const {
-    return "temp2_max";
+std::string SysmanKmdInterfaceXe::getTemperatureEmergencyFileName() const {
+    return "temp2_emergency";
 }
 
 std::optional<std::string> SysmanKmdInterfaceXe::getEngineClassString(uint16_t engineClass) {

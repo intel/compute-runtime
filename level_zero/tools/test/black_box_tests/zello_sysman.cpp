@@ -596,6 +596,7 @@ void testSysmanTemperature(ze_device_handle_t &device) {
         if (verbose) {
             std::cout << "For subDevice " << properties.subdeviceId << " temperature current state for "
                       << getTemperatureSensorType(properties.type) << " is: " << temperature << std::endl;
+            std::cout << "maxTemperature = " << properties.maxTemperature << std::endl;
         }
     }
 }

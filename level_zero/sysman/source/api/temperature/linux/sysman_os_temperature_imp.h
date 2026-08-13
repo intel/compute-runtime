@@ -50,8 +50,8 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     SysFsAccessInterface *pSysfsAccess = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
     std::string intelGraphicsHwmonDir = {};
-    std::string maxTemperatureFile = {};
-    bool maxTemperatureFileExists = false;
+    std::string temperatureEmergencyFile = {};
+    bool temperatureEmergencyFileExists = false;
 };
 
 } // namespace Sysman

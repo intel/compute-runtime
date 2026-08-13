@@ -303,7 +303,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonTemp2MaxFileWhenGettingPropertiesThenMaxTemperatureIsReadFromSysfs) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonTemp2EmergencyFileWhenGettingPropertiesThenMaxTemperatureIsReadFromSysfs) {
     setUpHwmonKmdInterfaceXe();
 
     PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
@@ -314,7 +314,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonTemp2MaxFileWhenGettingProperti
     EXPECT_EQ(ZES_TEMP_SENSORS_GPU, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
     EXPECT_EQ(0u, properties.subdeviceId);
-    EXPECT_DOUBLE_EQ(65.0, properties.maxTemperature);
+    EXPECT_DOUBLE_EQ(125.0, properties.maxTemperature);
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenSubdeviceHandleWhenGettingPropertiesThenSubdeviceMetadataAndMaxTemperatureAreReturned) {
@@ -328,7 +328,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenSubdeviceHandleWhenGettingProperties
     EXPECT_EQ(ZES_TEMP_SENSORS_MEMORY, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(1u, properties.subdeviceId);
-    EXPECT_DOUBLE_EQ(65.0, properties.maxTemperature);
+    EXPECT_DOUBLE_EQ(125.0, properties.maxTemperature);
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonScanFailureWhenGettingPropertiesThenDefaultMaxTemperatureIsReturned) {
@@ -358,9 +358,9 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonNameReadFailureAndNoMatchingHwm
     EXPECT_DOUBLE_EQ(defaultMaxTemperature, properties.maxTemperature);
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, GivenTemp2MaxNodeMissingWhenGettingPropertiesThenDefaultMaxTemperatureIsReturned) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenTemp2EmergencyNodeMissingWhenGettingPropertiesThenDefaultMaxTemperatureIsReturned) {
     setUpHwmonKmdInterfaceXe();
-    pSysfsAccess->temp2MaxExists = false;
+    pSysfsAccess->temp2EmergencyExists = false;
 
     PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
@@ -370,9 +370,9 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenTemp2MaxNodeMissingWhenGettingProper
     EXPECT_DOUBLE_EQ(defaultMaxTemperature, properties.maxTemperature);
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, GivenTemp2MaxReadFailureWhenGettingPropertiesThenDefaultMaxTemperatureIsReturned) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenTemp2EmergencyReadFailureWhenGettingPropertiesThenDefaultMaxTemperatureIsReturned) {
     setUpHwmonKmdInterfaceXe();
-    pSysfsAccess->temp2MaxReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pSysfsAccess->temp2EmergencyReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);

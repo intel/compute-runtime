@@ -208,7 +208,7 @@ std::string SysmanKmdInterfaceI915Prelim::getHwmonName(uint32_t subDeviceId, boo
     return getHwmonNameI915(subDeviceId, isSubdevice);
 }
 
-std::string SysmanKmdInterfaceI915Prelim::getTemperatureMaxFileName() const {
+std::string SysmanKmdInterfaceI915Prelim::getTemperatureEmergencyFileName() const {
     return "";
 }
 

@@ -77,7 +77,7 @@ const std::string telem6TelemFileName("/sys/class/intel_pmt/telem6/telem");
 const std::string mockTemperatureHwmonDir("device/hwmon");
 const std::string mockTemperatureHwmonNameFile0("device/hwmon/hwmon0/name");
 const std::string mockTemperatureHwmonNameFile1("device/hwmon/hwmon1/name");
-const std::string mockTemperatureHwmonTempFile0("device/hwmon/hwmon0/temp2_max");
+const std::string mockTemperatureHwmonTempFile0("device/hwmon/hwmon0/temp2_emergency");
 
 class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
   public:
@@ -85,11 +85,11 @@ class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     std::vector<std::string> directoryEntries = {"hwmon0"};
     ze_result_t hwmonNameReadResult0 = ZE_RESULT_SUCCESS;
     ze_result_t hwmonNameReadResult1 = ZE_RESULT_SUCCESS;
-    ze_result_t temp2MaxReadResult = ZE_RESULT_SUCCESS;
+    ze_result_t temp2EmergencyReadResult = ZE_RESULT_SUCCESS;
     std::string hwmonName0 = "xe";
     std::string hwmonName1 = "dummy";
-    int32_t temp2MaxValue = 65000;
-    bool temp2MaxExists = true;
+    int32_t temp2EmergencyValue = 125000;
+    bool temp2EmergencyExists = true;
 
     ze_result_t read(const std::string file, std::string &val) override {
         if (file == mockTemperatureHwmonNameFile0) {
@@ -109,10 +109,10 @@ class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t read(const std::string file, int32_t &val) override {
         if (file == mockTemperatureHwmonTempFile0) {
-            if (temp2MaxReadResult == ZE_RESULT_SUCCESS) {
-                val = temp2MaxValue;
+            if (temp2EmergencyReadResult == ZE_RESULT_SUCCESS) {
+                val = temp2EmergencyValue;
             }
-            return temp2MaxReadResult;
+            return temp2EmergencyReadResult;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -130,7 +130,7 @@ class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     bool fileExists(const std::string file) override {
         if (file == mockTemperatureHwmonTempFile0) {
-            return temp2MaxExists;
+            return temp2EmergencyExists;
         }
         return false;
     }

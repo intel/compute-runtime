@@ -38,14 +38,14 @@ ze_result_t LinuxTemperatureImp::getProperties(zes_temp_properties_t *pPropertie
 }
 
 ze_result_t LinuxTemperatureImp::getMaxTemperature(double &temperature) {
-    if (!maxTemperatureFileExists) {
+    if (!temperatureEmergencyFileExists) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     int32_t maxTemperature = 0;
-    auto result = pSysfsAccess->read(maxTemperatureFile, maxTemperature);
+    auto result = pSysfsAccess->read(temperatureEmergencyFile, maxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, maxTemperatureFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, temperatureEmergencyFile.c_str(), result);
         return result;
     }
 
@@ -139,14 +139,14 @@ bool LinuxTemperatureImp::isIntelGraphicsHwmonDir(const std::string &name) {
 
 void LinuxTemperatureImp::reInit() {
     intelGraphicsHwmonDir.clear();
-    maxTemperatureFile.clear();
-    maxTemperatureFileExists = false;
+    temperatureEmergencyFile.clear();
+    temperatureEmergencyFileExists = false;
     init();
 }
 
 void LinuxTemperatureImp::init() {
-    const auto maxTemperatureFileName = pSysmanKmdInterface->getTemperatureMaxFileName();
-    if (maxTemperatureFileName.empty()) {
+    const auto temperatureEmergencyFileName = pSysmanKmdInterface->getTemperatureEmergencyFileName();
+    if (temperatureEmergencyFileName.empty()) {
         return;
     }
     std::vector<std::string> listOfAllHwmonDirs = {};
@@ -171,8 +171,8 @@ void LinuxTemperatureImp::init() {
         return;
     }
 
-    maxTemperatureFile = intelGraphicsHwmonDir + "/" + maxTemperatureFileName;
-    maxTemperatureFileExists = pSysfsAccess->fileExists(maxTemperatureFile);
+    temperatureEmergencyFile = intelGraphicsHwmonDir + "/" + temperatureEmergencyFileName;
+    temperatureEmergencyFileExists = pSysfsAccess->fileExists(temperatureEmergencyFile);
 }
 
 void OsTemperature::getSupportedSensors(OsSysman *pOsSysman, std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) {

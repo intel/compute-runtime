@@ -140,9 +140,9 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGettingHwMonN
     EXPECT_STREQ("i915", pSysmanKmdInterface->getHwmonName(0, isSubdevice).c_str());
 }
 
-TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCallingGetTemperatureMaxFileNameThenEmptyPathIsReturned) {
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCallingGetTemperatureEmergencyFileNameThenEmptyPathIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    EXPECT_TRUE(pSysmanKmdInterface->getTemperatureMaxFileName().empty());
+    EXPECT_TRUE(pSysmanKmdInterface->getTemperatureEmergencyFileName().empty());
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGettingEngineBasePathThenCorrectPathIsReturned) {
