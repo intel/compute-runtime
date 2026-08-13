@@ -1054,10 +1054,6 @@ else()
 endif()
 
 set(DONT_LINK_ELF_STATICALLY TRUE)
-if(EXISTS ${NEO_SOURCE_DIR}/../internal)
-  add_subdirectory_unique(${NEO_SOURCE_DIR}/../internal ${NEO_BUILD_DIR}/internal)
-endif()
-
 set(NEO_SCRIPT_PROJECTS_FOLDER "neo scripts")
 
 configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
@@ -1072,5 +1068,9 @@ add_subdirectory_unique(target_unit_tests)
 add_subdirectory_unique(target_aub_tests)
 
 add_subdirectories()
+
+if(EXISTS ${NEO_SOURCE_DIR}/../internal)
+  add_subdirectory_unique(${NEO_SOURCE_DIR}/../internal ${NEO_BUILD_DIR}/internal)
+endif()
 
 include(package.cmake)
