@@ -4175,12 +4175,13 @@ CL_API_ENTRY cl_int CL_API_CALL clMemFreeCommon(cl_context context,
     }
 
     bool successfulFree = false;
+    const auto freePolicy = blocking ? NEO::FreePolicyType::blocking : NEO::FreePolicyType::none;
 
-    if (ptr && neoContext->getDeviceMemAllocPoolsManager().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+    if (ptr && neoContext->getDeviceMemAllocPoolsManager().freeSVMAlloc(const_cast<void *>(ptr), freePolicy)) {
         successfulFree = true;
     }
 
-    if (!successfulFree && ptr && neoContext->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+    if (!successfulFree && ptr && neoContext->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().freeSVMAlloc(const_cast<void *>(ptr), freePolicy)) {
         successfulFree = true;
     }
 

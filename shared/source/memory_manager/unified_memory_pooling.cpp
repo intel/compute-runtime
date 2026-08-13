@@ -71,6 +71,20 @@ size_t UsmMemAllocPool::getPoolSize() const {
 
 void UsmMemAllocPool::cleanup() {
     if (isInitialized()) {
+        {
+            std::unique_lock<std::mutex> lock(mtx);
+            this->drainDeferredFreeChunks();
+            if (false == this->deferredFreeChunks.empty()) {
+                // snapshots can bound work up to latestSentTaskCount, which is not stamped on
+                // the pool allocation, so raise it first or the wait would not cover them
+                this->svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
+                this->svmMemoryManager->waitForEnginesCompletion(allocationData);
+                this->drainDeferredFreeChunks();
+                // whole pool allocation is about to be released, so neither the chunk
+                // bookkeeping nor the residency those chunks still hold matters
+                this->deferredFreeChunks.clear();
+            }
+        }
         if (this->customCleanup) {
             this->customCleanup(this->pool);
         }
@@ -126,6 +140,13 @@ void *UsmMemAllocPool::createUnifiedMemoryAllocation(size_t requestedSize, const
     std::unique_lock<std::mutex> lock(mtx);
     auto actualSize = requestedSize;
     auto pooledAddress = this->chunkAllocator->allocateWithCustomAlignment(actualSize, memoryProperties.alignment);
+    if (!pooledAddress && false == this->deferredFreeChunks.empty()) {
+        // Chunks awaiting GPU completion are only reclaimed when their space is needed,
+        // to keep the completion polling off the successful allocation path.
+        this->drainDeferredFreeChunks();
+        actualSize = requestedSize;
+        pooledAddress = this->chunkAllocator->allocateWithCustomAlignment(actualSize, memoryProperties.alignment);
+    }
     if (!pooledAddress) {
         return nullptr;
     }
@@ -141,10 +162,11 @@ bool UsmMemAllocPool::isInPool(const void *ptr) const {
 }
 
 bool UsmMemAllocPool::isEmpty() const {
-    return 0u == this->allocations.getNumAllocs();
+    std::unique_lock<std::mutex> lock(mtx);
+    return 0u == this->allocations.getNumAllocs() && this->deferredFreeChunks.empty();
 }
 
-bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, bool blocking) {
+bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
     if (false == isInitialized() || false == isInPool(ptr)) {
         return false;
     }
@@ -154,26 +176,56 @@ bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, bool blocking) {
         return false;
     }
     DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
-    if (blocking) {
+    if (FreePolicyType::blocking == policy) {
+        svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
         svmMemoryManager->waitForEnginesCompletion(allocationData);
     }
-    this->chunkAllocator->free(allocationInfo->address, allocationInfo->size);
+    if (FreePolicyType::defer == policy) {
+        DeferredFreeInfo deferredFreeInfo{std::move(*allocationInfo), {}};
+        svmMemoryManager->captureEngineCompletionSnapshot(allocationData, deferredFreeInfo.snapshot);
+        this->deferredFreeChunks.push_back(std::move(deferredFreeInfo));
+    } else {
+        this->releaseChunk(*allocationInfo);
+    }
+    this->drainDeferredFreeChunks();
+    return true;
+}
+
+void UsmMemAllocPool::releaseChunk(const AllocationInfo &allocationInfo) {
+    this->chunkAllocator->free(allocationInfo.address, allocationInfo.size);
     if (trackResidency) {
         OPTIONAL_UNRECOVERABLE_IF(nullptr == device || nullptr == allocation);
-        for (const auto &[neoDevice, isResident] : allocationInfo->isResident) {
+        for (const auto &[neoDevice, isResident] : allocationInfo.isResident) {
             if (isResident && 1u == this->residencyCounts[neoDevice]--) {
                 evictPool(neoDevice);
             }
         }
     }
-    return true;
 }
 
-bool UsmMemAllocPool::freeIfOwned(UsmMemAllocPool *pool, const void *ptr, bool blocking) {
+void UsmMemAllocPool::reclaimDeferredFreeChunks() {
+    if (false == isInitialized()) {
+        return;
+    }
+    std::unique_lock<std::mutex> lock(mtx);
+    this->drainDeferredFreeChunks();
+}
+
+void UsmMemAllocPool::drainDeferredFreeChunks() {
+    std::erase_if(this->deferredFreeChunks, [this](const DeferredFreeInfo &deferredFreeInfo) {
+        if (false == isEngineCompletionSnapshotReady(deferredFreeInfo.snapshot)) {
+            return false;
+        }
+        this->releaseChunk(deferredFreeInfo.allocationInfo);
+        return true;
+    });
+}
+
+bool UsmMemAllocPool::freeIfOwned(UsmMemAllocPool *pool, const void *ptr, FreePolicyType policy) {
     if (nullptr == pool || false == pool->isInPool(ptr)) {
         return false;
     }
-    [[maybe_unused]] const auto freed = pool->freeSVMAlloc(ptr, blocking);
+    [[maybe_unused]] const auto freed = pool->freeSVMAlloc(ptr, policy);
     DEBUG_BREAK_IF(false == freed);
     return true;
 }
@@ -310,6 +362,12 @@ bool UsmMemAllocPoolsManager::canBePooled(size_t size, const UnifiedMemoryProper
 void UsmMemAllocPoolsManager::trimEmptyPools(PoolInfo poolInfo) {
     std::lock_guard lock(mtx);
     auto &bucket = pools[poolInfo];
+    // A pool holding chunks awaiting GPU completion never reports empty. Reclaim what
+    // retired since those chunks were freed, otherwise one stale chunk would keep the pool
+    // alive for good - allocations that fit do not drain, so nothing else revisits it.
+    for (auto &pool : bucket) {
+        pool->reclaimDeferredFreeChunks();
+    }
     auto firstEmptyPoolIt = std::partition(bucket.begin(), bucket.end(), [](std::unique_ptr<UsmMemAllocPool> &pool) {
         return !pool->isEmpty();
     });
@@ -323,10 +381,10 @@ void UsmMemAllocPoolsManager::trimEmptyPools(PoolInfo poolInfo) {
     }
 }
 
-bool UsmMemAllocPoolsManager::freeSVMAlloc(const void *ptr, bool blocking) {
+bool UsmMemAllocPoolsManager::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
     bool allocFreed = false;
     if (auto pool = this->getPoolContainingAlloc(ptr); pool) {
-        allocFreed = pool->freeSVMAlloc(ptr, blocking);
+        allocFreed = pool->freeSVMAlloc(ptr, policy);
         if (allocFreed && pool->isEmpty()) {
             trimEmptyPools(pool->getPoolInfo());
         }
@@ -451,11 +509,11 @@ void *UsmMemAllocPoolsFacade::createUnifiedMemoryAllocation(size_t size, const U
     return nullptr;
 }
 
-bool UsmMemAllocPoolsFacade::freeSVMAlloc(const void *ptr, bool blocking) {
+bool UsmMemAllocPoolsFacade::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
     if (this->poolManager) {
-        return this->poolManager->freeSVMAlloc(ptr, blocking);
+        return this->poolManager->freeSVMAlloc(ptr, policy);
     } else if (this->pool) {
-        return this->pool->freeSVMAlloc(ptr, blocking);
+        return this->pool->freeSVMAlloc(ptr, policy);
     }
     return false;
 }

@@ -1148,6 +1148,15 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
     return false;
 }
 
+void MemoryManager::captureEngineCompletionSnapshot(GraphicsAllocation &graphicsAllocation, EngineCompletionSnapshot &snapshot) {
+    for (auto &engine : getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
+        auto osContextId = engine.osContext->getContextId();
+        if (graphicsAllocation.isUsedByOsContext(osContextId)) {
+            snapshot.push_back({engine.commandStreamReceiver, graphicsAllocation.getTaskCount(osContextId)});
+        }
+    }
+}
+
 void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion) {
     for (auto &engineContainer : allRegisteredEngines) {
         for (auto &engine : engineContainer) {

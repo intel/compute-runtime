@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -250,6 +252,57 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
     EXPECT_EQ(nullptr, mockHostMemAllocPool->getPooledAllocationBasePtr(notAllocatedPoolPtr));
     result = context->freeMemExt(&memFreeDesc, notAllocatedPoolPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(AllocUsmHostEnabledMemoryTest, givenDeferFreePolicyWhenPooledChunkIsUsedByGpuThenChunkIsWithheldFromReuseWithoutBlocking) {
+    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(driverHandle->usmHostMemAllocPoolFacade.getPool());
+    ASSERT_NE(nullptr, mockHostMemAllocPool);
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, poolAllocationThreshold, 0u, &ptr));
+    ASSERT_TRUE(mockHostMemAllocPool->isPooledAllocation(ptr));
+
+    auto &csr = *l0Devices[0]->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    auto poolAllocation = driverHandle->svmAllocsManager->getSVMAlloc(mockHostMemAllocPool->pool)->gpuAllocations.getDefaultGraphicsAllocation();
+    poolAllocation->updateTaskCount(*csr.getTagAddress() + 1, csr.getOsContext().getContextId());
+
+    const auto waitCalledBeforeFree = mockMemoryManager->waitForEnginesCompletionCalled;
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, ptr));
+
+    EXPECT_EQ(waitCalledBeforeFree, mockMemoryManager->waitForEnginesCompletionCalled);
+    EXPECT_FALSE(mockHostMemAllocPool->isPooledAllocation(ptr));
+    EXPECT_EQ(1u, mockHostMemAllocPool->deferredFreeChunks.size());
+
+    // chunk is not allocated anymore, freeing it again is an error
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->freeMemExt(&memFreeDesc, ptr));
+
+    // the task count above is never signalled by any real submission, restore it so that
+    // pool cleanup in TearDown does not wait for work that will never complete
+    poolAllocation->updateTaskCount(*csr.getTagAddress(), csr.getOsContext().getContextId());
+}
+
+TEST_F(AllocUsmHostEnabledMemoryTest, givenBlockingFreePolicyWhenFreeingPooledChunkThenEnginesAreWaitedForAndChunkIsReturnedToPool) {
+    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(driverHandle->usmHostMemAllocPoolFacade.getPool());
+    ASSERT_NE(nullptr, mockHostMemAllocPool);
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, poolAllocationThreshold, 0u, &ptr));
+    ASSERT_TRUE(mockHostMemAllocPool->isPooledAllocation(ptr));
+
+    const auto expectedWaitCalled = mockMemoryManager->waitForEnginesCompletionCalled + 1;
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, ptr));
+
+    EXPECT_EQ(expectedWaitCalled, mockMemoryManager->waitForEnginesCompletionCalled);
+    EXPECT_FALSE(mockHostMemAllocPool->isPooledAllocation(ptr));
+    EXPECT_TRUE(mockHostMemAllocPool->deferredFreeChunks.empty());
 }
 
 TEST_F(AllocUsmHostEnabledMemoryTest, givenPooledAllocationWhenCallingGetMemAddressRangeThenCorrectValuesAreReturned) {

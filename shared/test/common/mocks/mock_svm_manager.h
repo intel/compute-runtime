@@ -64,6 +64,12 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
         SVMAllocsManager::trimUSMAllocCaches();
     }
     uint32_t trimUSMAllocCachesCalled = 0u;
+
+    void applyIndirectAccessTaskCountFloor(SvmAllocationData *allocationData) override {
+        applyIndirectAccessTaskCountFloorCalled++;
+        SVMAllocsManager::applyIndirectAccessTaskCountFloor(allocationData);
+    }
+    uint32_t applyIndirectAccessTaskCountFloorCalled = 0u;
 };
 
 template <bool enableLocalMemory, uint32_t rootDevicesCount>

@@ -22,6 +22,9 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/engine_limits.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/storage_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/storage_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine_completion_snapshot.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine_completion_snapshot.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/free_policy_type.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_partition.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_partition.h
     ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation.cpp

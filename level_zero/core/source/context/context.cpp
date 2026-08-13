@@ -533,13 +533,13 @@ NEO::UsmMemAllocPool *Context::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllo
     return usmPool;
 }
 
-bool Context::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, bool blocking) {
+bool Context::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, NEO::FreePolicyType policy) {
     if (usmPool) {
         [[maybe_unused]] bool status = false;
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType) {
-            status = driverHandle->usmHostMemAllocPoolFacade.freeSVMAlloc(ptr, blocking);
+            status = driverHandle->usmHostMemAllocPoolFacade.freeSVMAlloc(ptr, policy);
         } else {
-            status = svmData->device->getDeviceUsmMemAllocPoolFacade().freeSVMAlloc(ptr, blocking);
+            status = svmData->device->getDeviceUsmMemAllocPoolFacade().freeSVMAlloc(ptr, policy);
         }
         DEBUG_BREAK_IF(false == status);
         return true;
@@ -603,7 +603,8 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
         ipcHandleIterator++;
     }
 
-    if (this->tryFreeViaPooling(ptr, allocation, usmPool, blocking)) {
+    if (this->tryFreeViaPooling(ptr, allocation, usmPool,
+                                blocking ? NEO::FreePolicyType::blocking : NEO::FreePolicyType::none)) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -631,11 +632,11 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        if (this->tryFreeViaPooling(ptr, allocation, usmPool, blocking)) {
+        if (this->tryFreeViaPooling(ptr, allocation, usmPool, NEO::FreePolicyType::defer)) {
             return ZE_RESULT_SUCCESS;
         }
 
-        this->freePeerAllocationsFromAll(ptr, blocking);
+        this->freePeerAllocationsFromAll(ptr, false);
 
         this->driverHandle->svmAllocsManager->freeSVMAllocDefer(const_cast<void *>(ptr));
         return ZE_RESULT_SUCCESS;

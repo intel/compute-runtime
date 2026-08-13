@@ -276,6 +276,7 @@ class MemoryManager {
     void waitForDeletions();
     MOCKABLE_VIRTUAL void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation);
     MOCKABLE_VIRTUAL bool allocInUse(GraphicsAllocation &graphicsAllocation);
+    MOCKABLE_VIRTUAL void captureEngineCompletionSnapshot(GraphicsAllocation &graphicsAllocation, EngineCompletionSnapshot &snapshot);
     void cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion);
 
     bool isAsyncDeleterEnabled() const;

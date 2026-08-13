@@ -350,7 +350,7 @@ TEST_F(ClMemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHas
     auto gpuAddress = reinterpret_cast<void *>(surface->getGpuAddress());
     if (auto usmPool = device1->getDevice().getUsmGlobalSurfaceAllocPool();
         usmPool && usmPool->isInPool(gpuAddress)) {
-        usmPool->freeSVMAlloc(gpuAddress, false);
+        usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
     } else {
         if (device1->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
             device1->getMemoryManager()->freeGraphicsMemory(allocation);

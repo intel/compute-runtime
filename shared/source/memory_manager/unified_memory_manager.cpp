@@ -30,6 +30,8 @@
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/logger.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 uint32_t UnifiedMemoryProperties::getRootDeviceIndex() const {
@@ -862,6 +864,66 @@ void SVMAllocsManager::waitForEnginesCompletion(SvmAllocationData *allocationDat
     for (auto &gpuAllocation : allocationData->gpuAllocations.getGraphicsAllocations()) {
         if (gpuAllocation) {
             this->memoryManager->waitForEnginesCompletion(*gpuAllocation);
+        }
+    }
+}
+
+namespace {
+// An allocation reachable through indirect access is made resident once per csr and then
+// left always resident, so its task count stops advancing while later submissions can still
+// access it. For such an allocation the csr's latestSentTaskCount is the only current bound.
+GraphicsAllocation *getAllocationKeptResidentForIndirectAccess(SvmAllocationData *allocationData, CommandStreamReceiver *commandStreamReceiver) {
+    auto gpuAllocation = allocationData->gpuAllocations.getGraphicsAllocation(commandStreamReceiver->getRootDeviceIndex());
+    if (nullptr == gpuAllocation ||
+        false == gpuAllocation->isAlwaysResident(commandStreamReceiver->getOsContext().getContextId())) {
+        return nullptr;
+    }
+    return gpuAllocation;
+}
+} // namespace
+
+void SVMAllocsManager::captureEngineCompletionSnapshot(SvmAllocationData *allocationData, EngineCompletionSnapshot &snapshot) {
+    if (allocationData->cpuAllocation) {
+        this->memoryManager->captureEngineCompletionSnapshot(*allocationData->cpuAllocation, snapshot);
+    }
+
+    for (auto &gpuAllocation : allocationData->gpuAllocations.getGraphicsAllocations()) {
+        if (gpuAllocation) {
+            this->memoryManager->captureEngineCompletionSnapshot(*gpuAllocation, snapshot);
+        }
+    }
+
+    ContainerReadLockType lock(mtx);
+    for (auto &[commandStreamReceiver, tracker] : this->indirectAllocationsResidency) {
+        if (nullptr == getAllocationKeptResidentForIndirectAccess(allocationData, commandStreamReceiver)) {
+            continue;
+        }
+        auto snapshotEntry = std::find_if(snapshot.begin(), snapshot.end(), [&commandStreamReceiver](const auto &entry) {
+            return entry.first == commandStreamReceiver;
+        });
+        if (snapshotEntry == snapshot.end()) {
+            snapshot.push_back({commandStreamReceiver, tracker.latestSentTaskCount});
+        } else {
+            snapshotEntry->second = std::max(snapshotEntry->second, tracker.latestSentTaskCount);
+        }
+    }
+}
+
+void SVMAllocsManager::applyIndirectAccessTaskCountFloor(SvmAllocationData *allocationData) {
+    // Read lock covers the residency map; it is written only under the write lock. The task
+    // count write races with CommandStreamReceiver::makeResident the same way
+    // prepareIndirectAllocationForDestruction does - both writers are monotonic towards
+    // latestSentTaskCount. Kept separate from that function because the pool allocation
+    // survives the chunk free and must stay always resident.
+    ContainerReadLockType lock(mtx);
+    for (auto &[commandStreamReceiver, tracker] : this->indirectAllocationsResidency) {
+        auto gpuAllocation = getAllocationKeptResidentForIndirectAccess(allocationData, commandStreamReceiver);
+        if (nullptr == gpuAllocation) {
+            continue;
+        }
+        const auto osContextId = commandStreamReceiver->getOsContext().getContextId();
+        if (gpuAllocation->getTaskCount(osContextId) < tracker.latestSentTaskCount) {
+            gpuAllocation->updateTaskCount(tracker.latestSentTaskCount, osContextId);
         }
     }
 }

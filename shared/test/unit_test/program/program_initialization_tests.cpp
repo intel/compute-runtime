@@ -588,7 +588,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledUSMAllocationWhenReusedC
 
     // Dirty the chunk before returning to pool
     std::memset(globalSurface1->getUnderlyingBuffer(), dirtyValue, globalSurface1->getSize());
-    device.getUsmGlobalSurfaceAllocPool()->freeSVMAlloc(reinterpret_cast<void *>(globalSurface1->getGpuAddress()), false);
+    device.getUsmGlobalSurfaceAllocPool()->freeSVMAlloc(reinterpret_cast<void *>(globalSurface1->getGpuAddress()), NEO::FreePolicyType::none);
 
     // Second allocation - should reuse the same chunk
     globalSurface2.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, initData.data()));
@@ -639,7 +639,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledUSMAllocationWhenReusedC
 
     // Dirty the chunk before returning to pool
     std::memset(globalSurface1->getUnderlyingBuffer(), dirtyValue, globalSurface1->getSize());
-    device.getUsmGlobalSurfaceAllocPool()->freeSVMAlloc(reinterpret_cast<void *>(globalSurface1->getGpuAddress()), false);
+    device.getUsmGlobalSurfaceAllocPool()->freeSVMAlloc(reinterpret_cast<void *>(globalSurface1->getGpuAddress()), NEO::FreePolicyType::none);
 
     // Second allocation - should reuse the same chunk
     globalSurface2.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, nullptr));

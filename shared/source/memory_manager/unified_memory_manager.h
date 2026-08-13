@@ -12,6 +12,8 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/memory_manager/engine_completion_snapshot.h"
+#include "shared/source/memory_manager/free_policy_type.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency_container.h"
@@ -232,11 +234,7 @@ class SVMAllocsManager {
         std::atomic_bool empty = true;
     };
 
-    enum class FreePolicyType : uint32_t {
-        none = 0,
-        blocking = 1,
-        defer = 2
-    };
+    using FreePolicyType = NEO::FreePolicyType;
 
     SVMAllocsManager(MemoryManager *memoryManager);
     MOCKABLE_VIRTUAL ~SVMAllocsManager();
@@ -319,6 +317,8 @@ class SVMAllocsManager {
     bool submitIndirectAllocationsAsPack(CommandStreamReceiver &csr);
 
     void waitForEnginesCompletion(SvmAllocationData *allocationData);
+    void captureEngineCompletionSnapshot(SvmAllocationData *allocationData, EngineCompletionSnapshot &snapshot);
+    MOCKABLE_VIRTUAL void applyIndirectAccessTaskCountFloor(SvmAllocationData *allocationData);
 
   protected:
     void freeSVMAllocDeferImpl(FreePolicyType policy);

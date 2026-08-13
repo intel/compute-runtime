@@ -893,3 +893,25 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenR
     svmManager->freeSVMAlloc(ptr);
     svmManager->cleanupUSMAllocCaches();
 }
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenAllocationAbsentOnOneRootDeviceWhenCapturingEngineCompletionSnapshotThenAbsentAllocationIsSkipped) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(2, 1));
+    auto secondRootDevice = deviceFactory->rootDevices[1];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(secondRootDevice->getMemoryManager());
+
+    constexpr TaskCountType taskCount = 7u;
+    auto &defaultEngine = secondRootDevice->getDefaultEngine();
+    MockGraphicsAllocation allocationOnSecondRootDevice(1u, reinterpret_cast<void *>(0x1000), 4096u);
+    allocationOnSecondRootDevice.updateTaskCount(taskCount, defaultEngine.osContext->getContextId());
+
+    SvmAllocationData allocationData(1u);
+    allocationData.gpuAllocations.addAllocation(&allocationOnSecondRootDevice);
+    ASSERT_EQ(nullptr, allocationData.gpuAllocations.getGraphicsAllocation(0u));
+
+    EngineCompletionSnapshot snapshot;
+    svmManager->captureEngineCompletionSnapshot(&allocationData, snapshot);
+
+    ASSERT_EQ(1u, snapshot.size());
+    EXPECT_EQ(defaultEngine.commandStreamReceiver, snapshot[0].first);
+    EXPECT_EQ(taskCount, snapshot[0].second);
+}

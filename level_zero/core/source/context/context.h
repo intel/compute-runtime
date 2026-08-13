@@ -394,7 +394,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     static std::once_flag opaqueHandleResourcesOnceFlag;
 
     size_t getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
-    bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, bool blocking);
+    bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, NEO::FreePolicyType policy);
 
     std::map<uint32_t, ze_device_handle_t> devices;
     std::vector<ze_device_handle_t> deviceHandles;
