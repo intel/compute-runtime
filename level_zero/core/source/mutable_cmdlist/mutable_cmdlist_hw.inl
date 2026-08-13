@@ -370,12 +370,23 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
             }
         }
 
+        uint32_t systemMemoryAllocsCount = 0u;
+        uint32_t importedAllocationsCount = 0u;
+        bool trackL3FlushAfterPostSync = false;
+
         if (mutableCmdlistAppendLaunchParams.kernelArgumentMutation) {
+
+            trackL3FlushAfterPostSync = this->l3FlushAfterPostSyncEnabled && launchParams.isHostSignalScopeEvent;
             auto &appendKernelExt = MclKernelExt::get(kernel);
             // variables are already initialized with set kernel arg memory/immediate values - reflect it in variable state
             auto &residencyContainer = kernel->getArgumentsResidencyContainer();
             const auto &kernelArgInfos = static_cast<L0::KernelImp *>(kernel)->getKernelArgInfos();
             auto &kernelVariables = appendKernelExt.getVariables();
+
+            if (trackL3FlushAfterPostSync) {
+                buffersVariables.reserve(kernelVariables.size());
+            }
+
             for (uint32_t index = 0; index < kernelVariables.size(); index++) {
                 auto variable = kernelVariables[index];
                 if (variable == nullptr) {
@@ -384,6 +395,11 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                 auto &varDescriptor = variable->getDesc();
                 PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument variable %p index %u type %" PRIu8 "\n", variable, index, varDescriptor.type);
                 if (varDescriptor.type == VariableType::buffer) {
+
+                    if (trackL3FlushAfterPostSync) {
+                        buffersVariables.push_back(variable);
+                    }
+
                     if (kernelArgInfos[index].value != nullptr) {
                         varDescriptor.bufferAlloc = residencyContainer[index];
                         varDescriptor.argValue = kernelArgInfos[index].value;
@@ -396,6 +412,16 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                                      varDescriptor.allocId,
                                      varDescriptor.allocIdMemoryManagerCounter);
                         varDescriptor.state = VariableDescriptor::State::initialized;
+
+                        if (trackL3FlushAfterPostSync) {
+
+                            if (varDescriptor.bufferAlloc != nullptr && this->isUsingSystemAllocation(varDescriptor.bufferAlloc->getAllocationType())) {
+                                ++systemMemoryAllocsCount;
+                            }
+                            if (varDescriptor.bufferAlloc != nullptr && varDescriptor.bufferAlloc->getIsImported()) {
+                                ++importedAllocationsCount;
+                            }
+                        }
                     } else {
                         varDescriptor.argValue = nullptr;
                         PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument nullptr buffer\n");
@@ -405,25 +431,30 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
             // clean variable list in case next append kernel is immutable
             appendKernelExt.cleanArgumentVariables();
         }
+
         if (mutableCmdlistAppendLaunchParams.groupCountVariable != nullptr ||
             mutableCmdlistAppendLaunchParams.groupSizeVariable != nullptr ||
             mutableCmdlistAppendLaunchParams.globalOffsetVariable != nullptr ||
-            mutableCmdlistAppendLaunchParams.lastSlmArgumentVariable != nullptr) {
+            mutableCmdlistAppendLaunchParams.lastSlmArgumentVariable != nullptr ||
+            buffersVariables.size() > 0) {
 
             uint32_t initialGroupCount[3] = {threadGroupDimensions.groupCountX, threadGroupDimensions.groupCountY, threadGroupDimensions.groupCountZ};
+
             MutableKernelDispatchParameters dispatchParams = {
-                initialGroupCount,                                        // groupCount
-                static_cast<L0::KernelImp *>(kernel)->getGroupSize(),     // groupSize
-                static_cast<L0::KernelImp *>(kernel)->getGlobalOffsets(), // globalOffset
-                kernel->getPerThreadDataSizeForWholeThreadGroup(),        // perThreadSize
-                kernel->getRequiredWorkgroupOrder(),                      // walkOrder
-                kernel->getNumThreadsPerThreadGroup(),                    // numThreadsPerThreadGroup
-                kernel->getThreadExecutionMask(),                         // threadExecutionMask
-                0,                                                        // maxCooperativeGroupCount
-                launchParams.requiredPartitionDim,                        // requiredPartitionDim
-                launchParams.requiredDispatchWalkOrder,                   // requiredDispatchWalkOrder
-                kernel->requiresGenerationOfLocalIdsByRuntime(),          // generationOfLocalIdsByRuntime
-                launchParams.isCooperative};                              // cooperativeDispatch
+                .groupCount = initialGroupCount,
+                .groupSize = static_cast<L0::KernelImp *>(kernel)->getGroupSize(),
+                .globalOffset = static_cast<L0::KernelImp *>(kernel)->getGlobalOffsets(),
+                .perThreadSize = kernel->getPerThreadDataSizeForWholeThreadGroup(),
+                .walkOrder = kernel->getRequiredWorkgroupOrder(),
+                .numThreadsPerThreadGroup = kernel->getNumThreadsPerThreadGroup(),
+                .threadExecutionMask = kernel->getThreadExecutionMask(),
+                .maxCooperativeGroupCount = 0,
+                .systemMemoryAllocsCount = systemMemoryAllocsCount,
+                .importedAllocationsCount = importedAllocationsCount,
+                .requiredPartitionDim = launchParams.requiredPartitionDim,
+                .requiredDispatchWalkOrder = launchParams.requiredDispatchWalkOrder,
+                .generationOfLocalIdsByRuntime = kernel->requiresGenerationOfLocalIdsByRuntime(),
+                .cooperativeDispatch = launchParams.isCooperative};
 
             if (launchParams.isCooperative) {
                 dispatchParams.maxCooperativeGroupCount = kernel->suggestMaxCooperativeGroupCount(base->getEngineGroupType(), false);
@@ -434,12 +465,15 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                                          mutableCmdlistAppendLaunchParams.groupCountVariable,
                                          mutableCmdlistAppendLaunchParams.globalOffsetVariable,
                                          mutableCmdlistAppendLaunchParams.lastSlmArgumentVariable,
+                                         &buffersVariables,
                                          this->appendKernelMutableComputeWalker, dispatchParams);
 
             if (retVal != ZE_RESULT_SUCCESS) {
+                buffersVariables.clear();
                 return retVal;
             }
             this->enableReservePerThreadForLocalId = false;
+            buffersVariables.clear();
         }
     }
     return retVal;
@@ -752,6 +786,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatch
             bool captureArgument = false;
             bool slmArgument = false;
             bool immediateArgument = arg.type == NEO::ArgDescriptor::argTValue;
+            bool isBufferArg = false;
             if (arg.type == NEO::ArgDescriptor::argTPointer) {
                 captureArgument = arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrGlobal ||
                                   arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrConstant ||
@@ -759,12 +794,16 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatch
                                   arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal;
 
                 slmArgument = arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal;
+                isBufferArg = !slmArgument;
             }
             captureArgument |= immediateArgument;
             if (captureArgument) {
                 Variable *variable = nullptr;
                 InterfaceVariableDescriptor varDesc = {};
-                varDesc.isStageCommit = slmArgument;
+
+                bool useStageCommit = slmArgument || (isBufferArg && launchParams.isHostSignalScopeEvent && this->l3FlushAfterPostSyncEnabled);
+
+                varDesc.isStageCommit = useStageCommit;
                 varDesc.immediateValueChunks = immediateArgument;
                 getVariable(&varDesc, &variable);
                 variable->setAsKernelArg(kernel->toHandle(), argCount);
@@ -924,6 +963,8 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
         viewKernel->getNumThreadsPerThreadGroup(),                    // numThreadsPerThreadGroup
         viewKernel->getThreadExecutionMask(),                         // threadExecutionMask
         0,                                                            // maxCooperativeGroupCount
+        0,                                                            // systemMemoryAllocsCount
+        0,                                                            // importedAllocationsCount
         launchParams.requiredPartitionDim,                            // requiredPartitionDim
         launchParams.requiredDispatchWalkOrder,                       // requiredDispatchWalkOrder
         viewKernel->requiresGenerationOfLocalIdsByRuntime(),          // generationOfLocalIdsByRuntime
@@ -934,6 +975,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
                                  viewKernelAppendLaunchParams.groupCountVariable,
                                  viewKernelAppendLaunchParams.globalOffsetVariable,
                                  viewKernelAppendLaunchParams.lastSlmArgumentVariable,
+                                 nullptr,
                                  viewKernelMutableComputeWalker, dispatchParams);
 
     viewKernelAppendLaunchParams.groupCountVariable->resetGroupCountVariable();

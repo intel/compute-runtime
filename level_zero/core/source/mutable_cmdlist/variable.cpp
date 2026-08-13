@@ -454,6 +454,8 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel argument variable %p buffer gpuva %" PRIx64 " arg value %p from allocation %p alloc id %u alloc id from manager %u\n",
                  this, gpuAddress, argValue, newBufferAlloc, newAllocId, newAllocIdMemoryManagerCounter);
 
+    this->handleBufferTypeChange(oldBufferAlloc, newBufferAlloc);
+
     if (bufferUsages.statelessWithoutOffset.size() > 0) {
         for (const auto statelessPatch : bufferUsages.statelessWithoutOffset) {
             PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel argument buffer into heap offset %zx\n", statelessPatch);
@@ -486,6 +488,37 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
 
     return ZE_RESULT_SUCCESS;
 }
+
+void Variable::handleBufferTypeChange(NEO::GraphicsAllocation *oldAllocation, NEO::GraphicsAllocation *newAllocation) {
+
+    if (usedInDispatch.empty()) {
+        return;
+    }
+
+    bool isOldAllocSystemMemory = oldAllocation != nullptr && L0::CommandList::isUsingSystemAllocation(oldAllocation->getAllocationType());
+    bool isNewAllocSystemMemory = newAllocation != nullptr && L0::CommandList::isUsingSystemAllocation(newAllocation->getAllocationType());
+
+    bool isOldAllocImported = oldAllocation != nullptr && oldAllocation->getIsImported();
+    bool isNewAllocImported = newAllocation != nullptr && newAllocation->getIsImported();
+
+    int32_t allocSystemMemoryDelta = static_cast<int32_t>(isNewAllocSystemMemory) - static_cast<int32_t>(isOldAllocSystemMemory);
+    int32_t allocImportedDelta = static_cast<int32_t>(isNewAllocImported) - static_cast<int32_t>(isOldAllocImported);
+
+    if (allocSystemMemoryDelta == 0 && allocImportedDelta == 0) {
+        return;
+    }
+
+    bool commitChangesNeeded = false;
+
+    for (auto *variableDispatch : usedInDispatch) {
+        commitChangesNeeded |= variableDispatch->updateAllocationsCount(allocSystemMemoryDelta, allocImportedDelta);
+    }
+
+    if (commitChangesNeeded) {
+        this->setCommitVariable();
+    }
+}
+
 ze_result_t Variable::setValueVariable(size_t size, const void *argVal) {
     return selectImmediateSetValueHandler(size, argVal);
 }

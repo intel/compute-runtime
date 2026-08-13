@@ -158,7 +158,7 @@ struct MutableCommandListImp : public MutableCommandList {
                                       size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,
                                       bool resetSlmArgumentValues);
     ze_result_t addVariableDispatch(const NEO::KernelDescriptor &kernelDescriptor, KernelDispatch &kernelDispatch, Variable *groupSize, Variable *groupCount, Variable *globalOffset,
-                                    Variable *lastSlmArgumentVariable, MutableComputeWalker *mutableComputeWalker, const MutableKernelDispatchParameters &dispatchParams);
+                                    Variable *lastSlmArgumentVariable, const std::vector<Variable *> *buffersVariables, MutableComputeWalker *mutableComputeWalker, const MutableKernelDispatchParameters &dispatchParams);
 
     void createNativeBinary(ArrayRef<const uint8_t> module);
     KernelData *getKernelData(L0::Kernel *kernel);
@@ -198,6 +198,7 @@ struct MutableCommandListImp : public MutableCommandList {
     std::vector<std::unique_ptr<MutableStoreDataImm>> mutableStoreDataImmCmds;
     std::vector<std::unique_ptr<MutableLoadRegisterImm>> mutableLoadRegisterImmCmds;
     std::vector<std::unique_ptr<MutableKernelGroup>> mutableKernelGroups;
+    std::vector<Variable *> buffersVariables;
     std::vector<Variable *> stageCommitVariables;
 
     CommandToPatchContainer appendCmdsToPatch;

@@ -89,6 +89,13 @@ struct CommandList : _ze_command_list_handle_t {
     static constexpr uint32_t defaultNumIddsPerBlock = 64u;
     static constexpr uint32_t commandListimmediateIddsPerBlock = 1u;
 
+    static bool isUsingSystemAllocation(const NEO::AllocationType &allocType) {
+        return ((allocType == NEO::AllocationType::bufferHostMemory) ||
+                (allocType == NEO::AllocationType::svmCpu) ||
+                (allocType == NEO::AllocationType::svmZeroCopy) ||
+                (allocType == NEO::AllocationType::externalHostPtr));
+    }
+
     CommandList() = delete;
     CommandList(uint32_t numIddsPerBlock);
 

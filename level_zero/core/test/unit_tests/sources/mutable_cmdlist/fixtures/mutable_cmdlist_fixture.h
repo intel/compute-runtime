@@ -46,6 +46,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     std::unique_ptr<MutableCommandList> createMutableCmdList();
     Event *createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool externalMemory, bool externalFlag);
     void *allocateUsm(size_t size);
+    void *allocateDeviceUsm(size_t size);
     NEO::GraphicsAllocation *getUsmAllocation(void *usm);
     void resizeKernelArg(uint32_t resize);
     void prepareKernelArg(uint16_t argIndex, L0::MCL::VariableType varType, uint32_t kernelMask);
@@ -127,6 +128,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     CmdListKernelLaunchParams testLaunchParams = {};
 
     std::vector<void *> usmAllocations;
+    std::vector<void *> deviceUsmAllocations;
     std::vector<ze_event_handle_t> eventHandles;
     std::vector<Event *> events;
     std::vector<void *> externalStorages;
@@ -165,6 +167,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     uint16_t nextArgOffset = defaultNextArgOffset;
 
     bool createInOrder;
+    bool l3FlushAfterPostSyncEnabled = false;
     bool qwordInUse = false;
     bool sem64bSupport = false;
     bool lriRequired = false;

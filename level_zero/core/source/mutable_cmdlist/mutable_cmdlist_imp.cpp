@@ -147,7 +147,7 @@ void MutableCommandListImp::processResidencyContainer(bool baseCmdListClosed) {
 }
 
 ze_result_t MutableCommandListImp::addVariableDispatch(const NEO::KernelDescriptor &kernelDescriptor, KernelDispatch &kernelDispatch, Variable *groupSize, Variable *groupCount, Variable *globalOffset,
-                                                       Variable *lastSlmArgumentVariable, MutableComputeWalker *mutableComputeWalker, const MutableKernelDispatchParameters &dispatchParams) {
+                                                       Variable *lastSlmArgumentVariable, const std::vector<Variable *> *buffersVariables, MutableComputeWalker *mutableComputeWalker, const MutableKernelDispatchParameters &dispatchParams) {
     if (groupSize != nullptr && (false == groupSize->isType(VariableType::groupSize))) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -192,7 +192,7 @@ ze_result_t MutableCommandListImp::addVariableDispatch(const NEO::KernelDescript
 
     auto mutableIndirectData = std::make_unique<MutableIndirectData>(std::move(offsets), crossThreadData, perThreadData, inlineData);
     kernelDispatch.varDispatch = std::make_unique<VariableDispatch>(&kernelDispatch, std::move(mutableIndirectData), mutableComputeWalker,
-                                                                    groupSize, groupCount, globalOffset, lastSlmArgumentVariable,
+                                                                    groupSize, groupCount, globalOffset, lastSlmArgumentVariable, buffersVariables,
                                                                     base->getDevice()->getHwInfo().capabilityTable.grfSize,
                                                                     dispatchParams, base->getPartitionCount(), base->getEngineGroupType());
 

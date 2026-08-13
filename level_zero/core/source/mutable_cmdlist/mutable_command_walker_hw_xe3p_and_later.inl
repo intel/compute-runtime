@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"
@@ -354,6 +355,32 @@ void MutableComputeWalkerHw<GfxFamily>::setSlmSize(uint32_t slmSize) {
         auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
         walkerCmd->getInterfaceDescriptor().getRawData(slmSizeIddIndex) = cpuBufferIdd.getRawData(slmSizeIddIndex);
     }
+}
+
+template <typename GfxFamily>
+void MutableComputeWalkerHw<GfxFamily>::updateL3FlushAfterWalker(uint32_t systemMemoryAllocsCount, uint32_t importedAllocationsCount) {
+    using WalkerType = typename GfxFamily::DefaultWalkerType;
+    auto cpuBufferWalker = reinterpret_cast<WalkerType *>(this->cpuBuffer);
+
+    bool l2Flush = importedAllocationsCount > 0;
+    bool l2TransientFlush = systemMemoryAllocsCount > 0;
+
+    auto flushCachesMask = NEO::debugManager.flags.FlushAllCaches.get();
+    if (flushCachesMask) {
+        if (flushCachesMask & NEO::FlushCachesBitmask::l2Flush) {
+            l2Flush = true;
+        }
+        if (flushCachesMask & NEO::FlushCachesBitmask::l2TransientFlush) {
+            l2TransientFlush = true;
+        }
+    }
+
+    cpuBufferWalker->getPostSync().setL2Flush(l2Flush);
+    cpuBufferWalker->getPostSync().setL2TransientFlush(l2TransientFlush);
+
+    // update cmdbuffer
+    auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
+    walkerCmd->getPostSync().getRawData(0) = cpuBufferWalker->getPostSync().getRawData(0);
 }
 
 } // namespace L0::MCL

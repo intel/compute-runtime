@@ -460,13 +460,6 @@ struct CommandListCoreFamily : public CommandList {
 
     bool isKernelUncachedMocsRequired(bool kernelState);
 
-    static bool isUsingSystemAllocation(const NEO::AllocationType &allocType) {
-        return ((allocType == NEO::AllocationType::bufferHostMemory) ||
-                (allocType == NEO::AllocationType::svmCpu) ||
-                (allocType == NEO::AllocationType::svmZeroCopy) ||
-                (allocType == NEO::AllocationType::externalHostPtr));
-    }
-
     void postInitComputeSetup();
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) { return false; }

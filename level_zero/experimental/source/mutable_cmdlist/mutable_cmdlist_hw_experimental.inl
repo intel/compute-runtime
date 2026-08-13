@@ -272,14 +272,16 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLa
         kernel->getNumThreadsPerThreadGroup(),                    // numThreadsPerThreadGroup
         kernel->getThreadExecutionMask(),                         // threadExecutionMask
         0,                                                        // maxCooperativeGroupCount
+        0,                                                        // systemMemoryAllocsCount
+        0,                                                        // importedAllocationsCount
         NEO::RequiredPartitionDim::none,                          // requiredPartitionDim
         NEO::RequiredDispatchWalkOrder::none,                     // requiredDispatchWalkOrder
         kernel->requiresGenerationOfLocalIdsByRuntime(),          // generationOfLocalIdsByRuntime
         false};                                                   // cooperativeDispatch
 
     auto mutableCommandWalker = (*mutableWalkerCmds.rbegin()).get();
-    ret = addVariableDispatch(kernel->getKernelDescriptor(), *dispatch,
-                              groupSize, groupCount, nullptr, nullptr,
+    ret = addVariableDispatch(kernel->getKernelDescriptor(), *dispatch, groupSize, groupCount,
+                              nullptr, nullptr, nullptr,
                               mutableCommandWalker, dispatchParams);
     return ret;
 }

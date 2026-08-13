@@ -1150,13 +1150,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         initialGlobalOffset, // globalOffset
     };
 
-    auto result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), groupCount, nullptr, nullptr, nullptr, nullptr, dispatchParams);
+    auto result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), groupCount, nullptr, nullptr, nullptr, nullptr, nullptr, dispatchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
-    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, groupSize, nullptr, nullptr, nullptr, dispatchParams);
+    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, groupSize, nullptr, nullptr, nullptr, nullptr, dispatchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
-    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, nullptr, groupCount, nullptr, nullptr, dispatchParams);
+    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, nullptr, groupCount, nullptr, nullptr, nullptr, dispatchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 

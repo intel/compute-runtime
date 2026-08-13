@@ -29,7 +29,7 @@ struct Variable;
 struct VariableDispatch {
     VariableDispatch(KernelDispatch *kernelDispatch,
                      std::unique_ptr<MutableIndirectData> mutableIndirectData, MutableComputeWalker *mutableCommandWalker,
-                     Variable *groupSizeVariable, Variable *groupCountVariable, Variable *globalOffsetVariable, Variable *lastSlmArgumentVariable,
+                     Variable *groupSizeVariable, Variable *groupCountVariable, Variable *globalOffsetVariable, Variable *lastSlmArgumentVariable, const std::vector<Variable *> *buffersVariables,
                      uint32_t grfSize, const MutableKernelDispatchParameters &dispatchParams, uint32_t partitionCount,
                      NEO::EngineGroupType cmdListEngineType);
 
@@ -37,6 +37,8 @@ struct VariableDispatch {
     void setGroupCount(const MaxChannelsCArray, const NEO::Device &device, bool stageData);
     void setGlobalOffset(const MaxChannelsCArray);
     void setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &device, bool stageData);
+    bool updateAllocationsCount(int32_t systemMemoryAllocationsDelta, int32_t importedAllocationsDelta);
+
     void commitChanges(const NEO::Device &device);
 
     Variable *getGroupSizeVar() const;
@@ -69,13 +71,14 @@ struct VariableDispatch {
     void generateLocalIds(size_t localWorkSize, const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
 
     bool doCommitVariableDispatch() {
-        return commitGroupCount || commitGroupSize || commitSlmSize;
+        return commitGroupCount || commitGroupSize || commitSlmSize || commitL3FlushAfterWalker;
     }
 
     void cleanCommitVariableDispatch() {
         commitGroupCount = false;
         commitGroupSize = false;
         commitSlmSize = false;
+        commitL3FlushAfterWalker = false;
     }
 
     MaxChannelsArray groupSize = {1, 1, 1};
@@ -107,6 +110,10 @@ struct VariableDispatch {
     uint32_t maxCooperativeGroupCount = 0;
     uint32_t slmTotalSizePerThreadGroup = 0;
     uint32_t alignedSlmSize = 0;
+    uint32_t systemMemoryAllocsCount = 0u;
+    uint32_t importedAllocationsCount = 0u;
+    uint32_t commitedSystemMemoryAllocsCount = 0u;
+    uint32_t commitedImportedAllocationsCount = 0u;
 
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
@@ -117,6 +124,7 @@ struct VariableDispatch {
     bool commitGroupCount = false;
     bool commitGroupSize = false;
     bool commitSlmSize = false;
+    bool commitL3FlushAfterWalker = false;
     bool localIdGenerationByRuntime = false;
     bool isCooperative = false;
     bool isSlmKernel = false;

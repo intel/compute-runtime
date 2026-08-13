@@ -338,4 +338,8 @@ void MutableComputeWalkerHw<GfxFamily>::setSlmSize(uint32_t slmSize) {
     }
 }
 
+template <typename GfxFamily>
+void MutableComputeWalkerHw<GfxFamily>::updateL3FlushAfterWalker(uint32_t systemMemoryAllocsCount, uint32_t importedAllocationsCount) {
+}
+
 } // namespace L0::MCL

@@ -581,6 +581,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         }
 
         registerWalkerWithProfilingEnqueued(event);
+        launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     if (!handleCounterBasedEventOperations(event, launchParams.omitAddingEventResidency)) {

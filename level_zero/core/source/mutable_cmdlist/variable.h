@@ -305,6 +305,8 @@ struct Variable : public VariableHandle {
     ze_result_t selectImmediateAddKernelArgUsageHandler(const NEO::ArgDescriptor &kernelArg, IndirectObjectHeapOffset iohOffset, IndirectObjectHeapOffset iohFullOffset,
                                                         CommandBufferOffset walkerCmdOffset, MutableComputeWalker *mutableComputeWalker, bool inlineData);
 
+    void handleBufferTypeChange(NEO::GraphicsAllocation *oldAllocation, NEO::GraphicsAllocation *newAllocation);
+
     enum CbWaitEventOperationType {
         set,
         noop,

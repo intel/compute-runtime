@@ -79,6 +79,7 @@ struct WhiteBox<::L0::MCL::VariableDispatch>
                                                                                    groupCountVariable,
                                                                                    globalOffsetVariable,
                                                                                    lastSlmArgumentVariable,
+                                                                                   nullptr,
                                                                                    grfSize,
                                                                                    dispatchParams,
                                                                                    partitionCount,

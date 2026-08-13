@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -32,6 +32,7 @@ if(TESTS_XE3P_AND_LATER)
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_kernels_tests_xe3p_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_postsync_l3_flush_tests_xe3p_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_hw_command_tests_xe3p_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_semaphore_wait_tests_xe3p_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/variable_tests_xe3p_and_later.cpp

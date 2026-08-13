@@ -124,13 +124,15 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
             1,                                    // numThreadsPerThreadGroup
             std::numeric_limits<uint32_t>::max(), // threadExecutionMask
             0,                                    // maxCooperativeGroupCount
+            0u,                                   // systemMemoryAllocsCount
+            0u,                                   // importedAllocationsCount
             NEO::RequiredPartitionDim::none,      // requiredPartitionDim
             NEO::RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
             false,                                // generationOfLocalIdsByRuntime
             false};                               // cooperativeDispatch
 
-        dispatch.varDispatch = std::make_unique<VariableDispatch>(&dispatch, std::move(mutableIndirectData), mutableCommandWalker,
-                                                                  groupSize, groupCount, nullptr, nullptr, args.device->getHwInfo().capabilityTable.grfSize,
+        dispatch.varDispatch = std::make_unique<VariableDispatch>(&dispatch, std::move(mutableIndirectData), mutableCommandWalker, groupSize, groupCount, nullptr, nullptr, nullptr,
+                                                                  args.device->getHwInfo().capabilityTable.grfSize,
                                                                   dispatchParams, args.partitionCount, args.cmdListEngine);
     }
 }

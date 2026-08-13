@@ -39,6 +39,8 @@ struct MutableComputeWalkerHw : public MutableComputeWalker, NEO::NonCopyableAnd
 
     void updateSlmSize(const NEO::Device &device, uint32_t slmTotalSizePerThreadGroup) override;
 
+    void updateL3FlushAfterWalker(uint32_t systemMemoryAllocsCount, uint32_t importedAllocationsCount) override;
+
     void *getInlineDataPointer() const override;
     size_t getInlineDataOffset() const override;
     size_t getInlineDataSize() const override;

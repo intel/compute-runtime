@@ -92,6 +92,8 @@ struct MutableKernelDispatchParameters {
     uint32_t numThreadsPerThreadGroup = 0;
     uint32_t threadExecutionMask = 0;
     uint32_t maxCooperativeGroupCount = 0;
+    uint32_t systemMemoryAllocsCount = 0u;
+    uint32_t importedAllocationsCount = 0u;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     bool generationOfLocalIdsByRuntime = false;

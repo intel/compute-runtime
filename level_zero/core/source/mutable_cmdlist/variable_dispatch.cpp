@@ -31,15 +31,18 @@
 namespace L0::MCL {
 VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
                                    std::unique_ptr<MutableIndirectData> mutableIndirectData, MutableComputeWalker *mutableCommandWalker,
-                                   Variable *groupSizeVariable, Variable *groupCountVariable, Variable *globalOffsetVariable, Variable *lastSlmArgumentVariable,
-                                   uint32_t grfSize, const MutableKernelDispatchParameters &dispatchParams, uint32_t partitionCount,
-                                   NEO::EngineGroupType cmdListEngineType)
+                                   Variable *groupSizeVariable, Variable *groupCountVariable, Variable *globalOffsetVariable, Variable *lastSlmArgumentVariable, const std::vector<Variable *> *buffersVariables,
+                                   uint32_t grfSize, const MutableKernelDispatchParameters &dispatchParams, uint32_t partitionCount, NEO::EngineGroupType cmdListEngineType)
     : kernelDispatch(kernelDispatch),
       indirectData(std::move(mutableIndirectData)), mutableCommandWalker(mutableCommandWalker),
       groupSizeVar(groupSizeVariable), groupCountVar(groupCountVariable), globalOffsetVar(globalOffsetVariable), lastSlmArgumentVar(lastSlmArgumentVariable),
       perThreadDataSize(dispatchParams.perThreadSize),
       grfSize(grfSize), numChannels(kernelDispatch->kernelData->numLocalIdChannels), walkOrder(dispatchParams.walkOrder), numThreadsPerThreadGroup(dispatchParams.numThreadsPerThreadGroup),
       threadExecutionMask(dispatchParams.threadExecutionMask), maxCooperativeGroupCount(dispatchParams.maxCooperativeGroupCount),
+      systemMemoryAllocsCount(dispatchParams.systemMemoryAllocsCount),
+      importedAllocationsCount(dispatchParams.importedAllocationsCount),
+      commitedSystemMemoryAllocsCount(dispatchParams.systemMemoryAllocsCount),
+      commitedImportedAllocationsCount(dispatchParams.importedAllocationsCount),
       requiredPartitionDim(dispatchParams.requiredPartitionDim), requiredDispatchWalkOrder(dispatchParams.requiredDispatchWalkOrder),
       partitionCount(partitionCount), cmdListEngineType(cmdListEngineType),
       localIdGenerationByRuntime(dispatchParams.generationOfLocalIdsByRuntime), isCooperative(dispatchParams.cooperativeDispatch) {
@@ -110,6 +113,12 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
 
     // SLM kernel is when SLM arguments or SLM inline is present
     this->isSlmKernel = this->lastSlmArgumentVar != nullptr || this->kernelDispatch->slmInlineSize > 0;
+
+    if (buffersVariables) {
+        for (auto variable : *buffersVariables) {
+            variable->addDispatch(this);
+        }
+    }
 }
 
 void VariableDispatch::setGroupSize(const MaxChannelsCArray groupSize, NEO::Device &device, bool stageData) {
@@ -437,6 +446,17 @@ void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &d
     mutableCommandWalker->updateSpecificFields(device, args);
 }
 
+bool VariableDispatch::updateAllocationsCount(int32_t systemMemoryAllocationsDelta, int32_t importedAllocationsDelta) {
+    this->systemMemoryAllocsCount += systemMemoryAllocationsDelta;
+    this->importedAllocationsCount += importedAllocationsDelta;
+
+    bool commitForSystemAllocsNeeded = (systemMemoryAllocsCount > 0) != (commitedSystemMemoryAllocsCount > 0);
+    bool commitForImportedNeeded = (importedAllocationsCount > 0) != (commitedImportedAllocationsCount > 0);
+
+    this->commitL3FlushAfterWalker = commitForSystemAllocsNeeded || commitForImportedNeeded;
+    return this->commitL3FlushAfterWalker;
+}
+
 void VariableDispatch::commitChanges(const NEO::Device &device) {
     if (!this->doCommitVariableDispatch()) {
         return;
@@ -479,6 +499,13 @@ void VariableDispatch::commitChanges(const NEO::Device &device) {
     if (this->commitSlmSize) {
         mutableCommandWalker->updateSlmSize(device, this->slmTotalSizePerThreadGroup);
         kernelDispatch->slmTotalSizePerThreadGroup = this->slmTotalSizePerThreadGroup;
+    }
+
+    if (this->commitL3FlushAfterWalker) {
+        mutableCommandWalker->updateL3FlushAfterWalker(this->systemMemoryAllocsCount, this->importedAllocationsCount);
+
+        this->commitedSystemMemoryAllocsCount = this->systemMemoryAllocsCount;
+        this->commitedImportedAllocationsCount = this->importedAllocationsCount;
     }
 
     MutableWalkerSpecificFieldsArguments args{

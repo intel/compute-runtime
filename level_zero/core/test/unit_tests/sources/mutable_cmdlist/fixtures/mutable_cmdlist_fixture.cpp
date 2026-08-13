@@ -58,6 +58,9 @@ void MutableCommandListFixtureInit::setUp(bool createInOrder, int32_t useSemapho
 
     kernelHandle = kernelMutationGroup[0] = kernel->toHandle();
     kernel2Handle = kernelMutationGroup[1] = kernel2->toHandle();
+
+    auto &productHelper = this->device->getProductHelper();
+    l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported();
 }
 
 void MutableCommandListFixtureInit::tearDown() {
@@ -69,6 +72,9 @@ void MutableCommandListFixtureInit::tearDown() {
     }
     for (auto externalStorage : this->externalStorages) {
         context->freeMem(externalStorage);
+    }
+    for (auto deviceUsmAllocation : this->deviceUsmAllocations) {
+        context->freeMem(deviceUsmAllocation);
     }
 
     auto svmAllocsManager = this->device->getDriverHandle()->getSvmAllocsManager();
@@ -158,6 +164,15 @@ void *MutableCommandListFixtureInit::allocateUsm(size_t size) {
     auto usmPtr = svmAllocsManager->createSVMAlloc(size, allocationProperties, this->context->rootDeviceIndices, this->context->deviceBitfields);
     usmAllocations.push_back(usmPtr);
     return usmPtr;
+}
+
+void *MutableCommandListFixtureInit::allocateDeviceUsm(size_t size) {
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    void *deviceUsm = nullptr;
+    if (context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 4096u, &deviceUsm) == ZE_RESULT_SUCCESS) {
+        deviceUsmAllocations.push_back(deviceUsm);
+    }
+    return deviceUsm;
 }
 
 NEO::GraphicsAllocation *MutableCommandListFixtureInit::getUsmAllocation(void *usm) {
