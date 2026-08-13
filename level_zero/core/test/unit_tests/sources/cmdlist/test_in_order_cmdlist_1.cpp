@@ -524,6 +524,34 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventsWhenHostWaitsAreCalledThenL
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
+HWTEST_F(InOrderCmdListTests, givenTbxModeWhenHostSynchronizeIsCalledThenPublishWaitedCounterAfterDownloadingAllocations) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    bool counterPublishedOnDownload = true;
+    ultCsr->onDownloadAllocations = [&]() {
+        counterPublishedOnDownload = inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
+    };
+
+    immCmdList->isTbxMode = true;
+    auto downloadCallsBefore = ultCsr->downloadAllocationsCalledCount.load();
+
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(1, true));
+
+    EXPECT_EQ(downloadCallsBefore + 1, ultCsr->downloadAllocationsCalledCount.load());
+    EXPECT_FALSE(counterPublishedOnDownload);
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset()));
+
+    ultCsr->onDownloadAllocations = nullptr;
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallWaitUserFence) {
     NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
 

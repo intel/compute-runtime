@@ -2911,6 +2911,27 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTempNodeWhenCallingSync
     EXPECT_EQ(0u, inOrderExecInfo->tempTimestampNodes.size());
 }
 
+HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTempNodeWhenCallingHostSynchronizeThenReleaseNotUsedNodesInSameCall) {
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto inOrderExecInfo = static_cast<WhiteboxInOrderExecInfo *>(cmdList->inOrderExecInfo.get());
+    auto hostAddress = inOrderExecInfo->getBaseHostAddress();
+    *hostAddress = 3;
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
+
+    EXPECT_EQ(1u, inOrderExecInfo->tempTimestampNodes.size());
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->hostSynchronize(1, true));
+
+    EXPECT_EQ(0u, inOrderExecInfo->tempTimestampNodes.size());
+}
+
 HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDispatchingThenAssignNewNode) {
     auto eventPool = createEvents<FamilyType>(1, true);
     auto eventHandle = events[0]->toHandle();

@@ -1327,6 +1327,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     auto waitQueue = this->cmdQImmediate;
 
+    uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
+
     TaskCountType mainQueueTaskCount = waitQueue->getTaskCount();
     TaskCountType copyOffloadTaskCount = 0;
 
@@ -1358,8 +1360,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     auto tempAllocsCleanupRequired = handlePostWaitOperations && (mainStorageCleanupNeeded || copyOffloadStorageCleanupNeeded);
 
     bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !this->inOrderWaitsDisabled && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible && !this->isInOrderCounterSignalPending());
-
-    uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
 
     if (inOrderWaitAllowed && !inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
         status = synchronizeInOrderExecution(timeout, (waitQueue == this->cmdQImmediateCopyOffload));
@@ -1408,11 +1408,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     }
 
     if (status != ZE_RESULT_NOT_READY) {
-        if (isInOrderExecutionEnabled() && (status == ZE_RESULT_SUCCESS)) {
-            // on hang the counter was never reached, marking it waited would make later waits succeed immediately
-            inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue, inOrderExecInfo->getAllocationOffset());
-        }
-
         if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
             mainQueueCsr->downloadAllocations(true);
             if (dualStreamCopyOffload) {
@@ -1436,10 +1431,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                     }
                 }
 
-                if (inOrderExecInfo) {
-                    inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
-                }
-
                 this->storeFillPatternResourcesForReuse();
                 if (this->getDevice()->getDriverHandle()->getStagingBufferManager()) {
                     this->getDevice()->getDriverHandle()->getStagingBufferManager()->resetDetectedPtrs();
@@ -1450,6 +1441,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             this->handlePostSyncPrintfAndAssert(hangDetected);
         }
         this->kernelWithAssertAppended = false;
+
+        if (isInOrderExecutionEnabled() && (status == ZE_RESULT_SUCCESS)) {
+            // on hang the counter was never reached, marking it waited would make later waits succeed immediately
+            inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue, inOrderExecInfo->getAllocationOffset());
+
+            if (handlePostWaitOperations) {
+                inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
+            }
+        }
     }
 
     return status;
