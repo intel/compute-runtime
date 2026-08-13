@@ -6,4 +6,5 @@
 
 set_property(GLOBAL APPEND PROPERTY LEO_MT_TEST_SOURCES
              ${CMAKE_CURRENT_SOURCE_DIR}/leo_async_events_handler_mt_tests.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}/leo_event_profiling_lock_mt_tests.cpp
 )

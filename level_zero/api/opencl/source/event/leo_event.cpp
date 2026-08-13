@@ -121,8 +121,6 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
         return CL_PROFILING_INFO_NOT_AVAILABLE;
     }
 
-    auto lock = this->takeOwnership();
-
     const void *src = nullptr;
     size_t srcSize = GetInfo::invalidSourceSize;
     uint64_t timestamp = 0;
@@ -139,14 +137,19 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
 
     // Rebase raw packet start/end onto the submit epoch, restoring high bits a narrow packet drops.
     // Computed once: the derivation may adjust the submit/queue anchors.
-    if (!dataCalculated) {
-        auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-        const uint32_t kernelTimestampValidBits = neoDevice->getHardwareInfo().capabilityTable.kernelTimestampValidBits;
-        uint64_t contextCompleteTS = 0; // no separate device-enqueue completion writeback -> complete == end
-        NEO::calculateProfilingData(gfxCoreHelper, *neoDevice->getOSTime(), resolution, kernelTimestampValidBits,
-                                    queueTimeStamp, submitTimeStamp, startTimeStamp, endTimeStamp, completeTimeStamp,
-                                    ts.global.kernelStart, ts.global.kernelEnd, &contextCompleteTS, ts.global.kernelStart);
-        dataCalculated = true;
+    // Ownership covers only the derivation - once dataCalculated is set the anchors are read-only,
+    // so the switch below (and the blocking status query it may reach) must not hold the lock.
+    {
+        auto lock = this->takeOwnership();
+        if (!dataCalculated) {
+            auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+            const uint32_t kernelTimestampValidBits = neoDevice->getHardwareInfo().capabilityTable.kernelTimestampValidBits;
+            uint64_t contextCompleteTS = 0; // no separate device-enqueue completion writeback -> complete == end
+            NEO::calculateProfilingData(gfxCoreHelper, *neoDevice->getOSTime(), resolution, kernelTimestampValidBits,
+                                        queueTimeStamp, submitTimeStamp, startTimeStamp, endTimeStamp, completeTimeStamp,
+                                        ts.global.kernelStart, ts.global.kernelEnd, &contextCompleteTS, ts.global.kernelStart);
+            dataCalculated = true;
+        }
     }
 
     switch (paramName) {
