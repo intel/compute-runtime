@@ -48,7 +48,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isLatePreemptionStartSupportedHelper, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isReducedSurfaceStateSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getIpVersionForGmm, uint32_t, 0, ());
-    ADDMETHOD_CONST_NOBASE(overrideSystemMemoryPatIndex, uint64_t, 0, (uint64_t patIndex));
+    ADDMETHOD_CONST_NOBASE(overrideSystemMemoryPatIndexBase, uint64_t, 0, (uint64_t patIndex));
 
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};

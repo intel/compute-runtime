@@ -6,9 +6,9 @@
 
 target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_tests_base.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_tests_base.h
-
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_gen12lp_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_dg2_g10_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_dg2_g11_tests.cpp

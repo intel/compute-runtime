@@ -350,6 +350,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideDispatchAllModValue, -1, "-1: default. >
 DECLARE_DEBUG_VARIABLE(int32_t, PcQueueDrainMode, -1, "Control QueueDrainMode in PipeControl. -1: default (controlled by driver), >=0: override to given value")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL1P5CacheForRenderSurface, -1, "-1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, SkipImplicitInOrderDependencies, -1, "-1: default, 0: disable, 1: enable - skip all implicit in-order semaphores for L0 command lists")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableOverrideToPat19ForSystemMemory, -1, "-1: default, 0: disable, 1: enable - when enabled force PAT 19 for system memory allocations")
 DECLARE_DEBUG_VARIABLE(bool, TemporaryEnablePageFaultException, true, "Enable page fault exception bit in StateComputeMode, 0: disabled, 1: enable(default)")
 DECLARE_DEBUG_VARIABLE(bool, TemporaryEnableOutOfBoundariesInTranslationException, true, "Enable Out of Boundaries in Translation Exception,  0: disabled, 1: enable(default)")
 DECLARE_DEBUG_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers resident after creation")

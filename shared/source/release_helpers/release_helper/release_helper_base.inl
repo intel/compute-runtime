@@ -189,7 +189,7 @@ bool ReleaseHelperHw<releaseType>::isReducedSurfaceStateSupported() const {
 }
 
 template <ReleaseType releaseType>
-uint64_t ReleaseHelperHw<releaseType>::overrideSystemMemoryPatIndex(uint64_t patIndex) const {
+uint64_t ReleaseHelperHw<releaseType>::overrideSystemMemoryPatIndexBase(uint64_t patIndex) const {
     return patIndex;
 }
 
