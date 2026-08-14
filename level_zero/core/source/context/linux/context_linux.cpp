@@ -233,7 +233,8 @@ void *Context::importHandleFromReservedHandleData(void *reservedHandleData,
                                                   bool isHostIpcAllocation,
                                                   bool compressedMemory,
                                                   uint64_t &importHandle,
-                                                  NEO::GraphicsAllocation *&alloc) {
+                                                  NEO::GraphicsAllocation *&alloc,
+                                                  uint64_t physicalOffset) {
     int reservedHandle = this->driverHandle->getMemoryManager()->getImportHandleFromReservedHandleData(reservedHandleData, neoDevice->getRootDeviceIndex());
     if (reservedHandle != -1) {
         importHandle = static_cast<uint64_t>(reservedHandle);
@@ -247,7 +248,8 @@ void *Context::importHandleFromReservedHandleData(void *reservedHandleData,
                                                   nullptr,
                                                   &alloc,
                                                   allocDataRetry,
-                                                  compressedMemory);
+                                                  compressedMemory,
+                                                  physicalOffset);
     }
     return nullptr;
 }

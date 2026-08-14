@@ -22,7 +22,7 @@
 namespace L0 {
 namespace ult {
 
-void *DriverHandleGetFdMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
+void *DriverHandleGetFdMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) {
     this->allocationTypeRequested = allocationType;
     this->ipcFlagsRequested = flags;
     if (mockFd == allocationMap.second) {
@@ -135,14 +135,14 @@ void MemoryExportImportTest::SetUp() {
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
     if (mockHandle == allocationHandleMap.second) {
         return {nullptr, allocationHandleMap.first};
     }
     return {nullptr, nullptr};
 }
 void *DriverHandleGetMemHandleMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
-                                                   NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
+                                                   NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) {
     if (mockFd == allocationFdMap.second) {
         return allocationFdMap.first;
     }
@@ -226,7 +226,7 @@ void MemoryExportImportWSLTest::TearDown() {
     delete currMemoryManager;
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
     if (mockHandle == allocationMap.second) {
         return {nullptr, allocationMap.first};
     }
@@ -311,7 +311,7 @@ void MemoryExportImportWinHandleTest::SetUp() {
 
 void *DriverHandleGetIpcHandleMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags,
                                                    uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc,
-                                                   NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
+                                                   NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) {
     if (mockFd == allocationMap.second) {
         return allocationMap.first;
     }
@@ -390,6 +390,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::allocateGraphicsMemoryWithPro
 }
 
 NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
+    receivedPhysicalOffset = osHandleData.physicalOffset;
     if (failOnCreateGraphicsAllocationFromSharedHandle) {
         return nullptr;
     }

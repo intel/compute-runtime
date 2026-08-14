@@ -143,6 +143,7 @@ class MemoryManager {
         osHandle handle;
         uint32_t arrayIndex;
         uint32_t parentProcessId = 0;
+        uint64_t physicalOffset = 0;
 
         OsHandleData(uint64_t handle, uint32_t arrayIndex = 0) : handle(static_cast<osHandle>(handle)), arrayIndex(arrayIndex) {};
         OsHandleData(void *handle, uint32_t arrayIndex = 0) : handle(toOsHandle(handle)), arrayIndex(arrayIndex) {};
@@ -189,7 +190,8 @@ class MemoryManager {
                                           GraphicsAllocation **pAlloc,
                                           SvmAllocationData &mappedPeerAllocData,
                                           bool compressedMemory,
-                                          bool uncachedBias);
+                                          bool uncachedBias,
+                                          uint64_t physicalOffset);
 
     MOCKABLE_VIRTUAL void *importFdHandles(Device *neoDevice,
                                            SVMAllocsManager *svmAllocsManager,

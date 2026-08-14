@@ -76,7 +76,8 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                                                                       uint64_t cacheID,
                                                                       void *reservedHandleData,
                                                                       bool compressedMemory,
-                                                                      bool isOpaqueHandle) {
+                                                                      bool isOpaqueHandle,
+                                                                      uint64_t physicalOffset) {
     L0::Device *device = L0::Device::fromHandle(hDevice);
     auto neoDevice = device->getNEODevice();
     NEO::DriverModelType driverType = NEO::DriverModelType::unknown;
@@ -90,7 +91,8 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                                                   allocationType,
                                                   isHostIpcAllocation,
                                                   processId,
-                                                  compressedMemory);
+                                                  compressedMemory,
+                                                  physicalOffset);
     } else if (driverType == NEO::DriverModelType::wddm) {
         return {nullptr, nullptr};
     } else {
@@ -118,9 +120,10 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                                                          nullptr,
                                                          &alloc,
                                                          allocDataInternal,
-                                                         compressedMemory);
+                                                         compressedMemory,
+                                                         physicalOffset);
         if (opaqueHandlesAttempted && !alloc && reservedHandleData) {
-            result = importHandleFromReservedHandleData(reservedHandleData, cacheID, neoDevice, flags, allocationType, isHostIpcAllocation, compressedMemory, importHandle, alloc);
+            result = importHandleFromReservedHandleData(reservedHandleData, cacheID, neoDevice, flags, allocationType, isHostIpcAllocation, compressedMemory, importHandle, alloc, physicalOffset);
         }
 
         // Store cacheID in IPC handle tracking if opaque handles are used

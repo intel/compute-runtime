@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,9 @@ enum class InternalMemoryType : uint32_t {
 enum class InternalIpcMemoryType : uint32_t {
     deviceUnifiedMemory = 0,
     hostUnifiedMemory = 1,
-    deviceVirtualAddress = 2
+    deviceVirtualAddress = 2,
+    reservedDeviceMemory = 3,
+    reservedHostMemory = 4
 };
 
 enum class TransferType : uint32_t {

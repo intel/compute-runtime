@@ -1570,6 +1570,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
         return createUSMHostAllocationFromSharedHandle(osHandleData.handle, properties, nullptr, reuseSharedAllocation, true);
     }
 
+    if (reuseSharedAllocation && osHandleData.physicalOffset != 0) {
+        return nullptr;
+    }
+
     std::unique_lock<std::mutex> lock(mtx);
 
     PrimeHandle openFd{};
@@ -1628,8 +1632,20 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
                                     size, 0u, CacheSettingsHelper::getGmmUsageType(properties.allocationType, properties.flags.uncacheable, drm.getRootDeviceEnvironment().getHelper<ProductHelper>(), gmmHelper->getHardwareInfo()), createStorageInfoFromProperties(properties), gmmRequirements);
     }
 
+    // Address the consumer accesses and the size it may access from there. For a
+    // plain import these are just the BO base and size; with a physical offset the
+    // accessible window is the remainder of the BO starting at that offset.
+    uint64_t reportedAddress = 0;
+    size_t reportedSize = 0;
+
     if (bo == nullptr) {
         UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
+
+        const uint64_t physicalOffset = osHandleData.physicalOffset;
+        if (physicalOffset >= size) {
+            return nullptr;
+        }
+        size_t mappedSize = size - static_cast<size_t>(physicalOffset);
 
         auto patIndex = drm.getPatIndex(gmm.get(), properties.allocationType, CacheRegion::defaultRegion, cachePolicy, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
         auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle, properties.rootDeviceIndex} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle, properties.rootDeviceIndex);
@@ -1654,15 +1670,35 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
             return HeapIndex::heapStandard;
         };
 
-        if (mapPointer) {
-            gpuRange = reinterpret_cast<uint64_t>(mapPointer);
-        } else {
-            auto heapIndex = getHeapIndex();
-            gpuRange = acquireGpuRange(size, properties.rootDeviceIndex, heapIndex);
-        }
+        const bool vmBindAvailable = drm.isVmBindAvailable();
 
-        bo->setAddress(gpuRange);
-        bo->setUnmapSize(size);
+        if (physicalOffset != 0) {
+            // The offset/length are recorded on the BO; VM bind hands them to the
+            // kernel so only the mapped remainder is bound. The legacy execbuffer
+            // path has no per-bind offset, so the whole BO is placed and the offset
+            // is folded into the returned address instead - byte `offset` of the BO
+            // then resolves to the reported pointer. (Mirrors mapPhysicalDeviceMemoryToVirtualMemory.)
+            bo->setPhysicalMemoryOffset(physicalOffset);
+            bo->setVirtualMappingSize(mappedSize);
+            if (vmBindAvailable) {
+                gpuRange = mapPointer ? reinterpret_cast<uint64_t>(mapPointer) : acquireGpuRange(mappedSize, properties.rootDeviceIndex, getHeapIndex());
+                bo->setAddress(gpuRange);
+                bo->setUnmapSize(mappedSize);
+                reportedAddress = gpuRange;
+            } else {
+                gpuRange = mapPointer ? reinterpret_cast<uint64_t>(mapPointer) : acquireGpuRange(size, properties.rootDeviceIndex, getHeapIndex());
+                bo->setAddress(gpuRange);
+                bo->setUnmapSize(size);
+                reportedAddress = gpuRange + physicalOffset;
+            }
+            reportedSize = mappedSize;
+        } else {
+            gpuRange = mapPointer ? reinterpret_cast<uint64_t>(mapPointer) : acquireGpuRange(size, properties.rootDeviceIndex, getHeapIndex());
+            bo->setAddress(gpuRange);
+            bo->setUnmapSize(size);
+            reportedAddress = bo->peekAddress();
+            reportedSize = bo->peekSize();
+        }
 
         PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
                      "Created BO-%d range: %llx - %llx, size: %lld from PRIME_FD_TO_HANDLE\n",
@@ -1672,6 +1708,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
                      bo->peekSize());
 
         pushSharedBufferObject(bo);
+    } else {
+        reportedAddress = bo->peekAddress();
+        reportedSize = bo->peekSize();
     }
 
     if (reuseSharedAllocation) {
@@ -1679,8 +1718,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
     }
 
     auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
-    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
-    auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
+    auto canonizedGpuAddress = gmmHelper->canonize(reportedAddress);
+    auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(reportedAddress), reportedSize,
                                            osHandleData.handle, memoryPool, canonizedGpuAddress);
 
     drmAllocation->setDefaultGmm(gmm.release());

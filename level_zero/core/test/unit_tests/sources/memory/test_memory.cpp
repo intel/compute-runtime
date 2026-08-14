@@ -336,7 +336,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandle *driverHandle = context->getDriverHandle();
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ipcPtr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, &ipcAlloc, allocDataInternal, false);
+    void *ipcPtr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, &ipcAlloc, allocDataInternal, false, 0u);
     EXPECT_EQ(ipcPtr, nullptr);
 
     result = context->freeMem(ptr);
@@ -3733,7 +3733,7 @@ TEST_F(ContextMemoryTests, givenMultipleSubDevicesWhenAllocatingThenUseCorrectGl
 }
 
 struct DriverHandleFailGetFdMock : public L0::DriverHandle {
-    void *importFdHandle(NEO::Device *neoDevicee, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override {
+    void *importFdHandle(NEO::Device *neoDevicee, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) override {
         importFdHandleCalledTimes++;
         if (mockFd == allocationMap.second) {
             return allocationMap.first;
@@ -3798,6 +3798,102 @@ struct MemoryExportImportFailTest : public ::testing::Test {
     ze_context_handle_t hContext;
     std::unique_ptr<ContextFailFdMock> context;
 };
+
+void populateReservedIpcHandle(ze_ipc_mem_handle_t &ipcHandle, uint64_t handle, InternalIpcMemoryType memoryType, uint64_t poolOffset) {
+    IpcMemoryData &legacyData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
+    legacyData.handle = handle;
+    legacyData.type = static_cast<uint8_t>(memoryType);
+    legacyData.poolOffset = poolOffset;
+
+    IpcOpaqueMemoryData &opaqueData = *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
+    opaqueData.memoryType = static_cast<uint8_t>(memoryType);
+}
+
+struct ContextRecordPhysicalOffsetMock : public L0::Context {
+    ContextRecordPhysicalOffsetMock(DriverHandleFailGetFdMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+        driverHandle = inDriverHandle;
+    }
+    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
+        capturedPhysicalOffset = physicalOffset;
+        capturedAllocationType = allocationType;
+        getMemHandlePtrCalledTimes++;
+        return {nullptr, importBasePtr};
+    }
+    DriverHandleFailGetFdMock *driverHandle = nullptr;
+    uint64_t capturedPhysicalOffset = std::numeric_limits<uint64_t>::max();
+    NEO::AllocationType capturedAllocationType = NEO::AllocationType::unknown;
+    uint32_t getMemHandlePtrCalledTimes = 0;
+    void *importBasePtr = reinterpret_cast<void *>(0x1000u);
+};
+
+struct MemoryImportPhysicalOffsetTest : public ::testing::Test {
+    void SetUp() override {
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        auto mockBuiltIns = new MockBuiltins();
+        MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<DriverHandleFailGetFdMock>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+
+        context = std::make_unique<ContextRecordPhysicalOffsetMock>(driverHandle.get());
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+        auto neoDeviceLocal = device->getNEODevice();
+        context->rootDeviceIndices.pushUnique(neoDeviceLocal->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDeviceLocal->getRootDeviceIndex(), neoDeviceLocal->getDeviceBitfield()});
+        context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    }
+
+    void TearDown() override {
+    }
+    std::unique_ptr<DriverHandleFailGetFdMock> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    std::unique_ptr<ContextRecordPhysicalOffsetMock> context;
+};
+
+TEST_F(MemoryImportPhysicalOffsetTest,
+       givenReservedDeviceMemoryTypeWhenOpenIpcMemHandleThenPhysicalOffsetIsPassedAndVaOffsetIsNotApplied) {
+    ze_ipc_mem_handle_t ipcHandle{};
+    populateReservedIpcHandle(ipcHandle, 57u, InternalIpcMemoryType::reservedDeviceMemory, 0x2000u);
+
+    ze_ipc_memory_flags_t flags = {};
+    void *ipcPtr = nullptr;
+    auto result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0x2000u, context->capturedPhysicalOffset);
+    EXPECT_EQ(NEO::AllocationType::buffer, context->capturedAllocationType);
+    EXPECT_EQ(context->importBasePtr, ipcPtr);
+}
+
+TEST_F(MemoryImportPhysicalOffsetTest,
+       givenReservedHostMemoryTypeWhenOpenIpcMemHandleThenHostAllocationTypeIsUsedAndVaOffsetIsApplied) {
+    ze_ipc_mem_handle_t ipcHandle{};
+    populateReservedIpcHandle(ipcHandle, 57u, InternalIpcMemoryType::reservedHostMemory, 0x3000u);
+
+    ze_ipc_memory_flags_t flags = {};
+    void *ipcPtr = nullptr;
+    auto result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, context->capturedPhysicalOffset);
+    EXPECT_EQ(NEO::AllocationType::bufferHostMemory, context->capturedAllocationType);
+    EXPECT_EQ(ptrOffset(context->importBasePtr, 0x3000u), ipcPtr);
+}
+
+TEST_F(MemoryImportPhysicalOffsetTest,
+       givenDeviceUnifiedMemoryTypeWithPoolOffsetWhenOpenIpcMemHandleThenNoPhysicalOffsetAndVaOffsetIsApplied) {
+    ze_ipc_mem_handle_t ipcHandle{};
+    populateReservedIpcHandle(ipcHandle, 57u, InternalIpcMemoryType::deviceUnifiedMemory, 0x2000u);
+
+    ze_ipc_memory_flags_t flags = {};
+    void *ipcPtr = nullptr;
+    auto result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, context->capturedPhysicalOffset);
+    EXPECT_EQ(NEO::AllocationType::buffer, context->capturedAllocationType);
+    EXPECT_EQ(ptrOffset(context->importBasePtr, 0x2000u), ipcPtr);
+}
 
 TEST_F(MemoryExportImportFailTest,
        givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndIncorrectStypeThenFileDescriptorIsNotReturned) {
@@ -6226,7 +6322,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -6240,7 +6336,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -6255,7 +6351,7 @@ TEST_F(ImportFdUncachedTests,
                                   static_cast<ze_ipc_memory_flags_t>(ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED);
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -6269,7 +6365,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -6283,7 +6379,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::bufferHostMemory, true, nullptr, nullptr, allocDataInternal, false);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::bufferHostMemory, true, nullptr, nullptr, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -6298,12 +6394,30 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
     EXPECT_EQ(allocData->memoryType, InternalMemoryType::deviceUnifiedMemory);
+
+    context->freeMem(ptr);
+}
+
+TEST_F(ImportFdUncachedTests,
+       givenCallToImportFdHandleWithPhysicalOffsetAndIpcUncachedFlagThenPhysicalOffsetIsForwardedAndUncachedResourceIsSet) {
+    ze_ipc_memory_flags_t flags = ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
+    uint64_t handle = 1;
+    const uint64_t physicalOffset = 0x5000u;
+    NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, physicalOffset);
+    EXPECT_NE(nullptr, ptr);
+
+    EXPECT_EQ(physicalOffset, static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager)->receivedPhysicalOffset);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
 
     context->freeMem(ptr);
 }

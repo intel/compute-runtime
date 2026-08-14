@@ -785,7 +785,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
         }
         status = mapGpuVirtualAddress(allocation.get(), allocation->getReservedAddressPtr(), nullptr, 0u);
     } else {
-        status = mapPhysicalDeviceMemoryToVirtualMemory(allocation.get(), reinterpret_cast<uint64_t>(mapPointer), size, nullptr, 0u);
+        status = mapPhysicalDeviceMemoryToVirtualMemory(allocation.get(), reinterpret_cast<uint64_t>(mapPointer), size, nullptr, static_cast<size_t>(osHandleData.physicalOffset));
     }
     this->registerSysMemAlloc(allocation.get());
     DEBUG_BREAK_IF(!status);

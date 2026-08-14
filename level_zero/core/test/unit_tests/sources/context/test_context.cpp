@@ -6901,6 +6901,121 @@ TEST_F(ContextTest, whenCallingGetIpcMemHandleWithHostPhysicalMemoryHandleThenSu
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, whenGettingIpcHandleForReservedDeviceMemoryWithPhysicalOffsetThenReservedDeviceTypeAndPoolOffsetAreSet) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    context->settings.enableIpcHandleSharingByDefault = true;
+
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 1u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    const uint64_t physicalOffset = 0x2000u;
+    allocData->memoryType = InternalMemoryType::reservedDeviceMemory;
+    allocData->mappedPhysicalOffset = physicalOffset;
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    EXPECT_EQ(static_cast<uint8_t>(InternalIpcMemoryType::reservedDeviceMemory), ipcData->type);
+    EXPECT_EQ(physicalOffset, ipcData->poolOffset);
+
+    result = context->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    allocData->memoryType = InternalMemoryType::deviceUnifiedMemory;
+    allocData->mappedPhysicalOffset = 0u;
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(ContextTest, whenGettingIpcHandleForReservedHostMemoryWithPhysicalOffsetThenReservedHostTypeAndPoolOffsetAreSet) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    context->settings.enableIpcHandleSharingByDefault = true;
+
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 1u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    const uint64_t physicalOffset = 0x3000u;
+    allocData->memoryType = InternalMemoryType::reservedHostMemory;
+    allocData->mappedPhysicalOffset = physicalOffset;
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    EXPECT_EQ(static_cast<uint8_t>(InternalIpcMemoryType::reservedHostMemory), ipcData->type);
+    EXPECT_EQ(physicalOffset, ipcData->poolOffset);
+
+    result = context->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    allocData->memoryType = InternalMemoryType::deviceUnifiedMemory;
+    allocData->mappedPhysicalOffset = 0u;
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(ContextTest, whenCallingSetIPCHandleDataWithPhysicalOffsetAndNoPoolThenPoolOffsetIsSetToPhysicalOffset) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextWhiteboxForIpcTesting contextWhitebox(driverHandle.get());
+
+    NEO::MockGraphicsAllocation mockAllocation;
+
+    uint64_t handle = 55555;
+    L0::IpcMemoryData ipcData;
+    ipcData.handle = handle;
+    ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::reservedHostMemory);
+    ipcData.poolOffset = 0;
+
+    uint64_t ptrAddress = 0x1000;
+    uint8_t type = static_cast<uint8_t>(InternalIpcMemoryType::reservedHostMemory);
+    const uint64_t physicalOffset = 0x7000u;
+
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr, physicalOffset);
+
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    ASSERT_EQ(1u, ipcHandleMap.size());
+    auto handleIterator = ipcHandleMap.find(handle);
+    ASSERT_NE(handleIterator, ipcHandleMap.end());
+    EXPECT_EQ(physicalOffset, handleIterator->second->ipcData.poolOffset);
+
+    delete handleIterator->second;
+    driverHandle->getIPCHandleMap().clear();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 TEST_F(ContextTest, givenMultipleContiguousMappingsWhenUnmapFullRangeThenAllUnmappedAndSuccess) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};

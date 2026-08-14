@@ -1479,8 +1479,10 @@ void *MemoryManager::importFdHandle(Device *neoDevice,
                                     GraphicsAllocation **pAlloc,
                                     SvmAllocationData &mappedPeerAllocData,
                                     bool compressedMemory,
-                                    bool uncachedBias) {
+                                    bool uncachedBias,
+                                    uint64_t physicalOffset) {
     MemoryManager::OsHandleData osHandleData{handle};
+    osHandleData.physicalOffset = physicalOffset;
     AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                  MemoryConstants::pageSize,
                                                  allocationType,

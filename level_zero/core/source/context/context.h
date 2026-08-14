@@ -304,7 +304,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
         size_t *rowPitch);
 
     MOCKABLE_VIRTUAL bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool ipcSupportedAllocationByDefault);
-    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle);
+    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset);
     MOCKABLE_VIRTUAL void closeExternalHandle(uint64_t handle);
     MOCKABLE_VIRTUAL void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle);
     MOCKABLE_VIRTUAL uint8_t isOpaqueHandleSupported(IpcHandleType *handleType);
@@ -380,12 +380,13 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
                                              bool isHostIpcAllocation,
                                              bool compressedMemory,
                                              uint64_t &importHandle,
-                                             NEO::GraphicsAllocation *&alloc);
+                                             NEO::GraphicsAllocation *&alloc,
+                                             uint64_t physicalOffset = 0);
 
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, void *pNext, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
     template <typename IpcDataT>
-    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool, IpcHandleType handleType, void *reservedHandleData);
+    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool, IpcHandleType handleType, void *reservedHandleData, uint64_t physicalOffset = 0);
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
     size_t getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired) {
         return getPageAlignedSizeRequired(nullptr, size, heapRequired, pageSizeRequired);

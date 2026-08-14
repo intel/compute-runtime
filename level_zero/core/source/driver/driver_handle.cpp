@@ -665,7 +665,8 @@ void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
                                    void *basePointer,
                                    NEO::GraphicsAllocation **pAlloc,
                                    NEO::SvmAllocationData &mappedPeerAllocData,
-                                   bool compressedMemory) {
+                                   bool compressedMemory,
+                                   uint64_t physicalOffset) {
     const bool uncachedBias = ((flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) != 0) ||
                               ((flags & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED) != 0);
     return this->getMemoryManager()->importFdHandle(neoDevice,
@@ -677,7 +678,8 @@ void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
                                                     pAlloc,
                                                     mappedPeerAllocData,
                                                     compressedMemory,
-                                                    uncachedBias);
+                                                    uncachedBias,
+                                                    physicalOffset);
 }
 
 void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
@@ -780,7 +782,7 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                            NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
         ze_ipc_memory_flags_t flags = {};
         return this->importFdHandle(peerDevice, flags, handle, allocationType, false,
-                                    basePointer, pAlloc, mappedPeerAllocData, compressedMemory);
+                                    basePointer, pAlloc, mappedPeerAllocData, compressedMemory, 0u);
     };
     deps.importFds = [this](NEO::Device *peerDevice, const std::vector<NEO::osHandle> &handles,
                             void *basePointer, NEO::GraphicsAllocation **pAlloc,
@@ -831,11 +833,12 @@ NEO::GraphicsAllocation *DriverHandle::resolveMemoryAllocation(Device *device, v
     return allocation;
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     NEO::MemoryManager::OsHandleData osHandleData{handle};
     osHandleData.parentProcessId = parentProcessId;
+    osHandleData.physicalOffset = physicalOffset;
     NEO::AllocationProperties properties{neoDevice->getRootDeviceIndex(),
                                          MemoryConstants::pageSize,
                                          allocationType,

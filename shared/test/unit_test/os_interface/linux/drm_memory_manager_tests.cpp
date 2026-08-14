@@ -249,9 +249,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalDeviceMemoryThenSu
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenCreatePhysicalGraphicsMemoryFromSharedHandleThenSuccessReturned) {
-    mock->ioctlExpected.primeFdToHandle = 1;
-    mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.total = -1;
 
     VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(MemoryConstants::pageSize));
     this->mock->outputHandle = 2u;
@@ -1495,9 +1493,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreate
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleThenSucceeds) {
-    mock->ioctlExpected.primeFdToHandle = 1;
-    mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.total = -1;
 
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
@@ -1510,6 +1506,30 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleT
 
     memoryManager->closeSharedHandle(graphicsAllocation);
     EXPECT_EQ(Sharing::nonSharedResource, graphicsAllocation->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPhysicalOffsetAndNoVmBindWhenCreateGraphicsAllocationFromSharedHandleThenOffsetIsFoldedIntoReportedAddress) {
+    mock->ioctlExpected.total = -1;
+    this->mock->bindAvailable = false;
+
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+    const uint64_t physicalOffset = MemoryConstants::pageSize;
+    this->mock->outputHandle = 2u;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    osHandleData.physicalOffset = physicalOffset;
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    auto bo = static_cast<DrmAllocation *>(graphicsAllocation)->getBO();
+    ASSERT_NE(nullptr, bo);
+    EXPECT_EQ(physicalOffset, bo->getPhysicalMemoryOffset());
+
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_EQ(gmmHelper->canonize(bo->peekAddress() + physicalOffset), graphicsAllocation->getGpuAddress());
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -4720,6 +4740,51 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
 
     memoryManager.freeGraphicsMemory(allocation2);
     memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
+     givenPhysicalOffsetWhenCreateGraphicsAllocationFromSharedHandleThenBufferObjectMappingOffsetAndSizeAreSet) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    const uint32_t rootDeviceIndex = 0u;
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+    auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+    const uint64_t physicalOffset = MemoryConstants::pageSize;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    osHandleData.physicalOffset = physicalOffset;
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
+    auto allocation = memoryManager.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, allocation);
+
+    auto bo = static_cast<DrmAllocation *>(allocation)->getBO();
+    ASSERT_NE(nullptr, bo);
+    EXPECT_EQ(physicalOffset, bo->getPhysicalMemoryOffset());
+    EXPECT_EQ(static_cast<size_t>(2 * MemoryConstants::pageSize) - physicalOffset, bo->getVirtualMappingSize());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
+     givenReuseSharedAllocationAndPhysicalOffsetWhenCreateGraphicsAllocationFromSharedHandleThenNullptrIsReturned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    const uint32_t rootDeviceIndex = 0u;
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+    auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    osHandleData.physicalOffset = MemoryConstants::pageSize;
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
+    auto allocation = memoryManager.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    EXPECT_EQ(nullptr, allocation);
 }
 
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
