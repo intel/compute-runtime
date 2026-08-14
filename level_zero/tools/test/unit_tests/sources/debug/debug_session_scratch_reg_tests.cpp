@@ -271,11 +271,12 @@ TEST_F(DebugSessionScratchRegistersTestV2, WhenReadRegistersImpReturnsErrorThenG
 }
 
 TEST_F(DebugSessionScratchRegistersTestV2, WhenGetRenderSurfaceStateAddressV2IsCalledThenCorrectResultIsReturned) {
+    // s18 holds the low dword of the address, s19 the high dword
     session.readRegistersData.assign({0x0a, 0xbc, 0xde, 0xf0, 0x0d, 0xbe, 0xad, 0xde});
 
     uint64_t result = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, session.getScratchRenderSurfaceStateAddress(threadId, &result));
-    EXPECT_EQ(0xf0debc0adeadbe0d, result);
+    EXPECT_EQ(0xdeadbe0df0debc0a, result);
     EXPECT_EQ(threadId, session.lastReadRegistersParams->thread);
     EXPECT_EQ(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, session.lastReadRegistersParams->type);
     EXPECT_EQ(18u, session.lastReadRegistersParams->start);

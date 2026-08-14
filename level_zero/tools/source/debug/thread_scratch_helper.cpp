@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,10 @@ ze_result_t DebugSessionImp::getScratchRenderSurfaceStateAddressV2(EuThread::Thr
         return ret;
     }
 
-    *result = (static_cast<uint64_t>(s18and19[0]) << 32) | s18and19[1];
+    uint64_t scratchRssAddressLow = static_cast<uint64_t>(s18and19[0]);
+    uint64_t scratchRssAddressHigh = (static_cast<uint64_t>(s18and19[1]) << 32);
+    *result = scratchRssAddressLow | scratchRssAddressHigh;
+
     return ZE_RESULT_SUCCESS;
 }
 
