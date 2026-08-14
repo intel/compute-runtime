@@ -7,10 +7,19 @@
 
 #include "level_zero/sysman/source/api/memory/sysman_memory_imp.h"
 
+#include "shared/source/helpers/string.h"
+
 #include "level_zero/zes_intel_gpu_sysman.h"
+
+#include <map>
+#include <string>
 
 namespace L0 {
 namespace Sysman {
+
+static const std::map<uint32_t, std::string> memoryVendorIdToNameMap = {
+    {0xFFu, "Micron"},
+};
 
 ze_result_t MemoryImp::memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     return pOsMemory->getBandwidth(pBandwidth);
@@ -34,9 +43,14 @@ ze_result_t MemoryImp::memoryGetProperties(zes_mem_properties_t *pProperties) {
                 pVendorIdProps->vendorId = 0;
             }
             // A length of 0 indicates that the memory vendor name could not be determined.
-            // No vendor name source is wired up yet, so it is always reported as unavailable.
             pVendorIdProps->length = 0;
             pVendorIdProps->vendorName[0] = '\0';
+            auto vendorNameIterator = memoryVendorIdToNameMap.find(pVendorIdProps->vendorId);
+            if (vendorNameIterator != memoryVendorIdToNameMap.end()) {
+                const std::string &vendorName = vendorNameIterator->second;
+                strncpy_s(pVendorIdProps->vendorName, ZES_INTEL_MEMORY_VENDOR_NAME_SIZE, vendorName.c_str(), vendorName.size());
+                pVendorIdProps->length = static_cast<uint16_t>(vendorName.length());
+            }
         }
         pNext = pExtProps->pNext;
     }

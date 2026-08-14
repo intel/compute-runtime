@@ -26,6 +26,7 @@ constexpr uint32_t mockMemoryCurrentBandwidthRead = 3840;
 constexpr uint32_t mockMemoryCurrentBandwidthWrite = 2560;
 constexpr uint32_t mockMemoryBandwidthTimestamp = 1230000;
 constexpr uint32_t mockMemoryVendorIdValue = 0xADu;
+constexpr uint32_t mockMicronMemoryVendorIdValue = 0xFFu;
 
 struct MockMemoryManagerSysman : public MemoryManagerMock {
     MockMemoryManagerSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
@@ -210,7 +211,18 @@ struct MockOsMemory : public L0::Sysman::OsMemory {
     ADDMETHOD_NOBASE(getBandwidth, ze_result_t, ZE_RESULT_SUCCESS, (zes_mem_bandwidth_t * pBandwidth));
     ADDMETHOD_NOBASE(getState, ze_result_t, ZE_RESULT_SUCCESS, (zes_mem_state_t * pState));
     ADDMETHOD_NOBASE(isMemoryModuleSupported, bool, true, ());
-    ADDMETHOD_NOBASE(getVendorId, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t *pVendorId));
+
+    ze_result_t getVendorId(uint32_t *pVendorId) override {
+        getVendorIdCalled++;
+        if (getVendorIdResult == ZE_RESULT_SUCCESS) {
+            *pVendorId = getVendorIdValue;
+        }
+        return getVendorIdResult;
+    }
+
+    ze_result_t getVendorIdResult = ZE_RESULT_SUCCESS;
+    uint32_t getVendorIdCalled = 0u;
+    uint32_t getVendorIdValue = 0u;
 };
 
 struct MockSysmanProductHelperMemory : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {

@@ -257,6 +257,61 @@ TEST_F(SysmanDeviceMemoryFixture, GivenMemoryVendorIdExtensionAndVendorIdQueryIs
     }
 }
 
+TEST_F(SysmanDeviceMemoryFixture, GivenMemoryVendorIdExtensionAndVendorIdIsKnownWhenCallingZesMemoryGetPropertiesThenVendorNameIsReturned) {
+    pKmdSysManager->mockMemoryDomains = 1;
+    clearMemHandleListAndReinit();
+
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    ASSERT_EQ(handles.size(), memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        auto pMemoryImp = static_cast<L0::Sysman::MemoryImp *>(L0::Sysman::Memory::fromHandle(handle));
+        std::unique_ptr<L0::Sysman::OsMemory> pOsMemory = std::make_unique<MockOsMemory>();
+        auto pMockOsMemory = static_cast<MockOsMemory *>(pOsMemory.get());
+        pMockOsMemory->getVendorIdValue = mockMicronMemoryVendorIdValue;
+        std::swap(pMemoryImp->pOsMemory, pOsMemory);
+
+        zes_mem_properties_t properties = {};
+        zes_intel_memory_vendor_id_exp_properties_t vendorIdProperties = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP};
+        properties.pNext = &vendorIdProperties;
+
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(properties.pNext, &vendorIdProperties);
+        EXPECT_EQ(vendorIdProperties.vendorId, mockMicronMemoryVendorIdValue);
+        EXPECT_STREQ(vendorIdProperties.vendorName, "Micron");
+        EXPECT_EQ(vendorIdProperties.length, static_cast<uint16_t>(std::strlen("Micron")));
+
+        std::swap(pMemoryImp->pOsMemory, pOsMemory);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenMemoryVendorIdExtensionAndVendorIdIsUnknownWhenCallingZesMemoryGetPropertiesThenVendorNameIsNotReturned) {
+    pKmdSysManager->mockMemoryDomains = 1;
+    clearMemHandleListAndReinit();
+
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    ASSERT_EQ(handles.size(), memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        auto pMemoryImp = static_cast<L0::Sysman::MemoryImp *>(L0::Sysman::Memory::fromHandle(handle));
+        std::unique_ptr<L0::Sysman::OsMemory> pOsMemory = std::make_unique<MockOsMemory>();
+        auto pMockOsMemory = static_cast<MockOsMemory *>(pOsMemory.get());
+        pMockOsMemory->getVendorIdValue = mockMemoryVendorIdValue;
+        std::swap(pMemoryImp->pOsMemory, pOsMemory);
+
+        zes_mem_properties_t properties = {};
+        zes_intel_memory_vendor_id_exp_properties_t vendorIdProperties = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP};
+        properties.pNext = &vendorIdProperties;
+
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(vendorIdProperties.vendorId, mockMemoryVendorIdValue);
+        EXPECT_EQ(vendorIdProperties.length, 0u);
+        EXPECT_STREQ(vendorIdProperties.vendorName, "");
+
+        std::swap(pMemoryImp->pOsMemory, pOsMemory);
+    }
+}
+
 TEST_F(SysmanDeviceMemoryFixture, GivenUnsupportedExtensionStypeWhenCallingZesMemoryGetPropertiesThenExtensionIsIgnoredAndSuccessIsReturned) {
     pKmdSysManager->mockMemoryDomains = 1;
     clearMemHandleListAndReinit();
