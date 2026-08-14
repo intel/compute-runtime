@@ -1764,7 +1764,7 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
         if (start + count > registerCount) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        startRegOffset = static_cast<size_t>(registerStartOffset);
+        startRegOffset = static_cast<size_t>(registerStartOffset) + (static_cast<size_t>(start) * regdesc->bytes);
     } else {
         auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
         startRegOffset = threadSlotOffset + calculateRegisterOffsetInThreadSlot(regdesc, start);

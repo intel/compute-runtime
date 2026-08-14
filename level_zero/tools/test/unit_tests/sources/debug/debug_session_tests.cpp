@@ -5885,6 +5885,41 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
     rootEnv.sipExternalLib.reset(originalSipLib);
 }
 
+TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccessHelperCalledWithNonZeroStartThenRegisterAtRequestedIndexIsAccessed) {
+    auto neoDevice = mockDevice->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    auto mockSipLib = new MockSipExternalLib();
+
+    constexpr uint32_t regsetStartOffset = 64;
+    constexpr uint32_t startRegister = 18;
+    constexpr uint32_t registerCount = 32;
+    constexpr uint32_t valueAtStartRegister = 0xFF600080;
+    constexpr uint32_t valueAtFirstRegister = 0x08000600;
+
+    mockSipLib->getSipLibRegisterAccessCount = registerCount;
+    mockSipLib->getSipLibRegisterAccessStartOffset = regsetStartOffset;
+    rootEnv.sipExternalLib.reset(mockSipLib);
+
+    SIP::regset_desc regdesc = {};
+    regdesc.num = registerCount;
+    regdesc.bytes = sizeof(uint32_t);
+
+    ASSERT_GE(session->stateSaveAreaHeader.size(), regsetStartOffset + (registerCount * sizeof(uint32_t)));
+    auto regsetBase = reinterpret_cast<uint32_t *>(session->stateSaveAreaHeader.data() + regsetStartOffset);
+    regsetBase[0] = valueAtFirstRegister;
+    regsetBase[startRegister] = valueAtStartRegister;
+
+    uint32_t readValue = 0;
+    auto thread = session->allThreads[stoppedThreadId].get();
+    auto result = session->registersAccessHelper(thread, &regdesc, startRegister, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, &readValue, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(valueAtStartRegister, readValue);
+
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
 TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccessHelperReadWriteCalledThenSuccessReturned) {
     auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
