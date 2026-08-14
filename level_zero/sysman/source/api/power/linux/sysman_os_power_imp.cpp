@@ -82,9 +82,7 @@ ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy)
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 
     if (isTelemetrySupportAvailable) {
-        if ((result = pSysmanProductHelper->getPowerEnergyCounter(pEnergy, pLinuxSysmanImp, powerDomain, subdeviceId)) == ZE_RESULT_SUCCESS) {
-            return result;
-        }
+        return pSysmanProductHelper->getPowerEnergyCounter(pEnergy, pLinuxSysmanImp, powerDomain, subdeviceId);
     }
 
     if ((result = pSysfsAccess->read(energyCounterNodeFile, pEnergy->energy)) != ZE_RESULT_SUCCESS) {
