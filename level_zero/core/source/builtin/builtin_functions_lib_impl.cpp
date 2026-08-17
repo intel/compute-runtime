@@ -8,6 +8,7 @@
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/registry/built_ins_registry.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -88,7 +89,7 @@ Kernel *BuiltInKernelLibImpl::getImageFunction(ImageBuiltIn func, const NEO::Bui
 std::unique_ptr<BuiltInKernelLibImpl::BuiltInKernelData> BuiltInKernelLibImpl::loadBuiltIn(NEO::BuiltIn::BaseKernel baseKernel, const NEO::BuiltIn::AddressingMode &mode, const char *kernelName) {
     using BuiltInCodeType = NEO::BuiltIn::CodeType;
 
-    if (!NEO::BuiltIn::EmbeddedStorageRegistry::exists) {
+    if (!NEO::RegisterEmbeddedResource::anyRegistered()) {
         return nullptr;
     }
 

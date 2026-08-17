@@ -14,11 +14,13 @@
 #include "shared/source/utilities/mem_lifetime.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -132,7 +134,7 @@ enum class CodeType {
 };
 
 struct Code {
-    static const char *getExtension(CodeType ct) {
+    static constexpr const char *getExtension(CodeType ct) {
         switch (ct) {
         default:
             return "";
@@ -163,6 +165,24 @@ inline Resource createResource(const char *ptr, size_t size) {
 std::string createResourceName(BaseKernel kernel, const std::string &extension);
 StackVec<std::string, 3> getResourceNames(BaseKernel kernel, const AddressingMode &mode, CodeType type, const Device &device);
 
+template <BaseKernel kernel, CodeType codeType>
+constexpr auto makeResourceName() {
+    constexpr std::string_view baseName = getAsString(kernel);
+    constexpr std::string_view extension = Code::getExtension(codeType);
+
+    std::array<char, baseName.size() + extension.size() + 1> name{};
+    for (size_t i = 0; i < baseName.size(); ++i) {
+        name[i] = baseName[i];
+    }
+    for (size_t i = 0; i < extension.size(); ++i) {
+        name[baseName.size() + i] = extension[i];
+    }
+    return name;
+}
+
+template <BaseKernel kernel, CodeType codeType>
+inline constexpr auto resourceName = makeResourceName<kernel, codeType>();
+
 class Storage {
   public:
     Storage(const std::string &rootPath)
@@ -187,33 +207,6 @@ class FileStorage : public Storage {
 
   protected:
     Resource loadImpl(const std::string &fullResourceName) override;
-};
-
-struct EmbeddedStorageRegistry {
-    inline static bool exists = false;
-
-    static EmbeddedStorageRegistry &getInstance() {
-        static EmbeddedStorageRegistry gsr;
-        return gsr;
-    }
-
-    void store(const std::string &name, Resource &&resource) {
-        resources.emplace(name, Resource(std::move(resource)));
-    }
-
-    const Resource *get(const std::string &name) const;
-
-    ~EmbeddedStorageRegistry() {
-        exists = false;
-    }
-
-  protected:
-    EmbeddedStorageRegistry() {
-        exists = true;
-    }
-
-    using ResourcesContainer = std::unordered_map<std::string, Resource>;
-    ResourcesContainer resources;
 };
 
 class EmbeddedStorage : public Storage {

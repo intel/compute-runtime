@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/registry/built_ins_registry.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -111,23 +112,13 @@ BuiltIn::Resource BuiltIn::FileStorage::loadImpl(const std::string &fullResource
     return ret;
 }
 
-const BuiltIn::Resource *BuiltIn::EmbeddedStorageRegistry::get(const std::string &name) const {
-    auto it = resources.find(name);
-    if (resources.end() == it) {
-        return nullptr;
-    }
-
-    return &it->second;
-}
-
 BuiltIn::Resource BuiltIn::EmbeddedStorage::loadImpl(const std::string &fullResourceName) {
-    auto *constResource = BuiltIn::EmbeddedStorageRegistry::getInstance().get(fullResourceName);
-    if (constResource == nullptr) {
-        BuiltIn::Resource ret;
-        return ret;
+    auto *embeddedResource = RegisterEmbeddedResource::find(fullResourceName);
+    if (embeddedResource == nullptr) {
+        return BuiltIn::Resource{};
     }
 
-    return BuiltIn::createResource(*constResource);
+    return BuiltIn::createResource(embeddedResource->resource, embeddedResource->resourceLength, true);
 }
 
 BuiltIn::ResourceLoader::ResourceLoader() {

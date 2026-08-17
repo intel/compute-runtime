@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/registry/built_ins_registry.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -136,6 +137,52 @@ TEST(BuiltInResourceTests, whenMoveAssigningResourceThenOwnershipIsTransferredAn
     destination = std::move(asResourceRef(destination));
     EXPECT_EQ(destinationDataBeforeSelfMove, destination.data);
     EXPECT_EQ(sizeof(source), destination.size);
+}
+
+TEST(EmbeddedResourceRegistryTests, whenResourceIsRegisteredThenItIsFoundByName) {
+    static constexpr char resourceData[] = "mock_resource_data";
+    static RegisterEmbeddedResource registeredResource("mock_registered.builtin_kernel.bin", resourceData, sizeof(resourceData));
+
+    const auto *foundResource = RegisterEmbeddedResource::find("mock_registered.builtin_kernel.bin");
+    ASSERT_NE(nullptr, foundResource);
+    EXPECT_EQ(resourceData, foundResource->resource);
+    EXPECT_EQ(sizeof(resourceData), foundResource->resourceLength);
+    EXPECT_TRUE(RegisterEmbeddedResource::anyRegistered());
+}
+
+TEST(EmbeddedResourceRegistryTests, whenResourceWasNeverRegisteredThenItIsNotFound) {
+    EXPECT_EQ(nullptr, RegisterEmbeddedResource::find("mock_never_registered.builtin_kernel.bin"));
+}
+
+TEST(EmbeddedResourceRegistryTests, givenDuplicatedNameWhenResourceIsFoundThenFirstRegisteredOneIsReturned) {
+    static constexpr char firstResourceData[] = "first";
+    static constexpr char secondResourceData[] = "second";
+    static RegisterEmbeddedResource firstRegistration("mock_duplicated.builtin_kernel.bin", firstResourceData, sizeof(firstResourceData));
+    static RegisterEmbeddedResource secondRegistration("mock_duplicated.builtin_kernel.bin", secondResourceData, sizeof(secondResourceData));
+
+    const auto *foundResource = RegisterEmbeddedResource::find("mock_duplicated.builtin_kernel.bin");
+    ASSERT_NE(nullptr, foundResource);
+    EXPECT_EQ(firstResourceData, foundResource->resource);
+}
+
+TEST(EmbeddedResourceRegistryTests, whenLoadingRegisteredResourceFromEmbeddedStorageThenDataIsNotCopied) {
+    static constexpr char resourceData[] = "mock_not_copied_data";
+    static RegisterEmbeddedResource registeredResource("mock_not_copied.builtin_kernel.bin", resourceData, sizeof(resourceData));
+
+    BuiltIn::EmbeddedStorage embeddedStorage("");
+    auto resource = embeddedStorage.load("mock_not_copied.builtin_kernel.bin");
+
+    EXPECT_EQ(resourceData, resource.data);
+    EXPECT_EQ(sizeof(resourceData), resource.size);
+    EXPECT_TRUE(resource.persistentMemory);
+}
+
+TEST(EmbeddedResourceRegistryTests, whenLoadingUnknownResourceFromEmbeddedStorageThenEmptyResourceIsReturned) {
+    BuiltIn::EmbeddedStorage embeddedStorage("");
+    auto resource = embeddedStorage.load("mock_unknown.builtin_kernel.bin");
+
+    EXPECT_TRUE(resource.empty());
+    EXPECT_EQ(nullptr, resource.data);
 }
 
 using BuiltInSharedTest = Test<DeviceFixture>;

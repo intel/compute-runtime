@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/registry/built_ins_registry.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -1581,21 +1582,24 @@ TEST_F(BuiltInTests, WhenJoiningPathThenPathsAreJoinedWithCorrectSeparator) {
     EXPECT_EQ(0, strcmp((resourcePath + PATH_SEPARATOR + resourceName).c_str(), joinPath(resourcePath, resourceName).c_str()));
 }
 
-TEST_F(BuiltInTests, GivenFileNameWhenGettingKernelFromEmbeddedStorageRegistryThenValidPtrIsReturnedForExisitngKernels) {
-    class MockEmbeddedStorageRegistry : public BuiltIn::EmbeddedStorageRegistry {
-        using BuiltIn::EmbeddedStorageRegistry::EmbeddedStorageRegistry;
-    };
-    MockEmbeddedStorageRegistry storageRegistry;
+TEST_F(BuiltInTests, GivenFileNameWhenGettingKernelFromEmbeddedResourcesThenValidPtrIsReturnedForExisitngKernels) {
+    static constexpr char resource[] = "__kernel";
+    static RegisterEmbeddedResource registeredResource("mock_embedded_kernel.cl", resource, sizeof(resource));
 
-    std::string resource = "__kernel";
-    storageRegistry.store("kernel.cl", BuiltIn::createResource(resource.data(), resource.size() + 1));
+    const auto *foundResource = RegisterEmbeddedResource::find("mock_embedded_kernel.cl");
+    ASSERT_NE(nullptr, foundResource);
+    EXPECT_EQ(resource, foundResource->resource);
+    EXPECT_EQ(sizeof(resource), foundResource->resourceLength);
 
-    const BuiltIn::Resource *br = storageRegistry.get("kernel.cl");
-    EXPECT_NE(nullptr, br);
-    EXPECT_EQ(0, strcmp(resource.data(), br->data));
+    EXPECT_EQ(nullptr, RegisterEmbeddedResource::find("unknown.cl"));
+}
 
-    const BuiltIn::Resource *bnr = storageRegistry.get("unknown.cl");
-    EXPECT_EQ(nullptr, bnr);
+TEST_F(BuiltInTests, GivenBuiltinSourcesWhenResolvingResourceNamesThenEveryKernelSourceIsRegistered) {
+    for (uint32_t kernelIndex = 0; kernelIndex < static_cast<uint32_t>(BuiltIn::BaseKernel::count); ++kernelIndex) {
+        const auto sourceKernel = static_cast<BuiltIn::BaseKernel>(kernelIndex);
+        auto resourceName = BuiltIn::createResourceName(sourceKernel, BuiltIn::Code::getExtension(BuiltIn::CodeType::source));
+        EXPECT_NE(nullptr, RegisterEmbeddedResource::find(resourceName)) << resourceName;
+    }
 }
 
 TEST_F(BuiltInTests, WhenStoringRootPathThenPathIsSavedCorrectly) {
@@ -1617,7 +1621,7 @@ TEST_F(BuiltInTests, WhenStoringRootPathThenPathIsSavedCorrectly) {
     EXPECT_EQ(0, strcmp(rootPath.data(), mockStorage.getRootPath().data()));
 }
 
-TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromEmbeddedStorageRegistryThenValidPtrIsReturnedForExisitngKernels) {
+TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromEmbeddedStorageThenValidPtrIsReturnedForExisitngKernels) {
     class MockEmbeddedStorage : BuiltIn::EmbeddedStorage {
       public:
         MockEmbeddedStorage(const std::string &rootPath) : BuiltIn::EmbeddedStorage(rootPath) {};

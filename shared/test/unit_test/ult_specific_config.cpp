@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/registry/built_ins_registry.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -17,6 +18,10 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/tests_configuration.h"
 #include "shared/test/unit_test/mocks/mock_cpuid_functions.h"
+
+#include <array>
+#include <optional>
+#include <type_traits>
 
 namespace NEO {
 namespace ImplicitScaling {
@@ -71,12 +76,25 @@ void applyWorkarounds() {
         BuiltIn::bindlessImageBindlessBuffer,
         BuiltIn::bindlessImageStatelessBuffer,
         BuiltIn::bindlessImageStatelessBufferWide};
-    auto &storageRegistry = BuiltIn::EmbeddedStorageRegistry::getInstance();
-    std::string resource = "__mock_spirv_resource";
+    static constexpr char mockSpirvResource[] = "__mock_spirv_resource";
+    static constexpr size_t mockResourceCount = std::tuple_size_v<decltype(builtinBaseNames)> * std::extent_v<decltype(modes)>;
+    static constexpr size_t mockResourceNameCapacity = 96;
+
+    static std::array<std::array<char, mockResourceNameCapacity>, mockResourceCount> mockResourceNames{};
+    static std::array<std::optional<RegisterEmbeddedResource>, mockResourceCount> mockResources{};
+    static_assert(std::is_trivially_destructible_v<decltype(mockResourceNames)>);
+    static_assert(std::is_trivially_destructible_v<decltype(mockResources)>);
+
+    size_t mockResourceIndex = 0;
     for (const auto &baseName : builtinBaseNames) {
         for (const auto &mode : modes) {
-            std::string fullName = mode.toString() + baseName.str() + ".builtin_kernel.spv";
-            storageRegistry.store(fullName, BuiltIn::createResource(resource.data(), resource.size() + 1));
+            const auto fullName = mode.toString() + baseName.str() + ".builtin_kernel.spv";
+            auto &nameStorage = mockResourceNames[mockResourceIndex];
+            UNRECOVERABLE_IF(fullName.size() >= nameStorage.size());
+            memcpy_s(nameStorage.data(), nameStorage.size(), fullName.c_str(), fullName.size() + 1);
+
+            mockResources[mockResourceIndex].emplace(nameStorage.data(), mockSpirvResource, sizeof(mockSpirvResource));
+            ++mockResourceIndex;
         }
     }
 }
