@@ -3147,7 +3147,7 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceAndBadElfFileWhenHandlingBindT
     EXPECT_EQ(connection->vmBindMap.size(), 1u); // debug data not processed, so still pending
 }
 
-TEST_F(DebugApiLinuxTestXe, WhenCallingReadAndWriteGpuMemoryThenFsyncIsCalledTwice) {
+TEST_F(DebugApiLinuxTestXe, GivenSuccessfulReadGpuMemoryWhenCallingReadGpuMemoryThenFsyncIsCalledOnceBeforeReading) {
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
@@ -3157,17 +3157,35 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingReadAndWriteGpuMemoryThenFsyncIsCalledTwi
 
     char output[bufferSize];
     handler->preadRetVal = bufferSize;
-    auto retVal = session->readGpuMemory(7, output, bufferSize, 0x23000);
-    EXPECT_EQ(0, retVal);
-    EXPECT_EQ(handler->fsyncCalled, 2);
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
 
-    handler->pwriteRetVal = bufferSize;
-    retVal = session->writeGpuMemory(7, output, bufferSize, 0x23000);
-    EXPECT_EQ(0, retVal);
-    EXPECT_EQ(handler->fsyncCalled, 4);
+    auto retVal = session->readGpuMemory(7, output, bufferSize, 0x23000);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(1, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->preadCalled);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
 }
 
-TEST_F(DebugApiLinuxTestXe, WhenCallingReadOrWriteGpuMemoryAndFsyncFailsThenErrorIsReturned) {
+TEST_F(DebugApiLinuxTestXe, GivenSuccessfulWriteGpuMemoryWhenCallingWriteGpuMemoryThenFsyncIsCalledBeforeAndAfterWriting) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    char input[bufferSize];
+    handler->pwriteRetVal = bufferSize;
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    auto retVal = session->writeGpuMemory(7, input, bufferSize, 0x23000);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(2, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->pwriteCalled);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenFailingFsyncWhenCallingReadGpuMemoryThenErrorIsReturnedAndVmFdIsClosedWithoutReading) {
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
@@ -3176,28 +3194,90 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingReadOrWriteGpuMemoryAndFsyncFailsThenErro
     session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
 
     handler->fsyncRetVal = -1;
+    handler->numFsyncToSucceed = 0;
     char output[bufferSize];
     handler->preadRetVal = bufferSize;
-    handler->numFsyncToSucceed = 0;
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
     auto retVal = session->readGpuMemory(7, output, bufferSize, 0x23000);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
-    EXPECT_EQ(handler->fsyncCalled, 1);
+    EXPECT_EQ(1, handler->fsyncCalled);
+    EXPECT_EQ(0, handler->preadCalled);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+}
 
-    handler->pwriteRetVal = bufferSize;
+TEST_F(DebugApiLinuxTestXe, GivenFailingFirstFsyncWhenCallingWriteGpuMemoryThenErrorIsReturnedAndVmFdIsClosedWithoutWriting) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    handler->fsyncRetVal = -1;
     handler->numFsyncToSucceed = 0;
-    retVal = session->writeGpuMemory(7, output, bufferSize, 0x23000);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
-    EXPECT_EQ(handler->fsyncCalled, 2);
+    char input[bufferSize];
+    handler->pwriteRetVal = bufferSize;
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
 
-    handler->numFsyncToSucceed = 1;
-    retVal = session->readGpuMemory(7, output, bufferSize, 0x23000);
+    auto retVal = session->writeGpuMemory(7, input, bufferSize, 0x23000);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
-    EXPECT_EQ(handler->fsyncCalled, 4);
+    EXPECT_EQ(1, handler->fsyncCalled);
+    EXPECT_EQ(0, handler->pwriteCalled);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+}
 
+TEST_F(DebugApiLinuxTestXe, GivenMemAccessLogsEnabledWhenCallingFlushVmCacheThenFlushDurationIsLoggedAndAccumulated) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_MEM);
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    EXPECT_EQ(0, session->flushVmCache(11));
+    EXPECT_EQ(0, session->flushVmCache(11));
+
+    auto log = capture.getCapturedStdout();
+
+    EXPECT_TRUE(hasSubstr(log, std::string("MEM_ACCESS: fsync VM fd=11")));
+    EXPECT_TRUE(hasSubstr(log, std::string("total = ")));
+
+    const std::string countToken = "flush count = ";
+    const auto firstCountPos = log.find(countToken);
+    ASSERT_NE(std::string::npos, firstCountPos);
+    const auto secondCountPos = log.find(countToken, firstCountPos + countToken.size());
+    ASSERT_NE(std::string::npos, secondCountPos);
+
+    const auto firstCount = std::stoull(log.substr(firstCountPos + countToken.size()));
+    const auto secondCount = std::stoull(log.substr(secondCountPos + countToken.size()));
+    EXPECT_EQ(firstCount + 1, secondCount);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenFailingSecondFsyncWhenCallingWriteGpuMemoryThenErrorIsReturnedAndVmFdIsClosed) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    handler->fsyncRetVal = -1;
     handler->numFsyncToSucceed = 1;
-    retVal = session->writeGpuMemory(7, output, bufferSize, 0x23000);
+    char input[bufferSize];
+    handler->pwriteRetVal = bufferSize;
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    auto retVal = session->writeGpuMemory(7, input, bufferSize, 0x23000);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
-    EXPECT_EQ(handler->fsyncCalled, 6);
+    EXPECT_EQ(2, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->pwriteCalled);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
 }
 
 TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForInterruptOrAnyInvalidThreadControlCmdThenErrorIsReturned) {

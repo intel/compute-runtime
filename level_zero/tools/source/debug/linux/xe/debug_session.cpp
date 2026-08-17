@@ -1100,7 +1100,26 @@ int DebugSessionLinuxXe::openVmFd(uint64_t vmHandle, [[maybe_unused]] bool readO
 }
 
 int DebugSessionLinuxXe::flushVmCache(int vmfd) {
+    const bool logFlushDuration = (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_MEM) != 0;
+    std::chrono::steady_clock::time_point flushStartTime;
+    if (logFlushDuration) {
+        flushStartTime = std::chrono::steady_clock::now();
+    }
+
     int retVal = ioctlHandler->fsync(vmfd);
+
+    if (logFlushDuration) {
+        static std::atomic<uint64_t> flushVmCacheCount{0};
+        static std::atomic<int64_t> flushVmCacheTotalDurationUs{0};
+
+        const auto flushDurationUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - flushStartTime).count();
+        const auto totalDurationUs = flushVmCacheTotalDurationUs.fetch_add(flushDurationUs, std::memory_order_relaxed) + flushDurationUs;
+        const auto flushCount = flushVmCacheCount.fetch_add(1, std::memory_order_relaxed) + 1;
+        PRINT_DEBUGGER_MEM_ACCESS_LOG("fsync VM fd=%d took %" PRId64 " us, ret = %d (flush count = %" PRIu64 ", total = %" PRId64 " us)\n",
+                                      vmfd, static_cast<int64_t>(flushDurationUs), retVal,
+                                      static_cast<uint64_t>(flushCount), static_cast<int64_t>(totalDurationUs));
+    }
+
     if (retVal != 0) {
         PRINT_DEBUGGER_ERROR_LOG("Failed to fsync VM fd=%d errno=%d\n", vmfd, errno);
     }
