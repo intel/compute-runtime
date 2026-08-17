@@ -40,6 +40,7 @@ DebugSessionLinuxXe::~DebugSessionLinuxXe() {
     closeExternalSipHandles();
     closeAsyncThread();
     closeInternalEventsThread();
+    closeVmFdCache();
     closeFd();
 }
 
@@ -1097,6 +1098,13 @@ void DebugSessionLinuxXe::extractMetaData(uint64_t client, const MetaData &metaD
 }
 
 int DebugSessionLinuxXe::openVmFd(uint64_t vmHandle, [[maybe_unused]] bool readOnly) {
+    std::lock_guard<std::mutex> lock(this->vmFdCacheMutex);
+
+    auto cacheEntry = this->vmFdCache.find(vmHandle);
+    if (cacheEntry != this->vmFdCache.end()) {
+        return cacheEntry->second;
+    }
+
     NEO::EuDebugVmOpen vmOpen = {
         .extensions = 0,
         .clientHandle = clientHandle,
@@ -1105,7 +1113,20 @@ int DebugSessionLinuxXe::openVmFd(uint64_t vmHandle, [[maybe_unused]] bool readO
         .timeoutNs = 5000000000u};
 
     auto drmVmOpen = euDebugInterface->toDrmEuDebugVmOpen(vmOpen);
-    return ioctl(euDebugInterface->getParamValue(NEO::EuDebugParam::ioctlVmOpen), drmVmOpen.get());
+    auto vmDebugFd = ioctl(euDebugInterface->getParamValue(NEO::EuDebugParam::ioctlVmOpen), drmVmOpen.get());
+    if (vmDebugFd >= 0) {
+        this->vmFdCache[vmHandle] = vmDebugFd;
+    }
+    return vmDebugFd;
+}
+
+void DebugSessionLinuxXe::closeVmFdCache() {
+    std::lock_guard<std::mutex> lock(this->vmFdCacheMutex);
+
+    for (const auto &cacheEntry : this->vmFdCache) {
+        NEO::SysCalls::close(cacheEntry.second);
+    }
+    this->vmFdCache.clear();
 }
 
 int DebugSessionLinuxXe::flushVmCache(int vmfd) {

@@ -99,6 +99,14 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
     int flushVmCache(int vmfd) override;
+    void closeVmFd(int vmfd) override {};
+    void closeAllCachedVmFds() override {
+        this->closeVmFdCache();
+    }
+    void closeVmFdCache();
+
+    std::unordered_map<uint64_t, int> vmFdCache;
+    std::mutex vmFdCacheMutex;
 
     void attachTile() override {
         UNRECOVERABLE_IF(true);

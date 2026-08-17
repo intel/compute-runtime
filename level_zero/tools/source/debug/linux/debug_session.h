@@ -47,6 +47,8 @@ struct DebugSessionLinux : DebugSessionImp {
     }
     virtual int openVmFd(uint64_t vmHandle, bool readOnly) = 0;
     virtual int flushVmCache(int vmfd) { return 0; };
+    virtual void closeVmFd(int vmfd) { NEO::SysCalls::close(vmfd); };
+    virtual void closeAllCachedVmFds() {};
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;
     ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override;
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;

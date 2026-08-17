@@ -83,6 +83,7 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
         } else if ((request == static_cast<uint64_t>(NEO::EuDebugParam::ioctlVmOpen)) && (arg != nullptr)) {
             NEO::EuDebugVmOpen *vmOpenIn = reinterpret_cast<NEO::EuDebugVmOpen *>(arg);
             vmOpen = *vmOpenIn;
+            vmOpenCalled++;
             return vmOpenRetVal;
         } else if ((request == static_cast<uint64_t>(NEO::EuDebugParam::ioctlEuControl)) && (arg != nullptr)) {
             NEO::EuDebugEuControl *euControlArg = reinterpret_cast<NEO::EuDebugEuControl *>(arg);
@@ -158,6 +159,7 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
     std::unique_ptr<uint8_t[]> outputBitmask;
     size_t outputBitmaskSize = 0;
     int vmOpenRetVal = 600;
+    int vmOpenCalled = 0;
     int debugEventAckCount = 0;
 };
 
@@ -185,6 +187,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::ClientConnectionXe;
     using L0::DebugSessionLinuxXe::clientHandleClosed;
     using L0::DebugSessionLinuxXe::clientHandleToConnection;
+    using L0::DebugSessionLinuxXe::closeAllCachedVmFds;
     using L0::DebugSessionLinuxXe::convertToApi;
     using L0::DebugSessionLinuxXe::convertToPhysicalWithinDevice;
     using L0::DebugSessionLinuxXe::convertToThreadId;
@@ -213,6 +216,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::startAsyncThread;
     using L0::DebugSessionLinuxXe::threadControl;
     using L0::DebugSessionLinuxXe::ThreadControlCmd;
+    using L0::DebugSessionLinuxXe::vmFdCache;
 
     MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxXe(config, device, debugFd, std::make_unique<MockEuDebugInterface>(), params) {
         clientHandleToConnection[mockClientHandle].reset(new ClientConnectionXe(euDebugInterface.get()));

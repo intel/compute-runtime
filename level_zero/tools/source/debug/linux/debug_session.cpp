@@ -355,7 +355,7 @@ ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, si
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     gpuVa = gmmHelper->decanonize(gpuVa);
     if (flushVmCache(vmDebugFd) != 0) {
-        NEO::SysCalls::close(vmDebugFd);
+        closeVmFd(vmDebugFd);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
@@ -398,7 +398,7 @@ ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, si
 
         retVal = pendingSize;
     }
-    NEO::SysCalls::close(vmDebugFd);
+    closeVmFd(vmDebugFd);
 
     return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
@@ -415,7 +415,7 @@ ze_result_t DebugSessionLinux::writeGpuMemory(uint64_t vmHandle, const char *inp
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     gpuVa = gmmHelper->decanonize(gpuVa);
     if (flushVmCache(vmDebugFd) != 0) {
-        NEO::SysCalls::close(vmDebugFd);
+        closeVmFd(vmDebugFd);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
@@ -459,10 +459,10 @@ ze_result_t DebugSessionLinux::writeGpuMemory(uint64_t vmHandle, const char *inp
         retVal = pendingSize;
     }
     if (flushVmCache(vmDebugFd) != 0) {
-        NEO::SysCalls::close(vmDebugFd);
+        closeVmFd(vmDebugFd);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    NEO::SysCalls::close(vmDebugFd);
+    closeVmFd(vmDebugFd);
 
     return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
@@ -1057,6 +1057,7 @@ ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) 
 bool DebugSessionLinux::closeConnection() {
     closeAsyncThread();
     closeInternalEventsThread();
+    closeAllCachedVmFds();
 
     if (clientHandle != invalidClientHandle) {
         auto numTiles = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());

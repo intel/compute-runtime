@@ -3197,7 +3197,7 @@ TEST_F(DebugApiLinuxTestXe, GivenSuccessfulReadGpuMemoryWhenCallingReadGpuMemory
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(1, handler->fsyncCalled);
     EXPECT_EQ(1, handler->preadCalled);
-    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenSuccessfulWriteGpuMemoryWhenCallingWriteGpuMemoryThenFsyncIsCalledBeforeAndAfterWriting) {
@@ -3216,10 +3216,10 @@ TEST_F(DebugApiLinuxTestXe, GivenSuccessfulWriteGpuMemoryWhenCallingWriteGpuMemo
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(2, handler->fsyncCalled);
     EXPECT_EQ(1, handler->pwriteCalled);
-    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenFailingFsyncWhenCallingReadGpuMemoryThenErrorIsReturnedAndVmFdIsClosedWithoutReading) {
+TEST_F(DebugApiLinuxTestXe, GivenFailingFsyncWhenCallingReadGpuMemoryThenErrorIsReturnedWithoutReading) {
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
@@ -3237,10 +3237,10 @@ TEST_F(DebugApiLinuxTestXe, GivenFailingFsyncWhenCallingReadGpuMemoryThenErrorIs
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
     EXPECT_EQ(1, handler->fsyncCalled);
     EXPECT_EQ(0, handler->preadCalled);
-    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenFailingFirstFsyncWhenCallingWriteGpuMemoryThenErrorIsReturnedAndVmFdIsClosedWithoutWriting) {
+TEST_F(DebugApiLinuxTestXe, GivenFailingFirstFsyncWhenCallingWriteGpuMemoryThenErrorIsReturnedWithoutWriting) {
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
@@ -3258,7 +3258,7 @@ TEST_F(DebugApiLinuxTestXe, GivenFailingFirstFsyncWhenCallingWriteGpuMemoryThenE
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
     EXPECT_EQ(1, handler->fsyncCalled);
     EXPECT_EQ(0, handler->pwriteCalled);
-    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenMemAccessLogsEnabledWhenCallingFlushVmCacheThenFlushDurationIsLoggedAndAccumulated) {
@@ -3293,7 +3293,7 @@ TEST_F(DebugApiLinuxTestXe, GivenMemAccessLogsEnabledWhenCallingFlushVmCacheThen
     EXPECT_EQ(firstCount + 1, secondCount);
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenFailingSecondFsyncWhenCallingWriteGpuMemoryThenErrorIsReturnedAndVmFdIsClosed) {
+TEST_F(DebugApiLinuxTestXe, GivenFailingSecondFsyncWhenCallingWriteGpuMemoryThenErrorIsReturned) {
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
@@ -3311,7 +3311,95 @@ TEST_F(DebugApiLinuxTestXe, GivenFailingSecondFsyncWhenCallingWriteGpuMemoryThen
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
     EXPECT_EQ(2, handler->fsyncCalled);
     EXPECT_EQ(1, handler->pwriteCalled);
-    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenSameVmHandleWhenReadingGpuMemoryTwiceThenVmIsOpenedOnceAndFdIsKeptOpen) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readGpuMemory(7, output, bufferSize, 0x23000));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readGpuMemory(7, output, bufferSize, 0x23000));
+
+    EXPECT_EQ(1, handler->vmOpenCalled);
+    EXPECT_EQ(2, handler->preadCalled);
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(1u, session->vmFdCache.size());
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenSameVmHandleWhenReadingAndWritingGpuMemoryThenVmIsOpenedOnce) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    char buffer[bufferSize];
+    handler->preadRetVal = bufferSize;
+    handler->pwriteRetVal = bufferSize;
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readGpuMemory(7, buffer, bufferSize, 0x23000));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->writeGpuMemory(7, buffer, bufferSize, 0x23000));
+
+    EXPECT_EQ(1, handler->vmOpenCalled);
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenDifferentVmHandlesWhenReadingGpuMemoryThenEachVmIsOpenedAndAllFdsAreClosedOnCleanup) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readGpuMemory(7, output, bufferSize, 0x23000));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readGpuMemory(8, output, bufferSize, 0x23000));
+
+    EXPECT_EQ(2, handler->vmOpenCalled);
+    EXPECT_EQ(2u, session->vmFdCache.size());
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+
+    session->closeAllCachedVmFds();
+    EXPECT_EQ(2u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(0u, session->vmFdCache.size());
+
+    session->closeAllCachedVmFds();
+    EXPECT_EQ(2u, NEO::SysCalls::closeFuncCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenVmOpenFailsWhenReadingGpuMemoryThenNothingIsCachedAndNextAccessRetriesVmOpen) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+    handler->vmOpenRetVal = -1;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readGpuMemory(7, output, bufferSize, 0x23000));
+    EXPECT_EQ(0u, session->vmFdCache.size());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readGpuMemory(7, output, bufferSize, 0x23000));
+    EXPECT_EQ(2, handler->vmOpenCalled);
+    EXPECT_EQ(0, handler->preadCalled);
 }
 
 TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForInterruptOrAnyInvalidThreadControlCmdThenErrorIsReturned) {
