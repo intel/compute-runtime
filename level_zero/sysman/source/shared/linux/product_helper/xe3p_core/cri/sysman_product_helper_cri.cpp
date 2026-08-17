@@ -15,6 +15,7 @@
 #include "level_zero/zes_intel_gpu_sysman.h"
 
 #include <algorithm>
+#include <bit>
 #include <unordered_set>
 
 namespace L0 {
@@ -30,6 +31,7 @@ constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
 constexpr static uint32_t maxGpuBoardTemperatureSensorCount = 2;
+constexpr static uint32_t compositeTemperatureNotAvailable = 0xFFFFFFFFu;
 const std::string throttleReasonPath = "freq0/throttle/";
 
 // XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
@@ -41,6 +43,7 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
      {{"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"AVERAGE_POWER_CONTAINER", 136},
+      {"COMPOSITE_TEMPERATURE", 272},
       {"GPU_BOARD_TEMPERATURE", 176},
       {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"VCCGT_ENERGY_ACCUMULATOR", 44},
@@ -920,6 +923,39 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
         return result;
     }
     *pTemperature = static_cast<double>(gpuMaxTemperature);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getCompositeTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    uint32_t compositeTemperature = 0;
+    uint64_t telemOffset = 0;
+    std::string key("COMPOSITE_TEMPERATURE");
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, compositeTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        return result;
+    }
+
+    if (compositeTemperature == compositeTemperatureNotAvailable) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Composite temperature is not reported by the hardware, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    // Composite temperature is reported in IEEE 754 single precision floating point format, in degree celsius
+    *pTemperature = static_cast<double>(std::bit_cast<float>(compositeTemperature));
 
     return ZE_RESULT_SUCCESS;
 }

@@ -53,51 +53,27 @@ ze_result_t LinuxTemperatureImp::getMaxTemperature(double &temperature) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxTemperatureImp::getGlobalMaxTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getGlobalMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
-}
-
-ze_result_t LinuxTemperatureImp::getGpuMaxTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getGpuMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
-}
-
-ze_result_t LinuxTemperatureImp::getMemoryMaxTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getMemoryMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
-}
-
-ze_result_t LinuxTemperatureImp::getVoltageRegulatorMaxTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
-}
-
-ze_result_t LinuxTemperatureImp::getGpuBoardMaxTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
-}
-
-ze_result_t LinuxTemperatureImp::getCompositeTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getCompositeTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
-}
-
 ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 
     switch (static_cast<int32_t>(type)) {
     case ZES_TEMP_SENSORS_GLOBAL:
-        result = getGlobalMaxTemperature(pTemperature);
+        result = pSysmanProductHelper->getGlobalMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     case ZES_TEMP_SENSORS_GPU:
-        result = getGpuMaxTemperature(pTemperature);
+        result = pSysmanProductHelper->getGpuMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     case ZES_TEMP_SENSORS_MEMORY:
-        result = getMemoryMaxTemperature(pTemperature);
+        result = pSysmanProductHelper->getMemoryMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     case ZES_TEMP_SENSORS_VOLTAGE_REGULATOR:
-        result = getVoltageRegulatorMaxTemperature(pTemperature);
+        result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     case ZES_TEMP_SENSORS_GPU_BOARD:
-        result = getGpuBoardMaxTemperature(pTemperature);
+        result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     case ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP:
-        result = getCompositeTemperature(pTemperature);
+        result = pSysmanProductHelper->getCompositeTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     default:
         *pTemperature = 0;

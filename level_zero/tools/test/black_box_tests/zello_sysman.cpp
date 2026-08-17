@@ -568,7 +568,8 @@ std::string getTemperatureSensorType(zes_temp_sensors_t type) {
         {ZES_TEMP_SENSORS_GPU_MIN, "ZES_TEMP_SENSORS_GPU_MIN"},
         {ZES_TEMP_SENSORS_MEMORY_MIN, "ZES_TEMP_SENSORS_MEMORY_MIN"},
         {ZES_TEMP_SENSORS_GPU_BOARD, "ZES_TEMP_SENSORS_GPU_BOARD"},
-        {ZES_TEMP_SENSORS_VOLTAGE_REGULATOR, "ZES_TEMP_SENSORS_VOLTAGE_REGULATOR"}};
+        {ZES_TEMP_SENSORS_VOLTAGE_REGULATOR, "ZES_TEMP_SENSORS_VOLTAGE_REGULATOR"},
+        {ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP, "ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP"}};
     auto i = mgetSensorType.find(type);
     if (i == mgetSensorType.end()) {
         return "No supported temperature type available";
