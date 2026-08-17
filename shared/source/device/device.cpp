@@ -1243,10 +1243,8 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     }
 
     auto maxBvhLevelsToProgram = maxBvhLevels;
-    if constexpr (RayTracingHelper::maxBVHLevelsIsBitfield) {
-        if (maxBvhLevels == 8) {
-            maxBvhLevelsToProgram = 0;
-        }
+    if (maxBvhLevels == 8) {
+        maxBvhLevelsToProgram = 0;
     }
 
     for (unsigned int tile = 0; tile < tileCount; tile++) {
@@ -1275,7 +1273,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
             .stackSizePerRay = releaseHelper.getStackSizePerRay(),
             .numDSSRTStacks = rtStacksPerDss,
             .maxBVHLevels = maxBvhLevelsToProgram,
-            .flags = RayTracingHelper::depthTestLessEqualFlag,
+            .flags = RTDispatchGlobals::depthTestLessEqualFlag,
         };
 
         getGfxCoreHelper().adjustRTDispatchGlobals(dispatchGlobals, rtStacksPerDss);

@@ -3527,11 +3527,7 @@ HWTEST2_F(DeviceTestRayTracing, WhenAllocateRTDispatchGlobalsIsCalledThenStackSi
     EXPECT_EQ(expectedNumDSSRTStacks, dispatchGlobals.numDSSRTStacks);
     EXPECT_EQ(expectedSyncNumDSSRTStacks, dispatchGlobals.syncNumDSSRTStacks);
 
-    if constexpr (RayTracingHelper::maxBVHLevelsIsBitfield) {
-        EXPECT_EQ(0u, dispatchGlobals.maxBVHLevels);
-    } else {
-        EXPECT_EQ(8u, dispatchGlobals.maxBVHLevels);
-    }
+    EXPECT_EQ(0u, dispatchGlobals.maxBVHLevels);
 }
 
 HWTEST2_F(DeviceTestRayTracing, giveSetMaxBVHLevelsWhenAllocateRTDispatchGlobalsIsCalledThenStackSizePerDssIsSetCorrectly, IsXe3pLpg) {
