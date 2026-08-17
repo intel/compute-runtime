@@ -109,6 +109,7 @@ struct CommandQueuePatchPreambleCounter {
     uint64_t deviceNodeGpuAddress = 0;
     NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
     std::mutex mutex;
+    bool use32bSemaphore = false;
 
     CommandQueuePatchPreambleCounter() = default;
     CommandQueuePatchPreambleCounter(const CommandQueuePatchPreambleCounter &) = delete;

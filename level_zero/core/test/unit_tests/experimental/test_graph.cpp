@@ -2250,6 +2250,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
     auto whiteBoxCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(commandList.get())->cmdQImmediate);
+    EXPECT_EQ(!FamilyType::isQwordInOrderCounter, whiteBoxCmdQueue->patchPreambleCounter.use32bSemaphore);
 
     std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     subCommandList->setOrdinal(0);

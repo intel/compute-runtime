@@ -182,6 +182,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
     NEO::LinearStream *startingCmdBuffer = nullptr;
+    NEO::GraphicsAllocation *cachedSipAllocation = nullptr;
 
     uint32_t partitionCount = 1;
     uint32_t activeSubDevices = 1;
@@ -208,8 +209,6 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool patchingPreamble = false;
     bool saveWaitForPreamble = false;
     bool csrClientRegistered = false;
-
-    NEO::GraphicsAllocation *cachedSipAllocation = nullptr;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device * device, NEO::CommandStreamReceiver *csr,

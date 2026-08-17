@@ -27,6 +27,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandQueueHw : public CommandQueue {
     using CommandQueue::CommandQueue;
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    CommandQueueHw(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : CommandQueue(device, csr, desc) {
+        this->patchPreambleCounter.use32bSemaphore = GfxFamily::isQwordInOrderCounter == false;
+    }
     ze_result_t createFence(const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) override;
     ze_result_t executeCommandLists(uint32_t numCommandLists,
                                     ze_command_list_handle_t *phCommandLists,
