@@ -7,10 +7,14 @@
 
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 
+#include "CL/cl_ext.h"
+
 #include <string>
+#include <vector>
 
 namespace NEO {
 namespace LEO {
@@ -98,6 +102,89 @@ TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoUnloadableThenReturnsCLTrue
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_bool), retSize);
     EXPECT_EQ(CL_TRUE, unloadable);
+}
+
+TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoNameThenReturnsNullTerminatedString) {
+    size_t retSize = 0;
+    ASSERT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_NAME, 0, nullptr, &retSize));
+    ASSERT_GT(retSize, 0u);
+
+    std::string name(retSize, 'x');
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_NAME, retSize, name.data(), nullptr));
+    EXPECT_EQ('\0', name[retSize - 1]);
+}
+
+TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoExtensionsThenReturnsNullTerminatedString) {
+    size_t retSize = 0;
+    ASSERT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS, 0, nullptr, &retSize));
+    ASSERT_GT(retSize, 0u);
+
+    std::string extensions(retSize, 'x');
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS, retSize, extensions.data(), nullptr));
+    EXPECT_EQ('\0', extensions[retSize - 1]);
+}
+
+TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoHostTimerResolutionThenReturnsUint64) {
+    uint64_t resolution = 0;
+    size_t retSize = 0;
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_HOST_TIMER_RESOLUTION, sizeof(resolution), &resolution, &retSize));
+    EXPECT_EQ(sizeof(uint64_t), retSize);
+}
+
+TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoExtensionsWithVersionThenSizeIsMultipleOfNameVersion) {
+    size_t retSize = 0;
+    ASSERT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS_WITH_VERSION, 0, nullptr, &retSize));
+    ASSERT_GT(retSize, 0u);
+    EXPECT_EQ(0u, retSize % sizeof(cl_name_version));
+
+    std::vector<cl_name_version> extensions(retSize / sizeof(cl_name_version));
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS_WITH_VERSION, retSize, extensions.data(), nullptr));
+}
+
+TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoExtensionsWithVersionTwiceThenSizeIsStable) {
+    size_t firstSize = 0;
+    size_t secondSize = 0;
+    ASSERT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS_WITH_VERSION, 0, nullptr, &firstSize));
+    ASSERT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS_WITH_VERSION, 0, nullptr, &secondSize));
+    EXPECT_EQ(firstSize, secondSize);
+}
+
+TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoExternalMemoryImportHandleTypesThenQuerySucceeds) {
+    size_t retSize = 0;
+    ASSERT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTERNAL_MEMORY_IMPORT_HANDLE_TYPES_KHR, 0, nullptr, &retSize));
+    ASSERT_GT(retSize, 0u);
+
+    std::vector<uint8_t> value(retSize);
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTERNAL_MEMORY_IMPORT_HANDLE_TYPES_KHR, retSize, value.data(), nullptr));
+}
+
+TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoL0DriverHandleThenReturnsOwningDriver) {
+    ze_driver_handle_t queried = nullptr;
+    size_t retSize = 0;
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_L0_DRIVER_HANDLE, sizeof(queried), &queried, &retSize));
+    EXPECT_EQ(sizeof(ze_driver_handle_t), retSize);
+    EXPECT_EQ(driverHandle->toHandle(), queried);
+}
+
+TEST_F(PlatformGetInfoTests, givenTooSmallBufferWhenGetInfoThenReturnsCLInvalidValue) {
+    const cl_platform_info params[] = {CL_PLATFORM_VERSION, CL_PLATFORM_PROFILE, CL_PLATFORM_NAME,
+                                       CL_PLATFORM_VENDOR, CL_PLATFORM_NUMERIC_VERSION,
+                                       CL_PLATFORM_HOST_TIMER_RESOLUTION, CL_L0_DRIVER_HANDLE};
+
+    std::vector<uint8_t> storage(4096);
+    for (auto paramName : params) {
+        size_t retSize = 0;
+        ASSERT_EQ(CL_SUCCESS, platform->getInfo(paramName, 0, nullptr, &retSize)) << "param 0x" << std::hex << paramName;
+        ASSERT_GT(retSize, 0u);
+        EXPECT_EQ(CL_INVALID_VALUE, platform->getInfo(paramName, retSize - 1, storage.data(), nullptr))
+            << "param 0x" << std::hex << paramName;
+    }
+}
+
+TEST_F(PlatformGetInfoTests, givenInvalidParamWhenGetInfoThenReturnSizeIsNotOverwritten) {
+    size_t retSize = 4242u;
+    EXPECT_EQ(CL_INVALID_VALUE, platform->getInfo(0xDEAD0000u, 0, nullptr, &retSize));
+    EXPECT_EQ(4242u, retSize);
 }
 
 } // namespace ult
