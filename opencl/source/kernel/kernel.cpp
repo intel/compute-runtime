@@ -1525,6 +1525,9 @@ void Kernel::getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &al
 cl_int Kernel::setArgLocal(uint32_t argIndexIn,
                            size_t argSize,
                            const void *argVal) {
+    if (argSize == 0 && clDevice.getDeviceInfo().numericClVersion < CL_MAKE_VERSION(3, 1, 0)) {
+        return CL_INVALID_ARG_SIZE;
+    }
     storeKernelArg(argIndexIn, SLM_OBJ, nullptr, argVal, argSize);
     uint32_t *crossThreadData = reinterpret_cast<uint32_t *>(this->crossThreadData);
     uint32_t argIndex = argIndexIn;

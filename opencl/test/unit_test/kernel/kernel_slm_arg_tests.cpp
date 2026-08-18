@@ -175,3 +175,24 @@ TEST_F(KernelSlmAllocationModeTest, givenRuntimeAdjustedSlmAllocationModeWhenSet
     EXPECT_EQ(slmInlineSize, readSlmOffset(*kernel, arg0SlmOffset));
     EXPECT_EQ(slmInlineSize + static_cast<uint32_t>(arg0Size), readSlmOffset(*kernel, arg1SlmOffset));
 }
+
+TEST_F(KernelSlmAllocationModeTest, givenClVersionLowerThan3_1WhenSettingLocalArgWithZeroSizeThenInvalidArgSizeIsReturned) {
+    device->deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 0, 0);
+    auto kernel = createKernel(KernelDescriptor::SlmAllocationMode::compilerResolved);
+
+    EXPECT_EQ(CL_INVALID_ARG_SIZE, kernel->setArg(0, 0u, nullptr));
+}
+
+TEST_F(KernelSlmAllocationModeTest, givenClVersionLowerThan3_1WhenSettingLocalArgWithNonZeroSizeThenSuccessIsReturned) {
+    device->deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 0, 0);
+    auto kernel = createKernel(KernelDescriptor::SlmAllocationMode::compilerResolved);
+
+    EXPECT_EQ(CL_SUCCESS, kernel->setArg(0, arg0Size, nullptr));
+}
+
+TEST_F(KernelSlmAllocationModeTest, givenClVersion3_1WhenSettingLocalArgWithZeroSizeThenSuccessIsReturned) {
+    device->deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 1, 0);
+    auto kernel = createKernel(KernelDescriptor::SlmAllocationMode::compilerResolved);
+
+    EXPECT_EQ(CL_SUCCESS, kernel->setArg(0, 0u, nullptr));
+}
