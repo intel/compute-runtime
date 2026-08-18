@@ -1336,7 +1336,8 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
             auto &gfxCoreHelper = unifiedMemoryProperties.device->getGfxCoreHelper();
             auto &hwInfo = unifiedMemoryProperties.device->getHardwareInfo();
-            if (gfxCoreHelper.usmCompressionSupported(hwInfo) && !unifiedMemoryProperties.allocationFlags.allocFlags.rtAllocation) {
+            if (gfxCoreHelper.usmCompressionSupported(hwInfo) && !unifiedMemoryProperties.allocationFlags.allocFlags.rtAllocation &&
+                !unifiedMemoryProperties.allocationFlags.flags.uncompressedHint) {
                 compressionEnabled = true;
             }
             if (unifiedMemoryProperties.requestedAllocationType != AllocationType::unknown) {

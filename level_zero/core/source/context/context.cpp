@@ -340,6 +340,7 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
     unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice, unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault);
     unifiedMemoryProperties.device = neoDevice;
     unifiedMemoryProperties.allocationFlags.flags.compressedHint = isAllocationSuitableForCompression(lookupTable, *device, size);
+    unifiedMemoryProperties.allocationFlags.flags.uncompressedHint = lookupTable.uncompressedHint;
 
     if (deviceMemDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;

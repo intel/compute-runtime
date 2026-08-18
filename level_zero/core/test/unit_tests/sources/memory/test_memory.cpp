@@ -395,7 +395,7 @@ HWTEST_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressio
     {
         NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
-        ze_external_memory_import_win32_handle_t compressionHint = {};
+        ze_memory_compression_hints_ext_desc_t compressionHint = {};
         compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
         compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
 
@@ -416,7 +416,7 @@ HWTEST_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressio
         NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
         NEO::debugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
 
-        ze_external_memory_import_win32_handle_t compressionHint = {};
+        ze_memory_compression_hints_ext_desc_t compressionHint = {};
         compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
         compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
 
@@ -435,7 +435,7 @@ HWTEST_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressio
 
     // Compressed hint without debug flag
     {
-        ze_external_memory_import_win32_handle_t compressionHint = {};
+        ze_memory_compression_hints_ext_desc_t compressionHint = {};
         compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
         compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
 
@@ -455,7 +455,7 @@ HWTEST_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressio
     {
         NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
-        ze_external_memory_import_win32_handle_t compressionHint = {};
+        ze_memory_compression_hints_ext_desc_t compressionHint = {};
         compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
         compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED;
 
@@ -463,12 +463,29 @@ HWTEST_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressio
 
         auto allocation = allocDeviceMem(2048);
 
-        EXPECT_EQ(gfxCoreHelper.usmCompressionSupported(hwInfo), allocation->isCompressionEnabled());
+        EXPECT_FALSE(allocation->isCompressionEnabled());
 
         context->freeMem(ptr);
 
         deviceDesc.pNext = nullptr;
         NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+    }
+
+    // Uncompressed hint without debug flag
+    {
+        ze_memory_compression_hints_ext_desc_t compressionHint = {};
+        compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED;
+
+        deviceDesc.pNext = &compressionHint;
+
+        auto allocation = allocDeviceMem(2048);
+
+        EXPECT_FALSE(allocation->isCompressionEnabled());
+
+        context->freeMem(ptr);
+
+        deviceDesc.pNext = nullptr;
     }
 
     // Debug flag == 0
