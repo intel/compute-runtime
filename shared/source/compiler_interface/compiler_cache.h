@@ -37,8 +37,6 @@ struct CompilerCacheConfig {
     size_t cacheSize = 0;
 };
 
-bool isIgcShaderDumpEnabled();
-
 class CompilerCache : NEO::NonCopyableAndNonMovableClass {
   public:
     CompilerCache(const CompilerCacheConfig &config);
@@ -47,10 +45,6 @@ class CompilerCache : NEO::NonCopyableAndNonMovableClass {
     const CompilerCacheConfig &getConfig() {
         return config;
     }
-
-    static uint64_t getHashValue(const HardwareInfo &hwInfo, ArrayRef<const char> input,
-                                 ArrayRef<const char> options, ArrayRef<const char> internalOptions,
-                                 ArrayRef<const char> specIds, ArrayRef<const char> specValues);
 
     const std::string getCachedFileName(const HardwareInfo &hwInfo, ArrayRef<const char> input,
                                         ArrayRef<const char> options, ArrayRef<const char> internalOptions,
@@ -67,17 +61,17 @@ class CompilerCache : NEO::NonCopyableAndNonMovableClass {
     StatsResult zeroStats();
     bool clear();
 
-    MOCKABLE_VIRTUAL bool cacheBinary(const std::string &srcHash, const char *pBinary, size_t binarySize);
-    MOCKABLE_VIRTUAL std::unique_ptr<char[]> loadCachedBinary(const std::string &srcHash, size_t &cachedBinarySize);
+    MOCKABLE_VIRTUAL bool cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize);
+    MOCKABLE_VIRTUAL std::unique_ptr<char[]> loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize);
 
-    constexpr static uint64_t cacheVersion = 2;
+    constexpr static uint64_t cacheVersion = 1;
 
   protected:
     static bool isStatsFile(const std::string_view &path);
     MOCKABLE_VIRTUAL StatsResult readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats);
     MOCKABLE_VIRTUAL bool writeStatsToFile(const std::string &statsPath, const CacheStats &cacheStats);
     MOCKABLE_VIRTUAL bool evictCache(uint64_t &bytesEvicted);
-    MOCKABLE_VIRTUAL bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &srcHash);
+    MOCKABLE_VIRTUAL bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash);
     MOCKABLE_VIRTUAL bool createUniqueTempFileAndWriteData(char *tmpFilePathTemplate, const char *pBinary, size_t binarySize);
     MOCKABLE_VIRTUAL void lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize);
     MOCKABLE_VIRTUAL bool createStats(const std::string &statsPath);

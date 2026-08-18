@@ -44,8 +44,7 @@ class OclocFclFacadeBase : NEO::NonCopyableAndNonMovableClass {
                                                                       CIF::Builtins::BufferSimple *options,
                                                                       CIF::Builtins::BufferSimple *internalOptions,
                                                                       CIF::Builtins::BufferSimple *tracingOptions,
-                                                                      uint32_t tracingOptionsCount,
-                                                                      uint64_t srcHash) = 0;
+                                                                      uint32_t tracingOptionsCount) = 0;
 };
 static_assert(NEO::NonCopyableAndNonMovable<OclocFclFacadeBase>);
 
@@ -63,8 +62,7 @@ class OclocFclFacade : public OclocFclFacadeBase {
                                                               CIF::Builtins::BufferSimple *options,
                                                               CIF::Builtins::BufferSimple *internalOptions,
                                                               CIF::Builtins::BufferSimple *tracingOptions,
-                                                              uint32_t tracingOptionsCount,
-                                                              uint64_t srcHash) override;
+                                                              uint32_t tracingOptionsCount) override;
 
   protected:
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error);

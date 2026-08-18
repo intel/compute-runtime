@@ -129,8 +129,7 @@ CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> OclocFclFacade::translate(IGC::C
                                                                           CIF::Builtins::BufferSimple *options,
                                                                           CIF::Builtins::BufferSimple *internalOptions,
                                                                           CIF::Builtins::BufferSimple *tracingOptions,
-                                                                          uint32_t tracingOptionsCount,
-                                                                          uint64_t srcHash) {
+                                                                          uint32_t tracingOptionsCount) {
 
     auto fclTranslationCtx = this->createTranslationContext(inType, outType, error);
 
@@ -138,7 +137,7 @@ CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> OclocFclFacade::translate(IGC::C
         return nullptr;
     }
 
-    return fclTranslationCtx->Translate(src, options, internalOptions, nullptr, 0, srcHash);
+    return fclTranslationCtx->Translate(src, options, internalOptions, nullptr, 0);
 }
 
 CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> OclocFclFacade::createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error) {

@@ -161,6 +161,23 @@ struct MockIgcOclTranslationCtx : MockCIF<NEO::IgcOclTranslationCtxTag> {
     // calls when forceBuildFailureBackendOnly is set.
     IGC::CodeType::CodeType_t createdOutType = IGC::CodeType::undefined;
 
+    IGC::OclTranslationOutputBase *TranslateImpl(
+        CIF::Version_t outVersion,
+        CIF::Builtins::BufferSimple *src,
+        CIF::Builtins::BufferSimple *options,
+        CIF::Builtins::BufferSimple *internalOptions,
+        CIF::Builtins::BufferSimple *tracingOptions,
+        uint32_t tracingOptionsCount) override;
+
+    IGC::OclTranslationOutputBase *TranslateImpl(
+        CIF::Version_t outVersion,
+        CIF::Builtins::BufferSimple *src,
+        CIF::Builtins::BufferSimple *options,
+        CIF::Builtins::BufferSimple *internalOptions,
+        CIF::Builtins::BufferSimple *tracingOptions,
+        uint32_t tracingOptionsCount,
+        void *gtpinInput) override;
+
     bool GetSpecConstantsInfoImpl(
         CIF::Builtins::BufferSimple *src,
         CIF::Builtins::BufferSimple *outSpecConstantsIds,
@@ -175,8 +192,7 @@ struct MockIgcOclTranslationCtx : MockCIF<NEO::IgcOclTranslationCtxTag> {
         CIF::Builtins::BufferSimple *internalOptions,
         CIF::Builtins::BufferSimple *tracingOptions,
         uint32_t tracingOptionsCount,
-        void *gtPinInput,
-        uint64_t srcHash) override;
+        void *gtPinInput) override;
 };
 
 struct MockOclTranslationOutput : MockCIF<NEO::OclTranslationOutputTag> {
@@ -259,7 +275,6 @@ struct MockIgcOclDeviceCtx : MockCIF<NEO::IgcOclDeviceCtxTag> {
 };
 
 struct MockFclOclTranslationCtx : MockCIF<NEO::FclOclTranslationCtxTag> {
-    using MockCIF<NEO::FclOclTranslationCtxTag>::TranslateImpl;
     MockFclOclTranslationCtx();
     ~MockFclOclTranslationCtx() override;
 
@@ -269,8 +284,7 @@ struct MockFclOclTranslationCtx : MockCIF<NEO::FclOclTranslationCtxTag> {
         CIF::Builtins::BufferSimple *options,
         CIF::Builtins::BufferSimple *internalOptions,
         CIF::Builtins::BufferSimple *tracingOptions,
-        uint32_t tracingOptionsCount,
-        uint64_t srcHash) override;
+        uint32_t tracingOptionsCount) override;
 };
 
 struct MockFclOclDeviceCtx : MockCIF<NEO::FclOclDeviceCtxTag> {

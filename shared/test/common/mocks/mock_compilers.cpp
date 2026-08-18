@@ -305,6 +305,39 @@ void MockIgcOclDeviceCtx::GetIGCRegKeys(CIF::Builtins::BufferSimple *outIgcRegKe
 MockIgcOclTranslationCtx::MockIgcOclTranslationCtx() = default;
 MockIgcOclTranslationCtx::~MockIgcOclTranslationCtx() = default;
 
+IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
+    CIF::Version_t outVersion,
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *options,
+    CIF::Builtins::BufferSimple *internalOptions,
+    CIF::Builtins::BufferSimple *tracingOptions,
+    uint32_t tracingOptionsCount) {
+    if (igcDebugVars->shouldReturnInvalidTranslationOutput) {
+        return nullptr;
+    }
+
+    auto out = new MockOclTranslationOutput();
+    translate(true, src, options, internalOptions, out, createdOutType);
+    return out;
+}
+
+IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
+    CIF::Version_t outVersion,
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *options,
+    CIF::Builtins::BufferSimple *internalOptions,
+    CIF::Builtins::BufferSimple *tracingOptions,
+    uint32_t tracingOptionsCount,
+    void *gtpinInput) {
+    if (igcDebugVars->shouldReturnInvalidTranslationOutput) {
+        return nullptr;
+    }
+
+    auto out = new MockOclTranslationOutput();
+    translate(true, src, options, internalOptions, out, createdOutType);
+    return out;
+}
+
 bool MockIgcOclTranslationCtx::GetSpecConstantsInfoImpl(
     CIF::Builtins::BufferSimple *src,
     CIF::Builtins::BufferSimple *outSpecConstantsIds,
@@ -321,8 +354,7 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     CIF::Builtins::BufferSimple *internalOptions,
     CIF::Builtins::BufferSimple *tracingOptions,
     uint32_t tracingOptionsCount,
-    void *gtPinInput,
-    uint64_t srcHash) {
+    void *gtPinInput) {
     if (igcDebugVars->shouldReturnInvalidTranslationOutput) {
         return nullptr;
     }
@@ -392,8 +424,7 @@ IGC::OclTranslationOutputBase *MockFclOclTranslationCtx::TranslateImpl(
     CIF::Builtins::BufferSimple *options,
     CIF::Builtins::BufferSimple *internalOptions,
     CIF::Builtins::BufferSimple *tracingOptions,
-    uint32_t tracingOptionsCount,
-    uint64_t srcHash) {
+    uint32_t tracingOptionsCount) {
     if (fclDebugVars->shouldReturnInvalidTranslationOutput) {
         return nullptr;
     }
