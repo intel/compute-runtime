@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
@@ -121,6 +122,53 @@ bool Buffer::isZeroCopyAllowedForHostPtr(const void *hostPtr, size_t size, Memor
     }
 
     return true;
+}
+
+void *Buffer::allocateWithHostPtr(Context *context, void *hostPtr, size_t size, const MemoryProperties &memoryProperties) {
+    auto rootDeviceIndex = context->getClDevice()->getRootDeviceIndex();
+    auto driverHandle = context->getL0Object()->getDriverHandle();
+    auto memoryManager = driverHandle->getMemoryManager();
+    auto svmAllocsManager = driverHandle->getSvmAllocsManager();
+
+    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex,
+                                                                                memoryProperties,
+                                                                                false,
+                                                                                size,
+                                                                                AllocationType::bufferHostMemory,
+                                                                                false,
+                                                                                context->getClDevice()->getHardwareInfo(),
+                                                                                context->getDeviceBitfields().at(rootDeviceIndex),
+                                                                                context->isSingleDeviceContext());
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties, hostPtr);
+    if (nullptr == allocation) {
+        return nullptr;
+    }
+
+    SvmAllocationData allocData(rootDeviceIndex);
+    allocData.gpuAllocations.addAllocation(allocation);
+    allocData.cpuAllocation = nullptr;
+    allocData.size = allocation->getAllocationOffset() + size;
+    allocData.memoryType = InternalMemoryType::hostUnifiedMemory;
+    allocData.allocationFlagsProperty.hostptr = castToUint64(hostPtr);
+    allocData.device = nullptr;
+    allocData.setAllocId(++svmAllocsManager->allocationsCounter);
+    svmAllocsManager->insertSVMAlloc(allocData);
+
+    return reinterpret_cast<void *>(allocation->getGpuAddress());
+}
+
+void *Buffer::tryImportUserPtr(Context *context, void *hostPtr, size_t size, const MemoryProperties &memoryProperties, bool preferHostMemory) {
+    if (!memoryProperties.flags.useHostPtr || !preferHostMemory) {
+        return nullptr;
+    }
+
+    auto driverHandle = context->getL0Object()->getDriverHandle();
+    if (!isZeroCopyAllowedForHostPtr(hostPtr, size, driverHandle->getMemoryManager())) {
+        return nullptr;
+    }
+
+    return allocateWithHostPtr(context, hostPtr, size, memoryProperties);
 }
 
 Buffer::~Buffer() {

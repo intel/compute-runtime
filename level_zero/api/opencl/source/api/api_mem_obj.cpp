@@ -24,7 +24,6 @@
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_imp.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
-#include "level_zero/driver_experimental/zex_memory.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
@@ -108,27 +107,10 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                 copyFromHostPtr = false;
             }
         } else {
-            if (memoryProperties.flags.useHostPtr && preferHostMemory &&
-                NEO::LEO::Buffer::isZeroCopyAllowedForHostPtr(hostPtr, size, pCtx->getL0Object()->getDriverHandle()->getMemoryManager())) {
-                // Let the driver wrap the application storage instead of allocating and copying. The pointer is
-                // passed in through *ptr, as required by ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR.
-                ptr = hostPtr;
-                ze_host_mem_alloc_desc_t importHostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR};
-                if ((ZE_RESULT_SUCCESS == zeMemAllocHost(pCtx->getL0ContextHandle(), &importHostDesc, size, 0, &ptr)) &&
-                    (ptr == hostPtr)) {
-                    cpuPtr = ptr;
-                    copyFromHostPtr = false;
-                } else {
-                    // The driver would not wrap this pointer - drop whatever it handed back and take the
-                    // regular allocate and copy path below.
-                    if (ptr != nullptr && ptr != hostPtr) {
-                        zeMemFree(pCtx->getL0ContextHandle(), ptr);
-                    }
-                    ptr = nullptr;
-                }
-            }
-
-            if (nullptr == ptr) {
+            ptr = NEO::LEO::Buffer::tryImportUserPtr(pCtx, hostPtr, size, memoryProperties, preferHostMemory);
+            if (nullptr != ptr) {
+                copyFromHostPtr = false;
+            } else {
                 const bool allocateHostMemory = memoryProperties.flags.forceHostMemory ||
                                                 (preferHostMemory && !memoryProperties.flags.useHostPtr);
                 if (allocateHostMemory) {

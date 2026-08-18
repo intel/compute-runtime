@@ -54,6 +54,82 @@ struct LeoMemObjApiFixture : public Test<OclFixture> {
     std::unique_ptr<Context> context;
 };
 
+struct CreateBufferWithUnalignedHostPtrTest : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        cl_device_id clDeviceId = clDevice;
+        leoContext = std::make_unique<Context>(nullptr, context->toHandle(), 1, &clDeviceId, true);
+        neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+        svmAllocsManager = driverHandle->getSvmAllocsManager();
+
+        basePtr = alignedMalloc(allocSize + 2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+        ASSERT_NE(nullptr, basePtr);
+        unalignedHostPtr = ptrOffset(basePtr, MemoryConstants::cacheLineSize);
+    }
+
+    void TearDown() override {
+        alignedFree(basePtr);
+        leoContext.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    static constexpr size_t allocSize = 2 * MemoryConstants::pageSize;
+
+    ClDevice *clDevice = nullptr;
+    std::unique_ptr<Context> leoContext;
+    SVMAllocsManager *svmAllocsManager = nullptr;
+    void *basePtr = nullptr;
+    void *unalignedHostPtr = nullptr;
+};
+
+TEST_F(CreateBufferWithUnalignedHostPtrTest, givenPageUnalignedHostPtrWhenCreateBufferThenApplicationStorageIsWrappedWithoutCopy) {
+    cl_int retVal = CL_INVALID_VALUE;
+    auto clBuffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, unalignedHostPtr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, clBuffer);
+
+    auto buffer = castToObject<Buffer>(clBuffer);
+    ASSERT_NE(nullptr, buffer);
+    EXPECT_EQ(unalignedHostPtr, buffer->getCpuPtr());
+
+    auto svmData = svmAllocsManager->getSVMAlloc(buffer->getUsmPtr());
+    ASSERT_NE(nullptr, svmData);
+
+    auto allocation = svmData->gpuAllocations.getGraphicsAllocation(clDevice->getRootDeviceIndex());
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(unalignedHostPtr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(MemoryConstants::cacheLineSize, allocation->getAllocationOffset());
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize>(allocation->getGpuAddressWithoutOffset()));
+
+    auto usmPtr = buffer->getUsmPtr();
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(clBuffer));
+    EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(usmPtr));
+}
+
+TEST_F(CreateBufferWithUnalignedHostPtrTest, givenPageAlignedHostPtrWhenCreateBufferThenApplicationStorageIsWrappedWithoutCopy) {
+    cl_int retVal = CL_INVALID_VALUE;
+    auto clBuffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, basePtr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, clBuffer);
+
+    auto buffer = castToObject<Buffer>(clBuffer);
+    ASSERT_NE(nullptr, buffer);
+    EXPECT_EQ(basePtr, buffer->getCpuPtr());
+
+    auto svmData = svmAllocsManager->getSVMAlloc(buffer->getUsmPtr());
+    ASSERT_NE(nullptr, svmData);
+
+    auto allocation = svmData->gpuAllocations.getGraphicsAllocation(clDevice->getRootDeviceIndex());
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(basePtr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(0u, allocation->getAllocationOffset());
+
+    auto usmPtr = buffer->getUsmPtr();
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(clBuffer));
+    EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(usmPtr));
+}
+
 using GetSupportedImageFormatsTest = LeoMemObjApiFixture;
 
 TEST_F(GetSupportedImageFormatsTest, givenImagesNotSupportedWhenGetSupportedImageFormatsThenZeroFormatsReturned) {

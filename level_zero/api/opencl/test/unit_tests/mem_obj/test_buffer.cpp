@@ -170,6 +170,103 @@ TEST_F(BufferZeroCopyForHostPtrTest, givenHostPtrBelowMinAddressRestrictionThenZ
     EXPECT_TRUE(Buffer::isZeroCopyAllowedForHostPtr(hostPtr, bufferSize, &restrictedMemoryManager));
 }
 
+struct BufferUnalignedHostPtrTest : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        cl_device_id clDeviceId = clDevice;
+        capturingContext = std::make_unique<CapturingContext>(driverHandle.get(), clDevice->getL0Handle());
+        capturingContext->getDriverHandleCallBase = true;
+        leoContext = std::make_unique<Context>(nullptr, capturingContext->toHandle(), 1, &clDeviceId, true);
+        rootDeviceIndex = clDevice->getRootDeviceIndex();
+        svmAllocsManager = driverHandle->getSvmAllocsManager();
+
+        basePtr = alignedMalloc(allocSize + 2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+        ASSERT_NE(nullptr, basePtr);
+        unalignedHostPtr = ptrOffset(basePtr, MemoryConstants::cacheLineSize);
+    }
+
+    void TearDown() override {
+        alignedFree(basePtr);
+        leoContext.reset();
+        capturingContext.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    MemoryProperties createUseHostPtrProperties() {
+        return ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 0, 0, &clDevice->getDevice());
+    }
+
+    static constexpr size_t allocSize = 2 * MemoryConstants::pageSize;
+
+    ClDevice *clDevice = nullptr;
+    std::unique_ptr<CapturingContext> capturingContext;
+    std::unique_ptr<Context> leoContext;
+    SVMAllocsManager *svmAllocsManager = nullptr;
+    uint32_t rootDeviceIndex = 0;
+    void *basePtr = nullptr;
+    void *unalignedHostPtr = nullptr;
+};
+
+TEST_F(BufferUnalignedHostPtrTest, givenPageUnalignedHostPtrWhenAllocatingThenApplicationStorageIsWrappedAtPageAlignedBase) {
+    auto memoryProperties = createUseHostPtrProperties();
+
+    auto devicePtr = Buffer::allocateWithHostPtr(leoContext.get(), unalignedHostPtr, allocSize, memoryProperties);
+    ASSERT_NE(nullptr, devicePtr);
+
+    auto svmData = svmAllocsManager->getSVMAlloc(devicePtr);
+    ASSERT_NE(nullptr, svmData);
+
+    auto allocation = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(unalignedHostPtr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(AllocationType::bufferHostMemory, allocation->getAllocationType());
+
+    EXPECT_EQ(MemoryConstants::cacheLineSize, allocation->getAllocationOffset());
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize>(allocation->getGpuAddressWithoutOffset()));
+    EXPECT_EQ(allocation->getGpuAddressWithoutOffset() + allocation->getAllocationOffset(), castToUint64(devicePtr));
+
+    svmAllocsManager->freeSVMAlloc(devicePtr, true);
+}
+
+TEST_F(BufferUnalignedHostPtrTest, givenPageUnalignedHostPtrWhenAllocatingThenTrackedRangeCoversWholeBuffer) {
+    auto memoryProperties = createUseHostPtrProperties();
+
+    auto devicePtr = Buffer::allocateWithHostPtr(leoContext.get(), unalignedHostPtr, allocSize, memoryProperties);
+    ASSERT_NE(nullptr, devicePtr);
+
+    auto svmData = svmAllocsManager->getSVMAlloc(devicePtr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_EQ(MemoryConstants::cacheLineSize + allocSize, svmData->size);
+    EXPECT_EQ(svmData, svmAllocsManager->getSVMAlloc(ptrOffset(devicePtr, allocSize - 1u)));
+
+    svmAllocsManager->freeSVMAlloc(devicePtr, true);
+}
+
+TEST_F(BufferUnalignedHostPtrTest, givenPageUnalignedHostPtrWhenAllocatingThenAllocationIsNotEligibleForUsmReuseCache) {
+    auto memoryProperties = createUseHostPtrProperties();
+
+    auto devicePtr = Buffer::allocateWithHostPtr(leoContext.get(), unalignedHostPtr, allocSize, memoryProperties);
+    ASSERT_NE(nullptr, devicePtr);
+
+    auto svmData = svmAllocsManager->getSVMAlloc(devicePtr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, svmData->memoryType);
+    EXPECT_EQ(castToUint64(unalignedHostPtr), svmData->allocationFlagsProperty.hostptr);
+
+    svmAllocsManager->freeSVMAlloc(devicePtr, true);
+}
+
+TEST_F(BufferUnalignedHostPtrTest, givenAllocationWithHostPtrWhenFreedThenSvmDataIsRemoved) {
+    auto memoryProperties = createUseHostPtrProperties();
+
+    auto devicePtr = Buffer::allocateWithHostPtr(leoContext.get(), unalignedHostPtr, allocSize, memoryProperties);
+    ASSERT_NE(nullptr, devicePtr);
+
+    EXPECT_TRUE(svmAllocsManager->freeSVMAlloc(devicePtr, true));
+    EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(devicePtr));
+}
+
 struct SharedBufferDeviceAddressTest : public Test<OclFixture> {
     void SetUp() override {
         Test<OclFixture>::SetUp();
