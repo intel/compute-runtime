@@ -20,28 +20,9 @@ using Family = NEO::Xe3pCoreFamily;
 
 #include "gfx_core_helper_xe3p_core_additional.inl"
 
-namespace ContextGroup {
-extern uint32_t maxContextCount;
-}
-
 namespace NEO {
 template <>
 const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::none;
-
-template <>
-uint32_t GfxCoreHelperHw<Family>::getContextGroupContextsCount() const {
-    auto contextGroupCount = 64u;
-    if (contextGroupCount > ContextGroup::maxContextCount) {
-        contextGroupCount = ContextGroup::maxContextCount;
-    }
-    if (!secondaryContextsEnabled) {
-        contextGroupCount = 0;
-    }
-    if (debugManager.flags.ContextGroupSize.get() != -1) {
-        return debugManager.flags.ContextGroupSize.get();
-    }
-    return contextGroupCount;
-}
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {

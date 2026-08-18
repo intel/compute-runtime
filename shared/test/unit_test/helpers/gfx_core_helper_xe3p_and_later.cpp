@@ -17,6 +17,10 @@
 
 using namespace NEO;
 
+namespace ContextGroup {
+extern uint32_t maxContextCount;
+}
+
 using GfxCoreHelperXe3pAndLaterTests = GfxCoreHelperTest;
 
 HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenHwQueuesSupportFlagWhenInitializeFromProductHelperThenSecondaryContextsFollowIt, IsAtLeastXe3pCore) {
@@ -30,6 +34,32 @@ HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenHwQueuesSupportFlagWhenInitialize
 
     gfxCoreHelper.initializeFromProductHelper(productHelper, true);
     EXPECT_TRUE(gfxCoreHelper.areSecondaryContextsSupported());
+    EXPECT_EQ(ContextGroup::maxContextCount, gfxCoreHelper.getContextGroupContextsCount());
+}
+
+HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenMaxContextCountAboveDefaultWhenGettingContextGroupContextsCountThenValueIsNotClamped, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore restore;
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
+    gfxCoreHelper.initializeFromProductHelper(productHelper, true);
+
+    constexpr uint32_t defaultContextGroupCount = 64u;
+    auto maxContextCountToRestore = ContextGroup::maxContextCount;
+    ContextGroup::maxContextCount = defaultContextGroupCount * 2;
+    const auto contextGroupCount = gfxCoreHelper.getContextGroupContextsCount();
+    ContextGroup::maxContextCount = maxContextCountToRestore;
+
+    EXPECT_EQ(defaultContextGroupCount, contextGroupCount);
+}
+
+HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenContextGroupSizeDebugFlagSetWhenGettingContextGroupContextsCountThenDebugFlagValueIsReturned, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore restore;
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
+    gfxCoreHelper.initializeFromProductHelper(productHelper, false);
+
+    debugManager.flags.ContextGroupSize.set(5);
+    EXPECT_EQ(5u, gfxCoreHelper.getContextGroupContextsCount());
 }
 
 HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes, IsAtLeastXe3pCore) {

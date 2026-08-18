@@ -23,9 +23,25 @@
 
 #include "metrics_library_api_1_0.h"
 
+namespace ContextGroup {
+extern uint32_t maxContextCount;
+}
+
 namespace NEO {
 template <>
-uint32_t GfxCoreHelperHw<Family>::getContextGroupContextsCount() const;
+uint32_t GfxCoreHelperHw<Family>::getContextGroupContextsCount() const {
+    auto contextGroupCount = 64u;
+    if (contextGroupCount > ContextGroup::maxContextCount) {
+        contextGroupCount = ContextGroup::maxContextCount;
+    }
+    if (!secondaryContextsEnabled) {
+        contextGroupCount = 0;
+    }
+    if (debugManager.flags.ContextGroupSize.get() != -1) {
+        return debugManager.flags.ContextGroupSize.get();
+    }
+    return contextGroupCount;
+}
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const;
