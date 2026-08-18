@@ -6100,6 +6100,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenIndirectDataPointerZeInfoWhenDecodeZeIn
             - name : some_kernel
               execution_env:
                 simd_size: 32
+                inline_data_payload_size: 32
               payload_arguments:
                 - arg_type: indirect_data_pointer
                   offset: 16
@@ -6120,6 +6121,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerZeInfoWhenDecodeZeInfoThe
             - name : some_kernel
               execution_env:
                 simd_size: 32
+                inline_data_payload_size: 32
               payload_arguments:
                 - arg_type: scratch_pointer
                   offset: 24
@@ -6132,6 +6134,102 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerZeInfoWhenDecodeZeInfoThe
     const auto scratchPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
     EXPECT_EQ(24u, scratchPointerAddress.offset);
     EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerAtOffsetExceedingInlineDataPayloadSizeWhenDecodeZeInfoThenDecodingFails) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+                inline_data_payload_size: 32
+              payload_arguments:
+                - arg_type: scratch_pointer
+                  offset: 32
+                  size: 8
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
+    EXPECT_FALSE(errors.empty());
+    EXPECT_NE(std::string::npos, errors.find("scratch_pointer"));
+    EXPECT_NE(std::string::npos, errors.find("exceed inline data payload size"));
+    const auto scratchPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    EXPECT_TRUE(NEO::isUndefinedOffset(scratchPointerAddress.offset));
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenIndirectDataPointerAtOffsetExceedingInlineDataPayloadSizeWhenDecodeZeInfoThenDecodingFails) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+                inline_data_payload_size: 16
+              payload_arguments:
+                - arg_type: indirect_data_pointer
+                  offset: 16
+                  size: 8
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
+    EXPECT_FALSE(errors.empty());
+    EXPECT_NE(std::string::npos, errors.find("indirect_data_pointer"));
+    EXPECT_NE(std::string::npos, errors.find("exceed inline data payload size"));
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerWhenInlineDataIsNotUsedThenDecodingFails) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type: scratch_pointer
+                  offset: 8
+                  size: 8
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
+    EXPECT_FALSE(errors.empty());
+    EXPECT_NE(std::string::npos, errors.find("scratch_pointer"));
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerEndingExactlyAtInlineDataPayloadSizeWhenDecodeZeInfoThenScratchPointerIsPopulatedCorrectly) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+                inline_data_payload_size: 16
+              payload_arguments:
+                - arg_type: scratch_pointer
+                  offset: 8
+                  size: 8
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    const auto scratchPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    EXPECT_EQ(8u, scratchPointerAddress.offset);
+    EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerWithoutOffsetWhenDecodeZeInfoThenOffsetRemainsUndefinedAndDecodingSucceeds) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type: scratch_pointer
+                  size: 8
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    const auto scratchPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    EXPECT_TRUE(NEO::isUndefinedOffset(scratchPointerAddress.offset));
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrintfBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {

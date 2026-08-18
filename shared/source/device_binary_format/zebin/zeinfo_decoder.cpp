@@ -1222,9 +1222,16 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         arg.pointerSize = src.size;
         return DecodeError::success;
     };
-    auto populateArgToInlineData = [&src](auto &arg) {
-        arg.offset = src.offset;
-        arg.pointerSize = src.size;
+    auto populateArgToInlineData = [&src, &dst, &kernelName, &outErrReason](auto &arg, ConstStringRef argTypeName) {
+        if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
+            const auto inlineDataPayloadSize = static_cast<int32_t>(dst.kernelAttributes.inlineDataPayloadSize);
+            if ((src.offset + src.size) > inlineDataPayloadSize) {
+                outErrReason.append("DeviceBinaryFormat::zebin : Argument of type " + argTypeName.str() + " is patched only inside inline data, but its offset " + std::to_string(src.offset) + " and size " + std::to_string(src.size) + " exceed inline data payload size " + std::to_string(inlineDataPayloadSize) + " in context of : " + kernelName + ".\n");
+                return DecodeError::invalidBinary;
+            }
+        }
+        arg.offset = static_cast<InlineDataOffset>(src.offset);
+        arg.pointerSize = static_cast<uint8_t>(src.size);
         return DecodeError::success;
     };
     auto populateWithOffset = [&src](auto &dst) {
@@ -1432,10 +1439,10 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.privateMemoryAddress);
 
     case Types::Kernel::argTypeScratchPointer:
-        return populateArgToInlineData(dst.payloadMappings.implicitArgs.scratchPointerAddress);
+        return populateArgToInlineData(dst.payloadMappings.implicitArgs.scratchPointerAddress, Tags::Kernel::PayloadArgument::ArgType::scratchPointer);
 
     case Types::Kernel::argTypeIndirectDataPointer:
-        return populateArgToInlineData(dst.payloadMappings.implicitArgs.indirectDataPointerAddress);
+        return populateArgToInlineData(dst.payloadMappings.implicitArgs.indirectDataPointerAddress, Tags::Kernel::PayloadArgument::ArgType::indirectDataPointer);
 
     case Types::Kernel::argTypePrintfBuffer:
         dst.kernelAttributes.flags.usesPrintf = true;
