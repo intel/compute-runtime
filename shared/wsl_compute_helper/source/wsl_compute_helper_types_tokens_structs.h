@@ -347,39 +347,6 @@ struct TOKSTR_GT_SQIDI_INFO {
 static_assert(std::is_standard_layout_v<TOKSTR_GT_SQIDI_INFO>, "");
 static_assert(sizeof(TOKSTR_GT_SQIDI_INFO) % sizeof(uint32_t) == 0, "");
 
-struct TOKSTR__GT_CACHE_TYPES {
-    TokenVariableLength base;
-
-    TOKSTR__GT_CACHE_TYPES(uint16_t tokenId, uint32_t elementId = 0)
-        : base(tokenId, elementId, offsetof(TOKSTR__GT_CACHE_TYPES, CacheTypeMask) + sizeof(CacheTypeMask) - offsetof(TOKSTR__GT_CACHE_TYPES, L3), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
-
-    TOKSTR__GT_CACHE_TYPES()
-        : base(TOK_S_GT_CACHE_TYPES, 0, sizeof(*this) - sizeof(base)) {}
-
-    struct TOKSTR_ANONYMOUS9544 {
-        TokenVariableLength base;
-
-        TOKSTR_ANONYMOUS9544(uint16_t tokenId, uint32_t elementId = 0)
-            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS9544, eDRAM) + sizeof(eDRAM) - offsetof(TOKSTR_ANONYMOUS9544, L3), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
-
-        TOKSTR_ANONYMOUS9544()
-            : base(TOK_S_GT_CACHE_TYPES__ANONYMOUS9544, 0, sizeof(*this) - sizeof(base)) {}
-
-        TokenDword L3 = {TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__L3};
-        TokenDword LLC = {TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__LLC};
-        TokenDword eDRAM = {TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__E_DRAM};
-    };
-    static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS9544>, "");
-    static_assert(sizeof(TOKSTR_ANONYMOUS9544) % sizeof(uint32_t) == 0, "");
-
-    TokenDword L3 = {TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__L3};        // Indirect field from anonymous struct
-    TokenDword LLC = {TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__LLC};      // Indirect field from anonymous struct
-    TokenDword eDRAM = {TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__E_DRAM}; // Indirect field from anonymous struct
-    TokenDword CacheTypeMask = {TOK_FBD_GT_CACHE_TYPES__CACHE_TYPE_MASK};
-};
-static_assert(std::is_standard_layout_v<TOKSTR__GT_CACHE_TYPES>, "");
-static_assert(sizeof(TOKSTR__GT_CACHE_TYPES) % sizeof(uint32_t) == 0, "");
-
 struct TOKSTR_GT_SYSTEM_INFO {
     TokenVariableLength base;
 
@@ -422,7 +389,6 @@ struct TOKSTR_GT_SYSTEM_INFO {
     TOKSTR_GT_VDBOX_INFO VDBoxInfo = {TOK_FS_GT_SYSTEM_INFO__VDBOX_INFO};
     TOKSTR_GT_VEBOX_INFO VEBoxInfo = {TOK_FS_GT_SYSTEM_INFO__VEBOX_INFO};
     TokenDword NumThreadsPerEu = {TOK_FBD_GT_SYSTEM_INFO__NUM_THREADS_PER_EU};
-    TOKSTR__GT_CACHE_TYPES CacheTypes = {TOK_FS_GT_SYSTEM_INFO__CACHE_TYPES};
     TokenDword MaxVECS = {TOK_FBD_GT_SYSTEM_INFO__MAX_VECS};
 };
 static_assert(std::is_standard_layout_v<TOKSTR_GT_SYSTEM_INFO>, "");
