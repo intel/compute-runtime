@@ -532,6 +532,36 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWhenEnsur
     EXPECT_EQ(expectedHostFunctionIdAddress + csr->immWritePostSyncWriteOffset, streamer->getHostFunctionIdGpuAddress(1u));
 }
 
+TEST(CommandStreamReceiverHostFunctionsTest, givenReadyHostFunctionWhenItIsReservedForExecutionThenItCannotBeReservedAgain) {
+    MockGraphicsAllocation allocation;
+    uint64_t hostFunctionIdAddress = 1u;
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+    std::mutex tbxWriteMutex;
+
+    HostFunctionStreamer streamer(nullptr,
+                                  &allocation,
+                                  &hostFunctionIdAddress,
+                                  downloadAllocationImpl,
+                                  uploadAllocationChunkImpl,
+                                  1u,
+                                  sizeof(uint64_t),
+                                  false,
+                                  false,
+                                  false,
+                                  tbxWriteMutex);
+
+    HostFunction hostFunction{};
+    streamer.addHostFunction(1u, std::move(hostFunction));
+
+    auto reservedHostFunctionId = streamer.tryReserveHostFunctionReadyToExecute();
+
+    ASSERT_TRUE(reservedHostFunctionId.has_value());
+    EXPECT_EQ(1u, reservedHostFunctionId.value());
+    EXPECT_FALSE(streamer.tryReserveHostFunctionReadyToExecute().has_value());
+    EXPECT_FALSE(streamer.getHostFunctionReadyToExecute().has_value());
+}
+
 TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceiverWhenEnsureHostFunctionDataInitializationCalledThenHostFunctionAllocationsDeallocated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DeviceBitfield devices(0b11);
