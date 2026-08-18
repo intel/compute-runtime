@@ -67,8 +67,8 @@ The following core API has no equivalent in the deprecated extension:
 
 * `zeEventGetCounterBasedFlags` - returns the flags used to create a Counter Based Event
   (`0` for regular Events created with `zeEventCreate`). Requires Level Zero API version 1.17.
-  **This driver currently reports only the immediate / non-immediate flags** - `HOST_VISIBLE`,
-  `IPC`, the timestamp flags and `GRAPH_EXTERNAL` are not returned.
+  If neither `IMMEDIATE` nor `NON_IMMEDIATE` was requested, `IMMEDIATE` is added to the
+  returned value.
 * `zeDeviceGetCounterBasedEventMaxValue` - returns the maximum value supported for
   externally managed counter storage. Requires Level Zero API version 1.17.
   **Not implemented in this driver yet** - it currently returns
@@ -144,6 +144,8 @@ Flags below are listed without their `ZE_EVENT_COUNTER_BASED_FLAG_` prefix.
 Notes:
 - If neither `IMMEDIATE` nor `NON_IMMEDIATE` is set, `IMMEDIATE` is assumed.
 - `IPC` combined with `DEVICE_TIMESTAMP` or `HOST_TIMESTAMP` returns `ZE_RESULT_ERROR_INVALID_ARGUMENT`.
+- `DEVICE_TIMESTAMP` combined with `HOST_TIMESTAMP` returns `ZE_RESULT_ERROR_INVALID_ARGUMENT`.
+- Any bit outside the table above returns `ZE_RESULT_ERROR_INVALID_ENUMERATION`.
 
 `zeEventCounterBasedCreate` is the only API that should be used to create a Counter Based
 Event. There were multiple earlier attempts to define the creation API. All of them are

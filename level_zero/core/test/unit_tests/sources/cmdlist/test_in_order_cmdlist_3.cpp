@@ -709,6 +709,36 @@ HWTEST_F(InOrderIpcTests, givenTbxModeWhenOpenIsCalledThenSetAllocationParams) {
     zeEventCounterBasedCloseIpcHandle(newEvent);
 }
 
+HWTEST_F(InOrderIpcTests, givenCounterBasedEventWhenOpeningIpcHandleThenImportedEventReportsSameFlags) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE |
+                 ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE | ZE_EVENT_COUNTER_BASED_FLAG_IPC;
+
+    ze_event_handle_t exportedEvent = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &exportedEvent));
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, exportedEvent, 0, nullptr, launchParams);
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(exportedEvent, &zeIpcData));
+
+    ze_event_handle_t importedEvent = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &importedEvent));
+
+    ze_event_counter_based_flags_t exportedFlags = 0;
+    ze_event_counter_based_flags_t importedFlags = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeEventGetCounterBasedFlags(exportedEvent, &exportedFlags));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeEventGetCounterBasedFlags(importedEvent, &importedFlags));
+
+    EXPECT_EQ(static_cast<uint32_t>(desc.flags), exportedFlags);
+    EXPECT_EQ(exportedFlags, importedFlags);
+
+    zeEventCounterBasedCloseIpcHandle(importedEvent);
+    zeEventDestroy(exportedEvent);
+}
+
 HWTEST_F(InOrderIpcTests, givenOpaqueIpcHandleWhenOpeningThenCorrectMemoryTypeIsSetBasedOnHostAccess) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto pool = createEvents<FamilyType>(1, false);

@@ -7325,7 +7325,7 @@ TEST_F(EventTests, givenDefaultDescriptorWhenCreatingCbEvent2ThenEventWithNoProf
     EXPECT_FALSE(eventObj->isEventTimestampFlagSet());
     EXPECT_TRUE(eventObj->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
     EXPECT_TRUE(eventObj->isWaitScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
-    EXPECT_EQ(static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE), eventObj->getCounterBasedFlags());
+    EXPECT_EQ(static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE), eventObj->getCounterBasedFlags());
     zeEventDestroy(handle);
 }
 
@@ -7340,7 +7340,7 @@ TEST_F(EventTests, givenNullDescriptorWhenCreatingCbEvent2ThenEventWithNoProfili
     EXPECT_FALSE(eventObj->isEventTimestampFlagSet());
     EXPECT_TRUE(eventObj->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
     EXPECT_TRUE(eventObj->isWaitScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
-    EXPECT_EQ(static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE), eventObj->getCounterBasedFlags());
+    EXPECT_EQ(static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE), eventObj->getCounterBasedFlags());
     zeEventDestroy(handle);
 }
 
@@ -7355,6 +7355,108 @@ TEST_F(EventTests, givenDescriptorWithExternalFlagWhenCreatingCbEvent2ThenEventW
     EXPECT_TRUE(eventObj->isCounterBasedExplicitlyEnabled());
     EXPECT_TRUE(eventObj->isExternalEvent());
     zeEventDestroy(handle);
+}
+
+TEST_F(EventTests, givenHostTimestampFlagWhenCreatingCounterBasedEventThenTimestampStorageIsAllocated) {
+    ze_event_handle_t handle = nullptr;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
+
+    auto eventObj = Event::fromHandle(handle);
+    EXPECT_TRUE(eventObj->isEventTimestampFlagSet());
+    EXPECT_TRUE(eventObj->hasKernelMappedTsCapability);
+    zeEventDestroy(handle);
+}
+
+TEST_F(EventTests, givenDeviceTimestampFlagWhenCreatingCounterBasedEventThenTimestampStorageIsAllocatedWithoutMappedCapability) {
+    ze_event_handle_t handle = nullptr;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
+
+    auto eventObj = Event::fromHandle(handle);
+    EXPECT_TRUE(eventObj->isEventTimestampFlagSet());
+    EXPECT_FALSE(eventObj->hasKernelMappedTsCapability);
+    zeEventDestroy(handle);
+}
+
+TEST_F(EventTests, givenNoTimestampFlagsWhenCreatingCounterBasedEventThenTimestampStorageIsNotAllocated) {
+    ze_event_handle_t handle = nullptr;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
+
+    auto eventObj = Event::fromHandle(handle);
+    EXPECT_FALSE(eventObj->isEventTimestampFlagSet());
+    EXPECT_FALSE(eventObj->hasKernelMappedTsCapability);
+    zeEventDestroy(handle);
+}
+
+TEST_F(EventTests, givenCounterBasedEventCreatedWithAdditionalFlagsWhenQueryingCounterBasedFlagsThenAllCreationFlagsAreReturned) {
+    ze_event_handle_t handle = nullptr;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
+
+    ze_event_counter_based_flags_t flags = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, Event::fromHandle(handle)->getCounterBasedFlags(&flags));
+    EXPECT_EQ(static_cast<uint32_t>(desc.flags), flags);
+    zeEventDestroy(handle);
+}
+
+TEST_F(EventTests, givenCounterBasedEventCreatedWithTimestampAndExternalFlagsWhenQueryingCounterBasedFlagsThenAllCreationFlagsAreReturned) {
+    ze_event_handle_t handle = nullptr;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
+
+    ze_event_counter_based_flags_t flags = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, Event::fromHandle(handle)->getCounterBasedFlags(&flags));
+    EXPECT_EQ(static_cast<uint32_t>(desc.flags), flags);
+    zeEventDestroy(handle);
+}
+
+TEST_F(EventTests, givenNoImmediateFlagsWhenCreatingCounterBasedEventThenImmediateIsAddedToReportedFlags) {
+    ze_event_handle_t handle = nullptr;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
+
+    ze_event_counter_based_flags_t flags = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, Event::fromHandle(handle)->getCounterBasedFlags(&flags));
+    EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE), flags);
+    zeEventDestroy(handle);
+}
+
+TEST_F(EventTests, givenUndefinedFlagWhenCreatingCounterBasedEventThenReturnInvalidEnumeration) {
+    constexpr uint32_t firstUndefinedFlag = ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL << 1;
+
+    ze_event_handle_t handle = nullptr;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | firstUndefinedFlag;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, zeEventCounterBasedCreate(context, device, &desc, &handle));
+    EXPECT_EQ(nullptr, handle);
+
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
+    zeEventDestroy(handle);
+}
+
+TEST_F(EventTests, givenBothTimestampFlagsWhenCreatingCounterBasedEventThenReturnError) {
+    ze_event_handle_t handle = nullptr;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP | ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &desc, &handle));
+    EXPECT_EQ(nullptr, handle);
 }
 
 TEST_F(EventTests, givenInvalidExtensionArgumentWhenCreatingEventThenDoNotAbortAndReturnErrorCode) {

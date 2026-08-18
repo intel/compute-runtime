@@ -2802,6 +2802,25 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenAskin
     EXPECT_NE(events[0]->getGpuAddress(device), events[1]->getGpuAddress(device));
 }
 
+HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenHostTimestampCounterBasedEventWhenAppendingKernelThenTimestampNodeIsAssigned) {
+    ze_event_handle_t handle = nullptr;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
+
+    auto eventObj = Event::fromHandle(handle);
+    EXPECT_TRUE(eventObj->isEventTimestampFlagSet());
+    EXPECT_FALSE(eventObj->hasInOrderTimestampNode());
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
+
+    EXPECT_TRUE(eventObj->hasInOrderTimestampNode());
+
+    zeEventDestroy(handle);
+}
+
 HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetToZeroWhenAssigningTimestampNodeThenDoNotClear) {
     auto eventPool = createEvents<FamilyType>(2, true);
 

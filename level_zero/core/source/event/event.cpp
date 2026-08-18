@@ -295,7 +295,10 @@ ze_result_t EventPool::closeIpcHandle() {
 }
 
 ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_event_counter_based_desc_t *desc, ze_event_handle_t *phEvent) {
-    constexpr uint32_t supportedBasedFlags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE);
+    constexpr uint32_t cmdListTypeFlags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE);
+    constexpr uint32_t allCounterBasedFlags = (cmdListTypeFlags | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE | ZE_EVENT_COUNTER_BASED_FLAG_IPC |
+                                               ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP | ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP |
+                                               ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
 
     auto device = Device::fromHandle(toInternalType(hDevice));
     auto counterBasedEventDesc = desc ? desc : &defaultIntelCounterBasedEventDesc;
@@ -304,17 +307,25 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if ((counterBasedEventDesc->flags & ~allCounterBasedFlags) != 0) {
+        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+    }
+
     const bool ipcFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_IPC);
     const bool timestampFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP);
     const bool mappedTimestampFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP);
     const bool externalEvent = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
 
-    uint32_t inputCbFlags = counterBasedEventDesc->flags & supportedBasedFlags;
-    if (inputCbFlags == 0) {
-        inputCbFlags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+    uint32_t inputCbFlags = counterBasedEventDesc->flags;
+    if ((counterBasedEventDesc->flags & cmdListTypeFlags) == 0) {
+        inputCbFlags |= ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
     }
 
     if (ipcFlag && (timestampFlag || mappedTimestampFlag)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (timestampFlag && mappedTimestampFlag) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -334,7 +345,7 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
         .index = 0,
         .signalScope = signalScope,
         .waitScope = counterBasedEventDesc->wait,
-        .timestampPool = timestampFlag,
+        .timestampPool = timestampFlag || mappedTimestampFlag,
         .kernelMappedTsPoolFlag = mappedTimestampFlag,
         .importedIpcPool = false,
         .ipcPool = ipcFlag,
