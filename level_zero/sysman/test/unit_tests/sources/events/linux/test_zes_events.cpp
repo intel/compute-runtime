@@ -2209,30 +2209,19 @@ TEST_F(SysmanEventsFixture, GivenNullFsAccessWhenWedgedEventPathReachesIsSurviva
     EXPECT_EQ(0u, pEvents[0]);
 }
 
-TEST_F(SysmanEventsFixture, GivenDeviceAlreadyInSurvivabilityModeWhenEventsListenIsCalledThenEventIsReturnedImmediately) {
+TEST_F(SysmanEventsFixture, GivenDeviceAlreadyInSurvivabilityModeWhenEventsListenIsCalledThenNoEventIsReturnedWithoutUeventNotification) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
     pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
 
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     uint32_t numDeviceEvents = 0;
     std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
-    EXPECT_EQ(1u, numDeviceEvents);
-    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED, pDeviceEvents[0]);
-
-    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
-}
-
-TEST_F(SysmanEventsFixture, GivenDeviceNotInSurvivabilityModeWhenEventsListenIsCalledThenNoPreCheckEventIsReturned) {
-    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
-    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
-    uint32_t numDeviceEvents = 0;
-    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
     // Use timeout=0 so listenSystemEvents returns immediately with no udev event
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 0u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
     EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, pDeviceEvents[0]);
+
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
 }
 
 TEST_F(SysmanEventsFixture, GivenActionIsNotChangeWhenCheckingWedgedEventThenFalseIsReturned) {
@@ -2379,6 +2368,8 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForSurvivabilityM
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
     EXPECT_EQ(1u, numDeviceEvents);
     EXPECT_EQ(ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED, pDeviceEvents[0]);
+    EXPECT_TRUE(pSysmanDeviceImp->isDeviceInSurvivabilityMode);
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForSurvivabilityModeEventAndSysfsNodeReadsZeroThenEventListenAPIDoesNotReturnEvent) {

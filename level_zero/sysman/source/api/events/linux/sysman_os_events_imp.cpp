@@ -225,14 +225,6 @@ ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_
                     return ZE_RESULT_SUCCESS;
                 }
             }
-
-            if (registeredEvents[devIndex] & ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED) {
-                if (device->isDeviceInSurvivabilityMode) {
-                    pEvents[devIndex] |= ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
-                    *pNumDeviceEvents = 1;
-                    return ZE_RESULT_SUCCESS;
-                }
-            }
         }
     }
 
