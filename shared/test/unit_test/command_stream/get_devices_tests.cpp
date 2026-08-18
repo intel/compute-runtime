@@ -214,6 +214,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
                 hwInfoFromTable.featureTable = {};
                 hwInfoFromTable.workaroundTable = {};
                 hwInfoFromTable.gtSystemInfo = {};
+                hwInfoFromTable.ipVersion = hwInfo->ipVersion;
                 hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, 0x0, &compilerReleaseHelper);
 
                 productHelper.configureHardwareCustom(&hwInfoFromTable, nullptr);
@@ -289,6 +290,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
                 expectedHwInfo.featureTable = {};
                 expectedHwInfo.workaroundTable = {};
                 expectedHwInfo.gtSystemInfo = {};
+                expectedHwInfo.ipVersion = deviceAot.aotConfig;
                 hardwareInfoSetup[expectedHwInfo.platform.eProductFamily](&expectedHwInfo, true, 0x0, &compilerReleaseHelper);
                 productHelper.configureHardwareCustom(&expectedHwInfo, nullptr);
 

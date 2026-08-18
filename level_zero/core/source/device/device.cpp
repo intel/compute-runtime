@@ -862,7 +862,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             dpProperties->flags = 0u;
             dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
 
-            if (releaseHelper.isDotProductAccumulateSystolicSupported()) {
+            if (hardwareInfo.caps.isDotProductAccumulateSystolicSupported) {
                 dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
             }
         } else if (static_cast<uint32_t>(extendedProperties->stype) == ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP) {

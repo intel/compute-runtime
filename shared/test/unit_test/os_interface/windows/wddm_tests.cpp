@@ -8,9 +8,11 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -56,6 +58,23 @@ TEST_F(WddmTests, whenInitializingWddmThenSetTimestampFrequencyToCorrectValue) {
     EXPECT_EQ(0u, wddm->timestampFrequency);
     init();
     EXPECT_EQ(1u, wddm->timestampFrequency);
+}
+
+TEST_F(WddmTests, whenInitializingWddmThenCapsAreSetupBasedOnIpVersion) {
+    auto hardwareInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+    auto &compilerProductHelper = rootDeviceEnvironment->getHelper<CompilerProductHelper>();
+
+    HardwareIpVersion expectedIpVersion{};
+    expectedIpVersion.value = compilerProductHelper.getHwIpVersion(*hardwareInfo);
+    auto expectedCaps = resolveCaps(expectedIpVersion);
+    ASSERT_TRUE(expectedCaps.has_value());
+
+    hardwareInfo->caps.isDotProductAccumulateSystolicSupported = !expectedCaps->isDotProductAccumulateSystolicSupported;
+
+    init();
+
+    EXPECT_EQ(expectedIpVersion.value, hardwareInfo->ipVersion.value);
+    EXPECT_EQ(expectedCaps->isDotProductAccumulateSystolicSupported, hardwareInfo->caps.isDotProductAccumulateSystolicSupported);
 }
 
 TEST_F(WddmTests, givenWddmWhenPassesCorrectHandleToVerifySharedHandleThenReturnTrue) {

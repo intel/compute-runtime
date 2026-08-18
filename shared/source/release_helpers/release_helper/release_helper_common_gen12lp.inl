@@ -23,9 +23,4 @@ bool ReleaseHelperHw<release>::isRayTracingSupported() const {
     return false;
 }
 
-template <>
-bool ReleaseHelperHw<release>::isDotProductAccumulateSystolicSupported() const {
-    return false;
-}
-
 } // namespace NEO

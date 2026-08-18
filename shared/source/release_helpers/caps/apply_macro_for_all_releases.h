@@ -1,0 +1,150 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include "apply_macro_for_all_future_releases.h"
+#include "release_definitions.h"
+
+#ifdef SUPPORT_TGLLP
+#define NEO_APPLY_MACRO_FOR_TGLLP_RELEASES(MACRO) \
+    MACRO(release1200, Tgl)
+#else
+#define NEO_APPLY_MACRO_FOR_TGLLP_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_RKL
+#define NEO_APPLY_MACRO_FOR_RKL_RELEASES(MACRO) \
+    MACRO(release1201, Rkl)
+#else
+#define NEO_APPLY_MACRO_FOR_RKL_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_ADLS
+#define NEO_APPLY_MACRO_FOR_ADLS_RELEASES(MACRO) \
+    MACRO(release1202, AdlS)
+#else
+#define NEO_APPLY_MACRO_FOR_ADLS_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_ADLP
+#define NEO_APPLY_MACRO_FOR_ADLP_RELEASES(MACRO) \
+    MACRO(release1203, AdlP)
+#else
+#define NEO_APPLY_MACRO_FOR_ADLP_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_ADLN
+#define NEO_APPLY_MACRO_FOR_ADLN_RELEASES(MACRO) \
+    MACRO(release1204, AdlN)
+#else
+#define NEO_APPLY_MACRO_FOR_ADLN_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_DG1
+#define NEO_APPLY_MACRO_FOR_DG1_RELEASES(MACRO) \
+    MACRO(release1210, Dg1)
+#else
+#define NEO_APPLY_MACRO_FOR_DG1_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_DG2
+#define NEO_APPLY_MACRO_FOR_DG2_RELEASES(MACRO) \
+    MACRO(release1255, Dg2G10)                  \
+    MACRO(release1256, Dg2G11)                  \
+    MACRO(release1257, Dg2G12)
+#else
+#define NEO_APPLY_MACRO_FOR_DG2_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_MTL
+#define NEO_APPLY_MACRO_FOR_MTL_RELEASES(MACRO) \
+    MACRO(release1270, MtlU)                    \
+    MACRO(release1271, MtlH)
+#else
+#define NEO_APPLY_MACRO_FOR_MTL_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_ARL
+#define NEO_APPLY_MACRO_FOR_ARL_RELEASES(MACRO) \
+    MACRO(release1274, ArlH)
+#else
+#define NEO_APPLY_MACRO_FOR_ARL_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_PVC
+#define NEO_APPLY_MACRO_FOR_PVC_RELEASES(MACRO) \
+    MACRO(release1260, Pvc)                     \
+    MACRO(release1261, PvcVg)
+#else
+#define NEO_APPLY_MACRO_FOR_PVC_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_BMG
+#define NEO_APPLY_MACRO_FOR_BMG_RELEASES(MACRO) \
+    MACRO(release2001, BmgG21)                  \
+    MACRO(release2002, BmgG31)
+#else
+#define NEO_APPLY_MACRO_FOR_BMG_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_LNL
+#define NEO_APPLY_MACRO_FOR_LNL_RELEASES(MACRO) \
+    MACRO(release2004, Lnl)
+#else
+#define NEO_APPLY_MACRO_FOR_LNL_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_PTL
+#define NEO_APPLY_MACRO_FOR_PTL_RELEASES(MACRO) \
+    MACRO(release3000, PtlH)                    \
+    MACRO(release3001, PtlU)                    \
+    MACRO(release3003, Wcl)
+#else
+#define NEO_APPLY_MACRO_FOR_PTL_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_NVLS
+#define NEO_APPLY_MACRO_FOR_NVLS_RELEASES(MACRO) \
+    MACRO(release3004, NvlS)                     \
+    MACRO(release3005, NvlU)
+#else
+#define NEO_APPLY_MACRO_FOR_NVLS_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_CRI
+#define NEO_APPLY_MACRO_FOR_CRI_RELEASES(MACRO) \
+    MACRO(release3511, Cri)
+#else
+#define NEO_APPLY_MACRO_FOR_CRI_RELEASES(MACRO)
+#endif
+
+#ifdef SUPPORT_NVLP
+#define NEO_APPLY_MACRO_FOR_NVLP_RELEASES(MACRO) \
+    MACRO(release3510, NvlP)
+#else
+#define NEO_APPLY_MACRO_FOR_NVLP_RELEASES(MACRO)
+#endif
+
+#define NEO_APPLY_MACRO_FOR_ALL_RELEASES(MACRO) \
+    NEO_APPLY_MACRO_FOR_TGLLP_RELEASES(MACRO)   \
+    NEO_APPLY_MACRO_FOR_RKL_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_ADLS_RELEASES(MACRO)    \
+    NEO_APPLY_MACRO_FOR_ADLP_RELEASES(MACRO)    \
+    NEO_APPLY_MACRO_FOR_ADLN_RELEASES(MACRO)    \
+    NEO_APPLY_MACRO_FOR_DG1_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_DG2_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_MTL_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_ARL_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_PVC_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_BMG_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_LNL_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_PTL_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_NVLS_RELEASES(MACRO)    \
+    NEO_APPLY_MACRO_FOR_CRI_RELEASES(MACRO)     \
+    NEO_APPLY_MACRO_FOR_NVLP_RELEASES(MACRO)    \
+    NEO_APPLY_MACRO_FOR_ALL_FUTURE_RELEASES(MACRO)

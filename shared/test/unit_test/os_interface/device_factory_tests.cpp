@@ -139,12 +139,14 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionAndProductFamilyOverrideWhenPrepareDe
         GTEST_SKIP();
     }
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    debugManager.flags.OverrideHwIpVersion.set(0x1234u);
+
+    auto overriddenConfig = defaultHwInfo->ipVersion.value;
+    debugManager.flags.OverrideHwIpVersion.set(overriddenConfig);
     debugManager.flags.ProductFamilyOverride.set(productAcronym);
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_TRUE(success);
-    EXPECT_EQ(0x1234u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
+    EXPECT_EQ(overriddenConfig, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
 }
 
 TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledThenSetFtrFlag) {

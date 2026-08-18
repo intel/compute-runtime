@@ -15,7 +15,6 @@ class MockReleaseHelper : public ReleaseHelper {
   public:
     MockReleaseHelper() : ReleaseHelper(0) {}
     ADDMETHOD_CONST_NOBASE(isAdjustWalkOrderAvailable, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isDotProductAccumulateSystolicSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired, bool, false, (const HardwareInfo &hwInfo, bool isRcs));
     ADDMETHOD_CONST_NOBASE(isPipeControlPriorToPipelineSelectWaRequired, bool, false, ());

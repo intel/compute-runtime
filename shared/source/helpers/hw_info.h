@@ -9,6 +9,7 @@
 #include "shared/source/direct_submission/direct_submission_properties.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
+#include "shared/source/release_helpers/caps/caps.h"
 
 #include "gtsysinfo.h"
 #include "neo_igfxfmid.h"
@@ -63,6 +64,7 @@ struct HardwareInfo { // NOLINT(clang-analyzer-optin.performance.Padding)
     PLATFORM platform{};
     FeatureTable featureTable{};
     WorkaroundTable workaroundTable{};
+    alignas(8) Caps caps{};
     alignas(4) GT_SYSTEM_INFO gtSystemInfo{};
     alignas(8) RuntimeCapabilityTable capabilityTable{};
     alignas(8) HardwareIpVersion ipVersion{};

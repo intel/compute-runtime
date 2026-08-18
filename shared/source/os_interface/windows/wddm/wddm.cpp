@@ -42,6 +42,7 @@
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/source/sku_info/operations/windows/sku_info_receiver.h"
 
 namespace NEO {
@@ -130,6 +131,7 @@ bool Wddm::init() {
 
     populateIpVersion(*hardwareInfo);
     rootDeviceEnvironment.initReleaseHelper();
+    setupCaps(*hardwareInfo);
     rootDeviceEnvironment.initCompilerReleaseHelper();
     rootDeviceEnvironment.setRcsExposure();
 

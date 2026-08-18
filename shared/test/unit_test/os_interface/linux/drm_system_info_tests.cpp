@@ -5,10 +5,13 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -132,6 +135,48 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     const ReleaseHelperExpose *exposedReleaseHelper = static_cast<const ReleaseHelperExpose *>(releaseHelper);
     EXPECT_EQ(12u, exposedReleaseHelper->hardwareIpVersion.architecture);
     EXPECT_EQ(55u, exposedReleaseHelper->hardwareIpVersion.release);
+}
+
+TEST(DrmSystemInfoTest, givenQueriedIpVersionWhenSetupHardwareInfoThenCapsAreSetupBasedOnIt) {
+
+    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+      public:
+        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
+            return this->queriedIpVersion;
+        }
+        uint32_t queriedIpVersion = 0u;
+    };
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.releaseHelper.reset(nullptr);
+    rootDeviceEnvironment.initGmm();
+
+    HardwareIpVersion queriedIpVersion{};
+    queriedIpVersion.value = rootDeviceEnvironment.getHelper<CompilerProductHelper>().getHwIpVersion(*defaultHwInfo);
+    auto expectedCaps = resolveCaps(queriedIpVersion);
+    ASSERT_TRUE(expectedCaps.has_value());
+
+    DrmMockToQuerySystemInfo drm(rootDeviceEnvironment);
+    auto ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
+    ioctlHelper->queriedIpVersion = queriedIpVersion.value;
+    drm.ioctlHelper = std::move(ioctlHelper);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.isDotProductAccumulateSystolicSupported = !expectedCaps->isDotProductAccumulateSystolicSupported;
+
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+        hardwareInfoSetup[hwInfo->platform.eProductFamily](hwInfo, setupFeatureTableAndWorkaroundTable, 0u, compilerReleaseHelper);
+    };
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    drm.overrideDeviceDescriptor = &device;
+
+    ASSERT_EQ(0, drm.setupHardwareInfo(0, false));
+
+    const auto *setupHwInfo = rootDeviceEnvironment.getHardwareInfo();
+    EXPECT_EQ(queriedIpVersion.value, setupHwInfo->ipVersion.value);
+    EXPECT_EQ(expectedCaps->isDotProductAccumulateSystolicSupported, setupHwInfo->caps.isDotProductAccumulateSystolicSupported);
 }
 
 TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenCompilerReleaseHelperIsCreated) {

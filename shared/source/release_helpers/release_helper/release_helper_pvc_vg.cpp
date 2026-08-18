@@ -21,11 +21,6 @@ bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
 }
 
 template <>
-inline bool ReleaseHelperHw<release>::isDotProductAccumulateSystolicSupported() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
     return true;
 }
