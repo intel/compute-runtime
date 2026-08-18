@@ -162,7 +162,6 @@ inline Resource createResource(const char *ptr, size_t size) {
     return createResource(ptr, size, false);
 };
 
-std::string createResourceName(BaseKernel kernel, const std::string &extension);
 StackVec<std::string, 3> getResourceNames(BaseKernel kernel, const AddressingMode &mode, CodeType type, const Device &device);
 
 template <BaseKernel kernel, CodeType codeType>

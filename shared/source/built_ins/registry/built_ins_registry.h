@@ -21,7 +21,6 @@ struct RegisterEmbeddedResource {
     RegisterEmbeddedResource &operator=(const RegisterEmbeddedResource &) = delete;
 
     static const RegisterEmbeddedResource *find(std::string_view name);
-    static bool anyRegistered();
 
     std::string_view name;
     const char *resource;

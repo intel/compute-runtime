@@ -33,8 +33,4 @@ const RegisterEmbeddedResource *RegisterEmbeddedResource::find(std::string_view 
     return nullptr;
 }
 
-bool RegisterEmbeddedResource::anyRegistered() {
-    return firstEmbeddedResource != nullptr;
-}
-
 } // namespace NEO

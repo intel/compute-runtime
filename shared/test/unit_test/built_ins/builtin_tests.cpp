@@ -147,7 +147,6 @@ TEST(EmbeddedResourceRegistryTests, whenResourceIsRegisteredThenItIsFoundByName)
     ASSERT_NE(nullptr, foundResource);
     EXPECT_EQ(resourceData, foundResource->resource);
     EXPECT_EQ(sizeof(resourceData), foundResource->resourceLength);
-    EXPECT_TRUE(RegisterEmbeddedResource::anyRegistered());
 }
 
 TEST(EmbeddedResourceRegistryTests, whenResourceWasNeverRegisteredThenItIsNotFound) {
@@ -310,31 +309,6 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeSourceWhenGettingResourceNamesThenRe
         EXPECT_EQ(2u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
         EXPECT_EQ(resourceNames[1], expectedResourceNameGeneric);
-    }
-}
-
-TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
-
-    const std::pair<BuiltIn::BaseKernel, const char *> testCases[] = {
-        {BuiltIn::BaseKernel::auxTranslation, "aux_translation.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyBufferToBuffer, "copy_buffer_to_buffer.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyBufferRect, "copy_buffer_rect.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillBuffer, "fill_buffer.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyBufferToImage3d, "copy_buffer_to_image3d.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyImage3dToBuffer, "copy_image3d_to_buffer.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyImageToImage1d, "copy_image_to_image1d.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyImageToImage2d, "copy_image_to_image2d.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyImageToImage3d, "copy_image_to_image3d.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillImage1d, "fill_image1d.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillImage2d, "fill_image2d.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillImage3d, "fill_image3d.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyKernelTimestamps, "copy_kernel_timestamps.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillImage1dBuffer, "fill_image1d_buffer.builtin_kernel"}};
-
-    for (const auto &[type, name] : testCases) {
-        std::string builtinResourceName = BuiltIn::createResourceName(type, ".bin");
-        std::string expectedBuiltinResourceName = std::string(name) + ".bin";
-        EXPECT_EQ(expectedBuiltinResourceName, builtinResourceName);
     }
 }
 

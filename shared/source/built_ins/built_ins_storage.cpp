@@ -35,10 +35,6 @@ BuiltIn::Resource BuiltIn::createResource(const BuiltIn::Resource &r) {
     return BuiltIn::Resource(r);
 }
 
-std::string BuiltIn::createResourceName(BuiltIn::BaseKernel kernel, const std::string &extension) {
-    return std::string(BuiltIn::getAsString(kernel)) + extension;
-}
-
 StackVec<std::string, 3> BuiltIn::getResourceNames(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, BuiltIn::CodeType type, const Device &device) {
     auto &hwInfo = device.getHardwareInfo();
 

@@ -1597,7 +1597,7 @@ TEST_F(BuiltInTests, GivenFileNameWhenGettingKernelFromEmbeddedResourcesThenVali
 TEST_F(BuiltInTests, GivenBuiltinSourcesWhenResolvingResourceNamesThenEveryKernelSourceIsRegistered) {
     for (uint32_t kernelIndex = 0; kernelIndex < static_cast<uint32_t>(BuiltIn::BaseKernel::count); ++kernelIndex) {
         const auto sourceKernel = static_cast<BuiltIn::BaseKernel>(kernelIndex);
-        auto resourceName = BuiltIn::createResourceName(sourceKernel, BuiltIn::Code::getExtension(BuiltIn::CodeType::source));
+        auto resourceName = std::string(BuiltIn::getAsString(sourceKernel)) + BuiltIn::Code::getExtension(BuiltIn::CodeType::source);
         EXPECT_NE(nullptr, RegisterEmbeddedResource::find(resourceName)) << resourceName;
     }
 }
