@@ -501,7 +501,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsS
     EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetCpuCopyThresholdThenReturnBaselineThresholds, IsNotCriOrBmg) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetCpuCopyThresholdThenReturnBaselineThresholds, IsNotBmgOrCri) {
     EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::unknown));
 
     EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToDeviceUsm));

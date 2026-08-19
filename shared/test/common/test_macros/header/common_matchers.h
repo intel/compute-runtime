@@ -220,7 +220,8 @@ using IsAtMostBMG = IsAtMostProduct<IGFX_BMG>;
 
 using IsNotPvcOrDg2 = IsNotWithinProducts<IGFX_DG2, IGFX_PVC>;
 
-using IsNotCriOrBmg = IsNotWithinProducts<IGFX_BMG, IGFX_CRI>;
+using IsBmgOrCri = IsAnyProducts<IGFX_BMG, IGFX_CRI>;
+using IsNotBmgOrCri = IsNoneProducts<IGFX_BMG, IGFX_CRI>;
 
 struct IsLeoSupported {
     template <PRODUCT_FAMILY productFamily>

@@ -17,7 +17,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-using IsBmgOrCri = IsAnyProducts<IGFX_BMG, IGFX_CRI>;
 using SysmanProductHelperTemperatureTest = SysmanDeviceFixture;
 
 static int mockReadLinkMultiTelemetryNodesSuccess(const char *path, char *buf, size_t bufsize) {

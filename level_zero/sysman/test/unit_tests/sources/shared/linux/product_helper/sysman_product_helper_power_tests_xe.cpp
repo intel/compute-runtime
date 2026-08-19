@@ -22,7 +22,6 @@ const std::string_view telem3GuidFileName("/sys/class/intel_pmt/telem3/guid");
 const std::string_view telem3TelemFileName("/sys/class/intel_pmt/telem3/telem");
 
 using SysmanXeProductHelperPowerTest = SysmanDevicePowerFixtureXe;
-using IsBmgOrCri = IsAnyProducts<IGFX_BMG, IGFX_CRI>;
 
 constexpr uint32_t bmgPowerHandleComponentCount = 4u;
 constexpr uint32_t bmgPowerLimitSupportedCount = 3u;
@@ -1207,7 +1206,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysfsReadFailsWithVariousErrorCod
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerUsageThenUnsupportedFeatureIsReturned, IsNotCriOrBmg) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerUsageThenUnsupportedFeatureIsReturned, IsNotBmgOrCri) {
     auto handles = getPowerHandles();
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
