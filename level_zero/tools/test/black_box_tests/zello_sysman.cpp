@@ -153,6 +153,8 @@ void usage() {
                  "\n  -x,   --rescan                                                                                  selectively run driver rescan EXP API black box test and re-run telemetry on rescanned handles"
                  "\n  -L,   --infolog                                                                                 selectively run info log EXP API black box test"
                  "\n        [--enable <true|false>]                                                                   optionally enable/disable info log collection (requires root)"
+                 "\n  -ce,  --cperevent                                                                               selectively run CPER event register and listen black box test (requires root)"
+                 "\n        [--timeout <milliseconds>]                                                                optionally override the CPER event listen timeout, default is 10000"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -2500,6 +2502,27 @@ void getInfoLogExpFunctionPointers(zes_driver_handle_t driverHandle) {
     VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogEnableExp", reinterpret_cast<void **>(&zesIntelInfoLogEnableExpPtr)));
 }
 
+typedef ze_result_t(ZE_APICALL *zesIntelDriverEventRegister_pfn)(
+    zes_driver_handle_t hDriver,
+    zes_event_type_flags_t events);
+
+typedef ze_result_t(ZE_APICALL *zesIntelDriverEventListenExp_pfn)(
+    zes_driver_handle_t hDriver,
+    uint64_t timeout,
+    uint32_t count,
+    zes_device_handle_t *phDevices,
+    uint32_t *pNumDeviceEvents,
+    zes_event_type_flags_t *pEvents,
+    zes_event_type_flags_t *pDriverEvents);
+
+zesIntelDriverEventRegister_pfn zesIntelDriverEventRegisterPtr = nullptr;
+zesIntelDriverEventListenExp_pfn zesIntelDriverEventListenExpPtr = nullptr;
+
+void getDriverEventRegisterExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverEventRegister", reinterpret_cast<void **>(&zesIntelDriverEventRegisterPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverEventListenExp", reinterpret_cast<void **>(&zesIntelDriverEventListenExpPtr)));
+}
+
 std::string getInfoLogTypeString(zes_intel_info_log_type_exp_t type) {
     static const std::map<zes_intel_info_log_type_exp_t, std::string> infoLogTypeMap{
         {ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE, "ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE"}};
@@ -2584,6 +2607,76 @@ void testSysmanInfoLog(zes_driver_handle_t driver, bool doEnable, bool enableSta
             continue;
         }
     }
+}
+
+zes_intel_info_log_handle_t getCperInfoLogHandle(zes_driver_handle_t driver) {
+    uint32_t count = 0;
+    VALIDATECALL(zesIntelDriverEnumInfoLogsExpPtr(driver, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Info Log handles" << std::endl;
+        return nullptr;
+    }
+
+    std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesIntelDriverEnumInfoLogsExpPtr(driver, &count, handles.data()));
+
+    for (const auto &handle : handles) {
+        zes_intel_info_log_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP};
+        VALIDATECALL(zesIntelInfoLogGetPropertiesExpPtr(handle, &properties));
+        if (properties.infoLogFormat == ZES_INTEL_INFO_LOG_FORMAT_CPER) {
+            return handle;
+        }
+    }
+
+    std::cout << "No info log handle reports the CPER format" << std::endl;
+    return nullptr;
+}
+
+void testSysmanCperEvent(zes_driver_handle_t driver, std::vector<ze_device_handle_t> &devices, uint64_t timeout) {
+    std::cout << std::endl
+              << " ----  CPER event tests ---- " << std::endl;
+
+    if (!zesIntelDriverEventRegisterPtr || !zesIntelDriverEventListenExpPtr) {
+        std::cout << "Driver scoped event EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    if (!zesIntelDriverEnumInfoLogsExpPtr || !zesIntelInfoLogGetPropertiesExpPtr || !zesIntelInfoLogEnableExpPtr) {
+        std::cout << "Info Log EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    if (geteuid() != 0) {
+        std::cout << "Not running as Root. Skipping the CPER event test." << std::endl;
+        return;
+    }
+
+    zes_intel_info_log_handle_t hInfoLog = getCperInfoLogHandle(driver);
+    if (hInfoLog == nullptr) {
+        return;
+    }
+
+    VALIDATECALL(zesIntelInfoLogEnableExpPtr(hInfoLog, true));
+    VALIDATECALL(zesIntelDriverEventRegisterPtr(driver, ZES_INTEL_CPER_DATA_AVAILABLE));
+
+    uint32_t count = static_cast<uint32_t>(devices.size());
+    std::vector<zes_event_type_flags_t> events(count, 0);
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t driverEvents = 0;
+
+    std::cout << "Listening for CPER data on " << count << " device handles for " << timeout << " milliseconds" << std::endl;
+    VALIDATECALL(zesIntelDriverEventListenExpPtr(driver, timeout, count, devices.data(), &numDeviceEvents, events.data(), &driverEvents));
+
+    if (driverEvents & ZES_INTEL_CPER_DATA_AVAILABLE) {
+        std::cout << "Got CPER data available event, the data can be read with the info log test" << std::endl;
+    } else if (numDeviceEvents != 0) {
+        std::cout << "Received events on " << numDeviceEvents << " device handles, no CPER data was reported" << std::endl;
+    } else {
+        std::cout << "No event was received" << std::endl;
+    }
+
+    VALIDATECALL(zesIntelDriverEventRegisterPtr(driver, 0));
+    VALIDATECALL(zesIntelInfoLogEnableExpPtr(hInfoLog, false));
 }
 
 bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector<std::string> &buf) {
@@ -3010,6 +3103,27 @@ int main(int argc, char *argv[]) {
         }
         getInfoLogExpFunctionPointers(driver);
         testSysmanInfoLog(driver, infoLogDoEnable, infoLogEnableState);
+        buf.clear();
+    }
+
+    if (isParamEnabled(argc, argv, "-ce", "--cperevent", &optind)) {
+        uint64_t cperEventTimeout = 10000u;
+        optind = optind + 1;
+        while (optind < argc) {
+            buf.push_back(argv[optind]);
+            optind++;
+        }
+        if (buf.size() != 0) {
+            if (buf.size() != 2 || buf[0] != "--timeout") {
+                std::cout << "Invalid Arguments passed to the CPER event test" << std::endl;
+                usage();
+                exit(0);
+            }
+            cperEventTimeout = static_cast<uint64_t>(std::stoul(buf[1]));
+        }
+        getInfoLogExpFunctionPointers(driver);
+        getDriverEventRegisterExpFunctionPointers(driver);
+        testSysmanCperEvent(driver, devices, cperEventTimeout);
         buf.clear();
     }
 

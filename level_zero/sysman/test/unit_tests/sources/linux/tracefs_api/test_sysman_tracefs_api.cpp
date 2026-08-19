@@ -197,9 +197,22 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetBufferPercentCalledThenVer
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, percent);
 }
 
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetBufferPercentCalledWithLoadedEntryPointThenEntryPointIsCalledAndValidValueReturned) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    int result = testTraceFsApi.traceFsInstanceGetBufferPercentBase(&MockTraceFsOsLibrary::mockTraceFsInstance);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, result);
+}
+
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferPercentCalledThenVerifyReturnValue) {
     int result = testTraceFsApi.traceFsInstanceSetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance,
                                                                 MockTraceFsOsLibrary::mockBufferPercent);
+    EXPECT_EQ(0, result);
+}
+
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferPercentCalledWithLoadedEntryPointThenEntryPointIsCalledAndValidValueReturned) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    int result = testTraceFsApi.traceFsInstanceSetBufferPercentBase(&MockTraceFsOsLibrary::mockTraceFsInstance,
+                                                                    MockTraceFsOsLibrary::mockBufferPercent);
     EXPECT_EQ(0, result);
 }
 

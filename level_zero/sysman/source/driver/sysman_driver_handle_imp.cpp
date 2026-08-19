@@ -42,6 +42,8 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceMemoryGetPageOfflineStateExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceGetHealthExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceSetHealthExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEventRegister);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEventListenExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverRescanDevicesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEnumInfoLogsExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogGetPropertiesExp);
@@ -358,6 +360,24 @@ ze_result_t SysmanDriverHandleImp::sysmanEventsListenEx(uint64_t timeout, uint32
     }
     return pOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 };
+
+ze_result_t SysmanDriverHandleImp::sysmanDriverEventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents, zes_event_type_flags_t *pDriverEvents) {
+    if (pOsSysmanDriver == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Os Sysman Driver Not initialized\n");
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pOsSysmanDriver->driverEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents, pDriverEvents);
+}
+
+ze_result_t SysmanDriverHandleImp::driverEventRegister(zes_event_type_flags_t events) {
+    if (pOsSysmanDriver == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Os Sysman Driver Not initialized\n");
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pOsSysmanDriver->driverEventRegister(events);
+}
 
 ze_result_t SysmanDriverHandleImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
 

@@ -178,41 +178,34 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsFailureWhenlisteningForRes
     delete pUdevLibLocal;
 }
 
-TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenListeningForEventsThenEventListenReturnsErrorUninitialized) {
-    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
-        pipeFd[0] = mockReadPipeFd;
-        pipeFd[1] = mockWritePipeFd;
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        for (uint64_t i = 0; i < numberOfFds; i++) {
-            if (pollFd[i].fd == mockUdevFd) {
-                pollFd[i].revents = POLLIN;
-            }
-        }
-        return 1;
-    });
+TEST_F(SysmanEventsFixture, GivenDeviceHandleWhichCannotBeResolvedToASysmanDeviceWhenListeningForEventsThenInvalidArgumentIsReturned) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
 
-    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
-    auto pOsSysmanDriverOriginal = driverHandle->pOsSysmanDriver;
-    driverHandle->pOsSysmanDriver = static_cast<L0::Sysman::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp.get());
+    VariableBackup<decltype(globalSysmanDriver)> globalSysmanDriverBackup(&globalSysmanDriver, nullptr);
 
-    auto pUdevLibLocal = std::make_unique<EventsUdevLibMock>();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-
-    auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
-    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal.get();
-
-    std::unique_ptr<zes_device_handle_t[]> phDevices(new zes_device_handle_t[1]);
-    phDevices[0] = nullptr;
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     uint32_t numDeviceEvents = 0;
-    std::unique_ptr<zes_event_type_flags_t[]> pDeviceEvents(new zes_event_type_flags_t[1]);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.get(), &numDeviceEvents, pDeviceEvents.get()));
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
 
-    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibOriginal;
-    driverHandle->pOsSysmanDriver = pOsSysmanDriverOriginal;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, eventsUtil->eventsListen(0u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, pDeviceEvents[0]);
+}
+
+TEST_F(SysmanEventsFixture, GivenEventsUtilFailsWhenListeningForEventsThroughOsSysmanDriverThenErrorIsPropagatedAndSurvivabilityHandlingIsSkipped) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+
+    VariableBackup<decltype(globalSysmanDriver)> globalSysmanDriverBackup(&globalSysmanDriver, nullptr);
+
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, driverImp.eventsListen(0u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, pDeviceEvents[0]);
+    EXPECT_FALSE(pSysmanDeviceImp->isDeviceInSurvivabilityMode);
 }
 
 TEST_F(SysmanEventsFixture, GivenPipeSystemCallReturnsFailureWhenlisteningForResetRequiredEventThenDeviceListenReturnsResetRequiredEvent) {
@@ -2521,7 +2514,7 @@ TEST_F(SysmanEventsFixture, GivenInvalidDeviceRealPathWhenListeningForSurvivabil
     EXPECT_EQ(0u, numDeviceEvents);
 }
 
-TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenCallingDriverEventListenThenInvalidArgumentErrorIsReturned) {
+TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenCallingDriverEventListenThenInvalidArgumentIsReturned) {
     auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
     VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
 
@@ -2529,6 +2522,7 @@ TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenCallingDriverEventListenThe
     uint32_t numDeviceEvents = 0;
     std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
 }
 
 TEST_F(SysmanEventsFixture,

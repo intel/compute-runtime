@@ -58,6 +58,14 @@ ze_result_t WddmSysmanDriverImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_l
     return pInfoLogHandleContext->infoLogGet(pCount, phInfoLogs);
 }
 
+ze_result_t WddmSysmanDriverImp::driverEventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents, zes_event_type_flags_t *pDriverEvents) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmSysmanDriverImp::driverEventRegister(zes_event_type_flags_t events) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t WddmSysmanDriverImp::rescanDevices(SysmanDriverHandleImp *driverHandle, uint32_t *pCount, zes_device_handle_t *phDevices) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

@@ -16,6 +16,12 @@ InfoLogHandleContext::InfoLogHandleContext() {
     supportedFormats = OsInfoLog::getSupportedInfoLogFormats();
 }
 
+void InfoLogHandleContext::disableInfoLogCollection() {
+    for (auto &pInfoLog : handleList) {
+        pInfoLog->infoLogEnable(false);
+    }
+}
+
 void InfoLogHandleContext::releaseInfoLogHandles() {
     handleList.clear();
 }

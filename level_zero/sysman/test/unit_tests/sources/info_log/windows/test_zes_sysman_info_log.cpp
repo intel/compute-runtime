@@ -23,6 +23,12 @@ struct MockOsSysmanDriver : public OsSysmanDriver {
     ze_result_t eventsListen(uint64_t, uint32_t, zes_device_handle_t *, uint32_t *, zes_event_type_flags_t *) override {
         return ZE_RESULT_SUCCESS;
     }
+    ze_result_t driverEventsListen(uint64_t, uint32_t, zes_device_handle_t *, uint32_t *, zes_event_type_flags_t *, zes_event_type_flags_t *) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t driverEventRegister(zes_event_type_flags_t) override {
+        return ZE_RESULT_SUCCESS;
+    }
     ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) override {
         return context.infoLogGet(pCount, phInfoLogs);
     }
@@ -30,6 +36,23 @@ struct MockOsSysmanDriver : public OsSysmanDriver {
         return ZE_RESULT_SUCCESS;
     }
     InfoLogHandleContext context;
+};
+
+struct MockInfoLog : public InfoLog {
+    ze_result_t infoLogGetProperties(zes_intel_info_log_properties_exp_t *) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t infoLogRead(uint32_t *, uint8_t *) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t infoLogEnable(bool state) override {
+        enableCallCount++;
+        lastRequestedState = state;
+        return enableReturnValue;
+    }
+    uint32_t enableCallCount = 0;
+    bool lastRequestedState = true;
+    ze_result_t enableReturnValue = ZE_RESULT_SUCCESS;
 };
 
 class SysmanInfoLogFixture : public SysmanDriverHandleTest {
@@ -98,6 +121,64 @@ TEST_F(SysmanInfoLogFixture, GivenSupportedFormatsInjectedWhenEnumeratingInfoLog
     std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, context.infoLogGet(&count, handles.data()));
     EXPECT_NE(nullptr, handles[0]);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenMultipleInfoLogHandlesWhenDisablingInfoLogCollectionThenEveryHandleIsDisabled) {
+    InfoLogHandleContext context;
+
+    auto firstInfoLog = std::make_unique<MockInfoLog>();
+    auto secondInfoLog = std::make_unique<MockInfoLog>();
+    auto *pFirstInfoLog = firstInfoLog.get();
+    auto *pSecondInfoLog = secondInfoLog.get();
+    context.handleList.push_back(std::move(firstInfoLog));
+    context.handleList.push_back(std::move(secondInfoLog));
+
+    context.disableInfoLogCollection();
+
+    EXPECT_EQ(1u, pFirstInfoLog->enableCallCount);
+    EXPECT_FALSE(pFirstInfoLog->lastRequestedState);
+    EXPECT_EQ(1u, pSecondInfoLog->enableCallCount);
+    EXPECT_FALSE(pSecondInfoLog->lastRequestedState);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenHandleReportingFailureWhenDisablingInfoLogCollectionThenRemainingHandlesAreStillDisabled) {
+    InfoLogHandleContext context;
+
+    auto failingInfoLog = std::make_unique<MockInfoLog>();
+    failingInfoLog->enableReturnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto lastInfoLog = std::make_unique<MockInfoLog>();
+    auto *pFailingInfoLog = failingInfoLog.get();
+    auto *pLastInfoLog = lastInfoLog.get();
+    context.handleList.push_back(std::move(failingInfoLog));
+    context.handleList.push_back(std::move(lastInfoLog));
+
+    context.disableInfoLogCollection();
+
+    EXPECT_EQ(1u, pFailingInfoLog->enableCallCount);
+    EXPECT_EQ(1u, pLastInfoLog->enableCallCount);
+    EXPECT_FALSE(pLastInfoLog->lastRequestedState);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNoInfoLogHandlesWhenDisablingInfoLogCollectionThenNothingIsDisabled) {
+    InfoLogHandleContext context;
+    ASSERT_TRUE(context.handleList.empty());
+
+    context.disableInfoLogCollection();
+
+    EXPECT_TRUE(context.handleList.empty());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogHandlesWhenReleasingInfoLogHandlesThenHandleListIsEmptied) {
+    InfoLogHandleContext context;
+    context.supportedFormats = {ZES_INTEL_INFO_LOG_FORMAT_CPER};
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context.infoLogGet(&count, nullptr));
+    ASSERT_EQ(expectedInfoLogHandleCount, count);
+    ASSERT_EQ(expectedInfoLogHandleCount, static_cast<uint32_t>(context.handleList.size()));
+
+    context.releaseInfoLogHandles();
+    EXPECT_TRUE(context.handleList.empty());
 }
 
 TEST_F(SysmanInfoLogFixture, GivenCountZeroOrGreaterThanAvailableWhenEnumeratingInfoLogsThenCountIsUpdatedAndOneHandleIsReturned) {

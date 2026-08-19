@@ -41,6 +41,7 @@ struct InfoLogHandleContext {
 
     void init();
     ze_result_t infoLogGet(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs);
+    void disableInfoLogCollection();
     void releaseInfoLogHandles();
 
     std::vector<std::unique_ptr<InfoLog>> handleList = {};

@@ -27,7 +27,11 @@ namespace L0 {
 namespace Sysman {
 
 ze_result_t LinuxSysmanDriverImp::eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
-    ze_result_t res = pLinuxEventsUtil->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    return driverEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents, nullptr);
+}
+
+ze_result_t LinuxSysmanDriverImp::driverEventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents, zes_event_type_flags_t *pDriverEvents) {
+    ze_result_t res = pLinuxEventsUtil->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents, pDriverEvents);
     if (ZE_RESULT_SUCCESS != res) {
         return res;
     }
@@ -55,6 +59,10 @@ ze_result_t LinuxSysmanDriverImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_
 
 void LinuxSysmanDriverImp::eventRegister(zes_event_type_flags_t events, SysmanDeviceImp *pSysmanDevice) {
     pLinuxEventsUtil->eventRegister(events, pSysmanDevice);
+}
+
+ze_result_t LinuxSysmanDriverImp::driverEventRegister(zes_event_type_flags_t events) {
+    return pLinuxEventsUtil->driverEventRegister(events);
 }
 
 ze_result_t LinuxSysmanDriverImp::getPciBdfAndUuidForHwDevice(NEO::HwDeviceId *hwDeviceId, std::string &pciBdf, std::string &pciUuid) {
@@ -248,8 +256,18 @@ LinuxSysmanDriverImp::~LinuxSysmanDriverImp() {
     }
 
     if (nullptr != pInfoLogHandleContext) {
+        if (cperTracePipeFd >= 0) {
+            pInfoLogHandleContext->disableInfoLogCollection();
+        }
+
         delete pInfoLogHandleContext;
         pInfoLogHandleContext = nullptr;
+    }
+
+    if (cperTracePipeFd >= 0) {
+        int errorNum = 0;
+        SysmanSysCallsWrapper::close(cperTracePipeFd, errorNum);
+        cperTracePipeFd = -1;
     }
 }
 

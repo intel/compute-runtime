@@ -144,8 +144,6 @@ static const std::vector<uint8_t> expectedCper3Bytes = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00};
 
-// Distinguishing byte at offset 96 (record_id field) differs between events:
-// Event 1: 0x06, Event 2: 0x07, Event 3: 0x08
 static constexpr size_t cperRecordIdOffset = 96u;
 
 class MockTraceFsApiWithData : public PublicTraceFsApi {
@@ -154,6 +152,9 @@ class MockTraceFsApiWithData : public PublicTraceFsApi {
     static inline size_t tracePipeReadPos = 0;
     static inline bool simulateFirstOpenFailure = false;
     static inline int openCallCount = 0;
+    static inline int closeCallCount = 0;
+    static inline int eventDisableCallCount = 0;
+    static inline int traceOffCallCount = 0;
     static constexpr int mockTracePipeFd = 200;
 
     MockTraceFsApiWithData(bool useMultipleCper = false, bool failFirstOpen = false) {
@@ -167,6 +168,19 @@ class MockTraceFsApiWithData : public PublicTraceFsApi {
         tracePipeReadPos = 0;
         simulateFirstOpenFailure = failFirstOpen;
         openCallCount = 0;
+        closeCallCount = 0;
+        eventDisableCallCount = 0;
+        traceOffCallCount = 0;
+    }
+
+    int traceFsEventDisable(struct tracefs_instance *instance, const char *system, const char *event) override {
+        eventDisableCallCount++;
+        return PublicTraceFsApi::traceFsEventDisable(instance, system, event);
+    }
+
+    int traceFsTraceOff(struct tracefs_instance *instance) override {
+        traceOffCallCount++;
+        return PublicTraceFsApi::traceFsTraceOff(instance);
     }
 
     char *traceFsInstanceFileRead(struct tracefs_instance *instance, const char *file, int *psize) override {
@@ -209,6 +223,7 @@ class MockTraceFsApiWithData : public PublicTraceFsApi {
 
     static int mockSysCallsClose(int fd) {
         if (fd == mockTracePipeFd) {
+            closeCallCount++;
             tracePipeDataPtr = nullptr;
         }
         return 0;
@@ -285,6 +300,12 @@ static const std::string mockTwoSmallPlusOneLargerCperTracePipeEvents =
     "    kworker/13:2-370     [013] .....  5058.941472: xe_error_cper: dev=0000:13:00.0 "
     "cper_len=4 cper_raw=11 22 33 44\n";
 
+static const std::string mockLargerThenSmallCperTracePipeEvents =
+    "    kworker/13:2-370     [013] .....  5058.247549: xe_error_cper: dev=0000:13:00.0 "
+    "cper_len=4 cper_raw=AB CD EF 01\n"
+    "    kworker/13:2-370     [013] .....  5058.582145: xe_error_cper: dev=0000:13:00.0 "
+    "cper_len=2 cper_raw=12 34\n";
+
 class MockTraceFsApiWithBadCperData : public PublicTraceFsApi {
   public:
     static inline const std::string *badDataPtr = nullptr;
@@ -293,6 +314,8 @@ class MockTraceFsApiWithBadCperData : public PublicTraceFsApi {
     static inline bool shouldFailOpen = false;
     static constexpr int mockBadDataFd = 201;
     static inline const std::string emptyStr{};
+    static constexpr size_t midLineBreakPos = 40u;
+    static constexpr size_t cperRawBreakOffset = sizeof("cper_raw=AB CD") - 1;
 
     MockTraceFsApiWithBadCperData(const std::string &eventData = emptyStr, bool failOpen = false, const std::string *tracePipeData = nullptr, bool failTraceRead = false)
         : eventData(eventData), failTraceRead(failTraceRead) {
@@ -353,6 +376,29 @@ class MockTraceFsApiWithBadCperData : public PublicTraceFsApi {
             eagainCallCount++;
             errno = EAGAIN;
             return -1;
+        }
+        return mockSysCallsRead(fd, buf, count);
+    }
+
+    static ssize_t mockSysCallsReadWithEagainMidLine(int fd, void *buf, size_t count) {
+        if (fd == mockBadDataFd && eagainCallCount == 0 && badDataReadPos >= midLineBreakPos) {
+            eagainCallCount++;
+            errno = EAGAIN;
+            return -1;
+        }
+        return mockSysCallsRead(fd, buf, count);
+    }
+
+    static ssize_t mockSysCallsReadWithHardErrorMidCperRaw(int fd, void *buf, size_t count) {
+        if (fd == mockBadDataFd && badDataPtr != nullptr && eagainCallCount == 0) {
+            size_t cperRawPos = badDataPtr->find("cper_raw=");
+            if (cperRawPos != std::string::npos && badDataReadPos >= cperRawPos + cperRawBreakOffset) {
+                eagainCallCount++;
+                size_t nextLinePos = badDataPtr->find('\n', badDataReadPos);
+                badDataReadPos = (nextLinePos == std::string::npos) ? badDataPtr->size() : nextLinePos + 1;
+                errno = EIO;
+                return -1;
+            }
         }
         return mockSysCallsRead(fd, buf, count);
     }

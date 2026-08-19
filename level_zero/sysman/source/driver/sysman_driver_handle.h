@@ -31,6 +31,10 @@ struct SysmanDriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
                                            uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
     virtual ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                              uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
+    virtual ze_result_t sysmanDriverEventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
+                                                 uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents,
+                                                 zes_event_type_flags_t *pDriverEvents) = 0;
+    virtual ze_result_t driverEventRegister(zes_event_type_flags_t events) = 0;
     virtual ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) = 0;
     virtual ze_result_t getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) = 0;
 };

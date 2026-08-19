@@ -50,6 +50,11 @@ class SysmanInfoLogFixture : public ::testing::Test {
 
     void TearDown() override {
         if (driverHandle) {
+            auto *pLinuxSysmanDriverImp = static_cast<L0::Sysman::LinuxSysmanDriverImp *>(
+                static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle)->pOsSysmanDriver);
+            if (pLinuxSysmanDriverImp != nullptr) {
+                pLinuxSysmanDriverImp->setCperTracePipeFd(-1);
+            }
             delete driverHandle;
             driverHandle = nullptr;
         }
@@ -61,6 +66,16 @@ class SysmanInfoLogFixture : public ::testing::Test {
         std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
+    }
+
+    void enableInfoLogCollection(zes_intel_info_log_handle_t hInfoLog) {
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
+    }
+
+    int getCperTracePipeFd() {
+        auto *pLinuxSysmanDriverImp = static_cast<L0::Sysman::LinuxSysmanDriverImp *>(
+            static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle)->pOsSysmanDriver);
+        return pLinuxSysmanDriverImp->getCperTracePipeFd();
     }
 
     static NEO::OsLibrary *mockLoadFunc(const NEO::OsLibraryCreateProperties &) {
@@ -175,6 +190,29 @@ TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenEnumeratingInfoLogsThenE
     pSysmanDriverHandleImp->pOsSysmanDriver = originalOsSysmanDriver;
 }
 
+TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenEnablingInfoLogThenUninitializedIsReturnedAndTraceFsStateIsRolledBack) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    auto *pSysmanDriverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle);
+    auto *originalOsSysmanDriver = pSysmanDriverHandleImp->pOsSysmanDriver;
+    pSysmanDriverHandleImp->pOsSysmanDriver = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogEnableExp(infoLogHandles[0], true));
+    EXPECT_EQ(0, MockTraceFsApiWithData::openCallCount);
+
+    EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
+
+    pSysmanDriverHandleImp->pOsSysmanDriver = originalOsSysmanDriver;
+    EXPECT_EQ(-1, getCperTracePipeFd());
+}
+
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenEnablingInfoLogSuccessfullyThenSuccessIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
@@ -186,6 +224,21 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenEnablingInfoLogSuccessfu
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], true));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogFormatIsNotCperWhenEnablingInfoLogThenTracingIsTurnedOnWithoutOpeningTracePipe) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+
+    auto nonCperFormat = static_cast<zes_intel_info_log_format_exp_t>(ZES_INTEL_INFO_LOG_FORMAT_CPER + 1);
+    LinuxInfoLogImp infoLogImp(nonCperFormat);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, infoLogImp.infoLogEnable(true));
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(0, MockTraceFsApiWithData::openCallCount);
+    EXPECT_EQ(-1, getCperTracePipeFd());
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenDisablingInfoLogSuccessfullyThenSuccessIsReturned) {
@@ -269,19 +322,19 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenReadingValidCperDataThen
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
     std::vector<uint8_t> buffer(size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
     EXPECT_EQ(mockCperLen, size);
 
-    // Verify first bytes of CPER record
     for (uint32_t i = 0; i < expectedCper1Bytes.size(); i++) {
         EXPECT_EQ(expectedCper1Bytes[i], buffer[i]);
     }
 }
 
-TEST_F(SysmanInfoLogFixture, GivenFirstTraceFsPathFailsWhenReadingInfoLogThenFallsBackToSecondPathAndSucceeds) {
+TEST_F(SysmanInfoLogFixture, GivenFirstTraceFsPathFailsWhenEnablingInfoLogThenFallsBackToSecondPathAndReadSucceeds) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>(false, true);
     });
@@ -291,6 +344,9 @@ TEST_F(SysmanInfoLogFixture, GivenFirstTraceFsPathFailsWhenReadingInfoLogThenFal
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+
+    EXPECT_EQ(2, MockTraceFsApiWithData::openCallCount);
 
     uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
     std::vector<uint8_t> buffer(size);
@@ -325,6 +381,7 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenReadingMultipleCperDataT
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     // Total size is 3 * 532 = 1596 bytes
     uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
@@ -363,6 +420,7 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenBufferCanFitOnlyOneCperT
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     // Allocate buffer that can fit only 1 CPER (532 bytes) but not 2 (1064 bytes)
     uint32_t size = 600u;
@@ -391,6 +449,7 @@ TEST_F(SysmanInfoLogFixture, GivenCorruptedOddLengthCperRawWhenReadingInfoLogThe
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -408,6 +467,7 @@ TEST_F(SysmanInfoLogFixture, GivenInvalidHexCharacterInCperRawWhenReadingInfoLog
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -419,11 +479,13 @@ TEST_F(SysmanInfoLogFixture, GivenMissingCperLenFieldWhenReadingInfoLogThenZeroB
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockMissingFieldCperEvent);
     });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -441,6 +503,7 @@ TEST_F(SysmanInfoLogFixture, GivenCompactHexCperRawWithNoSpacesWhenReadingInfoLo
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -460,6 +523,7 @@ TEST_F(SysmanInfoLogFixture, GivenSpacedHexCperRawWhenReadingInfoLogThenDataIsRe
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -479,6 +543,7 @@ TEST_F(SysmanInfoLogFixture, GivenCperRawWithMultipleSpacedBytesAndTrailingField
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -500,6 +565,7 @@ TEST_F(SysmanInfoLogFixture, GivenTraceOutputWithNonCperLineWhenReadingInfoLogTh
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -513,11 +579,13 @@ TEST_F(SysmanInfoLogFixture, GivenCperEventWithZeroLengthWhenReadingInfoLogThenR
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockCperEventWithZeroLen);
     });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -525,7 +593,7 @@ TEST_F(SysmanInfoLogFixture, GivenCperEventWithZeroLengthWhenReadingInfoLogThenR
     EXPECT_EQ(0u, size);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenReadingInfoLogThenSizeIsZeroAndErrorIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenEnablingInfoLogThenErrorIsReturnedAndNoDescriptorIsStored) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockSingleCperEventData, true);
     });
@@ -534,9 +602,416 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenReadingInfoLogThenSizeIs
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], true));
+    EXPECT_EQ(-1, getCperTracePipeFd());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionNotEnabledWhenReadingInfoLogThenNotAvailableIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    ASSERT_EQ(-1, getCperTracePipeFd());
+
+    uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
+    std::vector<uint8_t> buffer(size);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(0u, size);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionNotEnabledAndNoFittingRecordsInTraceWhenReadingInfoLogThenNotAvailableIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithBadCperData>(mockCperEventWithZeroLen);
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    ASSERT_EQ(-1, getCperTracePipeFd());
+
+    uint32_t size = 1024u;
+    std::vector<uint8_t> buffer(size);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(0u, size);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionDisabledAfterEnableWhenReadingInfoLogThenNotAvailableIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+    ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
+    EXPECT_EQ(-1, getCperTracePipeFd());
+
+    uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
+    std::vector<uint8_t> buffer(size);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenReadingInfoLogThenNotAvailableIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    enableInfoLogCollection(infoLogHandles[0]);
+    ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+
+    auto *pSysmanDriverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle);
+    auto *originalOsSysmanDriver = pSysmanDriverHandleImp->pOsSysmanDriver;
+    pSysmanDriverHandleImp->pOsSysmanDriver = nullptr;
+
+    uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
+    std::vector<uint8_t> buffer(size);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(0u, size);
+
+    pSysmanDriverHandleImp->pOsSysmanDriver = originalOsSysmanDriver;
+    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionAlreadyEnabledWhenEnablingAgainThenDescriptorIsReusedAndNotLeaked) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    enableInfoLogCollection(infoLogHandles[0]);
+    ASSERT_EQ(1, MockTraceFsApiWithData::openCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], true));
+    EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
+    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionStillEnabledWhenDriverIsDestroyedThenTracePipeDescriptorIsClosed) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+    ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+    ASSERT_EQ(0, MockTraceFsApiWithData::closeCallCount);
+
+    delete driverHandle;
+    driverHandle = nullptr;
+
+    EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionStillEnabledWhenDriverIsDestroyedThenCollectionIsDisabledAndTraceFsStateIsRestored) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+    ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+    ASSERT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
+    ASSERT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
+    ASSERT_EQ(0, MockTraceFsApiWithData::eventDisableCallCount);
+    ASSERT_EQ(0, MockTraceFsApiWithData::traceOffCallCount);
+
+    delete driverHandle;
+    driverHandle = nullptr;
+
+    EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
+    EXPECT_EQ(1, MockTraceFsApiWithData::eventDisableCallCount);
+    EXPECT_EQ(1, MockTraceFsApiWithData::traceOffCallCount);
+    EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionNeverEnabledWhenDriverIsDestroyedThenTraceFsStateIsLeftUntouched) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    ASSERT_EQ(-1, getCperTracePipeFd());
+
+    delete driverHandle;
+    driverHandle = nullptr;
+
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(0, MockTraceFsApiWithData::eventDisableCallCount);
+    EXPECT_EQ(0, MockTraceFsApiWithData::traceOffCallCount);
+    EXPECT_EQ(0, MockTraceFsApiWithData::closeCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionNeverEnabledWhenDisablingThenSuccessIsReturnedAndCloseIsNotCalled) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    ASSERT_EQ(-1, getCperTracePipeFd());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(0, MockTraceFsApiWithData::closeCallCount);
+    EXPECT_EQ(-1, getCperTracePipeFd());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenDisablingInfoLogThenCloseIsSkippedAndSuccessIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+    ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+
+    auto *pSysmanDriverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle);
+    auto *originalOsSysmanDriver = pSysmanDriverHandleImp->pOsSysmanDriver;
+    pSysmanDriverHandleImp->pOsSysmanDriver = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(0, MockTraceFsApiWithData::closeCallCount);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
+
+    pSysmanDriverHandleImp->pOsSysmanDriver = originalOsSysmanDriver;
+    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionEnabledThenTraceFsWakeWatermarkIsLoweredToZero) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+
+    EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkAlreadyZeroWhenEnablingInfoLogThenItIsNotRewritten) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<MockTraceFsApiWithData>();
+        mockApi->getBufferPercentReturnValue = 0;
+        return mockApi;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeReadWhenEnablingInfoLogThenItIsNotOverridden) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<MockTraceFsApiWithData>();
+        mockApi->getBufferPercentReturnValue = -1;
+        return mockApi;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionEnabledWhenDisablingThenPreviousTraceFsWakeWatermarkIsRestored) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+    ASSERT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkRestoreFailsWhenDisablingThenSavedValueIsKeptAndWrittenBackByALaterDisable) {
+    VariableBackup<decltype(PublicTraceFsApi::failSetBufferPercentOnCall)> failRestoreBackup(&PublicTraceFsApi::failSetBufferPercentOnCall, 2u);
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+    ASSERT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
+    ASSERT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(3u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(3u, PublicTraceFsApi::setBufferPercentCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeProgrammedWhenEnablingInfoLogThenCollectionStillSucceeds) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<MockTraceFsApiWithData>();
+        mockApi->setBufferPercentReturnValue = -1;
+        return mockApi;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], true));
+    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+    EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], false));
+    EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenEnablingInfoLogThenTraceFsWakeWatermarkIsRestored) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSingleCperEventData, true);
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], true));
+
+    EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenReadStopsMidLineOnEagainWhenReadingAgainThenTheRecordIsCompletedAcrossCalls) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSpacedHexCperEvent);
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsReadWithEagainMidLine);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+
+    uint32_t size = 1024u;
+    std::vector<uint8_t> buffer(size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(0u, size);
+
+    size = 1024u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(2u, size);
+    EXPECT_EQ(0xAB, buffer[0]);
+    EXPECT_EQ(0xCD, buffer[1]);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenBufferFullDropsAnOversizedRecordWhenReadingAgainThenTheFollowingRecordIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSmallCperTraceEvent, false, &mockLargerThenSmallCperTracePipeEvents);
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+
+    uint32_t size = 2u;
+    std::vector<uint8_t> buffer(1024u);
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(0u, size);
+
+    size = 1024u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(2u, size);
+    EXPECT_EQ(0x12, buffer[0]);
+    EXPECT_EQ(0x34, buffer[1]);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenReadFailsMidLineWithHardErrorWhenReadingAgainThenTheTruncatedPrefixIsDiscarded) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSmallCperTraceEvent, false, &mockLargerThenSmallCperTracePipeEvents);
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsReadWithHardErrorMidCperRaw);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
+
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(0u, size);
+
+    size = 1024u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(2u, size);
+    EXPECT_EQ(0x12, buffer[0]);
+    EXPECT_EQ(0x34, buffer[1]);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTracePipeReturnsZeroLenCperWhenReadingInfoLogThenCperLenIsZeroAndSizeIsZero) {
@@ -549,6 +1024,7 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeReturnsZeroLenCperWhenReadingInfoLogT
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -566,6 +1042,7 @@ TEST_F(SysmanInfoLogFixture, GivenReadFromTracePipeReturnsErrorWhenReadingInfoLo
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -583,6 +1060,7 @@ TEST_F(SysmanInfoLogFixture, GivenCperRawWithEmptyValueWhenReadingInfoLogThenWhi
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -594,9 +1072,12 @@ TEST_F(SysmanInfoLogFixture, GivenCperLenFieldEmptyAtEndOfLineWhenReadingInfoLog
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockCperEventWithEmptyCperLen);
     });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -614,6 +1095,7 @@ TEST_F(SysmanInfoLogFixture, GivenCperRawByteCountMismatchesLenFieldWhenReadingI
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -649,9 +1131,12 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFileReadReturnsNullWhenReadingInfoLogThen
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(MockTraceFsApiWithBadCperData::emptyStr, false, nullptr, true);
     });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -669,6 +1154,7 @@ TEST_F(SysmanInfoLogFixture, GivenReadReturnsEagainWhenReadingInfoLogThenReadSto
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -686,8 +1172,8 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeReturnsLargerCperThanTracePredictedWh
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
-    // Buffer is 3 bytes: fits the 2-byte record seen in 'trace', but not the 4-byte record in 'trace_pipe'
     uint32_t size = 3u;
     std::vector<uint8_t> buffer(size);
     EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
@@ -704,12 +1190,11 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeDeliversExtraLargerRecordAfterFitting
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    enableInfoLogCollection(infoLogHandles[0]);
 
-    // Buffer fits 3x 2-byte records (6 bytes) but not 2x 2-byte + 1x 4-byte (8 bytes)
     uint32_t size = 7u;
     std::vector<uint8_t> buffer(size);
     EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    // First 2 records (4 bytes) were written before the 3rd record overflowed
     EXPECT_EQ(4u, size);
     EXPECT_EQ(0xAB, buffer[0]);
     EXPECT_EQ(0xCD, buffer[1]);

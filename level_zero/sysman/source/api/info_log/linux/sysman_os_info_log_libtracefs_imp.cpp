@@ -9,8 +9,10 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_imp.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_sys_calls_wrapper.h"
 #include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include <algorithm>
@@ -173,24 +175,23 @@ uint32_t LinuxInfoLogImp::countCperRecords(const std::string &traceOutput, uint3
     return cperCount;
 }
 
-// Reads exactly 'cperCount' CPER records from the tracefs 'trace_pipe' (consuming stream)
-// and writes their raw binary payloads contiguously into 'pBuffer'.
-// On return, 'aggregatedCperLen' holds the total number of bytes written.
-//
-// 'trace_pipe' is opened O_NONBLOCK; the loop reads one byte at a time, accumulating
-// characters into 'lineBuffer' until a newline is encountered. Each completed line that
-// contains "xe_error_cper:" is parsed for two fields:
-//
-//   cper_len  - decimal byte count of the payload, e.g. "8"
-//   cper_raw  - space-separated hex bytes of the payload, e.g. "AB CD EF 01 02 03 04 05"
-//
-// Sample trace_pipe line (one record):
-//   "     kworker-42   [000] ....  1234.567890: xe_error_cper: cper_len=8 cper_raw=AB CD EF 01 02 03 04 05\n"
-//
-// After parsing that line the bytes {0xAB,0xCD,0xEF,0x01,0x02,0x03,0x04,0x05} are
-// memcpy'd into pBuffer and aggregatedCperLen is advanced by 8.
-ze_result_t LinuxInfoLogImp::extractCperRecords(uint32_t cperCount, uint8_t *pBuffer, uint32_t bufferSize, uint32_t &aggregatedCperLen) {
-    ze_result_t result = ZE_RESULT_SUCCESS;
+int LinuxInfoLogImp::getTracePipeFd() const {
+    auto pLinuxSysmanDriverImp = static_cast<LinuxSysmanDriverImp *>(globalSysmanDriver->pOsSysmanDriver);
+    return (pLinuxSysmanDriverImp != nullptr) ? pLinuxSysmanDriverImp->getCperTracePipeFd() : -1;
+}
+
+ze_result_t LinuxInfoLogImp::openTracePipe() {
+    auto pLinuxSysmanDriverImp = static_cast<LinuxSysmanDriverImp *>(globalSysmanDriver->pOsSysmanDriver);
+    if (pLinuxSysmanDriverImp == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): Os Sysman driver not initialized, returning error: 0x%x\n", __FUNCTION__, ZE_RESULT_ERROR_UNINITIALIZED);
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    if (pLinuxSysmanDriverImp->getCperTracePipeFd() >= 0) {
+        return ZE_RESULT_SUCCESS;
+    }
+
     int errorNum = 0;
     int fd = -1;
     for (const auto &tracingDir : tracefsPaths) {
@@ -202,15 +203,78 @@ ze_result_t LinuxInfoLogImp::extractCperRecords(uint32_t cperCount, uint8_t *pBu
     }
 
     if (fd < 0) {
-        result = LinuxSysmanImp::getResult(errorNum);
+        ze_result_t result = LinuxSysmanImp::getResult(errorNum);
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Error@ %s(): Failed to open trace_pipe, returning error: 0x%x\n", __FUNCTION__, result);
         return result;
     }
 
+    lineBuffer.clear();
+    pLinuxSysmanDriverImp->setCperTracePipeFd(fd);
+    return ZE_RESULT_SUCCESS;
+}
+
+void LinuxInfoLogImp::setImmediateWakeBufferPercent() {
+    constexpr int immediateWakeBufferPercent = 0;
+    int currentPercent = pTraceFsApi->traceFsInstanceGetBufferPercent(nullptr);
+    if (currentPercent < 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Info@ %s(): Failed to read tracefs buffer percent, event reporting may be delayed\n", __FUNCTION__);
+        return;
+    }
+
+    if (currentPercent == immediateWakeBufferPercent) {
+        return;
+    }
+
+    if (pTraceFsApi->traceFsInstanceSetBufferPercent(nullptr, immediateWakeBufferPercent) != 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Info@ %s(): Failed to set tracefs buffer percent to %d, event reporting may be delayed\n",
+                     __FUNCTION__, immediateWakeBufferPercent);
+        return;
+    }
+
+    savedBufferPercent = currentPercent;
+}
+
+void LinuxInfoLogImp::restoreBufferPercent() {
+    if (savedBufferPercent < 0) {
+        return;
+    }
+
+    if (pTraceFsApi->traceFsInstanceSetBufferPercent(nullptr, savedBufferPercent) != 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Info@ %s(): Failed to restore tracefs buffer percent to %d, the watermark stays overridden until a later attempt succeeds\n",
+                     __FUNCTION__, savedBufferPercent);
+        return;
+    }
+
+    savedBufferPercent = -1;
+}
+
+void LinuxInfoLogImp::closeTracePipe() {
+    auto pLinuxSysmanDriverImp = static_cast<LinuxSysmanDriverImp *>(globalSysmanDriver->pOsSysmanDriver);
+    if (pLinuxSysmanDriverImp == nullptr) {
+        return;
+    }
+
+    int fd = pLinuxSysmanDriverImp->getCperTracePipeFd();
+    if (fd < 0) {
+        return;
+    }
+
+    int errorNum = 0;
+    SysmanSysCallsWrapper::close(fd, errorNum);
+    pLinuxSysmanDriverImp->setCperTracePipeFd(-1);
+    lineBuffer.clear();
+}
+
+ze_result_t LinuxInfoLogImp::extractCperRecords(int fd, uint32_t cperCount, uint8_t *pBuffer, uint32_t bufferSize, uint32_t &aggregatedCperLen) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    int errorNum = 0;
+
     aggregatedCperLen = 0;
     uint32_t cperExtracted = 0;
-    std::string lineBuffer;
     char byte;
 
     while (cperExtracted < cperCount) {
@@ -218,6 +282,7 @@ ze_result_t LinuxInfoLogImp::extractCperRecords(uint32_t cperCount, uint8_t *pBu
 
         if (bytesRead < 0) {
             if (errorNum != EAGAIN) {
+                lineBuffer.clear();
                 result = LinuxSysmanImp::getResult(errorNum);
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                              "Error@ %s(): Failed to read from trace_pipe, returning error: 0x%x\n",
@@ -235,28 +300,27 @@ ze_result_t LinuxInfoLogImp::extractCperRecords(uint32_t cperCount, uint8_t *pBu
             continue;
         }
 
-        if (lineBuffer.find("xe_error_cper:") == std::string::npos) {
-            lineBuffer.clear();
+        std::string line;
+        line.swap(lineBuffer);
+
+        if (line.find("xe_error_cper:") == std::string::npos) {
             continue;
         }
 
-        std::string cperLenStr = extractFieldValue(lineBuffer, "cper_len");
+        std::string cperLenStr = extractFieldValue(line, "cper_len");
 
         uint32_t cperLen = static_cast<uint32_t>(std::strtoul(cperLenStr.c_str(), nullptr, 0));
         if (cperLen == 0) {
-            lineBuffer.clear();
             continue;
         }
 
-        std::string cperHexStr = extractFieldValue(lineBuffer, "cper_raw");
+        std::string cperHexStr = extractFieldValue(line, "cper_raw");
         if (cperHexStr.empty()) {
-            lineBuffer.clear();
             continue;
         }
 
         std::vector<uint8_t> cperData;
         if (!hexStringToBytes(cperHexStr, cperData)) {
-            lineBuffer.clear();
             continue;
         }
 
@@ -264,7 +328,6 @@ ze_result_t LinuxInfoLogImp::extractCperRecords(uint32_t cperCount, uint8_t *pBu
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                          "Error@ %s(): CPER data size mismatch - expected: %u, got: %zu\n",
                          __FUNCTION__, cperLen, cperData.size());
-            lineBuffer.clear();
             continue;
         }
 
@@ -279,11 +342,7 @@ ze_result_t LinuxInfoLogImp::extractCperRecords(uint32_t cperCount, uint8_t *pBu
         std::memcpy(pBuffer + aggregatedCperLen, cperData.data(), cperData.size());
         aggregatedCperLen += cperLen;
         cperExtracted++;
-
-        lineBuffer.clear();
     }
-
-    SysmanSysCallsWrapper::close(fd, errorNum);
 
     return result;
 }
@@ -294,6 +353,14 @@ ze_result_t LinuxInfoLogImp::infoLogRead(uint32_t *pSize, uint8_t *pBuffer) {
                      "Error@ %s(): Invalid argument - pBuffer: %p, pSize: %p, size: %u\n",
                      __FUNCTION__, pBuffer, static_cast<void *>(pSize), pSize ? *pSize : 0);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    int fd = getTracePipeFd();
+    if (fd < 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): Info log collection is not enabled, returning error: 0x%x\n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        *pSize = 0;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     // Phase 1: Read from 'trace' (non-consuming) to determine how many CPERs fit in pBuffer
@@ -316,7 +383,7 @@ ze_result_t LinuxInfoLogImp::infoLogRead(uint32_t *pSize, uint8_t *pBuffer) {
 
     // Phase 2: Read from 'trace_pipe' (consuming) exactly cperCount records
     uint32_t bytesExtracted = 0;
-    ze_result_t result = extractCperRecords(cperCount, pBuffer, *pSize, bytesExtracted);
+    ze_result_t result = extractCperRecords(fd, cperCount, pBuffer, *pSize, bytesExtracted);
     if (result != ZE_RESULT_SUCCESS && result != ZE_RESULT_WARNING_DROPPED_DATA) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Error@ %s(): Failed to extract CPER records and returning error 0x%x\n", __FUNCTION__, result);
@@ -348,7 +415,22 @@ ze_result_t LinuxInfoLogImp::infoLogEnable(bool state) {
                          "Error@ %s(): Failed to turn tracing on, result: 0x%x\n", __FUNCTION__, errorResult);
             return errorResult;
         }
+
+        if (infoLogFormat == ZES_INTEL_INFO_LOG_FORMAT_CPER) {
+            setImmediateWakeBufferPercent();
+
+            errorResult = openTracePipe();
+            if (errorResult != ZE_RESULT_SUCCESS) {
+                restoreBufferPercent();
+                pTraceFsApi->traceFsTraceOff(nullptr);
+                pTraceFsApi->traceFsEventDisable(nullptr, "xe", "xe_error_cper");
+                return errorResult;
+            }
+        }
     } else {
+        closeTracePipe();
+        restoreBufferPercent();
+
         result = pTraceFsApi->traceFsEventDisable(nullptr, "xe", "xe_error_cper");
         if (result != 0) {
             errorResult = ZE_RESULT_ERROR_UNKNOWN;

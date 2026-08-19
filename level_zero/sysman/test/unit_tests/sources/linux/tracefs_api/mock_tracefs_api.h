@@ -10,6 +10,9 @@
 #include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/tracefs_api/mock_tracefs_os_library.h"
 
+#include <cstdint>
+#include <string>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -22,7 +25,16 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
     int eventDisableReturnValue = 0;
     int traceOnReturnValue = 0;
     int traceOffReturnValue = 0;
+    int getBufferPercentReturnValue = MockTraceFsOsLibrary::mockBufferPercent;
+    int setBufferPercentReturnValue = 0;
+    static inline int lastSetBufferPercent = -1;
+    static inline uint32_t setBufferPercentCallCount = 0;
+    static inline uint32_t failSetBufferPercentOnCall = 0;
     std::string mockTracePipeData;
+    PublicTraceFsApi() {
+        lastSetBufferPercent = -1;
+        setBufferPercentCallCount = 0;
+    }
 
     bool loadEntryPointsFromBase() {
         return L0::Sysman::TraceFsApi::loadEntryPoints();
@@ -91,6 +103,33 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
 
     int traceFsTraceOffBase(struct tracefs_instance *instance) {
         return L0::Sysman::TraceFsApi::traceFsTraceOff(instance);
+    }
+
+    int traceFsInstanceGetBufferPercent(struct tracefs_instance *instance) override {
+        if (traceFsInstanceGetBufferPercentEntry != nullptr) {
+            return getBufferPercentReturnValue;
+        }
+        return L0::Sysman::TraceFsApi::traceFsInstanceGetBufferPercent(instance);
+    }
+
+    int traceFsInstanceGetBufferPercentBase(struct tracefs_instance *instance) {
+        return L0::Sysman::TraceFsApi::traceFsInstanceGetBufferPercent(instance);
+    }
+
+    int traceFsInstanceSetBufferPercent(struct tracefs_instance *instance, int val) override {
+        if (traceFsInstanceSetBufferPercentEntry != nullptr) {
+            lastSetBufferPercent = val;
+            setBufferPercentCallCount++;
+            if (failSetBufferPercentOnCall == setBufferPercentCallCount) {
+                return -1;
+            }
+            return setBufferPercentReturnValue;
+        }
+        return L0::Sysman::TraceFsApi::traceFsInstanceSetBufferPercent(instance, val);
+    }
+
+    int traceFsInstanceSetBufferPercentBase(struct tracefs_instance *instance, int val) {
+        return L0::Sysman::TraceFsApi::traceFsInstanceSetBufferPercent(instance, val);
     }
 
     bool allEntryPointsLoaded() const {

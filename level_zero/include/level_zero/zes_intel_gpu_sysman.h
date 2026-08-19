@@ -698,6 +698,130 @@ typedef enum _zes_intel_temp_composite_exp_version_t {
 /// Composite single temperature is required for host fan modulation
 #define ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP ((zes_temp_sensors_t)0x00010000)
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DRIVER_EVENT_EXP_NAME
+/// @brief Driver scoped event extension name
+#define ZES_INTEL_DRIVER_EVENT_EXP_NAME "ZES_intel_experimental_driver_event"
+#endif // ZES_INTEL_DRIVER_EVENT_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver scoped event extension Version(s)
+typedef enum _zes_intel_driver_event_exp_version_t {
+    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                      ///< version 1.0
+    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_event_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver Scoped CPER Data Available Event
+#define ZES_INTEL_CPER_DATA_AVAILABLE ZE_BIT(16)
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Register driver scoped events to be notified about
+///
+/// @details
+///     - This function registers the driver scoped events the application wants to
+///       be notified about. Unlike ::zesDeviceEventRegister the registration is not
+///       tied to a device: the underlying data source is shared by all devices of
+///       the driver.
+///     - Only the Intel experimental driver scoped event flags are accepted, i.e.
+///       ::ZES_INTEL_CPER_DATA_AVAILABLE. Standard ::zes_event_type_flag_t values
+///       must be registered per device with ::zesDeviceEventRegister.
+///     - Unlike ::zesDeviceEventRegister, which adds to the events already registered
+///       for a device, this function replaces the set of registered driver scoped
+///       events. Calling it with `events` set to 0 therefore clears all previously
+///       registered driver scoped events.
+///     - Registered events are reported only by ::zesIntelDriverEventListenExp, in its
+///       `pDriverEvents` argument. As the events are driver scoped they have no device
+///       handle to be reported against, so ::zesDriverEventListen and
+///       ::zesDriverEventListenEx never report them.
+///     - Calling this function while another thread is blocked in a listen call updates
+///       that call, so an event registered after a listen has started can still be
+///       reported by it.
+///     - ::ZES_INTEL_CPER_DATA_AVAILABLE requires info log collection to have been
+///       enabled with ::zesIntelInfoLogEnableExp *before* the listen call is made.
+///       The data itself is left in place and must be retrieved with
+///       ::zesIntelInfoLogReadExp.
+///     - The application may call this function from simultaneous threads. However,
+///       listening for ::ZES_INTEL_CPER_DATA_AVAILABLE must be serialized with
+///       ::zesIntelInfoLogEnableExp and ::zesIntelInfoLogReadExp on a single thread,
+///       as all three operate on the same underlying trace buffer reader.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `events` contains a flag which is not a driver scoped event
+ze_result_t ZE_APICALL zesIntelDriverEventRegister(
+    zes_driver_handle_t hDriver,  ///< [in] handle of the driver instance
+    zes_event_type_flags_t events ///< [in] list of driver scoped events to listen to. Must be 0 or a combination
+                                  ///< of the Intel experimental driver scoped event flags.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Listen for device scoped and driver scoped events
+///
+/// @details
+///     - This function extends ::zesDriverEventListenEx with the ability to report the
+///       driver scoped events registered with ::zesIntelDriverEventRegister.
+///     - The `hDriver`, `timeout`, `count`, `phDevices`, `pNumDeviceEvents` and `pEvents`
+///       arguments behave exactly as in ::zesDriverEventListenEx: `pEvents` holds `count`
+///       entries, one per device handle, and `*pNumDeviceEvents` is an output only value.
+///     - `pDriverEvents` is optional. When it is `nullptr` this function behaves exactly
+///       like ::zesDriverEventListenEx and no driver scoped event source is listened to.
+///     - When `pDriverEvents` is not `nullptr` it is cleared on entry and, on return,
+///       contains the driver scoped events which occurred, i.e. 0 or a combination of the
+///       Intel experimental driver scoped event flags.
+///     - `*pNumDeviceEvents` accounts for device scoped events only and, as in
+///       ::zesDriverEventListenEx, is set to 1 when one or more device scoped events occurred,
+///       irrespective of the number of device handles they occurred for. It is not a count of
+///       the device handles which had events, so the application must scan `pEvents` to find
+///       them. A driver scoped event which occurs without any device scoped event therefore
+///       returns `*pNumDeviceEvents` set to 0 and `*pDriverEvents` set to the events which
+///       occurred, so an application must check both values.
+///     - ::ZES_INTEL_CPER_DATA_AVAILABLE requires info log collection to have been enabled
+///       with ::zesIntelInfoLogEnableExp *before* this call is made. The data itself is
+///       left in place and must be retrieved with ::zesIntelInfoLogReadExp.
+///     - The application should not call this function from simultaneous threads with the
+///       same driver handle.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pNumDeviceEvents`
+///         + `nullptr == pEvents`
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + one of the handles in `phDevices` is not a valid device handle
+ze_result_t ZE_APICALL zesIntelDriverEventListenExp(
+    zes_driver_handle_t hDriver,          ///< [in] handle of the driver instance
+    uint64_t timeout,                     ///< [in] if non-zero, then indicates the maximum time (in milliseconds) to
+                                          ///< yield before returning ::ZE_RESULT_SUCCESS or ::ZE_RESULT_NOT_READY;
+                                          ///< if zero, then will check status and return immediately;
+                                          ///< if `UINT64_MAX`, then function will not return until events arrive.
+    uint32_t count,                       ///< [in] Number of device handles in phDevices.
+    zes_device_handle_t *phDevices,       ///< [in][range(0, count)] Device handles to listen to for events. Only
+                                          ///< devices from the provided driver handle can be specified in this list.
+    uint32_t *pNumDeviceEvents,           ///< [out] Set to 1 if one or more device scoped events occurred for any of
+                                          ///< the device handles in `phDevices`, 0 otherwise. Not a count of the
+                                          ///< device handles which had events, `pEvents` must be scanned to find them.
+    zes_event_type_flags_t *pEvents,      ///< [in,out][range(0, count)] Returns events that occurred for each device
+                                          ///< handle, in the same order as `phDevices`.
+    zes_event_type_flags_t *pDriverEvents ///< [in,out][optional] Returns the driver scoped events which occurred, i.e.
+                                          ///< 0 or a combination of the Intel experimental driver scoped event flags.
+                                          ///< When `nullptr`, driver scoped events are not listened to.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

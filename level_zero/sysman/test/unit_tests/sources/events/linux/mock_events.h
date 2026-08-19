@@ -329,6 +329,7 @@ class PublicLinuxEventsUtil : public L0::Sysman::LinuxEventsUtil {
     using LinuxEventsUtil::pipeFd;
     using LinuxEventsUtil::processNetlinkRasEvent;
     using LinuxEventsUtil::pUdevLib;
+    using LinuxEventsUtil::registeredDriverEvents;
 };
 
 } // namespace ult

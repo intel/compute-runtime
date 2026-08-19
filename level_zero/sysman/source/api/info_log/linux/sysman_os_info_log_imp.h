@@ -9,6 +9,8 @@
 
 #include "level_zero/sysman/source/api/info_log/sysman_os_info_log.h"
 
+#include <string>
+
 namespace L0 {
 namespace Sysman {
 
@@ -26,11 +28,18 @@ class LinuxInfoLogImp : public OsInfoLog {
 
   private:
     uint32_t countCperRecords(const std::string &traceOutput, uint32_t bufferSize);
-    ze_result_t extractCperRecords(uint32_t cperCount, uint8_t *pBuffer, uint32_t bufferSize, uint32_t &aggregatedCperLen);
+    ze_result_t extractCperRecords(int fd, uint32_t cperCount, uint8_t *pBuffer, uint32_t bufferSize, uint32_t &aggregatedCperLen);
+    int getTracePipeFd() const;
+    ze_result_t openTracePipe();
+    void closeTracePipe();
+    void setImmediateWakeBufferPercent();
+    void restoreBufferPercent();
 
   protected:
     zes_intel_info_log_format_exp_t infoLogFormat;
     std::unique_ptr<TraceFsApi> pTraceFsApi;
+    int savedBufferPercent = -1;
+    std::string lineBuffer;
 };
 
 } // namespace Sysman

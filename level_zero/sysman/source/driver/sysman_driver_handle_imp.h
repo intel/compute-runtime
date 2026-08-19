@@ -40,12 +40,16 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
                                    uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
     ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                      uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
+    ze_result_t sysmanDriverEventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
+                                         uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents,
+                                         zes_event_type_flags_t *pDriverEvents) override;
     std::vector<SysmanDevice *> sysmanDevices;
     uint32_t numDevices = 0;
     ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) override;
     struct OsSysmanDriver *pOsSysmanDriver = nullptr;
     SysmanDevice *getSysmanDeviceFromCoreDeviceHandle(ze_device_handle_t hDevice);
     SysmanDriverHandle *getSysmanDriverHandleFromCoreDriverHandle(ze_driver_handle_t handle);
+    ze_result_t driverEventRegister(zes_event_type_flags_t events) override;
     ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) override;
     ze_result_t getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) override;
     const std::unordered_map<std::string, SysmanDevice *> &getUuidDeviceMap() const {

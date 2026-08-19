@@ -143,6 +143,33 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
     }
 }
 
+ze_result_t LinuxEventsUtil::driverEventRegister(zes_event_type_flags_t events) {
+    zes_event_type_flags_t supportedDriverEventMask = ZES_INTEL_CPER_DATA_AVAILABLE;
+
+    if (events & ~supportedDriverEventMask) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): events 0x%x contains a flag which is not a driver scoped event and returning error:0x%x \n", __FUNCTION__, events, ZE_RESULT_ERROR_INVALID_ENUMERATION);
+        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+    }
+
+    {
+        std::unique_lock<std::mutex> lock(eventsMutex);
+
+        zes_event_type_flags_t prevRegisteredEvents = registeredDriverEvents;
+        registeredDriverEvents = events;
+
+        if ((pipeFd[1] != -1) && (prevRegisteredEvents != registeredDriverEvents)) {
+            uint8_t value = 0x00;
+            if (NEO::SysCalls::write(pipeFd[1], &value, 1) < 0) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "%s", "Write to Pipe failed\n");
+            }
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 void LinuxEventsUtil::init() {
     pUdevLib = pLinuxSysmanDriverImp->getUdevLibHandle();
 }
@@ -159,13 +186,20 @@ void LinuxEventsUtil::initNetlink() {
     pDrmNl = nullptr;
 }
 
-ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
+ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents, zes_event_type_flags_t *pDriverEvents) {
     memset(pEvents, 0, count * sizeof(zes_event_type_flags_t));
     *pNumDeviceEvents = 0;
-    std::vector<zes_event_type_flags_t> registeredEvents(count);
+    if (pDriverEvents != nullptr) {
+        *pDriverEvents = 0;
+    }
+
+    std::vector<zes_event_type_flags_t> registeredEvents(count, 0);
+
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));
         if (device == nullptr) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Error@ %s(): device handle at index %d could not be mapped to a sysman device and returning error:0x%x \n", __FUNCTION__, devIndex, ZE_RESULT_ERROR_INVALID_ARGUMENT);
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         {
@@ -202,8 +236,13 @@ ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_
         }
     }
 
-    if (listenSystemEvents(pEvents, count, registeredEvents, phDevices, timeout)) {
-        *pNumDeviceEvents = 1;
+    if (listenSystemEvents(pEvents, count, registeredEvents, phDevices, timeout, pDriverEvents)) {
+        for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
+            if (pEvents[devIndex] != 0) {
+                *pNumDeviceEvents = 1;
+                break;
+            }
+        }
     }
 
     return ZE_RESULT_SUCCESS;
@@ -424,7 +463,41 @@ bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &reg
     return retVal;
 }
 
-bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout) {
+static bool isCperEventRegistered(zes_event_type_flags_t driverRegisteredEvents) {
+    return (driverRegisteredEvents & ZES_INTEL_CPER_DATA_AVAILABLE) != 0;
+}
+
+void LinuxEventsUtil::updateCperPollSource(zes_event_type_flags_t driverRegisteredEvents, std::vector<PollDescriptor> &pollSources, bool &cperRegistered) {
+    cperRegistered = isCperEventRegistered(driverRegisteredEvents);
+
+    auto tracefsSource = pollSources.end();
+    for (auto it = pollSources.begin(); it != pollSources.end(); it++) {
+        if (it->type == PollSourceType::tracefs) {
+            tracefsSource = it;
+            break;
+        }
+    }
+
+    int cperTracePipeFd = cperRegistered ? pLinuxSysmanDriverImp->getCperTracePipeFd() : -1;
+    if (cperTracePipeFd < 0) {
+        if (tracefsSource != pollSources.end()) {
+            pollSources.erase(tracefsSource);
+        } else if (cperRegistered) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "%s", "Info log collection is not enabled, CPER event will not be reported\n");
+        }
+        return;
+    }
+
+    if (tracefsSource == pollSources.end()) {
+        pollSources.push_back({{cperTracePipeFd, POLLIN, 0}, PollSourceType::tracefs});
+        return;
+    }
+
+    tracefsSource->pfd.fd = cperTracePipeFd;
+}
+
+bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout, zes_event_type_flags_t *pDriverEvents) {
     std::call_once(initEventsOnce, [this]() {
         this->init();
     });
@@ -438,17 +511,28 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
     std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {};
     FsAccessInterface *pFsAccess = nullptr;
 
-    if (pUdevLib == nullptr) {
+    zes_event_type_flags_t driverRegisteredEvents = 0;
+    if (pDriverEvents != nullptr) {
+        std::unique_lock<std::mutex> lock(eventsMutex);
+        driverRegisteredEvents = registeredDriverEvents;
+    }
+    bool cperRegistered = isCperEventRegistered(driverRegisteredEvents);
+
+    if (pUdevLib == nullptr && !cperRegistered) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "%s", "libudev library instantiation failed\n");
         return retval;
     }
 
-    subsystemList.push_back("drm");
-    subsystemList.push_back("auxiliary");
-
     std::vector<PollDescriptor> pollSources;
-    pollSources.push_back({{pUdevLib->registerEventsFromSubsystemAndGetFd(subsystemList), POLLIN, 0}, PollSourceType::udev});
+    if (pUdevLib != nullptr) {
+        subsystemList.push_back("drm");
+        subsystemList.push_back("auxiliary");
+        pollSources.push_back({{pUdevLib->registerEventsFromSubsystemAndGetFd(subsystemList), POLLIN, 0}, PollSourceType::udev});
+    } else {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "libudev library instantiation failed, listening for driver scoped events only\n");
+    }
 
     auto start = L0::Sysman::SteadyClock::now();
     std::chrono::duration<double, std::milli> timeElapsed;
@@ -464,13 +548,17 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             pollSources.push_back({{netlinkGetSocketFd(pDrmNl), POLLIN, 0}, PollSourceType::netlink});
         }
 
+        updateCperPollSource(driverRegisteredEvents, pollSources, cperRegistered);
+
         getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
     }
 
-    std::vector<struct pollfd> pfds(pollSources.size());
+    std::vector<struct pollfd> pfds;
     auto syncPfds = [&]() {
+        pfds.resize(pollSources.size());
         for (size_t i = 0; i < pollSources.size(); i++) {
             pfds[i] = pollSources[i].pfd;
+            pfds[i].revents = 0;
         }
     };
     auto syncRevents = [&]() {
@@ -486,6 +574,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
         bool pipeTriggered = false;
         bool netlinkReady = false;
         bool udevReady = false;
+        bool tracefsReady = false;
 
         for (auto &src : pollSources) {
             if (src.pfd.revents & POLLIN) {
@@ -493,6 +582,8 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
                     udevReady = true;
                 } else if (src.type == PollSourceType::pipe) {
                     pipeTriggered = true;
+                } else if (src.type == PollSourceType::tracefs) {
+                    tracefsReady = true;
                 } else {
                     netlinkReady = true;
                 }
@@ -508,9 +599,19 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             mapOfDevIndexToDevPath.clear();
             pFsAccess = nullptr;
             getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
+            if (pDriverEvents != nullptr) {
+                driverRegisteredEvents = registeredDriverEvents;
+            }
+            updateCperPollSource(driverRegisteredEvents, pollSources, cperRegistered);
+            syncPfds();
         }
 
-        if (mapOfDevIndexToDevPath.empty()) {
+        if (tracefsReady && (pDriverEvents != nullptr) && isCperEventRegistered(driverRegisteredEvents)) {
+            *pDriverEvents |= ZES_INTEL_CPER_DATA_AVAILABLE;
+            retval = true;
+        }
+
+        if (mapOfDevIndexToDevPath.empty() && !cperRegistered) {
             break;
         }
 
