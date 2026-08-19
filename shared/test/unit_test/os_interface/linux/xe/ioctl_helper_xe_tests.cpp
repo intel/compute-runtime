@@ -4723,6 +4723,7 @@ TEST_F(IoctlHelperXeTest, givenMemoryAvailableWhenHasEnoughDeviceMemoryCalledThe
     xeIoctlHelper->createMemoryInfo();
 
     EXPECT_TRUE(xeIoctlHelper->hasEnoughDeviceMemory(MemoryConstants::gigaByte, 0b01u));
+    EXPECT_TRUE(xeIoctlHelper->hasEnoughDeviceMemory(MemoryConstants::gigaByte, 0b10u));
 }
 
 TEST_F(IoctlHelperXeTest, givenNoMemoryAvailableWhenHasEnoughDeviceMemoryCalledThenReturnsFalse) {
@@ -4737,6 +4738,36 @@ TEST_F(IoctlHelperXeTest, givenNoMemoryAvailableWhenHasEnoughDeviceMemoryCalledT
     vramRegionTile1.used = vramRegionTile1.total_size;
 
     EXPECT_FALSE(xeIoctlHelper->hasEnoughDeviceMemory(1u, 0b10u));
+}
+
+TEST_F(IoctlHelperXeTest, givenCreateMemoryInfoCalledMultipleTimesThenLocalMemRegionsUsageDoesNotGrow) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    xeIoctlHelper->createMemoryInfo();
+    const auto entriesAfterFirstCall = xeIoctlHelper->localMemRegionsUsage.size();
+    EXPECT_NE(0u, entriesAfterFirstCall);
+
+    xeIoctlHelper->createMemoryInfo();
+    EXPECT_EQ(entriesAfterFirstCall, xeIoctlHelper->localMemRegionsUsage.size());
+}
+
+TEST_F(IoctlHelperXeTest, givenRegionSharedByMultipleTilesWhenHasEnoughDeviceMemoryCalledForAnyOfThemThenReturnsFalse) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    xeIoctlHelper->createMemoryInfo();
+
+    // mem_regions[2] (instance 2) is a near region for both tile 0 and tile 2
+    auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm->queryMemUsage);
+    auto &vramRegionShared = xeQueryMemUsage->mem_regions[2];
+    vramRegionShared.used = vramRegionShared.total_size;
+
+    EXPECT_FALSE(xeIoctlHelper->hasEnoughDeviceMemory(1u, 0b001u));
+    EXPECT_FALSE(xeIoctlHelper->hasEnoughDeviceMemory(1u, 0b100u));
 }
 
 TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeHardwareWithAubWhenMakeResidentBeforeLockNeededIsCalledThenReturnsFalse) {

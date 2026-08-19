@@ -24,6 +24,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::isDeferBackingEnabled;
     using IoctlHelperXe::isLowLatencyHintAvailable;
+    using IoctlHelperXe::localMemRegionsUsage;
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;
     using IoctlHelperXe::noCompressionHintAvailable;

@@ -465,6 +465,29 @@ inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_mem_region &x
     };
 }
 
+std::bitset<IoctlHelperXe::maxSupportedTilesNumber> IoctlHelperXe::getLocalMemRegionTilesMask(uint32_t regionInstance, uint32_t regionArrayIdx, bool populateUsage, size_t &usageCursor) {
+    std::bitset<maxSupportedTilesNumber> tilesMask{};
+    if (populateUsage) {
+        UNRECOVERABLE_IF(regionInstance >= 64u);
+        for (auto g = 0u; g < xeGtListData->num_gt; g++) {
+            const auto &gtEntry = xeGtListData->gt_list[g];
+            if (gtEntry.type == DRM_XE_QUERY_GT_TYPE_MAIN &&
+                (gtEntry.near_mem_regions & (1ull << regionInstance))) {
+                UNRECOVERABLE_IF(gtEntry.tile_id >= maxSupportedTilesNumber);
+                tilesMask.set(gtEntry.tile_id);
+            }
+        }
+        if (tilesMask.any()) {
+            localMemRegionsUsage.push_back({regionArrayIdx, tilesMask});
+        }
+    } else if (usageCursor < localMemRegionsUsage.size() &&
+               localMemRegionsUsage[usageCursor].regionArrayIdx == regionArrayIdx) {
+        tilesMask = localMemRegionsUsage[usageCursor].tilesMask;
+        ++usageCursor;
+    }
+    return tilesMask;
+}
+
 std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     auto memUsageData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_MEM_REGIONS);
 
@@ -472,21 +495,9 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
         return {};
     }
 
-    constexpr auto maxSupportedTilesNumber{4u};
-    std::array<std::bitset<maxSupportedTilesNumber>, 64> regionTilesMask{};
-
-    for (auto i{0u}; i < xeGtListData->num_gt; i++) {
-        const auto &gtEntry = xeGtListData->gt_list[i];
-        if (gtEntry.type != DRM_XE_QUERY_GT_TYPE_MAIN) {
-            continue;
-        }
-
-        uint64_t nearMemRegions{gtEntry.near_mem_regions};
-        auto regionIndex{Math::log2(nearMemRegions)};
-        regionTilesMask[regionIndex].set(gtEntry.tile_id);
-    }
-
     MemoryInfo::RegionContainer regionsContainer{};
+    const bool populateUsage = localMemRegionsUsage.empty();
+    size_t usageCursor = 0;
 
     auto xeMemRegionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
     for (auto i = 0u; i < xeMemRegionsData->num_mem_regions; i++) {
@@ -495,17 +506,12 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
         if (xeMemRegion.mem_class == DRM_XE_MEM_REGION_CLASS_SYSMEM) {
             // Make sure sysmem is always put at the first position
             regionsContainer.insert(regionsContainer.begin(), createMemoryRegionFromXeMemRegion(xeMemRegion, 0u));
-        } else {
-            auto regionIndex = xeMemRegion.instance;
-            UNRECOVERABLE_IF(regionIndex >= regionTilesMask.size());
-            if (auto tilesMask = regionTilesMask[regionIndex]; tilesMask.any()) {
-                regionsContainer.push_back(createMemoryRegionFromXeMemRegion(xeMemRegion, tilesMask));
-                const auto tileId = static_cast<uint16_t>(Math::log2(static_cast<uint64_t>(tilesMask.to_ulong())));
-                if (tileIdToRegionArrayIdx.size() < tileId + 1u) {
-                    tileIdToRegionArrayIdx.resize(tileId + 1, invalidIndex);
-                }
-                tileIdToRegionArrayIdx[tileId] = static_cast<int>(i);
-            }
+            continue;
+        }
+
+        const auto tilesMask = getLocalMemRegionTilesMask(xeMemRegion.instance, i, populateUsage, usageCursor);
+        if (tilesMask.any()) {
+            regionsContainer.push_back(createMemoryRegionFromXeMemRegion(xeMemRegion, tilesMask));
         }
     }
 
@@ -527,7 +533,7 @@ size_t IoctlHelperXe::getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, ui
 }
 
 bool IoctlHelperXe::hasEnoughDeviceMemory(size_t size, uint32_t memoryBanks) {
-    if (tileIdToRegionArrayIdx.empty()) {
+    if (localMemRegionsUsage.empty()) {
         return true;
     }
 
@@ -537,14 +543,13 @@ bool IoctlHelperXe::hasEnoughDeviceMemory(size_t size, uint32_t memoryBanks) {
     }
 
     auto *regionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
-    for (auto tileId = 0u; (memoryBanks >> tileId) != 0; tileId++) {
-        if (!(memoryBanks & (1u << tileId))) {
+    const std::bitset<maxSupportedTilesNumber> banks{memoryBanks};
+    for (const auto &usage : localMemRegionsUsage) {
+        if ((usage.tilesMask & banks).none() ||
+            usage.regionArrayIdx >= regionsData->num_mem_regions) {
             continue;
         }
-        if (tileId >= tileIdToRegionArrayIdx.size() || tileIdToRegionArrayIdx[tileId] == invalidIndex) {
-            continue;
-        }
-        const auto &region = regionsData->mem_regions[static_cast<uint32_t>(tileIdToRegionArrayIdx[tileId])];
+        const auto &region = regionsData->mem_regions[usage.regionArrayIdx];
         const auto available = (region.used <= region.total_size) ? (region.total_size - region.used) : 0u;
         if (available < size) {
             return false;

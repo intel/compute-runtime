@@ -231,9 +231,15 @@ class IoctlHelperXe : public IoctlHelper {
 
     std::vector<uint64_t> queryGtListData;
     constexpr static int invalidIndex = -1;
+    constexpr static uint32_t maxSupportedTilesNumber = 4u;
     std::map<uint16_t, uint16_t> gtIdToTileId;
     GtIdContainer tileIdToGtId;
-    GtIdContainer tileIdToRegionArrayIdx;
+    struct LocalMemRegionUsage {
+        size_t regionArrayIdx; // index into the DRM_XE_DEVICE_QUERY_MEM_REGIONS array; assumes stable ordering across queries
+        std::bitset<maxSupportedTilesNumber> tilesMask;
+    };
+    StackVec<LocalMemRegionUsage, maxSupportedTilesNumber> localMemRegionsUsage;
+    std::bitset<maxSupportedTilesNumber> getLocalMemRegionTilesMask(uint32_t regionInstance, uint32_t regionArrayIdx, bool populateUsage, size_t &usageCursor);
     std::map<uint16_t, uint16_t> mediaGtIdToTileId;
     GtIdContainer tileIdToMediaGtId;
     XeDrm::drm_xe_query_gt_list *xeGtListData = nullptr;
