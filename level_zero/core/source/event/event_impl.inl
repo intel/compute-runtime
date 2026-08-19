@@ -447,7 +447,7 @@ NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t t
         }
 
         return csr->waitUserFence(NEO::UserFenceWaitOperation::notEqual, static_cast<uint64_t>(clearedValue), castToUint64(typedAddress), eventPacketWidth,
-                                  packetWaitTimeout, true, this->externalInterruptId, getAllocation(this->device), nullptr);
+                                  packetWaitTimeout, false, this->externalInterruptId, getAllocation(this->device), nullptr);
     };
 
     if (this->heapfullCbEventWithProfiling && inOrderExecHelper.hasTimestampNodes()) {
@@ -488,7 +488,7 @@ NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t t
 
         auto waitAddress = castToUint64(ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset));
         auto *hostAlloc = inOrderExecHelper.isHostStorageDuplicated() ? inOrderExecHelper.getHostCounterAllocation() : inOrderExecHelper.getDeviceCounterAllocation();
-        if (!csr->waitUserFence(static_cast<TaskCountType>(getInOrderExecBaseSignalValue()), waitAddress, packetWaitTimeout, true, this->externalInterruptId, hostAlloc, nullptr)) {
+        if (!csr->waitUserFence(static_cast<TaskCountType>(getInOrderExecBaseSignalValue()), waitAddress, packetWaitTimeout, false, this->externalInterruptId, hostAlloc, nullptr)) {
             return NEO::WaitStatus::notReady;
         }
 
@@ -976,8 +976,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                                           NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get() &&
                                           (timeout == std::numeric_limits<uint64_t>::max()) &&
                                           EventHostSynchronize::isDrm(*csrs[0]) &&
+                                          !NEO::EngineHelpers::isBcs(csrs[0]->getOsContext().getEngineType()) &&
                                           csrs[0]->waitUserFenceSupported(nullptr) &&
-                                          this->isSignalWithUserInterrupt() &&
+                                          this->isLinuxUserFenceKmdWaitEnabled() &&
                                           (this->metricNotification == nullptr);
     const auto kmdWaitInitialPollUs = std::max<int64_t>(NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get(), 0);
     TaskCountType taskCountToWaitForCacheFlush = 0;

@@ -5344,6 +5344,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
     }
 
     const bool assignCsrOnSubmit = signalEvent->isSignalWithUserInterrupt() ||
+                                   signalEvent->isLinuxUserFenceKmdWaitEnabled() ||
                                    (signalEvent->isCounterBased() && signalEvent->isKmdWaitModeEnabled());
     if (!isImmediateType() && assignCsrOnSubmit) {
         this->interruptEvents.push_back(signalEvent);

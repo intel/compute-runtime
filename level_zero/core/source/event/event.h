@@ -392,6 +392,8 @@ struct Event : _ze_event_handle_t {
     bool isInterruptModeEnabled() const { return interruptMode; }
     void setSignalWithUserInterrupt(bool value) { signalWithUserInterrupt = value; }
     bool isSignalWithUserInterrupt() const { return signalWithUserInterrupt; }
+    void setLinuxUserFenceKmdWaitEnabled(bool value) { linuxUserFenceKmdWaitEnabled = value; }
+    bool isLinuxUserFenceKmdWaitEnabled() const { return linuxUserFenceKmdWaitEnabled; }
     void unsetInOrderExecInfo();
     uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
 
@@ -539,6 +541,7 @@ struct Event : _ze_event_handle_t {
     bool kmdWaitMode = false;
     bool interruptMode = false;
     bool signalWithUserInterrupt = false;
+    bool linuxUserFenceKmdWaitEnabled = false;
     bool isSharableCounterBased = false;
     bool reportEmptyCbEventAsReady = true;
     bool heapfullCbEventWithProfiling = false;

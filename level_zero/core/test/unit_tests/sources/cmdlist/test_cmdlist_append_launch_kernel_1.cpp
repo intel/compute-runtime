@@ -116,8 +116,11 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAll
     ASSERT_FALSE(commandList->hasIndirectAllocationsAllowed());
 }
 
-HWTEST_F(CommandListAppendLaunchKernel, GivenSignalWithUserInterruptEventWhenAppendingLaunchKernelThenMiUserInterruptIsGenerated) {
+HWTEST_F(CommandListAppendLaunchKernel, GivenLinuxUserFenceKmdWaitAndSignalWithUserInterruptEventsWhenAppendingLaunchKernelThenMiUserInterruptIsGeneratedOnlyForSignalWithUserInterrupt) {
     using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().isWaitUserFenceNotEqualSupportedValue = true;
     createKernel();
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -135,6 +138,8 @@ HWTEST_F(CommandListAppendLaunchKernel, GivenSignalWithUserInterruptEventWhenApp
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     auto event = std::unique_ptr<::L0::Event>(::L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_TRUE(event->isLinuxUserFenceKmdWaitEnabled());
+    ASSERT_FALSE(event->isSignalWithUserInterrupt());
 
     ze_group_count_t groupCount{1, 1, 1};
 
@@ -151,7 +156,7 @@ HWTEST_F(CommandListAppendLaunchKernel, GivenSignalWithUserInterruptEventWhenApp
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         CmdListKernelLaunchParams launchParams = {};
         ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));
-        // Without the dedicated flag no standalone MI_USER_INTERRUPT must be generated.
+        // Linux user-fence KMD wait does not require a standalone MI_USER_INTERRUPT.
         EXPECT_EQ(0u, countUserInterrupts(commandList.get()));
     }
 

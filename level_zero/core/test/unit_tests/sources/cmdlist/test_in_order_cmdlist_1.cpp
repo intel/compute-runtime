@@ -826,7 +826,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterruptableEventsWhenEx
     EXPECT_EQ(0u, cmdList->interruptEvents.size());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCommandListWithSignalWithUserInterruptPacketEventWhenExecutingOnSecondaryCsrThenAssignThatCsrToEvent) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCommandListWithLinuxUserFenceKmdWaitEventWhenExecutingOnSecondaryCsrThenAssignThatCsrToEvent) {
     DebugManagerStateRestore restore;
     auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     auto cmdlistHandle = cmdList->toHandle();
@@ -844,6 +844,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCommandListWithSig
     NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(false);
     auto eventWithoutKmdWait = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_FALSE(eventWithoutKmdWait->isLinuxUserFenceKmdWaitEnabled());
     ASSERT_FALSE(eventWithoutKmdWait->isSignalWithUserInterrupt());
     auto eventWithoutKmdWaitWhiteBox = whiteboxCast(eventWithoutKmdWait.get());
 
@@ -852,7 +853,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCommandListWithSig
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_FALSE(event->isCounterBased());
-    ASSERT_TRUE(event->isSignalWithUserInterrupt());
+    ASSERT_TRUE(event->isLinuxUserFenceKmdWaitEnabled());
+    ASSERT_FALSE(event->isSignalWithUserInterrupt());
     auto eventWhiteBox = whiteboxCast(event.get());
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));

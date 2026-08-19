@@ -1267,11 +1267,11 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
     }
 
     const bool userFenceNotEqualSupported = !csrs.empty() && csrs[0]->isWaitUserFenceNotEqualSupported();
-    const bool hostVisibleForInterrupt = eventDescriptor.hostVisibleEventPoolAllocation ||
-                                         (this->isCounterBased() && this->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-    setSignalWithUserInterrupt(NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get() &&
-                               hostVisibleForInterrupt &&
-                               userFenceNotEqualSupported);
+    const bool hostVisibleForKmdWait = eventDescriptor.hostVisibleEventPoolAllocation ||
+                                       (this->isCounterBased() && this->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+    setLinuxUserFenceKmdWaitEnabled(NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get() &&
+                                    hostVisibleForKmdWait &&
+                                    userFenceNotEqualSupported);
 
     if (externalInterruptWait || (interruptMode && kmdWaitMode)) {
         enableKmdWaitMode();

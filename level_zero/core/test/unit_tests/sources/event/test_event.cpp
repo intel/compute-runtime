@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/mock_timestamp_packet.h"
@@ -2644,6 +2645,7 @@ TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhen
     EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
     EXPECT_EQ(20000, NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.get());
     EXPECT_EQ(12000, NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get());
+    EXPECT_EQ(750000, NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWaitTimeoutNanoseconds.get());
 }
 
 HWTEST_F(EventSynchronizeTest, GivenWaitControllerWhenStrategiesAndInputsAreChangedThenExpectedWaitActionsAreReturned) {
@@ -2890,7 +2892,7 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingRegula
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isUserFenceWaitSupported = true;
     csr.isWaitUserFenceNotEqualSupportedValue = true;
-    event->setSignalWithUserInterrupt(true);
+    event->setLinuxUserFenceKmdWaitEnabled(true);
     csr.waitUserFenceParams.forceRetStatusEnabled = true;
     csr.waitUserFenceParams.forceRetStatusValue = true;
 
@@ -2908,7 +2910,7 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingRegula
     EXPECT_EQ(castToUint64(eventAddress), csr.waitUserFenceParams.latestWaitedAddress);
     EXPECT_EQ(static_cast<uint64_t>(Event::STATE_CLEARED), csr.waitUserFenceParams.latestWaitedValue);
     EXPECT_EQ(expectedTimeout, csr.waitUserFenceParams.latestWaitedTimeout);
-    EXPECT_TRUE(csr.waitUserFenceParams.userInterrupt);
+    EXPECT_FALSE(csr.waitUserFenceParams.userInterrupt);
     EXPECT_EQ(event->getAllocation(device), csr.waitUserFenceParams.latestAllocForInterruptWait);
 }
 
@@ -2938,7 +2940,7 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingMetric
 
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isUserFenceWaitSupported = true;
-    event->setSignalWithUserInterrupt(true);
+    event->setLinuxUserFenceKmdWaitEnabled(true);
     csr.waitUserFenceParams.forceRetStatusEnabled = true;
     csr.waitUserFenceParams.forceRetStatusValue = true;
 
@@ -2982,7 +2984,7 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyAndSignalAllPacketsWhen
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isUserFenceWaitSupported = true;
     csr.isWaitUserFenceNotEqualSupportedValue = true;
-    event->setSignalWithUserInterrupt(true);
+    event->setLinuxUserFenceKmdWaitEnabled(true);
     csr.waitUserFenceParams.forceRetStatusEnabled = true;
     csr.waitUserFenceParams.forceRetStatusValue = false;
 
@@ -3021,7 +3023,7 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenUserFenceWaitReturn
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isUserFenceWaitSupported = true;
     csr.isWaitUserFenceNotEqualSupportedValue = true;
-    event->setSignalWithUserInterrupt(true);
+    event->setLinuxUserFenceKmdWaitEnabled(true);
     csr.waitUserFenceParams.forceRetStatusEnabled = true;
     csr.waitUserFenceParams.forceRetStatusValue = false;
 
@@ -3048,7 +3050,7 @@ HWTEST_F(EventSynchronizeTimestampTest, GivenDrmAndKmdWaitStrategyWhenSynchroniz
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isUserFenceWaitSupported = true;
     csr.isWaitUserFenceNotEqualSupportedValue = true;
-    event->setSignalWithUserInterrupt(true);
+    event->setLinuxUserFenceKmdWaitEnabled(true);
     csr.waitUserFenceParams.forceRetStatusEnabled = true;
     csr.waitUserFenceParams.forceRetStatusValue = true;
 
@@ -3091,7 +3093,7 @@ HWTEST_F(EventSynchronizeTimestampTest, GivenDrmAndKmdWaitStrategyWhenTimestampN
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isUserFenceWaitSupported = true;
     csr.isWaitUserFenceNotEqualSupportedValue = true;
-    event->setSignalWithUserInterrupt(true);
+    event->setLinuxUserFenceKmdWaitEnabled(true);
     csr.waitUserFenceParams.forceRetStatusEnabled = true;
     csr.waitUserFenceParams.forceRetStatusValue = false;
 
@@ -3161,7 +3163,7 @@ TEST_F(EventSynchronizeTimestampTest, GivenZeroTotalEventSizeWhenGettingPoolInde
     EXPECT_EQ(0u, event->getPoolIndex());
 }
 
-HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingCounterBasedEventThenBoundedUserFenceWaitWithInterruptIsUsed) {
+HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingCounterBasedEventThenBoundedUserFenceWaitIsUsed) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
     NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
@@ -3175,7 +3177,7 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingCounte
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isUserFenceWaitSupported = true;
     csr.isWaitUserFenceNotEqualSupportedValue = true;
-    event->setSignalWithUserInterrupt(true);
+    event->setLinuxUserFenceKmdWaitEnabled(true);
     csr.waitUserFenceParams.forceRetStatusEnabled = true;
     csr.waitUserFenceParams.forceRetStatusValue = true;
 
@@ -3194,7 +3196,7 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingCounte
     EXPECT_EQ(castToUint64(&counterStorage), csr.waitUserFenceParams.latestWaitedAddress);
     EXPECT_EQ(1u, csr.waitUserFenceParams.latestWaitedValue);
     EXPECT_EQ(expectedTimeout, csr.waitUserFenceParams.latestWaitedTimeout);
-    EXPECT_TRUE(csr.waitUserFenceParams.userInterrupt);
+    EXPECT_FALSE(csr.waitUserFenceParams.userInterrupt);
     EXPECT_EQ(&counterAllocation, csr.waitUserFenceParams.latestAllocForInterruptWait);
 }
 
@@ -3210,7 +3212,7 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenFenceWaitIsActiveTh
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isUserFenceWaitSupported = true;
     csr.isWaitUserFenceNotEqualSupportedValue = true;
-    event->setSignalWithUserInterrupt(true);
+    event->setLinuxUserFenceKmdWaitEnabled(true);
     csr.waitUserFenceParams.forceRetStatusEnabled = true;
     csr.waitUserFenceParams.forceRetStatusValue = true;
 
@@ -5711,7 +5713,7 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeIsCalledThenPreamble
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 }
 
-HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingHostVisibleEventThenSignalWithUserInterruptIsEnabled) {
+HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingHostVisibleEventThenKmdWaitIsEnabledWithoutUserInterrupt) {
     DebugManagerStateRestore restore;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -5720,6 +5722,7 @@ HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingHostVisibleEventT
     NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(false);
     auto eventWithoutFlag = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(eventWithoutFlag->isLinuxUserFenceKmdWaitEnabled());
     EXPECT_FALSE(eventWithoutFlag->isSignalWithUserInterrupt());
     // The dedicated flag should not enable the generic interrupt mode (post-sync interrupt bit) behavior.
     EXPECT_FALSE(eventWithoutFlag->isInterruptModeEnabled());
@@ -5727,11 +5730,12 @@ HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingHostVisibleEventT
     NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
     auto eventWithFlag = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(eventWithFlag->isSignalWithUserInterrupt());
+    EXPECT_TRUE(eventWithFlag->isLinuxUserFenceKmdWaitEnabled());
+    EXPECT_FALSE(eventWithFlag->isSignalWithUserInterrupt());
     EXPECT_FALSE(eventWithFlag->isInterruptModeEnabled());
 }
 
-HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenNotEqualUserFenceUnsupportedThenSignalWithUserInterruptIsNotEnabled) {
+HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenNotEqualUserFenceUnsupportedThenKmdWaitIsNotEnabled) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
 
@@ -5740,10 +5744,11 @@ HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenNotEqualUserFenceUnsuppor
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(event->isLinuxUserFenceKmdWaitEnabled());
     EXPECT_FALSE(event->isSignalWithUserInterrupt());
 }
 
-HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingDeviceOnlyEventThenSignalWithUserInterruptIsNotEnabled) {
+HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingDeviceOnlyEventThenKmdWaitIsNotEnabled) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
 
@@ -5760,10 +5765,11 @@ HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingDeviceOnlyEventTh
 
     auto deviceOnlyEvent = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(deviceOnlyPool.get(), &eventDesc, device, result)));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(deviceOnlyEvent->isLinuxUserFenceKmdWaitEnabled());
     EXPECT_FALSE(deviceOnlyEvent->isSignalWithUserInterrupt());
 }
 
-HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingHostVisibleStandaloneCounterBasedEventThenSignalWithUserInterruptIsEnabled) {
+HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingHostVisibleStandaloneCounterBasedEventThenKmdWaitIsEnabledWithoutUserInterrupt) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
 
@@ -5776,11 +5782,12 @@ HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingHostVisibleStanda
     ASSERT_NE(nullptr, event);
     EXPECT_TRUE(event->isCounterBasedExplicitlyEnabled());
     EXPECT_TRUE(event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-    EXPECT_TRUE(event->isSignalWithUserInterrupt());
+    EXPECT_TRUE(event->isLinuxUserFenceKmdWaitEnabled());
+    EXPECT_FALSE(event->isSignalWithUserInterrupt());
     EXPECT_FALSE(event->isInterruptModeEnabled());
 }
 
-HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingDeviceScopeStandaloneCounterBasedEventThenSignalWithUserInterruptIsNotEnabled) {
+HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingDeviceScopeStandaloneCounterBasedEventThenKmdWaitIsNotEnabled) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
 
@@ -5796,6 +5803,7 @@ HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingDeviceScopeStanda
     ASSERT_NE(nullptr, event);
     EXPECT_TRUE(event->isCounterBasedExplicitlyEnabled());
     EXPECT_FALSE(event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+    EXPECT_FALSE(event->isLinuxUserFenceKmdWaitEnabled());
     EXPECT_FALSE(event->isSignalWithUserInterrupt());
 }
 
@@ -6509,7 +6517,7 @@ HWTEST_F(EventTests, Given64BitEventAndDrmKmdWaitStrategyWhenSignalAllPacketsUse
     auto prepareEvent = [&]() {
         auto testedEvent = std::make_unique<MockEventCompletion<uint64_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
         testedEvent->maxPacketCount = 2u;
-        testedEvent->setSignalWithUserInterrupt(true);
+        testedEvent->setLinuxUserFenceKmdWaitEnabled(true);
         return testedEvent;
     };
 
@@ -6542,7 +6550,7 @@ HWTEST_F(EventTests, Given64BitEventAndDrmKmdWaitStrategyWhenSignalAllPacketsUse
     EXPECT_EQ(castToUint64(remainingPacketAddress), csr.waitUserFenceParams.latestWaitedAddress);
 }
 
-HWTEST_F(EventTests, GivenDrmAndKmdWaitStrategyWhenSignalWithUserInterruptDisabledThenUserFenceWaitIsNotUsed) {
+HWTEST_F(EventTests, GivenDrmAndKmdWaitStrategyWhenLinuxUserFenceKmdWaitIsDisabledThenUserFenceWaitIsNotUsed) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
     NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
@@ -6557,7 +6565,32 @@ HWTEST_F(EventTests, GivenDrmAndKmdWaitStrategyWhenSignalWithUserInterruptDisabl
     auto testedEvent = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
     std::vector<uint64_t> eventStorage(alignUp(testedEvent->getMaxPacketsCount() * testedEvent->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
     testedEvent->hostAddressFromPool = eventStorage.data();
-    testedEvent->setSignalWithUserInterrupt(false);
+    testedEvent->setLinuxUserFenceKmdWaitEnabled(false);
+    testedEvent->failOnNextQueryStatus = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testedEvent->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(0u, csr.waitUserFenceParams.callCount);
+    EXPECT_EQ(0u, csr.waitUserFenceParams.callCountWithOperation);
+}
+
+HWTEST_F(EventTests, GivenDrmAndKmdWaitStrategyWhenEventUsesBcsThenUserFenceWaitIsNotUsed) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isUserFenceWaitSupported = true;
+    auto &osContext = reinterpret_cast<NEO::MockOsContext &>(csr.getOsContext());
+    osContext.engineType = aub_stream::ENGINE_BCS;
+
+    auto testedEvent = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    std::vector<uint64_t> eventStorage(alignUp(testedEvent->getMaxPacketsCount() * testedEvent->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
+    testedEvent->hostAddressFromPool = eventStorage.data();
+    testedEvent->setLinuxUserFenceKmdWaitEnabled(true);
     testedEvent->failOnNextQueryStatus = true;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testedEvent->hostSynchronize(std::numeric_limits<uint64_t>::max()));
@@ -6580,7 +6613,7 @@ HWTEST_F(EventTests, GivenDrmAndKmdWaitStrategyWhenLinuxUserFenceKmdWaitFlagIsDi
     auto testedEvent = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
     std::vector<uint64_t> eventStorage(alignUp(testedEvent->getMaxPacketsCount() * testedEvent->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
     testedEvent->hostAddressFromPool = eventStorage.data();
-    testedEvent->setSignalWithUserInterrupt(true);
+    testedEvent->setLinuxUserFenceKmdWaitEnabled(true);
     testedEvent->failOnNextQueryStatus = true;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testedEvent->hostSynchronize(std::numeric_limits<uint64_t>::max()));
@@ -6604,7 +6637,7 @@ HWTEST_F(EventTests, GivenDrmAndKmdWaitStrategyWhenPacketEventUsesMultiplePartit
     auto testedEvent = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
     std::vector<uint64_t> eventStorage(alignUp(testedEvent->getMaxPacketsCount() * testedEvent->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
     testedEvent->hostAddressFromPool = eventStorage.data();
-    testedEvent->setSignalWithUserInterrupt(true);
+    testedEvent->setLinuxUserFenceKmdWaitEnabled(true);
     testedEvent->failOnNextQueryStatus = true;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testedEvent->hostSynchronize(std::numeric_limits<uint64_t>::max()));
