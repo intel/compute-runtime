@@ -20,6 +20,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
@@ -5677,6 +5678,38 @@ TEST_F(DeviceTest, givenDeviceWithNoVmBindWhenQueryingReadonlyMemoryCapabilityTh
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(ZE_DEVICE_READONLY_MEMORY_CAPABILITY_NONE, roProps.readonlyCapability);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+struct MockProductHelperWideCacheLine : NEO::ProductHelperHw<gfxProduct> {
+    uint32_t getCacheLineSize() const override { return 256u; }
+};
+
+HWTEST_F(DeviceTest, givenCacheLineWiderThanTagWhenTakingFillPatternTagsThenNoTwoTagsShareACacheLine) {
+    NEO::RAIIProductHelperFactory<MockProductHelperWideCacheLine<IGFX_UNKNOWN>> raiiProductHelper{
+        *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]};
+
+    const auto cacheLineSize = device->getProductHelper().getCacheLineSize();
+
+    auto allocator = device->getFillPatternAllocator();
+    ASSERT_NE(nullptr, allocator);
+
+    constexpr size_t tagCount = 4;
+    NEO::TagNodeBase *tags[tagCount] = {};
+    for (auto &tag : tags) {
+        tag = allocator->getTag();
+        ASSERT_NE(nullptr, tag);
+    }
+
+    for (size_t i = 0; i < tagCount; i++) {
+        for (size_t j = i + 1; j < tagCount; j++) {
+            EXPECT_NE(tags[i]->getGpuAddress() / cacheLineSize, tags[j]->getGpuAddress() / cacheLineSize);
+        }
+    }
+
+    for (auto &tag : tags) {
+        tag->returnTag();
+    }
 }
 
 struct RTASDeviceTest : public ::testing::Test {
