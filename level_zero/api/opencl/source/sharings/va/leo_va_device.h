@@ -12,6 +12,7 @@
 #include <functional>
 
 namespace NEO {
+namespace LEO {
 class ClDevice;
 class Platform;
 
@@ -31,4 +32,5 @@ class VADevice {
     void *vaLibHandle = nullptr;
     void *vaGetDevice = nullptr;
 };
+} // namespace LEO
 } // namespace NEO

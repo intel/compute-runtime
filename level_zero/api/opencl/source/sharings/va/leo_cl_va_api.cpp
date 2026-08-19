@@ -50,9 +50,9 @@ clGetDeviceIDsFromVA_APIMediaAdapterINTEL(cl_platform_id platform, cl_va_api_dev
         return CL_INVALID_PLATFORM;
     }
 
-    NEO::VADevice vaDevice{};
-    auto device = vaDevice.getDeviceFromVA(reinterpret_cast<NEO::Platform *>(pPlatform), mediaAdapter);
-    GetInfoHelper::set(devices, reinterpret_cast<cl_device_id>(device));
+    VADevice vaDevice{};
+    cl_device_id device = vaDevice.getDeviceFromVA(pPlatform, mediaAdapter);
+    GetInfoHelper::set(devices, device);
     if (device == nullptr) {
         GetInfoHelper::set(numDevices, 0u);
         return CL_DEVICE_NOT_FOUND;
