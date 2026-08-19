@@ -14,8 +14,8 @@
 
 namespace NEO {
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment(bool isLocalMemory) {
-    size_t alignment = isLocalMemory ? MemoryConstants::cacheLineSize : Family::cacheLineSize;
+size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment(bool isLocalMemory, const HardwareInfo &hwInfo) {
+    size_t alignment = EncodeDispatchKernel<Family>::getCrossThreadDataAlignment(isLocalMemory, hwInfo);
     if (NEO::debugManager.flags.ForceIOHAlignment.get() != -1) {
         alignment = static_cast<size_t>(debugManager.flags.ForceIOHAlignment.get());
     }

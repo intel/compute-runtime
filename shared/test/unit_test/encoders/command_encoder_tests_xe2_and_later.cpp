@@ -51,8 +51,8 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, whenDebugFlagIsEnabledForAdjustPip
 }
 
 HWTEST2_F(CommandEncodeStatesTestXe2AndLater, whenGetDefaultIOHAlignmentThenReturnCorrectValue, IsAtLeastXe2HpgCore) {
-    EXPECT_EQ(FamilyType::cacheLineSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
-    EXPECT_EQ(MemoryConstants::cacheLineSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(true));
+    EXPECT_EQ(FamilyType::cacheLineSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, pDevice->getHardwareInfo()));
+    EXPECT_EQ(MemoryConstants::cacheLineSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(true, pDevice->getHardwareInfo()));
 }
 
 HWTEST2_F(CommandEncodeStatesTestXe2AndLater, whenDebugFlagIsDisabledForAdjustPipelineSelectThenNoCommandIsAdded, IsAtLeastXe2HpgCore) {

@@ -2945,7 +2945,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
 
     size_t totalSize = 1024 + 64;
-    size_t expectedSize = alignUp(totalSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
+    size_t expectedSize = alignUp(totalSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, device->getHwInfo()));
     EXPECT_EQ(expectedSize, ioh->getUsed());
 }
 

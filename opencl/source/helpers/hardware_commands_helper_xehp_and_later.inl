@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/l3_range.h"
@@ -62,11 +63,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     const RootDeviceEnvironment &rootDeviceEnvironment) {
     constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
-    if (indirectHeap.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()) {
-        indirectHeap.align(MemoryConstants::cacheLineSize);
-    } else {
-        indirectHeap.align(GfxFamily::cacheLineSize);
-    }
+    indirectHeap.align(EncodeDispatchKernel<GfxFamily>::getCrossThreadDataAlignment(indirectHeap.getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
+                                                                                    *rootDeviceEnvironment.getHardwareInfo()));
 
     auto offsetCrossThreadData = indirectHeap.getUsed();
     char *dest = nullptr;

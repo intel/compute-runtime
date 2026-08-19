@@ -306,7 +306,8 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
         return GfxFamily::cacheLineSize;
     }
 
-    static size_t getDefaultIOHAlignment(bool isLocalMemory);
+    static size_t getCrossThreadDataAlignment(bool isLocalMemory, const HardwareInfo &hwInfo);
+    static size_t getDefaultIOHAlignment(bool isLocalMemory, const HardwareInfo &hwInfo);
 
     static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr);
     static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args);
