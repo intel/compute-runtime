@@ -139,6 +139,9 @@ zexCommandListAppendMemoryFillWithParameters(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
+    if (size % patternSize != 0) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
     CmdListMemoryCopyParams memoryCopyParams{};
     return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
