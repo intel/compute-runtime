@@ -224,6 +224,16 @@ struct ExternalCbEventInfoContainer {
         auto it = getExecutorInfo(executor);
         return it == executorStorage.end() ? 0u : it->counter();
     }
+    void getPreambleCounterAndDeviceGpuAddress(L0::CommandList *executor, uint64_t &counter, uint64_t &deviceGpuAddress) {
+        auto it = getExecutorInfo(executor);
+        if (it == executorStorage.end()) {
+            counter = 0;
+            deviceGpuAddress = 0;
+        } else {
+            counter = it->counter();
+            deviceGpuAddress = it->deviceGpuAddress();
+        }
+    }
 
     void addWaitCbEventsInfo(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, uint64_t commandId, L0::CommandList *executor) {
         ExternalWaitCbEventsInfo &info = waitEventsContainer.emplace_back();

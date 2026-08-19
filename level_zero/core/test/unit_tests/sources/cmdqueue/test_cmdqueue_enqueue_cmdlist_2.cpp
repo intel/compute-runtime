@@ -1232,6 +1232,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
     CommandListExecutionInternalOptions internalOptions = {};
     internalOptions.patchPreambleRequiredCounter = counter;
+    internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress = counterDeviceGpuAddress;
     returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();

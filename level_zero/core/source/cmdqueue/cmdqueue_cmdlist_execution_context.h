@@ -49,6 +49,7 @@ struct CommandListExecutionContext {
     uint64_t currentGpuAddressForChainedBbStart = 0;
     uint64_t basePatchPreambleGpuAddress = 0;
     uint64_t patchPreambleRequiredCounter = 0;
+    uint64_t patchPreambleRequiredDevicePostSyncGpuAddress = 0;
 
     size_t spaceForResidency = 10;
     size_t bufferSpaceForPatchPreamble = 0;

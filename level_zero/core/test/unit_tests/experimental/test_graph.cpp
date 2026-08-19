@@ -2335,6 +2335,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, rootHostPatchPreambleData.hostAllocation());
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, rootHostPatchPreambleData.deviceGpuAddress());
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeAllocation, rootHostPatchPreambleData.deviceAllocation());
+    auto rootCounter = cbEventContainer->getPreambleCounter(nullptr);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootCounter);
+    uint64_t foundCounter = 0x0;
+    uint64_t foundDevAddress = 0x0;
+    cbEventContainer->getPreambleCounterAndDeviceGpuAddress(nullptr, foundCounter, foundDevAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, foundCounter);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, foundDevAddress);
 
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, forkEvent->getInOrderExecEventHelper().getPatchPreambleCounter());
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, forkEvent->getInOrderExecEventHelper().getPatchPreambleHostAddress());
@@ -2350,6 +2357,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeAllocation, childHostPatchPreambleData.hostAllocation());
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, childHostPatchPreambleData.deviceGpuAddress());
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceNodeAllocation, childHostPatchPreambleData.deviceAllocation());
+    auto childCounter = cbEventContainer->getPreambleCounter(subCommandList.get());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, childCounter);
+    foundCounter = 0x0;
+    foundDevAddress = 0x0;
+    cbEventContainer->getPreambleCounterAndDeviceGpuAddress(subCommandList.get(), foundCounter, foundDevAddress);
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, foundCounter);
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, foundDevAddress);
 
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, joinEvent->getInOrderExecEventHelper().getPatchPreambleCounter());
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostNodeCpuAddress, joinEvent->getInOrderExecEventHelper().getPatchPreambleHostAddress());
@@ -2358,7 +2372,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, joinEvent->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress());
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceNodeAllocation, joinEvent->getInOrderExecEventHelper().getPatchPreambleDeviceAllocation());
 
-    auto &nullPatchPreambleData = cbEventContainer->getPreambleData(reinterpret_cast<L0::CommandList *>(0x123));
+    auto nonExistingCmdList = reinterpret_cast<L0::CommandList *>(0x123);
+    auto &nullPatchPreambleData = cbEventContainer->getPreambleData(nonExistingCmdList);
     EXPECT_EQ(0u, nullPatchPreambleData.counter());
     EXPECT_EQ(nullptr, nullPatchPreambleData.hostAddress());
     EXPECT_EQ(0u, nullPatchPreambleData.hostGpuAddress());
@@ -2366,8 +2381,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(0u, nullPatchPreambleData.deviceGpuAddress());
     EXPECT_EQ(nullptr, nullPatchPreambleData.deviceAllocation());
 
-    auto nullCounter = cbEventContainer->getPreambleCounter(reinterpret_cast<L0::CommandList *>(0x123));
+    auto nullCounter = cbEventContainer->getPreambleCounter(nonExistingCmdList);
     EXPECT_EQ(0u, nullCounter);
+
+    foundCounter = 0x10;
+    foundDevAddress = 0x10;
+
+    cbEventContainer->getPreambleCounterAndDeviceGpuAddress(nonExistingCmdList, foundCounter, foundDevAddress);
+    EXPECT_EQ(0u, foundCounter);
+    EXPECT_EQ(0u, foundDevAddress);
 
     srcGraph.reset();
     forkEvent->destroy();
@@ -2926,6 +2948,102 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA &&
             deviceGpuAddress == actualAddress &&
             pipeControl->getImmediateData() == counter) {
+            foundDevicePostSyncWithCounter = true;
+        }
+        if (foundDevicePostSyncWithCounter && foundHostPostSyncWithCounter) {
+            break;
+        }
+    }
+    EXPECT_TRUE(foundHostPostSyncWithCounter);
+    EXPECT_TRUE(foundDevicePostSyncWithCounter);
+    srcGraph.reset();
+    event->destroy();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            GivenGraphUsesExternalCbEventOn32bSemWaitPlatformWhenPreambleCounterOverflowsAtGraphExecutionThenPatchPreambleDispatchesCounterPostSyncWithOffsetAddress) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    if constexpr (FamilyType::isQwordInOrderCounter) {
+        GTEST_SKIP();
+    }
+
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+    auto whiteBoxCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(commandList.get())->cmdQImmediate);
+
+    size_t tagSize = device->getDeviceInOrderCounterAllocator()->getTagSize();
+    size_t offset = tagSize / 2;
+
+    zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+
+    ze_event_handle_t eventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandle, 0U, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*srcGraph.get());
+    auto execGraphHandle = execGraph.toHandle();
+
+    whiteBoxCmdQueue->patchPreambleCounter.counter = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
+
+    auto cmdBufferCpuBase = commandList->getCmdContainer().getCommandStream()->getCpuBase();
+
+    auto sizeBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExp(commandListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr));
+    auto sizeAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+
+    auto cbEventContainer = execGraph.getExternalCbEventInfoContainer().get();
+    auto &rootHostPatchPreambleData = cbEventContainer->getPreambleData(nullptr);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootHostPatchPreambleData.counter());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, rootHostPatchPreambleData.hostGpuAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress + offset, rootHostPatchPreambleData.deviceGpuAddress());
+
+    auto counter = whiteBoxCmdQueue->patchPreambleCounter.counter;
+    auto lowerCounter = getLowPart(counter);
+    auto hostGpuAddress = whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress;
+    auto deviceGpuAddress = whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress + offset;
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdBufferCpuBase, sizeBefore),
+        sizeAfter - sizeBefore));
+
+    bool foundHostPostSyncWithCounter = false;
+    bool foundDevicePostSyncWithCounter = false;
+
+    auto pipeControlCmds = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pipeControlCmds.size());
+    for (auto &pipeControlCmd : pipeControlCmds) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlCmd);
+        auto actualAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA &&
+            hostGpuAddress == actualAddress &&
+            pipeControl->getImmediateData() == counter) {
+            foundHostPostSyncWithCounter = true;
+        }
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA &&
+            deviceGpuAddress == actualAddress &&
+            pipeControl->getImmediateData() == lowerCounter) {
             foundDevicePostSyncWithCounter = true;
         }
         if (foundDevicePostSyncWithCounter && foundHostPostSyncWithCounter) {

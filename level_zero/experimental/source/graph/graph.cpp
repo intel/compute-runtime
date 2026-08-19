@@ -1526,7 +1526,9 @@ ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, Gr
 
     CommandListExecutionInternalOptions internalOptions = {};
     if (this->externalCbEventStorage->externalCbEventsPresent()) {
-        internalOptions.patchPreambleRequiredCounter = this->externalCbEventStorage->getPreambleCounter(this->executionTarget);
+        this->externalCbEventStorage->getPreambleCounterAndDeviceGpuAddress(this->executionTarget,
+                                                                            internalOptions.patchPreambleRequiredCounter,
+                                                                            internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress);
     }
 
     auto segmentIt = this->myOrderedSegments.find(segmentStart);

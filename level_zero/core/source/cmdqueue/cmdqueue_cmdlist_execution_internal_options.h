@@ -18,6 +18,7 @@ namespace L0 {
 
 struct CommandListExecutionInternalOptions {
     uint64_t patchPreambleRequiredCounter = 0;
+    uint64_t patchPreambleRequiredDevicePostSyncGpuAddress = 0;
 
     NEO::LinearStream *parentImmediateCommandlistLinearStream = nullptr;
     std::unique_lock<std::mutex> *outerLockForIndirect = nullptr;

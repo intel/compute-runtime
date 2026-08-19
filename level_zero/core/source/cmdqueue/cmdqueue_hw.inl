@@ -932,6 +932,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
     if (ctx.patchPreambleEnabled) {
         auto neoDevice = this->device->getNEODevice();
         bool usePostSync = ctx.patchPreambleRequiredCounter > 0;
+        auto deviceRequiredCounter = !GfxFamily::isQwordInOrderCounter ? getLowPart(ctx.patchPreambleRequiredCounter) : ctx.patchPreambleRequiredCounter;
         auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
         NEO::GraphicsAllocation *counterHostAllocation = nullptr;
         uint64_t counterHostGpuAddress = 0;
@@ -941,6 +942,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
             patchPreambleCounter.getPatchPreambleNodeData(counterHostAllocation, counterHostGpuAddress, counterDeviceAllocation, counterDeviceGpuAddress);
             this->csr->makeResident(*counterHostAllocation);
             this->csr->makeResident(*counterDeviceAllocation);
+            counterDeviceGpuAddress = ctx.patchPreambleRequiredDevicePostSyncGpuAddress != 0 ? ctx.patchPreambleRequiredDevicePostSyncGpuAddress : counterDeviceGpuAddress;
         }
         if (this->isCopyOnlyCommandQueue) {
             NEO::EncodeDummyBlitWaArgs waArgs{false, &(rootDeviceEnvironment)};
@@ -949,7 +951,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
 
             NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(ctx.currentPatchPreambleBuffer, counterHostGpuAddress, ctx.patchPreambleRequiredCounter, args);
             if (usePostSync) {
-                NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(ctx.currentPatchPreambleBuffer, counterDeviceGpuAddress, ctx.patchPreambleRequiredCounter, args);
+                NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(ctx.currentPatchPreambleBuffer, counterDeviceGpuAddress, deviceRequiredCounter, args);
             }
         } else {
             NEO::PipeControlArgs args;
@@ -972,7 +974,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
                         neoDevice->getDeviceBitfield(),
                         args,
                         rootDeviceEnvironment,
-                        counterDeviceGpuAddress, ctx.patchPreambleRequiredCounter,
+                        counterDeviceGpuAddress, deviceRequiredCounter,
                         commandBufferCurrentGpuAddress,
                         false,
                         false);
@@ -989,7 +991,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
                     NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(ctx.currentPatchPreambleBuffer,
                                                                                                    NEO::PostSyncMode::immediateData,
                                                                                                    counterDeviceGpuAddress,
-                                                                                                   ctx.patchPreambleRequiredCounter,
+                                                                                                   deviceRequiredCounter,
                                                                                                    rootDeviceEnvironment,
                                                                                                    args);
                 } else {
@@ -1005,6 +1007,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
 
         auto currentPatchPreambleAddress = reinterpret_cast<uintptr_t>(ctx.currentPatchPreambleBuffer);
         uintptr_t estimatedEndPreambleAddress = ctx.basePatchPreambleAddress + ctx.bufferSpaceForPatchPreamble;
+        UNRECOVERABLE_IF(estimatedEndPreambleAddress < currentPatchPreambleAddress);
         if (estimatedEndPreambleAddress > currentPatchPreambleAddress) {
             memset(ctx.currentPatchPreambleBuffer, 0, (estimatedEndPreambleAddress - currentPatchPreambleAddress));
         }

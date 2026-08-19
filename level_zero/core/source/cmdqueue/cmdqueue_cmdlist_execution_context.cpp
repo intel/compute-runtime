@@ -46,6 +46,7 @@ CommandListExecutionContext::CommandListExecutionContext(
     constexpr size_t residencyContainerSpaceForBtdAllocation = 1;
 
     this->patchPreambleRequiredCounter = internalOptions.patchPreambleRequiredCounter;
+    this->patchPreambleRequiredDevicePostSyncGpuAddress = internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress;
     this->outerLockForIndirect = internalOptions.outerLockForIndirect;
     this->parentImmediateCommandlistLinearStream = internalOptions.parentImmediateCommandlistLinearStream;
 
