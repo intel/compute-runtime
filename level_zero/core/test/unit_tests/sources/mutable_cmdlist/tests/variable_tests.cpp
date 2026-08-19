@@ -929,6 +929,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableTest,
+            givenRuntimeAdjustedSlmAllocationModeWithInlineSlmWhenMutatingSlmArgumentThenInlineSlmIsNotAddedTwice) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+
+    createMutableComputeWalker<FamilyType, WalkerType>(0);
+
+    constexpr uint32_t inlineSlmSize = 256;
+    constexpr uint32_t slmArgSize = 1024;
+    constexpr uint32_t expectedSlmTotalSize = 2 * MemoryConstants::kiloByte;
+
+    this->slmInlineSize = inlineSlmSize;
+    this->slmOffset = inlineSlmSize;
+    this->mockKernelImmData->kernelDescriptor->kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+
+    createVariableDispatch(false, false, false, true);
+    Variable *slmArgument = getVariable(L0::MCL::VariableType::slmBuffer);
+
+    auto ret = slmArgument->setValue(slmArgSize, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    slmArgument->commitVariable();
+    EXPECT_EQ(expectedSlmTotalSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
             givenTwoSlmArgumentsWhenMutatingSlmArgumentsStartingFirstThenTotalSlmSizeChanged) {
     using WalkerType = typename FamilyType::PorWalkerType;
 

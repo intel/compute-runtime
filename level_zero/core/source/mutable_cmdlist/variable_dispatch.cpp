@@ -394,7 +394,9 @@ Variable *VariableDispatch::getLastSlmArgumentVariable() const { return lastSlmA
 const MutableIndirectData::Offsets &VariableDispatch::getIndirectDataOffsets() const { return indirectData->getIndirectDataOffsets(); }
 
 void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &device, bool stageData) {
-    this->slmTotalSizePerThreadGroup = slmArgTotalSize + kernelDispatch->slmInlineSize;
+    this->slmTotalSizePerThreadGroup = NEO::KernelDescriptor::getTotalSlmSizePerThreadGroup(slmArgTotalSize,
+                                                                                            kernelDispatch->slmInlineSize,
+                                                                                            kernelDispatch->kernelData->slmAllocationMode);
     if (this->isCooperative) {
         this->alignedSlmSize = device.getGfxCoreHelper().alignSlmSizePerThreadGroup(this->slmTotalSizePerThreadGroup, device.getRootDeviceEnvironment().getReleaseHelper());
     }

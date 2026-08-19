@@ -230,6 +230,7 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
         kernelDataEntry->requiredThreadGroupDispatchSize = kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize;
         kernelDataEntry->grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
         kernelDataEntry->barrierCount = kernelDescriptor.kernelAttributes.barrierCount;
+        kernelDataEntry->slmAllocationMode = kernelDescriptor.kernelAttributes.slmAllocationMode;
         kernelDataEntry->kernelStartOffset = isa->getAllocationOffset() + isaOffsetWithinAllocation;
         if (this->base->isHeaplessModeEnabled()) {
             kernelDataEntry->kernelStartAddress = isa->getGpuAddress() + isaOffsetWithinAllocation;
@@ -257,9 +258,16 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
 
 ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
                                                          size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,
-                                                         bool resetSlmArgumentValues) {
+                                                         Variable *firstSlmArgumentVariable, bool resetSlmArgumentValues) {
     auto kernelData = getKernelData(kernel);
     auto &kernelDescriptor = kernel->getKernelDescriptor();
+
+    if (firstSlmArgumentVariable != nullptr) {
+        const auto slmBaseOffset = kernelData->slmAllocationMode == NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted
+                                       ? kernelDescriptor.kernelAttributes.slmInlineSize
+                                       : 0u;
+        firstSlmArgumentVariable->setSlmBaseOffset(slmBaseOffset);
+    }
 
     auto ioh = base->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
     size_t reservedPerThreadDataSize = 0;
@@ -314,10 +322,8 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
     dispatch.offsets.walkerCmdOffset = walkerCmdOffset;
     dispatch.kernelData = kernelData;
     dispatch.walkerCmd = walkerCmd;
-    if (kernel->getSlmTotalSizePerThreadGroup() > 0) {
-        dispatch.slmTotalSizePerThreadGroup = kernel->getSlmTotalSizePerThreadGroup();
-        dispatch.slmInlineSize = kernelDescriptor.kernelAttributes.slmInlineSize;
-    }
+    dispatch.slmTotalSizePerThreadGroup = kernel->getSlmTotalSizePerThreadGroup();
+    dispatch.slmInlineSize = kernelDescriptor.kernelAttributes.slmInlineSize;
     dispatch.slmPolicy = static_cast<uint32_t>(kernel->getSlmPolicy());
     if (dispatch.kernelData->usesSyncBuffer) {
         dispatch.syncBuffer = syncBuffer;
@@ -339,10 +345,11 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
             currentSlmArgSize = slmArgSizes[i];
             currentSlmArgOffset = slmArgOffsetValues[i];
         }
-        auto retVal = Variable::fromHandle(vars[i])->addKernelArgUsage(args[i], kernelIohStartOffset, kernelFullOffset, kernelSshOffset,
-                                                                       currentSlmArgSize, currentSlmArgOffset,
-                                                                       walkerCmdOffset, mutableComputeWalker,
-                                                                       kernelData->passInlineData);
+        auto variable = Variable::fromHandle(vars[i]);
+        auto retVal = variable->addKernelArgUsage(args[i], kernelIohStartOffset, kernelFullOffset, kernelSshOffset,
+                                                  currentSlmArgSize, currentSlmArgOffset,
+                                                  walkerCmdOffset, mutableComputeWalker,
+                                                  kernelData->passInlineData);
         if (retVal != ZE_RESULT_SUCCESS) {
             DEBUG_BREAK_IF(true);
             return retVal;

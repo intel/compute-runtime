@@ -18,6 +18,7 @@ struct MutableAppendLaunchKernelWithParams {
     Variable *groupCountVariable = nullptr;
     Variable *groupSizeVariable = nullptr;
     Variable *globalOffsetVariable = nullptr;
+    Variable *firstSlmArgumentVariable = nullptr;
     Variable *lastSlmArgumentVariable = nullptr;
     MutableKernel *currentMutableKernel = nullptr;
     uint32_t maxKernelGroupScratch[2] = {0, 0};

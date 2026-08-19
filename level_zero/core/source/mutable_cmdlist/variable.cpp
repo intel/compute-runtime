@@ -1032,7 +1032,24 @@ void Variable::setNextSlmVariableOffset(SlmOffset nextSlmOffset) {
 }
 
 void Variable::processVariableDispatchForSlm() {
-    SlmOffset nextSlmOffset = this->desc.slmValue.slmOffsetValue + this->desc.slmValue.slmSize;
+
+    auto slmOffset = this->desc.slmValue.slmOffsetValue;
+    const bool isSlmOffsetResolved = slmOffset != undefined<SlmOffset>;
+    if (!isSlmOffsetResolved) {
+        const bool hasSlmBaseOffset = this->desc.slmValue.slmBaseOffset != undefined<SlmOffset>;
+        if (!hasSlmBaseOffset) {
+            return;
+        }
+        setNextSlmVariableOffset(this->desc.slmValue.slmBaseOffset);
+        return;
+    }
+
+    const bool isSlmSizeInitialized = this->desc.slmValue.slmSize != undefined<SlmOffset>;
+    if (!isSlmSizeInitialized) {
+        return;
+    }
+
+    SlmOffset nextSlmOffset = slmOffset + this->desc.slmValue.slmSize;
     if (this->desc.slmValue.nextSlmVariable != nullptr) {
         this->desc.slmValue.nextSlmVariable->setNextSlmVariableOffset(nextSlmOffset);
     } else {

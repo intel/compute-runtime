@@ -156,7 +156,7 @@ struct MutableCommandListImp : public MutableCommandList {
   protected:
     ze_result_t parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
                                       size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,
-                                      bool resetSlmArgumentValues);
+                                      Variable *firstSlmArgumentVariable, bool resetSlmArgumentValues);
     ze_result_t addVariableDispatch(const NEO::KernelDescriptor &kernelDescriptor, KernelDispatch &kernelDispatch, Variable *groupSize, Variable *groupCount, Variable *globalOffset,
                                     Variable *lastSlmArgumentVariable, const std::vector<Variable *> *buffersVariables, MutableComputeWalker *mutableComputeWalker, const MutableKernelDispatchParameters &dispatchParams);
 

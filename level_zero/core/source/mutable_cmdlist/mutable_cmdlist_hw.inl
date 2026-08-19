@@ -310,7 +310,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
     this->appendKernelMutableComputeWalker = (*mutableWalkerCmds.rbegin()).get();
     retVal = this->parseDispatchedKernel(kernel, appendKernelMutableComputeWalker, mutableCmdlistAppendLaunchParams.extraPayloadSpaceForKernelGroup,
                                          static_cast<L0::KernelImp *>(kernel)->getSyncBufferAllocation(),
-                                         false);
+                                         mutableCmdlistAppendLaunchParams.firstSlmArgumentVariable, false);
     if (retVal != ZE_RESULT_SUCCESS) {
         return retVal;
     }
@@ -815,6 +815,9 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatch
                 mutableParams.kernelArgumentMutation = true;
 
                 if (slmArgument) {
+                    if (mutableParams.firstSlmArgumentVariable == nullptr) {
+                        mutableParams.firstSlmArgumentVariable = variable;
+                    }
                     if (mutableParams.lastSlmArgumentVariable != nullptr) {
                         mutableParams.lastSlmArgumentVariable->setNextSlmVariable(variable);
                     }
@@ -939,7 +942,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
                                          viewKernelMutableComputeWalker,
                                          (parentMutableAppendLaunchParams.maxKernelGroupIndirectHeap - mutableKernel->getKernel()->getIndirectSize()),
                                          nullptr,
-                                         true);
+                                         viewKernelAppendLaunchParams.firstSlmArgumentVariable, true);
     if (retVal != ZE_RESULT_SUCCESS) {
         return retVal;
     }

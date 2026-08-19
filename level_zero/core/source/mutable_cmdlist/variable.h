@@ -103,6 +103,7 @@ struct SlmValueProperties {
     Variable *nextSlmVariable = nullptr;
     SlmOffset slmSize = 0;
     SlmOffset slmOffsetValue = 0;
+    SlmOffset slmBaseOffset = undefined<SlmOffset>;
     uint8_t slmAlignment = 0;
 };
 
@@ -253,6 +254,9 @@ struct Variable : public VariableHandle {
 
     void setNextSlmVariable(Variable *nextSlmVariable) {
         desc.slmValue.nextSlmVariable = nextSlmVariable;
+    }
+    void setSlmBaseOffset(SlmOffset slmBaseOffset) {
+        desc.slmValue.slmBaseOffset = slmBaseOffset;
     }
     void setNextSlmVariableOffset(SlmOffset nextSlmOffset);
     void processVariableDispatchForSlm();

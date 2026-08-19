@@ -144,7 +144,9 @@ void VariableFixture::createVariableDispatch(bool useGroupCount, bool useGroupSi
     this->kernelDispatch = std::make_unique<::L0::MCL::KernelDispatch>();
     this->kernelDispatch->kernelData = kernelData;
     this->kernelDispatch->slmInlineSize = this->slmInlineSize;
-    this->kernelDispatch->slmTotalSizePerThreadGroup = this->slmInlineSize + this->slmSize;
+    this->kernelDispatch->slmTotalSizePerThreadGroup = NEO::KernelDescriptor::getTotalSlmSizePerThreadGroup(this->slmSize,
+                                                                                                            this->slmInlineSize,
+                                                                                                            this->kernelDispatch->kernelData->slmAllocationMode);
     createMutableIndirectOffset();
 
     if (useGroupCount) {

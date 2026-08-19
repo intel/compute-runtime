@@ -64,6 +64,11 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         return kernelAttributes.crossThreadDataSize - std::min(kernelAttributes.crossThreadDataSize, kernelAttributes.inlineDataPayloadSize);
     }
 
+    enum class SlmAllocationMode : int8_t {
+        compilerResolved = 0, // Compiler resolves the offsets during codegen
+        runtimeAdjusted = 1   // Runtime adjusts the offsets (by slm_size) before kernel launch
+    };
+
     void patchOffsetInSlmIfRequired(ArrayRef<uint8_t> crossThreadData) const {
         if (kernelAttributes.slmAllocationMode != KernelDescriptor::SlmAllocationMode::runtimeAdjusted) {
             return;
@@ -79,21 +84,20 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         }
     }
 
-    uint32_t getTotalSlmSizePerThreadGroup(uint32_t totalSlmSizePerThreadGroup) const {
-        if (kernelAttributes.slmAllocationMode == KernelDescriptor::SlmAllocationMode::compilerResolved) {
-            return totalSlmSizePerThreadGroup + kernelAttributes.slmInlineSize;
+    static uint32_t getTotalSlmSizePerThreadGroup(uint32_t totalSlmSizePerThreadGroup, uint32_t slmInlineSize, SlmAllocationMode slmAllocationMode) {
+        if (slmAllocationMode == KernelDescriptor::SlmAllocationMode::compilerResolved) {
+            return totalSlmSizePerThreadGroup + slmInlineSize;
         }
         const bool noDynamicSlm = (0 == totalSlmSizePerThreadGroup);
         if (noDynamicSlm) {
-            return kernelAttributes.slmInlineSize;
+            return slmInlineSize;
         }
         return totalSlmSizePerThreadGroup;
     }
 
-    enum class SlmAllocationMode : int8_t {
-        compilerResolved = 0, // Compiler resolves the offsets during codegen
-        runtimeAdjusted = 1   // Runtime adjusts the offsets (by slm_size) before kernel launch
-    };
+    uint32_t getTotalSlmSizePerThreadGroup(uint32_t totalSlmSizePerThreadGroup) const {
+        return getTotalSlmSizePerThreadGroup(totalSlmSizePerThreadGroup, kernelAttributes.slmInlineSize, kernelAttributes.slmAllocationMode);
+    }
 
     struct KernelAttributes {
         uint32_t slmInlineSize = 0U;

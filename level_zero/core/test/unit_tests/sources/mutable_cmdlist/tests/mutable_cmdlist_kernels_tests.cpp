@@ -1846,6 +1846,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     prepareKernelArg(0, L0::MCL::VariableType::slmBuffer, kernelAllMask);
     prepareKernelArg(1, L0::MCL::VariableType::slmBuffer, kernelAllMask);
 
+    constexpr uint32_t inlineSlmSize = 256;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.slmInlineSize = inlineSlmSize;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.slmInlineSize = inlineSlmSize;
+
     uint32_t slmSize = 512;
 
     auto result = kernel->setArgBuffer(0, slmSize, nullptr);
@@ -1886,10 +1890,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto kernel2SlmBufferVariable1 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->desc.slmValue.slmSize);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->desc.slmValue.slmOffsetValue);
+    EXPECT_EQ(0u, kernel2SlmBufferVariable1->desc.slmValue.slmBaseOffset);
 
-    auto kernel2SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
+    auto kernel2SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[1]);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->desc.slmValue.slmSize);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->desc.slmValue.slmOffsetValue);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->desc.slmValue.slmBaseOffset);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1934,6 +1940,153 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto kernel1SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[1]);
     EXPECT_EQ(slmSize2, kernel1SlmBufferVariable2->desc.slmValue.slmSize);
     EXPECT_EQ(slmSize1, kernel1SlmBufferVariable2->desc.slmValue.slmOffsetValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenRuntimeAdjustedSlmAllocationModeWithInlineSlmWhenMutatingKernelAndLocalArgumentsInReverseOrderThenLocalArgumentOffsetsIncludeInlineSlm) {
+    constexpr uint32_t inlineSlmSize = 256;
+    constexpr size_t initialSlmArg0Size = 512;
+    constexpr size_t initialSlmArg1Size = 256;
+    constexpr size_t mutatedSlmArg0Size = 1024;
+    constexpr size_t mutatedSlmArg1Size = 512;
+
+    resizeKernelArg(2);
+    prepareKernelArg(0, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+    prepareKernelArg(1, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+
+    for (auto kernelImmData : {mockKernelImmData.get(), mockKernelImmData2.get()}) {
+        auto &kernelDescriptor = *kernelImmData->kernelDescriptor;
+        kernelDescriptor.kernelAttributes.slmInlineSize = inlineSlmSize;
+        kernelDescriptor.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+    }
+    mockKernelImmData->kernelDescriptor->patchOffsetInSlmIfRequired(kernel->getCrossThreadDataSpan());
+    mockKernelImmData2->kernelDescriptor->patchOffsetInSlmIfRequired(kernel2->getCrossThreadDataSpan());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, initialSlmArg0Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, initialSlmArg1Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel2->setArgBuffer(0, initialSlmArg0Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel2->setArgBuffer(1, initialSlmArg1Size, nullptr));
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_kernel_argument_exp_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_exp_desc_t slmArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    slmArg0.argIndex = 0;
+    slmArg0.argSize = mutatedSlmArg0Size;
+    slmArg0.commandId = commandId;
+    slmArg0.pArgValue = nullptr;
+    slmArg1.argIndex = 1;
+    slmArg1.argSize = mutatedSlmArg1Size;
+    slmArg1.commandId = commandId;
+    slmArg1.pArgValue = nullptr;
+    slmArg1.pNext = &slmArg0;
+    mutableCommandsDesc.pNext = &slmArg1;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    auto kernelDispatch = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch();
+    auto ioh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
+    auto crossThreadData = reinterpret_cast<uint8_t *>(ptrOffset(ioh->getCpuBase(), kernelDispatch->offsets.crossThreadOffset));
+    const auto &explicitArgs = mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs;
+    const auto arg0SlmOffset = explicitArgs[0].as<NEO::ArgDescPointer>().slmOffset;
+    const auto arg1SlmOffset = explicitArgs[1].as<NEO::ArgDescPointer>().slmOffset;
+
+    EXPECT_EQ(inlineSlmSize, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, arg0SlmOffset)));
+    EXPECT_EQ(inlineSlmSize + mutatedSlmArg0Size, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, arg1SlmOffset)));
+
+    constexpr uint32_t expectedSlmTotalSize = 2 * MemoryConstants::kiloByte;
+    EXPECT_EQ(expectedSlmTotalSize, kernelDispatch->slmTotalSizePerThreadGroup);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenRuntimeAdjustedSlmAllocationModeWithInlineSlmWhenMutatingToKernelWithUnsetLocalArgumentsThenLocalArgumentOffsetsIncludeInlineSlm) {
+    constexpr uint32_t inlineSlmSize = 256;
+    constexpr size_t initialSlmArg0Size = 512;
+    constexpr size_t initialSlmArg1Size = 256;
+    constexpr size_t mutatedSlmArg0Size = 1024;
+    constexpr size_t mutatedSlmArg1Size = 512;
+
+    resizeKernelArg(2);
+    prepareKernelArg(0, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+    prepareKernelArg(1, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+
+    for (auto kernelImmData : {mockKernelImmData.get(), mockKernelImmData2.get()}) {
+        auto &kernelDescriptor = *kernelImmData->kernelDescriptor;
+        kernelDescriptor.kernelAttributes.slmInlineSize = inlineSlmSize;
+        kernelDescriptor.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+    }
+    mockKernelImmData->kernelDescriptor->patchOffsetInSlmIfRequired(kernel->getCrossThreadDataSpan());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, initialSlmArg0Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, initialSlmArg1Size, nullptr));
+    EXPECT_EQ(0u, kernel2->getSlmArgSizes()[0]);
+    EXPECT_EQ(0u, kernel2->getSlmArgSizes()[1]);
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto inactiveKernelSlmVariables = getVariableList(commandId, L0::MCL::VariableType::slmBuffer, kernel2.get());
+    ASSERT_EQ(2u, inactiveKernelSlmVariables.size());
+    EXPECT_EQ(inlineSlmSize, inactiveKernelSlmVariables[0]->getDesc().slmValue.slmBaseOffset);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, inactiveKernelSlmVariables[1]->getDesc().slmValue.slmBaseOffset);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_kernel_argument_exp_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_exp_desc_t slmArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    slmArg0.argIndex = 0;
+    slmArg0.argSize = mutatedSlmArg0Size;
+    slmArg0.commandId = commandId;
+    slmArg0.pArgValue = nullptr;
+    slmArg0.pNext = &slmArg1;
+    slmArg1.argIndex = 1;
+    slmArg1.argSize = mutatedSlmArg1Size;
+    slmArg1.commandId = commandId;
+    slmArg1.pArgValue = nullptr;
+    mutableCommandsDesc.pNext = &slmArg0;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    auto kernelDispatch = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch();
+    auto ioh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
+    auto crossThreadData = reinterpret_cast<uint8_t *>(ptrOffset(ioh->getCpuBase(), kernelDispatch->offsets.crossThreadOffset));
+    const auto &explicitArgs = mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs;
+    const auto arg0SlmOffset = explicitArgs[0].as<NEO::ArgDescPointer>().slmOffset;
+    const auto arg1SlmOffset = explicitArgs[1].as<NEO::ArgDescPointer>().slmOffset;
+
+    EXPECT_EQ(inlineSlmSize, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, arg0SlmOffset)));
+    EXPECT_EQ(inlineSlmSize + mutatedSlmArg0Size, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, arg1SlmOffset)));
+
+    constexpr uint32_t expectedSlmTotalSize = 2 * MemoryConstants::kiloByte;
+    EXPECT_EQ(expectedSlmTotalSize, kernelDispatch->slmTotalSizePerThreadGroup);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
