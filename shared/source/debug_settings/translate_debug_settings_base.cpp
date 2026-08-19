@@ -13,8 +13,7 @@ namespace NEO {
 
 void translateDebugSettings(DebugVariables &debugVariables) {
     translateDebugSettingsImpl(debugVariables);
-
-    if (debugVariables.FlushAllCaches.get() == 1) {
+    if (debugVariables.FlushAllCaches.get() & 1) {
         debugVariables.FlushAllCaches.set(FlushCachesBitmask::allCaches);
     }
 }

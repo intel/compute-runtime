@@ -548,9 +548,15 @@ TEST(DebugSettingsManager, givenFlushAllCachesWhenTranslateDebugSettingsThenOver
     }
 
     {
+        NEO::debugManager.flags.FlushAllCaches.set(1 | FlushCachesBitmask::dcFlush);
+        translateDebugSettings(NEO::debugManager.flags);
+        EXPECT_EQ(NEO::debugManager.flags.FlushAllCaches.get(), FlushCachesBitmask::allCaches);
+    }
+
+    {
         NEO::debugManager.flags.FlushAllCaches.set(0);
         translateDebugSettings(NEO::debugManager.flags);
-        EXPECT_EQ(NEO::debugManager.flags.FlushAllCaches.get(), 0u);
+        EXPECT_EQ(NEO::debugManager.flags.FlushAllCaches.get(), 0);
     }
 
     {
