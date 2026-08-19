@@ -256,6 +256,9 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     }
 
     if (ret != ZE_RESULT_SUCCESS) {
+        if (baseImageHandle != nullptr) {
+            zeImageDestroy(baseImageHandle);
+        }
         errorCode.set(L0ToClResultMapper(ret));
         return nullptr;
     }

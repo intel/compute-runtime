@@ -245,6 +245,9 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     }
 
     if (ret != ZE_RESULT_SUCCESS) {
+        if (baseImageHandle != nullptr) {
+            zeImageDestroy(baseImageHandle);
+        }
         err.set(L0ToClResultMapper(ret));
         return nullptr;
     }

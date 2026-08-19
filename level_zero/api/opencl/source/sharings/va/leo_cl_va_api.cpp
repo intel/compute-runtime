@@ -76,17 +76,7 @@ clEnqueueAcquireVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
         return CL_INVALID_COMMAND_QUEUE;
     }
 
-    auto ret = pCommandQueue->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event, CL_COMMAND_ACQUIRE_VA_API_MEDIA_SURFACES_INTEL);
-
-    if (ret != CL_SUCCESS) {
-        return ret;
-    }
-
-    if (!pCommandQueue->getContext()->getInteropUserSyncEnabled()) {
-        ret = clFinish(commandQueue);
-    }
-
-    return ret;
+    return pCommandQueue->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event, CL_COMMAND_ACQUIRE_VA_API_MEDIA_SURFACES_INTEL);
 }
 
 cl_int CL_API_CALL
@@ -104,12 +94,8 @@ clEnqueueReleaseVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
 
     auto ret = pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event, CL_COMMAND_RELEASE_VA_API_MEDIA_SURFACES_INTEL);
 
-    if (ret != CL_SUCCESS) {
-        return ret;
-    }
-
     if (!pCommandQueue->getContext()->getInteropUserSyncEnabled()) {
-        ret = clFinish(commandQueue);
+        clFinish(commandQueue);
     }
 
     return ret;
@@ -129,6 +115,10 @@ cl_int CL_API_CALL clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
     }
 
     Context *pContext = castToObject<Context>(context);
+    if (!pContext) {
+        return CL_INVALID_CONTEXT;
+    }
+
     auto pSharing = pContext->getSharing<VASharingFunctions>();
     if (!pSharing) {
         return CL_INVALID_CONTEXT;
