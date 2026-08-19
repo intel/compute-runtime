@@ -198,6 +198,7 @@ struct Event : _ze_event_handle_t {
     static ze_result_t counterBasedCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_event_counter_based_desc_t *desc, ze_event_handle_t *phEvent);
     static ze_result_t counterBasedGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address);
     static ze_result_t counterBasedGetIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue);
+    static ze_result_t counterBasedGetMaxValue(ze_device_handle_t hDevice, uint64_t *maxValue);
 
     static Event *fromHandle(ze_event_handle_t handle) { return static_cast<Event *>(handle); }
 
