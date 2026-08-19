@@ -142,6 +142,9 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
         this->desc.eventValue.inOrderAllocationOffset = event->getInOrderAllocationOffset();
     }
     this->desc.size = 0;
+    this->desc.eventValue.qwordInUse = cmdList->isQwordInOrderCounter();
+    this->desc.eventValue.useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
+    this->desc.eventValue.qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->desc.eventValue.qwordInUse, this->desc.eventValue.useSemaphore64bCmd);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -185,6 +188,10 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     semWaitReserve += this->desc.eventValue.waitPackets;
     this->desc.eventValue.semWaitCmds.reserve(semWaitReserve);
     this->desc.size = 0;
+    this->desc.eventValue.qwordInUse = cmdList->isQwordInOrderCounter();
+    this->desc.eventValue.useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
+    this->desc.eventValue.qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->desc.eventValue.qwordInUse, this->desc.eventValue.useSemaphore64bCmd);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -830,13 +837,11 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
 }
 
 void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper) {
-    bool qwordInUse = cmdList->isQwordInOrderCounter();
-    bool useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
-    bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, useSemaphore64bCmd);
 
     auto newPatchPreambleCounter = eventInOrderHelper == nullptr ? 0u : eventInOrderHelper->getPatchPreambleCounter();
     auto newPatchPreambleCounterAddress = eventInOrderHelper == nullptr ? 0u : eventInOrderHelper->getPatchPreambleDeviceGpuAddress();
     bool newPatchPreambleNooped = newPatchPreambleCounter == 0;
+    newPatchPreambleCounter = this->desc.eventValue.qwordInUse == false ? getLowPart(newPatchPreambleCounter) : newPatchPreambleCounter;
 
     for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
         if (mutableSemWait->getType() != MutableSemaphoreWait::cbEventWaitPatchPreambleCounter) {
@@ -848,16 +853,16 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                 mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
             }
 
-            if (!qwordIndirect && eventInOrderHelper) {
+            if (!this->desc.eventValue.qwordIndirect && eventInOrderHelper) {
                 if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
                     mutableSemWait->setSemaphoreValue(eventInOrderHelper->getEventData()->counterValue);
                 }
             }
         } else {
-            setCbWaitEventPatchPreambleSemWaitOperation(operation, mutableSemWait, newPatchPreambleCounter, newPatchPreambleCounterAddress, newPatchPreambleNooped, qwordIndirect);
+            setCbWaitEventPatchPreambleSemWaitOperation(operation, mutableSemWait, newPatchPreambleCounter, newPatchPreambleCounterAddress, newPatchPreambleNooped, this->desc.eventValue.qwordIndirect);
         }
     }
-    if (qwordIndirect) {
+    if (this->desc.eventValue.qwordIndirect) {
         uint32_t cmdIndex = 0;
         for (auto &mutableLoadRegImm : this->desc.eventValue.loadRegImmCmds) {
             if (mutableLoadRegImm->getType() != MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter) {

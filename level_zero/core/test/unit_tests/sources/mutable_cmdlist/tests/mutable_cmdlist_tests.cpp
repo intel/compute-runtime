@@ -2063,6 +2063,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE, result);
+
+    // immutable kernels (without get next command id) are allowed to be appended, as mcl does not support implicit args, so the kernel will not be mutated
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 using MutableCommandListInOrderTest = Test<MutableCommandListFixture<true, -1>>;
@@ -3893,6 +3897,152 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     }
 
     waitValue = this->lriRequired ? 0 : newCounter;
+    NEO::EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&templateSemWait,
+                                                             newDeviceGpuAddress,
+                                                             waitValue,
+                                                             COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
+                                                             registerPollMode, waitMode, this->qwordInUse, this->lriRequired, switchOnUnsuccessful, this->sem64bSupport);
+    EXPECT_EQ(0, memcmp(&templateSemWait, semWaitCmd, sizeof(MI_SEMAPHORE_WAIT)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenExternalCbEventWithPatchPreambleCounterExceeding32BitBoundryWhenAppendingKernelWithWaitEventAndMutatingThenNewPatchPreambleWaitIsSetAndDeviceCounterUsesCorrectValues) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    MI_SEMAPHORE_WAIT templateSemWait;
+
+    auto event = createTestEvent(true, false, false, false, true);
+    auto eventHandle = event->toHandle();
+    auto newEvent = createTestEvent(true, false, false, false, true);
+    auto newEventHandle = newEvent->toHandle();
+
+    auto otherCmdlist = createMutableCmdList();
+    // attach wait events to other command list
+    L0::CmdListWaitEventParameters waitEventParams = {};
+    otherCmdlist->appendBarrier(event, 0, nullptr, waitEventParams);
+    otherCmdlist->appendBarrier(newEvent, 0, nullptr, waitEventParams);
+    otherCmdlist->close();
+
+    // assign them counters
+    uint32_t counterLow = 2;
+    uint64_t counter = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1 + counterLow;
+    auto lriCounterLow = getLowPart(counter);
+    auto lriCounterHigh = getHighPart(counter);
+    uint64_t deviceGpuAddress = 0xAB000;
+    MockGraphicsAllocation counterAllocation(nullptr, deviceGpuAddress, sizeof(uint64_t));
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counter, nullptr, 0, nullptr, deviceGpuAddress, &counterAllocation);
+
+    constexpr bool registerPollMode = false;
+    constexpr bool waitMode = true;
+    constexpr bool switchOnUnsuccessful = false;
+
+    // when qword not in use, then use lower 32b, when in use, check if lri is required, if so, use 0, else use full 64b counter
+    auto waitValue = this->qwordInUse == false ? counterLow : this->lriRequired ? 0
+                                                                                : counter;
+    NEO::EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&templateSemWait,
+                                                             deviceGpuAddress,
+                                                             waitValue,
+                                                             COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
+                                                             registerPollMode, waitMode, this->qwordInUse, this->lriRequired, switchOnUnsuccessful, this->sem64bSupport);
+
+    uint32_t newCounterLow = 4;
+    uint64_t newCounter = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1 + newCounterLow;
+    auto newLriCounterLow = getLowPart(newCounter);
+    auto newLriCounterHigh = getHighPart(newCounter);
+    uint64_t newDeviceGpuAddress = 0xCD000;
+    MockGraphicsAllocation newCounterAllocation(nullptr, newDeviceGpuAddress, sizeof(uint64_t));
+    newEvent->getInOrderExecEventHelper().assignPatchPreambleData(newCounter, nullptr, 0, nullptr, newDeviceGpuAddress, &newCounterAllocation);
+
+    // mutation point
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event 1 as wait event
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAllocation));
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+    ASSERT_EQ(2u, waitEventVar->getSemWaitList().size());
+
+    // patch preamble mutable sem wait
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    auto semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+    ASSERT_NE(nullptr, semWaitCmd);
+    EXPECT_EQ(deviceGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+    EXPECT_EQ(0, memcmp(&templateSemWait, semWaitCmd, sizeof(MI_SEMAPHORE_WAIT)));
+
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+    if (this->lriRequired) {
+        ASSERT_EQ(4u, waitEventVar->getLoadRegImmList().size());
+        auto mutableLri = waitEventVar->getLoadRegImmList()[0];
+        auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(lriCounterLow, lriCmd->getDataDword());
+
+        auto mutableLriHigh = waitEventVar->getLoadRegImmList()[1];
+        auto mockMutableLriHigh = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLriHigh);
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(mockMutableLriHigh->loadRegImm);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(lriCounterHigh, lriCmd->getDataDword());
+
+        EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
+    } else {
+        if (this->qwordInUse) {
+            EXPECT_EQ(counter, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
+        } else {
+            EXPECT_EQ(counterLow, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
+        }
+    }
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), &newCounterAllocation));
+
+    semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(semWaitCmd);
+    ASSERT_NE(nullptr, semWaitCmd);
+    EXPECT_EQ(newDeviceGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+
+    if (this->lriRequired) {
+        auto mutableLri = waitEventVar->getLoadRegImmList()[0];
+        auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(newLriCounterLow, lriCmd->getDataDword());
+
+        auto mutableLriHigh = waitEventVar->getLoadRegImmList()[1];
+        auto mockMutableLriHigh = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLriHigh);
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(mockMutableLriHigh->loadRegImm);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(newLriCounterHigh, lriCmd->getDataDword());
+
+        EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
+    } else {
+        if (this->qwordInUse) {
+            EXPECT_EQ(newCounter, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
+        } else {
+            EXPECT_EQ(newCounterLow, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
+        }
+    }
+
+    waitValue = this->qwordInUse == false ? newCounterLow : this->lriRequired ? 0
+                                                                              : newCounter;
     NEO::EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&templateSemWait,
                                                              newDeviceGpuAddress,
                                                              waitValue,

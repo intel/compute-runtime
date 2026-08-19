@@ -235,12 +235,13 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
         }
     }
 
+    constexpr ze_mutable_command_exp_flags_t notSupportedNonKernelMutationFlags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
+                                                                                  ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET |
+                                                                                  ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+    const bool unsupportedCondition = this->nextAppendKernelMutable && (this->nextMutationFlags & notSupportedNonKernelMutationFlags) != 0;
     if (launchParams.isBuiltInKernel) {
-        constexpr ze_mutable_command_exp_flags_t notSupportedNonKernelMutationFlags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                                                                                      ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET |
-                                                                                      ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
         // builtin kernels are supported with only wait event mutation flags
-        if (this->nextAppendKernelMutable && (this->nextMutationFlags & notSupportedNonKernelMutationFlags) != 0) {
+        if (unsupportedCondition) {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }
@@ -250,8 +251,11 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
     const bool usesUnsupportedFeature = kernelAttributes.flags.requiresImplicitArgs;
     if (usesUnsupportedFeature) {
-        DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE;
+        // unsupported kernels cannot be mutated with unsupported flags
+        if (unsupportedCondition) {
+            DEBUG_BREAK_IF(true);
+            return ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE;
+        }
     }
 
     MutableAppendLaunchKernelWithParams mutableCmdlistAppendLaunchParams = {};

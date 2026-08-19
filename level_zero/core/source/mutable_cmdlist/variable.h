@@ -97,6 +97,9 @@ struct EventValueProperties {
     bool hasStandaloneProfilingNode = false;
     bool isExternalFlag = false;
     bool patchPreambleNoopState = false;
+    bool qwordInUse = false;
+    bool useSemaphore64bCmd = false;
+    bool qwordIndirect = false;
 };
 
 struct SlmValueProperties {

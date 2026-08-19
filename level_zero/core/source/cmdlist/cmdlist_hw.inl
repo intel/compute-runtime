@@ -3601,6 +3601,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
     const bool copyOnlyWait = isCopyOnly(dualStreamCopyOffloadOperation);
     constexpr bool switchOnUnsuccessful = false;
 
+    counter = isQwordInOrderCounter() == false ? getLowPart(counter) : counter;
+
     NEO::GraphicsAllocation *devicePatchPreambleCounterAlloc = eventInOrderHelper.getPatchPreambleDeviceAllocation();
     uint64_t devicePatchPreambleCounterGpuAddress = eventInOrderHelper.getPatchPreambleDeviceGpuAddress();
 
