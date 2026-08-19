@@ -349,6 +349,19 @@ typedef struct _zes_intel_device_state_pending_action_exp_t {
                                         ///< For example, When device is wedged this will be set to ZES_PENDING_ACTION_PENDING_COLD_RESET
 } zes_intel_device_state_pending_action_exp_t;
 
+#ifndef ZES_INTEL_DEVICE_STATE_EXP_NAME
+/// @brief Device state extension name
+#define ZES_INTEL_DEVICE_STATE_EXP_NAME "ZES_intel_device_state_exp"
+#endif // ZES_INTEL_DEVICE_STATE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device state extension Version(s)
+typedef enum _zes_intel_device_state_exp_version_t {
+    ZES_INTEL_DEVICE_STATE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DEVICE_STATE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DEVICE_STATE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_state_exp_version_t;
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Intel experimental extension to the standard ::zes_device_state_ext_flag_t
 ///
