@@ -152,7 +152,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenQueueFlagWhenCreatingCmdL
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
-HWTEST_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListThenReturnError) {
+HWTEST_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListThenSkipWait) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
     debugManager.flags.ForceInOrderEvents.set(1);
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -172,9 +174,17 @@ HWTEST_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListThe
 
     auto handle = event->toHandle();
 
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    const auto offset = cmdStream->getUsed();
+
     returnValue = immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &handle, launchParams);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    EXPECT_TRUE(findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end()).empty());
 }
 
 HWTEST_F(InOrderCmdListTests, givenIpcAndCounterBasedEventPoolFlagsWhenCreatingThenReturnError) {
@@ -2546,6 +2556,66 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenNonInOrderCmdListWithCoun
 
     context->freeMem(deviceAlloc);
     context->freeMem(hostAlloc);
+}
+
+HWTEST_F(InOrderCmdListTests, givenEmptyCounterBasedEventWhenPassedAsWaitEventToImmediateCmdListThenSkipWait) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
+
+    auto eventHandle = events[0]->toHandle();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    const auto offset = cmdStream->getUsed();
+
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    EXPECT_TRUE(findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end()).empty());
+}
+
+HWTEST_F(InOrderCmdListTests, givenEmptyCounterBasedEventWhenPassedAsWaitEventToRegularCmdListThenSkipWait) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    EXPECT_FALSE(events[0]->getInOrderExecEventHelper().isDataAssigned());
+
+    auto eventHandle = events[0]->toHandle();
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+    const auto offset = cmdStream->getUsed();
+
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = true,
+        .skipFlush = false};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, regularCmdList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    EXPECT_TRUE(findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end()).empty());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingFromAppendCopyWhenDispatchingKernelThenProgramSemaphoreOnce) {

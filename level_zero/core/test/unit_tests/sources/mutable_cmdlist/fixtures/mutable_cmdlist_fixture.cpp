@@ -656,10 +656,10 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyRegionCall
 
 void MutableCommandListFixtureInit::mutableWaitEventsOnAppendWaitOnEventsCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
     L0::CmdListWaitEventParameters waitEventParams;
-    // when signal event is set, then it is cb to force error, then make it here wait event to force error
     if (callbackData->signalEvent != nullptr) {
         callbackData->numWaitEvents = 1;
         callbackData->waitEvents = &callbackData->signalEvent;
+        callbackData->cbEventAsWaitEvent = true;
     }
     callbackData->result = this->mutableCommandList->appendWaitOnEvents(callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams);
     callbackData->outWaitCmds = waitEventParams.outWaitCmds;

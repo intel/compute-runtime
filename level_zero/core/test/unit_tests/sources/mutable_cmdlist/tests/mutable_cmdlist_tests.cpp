@@ -3378,7 +3378,11 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendOperations(
     // create resources and call the append
     (this->*callbackInit)(&callbackData);
     if (createCbEvent) {
-        EXPECT_NE(ZE_RESULT_SUCCESS, callbackData.result);
+        if (callbackData.cbEventAsWaitEvent) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, callbackData.result);
+        } else {
+            EXPECT_NE(ZE_RESULT_SUCCESS, callbackData.result);
+        }
     } else {
         EXPECT_EQ(ZE_RESULT_SUCCESS, callbackData.result);
 

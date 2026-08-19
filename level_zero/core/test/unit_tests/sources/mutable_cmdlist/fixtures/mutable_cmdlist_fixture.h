@@ -91,6 +91,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         bool skipAddingWaitEventsToResidency = false;
+        bool cbEventAsWaitEvent = false;
     };
 
     using MutableEventOnAppendOperationCallback = void (MutableCommandListFixtureInit::*)(MutableWaitEventsOnAppendOperationsData *callbackData);
