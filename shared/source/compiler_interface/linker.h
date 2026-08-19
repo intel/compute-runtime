@@ -137,6 +137,9 @@ struct LinkerInput : NEO::NonCopyableAndNonMovableClass {
     template <Elf::ElfIdentifierClass numBits>
     bool addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &relocation);
 
+    template <Elf::ElfIdentifierClass numBits>
+    void addSymbolIfMissing(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &relocation);
+
     std::optional<uint32_t> getInstructionSegmentId(const SectionNameToSegmentIdMap &kernelNameToSegId, const std::string &kernelName);
 
     const Traits &getTraits() const {

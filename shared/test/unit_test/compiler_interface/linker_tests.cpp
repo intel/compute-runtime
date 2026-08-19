@@ -494,6 +494,93 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeDifferentThantObjectOrFuncWhenDeco
     EXPECT_EQ(0U, linkerInput.getSymbols().size());
 }
 
+TEST(LinkerInputTests, GivenInstructionRelocationAgainstLocalDataSymbolWhenDecodingElfThenSymbolIsNotRecordedAsExternalFunctionDependency) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.kernel";
+    sectionNames[1] = ".data.const";
+    elf64.setupSectionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 8, 1, Elf::STT_OBJECT, Elf::STB_LOCAL);
+    elf64.addReloc(0x10, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"kernel", 0}};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    EXPECT_TRUE(linkerInput.isValid());
+    EXPECT_TRUE(linkerInput.getKernelDependencies().empty());
+}
+
+TEST(LinkerInputTests, GivenInstructionRelocationsAgainstBothLocalDataSymbolAndGlobalExternalFunctionWhenDecodingElfThenOnlyTheFunctionIsRecordedAsKernelDependency) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.kernel";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = Zebin::Elf::SectionNames::externalFunctions.str();
+    elf64.setupSectionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 8, 1, Elf::STT_OBJECT, Elf::STB_LOCAL);
+    elf64.addSymbol(1, 0, 16, 2, Elf::STT_FUNC, Elf::STB_GLOBAL);
+
+    elf64.addReloc(0x10, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+    elf64.addReloc(0x20, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 1, "1");
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {
+        {"kernel", 0}, {Zebin::Elf::SectionNames::externalFunctions.str(), 2}};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    EXPECT_TRUE(linkerInput.isValid());
+    ASSERT_EQ(1u, linkerInput.getKernelDependencies().size());
+    EXPECT_EQ("1", linkerInput.getKernelDependencies()[0].usedFuncName);
+}
+
+TEST(LinkerInputTests, GivenKernelRelocatingAgainstLocalDataSymbolAndGlobalExternalFunctionWhenResolvingExternalFunctionsThenResolutionSucceeds) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.kernel";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = NEO::Zebin::Elf::SectionNames::externalFunctions.str();
+    elf64.setupSectionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 8, 1, NEO::Elf::STT_OBJECT, NEO::Elf::STB_LOCAL);
+    elf64.addSymbol(1, 0, 16, 2, NEO::Elf::STT_FUNC, NEO::Elf::STB_GLOBAL);
+    elf64.addReloc(0x10, 0, NEO::Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+    elf64.addReloc(0x20, 0, NEO::Zebin::Elf::R_ZE_SYM_ADDR, 0, 1, "1");
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {
+        {"kernel", 0}, {NEO::Zebin::Elf::SectionNames::externalFunctions.str(), 2}};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    ASSERT_TRUE(linkerInput.isValid());
+
+    NEO::ExternalFunctionInfo externalFunction;
+    externalFunction.functionName = "1";
+    NEO::ExternalFunctionInfosT externalFunctions = {&externalFunction};
+
+    NEO::KernelDependenciesT kernelDependencies;
+    for (const auto &dep : linkerInput.getKernelDependencies()) {
+        kernelDependencies.push_back(&dep);
+    }
+    NEO::FunctionDependenciesT functionDependencies;
+    for (const auto &dep : linkerInput.getFunctionDependencies()) {
+        functionDependencies.push_back(&dep);
+    }
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelMetadata.kernelName = "kernel";
+    NEO::KernelDescriptorMapT nameToKernelDescriptor = {{"kernel", &kernelDescriptor}};
+
+    auto result = NEO::resolveExternalDependencies(externalFunctions, kernelDependencies, functionDependencies, nameToKernelDescriptor);
+    EXPECT_EQ(NEO::RESOLVE_SUCCESS, result);
+}
+
 TEST(LinkerInputTests, GivenGlobalSymbolPointingToSectionDifferentThanInstructionsOrDataWhenDecodingElfThenItIsIgnoredAndAddedToExternalSymbols) {
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
 

@@ -175,6 +175,15 @@ void LinkerInput::addElfTextSegmentRelocation(RelocationInfo relocationInfo, uin
     outRelocInfo.push_back(std::move(relocationInfo));
 }
 
+template void LinkerInput::addSymbolIfMissing(Elf::Elf<Elf::EI_CLASS_32> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_32>::RelocationInfo &reloc);
+template void LinkerInput::addSymbolIfMissing(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_64>::RelocationInfo &reloc);
+template <Elf::ElfIdentifierClass numBits>
+void LinkerInput::addSymbolIfMissing(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &reloc) {
+    if (symbols.find(reloc.symbolName) == symbols.end()) {
+        addSymbol(elf, nameToSegmentId, reloc.symbolTableIndex);
+    }
+}
+
 template bool LinkerInput::addRelocation(Elf::Elf<Elf::EI_CLASS_32> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_32>::RelocationInfo &reloc);
 template bool LinkerInput::addRelocation(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_64>::RelocationInfo &reloc);
 template <Elf::ElfIdentifierClass numBits>
@@ -193,6 +202,7 @@ bool LinkerInput::addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegme
         auto kernelName = Zebin::getKernelNameFromSectionName(ConstStringRef(sectionName)).str();
         if (auto instructionSegmentId = getInstructionSegmentId(nameToSegmentId, kernelName)) {
             addElfTextSegmentRelocation(relocationInfo, *instructionSegmentId);
+            addSymbolIfMissing(elf, nameToSegmentId, reloc);
             parseRelocationForExtFuncUsage(relocationInfo, kernelName);
             return true;
         } else {
@@ -201,6 +211,7 @@ bool LinkerInput::addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegme
         }
     } else if (isDataSegment(relocationInfo.relocationSegment)) {
         addDataRelocationInfo(relocationInfo);
+        addSymbolIfMissing(elf, nameToSegmentId, reloc);
         return true;
     }
     return false;
@@ -287,11 +298,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<numBits> &elf, con
     }
 
     for (auto &reloc : elf.getRelocations()) {
-        if (addRelocation(elf, nameToSegmentId, reloc)) {          // relocation was added
-            if (symbols.find(reloc.symbolName) == symbols.end()) { // symbol used in relocation is not present
-                addSymbol(elf, nameToSegmentId, reloc.symbolTableIndex);
-            }
-        }
+        addRelocation(elf, nameToSegmentId, reloc);
     }
 }
 
