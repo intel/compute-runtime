@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -33,6 +34,7 @@
 #include "hw_cmds_xe3p_core.h"
 #include "per_product_test_definitions.h"
 
+#include <array>
 #include <list>
 #include <memory>
 
@@ -131,11 +133,10 @@ XE3P_CORETEST_F(CommandQueueTestsXe3pCore, whenMultipleComputeCmdQueuesCreatedTh
     EXPECT_EQ(engine1->osContext, engine4->osContext->getPrimaryContext());
 }
 
-XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenE64EnabledAndTransientL3UnavailableWhenSetupTimestampPacketFlushL3ThenCorrectFlushOptionsAreSetInPostSync) {
+XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenE64EnabledAndSystemAllocationWhenSetupTimestampPacketFlushL3ThenFlushOptionsAreSetAccordingToCacheMask) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
-    NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(0);
 
     auto &productHelper = this->clDevice->getDevice().getProductHelper();
     if (!productHelper.isL3FlushAfterPostSyncSupported()) {
@@ -180,7 +181,7 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenE64EnabledAndTransientL3Unavail
         EXPECT_FALSE(commandQueue->getPendingL3FlushForHostVisibleResources()); // no need to tag kernel since it was already flushed
     }
     {
-        NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(1);
+        NEO::debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush));
         commandsOffset = commandStream.getUsed();
 
         HardwareInterface<FamilyType>::template programWalker<WalkerType>(commandStream, *mockKernel->mockKernel, *commandQueue,
@@ -194,12 +195,12 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenE64EnabledAndTransientL3Unavail
         EXPECT_NE(nullptr, walkerCmd);
 
         EXPECT_TRUE(walkerCmd->getPostSync().getL2Flush());
-        EXPECT_FALSE(walkerCmd->getPostSync().getL2TransientFlush());
-        EXPECT_FALSE(commandQueue->getPendingL3FlushForHostVisibleResources()); // no need to tag kernel since it was already flushed
+        EXPECT_TRUE(walkerCmd->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(commandQueue->getPendingL3FlushForHostVisibleResources());
     }
 }
 
-XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenEnableL3FlushAfterPostSyncNonBlockingWithoutEventWhenProgramWalkerThenKernelIsTaggedAndL3FlushIsNotSet) {
+XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenEnableL3FlushAfterPostSyncNonBlockingWithoutEventWhenProgramWalkerThenFlushIsDeferredOrSetAccordingToCacheMask) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
@@ -231,8 +232,6 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenEnableL3FlushAfterPostSyncNonBl
     ASSERT_TRUE(walkerArgs.event == nullptr);
 
     {
-        NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(0);
-
         commandsOffset = commandStream.getUsed();
 
         HardwareInterface<FamilyType>::template programWalker<WalkerType>(commandStream, *mockKernel->mockKernel, *commandQueue,
@@ -251,8 +250,7 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenEnableL3FlushAfterPostSyncNonBl
         EXPECT_TRUE(commandQueue->getPendingL3FlushForHostVisibleResources());
     }
     {
-        NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(1);
-
+        NEO::debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush));
         commandsOffset = commandStream.getUsed();
 
         HardwareInterface<FamilyType>::template programWalker<WalkerType>(commandStream, *mockKernel->mockKernel, *commandQueue,
@@ -265,17 +263,14 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenEnableL3FlushAfterPostSyncNonBl
         auto walkerCmd = genCmdCast<WalkerType *>(*itorWalker);
         EXPECT_NE(nullptr, walkerCmd);
 
-        EXPECT_FALSE(walkerCmd->getPostSync().getL2Flush());
-        EXPECT_FALSE(walkerCmd->getPostSync().getL2TransientFlush());
-
-        EXPECT_TRUE(commandQueue->getPendingL3FlushForHostVisibleResources());
+        EXPECT_TRUE(walkerCmd->getPostSync().getL2Flush());
+        EXPECT_TRUE(walkerCmd->getPostSync().getL2TransientFlush());
     }
 }
 
-XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenForceL3FlushInPostSynchenProgramWalkerIsCalledThenCorrectFlushOptionsAreSetInPostSync) {
+XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenFlushAllCachesBitmaskWhenProgramWalkerIsCalledThenFlushOptionsAreSetInPostSync) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(0);
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
 
     auto &productHelper = this->clDevice->getDevice().getProductHelper();
@@ -300,11 +295,17 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenForceL3FlushInPostSynchenProgra
     timestampPacketContainer.add(clDevice->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
     walkerArgs.currentTimestampPacketNodes = &timestampPacketContainer;
 
-    {
+    struct TestParam {
+        int32_t flushCachesMask;
+        bool expectedL2Flush;
+        bool expectedL2TransientFlush;
+    };
 
-        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.set(true);
-        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.set(false);
-
+    for (const auto &[flushCachesMask, expectedL2Flush, expectedL2TransientFlush] : std::array<TestParam, 3>{
+             TestParam{static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush), true, false},
+             TestParam{static_cast<int32_t>(NEO::FlushCachesBitmask::l2TransientFlush), false, true},
+             TestParam{static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush | NEO::FlushCachesBitmask::l2TransientFlush), true, true}}) {
+        NEO::debugManager.flags.FlushAllCaches.set(flushCachesMask);
         commandsOffset = commandStream.getUsed();
 
         HardwareInterface<FamilyType>::template programWalker<WalkerType>(commandStream, *mockKernel->mockKernel, *commandQueue,
@@ -317,48 +318,8 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenForceL3FlushInPostSynchenProgra
         auto walkerCmd = genCmdCast<WalkerType *>(*itorWalker);
         EXPECT_NE(nullptr, walkerCmd);
 
-        EXPECT_FALSE(walkerCmd->getPostSync().getL2Flush());
-        EXPECT_TRUE(walkerCmd->getPostSync().getL2TransientFlush());
-    }
-    {
-        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.set(false);
-        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.set(true);
-
-        commandsOffset = commandStream.getUsed();
-
-        HardwareInterface<FamilyType>::template programWalker<WalkerType>(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                                          heap, heap, heap, dispatchInfo, walkerArgs);
-
-        HardwareParse hwParse;
-        hwParse.parseCommands<FamilyType>(commandStream, commandsOffset);
-        auto itorWalker = find<WalkerType *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
-        EXPECT_NE(hwParse.cmdList.end(), itorWalker);
-        auto walkerCmd = genCmdCast<WalkerType *>(*itorWalker);
-        EXPECT_NE(nullptr, walkerCmd);
-
-        EXPECT_TRUE(walkerCmd->getPostSync().getL2Flush());
-        EXPECT_FALSE(walkerCmd->getPostSync().getL2TransientFlush());
-    }
-
-    {
-        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.set(false);
-        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.set(false);
-        NEO::debugManager.flags.FlushAllCaches.set(-1);
-
-        commandsOffset = commandStream.getUsed();
-
-        HardwareInterface<FamilyType>::template programWalker<WalkerType>(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                                          heap, heap, heap, dispatchInfo, walkerArgs);
-
-        HardwareParse hwParse;
-        hwParse.parseCommands<FamilyType>(commandStream, commandsOffset);
-        auto itorWalker = find<WalkerType *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
-        EXPECT_NE(hwParse.cmdList.end(), itorWalker);
-        auto walkerCmd = genCmdCast<WalkerType *>(*itorWalker);
-        EXPECT_NE(nullptr, walkerCmd);
-
-        EXPECT_TRUE(walkerCmd->getPostSync().getL2Flush());
-        EXPECT_TRUE(walkerCmd->getPostSync().getL2TransientFlush());
+        EXPECT_EQ(expectedL2Flush, walkerCmd->getPostSync().getL2Flush());
+        EXPECT_EQ(expectedL2TransientFlush, walkerCmd->getPostSync().getL2TransientFlush());
     }
 }
 
@@ -422,14 +383,14 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenAllocationsWithCacheFlushRequir
     }
 }
 
-XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenMultipleDebugFlagsFlushConfigurationsWhenSetupTimestampPacketFlushL3IsCalledThenPostSyncIsProgrammedCorrectly) {
+XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenFlushAllCachesBitmaskConfigurationsWhenSetupTimestampPacketFlushL3IsCalledThenPostSyncIsProgrammedCorrectly) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    WalkerType computeWalker = FamilyType::template getInitGpuWalker<WalkerType>();
     auto commandQueue = createCommandQueue<FamilyType>();
 
     {
         DebugManagerStateRestore restorer;
-        NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(1);
+        NEO::debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush));
+        WalkerType computeWalker = FamilyType::template getInitGpuWalker<WalkerType>();
 
         FlushL3Args args{
             .containsPrintBuffer = false,
@@ -440,12 +401,13 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenMultipleDebugFlagsFlushConfigur
 
         GpgpuWalkerHelper<FamilyType>::template setupTimestampPacketFlushL3<WalkerType>(computeWalker, *commandQueue, args);
         auto &postSync = computeWalker.getPostSync();
-        EXPECT_FALSE(postSync.getL2TransientFlush());
+        EXPECT_TRUE(postSync.getL2TransientFlush());
         EXPECT_TRUE(postSync.getL2Flush());
     }
     {
         DebugManagerStateRestore restorer;
-        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.set(1);
+        NEO::debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush));
+        WalkerType computeWalker = FamilyType::template getInitGpuWalker<WalkerType>();
 
         FlushL3Args args{
             .containsPrintBuffer = false,
@@ -461,7 +423,8 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenMultipleDebugFlagsFlushConfigur
     }
     {
         DebugManagerStateRestore restorer;
-        NEO::debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.set(1);
+        NEO::debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2TransientFlush));
+        WalkerType computeWalker = FamilyType::template getInitGpuWalker<WalkerType>();
 
         FlushL3Args args{
             .containsPrintBuffer = false,
@@ -691,7 +654,6 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenL3FlushAfterPostSyncEnabledAndP
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
-    NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(0);
 
     auto &productHelper = this->clDevice->getDevice().getProductHelper();
     if (!productHelper.isL3FlushAfterPostSyncSupported()) {

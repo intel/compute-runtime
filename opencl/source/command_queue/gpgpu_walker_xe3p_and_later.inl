@@ -19,11 +19,6 @@ void NEO::GpgpuWalkerHelper<NEO::Family>::setupTimestampPacketFlushL3(WalkerType
         bool pendingL2Flush = l2Flush || l2TransientFlush;
         bool flushInPostSync = args.signalEvent || args.blocking || args.containsPrintBuffer;
 
-        if (debugManager.flags.RedirectFlushL3HostUsmToExternal.get()) {
-            l2Flush = l2TransientFlush;
-            l2TransientFlush = false;
-        }
-
         auto flushCachesMask = debugManager.flags.FlushAllCaches.get();
         if (flushCachesMask) {
             if (flushCachesMask & NEO::FlushCachesBitmask::l2Flush) {
@@ -34,15 +29,6 @@ void NEO::GpgpuWalkerHelper<NEO::Family>::setupTimestampPacketFlushL3(WalkerType
                 flushInPostSync = true;
                 l2TransientFlush = true;
             }
-        }
-
-        if (debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.get()) {
-            flushInPostSync = true;
-            l2Flush = true;
-        }
-        if (debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.get()) {
-            flushInPostSync = true;
-            l2TransientFlush = true;
         }
 
         if (flushInPostSync) {

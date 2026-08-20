@@ -58,11 +58,6 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFlushL3Flags(bool &isFlushL3ForE
     isFlushL3ForExternalAllocationRequired = isFlushL3AfterPostSync && isKernelUsingExternalAllocation;
     isFlushL3ForHostUsmRequired = isFlushL3AfterPostSync && isKernelUsingSystemAllocation;
 
-    if (NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && isFlushL3ForHostUsmRequired) {
-        isFlushL3ForExternalAllocationRequired = true;
-        isFlushL3ForHostUsmRequired = false;
-    }
-
     auto flushCachesMask = NEO::debugManager.flags.FlushAllCaches.get();
     if (flushCachesMask) {
         if (flushCachesMask & NEO::FlushCachesBitmask::l2Flush) {
@@ -71,13 +66,6 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFlushL3Flags(bool &isFlushL3ForE
         if (flushCachesMask & NEO::FlushCachesBitmask::l2TransientFlush) {
             isFlushL3ForHostUsmRequired = true;
         }
-    }
-
-    if (NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.get()) {
-        isFlushL3ForExternalAllocationRequired = true;
-    }
-    if (NEO::debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.get()) {
-        isFlushL3ForHostUsmRequired = true;
     }
 }
 
