@@ -6802,6 +6802,34 @@ TEST_F(IntelGTNotesFixture, givenAotConfigInIntelGTNotesSectionWhenValidatingTar
     EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
+TEST_F(IntelGTNotesFixture, givenZebinDeclaringLegacyProductConfigInIntelGTNotesSectionWhenParsingForRealTargetDeviceThenValidatedAsCompatible) {
+    TargetDevice targetDevice;
+    targetDevice.maxPointerSizeInBytes = 8u;
+    targetDevice.aotConfig.value = AOT::BMG_G21_A0;
+
+    NEO::Elf::ElfNoteSection elfNoteSection;
+    elfNoteSection.descSize = 4u;
+    elfNoteSection.nameSize = 8u;
+    elfNoteSection.type = Zebin::Elf::IntelGTSectionType::productConfig;
+
+    uint32_t legacyProductConfig = AOT::BMG_G21_A1_RESERVED;
+    uint8_t productConfigData[4];
+    memcpy_s(productConfigData, 4, &legacyProductConfig, 4);
+
+    auto sectionDataSize = sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), productConfigData, NEO::Zebin::Elf::intelGTNoteOwnerName.data(), sectionDataSize);
+    zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+    SingleDeviceBinary singleDeviceBinary{};
+
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
+}
+
 TEST_F(IntelGTNotesFixture, givenRequestedTargetDeviceWithApplyValidationWorkaroundFlagSetToTrueWhenValidatingDeviceBinaryThenDoNotUseProductConfigForValidation) {
     NEO::HardwareIpVersion aotConfig = {0};
     aotConfig.value = 0x00001234;
@@ -7475,6 +7503,33 @@ TEST(ValidateTargetDeviceTests, givenDeviceWithoutCompatModeWhenValidatingTarget
     }
 
     debugManager.flags.EnableCompatibilityMode.set(compatModeInitState);
+}
+
+TEST(ValidateTargetDeviceTests, givenBmgG21ReservedSteppingProductConfigWhenValidatingTargetDeviceThenAcceptedAsCompatibleWithEveryDeclaredCompatibleTarget) {
+    Zebin::Elf::ZebinTargetFlags targetMetadata;
+
+    for (auto reservedStepping : {AOT::BMG_G21_A1_RESERVED, AOT::BMG_G21_B0_RESERVED}) {
+        auto compatibleTargetsIt = AOT::getCompatibilityMapping().find(reservedStepping);
+        ASSERT_NE(compatibleTargetsIt, AOT::getCompatibilityMapping().end());
+        ASSERT_FALSE(compatibleTargetsIt->second.empty());
+
+        for (auto compatibleTargetConfig : compatibleTargetsIt->second) {
+            TargetDevice targetDevice;
+            targetDevice.aotConfig.value = compatibleTargetConfig;
+            targetDevice.maxPointerSizeInBytes = 8u;
+            targetDevice.productFamily = productFamily;
+            targetDevice.coreFamily = renderCoreFamily;
+
+            auto res = validateTargetDevice(targetDevice,
+                                            Zebin::Elf::EI_CLASS_64,
+                                            productFamily,
+                                            renderCoreFamily,
+                                            reservedStepping,
+                                            targetMetadata);
+            EXPECT_TRUE(res) << "reservedStepping=" << static_cast<uint32_t>(reservedStepping)
+                             << " targetDevice=" << static_cast<uint32_t>(compatibleTargetConfig);
+        }
+    }
 }
 
 TEST(PopulateGlobalDeviceHostNameMapping, givenValidZebinWithGlobalHostAccessTableSectionThenPopulateHostDeviceNameMapCorrectly) {

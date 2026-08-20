@@ -9,6 +9,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -104,6 +105,49 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSuppor
 
 BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersonThenCorrectValueIsSet) {
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::BMG_G21_A0);
+}
+
+TEST(BmgProductConfigHelperTest, givenBmgG21ReservedSteppingProductConfigWhenCheckingIsSupportedProductConfigThenFalseIsReturned) {
+    ProductConfigHelper productConfigHelper{};
+    EXPECT_FALSE(productConfigHelper.isSupportedProductConfig(AOT::BMG_G21_A1_RESERVED));
+    EXPECT_FALSE(productConfigHelper.isSupportedProductConfig(AOT::BMG_G21_B0_RESERVED));
+}
+
+TEST(BmgProductConfigHelperTest, givenLegacyProductConfigWhenGettingDeviceIdThenFallbackToFirstSupportedCompatibleTarget) {
+    for (auto legacyProductConfig : {AOT::BMG_G21_A1_RESERVED, AOT::BMG_G21_B0_RESERVED}) {
+        ProductConfigHelper productConfigHelper{};
+
+        auto compatibleConfigsIt = AOT::getCompatibilityMapping().find(legacyProductConfig);
+        ASSERT_NE(compatibleConfigsIt, AOT::getCompatibilityMapping().end());
+        auto compatibleConfigs = compatibleConfigsIt->second;
+        ASSERT_FALSE(compatibleConfigs.empty());
+
+        auto deviceIdOf = [&](AOT::PRODUCT_CONFIG config) -> uint32_t {
+            DeviceAotInfo info{};
+            return productConfigHelper.getDeviceAotInfoForProductConfig(config, info) ? info.deviceIds->front() : 0u;
+        };
+
+        // Disable one compatible target at a time (in the order the mapping declares them) and
+        // confirm the fallback always matches whichever entry is still the first supported one.
+        for (auto configToDisable : compatibleConfigs) {
+            uint32_t expectedDeviceId = 0u;
+            for (auto compatibleConfig : compatibleConfigs) {
+                expectedDeviceId = deviceIdOf(compatibleConfig);
+                if (expectedDeviceId != 0u) {
+                    break;
+                }
+            }
+            EXPECT_EQ(expectedDeviceId, productConfigHelper.getDeviceIdFromIpVersion(legacyProductConfig));
+
+            for (auto &device : productConfigHelper.getDeviceAotInfo()) {
+                if (device.aotConfig.value == configToDisable) {
+                    device.aotConfig.value = AOT::UNKNOWN_ISA;
+                }
+            }
+        }
+
+        EXPECT_EQ(0u, productConfigHelper.getDeviceIdFromIpVersion(legacyProductConfig));
+    }
 }
 
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {

@@ -748,6 +748,25 @@ TEST_F(AotDeviceInfoTests, givenNonExistingIpVersionWhenGetDeviceIdFromIpVersion
     EXPECT_EQ(id, 0u);
 }
 
+TEST_F(AotDeviceInfoTests, givenLegacyProductConfigPresentOnlyInCompatibilityMappingWhenGetDeviceIdFromIpVersionCalledThenFallbackDeviceIdIsReturned) {
+    for (const auto &[legacyProductConfig, compatibleConfigs] : AOT::getCompatibilityMapping()) {
+        if (productConfigHelper->isSupportedProductConfig(legacyProductConfig)) {
+            continue;
+        }
+
+        uint32_t expectedDeviceId = 0;
+        for (const auto &compatibleConfig : compatibleConfigs) {
+            DeviceAotInfo info{};
+            if (productConfigHelper->getDeviceAotInfoForProductConfig(compatibleConfig, info)) {
+                expectedDeviceId = info.deviceIds->front();
+                break;
+            }
+        }
+
+        EXPECT_EQ(expectedDeviceId, productConfigHelper->getDeviceIdFromIpVersion(legacyProductConfig));
+    }
+}
+
 TEST_F(AotDeviceInfoTests, givenTmpStringWhenSearchForDeviceAcronymThenCorrectResultIsReturned) {
     auto &deviceAot = productConfigHelper->getDeviceAotInfo();
     if (deviceAot.empty()) {

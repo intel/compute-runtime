@@ -152,6 +152,17 @@ uint32_t ProductConfigHelper::getDeviceIdFromIpVersion(uint32_t ipVersion) const
     if (it != deviceAotInfo.end()) {
         return it->deviceIds->front();
     }
+
+    auto compatibilityMappingIt = AOT::getCompatibilityMapping().find(static_cast<AOT::PRODUCT_CONFIG>(ipVersion));
+    if (compatibilityMappingIt != AOT::getCompatibilityMapping().end()) {
+        for (const auto &compatibleConfig : compatibilityMappingIt->second) {
+            auto compatibleIt = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(compatibleConfig));
+            if (compatibleIt != deviceAotInfo.end()) {
+                return compatibleIt->deviceIds->front();
+            }
+        }
+    }
+
     return 0;
 }
 
