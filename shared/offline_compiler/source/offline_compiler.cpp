@@ -779,7 +779,7 @@ std::string OfflineCompiler::validateInputType(const std::string &input, bool is
 int OfflineCompiler::buildSourceCode() {
     int retVal = OCLOC_SUCCESS;
 
-    if (sourceCode.empty()) {
+    if (sourceCode.empty() && !this->isEmptyInputAllowed()) {
         return OCLOC_INVALID_PROGRAM;
     }
 
@@ -787,7 +787,9 @@ int OfflineCompiler::buildSourceCode() {
     this->argHelper->printf(inputTypeWarnings.c_str());
 
     if (isIntermediateRepresentation(this->inputCodeType)) {
-        storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
+        if (!sourceCode.empty()) {
+            storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
+        }
         pBuildInfo->intermediateRepresentation = this->inputCodeType;
     } else {
         pBuildInfo->intermediateRepresentation = (this->intermediateRepresentation != IGC::CodeType::undefined) ? this->intermediateRepresentation : this->preferredIntermediateRepresentation;
@@ -929,7 +931,7 @@ int OfflineCompiler::build() {
     std::unique_ptr<char[]> sourceFromFile;
     size_t sourceFromFileSize = 0;
     sourceFromFile = argHelper->loadDataFromFile(inputFile, sourceFromFileSize);
-    if (sourceFromFileSize == 0) {
+    if (sourceFromFileSize == 0 && (!sourceFromFile || !this->isEmptyInputAllowed())) {
         return OCLOC_INVALID_FILE;
     }
     if (this->inputCodeType == IGC::CodeType::oclC) {
@@ -938,7 +940,11 @@ int OfflineCompiler::build() {
         sourceCode = (source != nullptr) ? getStringWithinDelimiters(sourceFromFile.get()) : sourceFromFile.get();
     } else {
         // use the binary input "as is"
-        sourceCode.assign(sourceFromFile.get(), sourceFromFileSize);
+        if (sourceFromFileSize == 0) {
+            sourceCode.clear();
+        } else {
+            sourceCode.assign(sourceFromFile.get(), sourceFromFileSize);
+        }
     }
 
     if (this->inputCodeType == IGC::CodeType::oclC) {

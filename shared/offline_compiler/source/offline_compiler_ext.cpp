@@ -19,6 +19,10 @@ int OfflineCompiler::parseCommandLineExt(size_t numArgs, const std::vector<std::
     return OCLOC_INVALID_COMMAND_LINE;
 }
 
+bool OfflineCompiler::isEmptyInputAllowed() const {
+    return false;
+}
+
 bool isIrOnly(const std::vector<std::string> &args) {
     return std::find(args.begin(), args.end(), "-spv_only") != args.end();
 }
