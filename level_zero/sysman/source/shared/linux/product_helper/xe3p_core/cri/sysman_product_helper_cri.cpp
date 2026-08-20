@@ -30,8 +30,7 @@ constexpr static uint32_t busWidthPerMsuInBits = 64;
 constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
-constexpr static uint32_t maxGpuBoardTemperatureSensorCount = 2;
-constexpr static uint32_t compositeTemperatureNotAvailable = 0xFFFFFFFFu;
+constexpr static uint32_t temperatureNotAvailable = 0xFFFFFFFF;
 const std::string throttleReasonPath = "freq0/throttle/";
 
 // XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
@@ -42,9 +41,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
     {"0x1e2fa030", // CRI PUNIT rev 0
      {{"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
+      {"AMB_TEMPERATURE", 176},
       {"AVERAGE_POWER_CONTAINER", 136},
       {"COMPOSITE_TEMPERATURE", 272},
-      {"GPU_BOARD_TEMPERATURE", 176},
       {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"VCCGT_ENERGY_ACCUMULATOR", 44},
       {"VCCDDRQ_ENERGY_ACCUMULATOR", 188},
@@ -760,21 +759,20 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorMaxTemperature
     for (uint32_t i = 0; i < maxVrTemperatureSensorCount; i++) {
         std::string key = "VR_TEMPERATURE_" + std::to_string(i);
 
-        uint32_t vrTemperature = 0;
-        ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vrTemperature);
+        uint32_t rawVrTemperature = 0;
+        ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, rawVrTemperature);
         if (result != ZE_RESULT_SUCCESS) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
             return result;
         }
 
-        double convertedTemperature = 0.0;
-        if (i == 0) {
-            convertedTemperature = static_cast<double>(vrTemperature / 10); // VR_TEMPERATURE_0 is reported in deci-degree celsius
-        } else {
-            convertedTemperature = static_cast<double>(vrTemperature & 0xFF); // VR_TEMPERATURE_1/2/3 is reported in U8.0 format
+        if (rawVrTemperature == temperatureNotAvailable) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): VR temperature is not available for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
 
-        maxVrTemperature = std::max(maxVrTemperature, convertedTemperature);
+        double vrTemperature = static_cast<double>(std::bit_cast<float>(rawVrTemperature));
+        maxVrTemperature = (i == 0) ? vrTemperature : std::max(maxVrTemperature, vrTemperature);
     }
 
     *pTemperature = maxVrTemperature;
@@ -793,33 +791,27 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSy
         return result;
     }
 
-    // Both GPU board temperature sensors share the same register
-    std::string key = "GPU_BOARD_TEMPERATURE";
+    std::string key = "AMB_TEMPERATURE";
 
-    uint32_t gpuBoardTemperature = 0;
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, gpuBoardTemperature);
+    uint64_t ambientTemperatureContainer = 0;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, ambientTemperatureContainer);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GPU board temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read ambient temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
         return result;
     }
 
-    double maxGpuBoardTemperature = 0.0;
+    uint32_t rawAmbientTemperature1 = static_cast<uint32_t>(ambientTemperatureContainer & 0xFFFFFFFF);
+    uint32_t rawAmbientTemperature2 = static_cast<uint32_t>(ambientTemperatureContainer >> 32);
 
-    // Read all GPU board temperature sensors and return the maximum
-    for (uint32_t i = 0; i < maxGpuBoardTemperatureSensorCount; i++) {
-        double convertedTemperature = 0.0;
-        if (i == 0) {
-            // Index 0: lower 16 bits, temperature in U8.0 format (bits 0-7)
-            convertedTemperature = static_cast<double>(gpuBoardTemperature & 0xFF);
-        } else {
-            // Index 1: upper 16 bits, temperature in U8.0 format (bits 16-23)
-            convertedTemperature = static_cast<double>((gpuBoardTemperature >> 16) & 0xFF);
-        }
-
-        maxGpuBoardTemperature = std::max(maxGpuBoardTemperature, convertedTemperature);
+    if (rawAmbientTemperature1 == temperatureNotAvailable || rawAmbientTemperature2 == temperatureNotAvailable) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Ambient temperature is not available for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    *pTemperature = maxGpuBoardTemperature;
+    double ambientTemperature1 = static_cast<double>(std::bit_cast<float>(rawAmbientTemperature1));
+    double ambientTemperature2 = static_cast<double>(std::bit_cast<float>(rawAmbientTemperature2));
+
+    *pTemperature = std::max(ambientTemperature1, ambientTemperature2);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -910,15 +902,21 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
         return result;
     }
 
-    uint32_t gpuMaxTemperature = 0;
+    uint32_t rawGpuMaxTemperature = 0;
     uint64_t telemOffset = 0;
     std::string key("SOC_TOPDIE_TEMPERATURE");
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, gpuMaxTemperature);
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, rawGpuMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
         return result;
     }
-    *pTemperature = static_cast<double>(gpuMaxTemperature);
+
+    if (rawGpuMaxTemperature == temperatureNotAvailable) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): GPU temperature is not available for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    *pTemperature = static_cast<double>(std::bit_cast<float>(rawGpuMaxTemperature));
 
     return ZE_RESULT_SUCCESS;
 }
@@ -945,12 +943,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCompositeTemperature(LinuxSysm
         return result;
     }
 
-    if (compositeTemperature == compositeTemperatureNotAvailable) {
+    if (compositeTemperature == temperatureNotAvailable) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Composite temperature is not reported by the hardware, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    // Composite temperature is reported in IEEE 754 single precision floating point format, in degree celsius
     *pTemperature = static_cast<double>(std::bit_cast<float>(compositeTemperature));
 
     return ZE_RESULT_SUCCESS;
