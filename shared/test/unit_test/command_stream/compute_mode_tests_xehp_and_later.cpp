@@ -26,8 +26,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithoutShare
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     setUpImpl<FamilyType>();
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     if (isBasicWARequired) {
@@ -56,9 +56,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &deviceHwInfo = device->getHardwareInfo();
 
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     overrideComputeModeRequest<FamilyType>(false, false, true);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
@@ -97,8 +97,8 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCompute
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     if (isBasicWARequired) {
@@ -146,8 +146,8 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeMod
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
     if (isBasicWARequired) {
@@ -233,8 +233,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeCmdSizeWhe
     overrideComputeModeRequest<FamilyType>(false, false, false, false, 128u);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdSize = sizeof(STATE_COMPUTE_MODE);
     if (isBasicWARequired) {
@@ -257,8 +257,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeCh
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     if (isBasicWARequired) {
@@ -318,8 +318,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     if (isBasicWARequired) {
@@ -351,8 +351,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     if (isBasicWARequired) {
@@ -391,8 +391,8 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     auto cmdOffset = 0u;
@@ -440,8 +440,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     auto cmdOffset = 0u;

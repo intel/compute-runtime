@@ -17,7 +17,6 @@
 #include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -178,25 +177,25 @@ TEST_F(DriverHandleTest, givenDriverWhenFindAllocationDataForRangeWithDifferentA
 
 using DriverVersionTest = Test<DeviceFixture>;
 TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
+    const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    const auto &productHelper = device->getProductHelper();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
     std::vector<std::pair<std::string, uint32_t>> additionalExtensions;
-    device->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, device->getProductHelper(), device->getHwInfo());
+    device->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, productHelper, hwInfo);
 
     if (device->getL0GfxCoreHelper().synchronizedDispatchSupported() && device->isImplicitScalingCapable()) {
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
     }
 
-    if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
+    if (rootDeviceEnvironment.getBindlessHeapsHelper()) {
         additionalExtensions.emplace_back(ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT);
     }
-    auto mockCompilerReleaseHelperVal = std::unique_ptr<MockCompilerReleaseHelper>(new MockCompilerReleaseHelper());
-    mockCompilerReleaseHelperVal->bFloat16Support = true;
-    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
-    rootDeviceEnvironment.compilerReleaseHelper.reset(mockCompilerReleaseHelperVal.release());
-    if (device->getNEODevice()->getRootDeviceEnvironment().getCompilerReleaseHelper().isBFloat16ConversionSupported()) {
-        additionalExtensions.emplace_back(ZE_BFLOAT16_CONVERSIONS_EXT_NAME, ZE_BFLOAT16_CONVERSIONS_EXT_VERSION_CURRENT);
-    }
 
-    if (device->getProductHelper().isInterruptSupported(rootDeviceEnvironment)) {
+    hwInfo.caps.bFloat16ConversionSupported = true;
+    additionalExtensions.emplace_back(ZE_BFLOAT16_CONVERSIONS_EXT_NAME, ZE_BFLOAT16_CONVERSIONS_EXT_VERSION_CURRENT);
+
+    if (productHelper.isInterruptSupported(rootDeviceEnvironment)) {
         additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT);
     }
 

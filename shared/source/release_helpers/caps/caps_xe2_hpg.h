@@ -17,7 +17,8 @@
 namespace NEO {
 
 struct CapsXe2HpgCore {
-    static constexpr bool isDotProductAccumulateSystolicSupported = true;
+    static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool dotProductAccumulateSystolicSupported = true;
 };
 
 struct CapsBmgG21 : CapsXe2HpgCore {};

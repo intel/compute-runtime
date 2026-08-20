@@ -110,7 +110,7 @@ std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInf
         extensions += "cl_intel_media_block_io ";
     }
 
-    if (compilerReleaseHelper.isBFloat16ConversionSupported()) {
+    if (hwInfo.caps.bFloat16ConversionSupported) {
         extensions += "cl_intel_bfloat16_conversions ";
     }
 
@@ -130,7 +130,7 @@ std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInf
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate_tf32 ";
     }
 
-    if (compilerReleaseHelper.isSplitMatrixMultiplyAccumulateSupported()) {
+    if (hwInfo.caps.splitMatrixMultiplyAccumulateSupported) {
         extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
     }
 

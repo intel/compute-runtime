@@ -14,8 +14,14 @@
 
 namespace NEO {
 
-#define NEO_CAP_FIELDS(NEO_COPY_CAP_FUNC) \
-    NEO_COPY_CAP_FUNC(isDotProductAccumulateSystolicSupported)
+#define NEO_CAP_FIELDS(NEO_COPY_CAP_FUNC)                                        \
+    NEO_COPY_CAP_FUNC(adjustWalkOrderAvailable)                                  \
+    NEO_COPY_CAP_FUNC(bFloat16ConversionSupported)                               \
+    NEO_COPY_CAP_FUNC(dotProductAccumulateSystolicSupported)                     \
+    NEO_COPY_CAP_FUNC(pipeControlPriorToNonPipelinedStateCommandsBaseWARequired) \
+    NEO_COPY_CAP_FUNC(pipeControlPriorToPipelineSelectWaRequired)                \
+    NEO_COPY_CAP_FUNC(programAllStateComputeCommandFieldsWARequired)             \
+    NEO_COPY_CAP_FUNC(splitMatrixMultiplyAccumulateSupported)
 
 template <typename SourceCaps>
 constexpr Caps materializeCaps() {

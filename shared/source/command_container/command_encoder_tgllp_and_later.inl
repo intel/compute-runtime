@@ -17,8 +17,8 @@ template <typename Family>
 size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvironment &rootDeviceEnvironment, bool hasSharedHandles, bool isRcs) {
     size_t size = 0;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const bool isBasicWARequired = hwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     if (isBasicWARequired) {
         size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier();

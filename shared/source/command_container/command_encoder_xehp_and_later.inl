@@ -685,6 +685,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
                                                     bool isIndirect,
                                                     uint32_t requiredWorkGroupOrder,
                                                     const RootDeviceEnvironment &rootDeviceEnvironment) {
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
     if (isIndirect) {
         walkerCmd.setIndirectParameterEnable(true);
@@ -740,7 +741,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
         walkerCmd.setWalkOrder(requiredWorkGroupOrder);
     }
 
-    adjustWalkOrder(walkerCmd, requiredWorkGroupOrder, rootDeviceEnvironment);
+    adjustWalkOrder(walkerCmd, requiredWorkGroupOrder, hwInfo);
     if (inlineDataProgrammingRequired == true) {
         walkerCmd.setEmitInlineParameter(1);
     }
@@ -902,7 +903,7 @@ inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(Line
 
     const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const bool isBasicWARequired = hwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
     const bool isExtendedWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, isRcs);
 
     if (isExtendedWARequired) {

@@ -38,9 +38,9 @@ TYPED_TEST(Dg1HwInfoTests, WhenSetupHardwareInfoThenCapsAreInitializedFromLookup
     auto expectedCaps = resolveCaps(hwInfo.ipVersion);
     ASSERT_TRUE(expectedCaps.has_value());
 
-    hwInfo.caps.isDotProductAccumulateSystolicSupported = !expectedCaps->isDotProductAccumulateSystolicSupported;
+    hwInfo.caps.dotProductAccumulateSystolicSupported = !expectedCaps->dotProductAccumulateSystolicSupported;
 
     TypeParam::setupHardwareInfo(&hwInfo, false, nullptr);
 
-    EXPECT_EQ(expectedCaps->isDotProductAccumulateSystolicSupported, hwInfo.caps.isDotProductAccumulateSystolicSupported);
+    EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, hwInfo.caps.dotProductAccumulateSystolicSupported);
 }

@@ -11,11 +11,6 @@
 namespace NEO {
 
 template <>
-bool ReleaseHelperHw<release>::isProgramAllStateComputeCommandFieldsWARequired() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
     return true;
 }
@@ -27,11 +22,6 @@ bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
 
 template <>
 bool ReleaseHelperHw<release>::isPostImageWriteFlushRequired() const {
-    return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const {
     return true;
 }
 

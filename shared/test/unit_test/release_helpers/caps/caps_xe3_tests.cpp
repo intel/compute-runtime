@@ -52,27 +52,57 @@ TEST(CapsXe3Test, givenNvlUIpVersionWhenResolvingCapsThenReleaseCapsAreReturned)
     EXPECT_EQ(std::nullopt, resolveCapsNvlU(withUnsupportedRevision(AOT::NVL_U_A0)));
 }
 
-TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPtlH = materializeCaps<CapsPtlH>();
-    EXPECT_TRUE(capsPtlH.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPtlH.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsPtlH.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsPtlH.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPtlH.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsPtlH.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsPtlH.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsPtlH.splitMatrixMultiplyAccumulateSupported);
 }
 
-TEST(CapsXe3Test, givenPtlUReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXe3Test, givenPtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPtlU = materializeCaps<CapsPtlU>();
-    EXPECT_TRUE(capsPtlU.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPtlU.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsPtlU.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsPtlU.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPtlU.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsPtlU.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsPtlU.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsPtlU.splitMatrixMultiplyAccumulateSupported);
 }
 
-TEST(CapsXe3Test, givenWclReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXe3Test, givenWclReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsWcl = materializeCaps<CapsWcl>();
-    EXPECT_TRUE(capsWcl.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsWcl.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsWcl.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsWcl.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsWcl.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsWcl.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsWcl.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsWcl.splitMatrixMultiplyAccumulateSupported);
 }
 
-TEST(CapsXe3Test, givenNvlSReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXe3Test, givenNvlSReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsNvlS = materializeCaps<CapsNvlS>();
-    EXPECT_TRUE(capsNvlS.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsNvlS.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsNvlS.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsNvlS.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsNvlS.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsNvlS.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsNvlS.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsNvlS.splitMatrixMultiplyAccumulateSupported);
 }
 
-TEST(CapsXe3Test, givenNvlUReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXe3Test, givenNvlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsNvlU = materializeCaps<CapsNvlU>();
-    EXPECT_TRUE(capsNvlU.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsNvlU.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsNvlU.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsNvlU.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsNvlU.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsNvlU.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsNvlU.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsNvlU.splitMatrixMultiplyAccumulateSupported);
 }

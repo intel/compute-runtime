@@ -93,9 +93,9 @@ TEST(HwInfoTest, whenSetupHardwareInfoForDefaultProductThenCapsAreInitializedFro
 
     if (expectedCaps.has_value()) {
         hwInfo.caps = {};
-        hwInfo.caps.isDotProductAccumulateSystolicSupported = !expectedCaps->isDotProductAccumulateSystolicSupported;
+        hwInfo.caps.dotProductAccumulateSystolicSupported = !expectedCaps->dotProductAccumulateSystolicSupported;
         hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, false, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
 
-        EXPECT_EQ(expectedCaps->isDotProductAccumulateSystolicSupported, hwInfo.caps.isDotProductAccumulateSystolicSupported);
+        EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, hwInfo.caps.dotProductAccumulateSystolicSupported);
     }
 }

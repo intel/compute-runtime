@@ -42,17 +42,35 @@ TEST(CapsXeHpgTest, givenDg2G12IpVersionWhenResolvingCapsThenReleaseCapsAreRetur
     EXPECT_EQ(std::nullopt, resolveCapsDg2G12(withUnsupportedRevision(AOT::DG2_G12_A0)));
 }
 
-TEST(CapsXeHpgTest, givenDg2G10ReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXeHpgTest, givenDg2G10ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsDg2G10 = materializeCaps<CapsDg2G10>();
-    EXPECT_TRUE(capsDg2G10.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsDg2G10.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsDg2G10.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsDg2G10.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsDg2G10.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsDg2G10.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_TRUE(capsDg2G10.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsDg2G10.splitMatrixMultiplyAccumulateSupported);
 }
 
-TEST(CapsXeHpgTest, givenDg2G11ReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXeHpgTest, givenDg2G11ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsDg2G11 = materializeCaps<CapsDg2G11>();
-    EXPECT_TRUE(capsDg2G11.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsDg2G11.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsDg2G11.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsDg2G11.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsDg2G11.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsDg2G11.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_TRUE(capsDg2G11.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsDg2G11.splitMatrixMultiplyAccumulateSupported);
 }
 
-TEST(CapsXeHpgTest, givenDg2G12ReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXeHpgTest, givenDg2G12ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsDg2G12 = materializeCaps<CapsDg2G12>();
-    EXPECT_TRUE(capsDg2G12.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsDg2G12.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsDg2G12.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsDg2G12.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsDg2G12.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsDg2G12.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_TRUE(capsDg2G12.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsDg2G12.splitMatrixMultiplyAccumulateSupported);
 }

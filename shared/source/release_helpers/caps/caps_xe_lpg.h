@@ -17,20 +17,35 @@
 namespace NEO {
 
 struct CapsXeLpgCore {
-    static constexpr bool isDotProductAccumulateSystolicSupported = false;
+    static constexpr bool bFloat16ConversionSupported = true;
 };
 
 struct CapsMtlU : CapsXeLpgCore {};
+struct CapsMtlUA0 : CapsMtlU {
+    static constexpr bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = true;
+    static constexpr bool programAllStateComputeCommandFieldsWARequired = true;
+};
+struct CapsMtlUB0 : CapsMtlU {};
+
 struct CapsMtlH : CapsXeLpgCore {};
+struct CapsMtlHA0 : CapsMtlH {
+    static constexpr bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = true;
+    static constexpr bool programAllStateComputeCommandFieldsWARequired = true;
+};
+struct CapsMtlHB0 : CapsMtlH {};
+
 struct CapsArlH : CapsXeLpgCore {
-    static constexpr bool isDotProductAccumulateSystolicSupported = true;
+    static constexpr bool adjustWalkOrderAvailable = true;
+    static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool pipeControlPriorToPipelineSelectWaRequired = true;
 };
 
 constexpr std::optional<Caps> resolveCapsMtlU(HardwareIpVersion ipVersion) {
     switch (ipVersion.value) {
     case AOT::MTL_U_A0:
+        return materializeCaps<CapsMtlUA0>();
     case AOT::MTL_U_B0:
-        return materializeCaps<CapsMtlU>();
+        return materializeCaps<CapsMtlUB0>();
     default:
         return std::nullopt;
     }
@@ -39,8 +54,9 @@ constexpr std::optional<Caps> resolveCapsMtlU(HardwareIpVersion ipVersion) {
 constexpr std::optional<Caps> resolveCapsMtlH(HardwareIpVersion ipVersion) {
     switch (ipVersion.value) {
     case AOT::MTL_H_A0:
+        return materializeCaps<CapsMtlHA0>();
     case AOT::MTL_H_B0:
-        return materializeCaps<CapsMtlH>();
+        return materializeCaps<CapsMtlHB0>();
     default:
         return std::nullopt;
     }

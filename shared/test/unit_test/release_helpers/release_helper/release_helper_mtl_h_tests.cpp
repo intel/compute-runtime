@@ -26,11 +26,7 @@ TEST_F(ReleaseHelperMtlHTests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
 
-        EXPECT_FALSE(releaseHelper->isAdjustWalkOrderAvailable());
-        EXPECT_EQ(revision == 0, releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
-        EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
-        EXPECT_EQ(revision == 0, releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_TRUE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_FALSE(releaseHelper->isRcsExposureDisabled());

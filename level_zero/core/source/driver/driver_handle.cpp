@@ -169,10 +169,12 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
     bool isBfloat16Supported = false;
     bool isBindlessHeapsSupported = false;
     for (const auto device : devices) {
-        if (device->getNEODevice()->getRootDeviceEnvironment().getCompilerReleaseHelper().isBFloat16ConversionSupported()) {
+        const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+        const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+        if (hwInfo.caps.bFloat16ConversionSupported) {
             isBfloat16Supported = true;
         }
-        if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
+        if (rootDeviceEnvironment.getBindlessHeapsHelper()) {
             isBindlessHeapsSupported = true;
         }
         if (isBfloat16Supported && isBindlessHeapsSupported) {
@@ -194,7 +196,8 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_1_0);
     }
 
-    if (devices[0]->getProductHelper().isInterruptSupported(devices[0]->getNEODevice()->getRootDeviceEnvironment())) {
+    const auto &rootDeviceEnvironment = devices[0]->getNEODevice()->getRootDeviceEnvironment();
+    if (devices[0]->getProductHelper().isInterruptSupported(rootDeviceEnvironment)) {
         additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_1_0);
     }
 

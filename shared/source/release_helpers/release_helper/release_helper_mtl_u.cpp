@@ -18,16 +18,6 @@ namespace NEO {
 constexpr auto release = ReleaseType::release1270;
 
 template <>
-bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const {
-    return hardwareIpVersion.value == AOT::MTL_U_A0;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isProgramAllStateComputeCommandFieldsWARequired() const {
-    return hardwareIpVersion.value == AOT::MTL_U_A0;
-}
-
-template <>
 inline bool ReleaseHelperHw<release>::isAuxSurfaceModeOverrideRequired() const {
     return true;
 }

@@ -69,12 +69,12 @@ TEST_F(WddmTests, whenInitializingWddmThenCapsAreSetupBasedOnIpVersion) {
     auto expectedCaps = resolveCaps(expectedIpVersion);
     ASSERT_TRUE(expectedCaps.has_value());
 
-    hardwareInfo->caps.isDotProductAccumulateSystolicSupported = !expectedCaps->isDotProductAccumulateSystolicSupported;
+    hardwareInfo->caps.dotProductAccumulateSystolicSupported = !expectedCaps->dotProductAccumulateSystolicSupported;
 
     init();
 
     EXPECT_EQ(expectedIpVersion.value, hardwareInfo->ipVersion.value);
-    EXPECT_EQ(expectedCaps->isDotProductAccumulateSystolicSupported, hardwareInfo->caps.isDotProductAccumulateSystolicSupported);
+    EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, hardwareInfo->caps.dotProductAccumulateSystolicSupported);
 }
 
 TEST_F(WddmTests, givenWddmWhenPassesCorrectHandleToVerifySharedHandleThenReturnTrue) {

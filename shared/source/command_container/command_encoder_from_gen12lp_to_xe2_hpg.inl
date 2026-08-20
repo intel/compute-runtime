@@ -17,8 +17,8 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
     LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
     bool hasSharedHandles, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush) {
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, rootDeviceEnvironment, isRcs);
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const bool isBasicWARequired = hwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     if (isBasicWARequired) {
         PipeControlArgs args;

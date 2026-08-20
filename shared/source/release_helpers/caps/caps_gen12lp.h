@@ -14,7 +14,9 @@
 
 namespace NEO {
 
-struct CapsGen12Lp {};
+struct CapsGen12Lp {
+    static constexpr bool bFloat16ConversionSupported = true;
+};
 
 struct CapsTgl : CapsGen12Lp {};
 struct CapsRkl : CapsGen12Lp {};

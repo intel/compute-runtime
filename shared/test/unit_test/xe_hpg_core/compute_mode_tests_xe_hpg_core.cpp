@@ -28,8 +28,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &releaseHelper = device->getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = device->getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     if (isBasicWARequired) {
@@ -114,8 +114,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenComputeModeCmdSizeWhenL
 
     auto expSize = sizeof(STATE_COMPUTE_MODE);
     auto &rootDeviceEnvironment = csr->peekRootDeviceEnvironment();
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     if (isBasicWARequired) {
         expSize += sizeof(PIPE_CONTROL);
@@ -145,8 +145,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenCoherencyWithSharedHand
 
     auto expSize = sizeof(STATE_COMPUTE_MODE) + (sizeof(PIPE_CONTROL));
     auto &rootDeviceEnvironment = csr->peekRootDeviceEnvironment();
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     if (isBasicWARequired) {
         expSize += sizeof(PIPE_CONTROL);
@@ -174,8 +174,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenCoherencyWithoutSharedH
 
     auto expSize = sizeof(STATE_COMPUTE_MODE);
     auto &rootDeviceEnvironment = csr->peekRootDeviceEnvironment();
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const auto &deviceHwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const bool isBasicWARequired = deviceHwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     if (isBasicWARequired) {
         expSize += sizeof(PIPE_CONTROL);

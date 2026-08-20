@@ -15,16 +15,6 @@ namespace NEO {
 constexpr auto release = ReleaseType::release1274;
 
 template <>
-bool ReleaseHelperHw<release>::isAdjustWalkOrderAvailable() const {
-    return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isPipeControlPriorToPipelineSelectWaRequired() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isBlitImageAllowedForDepthFormat() const {
     return false;
 }

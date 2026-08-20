@@ -41,17 +41,35 @@ TEST(CapsXe2HpgTest, givenLnlIpVersionWhenResolvingCapsThenReleaseCapsAreReturne
     EXPECT_EQ(std::nullopt, resolveCapsLnl(withUnsupportedRevision(AOT::LNL_A0)));
 }
 
-TEST(CapsXe2HpgTest, givenBmgG21ReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXe2HpgTest, givenBmgG21ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsBmgG21 = materializeCaps<CapsBmgG21>();
-    EXPECT_TRUE(capsBmgG21.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsBmgG21.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsBmgG21.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsBmgG21.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsBmgG21.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsBmgG21.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsBmgG21.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsBmgG21.splitMatrixMultiplyAccumulateSupported);
 }
 
-TEST(CapsXe2HpgTest, givenBmgG31ReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXe2HpgTest, givenBmgG31ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsBmgG31 = materializeCaps<CapsBmgG31>();
-    EXPECT_TRUE(capsBmgG31.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsBmgG31.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsBmgG31.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsBmgG31.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsBmgG31.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsBmgG31.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsBmgG31.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsBmgG31.splitMatrixMultiplyAccumulateSupported);
 }
 
-TEST(CapsXe2HpgTest, givenLnlReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXe2HpgTest, givenLnlReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsLnl = materializeCaps<CapsLnl>();
-    EXPECT_TRUE(capsLnl.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsLnl.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsLnl.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsLnl.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsLnl.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsLnl.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsLnl.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsLnl.splitMatrixMultiplyAccumulateSupported);
 }

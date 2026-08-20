@@ -17,12 +17,13 @@
 namespace NEO {
 
 struct CapsXeHpcCore {
-    static constexpr bool isDotProductAccumulateSystolicSupported = true;
+    static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool dotProductAccumulateSystolicSupported = true;
 };
 
 struct CapsPvc : CapsXeHpcCore {};
 struct CapsPvcVg : CapsXeHpcCore {
-    static constexpr bool isDotProductAccumulateSystolicSupported = false;
+    static constexpr bool dotProductAccumulateSystolicSupported = false;
 };
 
 constexpr std::optional<Caps> resolveCapsPvc(HardwareIpVersion ipVersion) {

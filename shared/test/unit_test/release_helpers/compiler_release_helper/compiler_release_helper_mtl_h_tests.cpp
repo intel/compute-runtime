@@ -25,8 +25,6 @@ TEST_F(CompilerReleaseHelperMtlHTests, whenGettingCapabilitiesThenCorrectPropert
         EXPECT_FALSE(compilerReleaseHelper->isBindlessAddressingDisabled());
         EXPECT_FALSE(compilerReleaseHelper->isForceEmuInt32DivRemSPRequired());
         EXPECT_FALSE(compilerReleaseHelper->isMatrixMultiplyAccumulateSupported());
-        EXPECT_FALSE(compilerReleaseHelper->isSplitMatrixMultiplyAccumulateSupported());
-        EXPECT_TRUE(compilerReleaseHelper->isBFloat16ConversionSupported());
         EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalFp16Caps());
         EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalExtraCaps());
         EXPECT_FALSE(compilerReleaseHelper->getFtrXe2Compression());

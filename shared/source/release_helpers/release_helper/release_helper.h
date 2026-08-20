@@ -38,11 +38,7 @@ class ReleaseHelper {
     static std::unique_ptr<ReleaseHelper> create(HardwareIpVersion hardwareIpVersion);
     virtual ~ReleaseHelper() = default;
 
-    virtual bool isAdjustWalkOrderAvailable() const = 0;
-    virtual bool isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const = 0;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const = 0;
-    virtual bool isPipeControlPriorToPipelineSelectWaRequired() const = 0;
-    virtual bool isProgramAllStateComputeCommandFieldsWARequired() const = 0;
     virtual bool isAuxSurfaceModeOverrideRequired() const = 0;
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
     virtual bool isRcsExposureDisabled() const = 0;
@@ -88,11 +84,7 @@ class ReleaseHelperHw : public ReleaseHelper {
         return std::make_unique<ReleaseHelperHw<releaseType>>(hardwareIpVersion);
     }
 
-    bool isAdjustWalkOrderAvailable() const override;
-    bool isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const override;
     bool isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const override;
-    bool isPipeControlPriorToPipelineSelectWaRequired() const override;
-    bool isProgramAllStateComputeCommandFieldsWARequired() const override;
     bool isAuxSurfaceModeOverrideRequired() const override;
     bool isResolvingSubDeviceIDNeeded() const override;
     bool isRcsExposureDisabled() const override;

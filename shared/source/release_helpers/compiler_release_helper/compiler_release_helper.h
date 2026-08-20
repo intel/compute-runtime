@@ -29,8 +29,6 @@ class CompilerReleaseHelper {
     virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isBindlessAddressingDisabled() const = 0;
     virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
-    virtual bool isSplitMatrixMultiplyAccumulateSupported() const = 0;
-    virtual bool isBFloat16ConversionSupported() const = 0;
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
     virtual bool getFtrXe2Compression() const = 0;
@@ -54,8 +52,6 @@ class CompilerReleaseHelperHw : public CompilerReleaseHelper {
     bool isForceEmuInt32DivRemSPRequired() const override;
     bool isBindlessAddressingDisabled() const override;
     bool isMatrixMultiplyAccumulateSupported() const override;
-    bool isSplitMatrixMultiplyAccumulateSupported() const override;
-    bool isBFloat16ConversionSupported() const override;
     uint32_t getAdditionalFp16Caps() const override;
     uint32_t getAdditionalExtraCaps() const override;
     bool getFtrXe2Compression() const override;

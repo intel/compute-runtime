@@ -164,7 +164,7 @@ TEST(DrmSystemInfoTest, givenQueriedIpVersionWhenSetupHardwareInfoThenCapsAreSet
     drm.ioctlHelper = std::move(ioctlHelper);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.caps.isDotProductAccumulateSystolicSupported = !expectedCaps->isDotProductAccumulateSystolicSupported;
+    hwInfo.caps.dotProductAccumulateSystolicSupported = !expectedCaps->dotProductAccumulateSystolicSupported;
 
     auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
         hardwareInfoSetup[hwInfo->platform.eProductFamily](hwInfo, setupFeatureTableAndWorkaroundTable, 0u, compilerReleaseHelper);
@@ -176,7 +176,7 @@ TEST(DrmSystemInfoTest, givenQueriedIpVersionWhenSetupHardwareInfoThenCapsAreSet
 
     const auto *setupHwInfo = rootDeviceEnvironment.getHardwareInfo();
     EXPECT_EQ(queriedIpVersion.value, setupHwInfo->ipVersion.value);
-    EXPECT_EQ(expectedCaps->isDotProductAccumulateSystolicSupported, setupHwInfo->caps.isDotProductAccumulateSystolicSupported);
+    EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, setupHwInfo->caps.dotProductAccumulateSystolicSupported);
 }
 
 TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenCompilerReleaseHelperIsCreated) {

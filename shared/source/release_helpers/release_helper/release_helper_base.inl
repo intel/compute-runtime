@@ -13,30 +13,10 @@
 namespace NEO {
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isAdjustWalkOrderAvailable() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
     if (debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
         return debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
     }
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isPipeControlPriorToPipelineSelectWaRequired() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isProgramAllStateComputeCommandFieldsWARequired() const {
     return false;
 }
 

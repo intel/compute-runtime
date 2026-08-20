@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -50,6 +51,7 @@ HWTEST2_F(PreambleTest, givenSpecificDeviceWhenProgramPipelineSelectIsCalledThen
     hwInfo.ipVersion.architecture = 12;
     hwInfo.ipVersion.release = 74;
     hwInfo.ipVersion.revision = 0;
+    setupCaps(hwInfo);
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex));
 

@@ -37,12 +37,24 @@ TEST(CapsXeHpcTest, givenPvcVgIpVersionWhenResolvingCapsThenReleaseCapsAreReturn
     EXPECT_EQ(std::nullopt, resolveCapsPvcVg(withUnsupportedRevision(AOT::PVC_XT_C0_VG)));
 }
 
-TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsSupported) {
+TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPvc = materializeCaps<CapsPvc>();
-    EXPECT_TRUE(capsPvc.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPvc.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsPvc.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsPvc.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPvc.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsPvc.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsPvc.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsPvc.splitMatrixMultiplyAccumulateSupported);
 }
 
-TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenDotProductAccumulateSystolicIsNotSupportedByAnyStepping) {
+TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPvcVg = materializeCaps<CapsPvcVg>();
-    EXPECT_FALSE(capsPvcVg.isDotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPvcVg.adjustWalkOrderAvailable);
+    EXPECT_TRUE(capsPvcVg.bFloat16ConversionSupported);
+    EXPECT_FALSE(capsPvcVg.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPvcVg.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsPvcVg.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsPvcVg.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsPvcVg.splitMatrixMultiplyAccumulateSupported);
 }
