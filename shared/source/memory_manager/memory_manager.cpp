@@ -1633,9 +1633,14 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
         SvmAllocationData allocDataInternal(peerAllocRootDeviceIndex);
         GraphicsAllocation *originalAlloc = alloc;
 
+        constexpr size_t reservedHandleDataSize = 32u;
         if (numHandles > 1) {
             UNRECOVERABLE_IF(numHandles == 0);
             std::vector<osHandle> handles;
+            std::vector<uint8_t> reservedHandleDataStorage;
+            if (deps.reservedHandleDataAvailable) {
+                reservedHandleDataStorage.resize(numHandles * reservedHandleDataSize, 0u);
+            }
             auto closeImportedHandles = [&]() {
                 for (uint32_t handleId = 0; handleId < handles.size(); handleId++) {
                     uint64_t handle = handles[handleId];
@@ -1644,43 +1649,64 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
             };
             for (uint32_t i = 0; i < numHandles; i++) {
                 uint64_t handle = 0;
-                uint8_t reservedHandleDataStorage[32] = {0};
-                void *reservedHandleData = nullptr;
-                if (deps.requiresReservedHandleData) {
-                    reservedHandleData = reservedHandleDataStorage;
-                }
+                void *reservedHandleData = deps.reservedHandleDataAvailable
+                                               ? reservedHandleDataStorage.data() + i * reservedHandleDataSize
+                                               : nullptr;
                 int ret = alloc->peekInternalHandle(this, i, handle, reservedHandleData);
                 if (ret < 0) {
                     closeImportedHandles();
                     return nullptr;
                 }
-                if (deps.requiresReservedHandleData) {
-                    int importHandleFromReserved = -1;
-                    importHandleFromReserved = this->getImportHandleFromReservedHandleData(reservedHandleData, device->getRootDevice()->getRootDeviceIndex());
-                    handle = static_cast<uint64_t>(importHandleFromReserved);
-                }
                 handles.push_back(static_cast<osHandle>(handle));
             }
             auto neoDevice = device->getRootDevice();
+            // Prefer the fd handles; fall back to the reserved handle data only if the fd import fails.
             peerPtr = deps.importFds(neoDevice, handles, peerMapAddress, &alloc, allocDataInternal, false);
+            if (peerPtr == nullptr && deps.reservedHandleDataAvailable) {
+                std::vector<osHandle> reservedHandles;
+                reservedHandles.reserve(numHandles);
+                bool allReservedHandlesResolved = true;
+                for (uint32_t i = 0; i < numHandles; i++) {
+                    int importHandleFromReserved = this->getImportHandleFromReservedHandleData(
+                        reservedHandleDataStorage.data() + i * reservedHandleDataSize, device->getRootDevice()->getRootDeviceIndex());
+                    if (importHandleFromReserved < 0) {
+                        allReservedHandlesResolved = false;
+                        break;
+                    }
+                    reservedHandles.push_back(static_cast<osHandle>(importHandleFromReserved));
+                }
+                if (allReservedHandlesResolved) {
+                    alloc = originalAlloc;
+                    peerPtr = deps.importFds(neoDevice, reservedHandles, peerMapAddress, &alloc, allocDataInternal, false);
+                }
+                for (uint32_t handleId = 0; handleId < reservedHandles.size(); handleId++) {
+                    uint64_t reservedHandle = reservedHandles[handleId];
+                    this->closeInternalHandle(reservedHandle, handleId, originalAlloc);
+                }
+            }
             closeImportedHandles();
         } else {
             uint64_t handle = 0;
-            uint8_t reservedHandleDataStorage[32] = {0};
+            uint8_t reservedHandleDataStorage[reservedHandleDataSize] = {0};
             void *reservedHandleData = nullptr;
-            if (deps.requiresReservedHandleData) {
+            if (deps.reservedHandleDataAvailable) {
                 reservedHandleData = reservedHandleDataStorage;
             }
             int ret = alloc->peekInternalHandle(this, handle, reservedHandleData);
             if (ret < 0) {
                 return nullptr;
             }
-            if (deps.requiresReservedHandleData) {
-                int importHandleFromReserved = -1;
-                importHandleFromReserved = this->getImportHandleFromReservedHandleData(reservedHandleData, device->getRootDeviceIndex());
-                handle = static_cast<uint64_t>(importHandleFromReserved);
-            }
+            // Prefer the fd handle; fall back to the reserved handle data only if the fd import fails.
             peerPtr = deps.importFd(device, handle, AllocationType::buffer, peerMapAddress, &alloc, allocDataInternal, false);
+            if (peerPtr == nullptr && deps.reservedHandleDataAvailable) {
+                int importHandleFromReserved = this->getImportHandleFromReservedHandleData(reservedHandleData, device->getRootDeviceIndex());
+                if (importHandleFromReserved >= 0) {
+                    uint64_t reservedHandle = static_cast<uint64_t>(importHandleFromReserved);
+                    alloc = originalAlloc;
+                    peerPtr = deps.importFd(device, reservedHandle, AllocationType::buffer, peerMapAddress, &alloc, allocDataInternal, false);
+                    this->closeInternalHandle(reservedHandle, 0u, originalAlloc);
+                }
+            }
             if (alloc != originalAlloc) {
                 alloc->setSharedHandle(std::numeric_limits<osHandle>::max());
             }

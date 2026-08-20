@@ -114,7 +114,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
                                                bool decompressP2PAllocation);
     NEO::GraphicsAllocation *findPeerAllocation(Device *device, const void *ptr);
     NEO::GraphicsAllocation *resolveMemoryAllocation(Device *device, void *ptr, size_t size, bool allowImport);
-    bool peerRequiresReservedHandleData(Device *srcDevice, Device *peerDevice);
+    bool peerReservedHandleDataAvailable(Device *srcDevice, Device *peerDevice);
 
     MOCKABLE_VIRTUAL bool isFabricAccessSupported();
 

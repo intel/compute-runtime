@@ -763,7 +763,7 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                                                          bool decompressP2PAllocation) {
     NEO::PeerAllocationDeps deps{};
 
-    // Check if peer access requires reserved handle data
+    // Check if reserved handle data is available as a fallback for peer access
     auto *alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
     if (alloc != nullptr) {
         uint32_t allocOwnerRootDeviceIndex = alloc->getRootDeviceIndex();
@@ -776,7 +776,7 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
         }
 
         if (allocOwnerDevice != nullptr) {
-            deps.requiresReservedHandleData = peerRequiresReservedHandleData(allocOwnerDevice, device);
+            deps.reservedHandleDataAvailable = peerReservedHandleDataAvailable(allocOwnerDevice, device);
         }
     }
 
