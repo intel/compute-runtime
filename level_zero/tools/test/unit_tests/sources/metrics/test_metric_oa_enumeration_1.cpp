@@ -149,6 +149,128 @@ TEST_F(MetricEnumerationTest, givenTwoConcurrentMetricGroupsWhenZetGetMetricGrou
     EXPECT_NE(metricGroups[1], nullptr);
 }
 
+TEST_F(MetricEnumerationTest, givenOaMertConcurrentGroupWhenZetGetMetricGroupIsCalledThenMetricSetsAndTheirMetricsAreEnumerated) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 2;
+    metricsConcurrentGroupParams.SymbolName = "OAMERT";
+    metricsConcurrentGroupParams.Description = "OAMERT description";
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioEquationElement.ImmediateUInt64 = 0;
+
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    // Metrics Discovery:: metric sets - one time based and one event based.
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSetTimeBased;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetTimeBasedParams = {};
+    metricsSetTimeBasedParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    metricsSetTimeBasedParams.SymbolName = "OaMertTimeBasedMetricSet";
+    metricsSetTimeBasedParams.ShortName = "OaMert time based metric set";
+    metricsSetTimeBasedParams.MetricsCount = 1;
+
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSetEventBased;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetEventBasedParams = {};
+    metricsSetEventBasedParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetEventBasedParams.SymbolName = "OaMertEventBasedMetricSet";
+    metricsSetEventBasedParams.ShortName = "OaMert event based metric set";
+    metricsSetEventBasedParams.MetricsCount = 1;
+
+    // Metrics Discovery:: metrics - one per metric set.
+    Mock<IMetric_1_13> timeBasedMetric;
+    TMetricParams_1_13 timeBasedMetricParams = {};
+    timeBasedMetricParams.SymbolName = "OaMertTimeBasedMetric";
+    timeBasedMetricParams.LongName = "OaMert time based metric";
+    timeBasedMetricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_EVENT;
+    timeBasedMetricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+
+    Mock<IMetric_1_13> eventBasedMetric;
+    TMetricParams_1_13 eventBasedMetricParams = {};
+    eventBasedMetricParams.SymbolName = "OaMertEventBasedMetric";
+    eventBasedMetricParams.LongName = "OaMert event based metric";
+    eventBasedMetricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
+    eventBasedMetricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_FLOAT;
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResults.push_back(&metricsSetTimeBased);
+    metricsConcurrentGroup.getMetricSetResults.push_back(&metricsSetEventBased);
+
+    metricsSetTimeBased.GetParamsResult = &metricsSetTimeBasedParams;
+    metricsSetTimeBased.GetMetricResult = &timeBasedMetric;
+    metricsSetEventBased.GetParamsResult = &metricsSetEventBasedParams;
+    metricsSetEventBased.GetMetricResult = &eventBasedMetric;
+
+    timeBasedMetric.GetParamsResult = &timeBasedMetricParams;
+    eventBasedMetric.GetParamsResult = &eventBasedMetricParams;
+
+    // Both metric sets of the OAMERT concurrent group are enumerated as metric groups.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    ASSERT_EQ(metricGroupCount, 2u);
+
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    ASSERT_EQ(metricGroupCount, 2u);
+    EXPECT_NE(metricGroups[0], nullptr);
+    EXPECT_NE(metricGroups[1], nullptr);
+
+    MetricsDiscovery::TMetricSetParams_1_11 *expectedMetricSetParams[] = {&metricsSetTimeBasedParams, &metricsSetEventBasedParams};
+    TMetricParams_1_13 *expectedMetricParams[] = {&timeBasedMetricParams, &eventBasedMetricParams};
+    zet_metric_group_sampling_type_flag_t expectedSamplingTypes[] = {ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED};
+    zet_metric_type_t expectedMetricTypes[] = {ZET_METRIC_TYPE_EVENT, ZET_METRIC_TYPE_RATIO};
+    zet_value_type_t expectedResultTypes[] = {ZET_VALUE_TYPE_UINT64, ZET_VALUE_TYPE_FLOAT32};
+
+    for (uint32_t index = 0; index < metricGroupCount; index++) {
+
+        // Metric group properties are taken from the corresponding metric set.
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[index], &metricGroupProperties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(metricGroupProperties.domain, 0u);
+        EXPECT_EQ(metricGroupProperties.samplingType, expectedSamplingTypes[index]);
+        EXPECT_EQ(metricGroupProperties.metricCount, 1u);
+        EXPECT_EQ(strcmp(metricGroupProperties.name, expectedMetricSetParams[index]->SymbolName), 0);
+        EXPECT_EQ(strcmp(metricGroupProperties.description, expectedMetricSetParams[index]->ShortName), 0);
+
+        // Metrics of each metric set are enumerated.
+        uint32_t metricCount = 0;
+        EXPECT_EQ(zetMetricGet(metricGroups[index], &metricCount, nullptr), ZE_RESULT_SUCCESS);
+        ASSERT_EQ(metricCount, 1u);
+
+        zet_metric_handle_t metricHandle = {};
+        EXPECT_EQ(zetMetricGet(metricGroups[index], &metricCount, &metricHandle), ZE_RESULT_SUCCESS);
+        EXPECT_NE(metricHandle, nullptr);
+
+        zet_metric_properties_t metricProperties = {};
+        EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(strcmp(metricProperties.name, expectedMetricParams[index]->SymbolName), 0);
+        EXPECT_EQ(strcmp(metricProperties.description, expectedMetricParams[index]->LongName), 0);
+        EXPECT_EQ(metricProperties.metricType, expectedMetricTypes[index]);
+        EXPECT_EQ(metricProperties.resultType, expectedResultTypes[index]);
+    }
+}
+
 TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetGetMetricGroupPropertiesIsCalledThenReturnsFail) {
 
     // Metrics Discovery device.

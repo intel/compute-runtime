@@ -23,6 +23,7 @@
 namespace L0 {
 
 const char *MetricEnumeration::oaConcurrentGroupName = "OA";
+const char *MetricEnumeration::oaMertConcurrentGroupName = "OAMERT";
 
 MetricEnumeration::MetricEnumeration(OaMetricSourceImp &metricSourceInput)
     : metricSource(metricSourceInput) {}
@@ -321,8 +322,9 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
             pConcurrentGroup->GetParams();
         DEBUG_BREAK_IF(pConcurrentGroupParams == nullptr);
 
-        // 2. Find "OA" concurrent group.
-        if (strcmp(pConcurrentGroupParams->SymbolName, oaConcurrentGroupName) == 0) {
+        // 2. Find "OA" or "OAMERT" concurrent group.
+        if (strcmp(pConcurrentGroupParams->SymbolName, oaConcurrentGroupName) == 0 ||
+            strcmp(pConcurrentGroupParams->SymbolName, oaMertConcurrentGroupName) == 0) {
 
             // Find the oaBufferOverflowInformation and store in member variable pOaBufferOverflowInformation
             const uint32_t measurementInfoCount = pConcurrentGroupParams->IoMeasurementInformationCount;

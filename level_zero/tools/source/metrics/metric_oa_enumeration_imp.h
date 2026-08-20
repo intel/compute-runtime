@@ -147,6 +147,7 @@ struct MetricEnumeration {
     static const uint32_t requiredMetricsDiscoveryMajorVersion = 1;
     static const uint32_t requiredMetricsDiscoveryMinorVersion = 13;
     static const char *oaConcurrentGroupName;
+    static const char *oaMertConcurrentGroupName;
 };
 
 struct OaMetricGroupImp : public MetricGroupImp {
