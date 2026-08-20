@@ -68,7 +68,6 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::outputFile;
     using OfflineCompiler::outputNoSuffix;
     using OfflineCompiler::parseCommandLine;
-    using OfflineCompiler::parseCommandLineExt;
     using OfflineCompiler::parseDebugSettings;
     using OfflineCompiler::pBuildInfo;
     using OfflineCompiler::perDeviceOptions;

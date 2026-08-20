@@ -68,6 +68,11 @@ bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *he
     return false;
 }
 
+bool isIrOnly(const std::vector<std::string> &args) {
+    return std::find(args.begin(), args.end(), "-spv_only") != args.end() ||
+           std::find(args.begin(), args.end(), "-emit_pisa") != args.end();
+}
+
 template <>
 void getProductsAcronymsForTarget<AOT::RELEASE>(std::vector<NEO::ConstStringRef> &out, AOT::RELEASE target, OclocArgHelper *argHelper) {
     auto &prodHelper = *argHelper->productConfigHelper;

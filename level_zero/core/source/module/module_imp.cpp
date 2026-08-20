@@ -14,6 +14,7 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
@@ -60,6 +61,7 @@
 #include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/modules_package_binary.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include "program_debug_data.h"
 
@@ -1044,14 +1046,17 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
                                                           static_cast<uint32_t>(desc->inputSize),
                                                           buildOptions.c_str(),
                                                           internalBuildOptions.c_str());
-        } else {
+        } else if (desc->format == ZE_MODULE_FORMAT_PISA) {
             this->isFunctionSymbolExportEnabled = true;
             this->isGlobalSymbolExportEnabled = true;
-            return this->translationUnit->buildExt(desc->format,
-                                                   reinterpret_cast<const char *>(desc->pInputModule),
-                                                   static_cast<uint32_t>(desc->inputSize),
-                                                   buildOptions.c_str(),
-                                                   internalBuildOptions.c_str());
+            return this->translationUnit->buildFromIntermediate(NEO::pisaCodeType,
+                                                                reinterpret_cast<const char *>(desc->pInputModule),
+                                                                static_cast<uint32_t>(desc->inputSize),
+                                                                buildOptions.c_str(),
+                                                                internalBuildOptions.c_str(),
+                                                                nullptr);
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ENUMERATION;
         }
     }
 }

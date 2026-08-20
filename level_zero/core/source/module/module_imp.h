@@ -70,7 +70,6 @@ struct ModuleTranslationUnit {
     }
 
     MOCKABLE_VIRTUAL ze_result_t buildFromSource(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions);
-    MOCKABLE_VIRTUAL ze_result_t buildExt(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions);
     MOCKABLE_VIRTUAL ze_result_t buildFromSourceWithHeaders(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions, std::span<const char *> headers, std::span<const size_t> headerSizes, std::span<const char *> headerNames);
 
     MOCKABLE_VIRTUAL ze_result_t buildFromIntermediate(IGC::CodeType::CodeType_t intermediateType, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,

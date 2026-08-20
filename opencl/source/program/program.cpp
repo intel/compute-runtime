@@ -330,7 +330,13 @@ cl_int Program::createProgramFromBinary(
             }
         }
     } else {
-        retVal = this->createFromILExt(context, pBinary, binarySize);
+        this->intermediateRepresentation = NEO::pisaCodeType;
+        this->irBinary = std::make_unique<char[]>(binarySize);
+        memcpy(this->irBinary.get(), pBinary, binarySize);
+        this->irBinarySize = binarySize;
+        this->isGeneratedByIgc = true;
+        this->createdFrom = CreatedFrom::il;
+        retVal = CL_SUCCESS;
     }
 
     return retVal;

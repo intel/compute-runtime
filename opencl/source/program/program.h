@@ -302,7 +302,6 @@ class Program : public BaseObject<_cl_program> {
     Zebin::Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
-    MOCKABLE_VIRTUAL cl_int createFromILExt(Context *context, const void *il, size_t length);
 
   protected:
     FORCE_NOINLINE void dumpKernelInfoToAubComments();

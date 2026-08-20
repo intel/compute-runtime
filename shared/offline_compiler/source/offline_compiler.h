@@ -188,8 +188,6 @@ All supported acronyms: %s.
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
-    int parseCommandLineExt(size_t numArgs, const std::vector<std::string> &allArgs, uint32_t &argIndex);
-    bool isEmptyInputAllowed() const;
     void setStatelessToStatefulBufferOffsetFlag();
     int appendExtraInternalOptions(std::string &internalOptions);
     void parseDebugSettings();

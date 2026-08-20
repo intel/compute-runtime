@@ -94,15 +94,7 @@ bool compilerOutputExists(const std::string &fileName, const std::string &type) 
 
 template <typename Predicate>
 bool matchesKnownIrExtension(Predicate matches) {
-    if (matches("bc") || matches("spv")) {
-        return true;
-    }
-    for (const auto &extension : NEO::getAdditionalIrFileExtensions()) {
-        if (matches(extension)) {
-            return true;
-        }
-    }
-    return false;
+    return matches("bc") || matches("spv") || matches("pisa");
 }
 
 bool compilerIrOutputExists(const std::string &fileName) {

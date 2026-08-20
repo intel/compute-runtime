@@ -176,6 +176,18 @@ TEST(OclocFatBinaryIsSpvOnly, givenSpvOnlyProvidedReturnsTrue) {
     EXPECT_TRUE(NEO::isIrOnly(args));
 }
 
+TEST(OclocFatBinaryIsIrOnly, givenEmitPisaOptThenReturnsTrue) {
+    std::vector<std::string> args = {"-emit_pisa"};
+
+    EXPECT_TRUE(NEO::isIrOnly(args));
+}
+
+TEST(OclocFatBinaryIsIrOnly, givenNoIrOnlyOptsThenReturnsFalse) {
+    std::vector<std::string> args = {"-pisa_input"};
+
+    EXPECT_FALSE(NEO::isIrOnly(args));
+}
+
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
     const char *args[] = {"ocloc", "-aaa", "*", "-device", "*"};
 

@@ -33,8 +33,6 @@ extern Environment *gEnvironment;
 
 namespace NEO {
 
-std::vector<std::string> getAdditionalIrFileExtensions();
-
 class OfflineCompilerTests : public ::testing::Test {
   public:
     OfflineCompiler *pOfflineCompiler = nullptr;

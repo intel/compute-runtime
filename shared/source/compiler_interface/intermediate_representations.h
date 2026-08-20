@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
+#include "ocl_igc_interface/code_type.h"
+
 #include <algorithm>
 #include <cstdint>
 
@@ -18,6 +20,8 @@ namespace NEO {
 inline constexpr ConstStringRef llvmBcMagic = "BC\xc0\xde";
 inline constexpr ConstStringRef spirvMagic = "\x07\x23\x02\x03";
 inline constexpr ConstStringRef spirvMagicInv = "\x03\x02\x23\x07";
+
+inline constexpr IGC::CodeType::CodeType_t pisaCodeType = IGC::CodeType::CodeTypeCoder::Enc("PISA");
 
 inline bool hasSameMagic(ConstStringRef expectedMagic, ArrayRef<const uint8_t> binary) {
     auto binaryMagicLen = std::min(expectedMagic.size(), binary.size());

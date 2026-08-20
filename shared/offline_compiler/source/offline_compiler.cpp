@@ -37,7 +37,6 @@
 #include "shared/source/utilities/io_functions.h"
 
 #include "neo_aot_platforms.h"
-#include "offline_compiler_ext.h"
 
 #include <filesystem>
 #include <iomanip>
@@ -779,7 +778,7 @@ std::string OfflineCompiler::validateInputType(const std::string &input, bool is
 int OfflineCompiler::buildSourceCode() {
     int retVal = OCLOC_SUCCESS;
 
-    if (sourceCode.empty() && !this->isEmptyInputAllowed()) {
+    if (sourceCode.empty() && this->inputCodeType != NEO::pisaCodeType) {
         return OCLOC_INVALID_PROGRAM;
     }
 
@@ -931,7 +930,7 @@ int OfflineCompiler::build() {
     std::unique_ptr<char[]> sourceFromFile;
     size_t sourceFromFileSize = 0;
     sourceFromFile = argHelper->loadDataFromFile(inputFile, sourceFromFileSize);
-    if (sourceFromFileSize == 0 && (!sourceFromFile || !this->isEmptyInputAllowed())) {
+    if (sourceFromFileSize == 0 && (!sourceFromFile || this->inputCodeType != NEO::pisaCodeType)) {
         return OCLOC_INVALID_FILE;
     }
     if (this->inputCodeType == IGC::CodeType::oclC) {
@@ -1414,12 +1413,16 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("-spec_const" == currArg && hasMoreArgs) {
             specConstantsFile = argv[argIndex + 1];
             argIndex++;
+        } else if ("-pisa_input" == currArg) {
+            this->inputCodeType = NEO::pisaCodeType;
+            this->intermediateRepresentation = NEO::pisaCodeType;
+        } else if ("-emit_pisa" == currArg) {
+            this->intermediateRepresentation = NEO::pisaCodeType;
+            this->onlyIr = true;
         } else {
-            retVal = parseCommandLineExt(numArgs, argv, argIndex);
-            if (OCLOC_INVALID_COMMAND_LINE == retVal) {
-                argHelper->printf("Invalid option (arg %u): %s\n", argIndex, argv[argIndex].c_str());
-                break;
-            }
+            argHelper->printf("Invalid option (arg %u): %s\n", argIndex, argv[argIndex].c_str());
+            retVal = OCLOC_INVALID_COMMAND_LINE;
+            break;
         }
     }
 
@@ -1808,14 +1811,21 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 -spec_const <filename>                      File containing specialization constants for SPIR-V input.
                                             Each line should contain: <spec_constant_id>: <value>
                                             Example: 0: 32505859
-%s
+
+  -pisa_input                               Indicates that input file is a pisa file.
+                                            This option is exclusive with -spirv_input.
+                                            This option is exclusive with -llvm_text.
+                                            This option is exclusive with -llvm_input.
+
+  -emit_pisa                                Will emit pisa file.
+                                            This option is exclusive with -spv_only.
+
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Xe3Core.bin)
     ocloc -file source_file.cl -device ptl-h
 )OCLOC_HELP",
                       getSupportedDevices(argHelper).c_str(),
-                      getDeprecatedDevices(argHelper).c_str(),
-                      getOfflineCompilerOptionsExt().c_str());
+                      getDeprecatedDevices(argHelper).c_str());
 }
 
 void OfflineCompiler::storeBinary(

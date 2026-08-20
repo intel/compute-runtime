@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
@@ -16,6 +17,9 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/ze_intel_gpu.h"
+
+#include <string_view>
 
 namespace L0 {
 namespace ult {
@@ -612,6 +616,65 @@ TEST_F(ModuleTests, givenIsLlvmBcWhenFlagIsSetThenReturnsTrue) {
     module.isLlvmBitcode = true;
     EXPECT_TRUE(module.isLlvmBc());
 };
+
+constexpr std::string_view pisaSample = R"PISA(
+  .kernel @k(.param[8] .addrspace(global) %arg0, .param[8] .addrspace(global) %arg1)
+  {
+    .reg .64b %r0, %r1, %r2, %r3, %r4;
+    .reg .64b %r5, %r6;
+    .reg .32b %r7;
+    ld.param.64b %r0, [%arg0];
+    ld.param.64b %r1, [%arg1];
+    zext.64b.32b   %r2, %localid.x;
+    umad.full.32b   %r3, %localsize.x, %groupid.x, %r2;
+    ld.const.64b   %r4, [%implargbuffer + 48];
+    iadd.64b   %r5, %r3, %r4;
+    shl.64b   %r6, %r5, 2;
+    ld.global.32b   %r7, [%r1 + %r6];
+    st.global.32b   [%r0 + %r6], %r7;
+    return;
+  }
+)PISA";
+
+using PisaInputTest = Test<DeviceFixture>;
+
+TEST_F(PisaInputTest, GivenPisaInputWithUnknownFormatWhenCreatingModuleThenInvalidEnumeratorErrorIsReturned) {
+    MockModule mod{this->device, nullptr, L0::ModuleType::user};
+    ze_module_desc_t desc = {.stype = ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.pInputModule = reinterpret_cast<const uint8_t *>(pisaSample.data());
+    desc.inputSize = pisaSample.size();
+    desc.format = ZE_MODULE_FORMAT_FORCE_UINT32;
+    auto res = mod.initialize(&desc, this->device->getNEODevice());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, res);
+}
+
+TEST_F(PisaInputTest, GivenPisaInputWhenCreatingModuleThenProperIntermediateCodeTypeIsUsed) {
+    struct MockTU : ModuleTranslationUnit {
+        using ModuleTranslationUnit::ModuleTranslationUnit;
+
+        ze_result_t buildFromIntermediate(IGC::CodeType::CodeType_t intermediateType, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
+                                          const ze_module_constants_t *pConstants) override {
+            intermediateTypeUsed = intermediateType;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        IGC::CodeType::CodeType_t intermediateTypeUsed = IGC::CodeType::invalid;
+    } *mockTranslationUnit = nullptr;
+
+    MockModule mod{this->device, nullptr, L0::ModuleType::user};
+    {
+        auto mtu = std::make_unique<MockTU>(this->device);
+        mockTranslationUnit = mtu.get();
+        mod.translationUnit = std::move(mtu);
+    }
+    ze_module_desc_t desc = {.stype = ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.pInputModule = reinterpret_cast<const uint8_t *>(pisaSample.data());
+    desc.inputSize = pisaSample.size();
+    desc.format = ZE_MODULE_FORMAT_PISA;
+    auto res = mod.initialize(&desc, this->device->getNEODevice());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(NEO::pisaCodeType, mockTranslationUnit->intermediateTypeUsed);
+}
 
 } // namespace ult
 } // namespace L0

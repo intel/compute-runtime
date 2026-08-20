@@ -6,10 +6,12 @@
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -40,22 +42,23 @@ TEST_F(ProcessElfBinaryTests, GivenNullWhenCreatingProgramFromBinaryThenInvalidB
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-TEST_F(ProcessElfBinaryTests, GivenInvalidBinaryWhenCreatingProgramFromBinaryThenExpectedErrorIsReturned) {
-    char pBinary[] = "thisistotallyinvalid\0";
-    size_t binarySize = strnlen_s(pBinary, 21);
+TEST_F(ProcessElfBinaryTests, GivenNonElfNonSpirvBinaryWhenCreatingProgramFromBinaryThenItIsTreatedAsPisaAndSuccessIsReturned) {
+    char pBinary[] = "thisistotallyinvalid";
+    size_t binarySize = strlen(pBinary);
     cl_int retVal = program->createProgramFromBinary(pBinary, binarySize, *device);
 
-    EXPECT_EQ(CL_INVALID_BINARY, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(NEO::pisaCodeType, program->getIntermediateRepresentation());
 }
 
 TEST_F(ProcessElfBinaryTests, GivenValidBinaryWhenCreatingProgramFromBinaryThenSuccessIsReturned) {
-    ZebinTestData::ValidEmptyProgram zebin;
+    ZebinTestData::ValidEmptyProgram<is64bit ? NEO::Elf::EI_CLASS_64 : NEO::Elf::EI_CLASS_32> zebin;
     const auto &pBinary = zebin.storage;
     auto binarySize = zebin.storage.size();
 
     cl_int retVal = program->createProgramFromBinary(pBinary.data(), binarySize, *device);
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0, memcmp(pBinary.data(), program->buildInfos[rootDeviceIndex].packedDeviceBinary.get(), binarySize));
 }
 

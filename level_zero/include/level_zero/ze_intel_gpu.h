@@ -23,6 +23,12 @@ extern "C" {
 #define ZE_INTEL_GPU_VERSION_MINOR 1
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Module format is PISA intermediate representation
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 18)
+#define ZE_MODULE_FORMAT_PISA static_cast<ze_module_format_t>(2U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME
 /// @brief Module DP properties driver extension name
 #define ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME "ZE_intel_experimental_device_module_dp_properties"
