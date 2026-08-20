@@ -254,9 +254,28 @@ TEST(GetProgramInfoTests, givenProgramWithExternalFunctionsWhenGetProgramInfoWit
     MockContextForKernelNames context;
     MockProgramForKernelNames program(&context, mockModule.toHandle());
 
-    uint32_t numKernels = 0;
+    size_t numKernels = 0;
     auto retVal = clGetProgramInfo(&program, CL_PROGRAM_NUM_KERNELS, sizeof(numKernels), &numKernels, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, numKernels);
+}
+
+TEST(GetProgramInfoTests, givenProgramWhenGetProgramInfoWithNumKernelsThenSizeOfSizeTIsReturned) {
+    MockModule mockModule({"kernel0", "kernel1"});
+
+    MockContextForKernelNames context;
+    MockProgramForKernelNames program(&context, mockModule.toHandle());
+
+    size_t paramValueSizeRet = 0;
+    auto retVal = clGetProgramInfo(&program, CL_PROGRAM_NUM_KERNELS, 0, nullptr, &paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
+
+    size_t numKernels = std::numeric_limits<size_t>::max();
+    paramValueSizeRet = 0;
+    retVal = clGetProgramInfo(&program, CL_PROGRAM_NUM_KERNELS, sizeof(numKernels), &numKernels, &paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
     EXPECT_EQ(2u, numKernels);
 }
 
