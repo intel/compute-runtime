@@ -6,4 +6,6 @@
 
 set_property(GLOBAL APPEND PROPERTY LEO_TEST_SOURCES
              ${CMAKE_CURRENT_SOURCE_DIR}/test_context.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}/test_context_image_formats.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}/test_context_impl.cpp
 )

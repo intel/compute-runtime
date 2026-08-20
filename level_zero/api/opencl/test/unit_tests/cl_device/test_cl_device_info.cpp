@@ -295,7 +295,7 @@ TEST_F(ClDeviceInfoTest, givenDeviceEnqueueCapabilitiesQueriedAsBoolWhenGetDevic
 TEST_F(ClDeviceInfoTest, givenDeviceIdParamWhenGetDeviceInfoThenReturnsHardwareDeviceId) {
     cl_uint deviceId = 0;
     EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_ID_INTEL, sizeof(deviceId), &deviceId, nullptr));
-    EXPECT_EQ(clDevice->getHardwareInfo().platform.usDeviceID, deviceId);
+    EXPECT_EQ(static_cast<cl_uint>(clDevice->getHardwareInfo().platform.usDeviceID), deviceId);
 }
 
 TEST_F(ClDeviceInfoTest, givenEusPerSubSliceParamWhenGetDeviceInfoThenReturnsHardwareValue) {
