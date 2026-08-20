@@ -4625,6 +4625,12 @@ inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::Memor
         directionSupported = (1 << static_cast<int32_t>(directionOut)) & NEO::debugManager.flags.SplitBcsTransferDirectionMask.get();
     }
 
+    const bool aggregatedSplitUnsupportedForOutOfOrder = this->isImmediateType() && !this->isInOrderExecutionEnabled() &&
+                                                         this->device->bcsSplit && this->device->bcsSplit->events.isAggregatedEventMode();
+    if (aggregatedSplitUnsupportedForOutOfOrder) {
+        return false;
+    }
+
     return (this->isBcsSplitEnabled() && (size >= minimalSizeForBcsSplit) && directionSupported);
 }
 

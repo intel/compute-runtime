@@ -30,6 +30,12 @@ struct CommandQueue;
 struct Device;
 class BcsSplit;
 
+struct ImmediateSplitEvents {
+    Event *markerEvent = nullptr;
+    Event *barrierEvent = nullptr;
+    StackVec<Event *, 16> subcopyEvents;
+};
+
 class BcsSplitEvents {
   public:
     BcsSplitEvents(BcsSplit &bcsSplit) : bcsSplit(bcsSplit) {}
@@ -37,6 +43,7 @@ class BcsSplitEvents {
     bool isAggregatedEventMode() const { return aggregatedEventsMode; }
     void setAggregatedEventMode(bool mode) { aggregatedEventsMode = mode; }
     std::optional<size_t> obtainForImmediateSplit(Context *context, size_t maxEventCountInPool);
+    ImmediateSplitEvents captureEventsForImmediateSplit(size_t markerEventIndex, size_t engineCount, bool barrierRequired, bool useSignalEventForSubcopy);
     size_t obtainForRecordedSplit(Context *context);
     void releaseResources();
     std::lock_guard<std::mutex> obtainLock() { return std::lock_guard<std::mutex>(mtx); }
@@ -133,7 +140,7 @@ class BcsSplit {
     void appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainCmdList,
                                StackVec<ze_event_handle_t, 16> &subCopyEvents,
                                Event *signalEvent,
-                               size_t markerEventIndex,
+                               Event *markerEvent,
                                bool useSignalEventForSubCopy,
                                bool hasRelaxedOrderingDependencies);
 

@@ -151,5 +151,116 @@ HWTEST2_F(AggregatedBcsSplitMtTests, givenBcsSplitEnabledWhenMultipleThreadsAcce
         context->freeMem(ptr);
     }
 }
+
+struct BcsSplitPoolModeMtTests : public AggregatedBcsSplitTests {
+    bool useAggregatedEventsMode() const override { return false; }
+};
+
+HWTEST2_F(BcsSplitPoolModeMtTests, givenPoolModeBcsSplitWhenMultipleThreadsAppendCopiesConcurrentlyThenInternalEventPoolsAreAccessedSafely, IsAtLeastXeHpcCore) {
+    constexpr uint32_t numThreads = 8;
+    constexpr uint32_t iterationCount = 8;
+
+    std::array<DestroyableZeUniquePtr<L0::CommandList>, numThreads> cmdLists = {};
+    std::array<std::thread, numThreads> threads = {};
+    std::array<void *, numThreads> hostPtrs = {};
+    std::vector<TaskCountType> initialTaskCounts;
+
+    ASSERT_FALSE(bcsSplit->events.isAggregatedEventMode());
+
+    for (uint32_t i = 0; i < numThreads; i++) {
+        cmdLists[i] = createCmdList(true);
+        hostPtrs[i] = allocHostMem();
+    }
+
+    for (auto &splitCmdList : bcsSplit->cmdLists) {
+        initialTaskCounts.push_back(splitCmdList->getCsr(false)->peekTaskCount());
+    }
+
+    std::atomic_bool started = false;
+
+    auto threadBody = [&](uint32_t cmdListId) {
+        while (!started.load()) {
+            std::this_thread::yield();
+        }
+
+        auto localCopyParams = copyParams;
+
+        for (uint32_t i = 0; i < iterationCount; i++) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, cmdLists[cmdListId]->appendMemoryCopy(hostPtrs[cmdListId], hostPtrs[cmdListId], copySize, nullptr, 0, nullptr, localCopyParams));
+        }
+    };
+
+    for (uint32_t i = 0; i < numThreads; ++i) {
+        threads[i] = std::thread(threadBody, i);
+    }
+
+    started = true;
+
+    for (auto &thread : threads) {
+        thread.join();
+    }
+
+    EXPECT_FALSE(bcsSplit->events.getEventResources().subcopy.empty());
+
+    for (size_t i = 0; i < bcsSplit->cmdLists.size(); i++) {
+        EXPECT_TRUE(bcsSplit->cmdLists[i]->getCsr(false)->peekTaskCount() > initialTaskCounts[i]);
+    }
+
+    for (auto &ptr : hostPtrs) {
+        context->freeMem(ptr);
+    }
+}
+
+HWTEST2_F(AggregatedBcsSplitMtTests, givenAggregatedModeOutOfOrderCopyWithPendingBarrierWhenLargeCopyAppendedConcurrentlyThenNoCrash, IsAtLeastXeHpcCore) {
+    ASSERT_TRUE(bcsSplit->events.isAggregatedEventMode());
+
+    constexpr uint32_t numThreads = 4;
+    constexpr uint32_t iterationCount = 4;
+
+    std::array<DestroyableZeUniquePtr<L0::CommandList>, numThreads> cmdLists = {};
+    std::array<std::thread, numThreads> threads = {};
+    std::array<void *, numThreads> hostPtrs = {};
+
+    for (uint32_t i = 0; i < numThreads; i++) {
+        ze_command_queue_desc_t desc = {};
+        desc.ordinal = queryCopyOrdinal();
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+        cmdLists[i] = DestroyableZeUniquePtr<L0::CommandList>(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        ASSERT_FALSE(cmdLists[i]->isInOrderExecutionEnabled());
+        hostPtrs[i] = allocHostMem();
+    }
+
+    std::atomic_bool started = false;
+
+    auto threadBody = [&](uint32_t cmdListId) {
+        auto csr = cmdLists[cmdListId]->getCsr(false);
+        auto localCopyParams = copyParams;
+
+        while (!started.load()) {
+            std::this_thread::yield();
+        }
+
+        for (uint32_t i = 0; i < iterationCount; i++) {
+            *csr->getBarrierCountTagAddress() = 0u;
+            csr->getNextBarrierCount();
+            EXPECT_EQ(ZE_RESULT_SUCCESS, cmdLists[cmdListId]->appendMemoryCopy(hostPtrs[cmdListId], hostPtrs[cmdListId], copySize, nullptr, 0, nullptr, localCopyParams));
+        }
+    };
+
+    for (uint32_t i = 0; i < numThreads; ++i) {
+        threads[i] = std::thread(threadBody, i);
+    }
+
+    started = true;
+
+    for (auto &thread : threads) {
+        thread.join();
+    }
+
+    for (auto &ptr : hostPtrs) {
+        context->freeMem(ptr);
+    }
+}
 } // namespace ult
 } // namespace L0

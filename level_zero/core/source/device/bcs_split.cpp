@@ -248,6 +248,26 @@ std::optional<size_t> BcsSplitEvents::obtainForImmediateSplit(Context *context, 
     return 0;
 }
 
+ImmediateSplitEvents BcsSplitEvents::captureEventsForImmediateSplit(size_t markerEventIndex, size_t engineCount, bool barrierRequired, bool useSignalEventForSubcopy) {
+    auto lock = obtainLock();
+
+    ImmediateSplitEvents capturedEvents;
+    if (barrierRequired) {
+        capturedEvents.barrierEvent = this->eventResources.barrier[markerEventIndex];
+    }
+
+    if (!useSignalEventForSubcopy) {
+        capturedEvents.markerEvent = this->eventResources.marker[markerEventIndex].event;
+        const auto subcopyEventIndex = markerEventIndex * this->bcsSplit.cmdLists.size();
+        for (size_t i = 0; i < engineCount; i++) {
+            const auto copyEventIndex = this->aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
+            capturedEvents.subcopyEvents.push_back(this->eventResources.subcopy[copyEventIndex]);
+        }
+    }
+
+    return capturedEvents;
+}
+
 uint64_t *BcsSplitEvents::getNextAllocationForAggregatedEvent() {
     constexpr size_t allocationSize = MemoryConstants::pageSize64k;
 

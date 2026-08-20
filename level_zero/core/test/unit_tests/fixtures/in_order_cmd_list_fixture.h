@@ -447,8 +447,10 @@ struct MultiTileSynchronizedDispatchFixture : public MultiTileInOrderCmdListFixt
 struct AggregatedBcsSplitTests : public ::testing::Test {
     using MockEvent = WhiteBox<L0::EventImp<uint64_t>>;
 
+    virtual bool useAggregatedEventsMode() const { return true; }
+
     void SetUp() override {
-        debugManager.flags.SplitBcsAggregatedEventsMode.set(1);
+        debugManager.flags.SplitBcsAggregatedEventsMode.set(useAggregatedEventsMode() ? 1 : 0);
         debugManager.flags.SplitBcsCopy.set(1);
         debugManager.flags.SplitBcsRequiredTileCount.set(expectedTileCount);
         debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
