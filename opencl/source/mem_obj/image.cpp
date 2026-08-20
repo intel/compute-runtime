@@ -309,6 +309,9 @@ Image *Image::create(Context *context,
             if (allocation->getBindlessOffset() != std::numeric_limits<uint64_t>::max()) {
                 image->bindlessInfo = std::make_unique<SurfaceStateInHeapInfo>(allocation->getBindlessInfo());
                 image->bindlessImage = true;
+                if (image->bindlessInfo->ssPtr) {
+                    image->setImageArg(image->bindlessInfo->ssPtr, false, 0, defaultRootDeviceIndex);
+                }
             }
         }
     }
