@@ -34,8 +34,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
     {"0x1e2f8200", // BMG PUNIT rev 1
      {{"XTAL_CLK_FREQUENCY", 4},
       {"VRAM_BANDWIDTH", 56},
-      {"VRAM_FREQUENCY", 56},
-      {"VRAM_VID", 60},
       {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
@@ -45,8 +43,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
-      {"VRAM_FREQUENCY", 56},
-      {"VRAM_VID", 60},
       {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
@@ -56,8 +52,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
-      {"VRAM_FREQUENCY", 56},
-      {"VRAM_VID", 60},
       {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
@@ -579,8 +573,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
-      {"VRAM_FREQUENCY", 56},
-      {"VRAM_VID", 60},
       {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
@@ -590,8 +582,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
-      {"VRAM_FREQUENCY", 56},
-      {"VRAM_VID", 60},
       {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
@@ -1879,66 +1869,7 @@ int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
 
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryDomainSupported() {
-    return true;
-}
-
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pActual) {
-    *pActual = -1.0;
-
-    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<std::string, uint64_t> keyOffsetMap;
-    std::unordered_map<std::string, std::string> keyTelemInfoMap;
-
-    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
-        return result;
-    }
-
-    uint32_t memoryActualFreq = 0;
-    uint64_t telemOffset = 0;
-    std::string key("VRAM_FREQUENCY");
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryActualFreq);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
-        return result;
-    }
-    *pActual = static_cast<double>(memoryActualFreq & 0xFFFF);
-
-    return ZE_RESULT_SUCCESS;
-}
-
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pVoltage) {
-    *pVoltage = -1.0;
-
-    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<std::string, uint64_t> keyOffsetMap;
-    std::unordered_map<std::string, std::string> keyTelemInfoMap;
-
-    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
-        return result;
-    }
-
-    uint32_t memoryVoltage = 0;
-    uint64_t telemOffset = 0;
-    std::string key("VRAM_VID");
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryVoltage);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
-        return result;
-    }
-
-    // VRAM_VID is 9 bits U1.8 format representation
-    uint32_t vramVid = memoryVoltage & 0x1FF;
-    double vramVoltage = static_cast<double>(vramVid) / 256.0;
-
-    *pVoltage = vramVoltage;
-
-    return ZE_RESULT_SUCCESS;
+    return false;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;
