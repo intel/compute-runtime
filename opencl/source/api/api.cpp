@@ -21,6 +21,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/wait_util.h"
 
 #include "opencl/source/api/additional_extensions.h"
 #include "opencl/source/api/api_enter.h"
@@ -2317,6 +2318,9 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
         TRACING_EXIT(ClSetEventCallback, &retVal);
         return retVal;
     }
+
+    /* Cover tryFlushEvent + addCallback (both may probe completion via WaitUtils). */
+    WaitUtils::SkipYieldGuard skipYieldOnSetCb;
 
     if (eventObject->tryFlushEvent() == false) {
         retVal = CL_OUT_OF_RESOURCES;
