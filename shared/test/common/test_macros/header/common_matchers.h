@@ -225,11 +225,7 @@ using IsNotCriOrBmg = IsNotWithinProducts<IGFX_BMG, IGFX_CRI>;
 struct IsLeoSupported {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-#ifdef _WIN32
         return IsCRI::isMatched<productFamily>() || IsNVLS::isMatched<productFamily>();
-#else
-        return IsCRI::isMatched<productFamily>();
-#endif
     }
 };
 
