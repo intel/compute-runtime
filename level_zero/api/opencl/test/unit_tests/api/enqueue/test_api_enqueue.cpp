@@ -5,13 +5,16 @@
  *
  */
 
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/test/common/fixtures/leo_capture_fixture.h"
@@ -277,6 +280,76 @@ TEST_F(EnqueueSvmFixture, givenInvalidSvmPtrWhenClEnqueueSVMMemFillThenUserProvi
 
     EXPECT_EQ(notAnEvent(), event);
     EXPECT_FALSE(capturingCmdList.appendMemoryFillArgs.wasCalled());
+}
+
+struct EnqueueMapImageFixture : public Test<LeoCaptureFixture> {
+    void SetUp() override {
+        Test<LeoCaptureFixture>::SetUp();
+        if (!clDevice->getHardwareInfo().capabilityTable.supportsImages) {
+            GTEST_SKIP() << "Product does not support images";
+        }
+        capturingCmdList.setCmdListContext(context->getL0ContextHandle());
+
+        cl_image_format format{CL_RGBA, CL_FLOAT};
+        cl_image_desc desc{};
+        desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        desc.image_width = width;
+        desc.image_height = height;
+
+        cl_int errcode = CL_INVALID_VALUE;
+        image = clCreateImage(clContext, CL_MEM_READ_WRITE, &format, &desc, nullptr, &errcode);
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        ASSERT_NE(nullptr, image);
+
+        leoImage = static_cast<Image *>(castToObject<MemObj>(image));
+        ASSERT_NE(nullptr, leoImage);
+    }
+
+    void TearDown() override {
+        if (image != nullptr) {
+            EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(image));
+        }
+        Test<LeoCaptureFixture>::TearDown();
+    }
+
+    static constexpr size_t width = 16;
+    static constexpr size_t height = 16;
+    cl_mem image = nullptr;
+    Image *leoImage = nullptr;
+};
+
+TEST_F(EnqueueMapImageFixture, givenHostPtrSizeAboveMaxMemAllocSizeWhenClEnqueueMapImageThenMappingSucceeds) {
+    const auto hostPtrSize = leoImage->getHostptrSize();
+    ASSERT_LT(1u, hostPtrSize);
+    neoDevice->deviceInfo.maxMemAllocSize = hostPtrSize - 1u;
+
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {width, height, 1};
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto mappedPtr = clEnqueueMapImage(getCommandQueue(), image, CL_FALSE, CL_MAP_WRITE, origin, region,
+                                       nullptr, nullptr, 0, nullptr, nullptr, &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(leoImage->getCpuPtr(), mappedPtr);
+}
+
+TEST_F(EnqueueMapImageFixture, givenRegionReachingImageEndWhenClEnqueueMapImageThenMappedRangeFitsInHostAllocation) {
+    size_t origin[3] = {width / 2, height / 2, 0};
+    size_t region[3] = {width - origin[0], height - origin[1], 1};
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto mappedPtr = clEnqueueMapImage(getCommandQueue(), image, CL_FALSE, CL_MAP_WRITE, origin, region,
+                                       nullptr, nullptr, 0, nullptr, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, mappedPtr);
+
+    const auto &imgInfo = leoImage->getL0Object()->getImageInfo();
+    const auto mappedOffset = ptrDiff(mappedPtr, leoImage->getCpuPtr());
+    const auto mappedEnd = mappedOffset + (region[1] - 1) * imgInfo.rowPitch + region[0] * imgInfo.surfaceFormat->imageElementSizeInBytes;
+
+    EXPECT_EQ(leoImage->getHostptrSize(), mappedEnd);
 }
 
 } // namespace ult

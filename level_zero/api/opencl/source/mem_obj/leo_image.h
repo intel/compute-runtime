@@ -33,6 +33,7 @@ class Image : public MemObj {
                         size_t *paramValueSizeRet);
 
     size_t calculateTotalSizeForImage(const std::array<size_t, 3> &sizes) const;
+    size_t calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes) const;
 
     void getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
 

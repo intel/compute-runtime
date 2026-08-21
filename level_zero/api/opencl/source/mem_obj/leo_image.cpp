@@ -486,13 +486,39 @@ size_t Image::getApiSize() const {
     return this->calculateTotalSizeForImage(sizes);
 }
 
+size_t Image::calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes) const {
+    auto l0Image = getL0Object();
+    const auto &l0ImgInfo = l0Image->getImageInfo();
+    auto retSize = l0ImgInfo.surfaceFormat->imageElementSizeInBytes * sizes[0];
+    auto rowPitch = l0ImgInfo.rowPitch;
+    auto slicePitch = l0ImgInfo.slicePitch;
+    const size_t precedingRows = sizes[1] > 0u ? sizes[1] - 1u : 0u;
+    const size_t precedingSlices = sizes[2] > 0u ? sizes[2] - 1u : 0u;
+
+    switch (l0ImgInfo.imgDesc.imageType) {
+    case NEO::ImageType::image1DArray:
+        retSize += slicePitch * precedingRows;
+        break;
+    case NEO::ImageType::image2D:
+        retSize += rowPitch * precedingRows;
+        break;
+    case NEO::ImageType::image2DArray:
+    case NEO::ImageType::image3D:
+        retSize += rowPitch * precedingRows + slicePitch * precedingSlices;
+        break;
+    default:
+        break;
+    }
+    return retSize;
+}
+
 size_t Image::getHostptrSize() const {
     auto l0Image = getL0Object();
     const auto &l0ImgInfo = l0Image->getImageInfo();
     MemObjSizeArray sizes{l0ImgInfo.imgDesc.imageWidth,
                           l0ImgInfo.imgDesc.imageType == ImageType::image1DArray ? l0ImgInfo.imgDesc.imageArraySize : l0ImgInfo.imgDesc.imageHeight,
                           l0ImgInfo.imgDesc.imageType == ImageType::image2DArray ? l0ImgInfo.imgDesc.imageArraySize : l0ImgInfo.imgDesc.imageDepth};
-    return this->calculateTotalSizeForImage(sizes);
+    return this->calculateHostPtrSizeForImage(sizes);
 }
 
 bool Image::isCompressionEnabled() {
