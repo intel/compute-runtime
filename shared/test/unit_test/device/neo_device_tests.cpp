@@ -431,6 +431,32 @@ TEST_F(DeviceGetCapsTest, givenEmptyIgcSpirvYamlWhenInitializeSpirvQueriesFromIg
     EXPECT_TRUE(pDevice->getDeviceInfo().spirvCapabilities.empty());
 }
 
+TEST_F(DeviceGetCapsTest, givenDefaultDebugFlagWhenInitializeSpirvQueriesFromIgcThenIgcPathIsEnabledByDefault) {
+    EXPECT_EQ(1, debugManager.flags.EnableSpirvQueriesFromIgc.get());
+
+    auto pCompilerInterface = new MockCompilerInterface;
+    pCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+
+    EXPECT_TRUE(pDevice->initializeSpirvQueriesFromIGC());
+    EXPECT_EQ(1u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
+    EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, pDevice->getDeviceInfo().spirvExtensions.size());
+    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount, pDevice->getDeviceInfo().spirvCapabilities.size());
+}
+
+TEST_F(DeviceGetCapsTest, givenDebugFlagDisabledWhenInitializeSpirvQueriesFromIgcThenIgcPathIsSkipped) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSpirvQueriesFromIgc.set(0);
+    auto pCompilerInterface = new MockCompilerInterface;
+    pCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+
+    EXPECT_FALSE(pDevice->initializeSpirvQueriesFromIGC());
+    EXPECT_EQ(0u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
+    EXPECT_TRUE(pDevice->getDeviceInfo().spirvExtensions.empty());
+    EXPECT_TRUE(pDevice->getDeviceInfo().spirvCapabilities.empty());
+}
+
 TEST_F(DeviceGetCapsTest,
        givenImplicitScalingWhenInitializeCapsIsCalledThenMaxMemAllocSizeIsSetCorrectly) {
     DebugManagerStateRestore dbgRestorer;
