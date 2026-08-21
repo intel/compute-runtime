@@ -645,11 +645,12 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
     auto lock = l0Device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     auto *builtinKernel = l0Device->getBuiltinFunctionsLib()->getImageFunction(L0::ImageBuiltIn::fillImage3d, builtInMode);
 
-    builtinKernel->setArgRedescribedImage(0u, pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()), false, 0u);
+    auto fillRegion = createZeImageRegionWithMipLevel(pImage, origin, region);
+
+    builtinKernel->setArgRedescribedImage(0u, pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()), false, fillRegion.mipLevel);
     builtinKernel->setArgumentValue(1u, sizeof(packedFillColor), packedFillColor);
 
-    auto fillRegion = createZeImageRegionWithMipLevel(pImage, origin, region);
-    uint32_t dstOffset[] = {fillRegion.originX, fillRegion.originY, fillRegion.originZ, fillRegion.mipLevel};
+    uint32_t dstOffset[] = {fillRegion.originX, fillRegion.originY, fillRegion.originZ, 0u};
     builtinKernel->setArgumentValue(2u, sizeof(dstOffset), dstOffset);
 
     uint32_t groupSizeX = static_cast<uint32_t>(region[0]);
