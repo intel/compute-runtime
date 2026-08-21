@@ -49,7 +49,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool isVmBindAvailable() override;
     bool isVmBindDecompressAvailable(uint32_t vmId) override;
     bool useKmdAllocationForIsa() const override { return noCompressionHintAvailable; }
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) override;
     uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override;
     CacheRegion closAlloc(CacheLevel cacheLevel) override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
@@ -151,7 +151,7 @@ class IoctlHelperXe : public IoctlHelper {
         return gtIdToTileId.at(gtId);
     }
     uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const override;
-    bool makeResidentBeforeLockNeeded() const override;
+    bool isDeferBackingEnabledForSize(size_t allocationSize) const override;
     bool isSmallBarConfigAllowed() const override { return false; }
     void *pciBarrierMmap() override;
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
@@ -169,7 +169,7 @@ class IoctlHelperXe : public IoctlHelper {
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
 
-    bool isDeferBackingEnabled() const;
+    bool isDeferBackingSupported() const;
     virtual const char *xeGetClassName(int className) const;
     const char *xeGetBindOperationName(int bindOperation);
     const char *xeGetAdviseOperationName(int adviseOperation);
@@ -222,7 +222,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::mutex xeLock;
     std::mutex gemCloseLock;
     mutable std::once_flag checkDeferBackingOnce;
-    mutable bool deferBackingEnabled = false;
+    mutable bool deferBackingSupported = false;
     mutable std::once_flag checkVmBindDecompressOnce;
     mutable bool vmBindDecompressAvailable = false;
     std::vector<BindInfo> bindInfo;

@@ -21,6 +21,7 @@
 #include "shared/source/helpers/topology.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/memory_info.h"
@@ -725,7 +726,7 @@ uint16_t IoctlHelperXe::getCpuCachingMode(std::optional<bool> isCoherent, bool a
     return cpuCachingMode;
 }
 
-int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint) {
+int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) {
     struct drm_xe_gem_create create = {};
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
 
@@ -747,7 +748,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    if (this->isDeferBackingEnabled()) {
+    if (deferBacking.has_value() ? *deferBacking : this->isDeferBackingEnabledForSize(allocSize)) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
     if (hint == GemCreateExtHint::noCompression) {
@@ -795,7 +796,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    if (this->isDeferBackingEnabled()) {
+    if (this->isDeferBackingEnabledForSize(size)) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
 
@@ -2065,24 +2066,40 @@ bool IoctlHelperXe::isImmediateVmBindRequired() const {
     return true;
 }
 
-bool IoctlHelperXe::makeResidentBeforeLockNeeded() const {
-    return this->isDeferBackingEnabled();
+bool IoctlHelperXe::isDeferBackingEnabledForSize(size_t allocationSize) const {
+    if (!this->isDeferBackingSupported()) {
+        return false;
+    }
+
+    // Global threshold: once defer backing is enabled, -1 means defer unconditionally, while
+    // 0-100 defers only once the projected device footprint (used local memory + this allocation)
+    // reaches threshold% of max local memory (overcommit onset), so normal-load allocations keep
+    // immediate backing and avoid the cold first-submit latency hit.
+    const int32_t thresholdPercent = debugManager.flags.DeferBackingMemoryPressurePercent.get();
+    if (thresholdPercent < 0) {
+        return true;
+    }
+
+    auto memoryManager = static_cast<DrmMemoryManager *>(drm.getRootDeviceEnvironment().executionEnvironment.memoryManager.get());
+    UNRECOVERABLE_IF(memoryManager == nullptr);
+    const uint32_t rootDeviceIndex = drm.getRootDeviceEnvironment().getRootDeviceIndex();
+    return memoryManager->isDeferBackingMemoryPressureReached(rootDeviceIndex, allocationSize, thresholdPercent);
 }
 
-bool IoctlHelperXe::isDeferBackingEnabled() const {
+bool IoctlHelperXe::isDeferBackingSupported() const {
     std::call_once(checkDeferBackingOnce, [this]() {
         const auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-        deferBackingEnabled = productHelper.isDeferBackingEnabled();
+        deferBackingSupported = productHelper.isDeferBackingEnabled();
 
-        if (deferBackingEnabled) {
+        if (deferBackingSupported) {
             const auto csrType = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(),
                                                                CommandStreamReceiverType::hardware);
             if (csrType == CommandStreamReceiverType::hardwareWithAub) {
-                deferBackingEnabled = false;
+                deferBackingSupported = false;
             }
         }
     });
-    return deferBackingEnabled;
+    return deferBackingSupported;
 }
 
 void IoctlHelperXe::insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) {

@@ -191,14 +191,14 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
     size_t getMemoryRegionSize(uint32_t memoryBank) const override {
         return 1024u;
     }
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, GemCreateExtHint hint) override {
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, GemCreateExtHint hint, std::optional<bool> deferBacking) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
         return 0;
     }
-    int createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation, GemCreateExtHint hint) override {
+    int createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation, GemCreateExtHint hint, std::optional<bool> deferBacking) override {
         if (allocSize == 0 || failOnCreateGemExtWithSingleRegion) {
             return EINVAL;
         }
@@ -207,7 +207,7 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
         receivedGemCreateExtHint = hint;
         return 0;
     }
-    int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation) override {
+    int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation, std::optional<bool> deferBacking) override {
         if (allocSize == 0) {
             return EINVAL;
         }

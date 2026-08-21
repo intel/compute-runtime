@@ -187,6 +187,13 @@ class BufferObject {
     void requireImmediateBinding(bool required) {
         requiresImmediateBinding = required;
     }
+
+    void setDeferBackingUsed(bool used) {
+        deferBackingUsed = used;
+    }
+    bool isDeferBackingUsed() const {
+        return deferBackingUsed;
+    }
     void requireResourceDecompress(bool required) {
         requiresResourceDecompress = required;
     }
@@ -360,5 +367,6 @@ class BufferObject {
     bool isReused = false;
     bool readOnlyGpuResource = false;
     bool asynchronousPagingFence = false;
+    bool deferBackingUsed = false;
 };
 } // namespace NEO

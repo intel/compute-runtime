@@ -3993,7 +3993,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateMultiHostDebugSurfaceAl
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerAndResidentNeededbeforeLockWhenCreateAllocWithAlignmentIsCalledThenverifyAllocationIsResident) {
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->makeResidentBeforeLockNeededResult = true;
+    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
 
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);

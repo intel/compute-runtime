@@ -58,6 +58,8 @@ set(TEST_TARGETS
     zello_function_pointers_cl
     zello_global_bindless_kernel
     zello_graph
+    zello_graph_gemm_submit
+    zello_overcommit
     zello_visit
     zello_host_function
     zello_host_pointer

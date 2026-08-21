@@ -101,6 +101,9 @@ DrmMemoryManager::DrmMemoryManager(GemCloseWorkerMode mode,
     }
     osMemory = OSMemory::create();
 
+    const auto rootDeviceCount = executionEnvironment.rootDeviceEnvironments.size();
+    cachedMaxLocalMemory = std::make_unique<uint64_t[]>(rootDeviceCount);
+
     initialize(mode);
 }
 
@@ -119,6 +122,7 @@ void DrmMemoryManager::initialize(GemCloseWorkerMode mode) {
         }
         localMemAllocs.emplace_back();
         setLocalMemBanksCount(rootDeviceIndex);
+        DrmMemoryManager::cacheMaxLocalMemorySize(rootDeviceIndex);
         disableGemCloseWorker &= getDrm(rootDeviceIndex).isVmBindAvailable();
         isLocalMemoryUsedForIsa(rootDeviceIndex);
     }
@@ -157,6 +161,17 @@ void DrmMemoryManager::setLocalMemBanksCount(uint32_t rootDeviceIndex) {
         localMemBanksCount[rootDeviceIndex] = (memoryInfo ? memoryInfo->getLocalMemoryRegions().size() : 1u);
     }
 };
+
+void DrmMemoryManager::cacheMaxLocalMemorySize(uint32_t rootDeviceIndex) {
+    if (!isLocalMemorySupported(rootDeviceIndex)) {
+        return;
+    }
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    const uint32_t subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
+    const uint32_t deviceBitfield = (subDevicesCount >= 32u) ? std::numeric_limits<uint32_t>::max()
+                                                             : ((1u << subDevicesCount) - 1u);
+    cachedMaxLocalMemory[rootDeviceIndex] = DrmMemoryManager::getLocalMemorySize(rootDeviceIndex, deviceBitfield);
+}
 
 BufferObject *DrmMemoryManager::createRootDeviceBufferObject(uint32_t rootDeviceIndex) {
     BufferObject *bo = nullptr;
@@ -2152,6 +2167,13 @@ Drm &DrmMemoryManager::getDrm(uint32_t rootDeviceIndex) const {
     return *this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>();
 }
 
+void DrmMemoryManager::makeAllocationResidentInDefaultContext(GraphicsAllocation *allocation) {
+    auto rootDeviceIndex = allocation->getRootDeviceIndex();
+    auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
+    [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false, true) == MemoryOperationsStatus::success;
+    DEBUG_BREAK_IF(!ret);
+}
+
 void DrmMemoryManager::makeAllocationResidentIfNeeded(GraphicsAllocation *allocation) {
     auto allocType = allocation->getAllocationType();
     if (GraphicsAllocation::isDebugSurfaceAllocationType(allocType) ||
@@ -2159,13 +2181,43 @@ void DrmMemoryManager::makeAllocationResidentIfNeeded(GraphicsAllocation *alloca
         return;
     }
 
-    auto rootDeviceIndex = allocation->getRootDeviceIndex();
-    auto ioctlHelper = this->getDrm(rootDeviceIndex).getIoctlHelper();
-    if (ioctlHelper->makeResidentBeforeLockNeeded()) {
-        auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
-        [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false, true) == MemoryOperationsStatus::success;
-        DEBUG_BREAK_IF(!ret);
+    // Use the defer-backing decision frozen on the BO at creation; re-evaluating pressure here can
+    // diverge from how the GEM was actually created as used-local-memory drifts before the lock.
+    auto bo = static_cast<DrmAllocation *>(allocation)->getBO();
+    if (bo != nullptr && bo->isDeferBackingUsed()) {
+        makeAllocationResidentInDefaultContext(allocation);
     }
+}
+
+bool DrmMemoryManager::isDeferBackingMemoryPressureReached(uint32_t rootDeviceIndex, size_t allocationSize, int32_t thresholdPercent) {
+    if (rootDeviceIndex == CommonConstants::unspecifiedDeviceIndex) {
+        return false;
+    }
+
+    // Max local memory is fixed and cached once during initialize() (cacheMaxLocalMemorySize),
+    // so the allocation hot path only reads the value here.
+    const uint64_t maxLocalMemory = cachedMaxLocalMemory[rootDeviceIndex];
+    if (maxLocalMemory == 0u) {
+        return false;
+    }
+
+    // Best-effort onset detector, not a hard limiter: usage is an unreserved snapshot so concurrent
+    // allocations may pick immediate backing together; the sub-capacity threshold and KMD are the backstop.
+    const uint64_t projectedLocalMemory = getUsedLocalMemorySize(rootDeviceIndex) + allocationSize;
+    const bool pressureReached = (projectedLocalMemory * 100ull) >= (maxLocalMemory * static_cast<uint64_t>(thresholdPercent));
+
+    if (debugManager.flags.PrintDebugMessages.get()) {
+        PRINT_STRING(true, stderr, "[DeferBackingPressure] used=%lluMB + req=%lluMB -> proj=%lluMB / max=%lluMB (%llu%%) threshold=%d%% -> deferBacking=%s\n",
+                     static_cast<unsigned long long>(getUsedLocalMemorySize(rootDeviceIndex) >> 20),
+                     static_cast<unsigned long long>(static_cast<uint64_t>(allocationSize) >> 20),
+                     static_cast<unsigned long long>(projectedLocalMemory >> 20),
+                     static_cast<unsigned long long>(maxLocalMemory >> 20),
+                     static_cast<unsigned long long>(projectedLocalMemory * 100ull / maxLocalMemory),
+                     thresholdPercent,
+                     pressureReached ? "ON" : "off");
+    }
+
+    return pressureReached;
 }
 
 uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
@@ -2869,10 +2921,14 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
 
     auto patIndex = drm->getPatIndex(gmm, allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMemoryPool, false);
 
+    // Evaluate the defer-backing decision once so the gemCreate ioctl flag and the BO's recorded
+    // state cannot diverge as memory pressure changes between separate evaluations.
+    const bool deferBacking = drm->getIoctlHelper()->isDeferBackingEnabledForSize(size);
+
     if (memoryBanks.count() > 1) {
-        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex, isUsmHostAllocation);
+        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex, isUsmHostAllocation, deferBacking);
     } else {
-        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, patIndex, pairHandle, isUsmHostAllocation);
+        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, patIndex, pairHandle, isUsmHostAllocation, GemCreateExtHint::none, deferBacking);
     }
 
     if (ret != 0) {
@@ -2886,6 +2942,7 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
     bo->setBOType(getBOTypeFromPatIndex(patIndex, productHelper.isVmBindPatIndexProgrammingSupported()));
     bo->setAddress(gpuAddress);
+    bo->setDeferBackingUsed(deferBacking);
 
     return bo;
 }
@@ -3317,7 +3374,9 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto alignSize = alignUp(remainingSize, MemoryConstants::pageSize64k);
     auto remainingMemoryBanks = allocationData.storageInfo.memoryBanks;
     auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(allocationData.storageInfo.getNumBanks());
-    bool makeResidentBeforeLock = ioctlHelper->makeResidentBeforeLockNeeded();
+    // Evaluate the defer-backing decision once and reuse it for the gemCreate ioctl flag, the BO's
+    // recorded state, the immediate bind, and the always-resident marking so they cannot diverge.
+    const bool deferBacking = ioctlHelper->isDeferBackingEnabledForSize(size);
 
     bool useChunking = false;
     uint32_t numOfChunks = 0;
@@ -3346,7 +3405,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
         auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
 
-        int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks, allocationData.flags.isUSMHostAllocation);
+        int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks, allocationData.flags.isUSMHostAllocation, GemCreateExtHint::none, deferBacking);
 
         if (ret) {
             ioctlHelper->munmapFunction(*this, cpuPointer, totalSizeToAlloc);
@@ -3371,7 +3430,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
             return nullptr;
         }
 
-        if (makeResidentBeforeLock) {
+        bo->setDeferBackingUsed(deferBacking);
+        if (deferBacking) {
             bo->requireImmediateBinding(true);
             [[maybe_unused]] auto ret = bo->bind(getDefaultOsContext(allocationData.rootDeviceIndex), 0, false);
             DEBUG_BREAK_IF(ret != 0);
@@ -3401,7 +3461,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     allocation->storageInfo.isChunked = useChunking;
     allocation->storageInfo.numOfChunks = numOfChunks;
 
-    if (makeResidentBeforeLock) {
+    if (deferBacking) {
         auto osContext = getDefaultOsContext(allocationData.rootDeviceIndex);
         allocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
     }

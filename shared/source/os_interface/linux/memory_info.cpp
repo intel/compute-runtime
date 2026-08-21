@@ -73,7 +73,7 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
     }
 }
 
-int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, GemCreateExtHint hint) {
+int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, GemCreateExtHint hint, std::optional<bool> deferBacking) {
     std::vector<unsigned long> memPolicyNodeMask;
     int mode = -1;
     auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
@@ -84,9 +84,9 @@ int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allo
         if (memPolicyMode != -1) {
             mode = memPolicyMode;
         }
-        return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, mode, memPolicyNodeMask, isCoherent, hint);
+        return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, mode, memPolicyNodeMask, isCoherent, hint, deferBacking);
     } else {
-        return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, std::nullopt, std::nullopt, isCoherent, hint);
+        return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, std::nullopt, std::nullopt, isCoherent, hint, deferBacking);
     }
 }
 
@@ -147,7 +147,7 @@ void MemoryInfo::printRegionSizes() const {
     }
 }
 
-int MemoryInfo::createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation, GemCreateExtHint hint) {
+int MemoryInfo::createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation, GemCreateExtHint hint, std::optional<bool> deferBacking) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
     MemRegionsVec region = {regionClassAndInstance};
@@ -159,11 +159,11 @@ int MemoryInfo::createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t 
         }
     }
     uint32_t numOfChunks = 0;
-    auto ret = createGemExt(region, allocSize, handle, patIndex, vmId, pairHandle, false, numOfChunks, isUSMHostAllocation, hint);
+    auto ret = createGemExt(region, allocSize, handle, patIndex, vmId, pairHandle, false, numOfChunks, isUSMHostAllocation, hint, deferBacking);
     return ret;
 }
 
-int MemoryInfo::createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation) {
+int MemoryInfo::createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation, std::optional<bool> deferBacking) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto banks = std::bitset<4>(memoryBanks);
     MemRegionsVec memRegions{};
@@ -178,7 +178,7 @@ int MemoryInfo::createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size
         currentBank++;
     }
     uint32_t numOfChunks = 0;
-    auto ret = createGemExt(memRegions, allocSize, handle, patIndex, {}, -1, false, numOfChunks, isUSMHostAllocation);
+    auto ret = createGemExt(memRegions, allocSize, handle, patIndex, {}, -1, false, numOfChunks, isUSMHostAllocation, GemCreateExtHint::none, deferBacking);
     return ret;
 }
 

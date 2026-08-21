@@ -60,6 +60,7 @@ class DrmMemoryManager : public MemoryManager {
 
     uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
     uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) override;
+    bool isDeferBackingMemoryPressureReached(uint32_t rootDeviceIndex, size_t allocationSize, int32_t thresholdPercent);
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
@@ -162,6 +163,7 @@ class DrmMemoryManager : public MemoryManager {
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId(uint32_t rootDeviceIndex) const;
     OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
+    void makeAllocationResidentInDefaultContext(GraphicsAllocation *allocation);
     void makeAllocationResidentIfNeeded(GraphicsAllocation *allocation);
 
     MOCKABLE_VIRTUAL bool getSystemMemoryUsageFromProcMeminfo(uint64_t &totalBytes, uint64_t &freeBytes);
@@ -212,6 +214,7 @@ class DrmMemoryManager : public MemoryManager {
     void releaseBufferObject(uint32_t rootDeviceIndex);
     BufferObject::BOType getBOTypeFromPatIndex(uint64_t patIndex, bool isPatIndexSupported) const;
     void setLocalMemBanksCount(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL void cacheMaxLocalMemorySize(uint32_t rootDeviceIndex);
     bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const override;
 
     template <typename Func>
@@ -231,6 +234,7 @@ class DrmMemoryManager : public MemoryManager {
     std::map<std::pair<int, uint32_t>, BufferObjectHandleWrapper, BoHandleDeviceIndexPairComparer> sharedBoHandles;
     std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;
     std::vector<size_t> localMemBanksCount;
+    std::unique_ptr<uint64_t[]> cachedMaxLocalMemory;
     std::vector<GraphicsAllocation *> sysMemAllocs;
     std::mutex allocMutex;
 };

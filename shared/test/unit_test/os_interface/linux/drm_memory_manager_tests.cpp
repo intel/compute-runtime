@@ -3014,7 +3014,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAnd
     this->dontTestIoctlInTearDown = true;
 
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->makeResidentBeforeLockNeededResult = true;
+    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
 
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
@@ -3034,12 +3034,68 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAnd
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDeferBackingDecisionFrozenAtCreationWhenIoctlHelperResultChangesBeforeLockThenResidencyFollowsCreationDecision) {
+    mock->ioctlExpected.total = -1;
+    this->dontTestIoctlInTearDown = true;
+
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), 0));
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::buffer});
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_TRUE(static_cast<DrmAllocation *>(allocation)->getBO()->isDeferBackingUsed());
+
+    mockIoctlHelper->isDeferBackingEnabledForSizeResult = false;
+
+    auto ptr = memoryManager->lockResource(allocation);
+    EXPECT_NE(nullptr, ptr);
+
+    auto osContext = device->getDefaultEngine().osContext;
+    EXPECT_TRUE(allocation->isAlwaysResident(osContext->getContextId()));
+
+    memoryManager->unlockResource(allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDeferBackingNotUsedAtCreationWhenIoctlHelperResultChangesBeforeLockThenAllocationStaysNonResident) {
+    mock->ioctlExpected.total = -1;
+    this->dontTestIoctlInTearDown = true;
+
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    mockIoctlHelper->isDeferBackingEnabledForSizeResult = false;
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), 0));
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::buffer});
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_FALSE(static_cast<DrmAllocation *>(allocation)->getBO()->isDeferBackingUsed());
+
+    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
+
+    auto ptr = memoryManager->lockResource(allocation);
+    EXPECT_NE(nullptr, ptr);
+
+    auto osContext = device->getDefaultEngine().osContext;
+    EXPECT_FALSE(allocation->isAlwaysResident(osContext->getContextId()));
+
+    memoryManager->unlockResource(allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAndResidentNeededbeforeLockWhenLockIsCalledForDebugAllocationsThenVerifyAllocationIsNotResident) {
     mock->ioctlExpected.total = -1;
     this->dontTestIoctlInTearDown = true;
 
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->makeResidentBeforeLockNeededResult = true;
+    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
 
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
@@ -3513,6 +3569,125 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests,
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenNullPtrIsReturned) {
     EXPECT_EQ(nullptr, memoryManager->getAlignedMallocRestrictions());
+}
+
+struct DeferBackingPressureDrmMemoryManager : public DrmMemoryManager {
+    using DrmMemoryManager::DrmMemoryManager;
+    uint64_t maxLocalMemory = 0u;
+    uint32_t getLocalMemorySizeCallCount = 0u;
+    uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override {
+        getLocalMemorySizeCallCount++;
+        return maxLocalMemory;
+    }
+    void cacheMaxLocalMemorySize(uint32_t rootDeviceIndex) override {
+        this->localMemorySupported[rootDeviceIndex] = true;
+        this->cachedMaxLocalMemory[rootDeviceIndex] = this->getLocalMemorySize(rootDeviceIndex, 0u);
+    }
+    void setUsedLocalMemory(uint32_t rootDeviceIndex, size_t value) {
+        this->localMemAllocsSize[rootDeviceIndex] = value;
+    }
+};
+
+TEST_F(DrmMemoryManagerBasic, givenThresholdWhenProjectedUsageCrossesThresholdThenDeferBackingDecisionFlips) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.maxLocalMemory = 1000u;
+    memoryManager.cacheMaxLocalMemorySize(rootDeviceIndex);
+
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 700u);
+    EXPECT_FALSE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 80));
+
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 799u);
+    EXPECT_FALSE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 80));
+
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 800u);
+    EXPECT_TRUE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 80));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenAllocationSizeWhenProjectedUsageCrossesThresholdThenDeferBackingIsEnabled) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.maxLocalMemory = 1000u;
+    memoryManager.cacheMaxLocalMemorySize(rootDeviceIndex);
+
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 700u);
+    EXPECT_FALSE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 99u, 80));
+    EXPECT_TRUE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 100u, 80));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenThresholdZeroThenDeferBackingAlwaysTriggeredAndAtHundredOnlyAtFull) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.maxLocalMemory = 1000u;
+    memoryManager.cacheMaxLocalMemorySize(rootDeviceIndex);
+
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 0u);
+    EXPECT_TRUE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 0));
+
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 999u);
+    EXPECT_FALSE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 100));
+    EXPECT_TRUE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 1u, 100));
+
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 1000u);
+    EXPECT_TRUE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 100));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenZeroMaxLocalMemoryWhenCheckingDeferBackingPressureThenReturnsFalse) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.maxLocalMemory = 0u;
+    memoryManager.cacheMaxLocalMemorySize(rootDeviceIndex);
+
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 0u);
+    EXPECT_FALSE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 4096u, 50));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenUnspecifiedRootDeviceIndexWhenCheckingDeferBackingPressureThenReturnsFalse) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.maxLocalMemory = 1000u;
+
+    EXPECT_FALSE(memoryManager.isDeferBackingMemoryPressureReached(CommonConstants::unspecifiedDeviceIndex, 0u, 80));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenMaxLocalMemoryCachedAtInitWhenCheckedMultipleTimesThenItIsNotQueriedAgain) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.maxLocalMemory = 1000u;
+    memoryManager.cacheMaxLocalMemorySize(rootDeviceIndex);
+    EXPECT_EQ(1u, memoryManager.getLocalMemorySizeCallCount);
+
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 900u);
+    EXPECT_TRUE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 80));
+    EXPECT_EQ(1u, memoryManager.getLocalMemorySizeCallCount);
+
+    memoryManager.maxLocalMemory = 5000u;
+    EXPECT_TRUE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 80));
+    EXPECT_EQ(1u, memoryManager.getLocalMemorySizeCallCount);
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenPrintDebugMessagesEnabledWhenCheckingDeferBackingPressureThenDecisionIsPrinted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.maxLocalMemory = 1000u;
+    memoryManager.cacheMaxLocalMemorySize(rootDeviceIndex);
+    memoryManager.setUsedLocalMemory(rootDeviceIndex, 900u);
+
+    testing::internal::CaptureStderr();
+    EXPECT_TRUE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 80));
+    const std::string output = testing::internal::GetCapturedStderr();
+
+    EXPECT_NE(std::string::npos, output.find("[DeferBackingPressure]"));
+
+    memoryManager.commonCleanup();
 }
 
 TEST_F(DrmMemoryManagerBasic, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterEnabledIsTrue) {
@@ -5089,7 +5264,7 @@ struct MockIoctlHelperPrelimResourceRegistration : public IoctlHelperPrelim20 {
 
     MockIoctlHelperPrelimResourceRegistration(Drm &drm) : IoctlHelperPrelim20(drm) {}
 
-    ADDMETHOD_CONST_NOBASE(makeResidentBeforeLockNeeded, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isDeferBackingEnabledForSize, bool, false, (size_t allocationSize));
 };
 
 TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeShouldBeRegisteredThenBoHasBindExtHandleAdded) {
@@ -9973,7 +10148,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenMakeResidentBeforeL
     mock->ioctlExpected.gemMmapOffset = 1;
 
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->makeResidentBeforeLockNeededResult = true;
+    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
     mockIoctlHelper->callBaseVmAdviseAtomicAttribute = false;
     mockIoctlHelper->vmAdviseAtomicAttribute = std::nullopt;
 
