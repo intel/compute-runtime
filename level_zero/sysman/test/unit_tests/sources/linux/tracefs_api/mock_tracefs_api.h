@@ -11,6 +11,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/tracefs_api/mock_tracefs_os_library.h"
 
 #include <cstdint>
+#include <cstring>
 #include <string>
 
 namespace L0 {
@@ -28,24 +29,73 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
     int getBufferPercentReturnValue = MockTraceFsOsLibrary::mockBufferPercent;
     int setBufferPercentReturnValue = 0;
     static inline int lastSetBufferPercent = -1;
+    static inline struct tracefs_instance *lastSetBufferPercentInstance = nullptr;
     static inline uint32_t setBufferPercentCallCount = 0;
     static inline uint32_t failSetBufferPercentOnCall = 0;
+    int setBufferSizeReturnValue = 0;
+    // cpu -1 is a valid request (all CPUs), so an out-of-range value marks "not recorded yet".
+    static constexpr int noCpuRecorded = -2;
+    static inline size_t lastSetBufferSize = 0;
+    static inline int lastSetBufferSizeCpu = noCpuRecorded;
+    static inline uint32_t setBufferSizeCallCount = 0;
     std::string mockTracePipeData;
+    bool mockEventAlreadyEnabled = false;
+    bool mockTracingAlreadyOn = false;
+    bool mockInstanceCreateReturnsNull = false;
+
     PublicTraceFsApi() {
         lastSetBufferPercent = -1;
+        lastSetBufferPercentInstance = nullptr;
         setBufferPercentCallCount = 0;
+        lastSetBufferSize = 0;
+        lastSetBufferSizeCpu = noCpuRecorded;
+        setBufferSizeCallCount = 0;
     }
 
     bool loadEntryPointsFromBase() {
         return L0::Sysman::TraceFsApi::loadEntryPoints();
     }
 
+    struct tracefs_instance *traceFsInstanceCreate(const char *name) override {
+        if (traceFsInstanceCreateEntry == nullptr) {
+            return L0::Sysman::TraceFsApi::traceFsInstanceCreate(name);
+        }
+        if (mockInstanceCreateReturnsNull) {
+            return nullptr;
+        }
+        return &MockTraceFsOsLibrary::mockTraceFsInstance;
+    }
+
+    struct tracefs_instance *traceFsInstanceCreateBase(const char *name) {
+        return L0::Sysman::TraceFsApi::traceFsInstanceCreate(name);
+    }
+
+    void traceFsInstanceDestroy(struct tracefs_instance *instance) override {}
+    void traceFsInstanceFree(struct tracefs_instance *instance) override {}
+
+    void traceFsInstanceDestroyBase(struct tracefs_instance *instance) {
+        L0::Sysman::TraceFsApi::traceFsInstanceDestroy(instance);
+    }
+
+    void traceFsInstanceFreeBase(struct tracefs_instance *instance) {
+        L0::Sysman::TraceFsApi::traceFsInstanceFree(instance);
+    }
+
     char *traceFsInstanceFileRead(struct tracefs_instance *instance, const char *file, int *psize) override {
-        if (file && std::string(file) == "trace_pipe" && !mockTracePipeData.empty()) {
-            if (psize) {
-                *psize = static_cast<int>(mockTracePipeData.size());
+        if (file) {
+            std::string fileStr(file);
+            if (fileStr == "trace_pipe" && !mockTracePipeData.empty()) {
+                if (psize) {
+                    *psize = static_cast<int>(mockTracePipeData.size());
+                }
+                return const_cast<char *>(mockTracePipeData.c_str());
             }
-            return const_cast<char *>(mockTracePipeData.c_str());
+            if (fileStr == "events/xe/xe_error_cper/enable") {
+                return mockEventAlreadyEnabled ? strdup("1") : nullptr;
+            }
+            if (fileStr == "tracing_on") {
+                return mockTracingAlreadyOn ? strdup("1") : nullptr;
+            }
         }
         return L0::Sysman::TraceFsApi::traceFsInstanceFileRead(instance, file, psize);
     }
@@ -59,6 +109,20 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
 
     long long traceFsInstanceGetBufferSizeBase(struct tracefs_instance *instance, int cpu) {
         return L0::Sysman::TraceFsApi::traceFsInstanceGetBufferSize(instance, cpu);
+    }
+
+    int traceFsInstanceSetBufferSize(struct tracefs_instance *instance, size_t size, int cpu) override {
+        if (traceFsInstanceSetBufferSizeEntry != nullptr) {
+            lastSetBufferSize = size;
+            lastSetBufferSizeCpu = cpu;
+            setBufferSizeCallCount++;
+            return setBufferSizeReturnValue;
+        }
+        return L0::Sysman::TraceFsApi::traceFsInstanceSetBufferSize(instance, size, cpu);
+    }
+
+    int traceFsInstanceSetBufferSizeBase(struct tracefs_instance *instance, size_t size, int cpu) {
+        return L0::Sysman::TraceFsApi::traceFsInstanceSetBufferSize(instance, size, cpu);
     }
 
     int traceFsEventEnable(struct tracefs_instance *instance, const char *system, const char *event) override {
@@ -119,6 +183,7 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
     int traceFsInstanceSetBufferPercent(struct tracefs_instance *instance, int val) override {
         if (traceFsInstanceSetBufferPercentEntry != nullptr) {
             lastSetBufferPercent = val;
+            lastSetBufferPercentInstance = instance;
             setBufferPercentCallCount++;
             if (failSetBufferPercentOnCall == setBufferPercentCallCount) {
                 return -1;

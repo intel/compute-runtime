@@ -24,7 +24,10 @@ class InfoLog {
 
     virtual ze_result_t infoLogGetProperties(zes_intel_info_log_properties_exp_t *pProperties) = 0;
     virtual ze_result_t infoLogRead(uint32_t *pSize, uint8_t *pBuffer) = 0;
-    virtual ze_result_t infoLogEnable(bool state) = 0;
+    virtual ze_result_t infoLogEnable(zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor) = 0;
+    virtual ze_result_t infoLogDisable() = 0;
+    virtual ze_result_t infoLogReadWithMetaData(uint32_t *pSize, uint8_t *pBuffer,
+                                                uint32_t *pEventCount, zes_intel_info_log_metadata_exp *pDescriptors) = 0;
 
     static InfoLog *fromHandle(zes_intel_info_log_handle_t handle) {
         return reinterpret_cast<InfoLog *>(handle);

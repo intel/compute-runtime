@@ -56,11 +56,43 @@ int SysmanSysCallsWrapper::close(int fd, int &errorNum) {
     return result;
 }
 
+int SysmanSysCallsWrapper::dup(int oldfd, int &errorNum) {
+    errno = 0;
+    int result = NEO::SysCalls::dup(oldfd);
+    errorNum = errno;
+    return result;
+}
+
 int SysmanSysCallsWrapper::access(const char *pathname, int mode, int &errorNum) {
     errno = 0;
     int result = NEO::SysCalls::access(pathname, mode);
     errorNum = errno;
     return result;
+}
+
+FILE *SysmanSysCallsWrapper::fdopen(int fd, const char *mode, int &errorNum) {
+    errno = 0;
+    auto filep = NEO::SysCalls::fdopen(fd, mode);
+    errorNum = errno;
+    return filep;
+}
+
+char *SysmanSysCallsWrapper::fgets(char *s, int size, FILE *stream, int &errorNum) {
+    errno = 0;
+    auto ret = NEO::SysCalls::fgets(s, size, stream);
+    errorNum = errno;
+    return ret;
+}
+
+int SysmanSysCallsWrapper::fclose(FILE *stream, int &errorNum) {
+    errno = 0;
+    auto ret = NEO::SysCalls::fclose(stream);
+    errorNum = errno;
+    return ret;
+}
+
+int SysmanSysCallsWrapper::setvbuf(FILE *stream, char *buf, int mode, size_t size) {
+    return NEO::SysCalls::setvbuf(stream, buf, mode, size);
 }
 
 } // namespace Sysman

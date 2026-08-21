@@ -166,6 +166,22 @@ ssize_t write(int fd, const void *buf, size_t count) {
     return ::write(fd, buf, count);
 }
 
+FILE *fdopen(int fd, const char *mode) {
+    return ::fdopen(fd, mode);
+}
+
+char *fgets(char *s, int size, FILE *stream) {
+    return ::fgets(s, size, stream);
+}
+
+int fclose(FILE *stream) {
+    return ::fclose(stream);
+}
+
+int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
+    return ::setvbuf(stream, buf, mode, size);
+}
+
 int fcntl(int fd, int cmd) {
     return ::fcntl(fd, cmd);
 }

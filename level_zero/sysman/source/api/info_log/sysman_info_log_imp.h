@@ -22,7 +22,10 @@ class InfoLogImp : public InfoLog {
 
     ze_result_t infoLogGetProperties(zes_intel_info_log_properties_exp_t *pProperties) override;
     ze_result_t infoLogRead(uint32_t *pSize, uint8_t *pBuffer) override;
-    ze_result_t infoLogEnable(bool state) override;
+    ze_result_t infoLogEnable(zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor) override;
+    ze_result_t infoLogDisable() override;
+    ze_result_t infoLogReadWithMetaData(uint32_t *pSize, uint8_t *pBuffer,
+                                        uint32_t *pEventCount, zes_intel_info_log_metadata_exp *pDescriptors) override;
 
     void init();
     std::unique_ptr<OsInfoLog> pOsInfoLog;

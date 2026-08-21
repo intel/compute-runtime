@@ -42,13 +42,15 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceMemoryGetPageOfflineStateExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceGetHealthExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceSetHealthExp);
-    RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEventRegister);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEventRegisterExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEventListenExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverRescanDevicesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEnumInfoLogsExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogGetPropertiesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogReadExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogEnableExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogDisableExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogReadWithMetadataExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 

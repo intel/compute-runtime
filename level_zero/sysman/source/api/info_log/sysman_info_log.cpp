@@ -18,7 +18,7 @@ InfoLogHandleContext::InfoLogHandleContext() {
 
 void InfoLogHandleContext::disableInfoLogCollection() {
     for (auto &pInfoLog : handleList) {
-        pInfoLog->infoLogEnable(false);
+        pInfoLog->infoLogDisable();
     }
 }
 

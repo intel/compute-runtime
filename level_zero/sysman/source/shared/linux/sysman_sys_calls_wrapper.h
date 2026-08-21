@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstdio>
 #include <sys/types.h>
 
 namespace L0 {
@@ -23,7 +24,12 @@ class SysmanSysCallsWrapper {
     static off_t lseek(int fd, off_t offset, int whence, int &errorNum);
     static int ioctl(int fd, unsigned long request, void *arg, int &errorNum);
     static int close(int fd, int &errorNum);
+    static int dup(int oldfd, int &errorNum);
     static int access(const char *pathname, int mode, int &errorNum);
+    static FILE *fdopen(int fd, const char *mode, int &errorNum);
+    static char *fgets(char *s, int size, FILE *stream, int &errorNum);
+    static int fclose(FILE *stream, int &errorNum);
+    static int setvbuf(FILE *stream, char *buf, int mode, size_t size);
 };
 
 } // namespace Sysman

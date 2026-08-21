@@ -28,7 +28,16 @@ ze_result_t LinuxInfoLogImp::infoLogRead(uint32_t *pSize, uint8_t *pBuffer) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t LinuxInfoLogImp::infoLogEnable(bool state) {
+ze_result_t LinuxInfoLogImp::infoLogEnable(zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxInfoLogImp::infoLogDisable() {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxInfoLogImp::infoLogReadWithMetaData(uint32_t *pSize, uint8_t *pBuffer,
+                                                     uint32_t *pEventCount, zes_intel_info_log_metadata_exp *pDescriptors) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

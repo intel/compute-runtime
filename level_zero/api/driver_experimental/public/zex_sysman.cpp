@@ -75,7 +75,7 @@ ze_result_t ZE_APICALL zesIntelDriverEnumInfoLogsExp(zes_driver_handle_t hDriver
     }
 }
 
-ze_result_t ZE_APICALL zesIntelDriverEventRegister(zes_driver_handle_t hDriver, zes_event_type_flags_t events) {
+ze_result_t ZE_APICALL zesIntelDriverEventRegisterExp(zes_driver_handle_t hDriver, zes_event_type_flags_t events) {
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
@@ -115,11 +115,34 @@ ze_result_t ZE_APICALL zesIntelInfoLogReadExp(zes_intel_info_log_handle_t hInfoL
     }
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(zes_intel_info_log_handle_t hInfoLog, bool state) {
+ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(zes_intel_info_log_handle_t hInfoLog, zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor) {
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogEnable(state);
+        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogEnable(pEnableDescriptor);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t ZE_APICALL zesIntelInfoLogDisableExp(zes_intel_info_log_handle_t hInfoLog) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogDisable();
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t ZE_APICALL zesIntelInfoLogReadWithMetadataExp(zes_intel_info_log_handle_t hInfoLog,
+                                                          uint32_t *pSize, uint8_t *pBuffer,
+                                                          uint32_t *pEventCount,
+                                                          zes_intel_info_log_metadata_exp *pDescriptors) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogReadWithMetaData(pSize, pBuffer, pEventCount, pDescriptors);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -153,8 +176,8 @@ ze_result_t ZE_APICALL zesIntelDriverEnumInfoLogsExp(zes_driver_handle_t hDriver
     return L0::zesIntelDriverEnumInfoLogsExp(hDriver, pCount, phInfoLogs);
 }
 
-ze_result_t ZE_APICALL zesIntelDriverEventRegister(zes_driver_handle_t hDriver, zes_event_type_flags_t events) {
-    return L0::zesIntelDriverEventRegister(hDriver, events);
+ze_result_t ZE_APICALL zesIntelDriverEventRegisterExp(zes_driver_handle_t hDriver, zes_event_type_flags_t events) {
+    return L0::zesIntelDriverEventRegisterExp(hDriver, events);
 }
 
 ze_result_t ZE_APICALL zesIntelDriverEventListenExp(zes_driver_handle_t hDriver, uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents, zes_event_type_flags_t *pDriverEvents) {
@@ -169,8 +192,19 @@ ze_result_t ZE_APICALL zesIntelInfoLogReadExp(zes_intel_info_log_handle_t hInfoL
     return L0::zesIntelInfoLogReadExp(hInfoLog, pSize, pBuffer);
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(zes_intel_info_log_handle_t hInfoLog, bool state) {
-    return L0::zesIntelInfoLogEnableExp(hInfoLog, state);
+ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(zes_intel_info_log_handle_t hInfoLog, zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor) {
+    return L0::zesIntelInfoLogEnableExp(hInfoLog, pEnableDescriptor);
+}
+
+ze_result_t ZE_APICALL zesIntelInfoLogDisableExp(zes_intel_info_log_handle_t hInfoLog) {
+    return L0::zesIntelInfoLogDisableExp(hInfoLog);
+}
+
+ze_result_t ZE_APICALL zesIntelInfoLogReadWithMetadataExp(zes_intel_info_log_handle_t hInfoLog,
+                                                          uint32_t *pSize, uint8_t *pBuffer,
+                                                          uint32_t *pEventCount,
+                                                          zes_intel_info_log_metadata_exp *pDescriptors) {
+    return L0::zesIntelInfoLogReadWithMetadataExp(hInfoLog, pSize, pBuffer, pEventCount, pDescriptors);
 }
 
 } // extern "C"

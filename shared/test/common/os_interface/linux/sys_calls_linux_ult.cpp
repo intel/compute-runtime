@@ -100,6 +100,7 @@ bool failMunmap = false;
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 int (*sysCallsClose)(int fileDescriptor) = nullptr;
 int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode) = nullptr;
+int (*sysCallsAccess)(const char *pathname, int mode) = nullptr;
 int (*sysCallsDlinfo)(void *handle, int request, void *info) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
 ssize_t (*sysCallsPwrite)(int fd, const void *buf, size_t count, off_t offset) = nullptr;
@@ -143,6 +144,10 @@ int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval
 int (*sysCallsDup)(int oldfd) = nullptr;
 int (*sysCallsGetpid)() = nullptr;
 int (*sysCallsGetrlimit)(int resource, struct rlimit *rlim) = nullptr;
+FILE *(*sysCallsFdopen)(int fd, const char *mode) = nullptr;
+char *(*sysCallsFgets)(char *s, int size, FILE *stream) = nullptr;
+int (*sysCallsFclose)(FILE *stream) = nullptr;
+int (*sysCallsSetvbuf)(FILE *stream, char *buf, int mode, size_t size) = nullptr;
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 long sysconfReturn = 1ull << 30;
@@ -286,6 +291,9 @@ unsigned long getNumThreads() {
 
 int access(const std::string &pathName, int mode) {
     accessFuncCalled++;
+    if (sysCallsAccess != nullptr) {
+        return sysCallsAccess(pathName.c_str(), mode);
+    }
     if (failAccess) {
         return -1;
     }
@@ -715,6 +723,34 @@ int getrlimit(int resource, struct rlimit *rlim) {
         rlim->rlim_max = 4096;
     }
     return 0;
+}
+
+FILE *fdopen(int fd, const char *mode) {
+    if (sysCallsFdopen != nullptr) {
+        return sysCallsFdopen(fd, mode);
+    }
+    return ::fdopen(fd, mode);
+}
+
+char *fgets(char *s, int size, FILE *stream) {
+    if (sysCallsFgets != nullptr) {
+        return sysCallsFgets(s, size, stream);
+    }
+    return ::fgets(s, size, stream);
+}
+
+int fclose(FILE *stream) {
+    if (sysCallsFclose != nullptr) {
+        return sysCallsFclose(stream);
+    }
+    return ::fclose(stream);
+}
+
+int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
+    if (sysCallsSetvbuf != nullptr) {
+        return sysCallsSetvbuf(stream, buf, mode, size);
+    }
+    return ::setvbuf(stream, buf, mode, size);
 }
 
 char **getEnviron() {

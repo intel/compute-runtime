@@ -43,6 +43,7 @@ typedef long long (*pTraceFsInstanceGetBufferSize)(struct tracefs_instance *, in
 typedef int (*pTraceFsInstanceSetBufferSize)(struct tracefs_instance *, size_t, int);
 typedef char *(*pTraceFsInstanceGetFile)(struct tracefs_instance *, const char *);
 typedef char *(*pTraceFsGetTracingFile)(const char *);
+typedef void (*pTraceFsPutTracingFile)(char *);
 
 class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
   public:
@@ -72,6 +73,7 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL char *traceFsInstanceGetFile(struct tracefs_instance *instance, const char *file);
     MOCKABLE_VIRTUAL char *traceFsGetTracingFile(const char *file);
+    MOCKABLE_VIRTUAL void traceFsPutTracingFile(char *file);
 
     bool isAvailable() { return nullptr != traceFsLibraryHandle.get(); }
 
@@ -106,6 +108,7 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
     pTraceFsInstanceSetBufferSize traceFsInstanceSetBufferSizeEntry = nullptr;
     pTraceFsInstanceGetFile traceFsInstanceGetFileEntry = nullptr;
     pTraceFsGetTracingFile traceFsGetTracingFileEntry = nullptr;
+    pTraceFsPutTracingFile traceFsPutTracingFileEntry = nullptr;
 };
 
 } // namespace Sysman

@@ -105,6 +105,12 @@ class SysmanEventsInfoLogFixture : public SysmanDeviceFixture {
         return hInfoLog;
     }
 
+    void enableInfoLogCollection(zes_intel_info_log_handle_t hInfoLog, const char *instanceName = nullptr) {
+        zes_intel_info_log_enable_descriptor_exp enableDescriptor = {};
+        enableDescriptor.instanceName = instanceName;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, &enableDescriptor));
+    }
+
     int getCperTracePipeFd() {
         return pLinuxSysmanDriverImp->getCperTracePipeFd();
     }
@@ -215,7 +221,7 @@ class SysmanEventsInfoLogFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanEventsInfoLogFixture, GivenEventFlagsWhichAreNotDriverScopedWhenRegisteringDriverEventsThenInvalidEnumerationErrorIsReturned) {
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     EXPECT_EQ(0u, getDriverRegisteredEvents());
     EXPECT_TRUE(pEventsUtil->deviceEventsMap.empty());
 }
@@ -223,14 +229,14 @@ TEST_F(SysmanEventsInfoLogFixture, GivenEventFlagsWhichAreNotDriverScopedWhenReg
 TEST_F(SysmanEventsInfoLogFixture, GivenOsSysmanDriverIsNullWhenRegisteringDriverEventsThenUninitializedIsReturnedAndRegistrationIsNotUpdated) {
     VariableBackup<L0::Sysman::OsSysmanDriver *> osSysmanDriverBackup(&driverHandle->pOsSysmanDriver);
     driverHandle->pOsSysmanDriver = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(0u, getDriverRegisteredEvents());
     EXPECT_TRUE(pEventsUtil->deviceEventsMap.empty());
     EXPECT_EQ(0u, writeCallCount);
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenDriverScopedEventsWhenRegisteringThemThenDeviceRegistrationsAreNotAffected) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), getDriverRegisteredEvents());
     EXPECT_TRUE(pEventsUtil->deviceEventsMap.empty());
 
@@ -242,7 +248,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenDriverScopedEventsWhenRegisteringThemThe
 TEST_F(SysmanEventsInfoLogFixture, GivenListenIsInFlightAndNoDriverScopedEventIsRegisteredWhenRegisteringDriverEventsThenPipeIsWritten) {
     startListenOnPipe();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), getDriverRegisteredEvents());
     EXPECT_EQ(1u, writeCallCount);
 }
@@ -251,7 +257,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenListenIsInFlightAndDriverScopedEventIsRe
     seedDriverScopedRegistration(ZES_INTEL_CPER_DATA_AVAILABLE);
     startListenOnPipe();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), 0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), 0));
     EXPECT_EQ(0u, getDriverRegisteredEvents());
     EXPECT_EQ(1u, writeCallCount);
 }
@@ -260,7 +266,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenListenIsInFlightAndDriverScopedEventIsRe
     seedDriverScopedRegistration(ZES_INTEL_CPER_DATA_AVAILABLE);
     startListenOnPipe();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), getDriverRegisteredEvents());
     EXPECT_EQ(0u, writeCallCount);
 }
@@ -268,7 +274,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenListenIsInFlightAndDriverScopedEventIsRe
 TEST_F(SysmanEventsInfoLogFixture, GivenListenIsInFlightAndNoDriverScopedEventIsRegisteredWhenClearingDriverEventsThenPipeIsNotWritten) {
     startListenOnPipe();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), 0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), 0));
     EXPECT_EQ(0u, getDriverRegisteredEvents());
     EXPECT_EQ(0u, writeCallCount);
 }
@@ -276,7 +282,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenListenIsInFlightAndNoDriverScopedEventIs
 TEST_F(SysmanEventsInfoLogFixture, GivenNoListenIsInFlightWhenRegisteringDriverEventsThenRegistrationIsUpdatedAndPipeIsNotWritten) {
     EXPECT_EQ(-1, pEventsUtil->pipeFd[1]);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), getDriverRegisteredEvents());
     EXPECT_EQ(0u, writeCallCount);
 }
@@ -285,7 +291,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenNoListenIsInFlightAndDriverScopedEventIs
     seedDriverScopedRegistration(ZES_INTEL_CPER_DATA_AVAILABLE);
     EXPECT_EQ(-1, pEventsUtil->pipeFd[1]);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), getDriverRegisteredEvents());
     EXPECT_EQ(0u, writeCallCount);
 }
@@ -294,7 +300,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenWriteToPipeFailsWhenRegisteringDriverEve
     startListenOnPipe();
     writeReturnValue = -1;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), getDriverRegisteredEvents());
     EXPECT_EQ(1u, writeCallCount);
 }
@@ -317,11 +323,11 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredAndInfoLogC
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
+    enableInfoLogCollection(hInfoLog);
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
     EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 1u;
     zes_device_handle_t phDevices[count] = {device->toHandle()};
@@ -345,7 +351,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredAndInfoLogC
         EXPECT_EQ(expectedCper1Bytes[i], buffer[i]);
     }
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
     EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
     EXPECT_EQ(-1, getCperTracePipeFd());
 }
@@ -370,10 +376,10 @@ TEST_F(SysmanEventsInfoLogFixture, GivenLibUdevIsNotAvailableAndCperDataAvailabl
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
+    enableInfoLogCollection(hInfoLog);
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 1u;
     zes_device_handle_t phDevices[count] = {device->toHandle()};
@@ -386,7 +392,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenLibUdevIsNotAvailableAndCperDataAvailabl
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), driverEvents);
     EXPECT_EQ(nullptr, pEventsUtil->pUdevLib);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
     EXPECT_EQ(-1, getCperTracePipeFd());
 }
 
@@ -404,7 +410,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredAndInfoLogC
         return static_cast<int>(numberOfFds);
     });
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(-1, getCperTracePipeFd());
 
     constexpr uint32_t count = 1u;
@@ -456,7 +462,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenCalling
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
+    enableInfoLogCollection(hInfoLog);
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
 
     seedDriverScopedRegistration(ZES_INTEL_CPER_DATA_AVAILABLE);
@@ -471,7 +477,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenCalling
     EXPECT_EQ(0u, pEvents[0]);
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), driverEvents);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsEnabledAndOnlyDeviceScopedEventIsRegisteredWhenListeningForEventsThenTracefsSourceIsNotAdded) {
@@ -483,7 +489,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsEnabledAndOnlyDeviceS
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
+    enableInfoLogCollection(hInfoLog);
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
 
@@ -497,7 +503,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsEnabledAndOnlyDeviceS
     EXPECT_EQ(1u, pollCallCount);
     EXPECT_FALSE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeningWithZesDriverEventListenExThenTracefsSourceIsNotAddedAndOnlyDeviceSlotsAreWritten) {
@@ -509,9 +515,9 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeni
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
+    enableInfoLogCollection(hInfoLog);
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 1u;
     zes_device_handle_t phDevices[count] = {device->toHandle()};
@@ -526,7 +532,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeni
     EXPECT_EQ(1u, pollCallCount);
     EXPECT_FALSE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeningWithZesDriverEventListenThenTracefsSourceIsNotAddedAndOnlyDeviceSlotsAreWritten) {
@@ -538,8 +544,8 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeni
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    enableInfoLogCollection(hInfoLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 1u;
     zes_device_handle_t phDevices[count] = {device->toHandle()};
@@ -554,7 +560,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeni
     EXPECT_EQ(1u, pollCallCount);
     EXPECT_FALSE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeningWithZesDriverEventListenExAndNumDeviceEventsSetToCountPlusOneThenDriverSlotIsUntouched) {
@@ -566,8 +572,8 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeni
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    enableInfoLogCollection(hInfoLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 1u;
     zes_device_handle_t phDevices[count] = {device->toHandle()};
@@ -582,7 +588,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeni
     EXPECT_EQ(1u, pollCallCount);
     EXPECT_FALSE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeningWithNullDriverEventsThenTracefsSourceIsNotAdded) {
@@ -594,8 +600,8 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeni
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    enableInfoLogCollection(hInfoLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 1u;
     zes_device_handle_t phDevices[count] = {device->toHandle()};
@@ -609,7 +615,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenListeni
     EXPECT_EQ(1u, pollCallCount);
     EXPECT_FALSE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenTracefsPollSourceIsReadyAndDriverEventsOutputIsNullWhenListeningForEventsThenNoDriverScopedEventIsReported) {
@@ -622,7 +628,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenTracefsPollSourceIsReadyAndDriverEventsO
         return markFdReady(pollFd, numberOfFds, mockTracefsFd);
     });
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), pMockEventsUtil->registeredDriverEvents);
 
     constexpr uint32_t count = 1u;
@@ -656,9 +662,9 @@ TEST_F(SysmanEventsInfoLogFixture, GivenDeviceScopedAndDriverScopedEventsOccurIn
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
+    enableInfoLogCollection(hInfoLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 1u;
     zes_device_handle_t phDevices[count] = {device->toHandle()};
@@ -671,7 +677,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenDeviceScopedAndDriverScopedEventsOccurIn
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH), pDeviceEvents[0]);
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), driverEvents);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
     pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
 }
 
@@ -688,7 +694,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhileListen
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
+    enableInfoLogCollection(hInfoLog);
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
     ASSERT_EQ(0u, getDriverRegisteredEvents());
 
@@ -709,7 +715,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhileListen
 
     EXPECT_EQ(1u, pipeReadCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhileListeningAndInfoLogCollectionIsNotEnabledWhenRegistrationPipeIsNotifiedThenNoTracefsSourceIsAddedAndNoEventIsReported) {
@@ -753,8 +759,8 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsUnregisteredWhileList
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    enableInfoLogCollection(hInfoLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 0u;
     zes_device_handle_t *phDevices = nullptr;
@@ -769,7 +775,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsUnregisteredWhileList
     EXPECT_EQ(1u, pollCallCount);
     EXPECT_TRUE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenDriverScopedRegistrationIsDroppedWhileListeningWhenRegistrationPipeIsNotifiedThenTracefsSourceIsRemovedAndNoEventIsReported) {
@@ -785,8 +791,8 @@ TEST_F(SysmanEventsInfoLogFixture, GivenDriverScopedRegistrationIsDroppedWhileLi
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    enableInfoLogCollection(hInfoLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 0u;
     zes_device_handle_t *phDevices = nullptr;
@@ -800,7 +806,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenDriverScopedRegistrationIsDroppedWhileLi
     EXPECT_EQ(1u, pollCallCount);
     EXPECT_TRUE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsUnregisteredInTheSameWakeUpWhichCarriesTracePipeDataWhenListeningForEventsThenTheEventIsNotReported) {
@@ -817,8 +823,8 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsUnregisteredInTheSame
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    enableInfoLogCollection(hInfoLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 0u;
     zes_device_handle_t *phDevices = nullptr;
@@ -833,7 +839,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsUnregisteredInTheSame
     EXPECT_EQ(1u, pollCallCount);
     EXPECT_TRUE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsDisabledWhileListeningWhenRegistrationPipeIsNotifiedThenTracefsSourceIsRemovedAndNoEventIsReported) {
@@ -849,8 +855,8 @@ TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsDisabledWhileListenin
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    enableInfoLogCollection(hInfoLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 0u;
     zes_device_handle_t *phDevices = nullptr;
@@ -880,8 +886,8 @@ TEST_F(SysmanEventsInfoLogFixture, GivenTracePipeIsReopenedWhileListeningWhenReg
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, true));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    enableInfoLogCollection(hInfoLog);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 
     constexpr uint32_t count = 0u;
     zes_device_handle_t *phDevices = nullptr;
@@ -916,7 +922,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenOsSysmanDriverIsNullWhenListeningForDriv
 TEST_F(SysmanEventsInfoLogFixture, GivenSysmanInitFromCoreWhenCallingDriverEventRegisterEntrypointThenUnsupportedFeatureIsReturned) {
     VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(0u, getDriverRegisteredEvents());
 }
 
@@ -924,7 +930,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenNeitherInitFlagSetWhenCallingDriverEvent
     VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, false);
     VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
     EXPECT_EQ(0u, getDriverRegisteredEvents());
 }
 
@@ -951,6 +957,90 @@ TEST_F(SysmanEventsInfoLogFixture, GivenNeitherInitFlagSetWhenCallingDriverEvent
     zes_event_type_flags_t driverEvents = 0;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverEventListenExp(driverHandle->toHandle(), 0u, count, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+}
+
+TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsEnabledOnNamedInstanceAndCperDataAvailableIsRegisteredWhenListeningForDriverEventsThenEventIsReportedFromThatInstance) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccess(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, mockSysCallsPipe);
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        recordPollCall(pollFd, numberOfFds);
+        return markFdReady(pollFd, numberOfFds, MockTraceFsApiWithData::mockTracePipeFd);
+    });
+
+    auto hInfoLog = getInfoLogHandle();
+    ASSERT_NE(nullptr, hInfoLog);
+
+    enableInfoLogCollection(hInfoLog, "cper_instance");
+    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+    EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
+    EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
+    EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, PublicTraceFsApi::lastSetBufferPercentInstance);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+
+    constexpr uint32_t count = 1u;
+    zes_device_handle_t phDevices[count] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[count] = {};
+    zes_event_type_flags_t driverEvents = 0;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventListenExp(driverHandle->toHandle(), 1u, count, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), driverEvents);
+    EXPECT_TRUE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
+
+    uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
+    std::vector<uint8_t> buffer(size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(hInfoLog, &size, buffer.data()));
+    EXPECT_EQ(mockCperLen, size);
+    for (uint32_t i = 0; i < expectedCper1Bytes.size(); i++) {
+        EXPECT_EQ(expectedCper1Bytes[i], buffer[i]);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
+    EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
+    EXPECT_EQ(-1, getCperTracePipeFd());
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
+    EXPECT_EQ(1u, MockTraceFsApiWithData::instanceDestroyCallCount);
+    EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
+}
+
+TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsEnabledOnNamedInstanceAndCperDataAvailableIsRegisteredWhileListeningWhenRegistrationPipeIsNotifiedThenTracefsSourceUsesTheInstanceDescriptor) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccess(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, mockSysCallsPipe);
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        recordPollCall(pollFd, numberOfFds);
+        if (pollCallCount == 1u) {
+            pEventsUtilForPoll->driverEventRegister(ZES_INTEL_CPER_DATA_AVAILABLE);
+            return markFdReady(pollFd, numberOfFds, mockInfoLogReadPipeFd);
+        }
+        return markFdReady(pollFd, numberOfFds, MockTraceFsApiWithData::mockTracePipeFd);
+    });
+
+    auto hInfoLog = getInfoLogHandle();
+    ASSERT_NE(nullptr, hInfoLog);
+
+    enableInfoLogCollection(hInfoLog, "cper_instance");
+    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+    ASSERT_EQ(0u, getDriverRegisteredEvents());
+
+    constexpr uint32_t count = 0u;
+    zes_device_handle_t *phDevices = nullptr;
+    zes_event_type_flags_t pDeviceEvents[1] = {0};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t driverEvents = 0;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventListenExp(driverHandle->toHandle(), 1000u, count, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), driverEvents);
+
+    EXPECT_EQ(2u, pollCallCount);
+    EXPECT_FALSE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
+    EXPECT_TRUE(wasFdPolled(1, MockTraceFsApiWithData::mockTracePipeFd));
+    EXPECT_EQ(1u, pipeReadCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(hInfoLog));
+    EXPECT_EQ(-1, getCperTracePipeFd());
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenTracePipeIsOpenAndInfoLogHandlesWereNotEnumeratedWhenDestroyingTheDriverThenTracePipeIsClosed) {

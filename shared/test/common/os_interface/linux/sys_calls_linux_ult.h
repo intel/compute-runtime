@@ -10,6 +10,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <cstdio>
 #include <dirent.h>
 #include <poll.h>
 #include <sys/resource.h>
@@ -30,6 +31,7 @@ extern int (*sysCallsRmdir)(const std::string &dir);
 extern int (*sysCallsOpen)(const char *pathname, int flags);
 extern int (*sysCallsClose)(int fileDescriptor);
 extern int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode);
+extern int (*sysCallsAccess)(const char *pathname, int mode);
 extern int (*sysCallsDlinfo)(void *handle, int request, void *info);
 extern ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset);
 extern ssize_t (*sysCallsPwrite)(int fd, const void *buf, size_t count, off_t offset);
@@ -74,6 +76,10 @@ extern int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void 
 extern int (*sysCallsDup)(int oldfd);
 extern pid_t (*sysCallsGetpid)();
 extern int (*sysCallsGetrlimit)(int resource, struct rlimit *rlim);
+extern FILE *(*sysCallsFdopen)(int fd, const char *mode);
+extern char *(*sysCallsFgets)(char *s, int size, FILE *stream);
+extern int (*sysCallsFclose)(FILE *stream);
+extern int (*sysCallsSetvbuf)(FILE *stream, char *buf, int mode, size_t size);
 
 extern bool allowFakeDevicePath;
 extern int flockRetVal;

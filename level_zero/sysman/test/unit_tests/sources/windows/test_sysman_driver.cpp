@@ -165,7 +165,10 @@ TEST_F(SysmanDriverHandleTest,
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogEnableExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverEventRegister", &funPtr);
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDisableExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverEventRegisterExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverEventListenExp", &funPtr);
@@ -210,7 +213,7 @@ TEST_F(SysmanDriverEventRegisterTest, GivenNullOsSysmanDriverWhenCallingDriverEv
 }
 
 TEST_F(SysmanDriverEventRegisterTest, GivenWddmDriverWhenCallingDriverEventRegisterEntrypointThenUnsupportedFeatureIsReturned) {
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverEventRegister(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverEventRegisterExp(driverHandle->toHandle(), ZES_INTEL_CPER_DATA_AVAILABLE));
 }
 
 using SysmanDriverEventListenTest = SysmanDriverHandleTest;

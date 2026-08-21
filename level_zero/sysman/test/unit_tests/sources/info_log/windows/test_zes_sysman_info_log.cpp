@@ -45,14 +45,18 @@ struct MockInfoLog : public InfoLog {
     ze_result_t infoLogRead(uint32_t *, uint8_t *) override {
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t infoLogEnable(bool state) override {
-        enableCallCount++;
-        lastRequestedState = state;
-        return enableReturnValue;
+    ze_result_t infoLogEnable(zes_intel_info_log_enable_descriptor_exp *) override {
+        return ZE_RESULT_SUCCESS;
     }
-    uint32_t enableCallCount = 0;
-    bool lastRequestedState = true;
-    ze_result_t enableReturnValue = ZE_RESULT_SUCCESS;
+    ze_result_t infoLogDisable() override {
+        disableCallCount++;
+        return disableReturnValue;
+    }
+    ze_result_t infoLogReadWithMetaData(uint32_t *, uint8_t *, uint32_t *, zes_intel_info_log_metadata_exp *) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    uint32_t disableCallCount = 0;
+    ze_result_t disableReturnValue = ZE_RESULT_SUCCESS;
 };
 
 class SysmanInfoLogFixture : public SysmanDriverHandleTest {
@@ -86,7 +90,23 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogImpWhenCallingInfoLogReadThenUnsupporte
 TEST_F(SysmanInfoLogFixture, GivenInfoLogImpWhenCallingInfoLogEnableThenUnsupportedFeatureIsReturned) {
     auto pInfoLogImp = std::make_unique<InfoLogImp>(ZES_INTEL_INFO_LOG_FORMAT_CPER);
     pInfoLogImp->init();
-    ze_result_t result = pInfoLogImp->infoLogEnable(true);
+    ze_result_t result = pInfoLogImp->infoLogEnable(nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogImpWhenCallingInfoLogDisableThenUnsupportedFeatureIsReturned) {
+    auto pInfoLogImp = std::make_unique<InfoLogImp>(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    pInfoLogImp->init();
+    ze_result_t result = pInfoLogImp->infoLogDisable();
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogImpWhenCallingInfoLogReadWithMetaDataThenUnsupportedFeatureIsReturned) {
+    auto pInfoLogImp = std::make_unique<InfoLogImp>(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    pInfoLogImp->init();
+    uint32_t size = 0;
+    uint32_t eventCount = 0;
+    ze_result_t result = pInfoLogImp->infoLogReadWithMetaData(&size, nullptr, &eventCount, nullptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
@@ -135,17 +155,15 @@ TEST_F(SysmanInfoLogFixture, GivenMultipleInfoLogHandlesWhenDisablingInfoLogColl
 
     context.disableInfoLogCollection();
 
-    EXPECT_EQ(1u, pFirstInfoLog->enableCallCount);
-    EXPECT_FALSE(pFirstInfoLog->lastRequestedState);
-    EXPECT_EQ(1u, pSecondInfoLog->enableCallCount);
-    EXPECT_FALSE(pSecondInfoLog->lastRequestedState);
+    EXPECT_EQ(1u, pFirstInfoLog->disableCallCount);
+    EXPECT_EQ(1u, pSecondInfoLog->disableCallCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenHandleReportingFailureWhenDisablingInfoLogCollectionThenRemainingHandlesAreStillDisabled) {
     InfoLogHandleContext context;
 
     auto failingInfoLog = std::make_unique<MockInfoLog>();
-    failingInfoLog->enableReturnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    failingInfoLog->disableReturnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     auto lastInfoLog = std::make_unique<MockInfoLog>();
     auto *pFailingInfoLog = failingInfoLog.get();
     auto *pLastInfoLog = lastInfoLog.get();
@@ -154,9 +172,8 @@ TEST_F(SysmanInfoLogFixture, GivenHandleReportingFailureWhenDisablingInfoLogColl
 
     context.disableInfoLogCollection();
 
-    EXPECT_EQ(1u, pFailingInfoLog->enableCallCount);
-    EXPECT_EQ(1u, pLastInfoLog->enableCallCount);
-    EXPECT_FALSE(pLastInfoLog->lastRequestedState);
+    EXPECT_EQ(1u, pFailingInfoLog->disableCallCount);
+    EXPECT_EQ(1u, pLastInfoLog->disableCallCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNoInfoLogHandlesWhenDisablingInfoLogCollectionThenNothingIsDisabled) {
@@ -278,7 +295,45 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingInfoLogEnableExpT
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, handles.data()));
     ASSERT_NE(nullptr, handles[0]);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogEnableExp(handles[0], true));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogEnableExp(handles[0], nullptr));
+
+    driverHandle->pOsSysmanDriver = savedOsDriver;
+}
+
+TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingInfoLogDisableThenUnsupportedFeatureIsReturned) {
+    auto mockOsDriver = std::make_unique<MockOsSysmanDriver>();
+    auto *savedOsDriver = driverHandle->pOsSysmanDriver;
+    driverHandle->pOsSysmanDriver = mockOsDriver.get();
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    ASSERT_EQ(expectedInfoLogHandleCount, count);
+
+    std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, handles.data()));
+    ASSERT_NE(nullptr, handles[0]);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDisableExp(handles[0]));
+
+    driverHandle->pOsSysmanDriver = savedOsDriver;
+}
+
+TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingReadInfoLogWithMetaDataExpThenUnsupportedFeatureIsReturned) {
+    auto mockOsDriver = std::make_unique<MockOsSysmanDriver>();
+    auto *savedOsDriver = driverHandle->pOsSysmanDriver;
+    driverHandle->pOsSysmanDriver = mockOsDriver.get();
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    ASSERT_EQ(expectedInfoLogHandleCount, count);
+
+    std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, handles.data()));
+    ASSERT_NE(nullptr, handles[0]);
+
+    uint32_t size = 0;
+    uint32_t eventCount = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogReadWithMetadataExp(handles[0], &size, nullptr, &eventCount, nullptr));
 
     driverHandle->pOsSysmanDriver = savedOsDriver;
 }

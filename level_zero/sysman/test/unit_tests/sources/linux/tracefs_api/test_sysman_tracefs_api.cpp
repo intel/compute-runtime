@@ -39,6 +39,14 @@ class SysmanTraceFsApiFixture : public ::testing::Test {
 
         return localTraceFsApi.loadEntryPointsFromBase();
     }
+
+    void loadEntryPointsWithMissingFunction(PublicTraceFsApi &traceFsApi, const std::string &procName) {
+        auto mockTraceFsOsLibrary = std::make_unique<MockTraceFsOsLibrary>();
+        mockTraceFsOsLibrary->deleteEntryPoint(procName);
+        traceFsApi.traceFsLibraryHandle = std::move(mockTraceFsOsLibrary);
+
+        EXPECT_FALSE(traceFsApi.loadEntryPointsFromBase());
+    }
 };
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenMissingLibraryEntryPointThenVerifyLoadEntryPointsFails) {
@@ -62,6 +70,7 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenMissingLibraryEntryPointThenV
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_set_buffer_size"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_get_file"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_get_tracing_file"));
+    EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_put_tracing_file"));
 }
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenMissingLibraryHandleThenVerifyLoadEntryPointsFails) {
@@ -86,12 +95,46 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceCreateCalledThenVerif
     EXPECT_NE(nullptr, instance);
 }
 
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceCreateCalledWithLoadedEntryPointThenVerifyEntryPointIsCalledAndValidInstanceReturned) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    auto instance = testTraceFsApi.traceFsInstanceCreateBase(MockTraceFsOsLibrary::mockInstanceName);
+    EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, instance);
+}
+
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceDestroyCalledThenVerifySuccess) {
     testTraceFsApi.traceFsInstanceDestroy(&MockTraceFsOsLibrary::mockTraceFsInstance);
 }
 
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceDestroyCalledWithLoadedEntryPointThenVerifyEntryPointIsCalled) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    testTraceFsApi.traceFsInstanceDestroyBase(&MockTraceFsOsLibrary::mockTraceFsInstance);
+    EXPECT_EQ(1u, MockTraceFsOsLibrary::instanceDestroyCallCount);
+}
+
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceDestroyCalledWithoutEntryPointThenVerifyEntryPointIsNotCalled) {
+    PublicTraceFsApi localTraceFsApi;
+    loadEntryPointsWithMissingFunction(localTraceFsApi, "tracefs_instance_destroy");
+
+    localTraceFsApi.traceFsInstanceDestroyBase(&MockTraceFsOsLibrary::mockTraceFsInstance);
+    EXPECT_EQ(0u, MockTraceFsOsLibrary::instanceDestroyCallCount);
+}
+
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceFreeCalledThenVerifySuccess) {
     testTraceFsApi.traceFsInstanceFree(&MockTraceFsOsLibrary::mockTraceFsInstance);
+}
+
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceFreeCalledWithLoadedEntryPointThenVerifyEntryPointIsCalled) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    testTraceFsApi.traceFsInstanceFreeBase(&MockTraceFsOsLibrary::mockTraceFsInstance);
+    EXPECT_EQ(1u, MockTraceFsOsLibrary::instanceFreeCallCount);
+}
+
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceFreeCalledWithoutEntryPointThenVerifyEntryPointIsNotCalled) {
+    PublicTraceFsApi localTraceFsApi;
+    loadEntryPointsWithMissingFunction(localTraceFsApi, "tracefs_instance_free");
+
+    localTraceFsApi.traceFsInstanceFreeBase(&MockTraceFsOsLibrary::mockTraceFsInstance);
+    EXPECT_EQ(0u, MockTraceFsOsLibrary::instanceFreeCallCount);
 }
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetInstanceNameCalledThenVerifyReturnValue) {
@@ -118,6 +161,7 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenFileReadCalledThenVerifyRetur
                                                            &size);
     EXPECT_NE(nullptr, content);
     EXPECT_GT(size, 0);
+    free(content);
 }
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenFileWriteCalledThenVerifyReturnValue) {
@@ -234,18 +278,37 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferSizeCalledThenVerify
                                                              MockTraceFsOsLibrary::mockSize,
                                                              MockTraceFsOsLibrary::mockCpu);
     EXPECT_EQ(0, result);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockSize, PublicTraceFsApi::lastSetBufferSize);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockCpu, PublicTraceFsApi::lastSetBufferSizeCpu);
+}
+
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferSizeCalledWithLoadedEntryPointThenEntryPointIsCalledAndValidValueReturned) {
+    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
+    int result = testTraceFsApi.traceFsInstanceSetBufferSizeBase(&MockTraceFsOsLibrary::mockTraceFsInstance,
+                                                                 MockTraceFsOsLibrary::mockSize,
+                                                                 MockTraceFsOsLibrary::mockCpu);
+    EXPECT_EQ(0, result);
 }
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetFileCalledThenVerifyReturnValue) {
     char *file = testTraceFsApi.traceFsInstanceGetFile(&MockTraceFsOsLibrary::mockTraceFsInstance,
                                                        MockTraceFsOsLibrary::mockFileName);
     EXPECT_NE(nullptr, file);
+    free(file);
 }
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetTracingFileCalledThenVerifyReturnValue) {
     char *file = testTraceFsApi.traceFsGetTracingFile(MockTraceFsOsLibrary::mockFileName);
     EXPECT_NE(nullptr, file);
     free(file);
+}
+
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenPutTracingFileCalledWithoutEntryPointThenVerifyEntryPointIsNotCalled) {
+    PublicTraceFsApi localTraceFsApi;
+    loadEntryPointsWithMissingFunction(localTraceFsApi, "tracefs_put_tracing_file");
+
+    localTraceFsApi.traceFsPutTracingFile(nullptr);
+    EXPECT_EQ(0u, MockTraceFsOsLibrary::putTracingFileCallCount);
 }
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenLibraryAvailableThenIsAvailableReturnsTrue) {
@@ -267,11 +330,19 @@ TEST_F(SysmanTraceFsApiNullEntryFixture, GivenTraceFsApiWhenAllApisCalledWithNoE
     EXPECT_EQ(nullptr, testTraceFsApi.traceFsInstanceGetName(nullptr));
     EXPECT_EQ(nullptr, testTraceFsApi.traceFsInstanceGetTraceDir(nullptr));
     EXPECT_EQ(nullptr, testTraceFsApi.traceFsLocalEvents(MockTraceFsOsLibrary::mockTraceDir));
-    EXPECT_EQ(nullptr, testTraceFsApi.traceFsInstanceGetFile(nullptr, MockTraceFsOsLibrary::mockFileName));
-    EXPECT_EQ(nullptr, testTraceFsApi.traceFsGetTracingFile(MockTraceFsOsLibrary::mockFileName));
+
+    auto instanceFile = std::unique_ptr<char, decltype(&free)>(
+        testTraceFsApi.traceFsInstanceGetFile(nullptr, MockTraceFsOsLibrary::mockFileName), free);
+    EXPECT_EQ(nullptr, instanceFile);
+
+    auto tracingFile = std::unique_ptr<char, decltype(&free)>(
+        testTraceFsApi.traceFsGetTracingFile(MockTraceFsOsLibrary::mockFileName), free);
+    EXPECT_EQ(nullptr, tracingFile);
 
     int size = 0;
-    EXPECT_EQ(nullptr, testTraceFsApi.traceFsInstanceFileRead(nullptr, MockTraceFsOsLibrary::mockFileName, &size));
+    auto content = std::unique_ptr<char, decltype(&free)>(
+        testTraceFsApi.traceFsInstanceFileRead(nullptr, MockTraceFsOsLibrary::mockFileName, &size), free);
+    EXPECT_EQ(nullptr, content);
 
     EXPECT_EQ(-1, testTraceFsApi.traceFsInstanceFileOpen(nullptr, MockTraceFsOsLibrary::mockFileName, MockTraceFsOsLibrary::mockFileMode));
     EXPECT_EQ(-1, testTraceFsApi.traceFsInstanceFileWrite(nullptr, MockTraceFsOsLibrary::mockFileName, "test_data"));

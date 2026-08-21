@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/sys_calls_common.h"
 
+#include <cstdio>
 #include <dirent.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -78,6 +79,10 @@ int dup(int oldfd);
 pid_t getpid();
 char **getEnviron();
 int getrlimit(int resource, struct rlimit *rlim);
+FILE *fdopen(int fd, const char *mode);
+char *fgets(char *s, int size, FILE *stream);
+int fclose(FILE *stream);
+int setvbuf(FILE *stream, char *buf, int mode, size_t size);
 
 } // namespace SysCalls
 } // namespace NEO

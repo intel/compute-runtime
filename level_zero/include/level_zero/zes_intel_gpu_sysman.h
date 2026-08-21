@@ -579,6 +579,18 @@ typedef enum _zes_intel_info_log_format_exp_t {
 } zes_intel_info_log_format_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Descriptor passed to zesIntelInfoLogEnableExp
+typedef struct _zes_intel_info_log_enable_descriptor_exp {
+    const char *instanceName;        ///< [in][optional] named tracefs instance; nullptr = use global trace buffer
+    uint32_t *pBufferSizeInKb;       ///< [in,out][optional] pointer to the per-CPU trace buffer size in kilobytes. On input,
+                                     ///< requested size, applied to every per-CPU buffer; on output, actual per-CPU size set
+                                     ///< (rounded to closest supported size). nullptr = use default size.
+    uint32_t *pPercentFullThreshold; ///< [in,out][optional] pointer to percentage (0-100) of buffer full to generate wakeup event.
+                                     ///< On input, requested threshold; on output, actual threshold set (rounded to closest supported).
+                                     ///< nullptr = use default threshold.
+} zes_intel_info_log_enable_descriptor_exp;
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Info log properties structure
 typedef struct _zes_intel_info_log_properties_exp_t {
     zes_structure_type_ext_t stype;                ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP
@@ -588,6 +600,7 @@ typedef struct _zes_intel_info_log_properties_exp_t {
     uint32_t maxSize;                              ///< [out] Maximum size of the info log in kilobytes. This is the maximum size
                                                    ///< of the buffer that can be allocated to read the info log. The application should not
                                                    ///< allocate a buffer larger than this size.
+    ze_bool_t isInstancedCollectionSupported;      ///< [out] true if named tracefs instances are available
 } zes_intel_info_log_properties_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -642,28 +655,84 @@ ze_result_t ZE_APICALL zesIntelInfoLogReadExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Enable Tracefs Event
+/// @brief Enable info log collection
 ///
 /// @details
-///     - This function enables an info log event for the supplied driver.
-///     - The event "xe_error_cper" can be enabled via this API to trace CPER error events.
+///     - Enables the xe_error_cper tracepoint, optionally in a named tracefs instance.
+///     - Pass enableDescriptor.instanceName == nullptr to use the global trace buffer.
 ///     - This API is NOT thread-safe. It must be called from a single thread or process.
 ///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_DEVICE_LOST
 ///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
-///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + instanceName is non-null but named tracefs instances are unavailable
 ///     - ::ZE_RESULT_ERROR_UNKNOWN
-///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
-///         + User does not have permissions to enable tracefs events.
+///         + named instance could not be created, or enable/trace-on failed
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + already enabled with a conflicting instance configuration
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
 ///         + `nullptr == hInfoLog`
 ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(
-    zes_intel_info_log_handle_t hInfoLog, ///< [in] handle of the info log
-    bool state                            ///< [in] state of the info log. If state == true, info log collection is enabled,
-                                          ///< else info log collection is disabled.
+    zes_intel_info_log_handle_t hInfoLog,                       ///< [in] handle of the info log
+    zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor ///< [in,out] pointer to enable descriptor
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Disable info log collection
+///
+/// @details
+///     - Disables the xe_error_cper tracepoint and cleans up any named tracefs instance
+///       created by a prior zesIntelInfoLogEnableExp call.
+///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///         + event disable or trace-off failed
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hInfoLog`
+ze_result_t ZE_APICALL zesIntelInfoLogDisableExp(
+    zes_intel_info_log_handle_t hInfoLog ///< [in] handle of the info log
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Per-record metadata returned by zesIntelInfoLogReadWithMetadataExp
+typedef struct _zes_intel_info_log_metadata_exp {
+    zes_structure_type_ext_t stype; ///< [in] must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_METADATA_EXP
+    void *pNext;                    ///< [in,out][optional]
+    zes_pci_address_t address;      ///< [out] Device BDF (domain:bus:device.function)
+    zes_uuid_t uuid;                ///< [out] Device UUID (platform_id from trace event)
+    uint64_t timestamp;             ///< [out] Event timestamp in microseconds since boot
+    uint32_t lengthOfData;          ///< [out] CPER record byte length
+    uint32_t offset;                ///< [out] Byte offset of this record in pBuffer
+} zes_intel_info_log_metadata_exp;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Read info log data with per-record metadata
+///
+/// @details
+///     - First call (pBuffer==nullptr or pDescriptors==nullptr): non-consuming, returns
+///       the number of available records and total byte size via trace snapshot.
+///     - Second call (pBuffer!=nullptr and pDescriptors!=nullptr): consumes from
+///       trace_pipe, fills binary CPER data and per-record metadata descriptors.
+///     - This API is NOT thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_WARNING_DROPPED_DATA
+///         + a record arrived that was larger than the remaining buffer
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + `nullptr == pSize` or `nullptr == pEventCount`
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///         + trace file could not be read
+ze_result_t ZE_APICALL zesIntelInfoLogReadWithMetadataExp(
+    zes_intel_info_log_handle_t hInfoLog,         ///< [in] handle of the info log
+    uint32_t *pSize,                              ///< [in,out] buffer size hint in bytes / bytes written out
+    uint8_t *pBuffer,                             ///< [in,out][optional] destination for CPER binary data
+    uint32_t *pEventCount,                        ///< [in,out] descriptor array capacity in / records written out
+    zes_intel_info_log_metadata_exp *pDescriptors ///< [in,out][optional] per-record metadata
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -744,7 +813,7 @@ typedef enum _zes_intel_driver_event_exp_version_t {
 ///         + `nullptr == hDriver`
 ///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
 ///         + `events` contains a flag which is not a driver scoped event
-ze_result_t ZE_APICALL zesIntelDriverEventRegister(
+ze_result_t ZE_APICALL zesIntelDriverEventRegisterExp(
     zes_driver_handle_t hDriver,  ///< [in] handle of the driver instance
     zes_event_type_flags_t events ///< [in] list of driver scoped events to listen to. Must be 0 or a combination
                                   ///< of the Intel experimental driver scoped event flags.
@@ -755,7 +824,7 @@ ze_result_t ZE_APICALL zesIntelDriverEventRegister(
 ///
 /// @details
 ///     - This function extends ::zesDriverEventListenEx with the ability to report the
-///       driver scoped events registered with ::zesIntelDriverEventRegister.
+///       driver scoped events registered with ::zesIntelDriverEventRegisterExp.
 ///     - The `hDriver`, `timeout`, `count`, `phDevices`, `pNumDeviceEvents` and `pEvents`
 ///       arguments behave exactly as in ::zesDriverEventListenEx: `pEvents` holds `count`
 ///       entries, one per device handle, and `*pNumDeviceEvents` is an output only value.

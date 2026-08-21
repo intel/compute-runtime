@@ -34,6 +34,7 @@ static constexpr std::string_view traceFsInstanceGetBufferSizeRoutine = "tracefs
 static constexpr std::string_view traceFsInstanceSetBufferSizeRoutine = "tracefs_instance_set_buffer_size";
 static constexpr std::string_view traceFsInstanceGetFileRoutine = "tracefs_instance_get_file";
 static constexpr std::string_view traceFsGetTracingFileRoutine = "tracefs_get_tracing_file";
+static constexpr std::string_view traceFsPutTracingFileRoutine = "tracefs_put_tracing_file";
 
 template <class T>
 bool TraceFsApi::getSymbolAddr(std::string_view name, T &sym) {
@@ -70,6 +71,7 @@ bool TraceFsApi::loadEntryPoints() {
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceSetBufferSizeRoutine, traceFsInstanceSetBufferSizeEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetFileRoutine, traceFsInstanceGetFileEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsGetTracingFileRoutine, traceFsGetTracingFileEntry);
+    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsPutTracingFileRoutine, traceFsPutTracingFileEntry);
 
     return allEntryPointsLoaded;
 }
@@ -212,6 +214,13 @@ char *TraceFsApi::traceFsGetTracingFile(const char *file) {
         return nullptr;
     }
     return (*traceFsGetTracingFileEntry)(file);
+}
+
+void TraceFsApi::traceFsPutTracingFile(char *file) {
+    if (nullptr == traceFsPutTracingFileEntry) {
+        return;
+    }
+    (*traceFsPutTracingFileEntry)(file);
 }
 
 TraceFsApi::TraceFsApi() = default;
