@@ -71,11 +71,6 @@ struct IpcEventPoolData {
 #pragma pack()
 static_assert(sizeof(IpcEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
-// Sole wire format for event-pool IPC: getIpcHandle always writes it, openEventPoolIpcHandle always
-// parses it (IpcEventPoolData above is documentation-only). reservedHandleData[32] is an opaque OS
-// fallback handle tried if the primary fd/NT import fails (mirrors IpcOpaqueMemoryData). Fields are
-// ordered largest-to-smallest so each lands naturally aligned under #pragma pack(1) - a misaligned
-// reference (e.g. gtest EXPECT_EQ binding processId) is UB and trips UBSan.
 #pragma pack(1)
 struct IpcOpaqueEventPoolData {
     union {
@@ -83,45 +78,39 @@ struct IpcOpaqueEventPoolData {
         uint64_t nt;
         uint64_t val; // Generic value
     } handle = {};
-    union {
-        int fd;
-        uint64_t nt;
-        uint64_t val; // Generic value
-    } opaqueHandle = {};
-    uint32_t numEvents = 0;
-    unsigned int processId = 0;
-    uint16_t rootDeviceIndex = 0;
-    uint8_t maxEventPackets = 0; // max is EventPacketsCount::maxKernelSplit (3)
-    uint8_t numDevices = 0;
+    size_t numEvents = 0;
+    uint32_t rootDeviceIndex = 0;
+    uint32_t maxEventPackets = 0;
+    uint16_t numDevices = 0;
     bool isDeviceEventPoolAllocation : 1 = false;
     bool isHostVisibleEventPoolAllocation : 1 = false;
     bool isImplicitScalingCapable : 1 = false;
     bool isEventPoolKernelMappedTsFlagSet : 1 = false;
     bool isEventPoolTsFlagSet : 1 = false;
     IpcHandleType type = IpcHandleType::maxHandle;
-    uint8_t reservedHandleData[32] = {0}; // opaque OS-specific fallback handle, mirrors IpcOpaqueMemoryData
+    unsigned int processId = 0;
+    union {
+        int fd;
+        uint64_t nt;
+        uint64_t val; // Generic value
+    } opaqueHandle = {};
 };
 #pragma pack()
 static_assert(sizeof(IpcOpaqueEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
-// communicationAllocHandle (2-way) and oneWayAllocCounterHandle (1-way) are mutually exclusive, so
-// they are unioned to make room for reservedHandleData[32] - an opaque OS fallback handle tried if
-// the primary fd/NT import fails (mirrors IpcOpaqueMemoryData). Fields are largest-to-smallest for
-// natural alignment under #pragma pack(1) - see IpcOpaqueEventPoolData above.
+// 2way communication uses communicator allocation to obtain indirect handles, current counter value etc.
+// 1way communication must pass all informations as part of single IPC exchange
 #pragma pack(1)
 struct IpcCounterBasedEventData {
-    union {
-        uint64_t oneWayAllocCounterHandle;
-        uint64_t communicationAllocHandle;
-    };
+    uint64_t oneWayAllocCounterHandle = 0;
+    uint64_t communicationAllocHandle = 0;
     uint64_t oneWayCounterValue = 0;
-    uint32_t allocOffset = 0;
-    uint32_t processId = 0;
-    uint8_t oneWayPartitionCount = 0;     // max is device/tile partition count
-    uint8_t counterBasedFlags = 0;        // values are ZEX_COUNTER_BASED_EVENT_FLAG_* bits 0-6
-    uint8_t signalScopeFlags = 0;         // values are ZE_EVENT_SCOPE_FLAG_* bits 0-2
-    uint8_t waitScopeFlags = 0;           // values are ZE_EVENT_SCOPE_FLAG_* bits 0-2
-    uint8_t reservedHandleData[32] = {0}; // opaque OS-specific fallback handle, mirrors IpcOpaqueMemoryData
+    size_t allocOffset = 0;
+    uint32_t oneWayPartitionCount = 0;
+    uint32_t counterBasedFlags = 0;
+    uint32_t signalScopeFlags = 0;
+    uint32_t waitScopeFlags = 0;
+    unsigned int processId = 0;
 };
 #pragma pack()
 static_assert(sizeof(IpcCounterBasedEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcCounterBasedEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
@@ -656,11 +645,6 @@ struct EventPool : _ze_event_pool_handle_t {
     ze_event_pool_flags_t eventPoolFlags{};
 
     uint64_t exportedIpcHandle = 0;
-
-    // Opaque-handle import cache ref taken when this pool was imported; released in ~EventPool.
-    // Driver handle stored separately so open-failure paths (devices/context still empty) can release it.
-    uint64_t importedIpcCacheId = 0;
-    DriverHandle *importedIpcDriverHandle = nullptr;
 
     bool hasExportedIpcHandle = false;
     bool isDeviceEventPoolAllocation = false;
