@@ -11,8 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -23,15 +22,17 @@ namespace NEO {
 StackVec<const char *, 4> validL0Prefixes;
 StackVec<NEO::DebugVarPrefix, 4> validL0PrefixTypes;
 
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper &releaseHelper) {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const HardwareInfo &hwInfo) {
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
         return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
     }
-    return releaseHelper.isGlobalBindlessAllocatorEnabled();
+    return hwInfo.caps.globalBindlessAllocatorEnabled;
 }
 
 bool ApiSpecificConfig::getBindlessMode(const Device &device) {
-    if (device.getCompilerProductHelper().isHeaplessModeEnabled(device.getHardwareInfo())) {
+    const auto &hwInfo = device.getHardwareInfo();
+
+    if (device.getCompilerProductHelper().isHeaplessModeEnabled(hwInfo)) {
         return true;
     }
 
@@ -40,11 +41,10 @@ bool ApiSpecificConfig::getBindlessMode(const Device &device) {
     }
 
     auto ailHelper = device.getAilConfigurationHelper();
-    const auto &compilerReleaseHelper = device.getCompilerReleaseHelper();
     if (ailHelper && ailHelper->disableBindlessAddressing()) {
         return false;
     } else {
-        return !compilerReleaseHelper.isBindlessAddressingDisabled();
+        return !hwInfo.caps.bindlessAddressingDisabled;
     }
 }
 

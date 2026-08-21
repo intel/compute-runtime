@@ -11,16 +11,6 @@
 namespace NEO {
 
 template <>
-bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
-    return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isPostImageWriteFlushRequired() const {
     return true;
 }

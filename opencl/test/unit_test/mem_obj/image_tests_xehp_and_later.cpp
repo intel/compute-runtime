@@ -195,9 +195,9 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
 
     imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
 
-    const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    const auto &hwInfo = pClDevice->getDevice().getHardwareInfo();
     auto expectedMode = AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
-    if (releaseHelper.isAuxSurfaceModeOverrideRequired()) {
+    if (hwInfo.caps.auxSurfaceModeOverrideRequired) {
         expectedMode = AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E;
     }
 
@@ -364,10 +364,10 @@ HWTEST2_F(ImageClearColorFixture, givenSurfaceStateWhenAuxParamsForMCSCCSAreSetT
     this->setUpImpl<FamilyType>();
     auto surfaceState = this->getSurfaceState<FamilyType>();
 
-    const auto &releaseHelper = context.getDevice(0)->getRootDeviceEnvironment().getReleaseHelper();
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper);
+    const auto &hwInfo = context.getDevice(0)->getDevice().getHardwareInfo();
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
 
-    auto expectedAuxMode = releaseHelper.isAuxSurfaceModeOverrideRequired() ? EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E : EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
+    auto expectedAuxMode = hwInfo.caps.auxSurfaceModeOverrideRequired ? EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E : EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedAuxMode);
 }

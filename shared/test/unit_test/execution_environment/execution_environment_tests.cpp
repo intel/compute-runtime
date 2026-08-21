@@ -243,9 +243,8 @@ TEST(RootDeviceEnvironment, givenDefaultHardwareInfoWhenPrepareDeviceEnvironment
     rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
     rootDeviceEnvironment->setRcsExposure();
     auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
-    const auto &releaseHelper = rootDeviceEnvironment->getReleaseHelper();
 
-    bool shouldRcsBeDisabled = releaseHelper.isRcsExposureDisabled();
+    bool shouldRcsBeDisabled = hwInfo->caps.rcsExposureDisabled;
     bool isRcsDisabled = hwInfo->featureTable.flags.ftrRcsNode;
     EXPECT_NE(shouldRcsBeDisabled, isRcsDisabled);
 }

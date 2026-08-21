@@ -29,11 +29,6 @@ uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
     return 64u;
 }
 
-template <>
-bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
-    return true;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helpers/release_helper/release_helper_common_xe3_and_later.inl"

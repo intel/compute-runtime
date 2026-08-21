@@ -43,11 +43,6 @@ bool ReleaseHelperHw<release>::isNumRtStacksPerDssFixedValue() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isPostImageWriteFlushRequired() const {
     return true;
 }

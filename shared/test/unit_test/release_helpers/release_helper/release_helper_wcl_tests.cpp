@@ -27,8 +27,6 @@ TEST_F(ReleaseHelperWclTests, whenGettingCapabilitiesThenCorrectPropertiesAreRet
 
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
-        EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
-        EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_FALSE(releaseHelper->isRayTracingSupported());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());

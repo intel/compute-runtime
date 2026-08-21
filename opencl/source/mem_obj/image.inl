@@ -119,8 +119,8 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
         auto mcsGmm = getMcsAllocation()->getDefaultGmm();
 
         if (EncodeSurfaceState<GfxFamily>::shouldProgramAuxForMcs(mcsGmm->unifiedAuxTranslationCapable(), mcsGmm->hasMultisampleControlSurface())) {
-            const auto &releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
-            EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
+            const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+            EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, hwInfo);
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
             surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());
             EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);

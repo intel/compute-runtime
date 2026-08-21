@@ -55,54 +55,74 @@ TEST(CapsXe3Test, givenNvlUIpVersionWhenResolvingCapsThenReleaseCapsAreReturned)
 TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPtlH = materializeCaps<CapsPtlH>();
     EXPECT_FALSE(capsPtlH.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsPtlH.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsPtlH.bFloat16ConversionSupported);
+    EXPECT_FALSE(capsPtlH.bindlessAddressingDisabled);
     EXPECT_TRUE(capsPtlH.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsPtlH.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsPtlH.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPtlH.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsPtlH.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsPtlH.rcsExposureDisabled);
     EXPECT_FALSE(capsPtlH.splitMatrixMultiplyAccumulateSupported);
 }
 
 TEST(CapsXe3Test, givenPtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPtlU = materializeCaps<CapsPtlU>();
     EXPECT_FALSE(capsPtlU.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsPtlU.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsPtlU.bFloat16ConversionSupported);
+    EXPECT_FALSE(capsPtlU.bindlessAddressingDisabled);
     EXPECT_TRUE(capsPtlU.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsPtlU.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsPtlU.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPtlU.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsPtlU.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsPtlU.rcsExposureDisabled);
     EXPECT_FALSE(capsPtlU.splitMatrixMultiplyAccumulateSupported);
 }
 
 TEST(CapsXe3Test, givenWclReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsWcl = materializeCaps<CapsWcl>();
     EXPECT_FALSE(capsWcl.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsWcl.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsWcl.bFloat16ConversionSupported);
+    EXPECT_FALSE(capsWcl.bindlessAddressingDisabled);
     EXPECT_TRUE(capsWcl.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsWcl.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsWcl.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsWcl.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsWcl.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsWcl.rcsExposureDisabled);
     EXPECT_FALSE(capsWcl.splitMatrixMultiplyAccumulateSupported);
 }
 
 TEST(CapsXe3Test, givenNvlSReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsNvlS = materializeCaps<CapsNvlS>();
     EXPECT_FALSE(capsNvlS.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsNvlS.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsNvlS.bFloat16ConversionSupported);
+    EXPECT_FALSE(capsNvlS.bindlessAddressingDisabled);
     EXPECT_TRUE(capsNvlS.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsNvlS.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsNvlS.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsNvlS.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsNvlS.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsNvlS.rcsExposureDisabled);
     EXPECT_FALSE(capsNvlS.splitMatrixMultiplyAccumulateSupported);
 }
 
 TEST(CapsXe3Test, givenNvlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsNvlU = materializeCaps<CapsNvlU>();
     EXPECT_FALSE(capsNvlU.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsNvlU.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsNvlU.bFloat16ConversionSupported);
+    EXPECT_FALSE(capsNvlU.bindlessAddressingDisabled);
     EXPECT_TRUE(capsNvlU.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsNvlU.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsNvlU.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsNvlU.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsNvlU.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsNvlU.rcsExposureDisabled);
     EXPECT_FALSE(capsNvlU.splitMatrixMultiplyAccumulateSupported);
 }

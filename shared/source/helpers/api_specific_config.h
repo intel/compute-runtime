@@ -15,13 +15,13 @@
 
 namespace NEO {
 class Device;
-class ReleaseHelper;
+struct HardwareInfo;
 struct RootDeviceEnvironment;
 
 struct ApiSpecificConfig {
     enum ApiType { OCL,
                    L0 };
-    static bool getGlobalBindlessHeapConfiguration(const ReleaseHelper &releaseHelper);
+    static bool getGlobalBindlessHeapConfiguration(const HardwareInfo &hwInfo);
     static bool getBindlessMode(const Device &device);
     static bool isDeviceAllocationCacheEnabled();
     static bool isHostAllocationCacheEnabled();

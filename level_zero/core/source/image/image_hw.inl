@@ -327,8 +327,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         const bool unifiedMcs = this->getIsUnifiedMcsSurface();
         if (mcsAlloc != nullptr || unifiedMcs) {
             auto mcsGmm = mcsAlloc ? mcsAlloc->getDefaultGmm() : gmm;
-            const auto &releaseHelper = device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper();
-            NEO::EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
+            const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+            NEO::EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, hwInfo);
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
             surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());
             NEO::EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);

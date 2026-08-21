@@ -39,11 +39,8 @@ class ReleaseHelper {
     virtual ~ReleaseHelper() = default;
 
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const = 0;
-    virtual bool isAuxSurfaceModeOverrideRequired() const = 0;
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
-    virtual bool isRcsExposureDisabled() const = 0;
     virtual const SupportedNumGrfs getSupportedNumGrfs() const = 0;
-    virtual bool isGlobalBindlessAllocatorEnabled() const = 0;
     virtual uint64_t getTotalMemBankSize() const = 0;
     virtual const ThreadsPerEUConfigs getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const = 0;
     virtual bool isDeviceConfigStringTileCountIncluded() const = 0;
@@ -85,11 +82,8 @@ class ReleaseHelperHw : public ReleaseHelper {
     }
 
     bool isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const override;
-    bool isAuxSurfaceModeOverrideRequired() const override;
     bool isResolvingSubDeviceIDNeeded() const override;
-    bool isRcsExposureDisabled() const override;
     const SupportedNumGrfs getSupportedNumGrfs() const override;
-    bool isGlobalBindlessAllocatorEnabled() const override;
     uint64_t getTotalMemBankSize() const override;
     const StackVec<uint32_t, 6> getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const override;
     bool isDeviceConfigStringTileCountIncluded() const override;

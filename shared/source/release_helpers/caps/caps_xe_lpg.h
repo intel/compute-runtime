@@ -18,16 +18,21 @@ namespace NEO {
 
 struct CapsXeLpgCore {
     static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool globalBindlessAllocatorEnabled = true;
 };
 
-struct CapsMtlU : CapsXeLpgCore {};
+struct CapsMtlU : CapsXeLpgCore {
+    static constexpr bool auxSurfaceModeOverrideRequired = true;
+};
 struct CapsMtlUA0 : CapsMtlU {
     static constexpr bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = true;
     static constexpr bool programAllStateComputeCommandFieldsWARequired = true;
 };
 struct CapsMtlUB0 : CapsMtlU {};
 
-struct CapsMtlH : CapsXeLpgCore {};
+struct CapsMtlH : CapsXeLpgCore {
+    static constexpr bool auxSurfaceModeOverrideRequired = true;
+};
 struct CapsMtlHA0 : CapsMtlH {
     static constexpr bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = true;
     static constexpr bool programAllStateComputeCommandFieldsWARequired = true;

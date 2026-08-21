@@ -19,8 +19,10 @@ namespace NEO {
 struct CapsXeHpgCore {
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = true;
     static constexpr bool programAllStateComputeCommandFieldsWARequired = true;
+    static constexpr bool rcsExposureDisabled = true;
     static constexpr bool splitMatrixMultiplyAccumulateSupported = true;
 };
 

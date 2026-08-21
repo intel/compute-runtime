@@ -21,11 +21,6 @@ bool ReleaseHelperHw<releaseType>::isPipeControlPriorToNonPipelinedStateCommands
 }
 
 template <ReleaseType releaseType>
-inline bool ReleaseHelperHw<releaseType>::isAuxSurfaceModeOverrideRequired() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
     return true;
 }
@@ -36,18 +31,8 @@ bool ReleaseHelperHw<releaseType>::isDirectSubmissionLightSupported() const {
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isRcsExposureDisabled() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 const SupportedNumGrfs ReleaseHelperHw<releaseType>::getSupportedNumGrfs() const {
     return {128u, 256u};
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isGlobalBindlessAllocatorEnabled() const {
-    return false;
 }
 
 template <ReleaseType releaseType>

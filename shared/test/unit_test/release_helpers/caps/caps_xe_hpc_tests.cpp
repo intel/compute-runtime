@@ -40,21 +40,29 @@ TEST(CapsXeHpcTest, givenPvcVgIpVersionWhenResolvingCapsThenReleaseCapsAreReturn
 TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPvc = materializeCaps<CapsPvc>();
     EXPECT_FALSE(capsPvc.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsPvc.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsPvc.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsPvc.bindlessAddressingDisabled);
     EXPECT_TRUE(capsPvc.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPvc.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsPvc.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPvc.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsPvc.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsPvc.rcsExposureDisabled);
     EXPECT_FALSE(capsPvc.splitMatrixMultiplyAccumulateSupported);
 }
 
 TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPvcVg = materializeCaps<CapsPvcVg>();
     EXPECT_FALSE(capsPvcVg.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsPvcVg.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsPvcVg.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsPvcVg.bindlessAddressingDisabled);
     EXPECT_FALSE(capsPvcVg.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsPvcVg.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsPvcVg.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPvcVg.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsPvcVg.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsPvcVg.rcsExposureDisabled);
     EXPECT_FALSE(capsPvcVg.splitMatrixMultiplyAccumulateSupported);
 }

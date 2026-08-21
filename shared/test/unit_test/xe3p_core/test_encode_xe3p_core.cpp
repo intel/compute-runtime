@@ -1423,7 +1423,7 @@ XE3P_CORETEST_F(CommandContainerXe3pTest, GivenComputeWalker2AndArgsWhencallingS
 XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenSurfaceStateWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
+    auto hwInfo = *defaultHwInfo;
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }

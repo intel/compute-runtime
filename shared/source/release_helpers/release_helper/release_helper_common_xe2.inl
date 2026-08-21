@@ -11,17 +11,7 @@
 namespace NEO {
 
 template <>
-bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isDeviceConfigStringTileCountIncluded() const {
-    return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
     return true;
 }
 

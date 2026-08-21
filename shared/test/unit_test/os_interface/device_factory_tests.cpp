@@ -155,8 +155,8 @@ TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledTh
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     ASSERT_TRUE(success);
 
-    const auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-    EXPECT_NE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode, releaseHelper.isRcsExposureDisabled());
+    const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+    EXPECT_NE(hwInfo.featureTable.flags.ftrRcsNode, hwInfo.caps.rcsExposureDisabled);
 }
 
 TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesSucceedsForAtLeastOneDeviceThenSuccessIsReturned) {

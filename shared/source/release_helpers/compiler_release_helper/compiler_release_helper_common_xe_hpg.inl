@@ -10,11 +10,6 @@
 namespace NEO {
 
 template <>
-bool CompilerReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
-    return false;
-}
-
-template <>
 bool CompilerReleaseHelperHw<release>::getFtrXe2Compression() const {
     return false;
 }

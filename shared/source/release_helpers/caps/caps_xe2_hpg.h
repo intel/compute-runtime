@@ -17,8 +17,11 @@
 namespace NEO {
 
 struct CapsXe2HpgCore {
+    static constexpr bool auxSurfaceModeOverrideRequired = true;
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool rcsExposureDisabled = true;
 };
 
 struct CapsBmgG21 : CapsXe2HpgCore {};

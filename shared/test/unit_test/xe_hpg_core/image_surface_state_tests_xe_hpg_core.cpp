@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -64,20 +65,20 @@ XE_HPG_CORETEST_F(ImageSurfaceStateTestsXeHpgCore, givenGmmWithMediaCompressedWh
 
 XE_HPG_CORETEST_F(ImageSurfaceStateTestsXeHpgCore, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsFalseWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isAuxSurfaceModeOverrideRequiredResult = false;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.caps.auxSurfaceModeOverrideRequired = false;
 
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
 }
 
 XE_HPG_CORETEST_F(ImageSurfaceStateTestsXeHpgCore, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsTrueWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isAuxSurfaceModeOverrideRequiredResult = true;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.caps.auxSurfaceModeOverrideRequired = true;
 
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }

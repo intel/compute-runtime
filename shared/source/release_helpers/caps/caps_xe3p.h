@@ -18,7 +18,10 @@ namespace NEO {
 
 struct CapsXe3pCore {
     static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool bindlessAddressingDisabled = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool rcsExposureDisabled = true;
 };
 
 struct CapsCri : CapsXe3pCore {};

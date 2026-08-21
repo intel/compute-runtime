@@ -18,7 +18,9 @@ namespace NEO {
 
 struct CapsXeHpcCore {
     static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool bindlessAddressingDisabled = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool rcsExposureDisabled = true;
 };
 
 struct CapsPvc : CapsXeHpcCore {};

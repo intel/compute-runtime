@@ -15,11 +15,8 @@ class MockReleaseHelper : public ReleaseHelper {
   public:
     MockReleaseHelper() : ReleaseHelper(0) {}
     ADDMETHOD_CONST_NOBASE(isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired, bool, false, (const HardwareInfo &hwInfo, bool isRcs));
-    ADDMETHOD_CONST_NOBASE(isAuxSurfaceModeOverrideRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isResolvingSubDeviceIDNeeded, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isRcsExposureDisabled, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getSupportedNumGrfs, const SupportedNumGrfs, {128u}, ());
-    ADDMETHOD_CONST_NOBASE(isGlobalBindlessAllocatorEnabled, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getTotalMemBankSize, uint64_t, 32ull * MemoryConstants::gigaByte, ());
     ADDMETHOD_CONST_NOBASE(getThreadsPerEUConfigs, const ThreadsPerEUConfigs, {}, (uint32_t numThreadsPerEu));
     ADDMETHOD_CONST_NOBASE(isDeviceConfigStringTileCountIncluded, bool, false, ());

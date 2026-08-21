@@ -15,11 +15,6 @@ namespace NEO {
 constexpr auto release = ReleaseType::release3000;
 
 template <>
-bool CompilerReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
-    return false;
-}
-
-template <>
 bool CompilerReleaseHelperHw<release>::getFtrXe2Compression() const {
     return !(hardwareIpVersion.value == AOT::PTL_H_A0);
 }

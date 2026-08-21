@@ -55,7 +55,7 @@ void RootDevice::createBindlessHeapsHelper() {
     EnvironmentVariableReader envReader;
     bool disableGlobalBindless = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
 
-    if (!disableGlobalBindless && ApiSpecificConfig::getGlobalBindlessHeapConfiguration(this->getReleaseHelper()) && ApiSpecificConfig::getBindlessMode(*this)) {
+    if (!disableGlobalBindless && ApiSpecificConfig::getGlobalBindlessHeapConfiguration(this->getHardwareInfo()) && ApiSpecificConfig::getBindlessMode(*this)) {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createBindlessHeapsHelper(this, getNumGenericSubDevices() > 1);
     }
 }

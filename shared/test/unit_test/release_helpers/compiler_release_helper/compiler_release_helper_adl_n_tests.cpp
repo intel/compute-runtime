@@ -22,7 +22,6 @@ TEST_F(CompilerReleaseHelperAdlNTests, whenGettingCapabilitiesThenCorrectPropert
         compilerReleaseHelper = CompilerReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, compilerReleaseHelper);
 
-        EXPECT_TRUE(compilerReleaseHelper->isBindlessAddressingDisabled());
         EXPECT_FALSE(compilerReleaseHelper->isForceEmuInt32DivRemSPRequired());
         EXPECT_FALSE(compilerReleaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalFp16Caps());

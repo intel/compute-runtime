@@ -301,8 +301,7 @@ bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
 }
 
 void RootDeviceEnvironment::setRcsExposure() {
-    UNRECOVERABLE_IF(releaseHelper == nullptr);
-    if (releaseHelper->isRcsExposureDisabled()) {
+    if (hwInfo->caps.rcsExposureDisabled) {
         hwInfo->featureTable.flags.ftrRcsNode = false;
         if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) || (debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS))) {
             hwInfo->featureTable.flags.ftrRcsNode = true;

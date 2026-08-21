@@ -17,11 +17,6 @@ bool ReleaseHelperHw<release>::isDirectSubmissionLightSupported() const {
 }
 
 template <>
-inline bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
     auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
     if (enableStateCacheInvalidationWa != -1) {

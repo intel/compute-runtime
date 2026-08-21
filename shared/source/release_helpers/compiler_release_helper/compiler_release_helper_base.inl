@@ -15,11 +15,6 @@ bool CompilerReleaseHelperHw<releaseType>::isForceEmuInt32DivRemSPRequired() con
 }
 
 template <ReleaseType releaseType>
-bool CompilerReleaseHelperHw<releaseType>::isBindlessAddressingDisabled() const {
-    return true;
-}
-
-template <ReleaseType releaseType>
 bool CompilerReleaseHelperHw<releaseType>::isMatrixMultiplyAccumulateSupported() const {
     return true;
 }

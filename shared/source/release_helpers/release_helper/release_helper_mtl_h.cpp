@@ -18,11 +18,6 @@ namespace NEO {
 constexpr auto release = ReleaseType::release1271;
 
 template <>
-inline bool ReleaseHelperHw<release>::isAuxSurfaceModeOverrideRequired() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
     return true;
 }

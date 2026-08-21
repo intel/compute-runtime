@@ -17,9 +17,4 @@ const ThreadsPerEUConfigs ReleaseHelperHw<release>::getThreadsPerEUConfigs(uint3
     return {4, 5, 6, 8, 10};
 }
 
-template <>
-bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
-    return true;
-}
-
 } // namespace NEO
