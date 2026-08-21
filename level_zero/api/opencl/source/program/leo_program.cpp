@@ -525,7 +525,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         devicesToExpose.push_back(clDevice);
     }
     uint32_t numDevices = static_cast<uint32_t>(devicesToExpose.size());
-    size_t numKernels = 0u;
+    uint32_t numKernels = 0u;
     std::string kernelNames;
 
     switch (paramName) {
@@ -610,7 +610,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         if (nullptr == this->getModuleHandle()) {
             retVal = CL_INVALID_PROGRAM_EXECUTABLE;
         } else {
-            numKernels = getUserKernelNames().size();
+            numKernels = static_cast<uint32_t>(getUserKernelNames().size());
             pSrc = &numKernels;
             retSize = srcSize = sizeof(numKernels);
         }
