@@ -20,6 +20,7 @@
 
 #include "neo_igfxfmid.h"
 
+#include <limits>
 #include <map>
 #include <memory>
 #include <vector>
@@ -76,6 +77,11 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     static bool useImmediateComputeFlushTask(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static ze_mutable_command_exp_flags_t getCmdListUpdateCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static ze_record_replay_graph_exp_flags_t getRecordReplayGraphCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
+
+    uint64_t getCounterBasedEventMaxValue() const {
+        return (getCmdListWaitOnMemoryDataSize() == sizeof(uint64_t)) ? std::numeric_limits<uint64_t>::max()
+                                                                      : std::numeric_limits<uint32_t>::max();
+    }
 
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device, ze_result_t &result) const = 0;
     virtual L0::Event *createStandaloneEvent(const EventDescriptor &desc, L0::Device *device, ze_result_t &result) const = 0;

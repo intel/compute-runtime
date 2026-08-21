@@ -3995,7 +3995,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageWhenCallingAppen
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     const uint64_t incValue = (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234) * partitionCount;
-    const uint64_t counterValue = incValue * 2;
+    const uint64_t counterValue = device->getL0GfxCoreHelper().getCounterBasedEventMaxValue();
     const uint64_t programmedIncValue = incValue / partitionCount;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
@@ -4031,7 +4031,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdLi
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     const uint64_t incValue = (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234) * partitionCount;
-    const uint64_t counterValue = incValue * 2;
+    const uint64_t counterValue = device->getL0GfxCoreHelper().getCounterBasedEventMaxValue();
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
 
