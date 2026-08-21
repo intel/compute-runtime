@@ -3849,10 +3849,8 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
           givenHeaplessModeAndContextGroupEnabledWhenExecutingImmCommandListThenScratchControllerAndHeapAllocationFromPrimaryCsrIsUsed,
           IsHeaplessRequired) {
 
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr bool heaplessModeEnabled = FamilyType::template isHeaplessMode<DefaultWalkerType>();
     HardwareInfo hwInfo = *defaultHwInfo;
-    if (!heaplessModeEnabled || hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
         GTEST_SKIP();
     }
 

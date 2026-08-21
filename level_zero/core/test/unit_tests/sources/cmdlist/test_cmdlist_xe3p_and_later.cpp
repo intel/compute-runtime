@@ -44,10 +44,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCalli
     constexpr uint64_t counterValue = 4;
     constexpr uint64_t incValue = 2;
 
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
-
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
     auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
     eventObj->isTimestampEvent = true;
@@ -100,10 +96,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCalli
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptModeEnabledWhenDispatchingWalkerWithRegularEventAndNonInOrderCmdListThenSetPostSyncInterruptEnabled, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
-
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
 
     auto eventPool = createEvents<FamilyType>(1, false);
 
@@ -169,10 +161,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptModeEnabledWhenDisp
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenAtomicSignallingEnabledWhenDispatchingWalkerThenSetCorrectPostSyncFields, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
-
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
     debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
@@ -359,10 +347,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
 
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
-
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
 
@@ -499,10 +483,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventWhenDispatchingWalkerThenSetCorrectPostSyncFields, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
-
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
     debugManager.flags.EnableL3FlushAfterPostSync.set(0);
@@ -681,10 +661,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenDuplicatedHostStorageEnabled
 
     debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
-
     auto eventPool = createEvents<FamilyType>(1, false);
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -735,10 +711,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenDuplicatedHostStorageEnabled
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenDebugFlagSetWhenSettingPostSyncsThenEnableSerialization, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
-
     debugManager.flags.SerializeWalkerPostSyncOps.set(1);
 
     auto eventPool = createEvents<FamilyType>(1, false);
@@ -784,10 +756,6 @@ struct MultiTileInOrderCmdListTestsXe3pCoreAndLater : public InOrderCmdListTests
 HWTEST2_F(MultiTileInOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWhenAppendCalledThenProgramIncOperation, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
-
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
 
     uint64_t counterValue = 4;
     uint64_t incValue = 2 * partitionCount;
@@ -865,10 +833,6 @@ HWTEST2_F(MultiTileInOrderCmdListTestsXe3pCoreAndLater, givenSyncDispatchEnabled
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWhenAppendCalledThenProgramIncOperation, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
-
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
 
     uint64_t counterValue = 4;
     uint64_t incValue = 2;
