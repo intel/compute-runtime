@@ -74,11 +74,8 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierCl
         auto targetDeviceProductConfig = static_cast<AOT::PRODUCT_CONFIG>(targetDevice.aotConfig.value);
         if (targetDeviceProductConfig == productConfig) {
             return true;
-        } else if (debugManager.flags.EnableCompatibilityMode.get() == true) {
-            return isTargetProductConfigCompatibleWithProductConfig(targetDeviceProductConfig, productConfig);
-        } else {
-            return false;
         }
+        return isTargetProductConfigCompatibleWithProductConfig(targetDeviceProductConfig, productConfig);
     }
 
     if (gfxCore == IGFX_UNKNOWN_CORE && productFamily == IGFX_UNKNOWN) {

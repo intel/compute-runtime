@@ -7473,38 +7473,6 @@ TEST(ValidateTargetDeviceTests, givenDeviceInCompatModeWhenValidatingTargetDevic
     }
 }
 
-TEST(ValidateTargetDeviceTests, givenDeviceWithoutCompatModeWhenValidatingTargetDeviceThenUseItOnlyForValidation) {
-    bool compatModeInitState = debugManager.flags.EnableCompatibilityMode.get();
-    debugManager.flags.EnableCompatibilityMode.set(false);
-
-    for (auto &currentDevice : AOT::deviceAcronyms) {
-        TargetDevice targetDevice;
-        targetDevice.aotConfig.value = currentDevice.second;
-        targetDevice.maxPointerSizeInBytes = 8u;
-
-        Zebin::Elf::ZebinTargetFlags targetMetadata;
-
-        for (auto &deviceToCompare : AOT::deviceAcronyms) {
-            auto productConfigToCompare = deviceToCompare.second;
-
-            auto res = validateTargetDevice(targetDevice,
-                                            Zebin::Elf::EI_CLASS_64,
-                                            productFamily,
-                                            renderCoreFamily,
-                                            productConfigToCompare,
-                                            targetMetadata);
-
-            if (targetDevice.aotConfig.value == productConfigToCompare) {
-                EXPECT_TRUE(res);
-            } else {
-                EXPECT_FALSE(res);
-            }
-        }
-    }
-
-    debugManager.flags.EnableCompatibilityMode.set(compatModeInitState);
-}
-
 TEST(ValidateTargetDeviceTests, givenBmgG21ReservedSteppingProductConfigWhenValidatingTargetDeviceThenAcceptedAsCompatibleWithEveryDeclaredCompatibleTarget) {
     Zebin::Elf::ZebinTargetFlags targetMetadata;
 

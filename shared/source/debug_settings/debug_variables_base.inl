@@ -711,7 +711,6 @@ DECLARE_DEBUG_VARIABLE(bool, PrintBOChunkingLogs, false, "Print some logs on BO 
 DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPrefetch, false, "Enables prefetching of Shared Memory chunks")
 DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPreferredLocationHint, false, "Enables preferred location advise on chunks")
 DECLARE_DEBUG_VARIABLE(bool, ForceCompatibilityMode, false, "Forces compatibility mode, device from decoded binary is not validated against target device")
-DECLARE_DEBUG_VARIABLE(bool, EnableCompatibilityMode, true, "Enables compatibility mode for platforms which can use precompiled base platform configuration")
 DECLARE_DEBUG_VARIABLE(bool, DoNotUseChunkedBosForHugeHostPtrAllocs, false, "Do not use chunked BOs for huge host pointer allocations")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBOChunking, -1, "Enables use of chunking of BOs in the KMD, mask: -1 = default, 0 = no chunking, 1 = shared allocations only, 2 = multi-tile device allocations only, 3 = shared and multi-tile device allocations .")
 DECLARE_DEBUG_VARIABLE(int32_t, DestroyAllocationsViaGmm, -1, "Use DeAllocate2 wrapper instead of raw GDI destroy allocations")
