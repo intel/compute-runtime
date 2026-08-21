@@ -1466,12 +1466,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         Vec3<size_t> dstImgSize = {region.width, region.height, region.depth};
 
         auto srcRowPitch = srcImgInfo.rowPitch;
-        auto srcSlicePitch =
-            (srcImgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : srcRegion.height) * srcRowPitch;
+        auto srcSlicePitch = srcImgInfo.slicePitch;
 
         auto dstRowPitch = dstImgInfo.rowPitch;
-        auto dstSlicePitch =
-            (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : dstRegion.height) * dstRowPitch;
+        auto dstSlicePitch = dstImgInfo.slicePitch;
 
         bool src1DBuffer = (srcImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
         bool dst1DBuffer = (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);

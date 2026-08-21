@@ -1370,9 +1370,9 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhen1DArrayImageCopyRegionThenAp
     cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, copyParams);
 
     EXPECT_EQ(cmdList.appendCopyImageSrcRowPitch, imageHWSrc->getImageInfo().rowPitch);
-    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, srcRegion.height * imageHWSrc->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, imageHWSrc->getImageInfo().slicePitch);
     EXPECT_EQ(cmdList.appendCopyImageDstRowPitch, imageHWDst->getImageInfo().rowPitch);
-    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, dstRegion.height * imageHWDst->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, imageHWDst->getImageInfo().slicePitch);
     Vec3<size_t> expectedRegionCopySize = {srcRegion.width, srcRegion.height, srcRegion.depth};
     Vec3<size_t> expectedRegionSrcOrigin = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
     Vec3<size_t> expectedRegionDstOrigin = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
@@ -1412,9 +1412,9 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhen2DArrayImageCopyRegionThenAp
     cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, copyParams);
 
     EXPECT_EQ(cmdList.appendCopyImageSrcRowPitch, imageHWSrc->getImageInfo().rowPitch);
-    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, srcRegion.height * imageHWSrc->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, imageHWSrc->getImageInfo().slicePitch);
     EXPECT_EQ(cmdList.appendCopyImageDstRowPitch, imageHWDst->getImageInfo().rowPitch);
-    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, dstRegion.height * imageHWDst->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, imageHWDst->getImageInfo().slicePitch);
     Vec3<size_t> expectedRegionCopySize = {srcRegion.width, srcRegion.height, srcRegion.depth};
     Vec3<size_t> expectedRegionSrcOrigin = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
     Vec3<size_t> expectedRegionDstOrigin = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
