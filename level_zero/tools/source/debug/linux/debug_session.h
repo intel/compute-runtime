@@ -50,6 +50,7 @@ struct DebugSessionLinux : DebugSessionImp {
     virtual void closeVmFd(int vmfd) { NEO::SysCalls::close(vmfd); };
     virtual void closeAllCachedVmFds() {};
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;
+    ze_result_t readGpuMemoryImp(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa, bool flushBeforeRead);
     ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override;
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;
     static bool apiEventCompare(const zet_debug_event_t &event1, const zet_debug_event_t &event2) {

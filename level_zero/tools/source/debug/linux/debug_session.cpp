@@ -344,6 +344,10 @@ ze_result_t DebugSessionLinux::interruptImp(uint32_t deviceIndex) {
 }
 
 ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) {
+    return readGpuMemoryImp(vmHandle, output, size, gpuVa, true);
+}
+
+ze_result_t DebugSessionLinux::readGpuMemoryImp(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa, bool flushBeforeRead) {
 
     int vmDebugFd = openVmFd(vmHandle, true);
     if (vmDebugFd < 0) {
@@ -354,7 +358,7 @@ ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, si
     int64_t retVal = 0;
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     gpuVa = gmmHelper->decanonize(gpuVa);
-    if (flushVmCache(vmDebugFd) != 0) {
+    if (flushBeforeRead && flushVmCache(vmDebugFd) != 0) {
         closeVmFd(vmDebugFd);
         return ZE_RESULT_ERROR_UNKNOWN;
     }

@@ -3166,6 +3166,59 @@ TEST_F(DebugApiLinuxTestXe, GivenSuccessfulReadGpuMemoryWhenCallingReadGpuMemory
     EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenFlushBeforeReadRequestedWhenCallingReadGpuMemoryImpThenVmCacheIsFlushed) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+
+    auto retVal = session->readGpuMemoryImp(7, output, bufferSize, 0x23000, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(1, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenFlushBeforeReadNotRequestedWhenCallingReadGpuMemoryImpThenVmCacheIsNotFlushedAndMemoryIsRead) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+
+    auto retVal = session->readGpuMemoryImp(7, output, bufferSize, 0x23000, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(0, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenFailingFsyncAndFlushBeforeReadNotRequestedWhenCallingReadGpuMemoryImpThenMemoryIsRead) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+    handler->fsyncRetVal = -1;
+    handler->numFsyncToSucceed = 0;
+
+    auto retVal = session->readGpuMemoryImp(7, output, bufferSize, 0x23000, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(0, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenSuccessfulWriteGpuMemoryWhenCallingWriteGpuMemoryThenFsyncIsCalledBeforeAndAfterWriting) {
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
