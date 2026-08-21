@@ -400,20 +400,6 @@ ze_result_t Event::counterBasedGetIncrementValue(ze_device_handle_t hDevice, uin
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t Event::counterBasedGetMaxValue(ze_device_handle_t hDevice, uint64_t *maxValue) {
-    auto device = Device::fromHandle(hDevice);
-    if (!device) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-
-    if (!maxValue) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-
-    *maxValue = device->getL0GfxCoreHelper().getCounterBasedEventMaxValue();
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t Event::counterBasedGetIpcHandle(ze_event_handle_t hEvent, ze_ipc_event_counter_based_handle_t *phIpc) {
     auto event = Event::fromHandle(hEvent);
     if (!event || !phIpc || !event->isCounterBasedExplicitlyEnabled()) {
@@ -1306,7 +1292,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
                 completionValue = externalSyncAllocProperties->completionValue;
             }
 
-            if (!deviceAddress || completionValue > device->getL0GfxCoreHelper().getCounterBasedEventMaxValue()) {
+            if (!deviceAddress) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
@@ -1334,7 +1320,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
             }
             auto deviceAlloc = getExternalCounterAllocationFromAddress(deviceAddress);
 
-            if (!deviceAlloc || incrementValue == 0 || completionValue > device->getL0GfxCoreHelper().getCounterBasedEventMaxValue()) {
+            if (!deviceAlloc || incrementValue == 0) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 

@@ -6599,7 +6599,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInO
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     constexpr uint64_t incValue = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234;
-    const uint64_t counterValue = device->getL0GfxCoreHelper().getCounterBasedEventMaxValue();
+    constexpr uint64_t counterValue = incValue * 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
 
@@ -6677,7 +6677,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdListWhenCall
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     constexpr uint64_t incValue = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234;
-    const uint64_t counterValue = device->getL0GfxCoreHelper().getCounterBasedEventMaxValue();
+    constexpr uint64_t counterValue = incValue * 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
 

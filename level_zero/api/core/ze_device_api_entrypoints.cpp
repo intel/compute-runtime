@@ -196,7 +196,7 @@ ze_result_t ZE_APICALL zeDeviceValidateRuntimeRequirements(
 ze_result_t ZE_APICALL zeDeviceGetCounterBasedEventMaxValue(
     ze_device_handle_t hDevice,
     uint64_t *maxValue) {
-    return Event::counterBasedGetMaxValue(hDevice, maxValue);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace L0
