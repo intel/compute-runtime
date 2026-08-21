@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
     uint64_t handleType = 0;
     uintptr_t hostptr = 0;
     std::vector<Device *> devices;
-
+    bool bindlessImage = false;
     if (properties != nullptr) {
         for (int i = 0; properties[i] != 0; i += 2) {
             switch (properties[i]) {
@@ -73,6 +73,9 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
                     i++;
                 }
                 break;
+            case CL_MEM_BINDLESS_IMAGE_INTEL: // Avoiding get a false when using bindless image extension
+                bindlessImage = true;
+                break;
             default:
                 return false;
             }
@@ -84,7 +87,7 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
     memoryProperties.handle = handle;
     memoryProperties.hostptr = hostptr;
     memoryProperties.associatedDevices = devices;
-
+    memoryProperties.flags.bindlessImage = bindlessImage;
     switch (objectType) {
     case ClMemoryPropertiesHelper::ObjType::buffer:
         return isFieldValid(flags, MemObjHelper::validFlagsForBuffer) &&
