@@ -292,20 +292,13 @@ ze_result_t DebugSessionWindows::handleContextCreateDestroyEvent(DBGUMD_READ_EVE
     if (!contextCreateDestroyParams.IsSIPInstalled) {
         return ZE_RESULT_SUCCESS;
     }
-    bool notifyDetach = false;
     {
         std::unique_lock<std::mutex> lock(asyncThreadMutex);
         if (contextCreateDestroyParams.IsCreated) {
             allContexts.insert(contextCreateDestroyParams.hContextHandle);
         } else {
-            notifyDetach = allContexts.erase(contextCreateDestroyParams.hContextHandle);
+            allContexts.erase(contextCreateDestroyParams.hContextHandle);
         }
-    }
-    if (notifyDetach) {
-        zet_debug_event_t debugEvent = {};
-        debugEvent.type = ZET_DEBUG_EVENT_TYPE_DETACHED;
-        debugEvent.info.detached.reason = ZET_DEBUG_DETACH_REASON_HOST_EXIT;
-        pushApiEvent(debugEvent, 0, DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY);
     }
     return ZE_RESULT_SUCCESS;
 }
