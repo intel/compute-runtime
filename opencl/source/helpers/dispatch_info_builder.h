@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,19 +101,19 @@ class DispatchInfoBuilder {
     }
 
     template <SplitDispatch::Dim d = dim, typename... ArgsT>
-    typename std::enable_if<(d == SplitDispatch::Dim::d1D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setArgSvm(SplitDispatch::RegionCoordX x, ArgsT &&...args) {
+        requires((d == SplitDispatch::Dim::d1D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setArgSvm(SplitDispatch::RegionCoordX x, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x)].getKernel()->setArgSvm(std::forward<ArgsT>(args)...);
     }
 
     template <SplitDispatch::Dim d = dim, typename... ArgsT>
-    typename std::enable_if<(d == SplitDispatch::Dim::d2D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setArgSvm(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, ArgsT &&...args) {
+        requires((d == SplitDispatch::Dim::d2D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setArgSvm(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x, y)].getKernel()->setArgSvm(std::forward<ArgsT>(args)...);
     }
     template <SplitDispatch::Dim d = dim, typename... ArgsT>
-    typename std::enable_if<(d == SplitDispatch::Dim::d3D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setArgSvm(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, ArgsT &&...args) {
+        requires((d == SplitDispatch::Dim::d3D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setArgSvm(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x, y, z)].getKernel()->setArgSvm(std::forward<ArgsT>(args)...);
     }
 
@@ -132,42 +132,42 @@ class DispatchInfoBuilder {
     }
 
     template <SplitDispatch::Dim d = dim, typename... ArgsT>
-    typename std::enable_if<(d == SplitDispatch::Dim::d1D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setArg(SplitDispatch::RegionCoordX x, ArgsT &&...args) {
+        requires((d == SplitDispatch::Dim::d1D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setArg(SplitDispatch::RegionCoordX x, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x)].getKernel()->setArg(std::forward<ArgsT>(args)...);
     }
 
     template <SplitDispatch::Dim d = dim, typename... ArgsT>
-    typename std::enable_if<(d == SplitDispatch::Dim::d2D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setArg(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, ArgsT &&...args) {
+        requires((d == SplitDispatch::Dim::d2D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setArg(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x, y)].getKernel()->setArg(std::forward<ArgsT>(args)...);
     }
     template <SplitDispatch::Dim d = dim, typename... ArgsT>
-    typename std::enable_if<(d == SplitDispatch::Dim::d3D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setArg(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, ArgsT &&...args) {
+        requires((d == SplitDispatch::Dim::d3D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setArg(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x, y, z)].getKernel()->setArg(std::forward<ArgsT>(args)...);
     }
     template <SplitDispatch::Dim d = dim>
-    typename std::enable_if<(d == SplitDispatch::Dim::d1D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setKernel(SplitDispatch::RegionCoordX x, Kernel *kern) {
+        requires((d == SplitDispatch::Dim::d1D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setKernel(SplitDispatch::RegionCoordX x, Kernel *kern) {
         dispatchInfos[getDispatchId(x)].setKernel(kern);
     }
 
     template <SplitDispatch::Dim d = dim>
-    typename std::enable_if<(d == SplitDispatch::Dim::d2D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setKernel(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, Kernel *kern) {
+        requires((d == SplitDispatch::Dim::d2D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setKernel(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, Kernel *kern) {
         dispatchInfos[getDispatchId(x, y)].setKernel(kern);
     }
 
     template <SplitDispatch::Dim d = dim>
-    typename std::enable_if<(d == SplitDispatch::Dim::d3D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setKernel(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, Kernel *kern) {
+        requires((d == SplitDispatch::Dim::d3D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setKernel(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, Kernel *kern) {
         dispatchInfos[getDispatchId(x, y, z)].setKernel(kern);
     }
 
     template <SplitDispatch::SplitMode m = mode>
-    typename std::enable_if<(m == SplitDispatch::SplitMode::noSplit) || (m == SplitDispatch::SplitMode::walkerSplit), void>::type
-    setDispatchGeometry(const uint32_t inputDim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> &lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
+        requires((m == SplitDispatch::SplitMode::noSplit) || (m == SplitDispatch::SplitMode::walkerSplit))
+    void setDispatchGeometry(const uint32_t inputDim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> &lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
         auto &dispatchInfo = dispatchInfos[0];
         DEBUG_BREAK_IF(inputDim > static_cast<uint32_t>(dim) + 1);
         dispatchInfo.setDim(inputDim);
@@ -182,8 +182,8 @@ class DispatchInfoBuilder {
     }
 
     template <SplitDispatch::SplitMode m = mode>
-    typename std::enable_if<(m == SplitDispatch::SplitMode::noSplit) || (m == SplitDispatch::SplitMode::walkerSplit), void>::type
-    setDispatchGeometry(const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> &lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
+        requires((m == SplitDispatch::SplitMode::noSplit) || (m == SplitDispatch::SplitMode::walkerSplit))
+    void setDispatchGeometry(const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> &lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
         auto &dispatchInfo = dispatchInfos[0];
         dispatchInfo.setDim(static_cast<uint32_t>(dim) + 1);
         dispatchInfo.setGWS(gws);
@@ -197,9 +197,9 @@ class DispatchInfoBuilder {
     }
 
     template <SplitDispatch::Dim d = dim, typename... ArgsT>
-    typename std::enable_if<(d == SplitDispatch::Dim::d1D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setDispatchGeometry(SplitDispatch::RegionCoordX x,
-                        const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> &lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
+        requires((d == SplitDispatch::Dim::d1D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setDispatchGeometry(SplitDispatch::RegionCoordX x,
+                             const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> &lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
         auto &dispatchInfo = dispatchInfos[getDispatchId(x)];
         dispatchInfo.setDim(static_cast<uint32_t>(dim) + 1);
         dispatchInfo.setGWS(gws);
@@ -213,9 +213,9 @@ class DispatchInfoBuilder {
     }
 
     template <SplitDispatch::Dim d = dim, typename... ArgsT>
-    typename std::enable_if<(d == SplitDispatch::Dim::d2D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setDispatchGeometry(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y,
-                        const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
+        requires((d == SplitDispatch::Dim::d2D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setDispatchGeometry(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y,
+                             const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
         auto &dispatchInfo = dispatchInfos[getDispatchId(x, y)];
         dispatchInfo.setDim(static_cast<uint32_t>(dim) + 1);
         dispatchInfo.setGWS(gws);
@@ -229,9 +229,9 @@ class DispatchInfoBuilder {
     }
 
     template <SplitDispatch::Dim d = dim, typename... ArgsT>
-    typename std::enable_if<(d == SplitDispatch::Dim::d3D) && (mode != SplitDispatch::SplitMode::noSplit), void>::type
-    setDispatchGeometry(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z,
-                        const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> &lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
+        requires((d == SplitDispatch::Dim::d3D) && (mode != SplitDispatch::SplitMode::noSplit))
+    void setDispatchGeometry(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z,
+                             const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws = {0, 0, 0}, const Vec3<size_t> &lws = {0, 0, 0}, const Vec3<size_t> &twgs = {0, 0, 0}, const Vec3<size_t> &nwgs = {0, 0, 0}, const Vec3<size_t> &swgs = {0, 0, 0}) {
         auto &dispatchInfo = dispatchInfos[getDispatchId(x, y, z)];
         dispatchInfo.setDim(static_cast<uint32_t>(dim) + 1);
         dispatchInfo.setGWS(gws);
