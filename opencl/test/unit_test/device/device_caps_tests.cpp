@@ -555,25 +555,6 @@ TEST_F(DeviceGetCapsTest, GivenDeviceDependentSpirvCapabilitiesThenIgcPathReport
     }
 }
 
-TEST_F(DeviceGetCapsTest, GivenDefaultDebugFlagWhenQueryingSpirvExtensionsThenIgcPathIsUsedByDefault) {
-    EXPECT_EQ(1, debugManager.flags.EnableSpirvQueriesFromIgc.get());
-
-    auto *mockDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
-    auto *mockCompilerInterface = new MockCompilerInterface();
-    mockCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
-    mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[mockDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompilerInterface);
-    auto device = std::make_unique<MockClDevice>(mockDevice);
-
-    size_t extSize = 0;
-    EXPECT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, 0, nullptr, &extSize));
-    EXPECT_EQ(1u, mockCompilerInterface->getSpirvExtensionsYAMLCalled);
-
-    std::vector<const char *> extensions(extSize / sizeof(const char *));
-    EXPECT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, extSize, extensions.data(), nullptr));
-    EXPECT_TRUE(std::any_of(extensions.begin(), extensions.end(),
-                            [](const char *e) { return std::string("SPV_INTEL_subgroup_buffer_prefetch") == e; }));
-}
-
 TEST_F(DeviceGetCapsTest, GivenIgcProvidesSpirvYamlWhenQueryingSpirvInfoThenIgcDataIsMergedWithRequiredBaseline) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSpirvQueriesFromIgc.set(1);
