@@ -943,20 +943,23 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
             return tracingRetVal;
         }
     }
-    if (!pImage->getCpuPtr()) {
-        ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc{ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC, nullptr, ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE};
-        ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, &relaxedSizeDesc, 0};
-        void *cpuPtr = nullptr;
-        errcodeHelper.set(L0ToClResultMapper(zeMemAllocHost(pCommandQueue->getL0Object()->getCmdListContext(),
-                                                            &hostDesc,
-                                                            pImage->getHostptrSize(),
-                                                            1,
-                                                            &cpuPtr)));
-        pImage->setCpuPtr(cpuPtr);
-        if (errcodeHelper.localErrcode != CL_SUCCESS) {
-            void *tracingRetVal = nullptr;
-            TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
-            return tracingRetVal;
+    {
+        auto memObjLock = pImage->takeOwnership();
+        if (!pImage->getCpuPtr()) {
+            ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc{ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC, nullptr, ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE};
+            ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, &relaxedSizeDesc, 0};
+            void *cpuPtr = nullptr;
+            errcodeHelper.set(L0ToClResultMapper(zeMemAllocHost(pCommandQueue->getL0Object()->getCmdListContext(),
+                                                                &hostDesc,
+                                                                pImage->getHostptrSize(),
+                                                                1,
+                                                                &cpuPtr)));
+            pImage->setCpuPtr(cpuPtr);
+            if (errcodeHelper.localErrcode != CL_SUCCESS) {
+                void *tracingRetVal = nullptr;
+                TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
+                return tracingRetVal;
+            }
         }
     }
 
