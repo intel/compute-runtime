@@ -3102,8 +3102,13 @@ struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
         case BindlessImageSlot::redescribedImage:
             passedRedescribedSurfaceStateHeap = surfaceStateHeap;
             passedRedescribedSurfaceStateOffset = surfaceStateOffset;
+            passedRedescribedMipLevel = mipLevel;
             break;
         case BindlessImageSlot::packedImage:
+            passedPackedSurfaceStateHeap = surfaceStateHeap;
+            passedPackedSurfaceStateOffset = surfaceStateOffset;
+            passedPackedMipLevel = mipLevel;
+            break;
         case BindlessImageSlot::image:
         default:
             passedSurfaceStateHeap = surfaceStateHeap;
@@ -3120,9 +3125,11 @@ struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
 
     void *passedRedescribedSurfaceStateHeap = nullptr;
     uint32_t passedRedescribedSurfaceStateOffset = 0;
+    uint32_t passedRedescribedMipLevel = 0;
 
     void *passedPackedSurfaceStateHeap = nullptr;
     uint32_t passedPackedSurfaceStateOffset = 0;
+    uint32_t passedPackedMipLevel = 0;
 };
 
 HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
@@ -3275,6 +3282,108 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
     EXPECT_TRUE(kernel->privateState.isBindlessOffsetSet[3]);
     EXPECT_FALSE(kernel->privateState.usingSurfaceStateHeap[3]);
     EXPECT_EQ(0, std::count(kernel->privateState.argumentsResidencyContainer.begin(), kernel->privateState.argumentsResidencyContainer.end(), expectedSsInHeap.heapAllocation));
+}
+
+HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSettingDifferentMipLevelsThenUseDistinctGlobalSlots, ImageSupport) {
+    createKernel();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.miplevels = 3u;
+
+    auto imageHW = std::make_unique<MyMockImage<FamilyType::gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    auto handle = imageHW->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ret = kernel->setArgRedescribedImage(3, handle, false, 1u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto mipLevel1Slot = imageHW->getBindlessSlotWithMipmap(1u);
+    ASSERT_NE(nullptr, mipLevel1Slot);
+    ASSERT_NE(nullptr, imageHW->getBindlessSlot());
+    EXPECT_NE(imageHW->getBindlessSlot()->surfaceStateOffset, mipLevel1Slot->surfaceStateOffset);
+    auto mipLevel1SurfaceState = imageHW->passedRedescribedSurfaceStateHeap;
+    EXPECT_EQ(1u, imageHW->passedRedescribedMipLevel);
+
+    ret = kernel->setArgRedescribedImage(3, handle, false, 2u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto mipLevel2Slot = imageHW->getBindlessSlotWithMipmap(2u);
+    ASSERT_NE(nullptr, mipLevel2Slot);
+    EXPECT_NE(mipLevel1Slot->surfaceStateOffset, mipLevel2Slot->surfaceStateOffset);
+    EXPECT_NE(mipLevel1SurfaceState, imageHW->passedRedescribedSurfaceStateHeap);
+    EXPECT_EQ(2u, imageHW->passedRedescribedMipLevel);
+
+    ret = kernel->setArgRedescribedImage(3, handle, false, 1u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(mipLevel1Slot, imageHW->getBindlessSlotWithMipmap(1u));
+    EXPECT_EQ(mipLevel1SurfaceState, imageHW->passedRedescribedSurfaceStateHeap);
+    EXPECT_EQ(1u, imageHW->passedRedescribedMipLevel);
+    EXPECT_TRUE(kernel->privateState.isBindlessOffsetSet[3]);
+    EXPECT_FALSE(kernel->privateState.usingSurfaceStateHeap[3]);
+}
+
+HWTEST2_F(SetKernelArg, givenPackedImageBindlessKernelAndGlobalBindlessHelperWhenSettingDifferentMipLevelsThenUseDistinctGlobalPackedSlots, ImageSupport) {
+    createKernel();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.miplevels = 3u;
+
+    auto imageHW = std::make_unique<MyMockImage<FamilyType::gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    auto handle = imageHW->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize();
+    const auto packedSlotOffset = surfaceStateSize * NEO::BindlessImageSlot::packedImage;
+
+    ret = kernel->setArgRedescribedImage(3, handle, true, 1u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto mipLevel1Slot = imageHW->getBindlessSlotWithMipmap(1u);
+    ASSERT_NE(nullptr, mipLevel1Slot);
+    ASSERT_NE(nullptr, imageHW->getBindlessSlot());
+    EXPECT_NE(imageHW->getBindlessSlot()->surfaceStateOffset, mipLevel1Slot->surfaceStateOffset);
+    EXPECT_EQ(ptrOffset(mipLevel1Slot->ssPtr, packedSlotOffset), imageHW->passedPackedSurfaceStateHeap);
+    EXPECT_EQ(1u, imageHW->passedPackedMipLevel);
+
+    ret = kernel->setArgRedescribedImage(3, handle, true, 2u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto mipLevel2Slot = imageHW->getBindlessSlotWithMipmap(2u);
+    ASSERT_NE(nullptr, mipLevel2Slot);
+    EXPECT_NE(mipLevel1Slot->surfaceStateOffset, mipLevel2Slot->surfaceStateOffset);
+    EXPECT_EQ(ptrOffset(mipLevel2Slot->ssPtr, packedSlotOffset), imageHW->passedPackedSurfaceStateHeap);
+    EXPECT_EQ(2u, imageHW->passedPackedMipLevel);
+
+    // packed and redescribed args at the same level share the block but not the slot
+    ret = kernel->setArgRedescribedImage(3, handle, false, 1u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(mipLevel1Slot, imageHW->getBindlessSlotWithMipmap(1u));
+    EXPECT_EQ(ptrOffset(mipLevel1Slot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage),
+              imageHW->passedRedescribedSurfaceStateHeap);
+    EXPECT_NE(imageHW->passedPackedSurfaceStateHeap, imageHW->passedRedescribedSurfaceStateHeap);
+
+    ret = kernel->setArgRedescribedImage(3, handle, true, 1u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(ptrOffset(mipLevel1Slot->ssPtr, packedSlotOffset), imageHW->passedPackedSurfaceStateHeap);
+    EXPECT_EQ(1u, imageHW->passedPackedMipLevel);
+    EXPECT_TRUE(kernel->privateState.isBindlessOffsetSet[3]);
+    EXPECT_FALSE(kernel->privateState.usingSurfaceStateHeap[3]);
 }
 
 HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrectSurfaceStateAddressIsPatchedInCrossThreadData, ImageSupport) {

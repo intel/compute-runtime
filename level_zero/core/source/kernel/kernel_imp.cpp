@@ -746,11 +746,11 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
         const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
         if (bindlessHeapsHelper) {
 
-            if (image->allocateBindlessSlot() != ZE_RESULT_SUCCESS) {
+            if (image->allocateBindlessSlotWithMipmap(mipLevel) != ZE_RESULT_SUCCESS) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
 
-            auto ssInHeap = image->getBindlessSlot();
+            auto ssInHeap = image->getBindlessSlotWithMipmap(mipLevel);
             auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
             // redescribed image's surface state is after image's implicit args and sampler
             uint64_t bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * bindlessSlot;

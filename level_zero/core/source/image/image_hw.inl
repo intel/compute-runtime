@@ -64,6 +64,9 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     imgInfo.imgDesc = lookupTable.imageProperties.imageDescriptor;
     imgInfo.mipCount = imgInfo.imgDesc.numMipLevels > 1 ? imgInfo.imgDesc.numMipLevels : 0;
+    if (imgInfo.imgDesc.numMipLevels > 1) {
+        mipLevelBindlessInfos = std::vector<std::unique_ptr<NEO::SurfaceStateInHeapInfo>>(imgInfo.imgDesc.numMipLevels);
+    }
 
     if (lookupTable.isSrgb) {
         if (desc->format.layout != ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8 || desc->format.type != ZE_IMAGE_FORMAT_TYPE_UNORM) {
@@ -523,31 +526,31 @@ void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHea
         UNRECOVERABLE_IF(true);
     }
 
-    auto dst = ptrOffset(surfaceStateHeap, surfaceStateOffset);
-    memcpy_s(dst, sizeof(RENDER_SURFACE_STATE), src, sizeof(RENDER_SURFACE_STATE));
+    RENDER_SURFACE_STATE stateToCopy = *src;
 
     if (imgInfo.mipCount > 1u && (bindlessSlot == NEO::BindlessImageSlot::image ||
                                   bindlessSlot == NEO::BindlessImageSlot::redescribedImage ||
                                   bindlessSlot == NEO::BindlessImageSlot::packedImage)) {
-        auto *dstRss = static_cast<RENDER_SURFACE_STATE *>(dst);
-        const uint32_t mipCountLod = imgInfo.mipCount > 0u ? imgInfo.mipCount - 1u : 0u;
+        const uint32_t mipCountLod = imgInfo.mipCount - 1u;
         const uint32_t clampedMip = std::min(mipLevel, mipCountLod);
 
-        dstRss->setSurfaceMinLOD(clampedMip);
-        dstRss->setMIPCountLOD(mipCountLod);
+        stateToCopy.setSurfaceMinLOD(clampedMip);
+        stateToCopy.setMIPCountLOD(mipCountLod);
 
         if (this->allocation != nullptr) {
             auto *gmm = this->allocation->getDefaultGmm();
             if (gmm != nullptr) {
-                NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(dstRss, gmm);
+                NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&stateToCopy, gmm);
             }
         }
     }
 
     if (isMediaBlockArg) {
-        RENDER_SURFACE_STATE *dstRss = static_cast<RENDER_SURFACE_STATE *>(dst);
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setWidthForMediaBlockSurfaceState(dstRss, imgInfo);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setWidthForMediaBlockSurfaceState(&stateToCopy, imgInfo);
     }
+
+    auto dst = ptrOffset(surfaceStateHeap, surfaceStateOffset);
+    memcpy_s(dst, sizeof(RENDER_SURFACE_STATE), &stateToCopy, sizeof(RENDER_SURFACE_STATE));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

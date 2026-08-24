@@ -15,6 +15,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <vector>
 
 namespace NEO {
 class GraphicsAllocation;
@@ -73,6 +74,8 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
                                                                  NEO::GraphicsAllocation *allocation);
     ze_result_t allocateBindlessSlot() override;
     NEO::SurfaceStateInHeapInfo *getBindlessSlot() override;
+    ze_result_t allocateBindlessSlotWithMipmap(uint32_t mipLevel) override;
+    NEO::SurfaceStateInHeapInfo *getBindlessSlotWithMipmap(uint32_t mipLevel) override;
     ze_result_t getDeviceOffset(uint64_t *deviceOffset) override;
     static size_t getRowPitchFor2dImage(Device *device, const NEO::ImageInfo &imgInfo);
     ze_result_t allocateImplicitArgsOnDemand() override;
@@ -112,6 +115,8 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     ze_sampler_desc_t samplerDesc = {};
     std::optional<ze_image_desc_t> sourceImageFormatDesc = {};
     std::unique_ptr<NEO::SurfaceStateInHeapInfo> bindlessInfo;
+    std::vector<std::unique_ptr<NEO::SurfaceStateInHeapInfo>> mipLevelBindlessInfos;
+    std::mutex mipLevelBindlessInfosMutex;
     bool bindlessImage = false;
     bool imageFromBuffer = false;
     bool sampledImage = false;

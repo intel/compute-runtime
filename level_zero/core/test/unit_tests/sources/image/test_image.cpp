@@ -3659,6 +3659,311 @@ HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageWhenAllocateImplicitArg
     EXPECT_EQ(nullptr, imageHW->getImplicitArgsAllocation());
 }
 
+HWTEST2_F(ImageCreate, givenMipmappedImageWhenAllocatingBindlessSlotWithMipmapThenEachLevelGetsSeededSlotWithItsOwnLod, ImageSupport) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &bindlessExtDesc;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 135u;
+    desc.width = 28u;
+    desc.miplevels = 4u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    ASSERT_NE(nullptr, imageHW->getBindlessSlot());
+    EXPECT_EQ(imageHW->getBindlessSlot(), imageHW->getBindlessSlotWithMipmap(0u));
+
+    const auto baseSlotOffset = imageHW->getBindlessSlot()->surfaceStateOffset;
+    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize();
+    const auto samplerSlotOffset = surfaceStateSize * NEO::BindlessImageSlot::sampler;
+
+    for (uint32_t mipLevel = 1u; mipLevel < desc.miplevels; mipLevel++) {
+        ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlotWithMipmap(mipLevel));
+
+        auto baseSlot = imageHW->getBindlessSlot();
+        auto mipLevelSlot = imageHW->getBindlessSlotWithMipmap(mipLevel);
+        ASSERT_NE(nullptr, mipLevelSlot);
+        EXPECT_EQ(baseSlotOffset, baseSlot->surfaceStateOffset);
+        EXPECT_NE(baseSlotOffset, mipLevelSlot->surfaceStateOffset);
+
+        auto redescribedState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(mipLevelSlot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage));
+        EXPECT_EQ(mipLevel, redescribedState->getSurfaceMinLOD());
+
+        auto imageState = reinterpret_cast<RENDER_SURFACE_STATE *>(mipLevelSlot->ssPtr);
+        EXPECT_EQ(mipLevel, imageState->getSurfaceMinLOD());
+
+        // slots which do not depend on the mip level are seeded from mip level 0
+        EXPECT_EQ(0, memcmp(ptrOffset(mipLevelSlot->ssPtr, samplerSlotOffset),
+                            ptrOffset(baseSlot->ssPtr, samplerSlotOffset), surfaceStateSize));
+
+        // mip level 0 keeps its own state
+        auto baseRedescribedState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(baseSlot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage));
+        EXPECT_EQ(0u, baseRedescribedState->getSurfaceMinLOD());
+    }
+
+    // allocating the same level again reuses the slot
+    auto mipLevel1Slot = imageHW->getBindlessSlotWithMipmap(1u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlotWithMipmap(1u));
+    EXPECT_EQ(mipLevel1Slot, imageHW->getBindlessSlotWithMipmap(1u));
+
+    // out of range levels are clamped to the last one
+    EXPECT_EQ(imageHW->getBindlessSlotWithMipmap(desc.miplevels - 1u), imageHW->getBindlessSlotWithMipmap(desc.miplevels + 100u));
+}
+
+HWTEST2_F(ImageCreate, givenImageWhenAllocatingBindlessSlotAgainThenPreviouslyReturnedSlotStaysValid, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &bindlessExtDesc;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 135u;
+    desc.width = 28u;
+    desc.miplevels = 4u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    auto baseSlot = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, baseSlot);
+    const auto baseSlotOffset = baseSlot->surfaceStateOffset;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlot());
+    EXPECT_EQ(baseSlot, imageHW->getBindlessSlot());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlotWithMipmap(2u));
+    EXPECT_EQ(baseSlot, imageHW->getBindlessSlot());
+    EXPECT_EQ(baseSlotOffset, baseSlot->surfaceStateOffset);
+}
+
+HWTEST2_F(ImageCreate, givenMipmappedImageWhenProgrammingPackedSlotForMipLevelThenPerLevelSlotGetsItsOwnLod, ImageSupport) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &bindlessExtDesc;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 135u;
+    desc.width = 28u;
+    desc.miplevels = 4u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    auto baseSlot = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, baseSlot);
+
+    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize();
+    const auto packedSlotOffset = surfaceStateSize * NEO::BindlessImageSlot::packedImage;
+    constexpr uint32_t mipLevel = 2u;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlotWithMipmap(mipLevel));
+
+    auto mipLevelSlot = imageHW->getBindlessSlotWithMipmap(mipLevel);
+    ASSERT_NE(nullptr, mipLevelSlot);
+    EXPECT_NE(baseSlot->surfaceStateOffset, mipLevelSlot->surfaceStateOffset);
+
+    // on allocation the packed slot is only seeded, the caller programs it on demand
+    EXPECT_EQ(0, memcmp(ptrOffset(mipLevelSlot->ssPtr, packedSlotOffset),
+                        ptrOffset(baseSlot->ssPtr, packedSlotOffset), surfaceStateSize));
+
+    imageHW->copySurfaceStateToSSH(ptrOffset(mipLevelSlot->ssPtr, packedSlotOffset), 0u,
+                                   NEO::BindlessImageSlot::packedImage, false, mipLevel);
+
+    auto packedState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(mipLevelSlot->ssPtr, packedSlotOffset));
+    EXPECT_EQ(mipLevel, packedState->getSurfaceMinLOD());
+    EXPECT_EQ(desc.miplevels - 1u, packedState->getMIPCountLOD());
+
+    // mip level 0 keeps its own packed state
+    auto basePackedState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(baseSlot->ssPtr, packedSlotOffset));
+    EXPECT_EQ(0u, basePackedState->getSurfaceMinLOD());
+
+    // out of range levels are clamped to the last one
+    imageHW->copySurfaceStateToSSH(ptrOffset(mipLevelSlot->ssPtr, packedSlotOffset), 0u,
+                                   NEO::BindlessImageSlot::packedImage, false, desc.miplevels + 100u);
+    EXPECT_EQ(desc.miplevels - 1u, packedState->getSurfaceMinLOD());
+}
+
+HWTEST2_F(ImageCreate, givenNonMipmappedImageWhenAllocatingBindlessSlotWithMipmapThenBaseSlotIsUsed, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &bindlessExtDesc;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 32u;
+    desc.width = 32u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    ASSERT_NE(nullptr, imageHW->getBindlessSlot());
+    const auto baseSlotOffset = imageHW->getBindlessSlot()->surfaceStateOffset;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlotWithMipmap(3u));
+    EXPECT_EQ(imageHW->getBindlessSlot(), imageHW->getBindlessSlotWithMipmap(3u));
+    EXPECT_EQ(baseSlotOffset, imageHW->getBindlessSlotWithMipmap(3u)->surfaceStateOffset);
+}
+
+HWTEST2_F(ImageCreate, givenMipmappedImageWhenGettingSlotForNotAllocatedMipLevelThenUnrecoverableIsTriggered, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &bindlessExtDesc;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 135u;
+    desc.width = 28u;
+    desc.miplevels = 4u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    auto baseSlot = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, baseSlot);
+
+    EXPECT_ANY_THROW(imageHW->getBindlessSlotWithMipmap(2u));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlotWithMipmap(2u));
+    EXPECT_NE(baseSlot, imageHW->getBindlessSlotWithMipmap(2u));
+
+    EXPECT_ANY_THROW(imageHW->getBindlessSlotWithMipmap(1u));
+}
+
+HWTEST2_F(ImageCreate, givenMipmappedImageWhenMipLevelSlotAllocationFailsThenOutOfHostMemoryIsReturned, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &bindlessExtDesc;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 135u;
+    desc.width = 28u;
+    desc.miplevels = 4u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+    ASSERT_NE(nullptr, imageHW->getBindlessSlot());
+
+    bindlessHelper->failAllocateSS = true;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, imageHW->allocateBindlessSlotWithMipmap(2u));
+    EXPECT_ANY_THROW(imageHW->getBindlessSlotWithMipmap(2u));
+}
+
+HWTEST2_F(ImageCreate, givenMipmappedImageWithoutBindlessSlotWhenAllocatingBindlessSlotWithMipmapThenNoMipLevelSlotIsAllocated, ImageSupport) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(nullptr);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 135u;
+    desc.width = 28u;
+    desc.miplevels = 4u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    // without a bindless heaps helper the image has no base slot to seed a mip level slot from
+    ASSERT_EQ(nullptr, imageHW->getBindlessSlot());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, imageHW->allocateBindlessSlotWithMipmap(2u));
+    EXPECT_ANY_THROW(imageHW->getBindlessSlotWithMipmap(2u));
+}
+
 HWTEST_F(ImageCreate, givenMipmappedImageWhenCopySurfaceStateToSSHThenXOffsetAndYOffsetAreZero) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 

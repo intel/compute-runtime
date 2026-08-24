@@ -16,8 +16,11 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -29,6 +32,7 @@
 #include "neo_igfxfmid.h"
 #include "third_party/opencl_headers/CL/cl_gl.h"
 
+#include <algorithm>
 #include <mutex>
 
 namespace L0 {
@@ -66,6 +70,17 @@ void getImageDescriptorFor3ChEmulation(const ze_image_desc_t *origImgDesc, ze_im
 }
 
 ImageImp::~ImageImp() {
+    if (this->device != nullptr) {
+        auto rootIndex = this->device->getNEODevice()->getRootDeviceIndex();
+        auto bindlessHeapsHelper = this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootIndex]->getBindlessHeapsHelper();
+        if (bindlessHeapsHelper != nullptr) {
+            for (const auto &mipLevelBindlessInfo : mipLevelBindlessInfos) {
+                if (mipLevelBindlessInfo != nullptr) {
+                    bindlessHeapsHelper->releaseSSToReusePool(*mipLevelBindlessInfo);
+                }
+            }
+        }
+    }
     if ((isImageView() || imageFromBuffer) && this->device != nullptr) {
         auto rootIndex = this->device->getNEODevice()->getRootDeviceIndex();
         if (bindlessInfo.get() && this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootIndex]->getBindlessHeapsHelper() != nullptr) {
@@ -161,7 +176,7 @@ ze_result_t ImageImp::allocateBindlessSlot() {
         if (!this->device->getNEODevice()->getMemoryManager()->allocateBindlessSlot(allocation)) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
-        if (allocation->getBindlessOffset() != std::numeric_limits<uint64_t>::max()) {
+        if (!bindlessInfo && allocation->getBindlessOffset() != std::numeric_limits<uint64_t>::max()) {
             bindlessInfo = std::make_unique<NEO::SurfaceStateInHeapInfo>(allocation->getBindlessInfo());
         }
         return ZE_RESULT_SUCCESS;
@@ -184,6 +199,65 @@ ze_result_t ImageImp::allocateBindlessSlot() {
 
 NEO::SurfaceStateInHeapInfo *ImageImp::getBindlessSlot() {
     return bindlessInfo.get();
+}
+
+ze_result_t ImageImp::allocateBindlessSlotWithMipmap(uint32_t mipLevel) {
+    auto result = allocateBindlessSlot();
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    const auto numMipLevels = imgInfo.imgDesc.numMipLevels;
+    if (mipLevel == 0u || numMipLevels <= 1u || bindlessInfo == nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto &rootDeviceEnvironment = *this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[allocation->getRootDeviceIndex()];
+    auto bindlessHeapsHelper = rootDeviceEnvironment.getBindlessHeapsHelper();
+    if (bindlessHeapsHelper == nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    const auto clampedMipLevel = std::min(mipLevel, numMipLevels - 1u);
+
+    std::lock_guard<std::mutex> lock(this->mipLevelBindlessInfosMutex);
+    UNRECOVERABLE_IF(clampedMipLevel >= this->mipLevelBindlessInfos.size());
+    if (this->mipLevelBindlessInfos[clampedMipLevel] != nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    const auto surfaceStateSize = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>().getRenderSurfaceStateSize();
+    const auto slotSize = NEO::BindlessImageSlot::max * surfaceStateSize;
+
+    auto surfaceStateInfo = bindlessHeapsHelper->allocateSSInHeap(slotSize, allocation, NEO::BindlessHeapsHelper::globalSsh);
+    if (surfaceStateInfo.heapAllocation == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    memcpy_s(surfaceStateInfo.ssPtr, surfaceStateInfo.ssSize, bindlessInfo->ssPtr, std::min(bindlessInfo->ssSize, surfaceStateInfo.ssSize));
+
+    for (const auto slot : {NEO::BindlessImageSlot::image, NEO::BindlessImageSlot::redescribedImage}) {
+        copySurfaceStateToSSH(ptrOffset(surfaceStateInfo.ssPtr, surfaceStateSize * slot), 0u, slot, false, clampedMipLevel);
+    }
+
+    this->mipLevelBindlessInfos[clampedMipLevel] = std::make_unique<NEO::SurfaceStateInHeapInfo>(surfaceStateInfo);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+NEO::SurfaceStateInHeapInfo *ImageImp::getBindlessSlotWithMipmap(uint32_t mipLevel) {
+    const auto numMipLevels = imgInfo.imgDesc.numMipLevels;
+    if (mipLevel == 0u || numMipLevels <= 1u) {
+        return getBindlessSlot();
+    }
+
+    const auto clampedMipLevel = std::min(mipLevel, numMipLevels - 1u);
+
+    std::lock_guard<std::mutex> lock(this->mipLevelBindlessInfosMutex);
+    UNRECOVERABLE_IF(clampedMipLevel >= this->mipLevelBindlessInfos.size());
+    auto &mipLevelBindlessInfo = this->mipLevelBindlessInfos[clampedMipLevel];
+    UNRECOVERABLE_IF(mipLevelBindlessInfo == nullptr);
+    return mipLevelBindlessInfo.get();
 }
 
 ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage) {
