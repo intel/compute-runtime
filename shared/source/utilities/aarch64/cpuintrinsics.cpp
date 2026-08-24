@@ -1,30 +1,12 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/utilities/cpuintrinsics.h"
-
-#if defined(_WIN32)
-#include <immintrin.h>
-#include <intrin.h>
-#pragma intrinsic(__rdtsc)
-#else
-#if defined(__ARM_ARCH)
-extern "C" uint64_t __rdtsc();
-#else
-#include <immintrin.h>
-#include <x86intrin.h>
-#endif
-#endif
-
-#if defined(__ARM_ARCH)
 #include <sse2neon.h>
-#else
-#include <emmintrin.h>
-#endif
 
 namespace NEO {
 namespace CpuIntrinsics {
@@ -76,11 +58,7 @@ void umonitor(void *a) {
 }
 
 uint64_t rdtsc() {
-#if defined(__ARM_ARCH)
     return 0;
-#else
-    return __rdtsc();
-#endif
 }
 
 } // namespace CpuIntrinsics
