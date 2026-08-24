@@ -337,7 +337,7 @@ template <typename GfxFamily>
 bool TbxCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
                                                          size_t length, uint32_t compareOperation) {
     if (hardwareContextController) {
-        auto readMemory = std::make_unique<char[]>(length);
+        auto readMemory = std::make_unique_for_overwrite<char[]>(length);
         // note: memory bank should not matter assuming that we call expect on the memory that was previously allocated
         hardwareContextController->readMemory((uint64_t)gfxAddress, readMemory.get(), length, this->getMemoryBankForGtt(), MemoryConstants::pageSize64k);
         auto isMemoryEqual = (memcmp(readMemory.get(), srcAddress, length) == 0);

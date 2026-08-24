@@ -495,7 +495,7 @@ std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<
                   "Alignment of a buffer returned via new[] operator must allow storing the required type!");
 
     const auto bufferSize{sizeof(prelim_drm_i915_vm_bind_ext_uuid) * bindExtHandles.size()};
-    auto extensionsBuffer = std::make_unique<uint8_t[]>(bufferSize);
+    auto extensionsBuffer = std::make_unique_for_overwrite<uint8_t[]>(bufferSize);
 
     auto extensions = new (extensionsBuffer.get()) prelim_drm_i915_vm_bind_ext_uuid[bindExtHandles.size()];
     std::memset(extensionsBuffer.get(), 0, bufferSize);
@@ -649,7 +649,7 @@ bool IoctlHelperPrelim20::perfDisableEuStallStream(int32_t *stream) {
 std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) {
 
     if (regionInstanceClass) {
-        auto retVal = std::make_unique<uint8_t[]>(sizeof(prelim_drm_i915_gem_vm_region_ext));
+        auto retVal = std::make_unique_for_overwrite<uint8_t[]>(sizeof(prelim_drm_i915_gem_vm_region_ext));
 
         auto regionExt = reinterpret_cast<prelim_drm_i915_gem_vm_region_ext *>(retVal.get());
 

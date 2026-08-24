@@ -137,7 +137,7 @@ cl_int Program::populateIrBinaryFromModule(bool isSpirv) {
     if (ZE_RESULT_SUCCESS != l0Module->getIrBinary(&irSize, nullptr) || 0u == irSize) {
         return CL_INVALID_OPERATION;
     }
-    this->irBinary = std::make_unique<char[]>(irSize);
+    this->irBinary = std::make_unique_for_overwrite<char[]>(irSize);
     if (ZE_RESULT_SUCCESS != l0Module->getIrBinary(&irSize, reinterpret_cast<uint8_t *>(this->irBinary.get()))) {
         this->irBinary.reset();
         return CL_INVALID_OPERATION;

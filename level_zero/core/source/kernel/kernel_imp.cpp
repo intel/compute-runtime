@@ -209,7 +209,7 @@ void KernelImmutableData::createRelocatedDebugData(NEO::SharedPoolAllocation *gl
             UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.external.relocatedDebugData.get() != nullptr);
 
             auto size = kernelInfo->kernelDescriptor.external.debugData->vIsaSize;
-            kernelInfo->kernelDescriptor.external.relocatedDebugData = std::make_unique<uint8_t[]>(size);
+            kernelInfo->kernelDescriptor.external.relocatedDebugData = std::make_unique_for_overwrite<uint8_t[]>(size);
 
             memcpy_s(kernelInfo->kernelDescriptor.external.relocatedDebugData.get(), size, kernelInfo->kernelDescriptor.external.debugData->vIsa, kernelInfo->kernelDescriptor.external.debugData->vIsaSize);
 

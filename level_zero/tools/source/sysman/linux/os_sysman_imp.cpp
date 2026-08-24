@@ -435,7 +435,6 @@ ze_result_t LinuxSysmanImp::resizeVfBar(uint8_t size) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     std::unique_ptr<uint8_t[]> configMemory = std::make_unique<uint8_t[]>(PCI_CFG_SPACE_EXP_SIZE);
-    memset(configMemory.get(), 0, PCI_CFG_SPACE_EXP_SIZE);
     if (this->preadFunction(fdConfig, configMemory.get(), PCI_CFG_SPACE_EXP_SIZE, 0) < 0) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                      "Read to get config space failed\n");

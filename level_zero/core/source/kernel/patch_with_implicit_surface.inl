@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
         std::unique_ptr<uint64_t[]> surfaceState;
 
         if (useTempBuffer) {
-            surfaceState = std::make_unique<uint64_t[]>(surfaceStateSize / sizeof(uint64_t));
+            surfaceState = std::make_unique_for_overwrite<uint64_t[]>(surfaceStateSize / sizeof(uint64_t));
         }
 
         auto addressToPatch = allocation->getGpuAddress();

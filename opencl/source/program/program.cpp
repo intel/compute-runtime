@@ -331,7 +331,7 @@ cl_int Program::createProgramFromBinary(
         }
     } else {
         this->intermediateRepresentation = NEO::pisaCodeType;
-        this->irBinary = std::make_unique<char[]>(binarySize);
+        this->irBinary = std::make_unique_for_overwrite<char[]>(binarySize);
         memcpy(this->irBinary.get(), pBinary, binarySize);
         this->irBinarySize = binarySize;
         this->isGeneratedByIgc = true;

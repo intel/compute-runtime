@@ -135,7 +135,7 @@ std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32
 
     XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     const auto bufferSize{sizeof(VmBindOpExtAttachDebug) * bindExtHandles.size()};
-    auto extensionsBuffer = std::make_unique<uint8_t[]>(bufferSize);
+    auto extensionsBuffer = std::make_unique_for_overwrite<uint8_t[]>(bufferSize);
 
     auto extensions = new (extensionsBuffer.get()) VmBindOpExtAttachDebug[bindExtHandles.size()];
     std::memset(extensionsBuffer.get(), 0, bufferSize);

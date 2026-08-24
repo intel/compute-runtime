@@ -284,7 +284,7 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
     stoppedThreadsToReport.reserve(threadsToCheck.size());
 
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
-    auto cr0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+    auto cr0 = std::make_unique_for_overwrite<uint32_t[]>(regSize / sizeof(uint32_t));
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
 
     for (auto &threadId : threadsToCheck) {
@@ -1112,7 +1112,7 @@ void DebugSessionLinux::handlePageFaultEvent(PageFaultEvent &pfEvent) {
         return;
     }
 
-    std::unique_ptr<uint8_t[]> bitmaskPF = std::make_unique<uint8_t[]>(size);
+    std::unique_ptr<uint8_t[]> bitmaskPF = std::make_unique_for_overwrite<uint8_t[]>(size);
     std::transform(bitmaskAfter, bitmaskAfter + size, bitmaskResolved, bitmaskPF.get(), std::bit_xor<uint8_t>());
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();

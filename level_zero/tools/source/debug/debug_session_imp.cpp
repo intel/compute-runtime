@@ -455,7 +455,7 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
         auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
 
         if (gpuVa != 0 && stateSaveAreaSize != 0) {
-            stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
+            stateSaveArea = std::make_unique_for_overwrite<char[]>(stateSaveAreaSize);
             stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
         } else {
             DEBUG_BREAK_IF(true);
@@ -528,7 +528,7 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
             }
 
             const auto regSize = std::max(getRegisterSize(registerType), hwInfo.capabilityTable.grfSize);
-            auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+            auto reg = std::make_unique_for_overwrite<uint32_t[]>(regSize / sizeof(uint32_t));
 
             for (auto &threadID : threadIds) {
                 memset(reg.get(), 0, regSize);
@@ -917,7 +917,7 @@ void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<Eu
         return;
     }
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
-    auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+    auto reg = std::make_unique_for_overwrite<uint32_t[]>(regSize / sizeof(uint32_t));
 
     for (auto &newlyStopped : newlyStoppedThreads) {
         if (allThreads[newlyStopped]->isStopped()) {
@@ -1505,7 +1505,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
 
     const auto &hwInfo = connectedDevice->getHwInfo();
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), hwInfo.capabilityTable.grfSize);
-    auto r0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+    auto r0 = std::make_unique_for_overwrite<uint32_t[]>(regSize / sizeof(uint32_t));
 
     ret = readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0.get());
     if (ret != ZE_RESULT_SUCCESS) {
@@ -1582,7 +1582,6 @@ void DebugSession::updateGrfRegisterSetProperties(EuThread::ThreadId thread, uin
     auto regsetType = l0GfxCoreHelper.getRegsetTypeForLargeGrfDetection();
     const auto regSize = std::max(getRegisterSize(regsetType), 64u);
     auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
-    memset(reg.get(), 0, regSize);
     readRegistersImp(thread, regsetType, 0, 1, reg.get());
     for (uint32_t i = 0; i < *pCount; i++) {
         if (pRegisterSetProperties[i].type == ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU) {

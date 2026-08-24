@@ -87,8 +87,7 @@ bool PrintfHandler::printEnqueueOutput() {
     std::unique_ptr<uint8_t[]> printfOutputDecompressed;
 
     if (productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface)) {
-        printfOutputDecompressed = std::make_unique_for_overwrite<uint8_t[]>(printfOutputSize);
-        memset(printfOutputDecompressed.get(), 0, sizeof(uint32_t));
+        printfOutputDecompressed = std::make_unique<uint8_t[]>(printfOutputSize);
         printfOutputBuffer = printfOutputDecompressed.get();
         auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(rootDeviceEnvironment, device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::regular);
 

@@ -188,7 +188,7 @@ void DebugSessionLinuxi915::readInternalEventsAsync() {
             if (result == ZE_RESULT_SUCCESS) {
                 std::lock_guard<std::mutex> lock(internalEventThreadMutex);
 
-                auto memory = std::make_unique<uint64_t[]>(maxEventSize / sizeof(uint64_t));
+                auto memory = std::make_unique_for_overwrite<uint64_t[]>(maxEventSize / sizeof(uint64_t));
                 memcpy(memory.get(), event, maxEventSize);
 
                 internalEventQueue.push(std::move(memory));
@@ -292,7 +292,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
             const auto &connection = clientHandleToConnection[uuid->client_handle];
             if (uuid->payload_size) {
                 prelim_drm_i915_debug_read_uuid readUuid = {};
-                auto payload = std::make_unique<char[]>(uuid->payload_size);
+                auto payload = std::make_unique_for_overwrite<char[]>(uuid->payload_size);
                 readUuid.client_handle = uuid->client_handle;
                 readUuid.handle = static_cast<decltype(readUuid.handle)>(uuid->handle);
                 readUuid.payload_ptr = reinterpret_cast<uint64_t>(payload.get());

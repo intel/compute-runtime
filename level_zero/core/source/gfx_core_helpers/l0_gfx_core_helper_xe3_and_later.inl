@@ -21,8 +21,6 @@ void L0GfxCoreHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::v
     bitmaskSize = std::max(highestEnabledSlice, hwInfo.gtSystemInfo.MaxSlicesSupported) * numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
     bitmask = std::make_unique<uint8_t[]>(bitmaskSize);
 
-    memset(bitmask.get(), 0, bitmaskSize);
-
     for (auto &thread : threads) {
         uint8_t *sliceData = ptrOffset(bitmask.get(), threadsSizePerSlice * thread.slice);
 

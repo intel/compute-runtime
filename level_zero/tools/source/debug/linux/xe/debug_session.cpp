@@ -305,7 +305,7 @@ void DebugSessionLinuxXe::readInternalEventsAsync() {
                 newestAttSeqNo.store(event->seqno);
             }
 
-            auto memory = std::make_unique<uint64_t[]>(maxEventSize / sizeof(uint64_t));
+            auto memory = std::make_unique_for_overwrite<uint64_t[]>(maxEventSize / sizeof(uint64_t));
             memcpy(memory.get(), event, maxEventSize);
 
             internalEventQueue.push(std::move(memory));
@@ -1039,7 +1039,7 @@ void DebugSessionLinuxXe::handleMetadataEvent(NEO::EuDebugEventMetadata *metaDat
         }
 
         NEO::EuDebugReadMetadata readMetadata{};
-        auto ptr = std::make_unique<char[]>(metaData->len);
+        auto ptr = std::make_unique_for_overwrite<char[]>(metaData->len);
         readMetadata.clientHandle = metaData->clientHandle;
         readMetadata.metadataHandle = static_cast<decltype(readMetadata.metadataHandle)>(metaData->metadataHandle);
         readMetadata.ptr = reinterpret_cast<uint64_t>(ptr.get());
@@ -1278,7 +1278,7 @@ int DebugSessionLinuxXe::threadControlStopped(std::unique_ptr<uint8_t[]> &bitmas
         }
     }
 
-    auto temp = std::make_unique<uint8_t[]>(euControl.bitmaskSize);
+    auto temp = std::make_unique_for_overwrite<uint8_t[]>(euControl.bitmaskSize);
     memcpy_s(temp.get(), euControl.bitmaskSize, reinterpret_cast<void *>(euControl.bitmaskPtr), euControl.bitmaskSize);
     printBitmask(temp.get(), euControl.bitmaskSize);
     bitmaskOut = std::move(temp);

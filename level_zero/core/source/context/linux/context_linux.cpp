@@ -204,7 +204,7 @@ void Context::initOpaqueHandleResourcesImpl() {
                      static_cast<long long>(availableFDs), static_cast<long long>(rlim.rlim_cur),
                      static_cast<long long>(maxOpaqueHandlePreallocation));
     }
-    auto tempFds = std::make_unique<int[]>(availableFDs);
+    auto tempFds = std::make_unique_for_overwrite<int[]>(availableFDs);
 
     rlim_t i;
     for (i = 0; i < availableFDs; ++i) {
