@@ -19,6 +19,7 @@ namespace NEO {
 struct CapsXeLpgCore {
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool rayTracingSupported = true;
 };
 
 struct CapsMtlU : CapsXeLpgCore {

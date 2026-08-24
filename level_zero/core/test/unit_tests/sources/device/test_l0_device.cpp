@@ -1275,9 +1275,9 @@ HWTEST_F(DeviceTest, whenPassingRaytracingExpStructToGetPropertiesThenProperties
     EXPECT_NE(37u, rayTracingProperties.maxBVHLevels);
 
     unsigned int expectedMaxBVHLevels = 0;
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         expectedMaxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
     }
 
@@ -1303,8 +1303,8 @@ HWTEST_F(DeviceTest, givenSetMaxBVHLevelsWhenPassingRaytracingExpStructToGetProp
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(ZE_DEVICE_RAYTRACING_EXT_FLAG_FORCE_UINT32, rayTracingProperties.flags);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
-    if (releaseHelper.isRayTracingSupported()) {
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_EQ(7u, rayTracingProperties.maxBVHLevels);
     } else {
         EXPECT_EQ(0u, rayTracingProperties.maxBVHLevels);
@@ -5793,9 +5793,9 @@ HWTEST_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesThenCor
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5818,19 +5818,17 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
 
 HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned) {
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    auto &hwInfo = *this->neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    if (!releaseHelper.isRayTracingSupported()) {
-        GTEST_SKIP();
-    }
+    hwInfo.caps.rayTracingSupported = true;
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = true;
     MockOsLibrary::failGetProcAddress = true;
@@ -5852,11 +5850,9 @@ HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenC
 }
 
 HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned) {
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    auto &hwInfo = *this->neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    if (!releaseHelper.isRayTracingSupported()) {
-        GTEST_SKIP();
-    }
+    hwInfo.caps.rayTracingSupported = true;
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = false;
     MockOsLibrary::failGetProcAddress = true;
@@ -5896,9 +5892,9 @@ HWTEST_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesExtThen
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5921,19 +5917,17 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesExt
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
     }
 }
 
 HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASPropertiesExtThenCorrectPropertiesIsReturned) {
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    auto &hwInfo = *this->neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    if (!releaseHelper.isRayTracingSupported()) {
-        GTEST_SKIP();
-    }
+    hwInfo.caps.rayTracingSupported = true;
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = true;
     MockOsLibrary::failGetProcAddress = true;
@@ -5955,11 +5949,9 @@ HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASPropertiesExtThe
 }
 
 HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesExtThenCorrectPropertiesIsReturned) {
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    auto &hwInfo = *this->neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    if (!releaseHelper.isRayTracingSupported()) {
-        GTEST_SKIP();
-    }
+    hwInfo.caps.rayTracingSupported = true;
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = false;
     MockOsLibrary::failGetProcAddress = true;

@@ -33,7 +33,6 @@ TEST_F(ReleaseHelperCriTests, whenGettingCapabilitiesThenCorrectPropertiesAreRet
 
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
         EXPECT_FALSE(releaseHelper->isResolvingSubDeviceIDNeeded());
-        EXPECT_FALSE(releaseHelper->isRayTracingSupported());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
@@ -166,7 +165,5 @@ TEST_F(ReleaseHelperCriTests, whenGettingDeviceConfigStringFormatThenXeCuSegment
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isDeviceConfigStringTileCountIncluded());
-        EXPECT_TRUE(releaseHelper->isDeviceConfigStringXeCuSegmentIncluded());
     }
 }

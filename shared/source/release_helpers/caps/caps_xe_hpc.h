@@ -21,6 +21,7 @@ struct CapsXeHpcCore {
     static constexpr bool bindlessAddressingDisabled = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool rcsExposureDisabled = true;
+    static constexpr bool rayTracingSupported = true;
 };
 
 struct CapsPvc : CapsXeHpcCore {};

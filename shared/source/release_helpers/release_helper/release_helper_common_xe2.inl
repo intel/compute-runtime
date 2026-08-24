@@ -11,11 +11,6 @@
 namespace NEO {
 
 template <>
-bool ReleaseHelperHw<release>::isDeviceConfigStringTileCountIncluded() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isPreImageReadFlushRequired() const {
     return true;
 }

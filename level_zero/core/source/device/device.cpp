@@ -844,7 +844,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             ze_device_raytracing_ext_properties_t *rtProperties =
                 reinterpret_cast<ze_device_raytracing_ext_properties_t *>(extendedProperties);
 
-            if (releaseHelper.isRayTracingSupported()) {
+            if (hardwareInfo.caps.rayTracingSupported) {
                 rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
                 rtProperties->maxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
 
@@ -925,7 +925,6 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
     const auto &l0GfxCoreHelper = this->getL0GfxCoreHelper();
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
     pDeviceProperties->type = ZE_DEVICE_TYPE_GPU;
 
@@ -1044,7 +1043,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExp();
                 rtasProperties->rtasBufferAlignment = 128;
 
-                if (releaseHelper.isRayTracingSupported()) {
+                if (hardwareInfo.caps.rayTracingSupported) {
                     ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXP_INVALID;
@@ -1056,7 +1055,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExt();
                 rtasProperties->rtasBufferAlignment = 128;
 
-                if (releaseHelper.isRayTracingSupported()) {
+                if (hardwareInfo.caps.rayTracingSupported) {
                     ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXT_INVALID;

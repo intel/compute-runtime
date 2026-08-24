@@ -19,7 +19,6 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/directory.h"
 
 #include <algorithm>
@@ -45,8 +44,7 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     if (debugManager.flags.GenerateAubFilePerProcessId.get()) {
         strExtendedFileName << "_PID_" << SysCalls::getProcessId();
     }
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    const auto deviceConfig = AubHelper::getDeviceConfigString(releaseHelper->isDeviceConfigStringTileCountIncluded(), releaseHelper->isDeviceConfigStringXeCuSegmentIncluded(), subDevicesCount, gtSystemInfo.SliceCount, subSlicesPerSlice, gtSystemInfo.MaxEuPerSubSlice);
+    const auto deviceConfig = AubHelper::getDeviceConfigString(hwInfo.caps.deviceConfigStringTileCountIncluded, hwInfo.caps.deviceConfigStringXeCuSegmentIncluded, subDevicesCount, gtSystemInfo.SliceCount, subSlicesPerSlice, gtSystemInfo.MaxEuPerSubSlice);
     strfilename << deviceConfig << "_" << rootDeviceIndex << "_" << strExtendedFileName.str() << ".aub";
 
     // clean-up any fileName issues because of the file system incompatibilities

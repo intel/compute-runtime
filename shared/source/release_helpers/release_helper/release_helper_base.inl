@@ -46,21 +46,6 @@ const ThreadsPerEUConfigs ReleaseHelperHw<releaseType>::getThreadsPerEUConfigs(u
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isDeviceConfigStringTileCountIncluded() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isDeviceConfigStringXeCuSegmentIncluded() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isRayTracingSupported() const {
-    return true;
-}
-
-template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::getStackSizePerRay() const {
     return 0u;
 }

@@ -13,11 +13,6 @@
 namespace NEO {
 
 template <>
-bool ReleaseHelperHw<release>::isDeviceConfigStringTileCountIncluded() const {
-    return true;
-}
-
-template <>
 const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferredSlmValue() const {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename Xe3CoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
     static const SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {{

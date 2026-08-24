@@ -18,9 +18,4 @@ template <>
 bool ReleaseHelperHw<release>::isResolvingSubDeviceIDNeeded() const {
     return true;
 }
-template <>
-bool ReleaseHelperHw<release>::isRayTracingSupported() const {
-    return false;
-}
-
 } // namespace NEO

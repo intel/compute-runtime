@@ -19,9 +19,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getSupportedNumGrfs, const SupportedNumGrfs, {128u}, ());
     ADDMETHOD_CONST_NOBASE(getTotalMemBankSize, uint64_t, 32ull * MemoryConstants::gigaByte, ());
     ADDMETHOD_CONST_NOBASE(getThreadsPerEUConfigs, const ThreadsPerEUConfigs, {}, (uint32_t numThreadsPerEu));
-    ADDMETHOD_CONST_NOBASE(isDeviceConfigStringTileCountIncluded, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isDeviceConfigStringXeCuSegmentIncluded, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isRayTracingSupported, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getStackSizePerRay, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(isLocalOnlyAllowed, bool, {}, ());
     ADDMETHOD_CONST_NOBASE(isDummyBlitWaRequired, bool, false, ());

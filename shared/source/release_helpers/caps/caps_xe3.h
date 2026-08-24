@@ -18,16 +18,23 @@ namespace NEO {
 
 struct CapsXe3Core {
     static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool rcsExposureDisabled = true;
 };
 
-struct CapsPtlH : CapsXe3Core {};
-struct CapsPtlU : CapsXe3Core {};
+struct CapsPtlH : CapsXe3Core {
+    static constexpr bool rayTracingSupported = true;
+};
+struct CapsPtlU : CapsXe3Core {
+    static constexpr bool rayTracingSupported = true;
+};
 struct CapsWcl : CapsXe3Core {};
 struct CapsNvlS : CapsXe3Core {};
-struct CapsNvlU : CapsXe3Core {};
+struct CapsNvlU : CapsXe3Core {
+    static constexpr bool rayTracingSupported = true;
+};
 
 constexpr std::optional<Caps> resolveCapsPtlH(HardwareIpVersion ipVersion) {
     switch (ipVersion.value) {

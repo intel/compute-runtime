@@ -24,11 +24,6 @@ bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
     return false;
 }
 
-template <>
-bool ReleaseHelperHw<release>::isRayTracingSupported() const {
-    return false;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helpers/release_helper/release_helper_common_xe3_and_later.inl"

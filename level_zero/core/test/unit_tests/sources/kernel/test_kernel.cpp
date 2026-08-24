@@ -1184,9 +1184,7 @@ HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitializ
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isRayTracingSupportedResult = true;
-    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    hwInfo.caps.rayTracingSupported = true;
 
     auto result = kernel->initialize(&kernelDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1233,9 +1231,8 @@ HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndReleaseDoesNotSupportR
                                           32u,
                                           mockKernelImmutableData.get());
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isRayTracingSupportedResult = false;
-    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.rayTracingSupported = false;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1281,9 +1278,7 @@ HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndReleaseSupportsRayTrac
                                           32u,
                                           mockKernelImmutableData.get());
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isRayTracingSupportedResult = true;
-    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    hwInfo.caps.rayTracingSupported = true;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1323,9 +1318,8 @@ HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseAndReleaseDoesNotSupport
                                           32u,
                                           mockKernelImmutableData.get());
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isRayTracingSupportedResult = false;
-    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.rayTracingSupported = false;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1364,9 +1358,8 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRtDispatchGlobalsPointer
                                           32u,
                                           mockKernelImmutableData.get());
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isRayTracingSupportedResult = true;
-    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.rayTracingSupported = true;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1407,9 +1400,8 @@ HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIs
                                           32u,
                                           mockKernelImmutableData.get());
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isRayTracingSupportedResult = true;
-    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.rayTracingSupported = true;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1452,9 +1444,8 @@ HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRTStackAllocationFail
                                           32u,
                                           mockKernelImmutableData.get());
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isRayTracingSupportedResult = true;
-    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.rayTracingSupported = true;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1572,9 +1563,8 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
                                           32u,
                                           mockKernelImmutableData.get());
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isRayTracingSupportedResult = true;
-    module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.rayTracingSupported = true;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());

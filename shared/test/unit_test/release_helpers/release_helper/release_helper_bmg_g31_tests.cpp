@@ -29,7 +29,6 @@ TEST_F(ReleaseHelperBmgG31Tests, whenGettingCapabilitiesThenCorrectPropertiesAre
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
 
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
-        EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }

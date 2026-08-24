@@ -19,12 +19,15 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(auxSurfaceModeOverrideRequired)                            \
     NEO_COPY_CAP_FUNC(bFloat16ConversionSupported)                               \
     NEO_COPY_CAP_FUNC(bindlessAddressingDisabled)                                \
+    NEO_COPY_CAP_FUNC(deviceConfigStringTileCountIncluded)                       \
+    NEO_COPY_CAP_FUNC(deviceConfigStringXeCuSegmentIncluded)                     \
     NEO_COPY_CAP_FUNC(dotProductAccumulateSystolicSupported)                     \
     NEO_COPY_CAP_FUNC(globalBindlessAllocatorEnabled)                            \
     NEO_COPY_CAP_FUNC(pipeControlPriorToNonPipelinedStateCommandsBaseWARequired) \
     NEO_COPY_CAP_FUNC(pipeControlPriorToPipelineSelectWaRequired)                \
     NEO_COPY_CAP_FUNC(programAllStateComputeCommandFieldsWARequired)             \
     NEO_COPY_CAP_FUNC(rcsExposureDisabled)                                       \
+    NEO_COPY_CAP_FUNC(rayTracingSupported)                                       \
     NEO_COPY_CAP_FUNC(splitMatrixMultiplyAccumulateSupported)
 
 template <typename SourceCaps>

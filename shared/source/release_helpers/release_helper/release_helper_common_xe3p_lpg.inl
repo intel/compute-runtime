@@ -33,11 +33,6 @@ uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isDeviceConfigStringTileCountIncluded() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isNumRtStacksPerDssFixedValue() const {
     return false;
 }

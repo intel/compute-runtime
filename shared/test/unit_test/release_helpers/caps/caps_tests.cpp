@@ -41,12 +41,15 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->auxSurfaceModeOverrideRequired, hwInfo.caps.auxSurfaceModeOverrideRequired);
         EXPECT_EQ(expectedCaps->bFloat16ConversionSupported, hwInfo.caps.bFloat16ConversionSupported);
         EXPECT_EQ(expectedCaps->bindlessAddressingDisabled, hwInfo.caps.bindlessAddressingDisabled);
+        EXPECT_EQ(expectedCaps->deviceConfigStringTileCountIncluded, hwInfo.caps.deviceConfigStringTileCountIncluded);
+        EXPECT_EQ(expectedCaps->deviceConfigStringXeCuSegmentIncluded, hwInfo.caps.deviceConfigStringXeCuSegmentIncluded);
         EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, hwInfo.caps.dotProductAccumulateSystolicSupported);
         EXPECT_EQ(expectedCaps->globalBindlessAllocatorEnabled, hwInfo.caps.globalBindlessAllocatorEnabled);
         EXPECT_EQ(expectedCaps->pipeControlPriorToNonPipelinedStateCommandsBaseWARequired, hwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
         EXPECT_EQ(expectedCaps->pipeControlPriorToPipelineSelectWaRequired, hwInfo.caps.pipeControlPriorToPipelineSelectWaRequired);
         EXPECT_EQ(expectedCaps->programAllStateComputeCommandFieldsWARequired, hwInfo.caps.programAllStateComputeCommandFieldsWARequired);
         EXPECT_EQ(expectedCaps->rcsExposureDisabled, hwInfo.caps.rcsExposureDisabled);
+        EXPECT_EQ(expectedCaps->rayTracingSupported, hwInfo.caps.rayTracingSupported);
         EXPECT_EQ(expectedCaps->splitMatrixMultiplyAccumulateSupported, hwInfo.caps.splitMatrixMultiplyAccumulateSupported);
     }
 }

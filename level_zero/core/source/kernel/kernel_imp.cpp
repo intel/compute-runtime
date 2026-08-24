@@ -1359,7 +1359,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     if (this->usesRayTracing()) {
-        if (!rootDeviceEnvironment.getReleaseHelper().isRayTracingSupported()) {
+        if (!hwInfo.caps.rayTracingSupported) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Ray tracing detected in kernel, but the current device does not support ray tracing. Returning ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.\n");
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }

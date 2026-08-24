@@ -46,12 +46,15 @@ TEST(CapsXe2HpgTest, givenBmgG21ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG21.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsBmgG21.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsBmgG21.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsBmgG21.deviceConfigStringTileCountIncluded);
+    EXPECT_FALSE(capsBmgG21.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsBmgG21.bindlessAddressingDisabled);
     EXPECT_TRUE(capsBmgG21.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsBmgG21.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsBmgG21.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsBmgG21.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsBmgG21.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsBmgG21.rayTracingSupported);
     EXPECT_TRUE(capsBmgG21.rcsExposureDisabled);
     EXPECT_FALSE(capsBmgG21.splitMatrixMultiplyAccumulateSupported);
 }
@@ -61,12 +64,15 @@ TEST(CapsXe2HpgTest, givenBmgG31ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG31.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsBmgG31.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsBmgG31.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsBmgG31.deviceConfigStringTileCountIncluded);
+    EXPECT_FALSE(capsBmgG31.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsBmgG31.bindlessAddressingDisabled);
     EXPECT_TRUE(capsBmgG31.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsBmgG31.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsBmgG31.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsBmgG31.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsBmgG31.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsBmgG31.rayTracingSupported);
     EXPECT_TRUE(capsBmgG31.rcsExposureDisabled);
     EXPECT_FALSE(capsBmgG31.splitMatrixMultiplyAccumulateSupported);
 }
@@ -76,12 +82,15 @@ TEST(CapsXe2HpgTest, givenLnlReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsLnl.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsLnl.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsLnl.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsLnl.deviceConfigStringTileCountIncluded);
+    EXPECT_FALSE(capsLnl.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsLnl.bindlessAddressingDisabled);
     EXPECT_TRUE(capsLnl.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsLnl.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsLnl.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsLnl.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsLnl.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_TRUE(capsLnl.rayTracingSupported);
     EXPECT_TRUE(capsLnl.rcsExposureDisabled);
     EXPECT_FALSE(capsLnl.splitMatrixMultiplyAccumulateSupported);
 }

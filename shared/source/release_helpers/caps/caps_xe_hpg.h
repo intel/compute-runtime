@@ -23,6 +23,7 @@ struct CapsXeHpgCore {
     static constexpr bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = true;
     static constexpr bool programAllStateComputeCommandFieldsWARequired = true;
     static constexpr bool rcsExposureDisabled = true;
+    static constexpr bool rayTracingSupported = true;
     static constexpr bool splitMatrixMultiplyAccumulateSupported = true;
 };
 

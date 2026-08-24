@@ -31,21 +31,6 @@ uint64_t ReleaseHelperHw<release>::getTotalMemBankSize() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isDeviceConfigStringTileCountIncluded() const {
-    return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isDeviceConfigStringXeCuSegmentIncluded() const {
-    return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isRayTracingSupported() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
     return false;
 }

@@ -43,9 +43,6 @@ class ReleaseHelper {
     virtual const SupportedNumGrfs getSupportedNumGrfs() const = 0;
     virtual uint64_t getTotalMemBankSize() const = 0;
     virtual const ThreadsPerEUConfigs getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const = 0;
-    virtual bool isDeviceConfigStringTileCountIncluded() const = 0;
-    virtual bool isDeviceConfigStringXeCuSegmentIncluded() const = 0;
-    virtual bool isRayTracingSupported() const = 0;
     virtual uint32_t getStackSizePerRay() const = 0;
     virtual bool isLocalOnlyAllowed() const = 0;
     virtual bool isDummyBlitWaRequired() const = 0;
@@ -86,9 +83,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     const SupportedNumGrfs getSupportedNumGrfs() const override;
     uint64_t getTotalMemBankSize() const override;
     const StackVec<uint32_t, 6> getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const override;
-    bool isDeviceConfigStringTileCountIncluded() const override;
-    bool isDeviceConfigStringXeCuSegmentIncluded() const override;
-    bool isRayTracingSupported() const override;
     uint32_t getStackSizePerRay() const override;
     bool isLocalOnlyAllowed() const override;
     bool isDummyBlitWaRequired() const override;
