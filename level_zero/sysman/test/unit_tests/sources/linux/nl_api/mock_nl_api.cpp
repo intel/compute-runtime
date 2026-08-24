@@ -338,11 +338,11 @@ int MockNlApi::genlHandleMsg(struct nl_msg *msg, void *arg) {
             }
         }
     } else if (getThreshold) {
-        next = addAttrib(info, next, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_ID, 1);
-        next = addAttrib(info, next, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_NAME, 7);
-        addAttrib(info, next, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_THRESHOLD, mockThresholdValue);
+        next = addAttrib(info, next, NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_ID, 1);
+        next = addAttrib(info, next, NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_NAME, 7);
+        addAttrib(info, next, NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_THRESHOLD, mockThresholdValue);
         for (int i = 0; i < pOps->o_ncmds; i++) {
-            if (pOps->o_cmds[i].c_id == DRM_RAS_CMD_GET_ERROR_THRESHOLD && pOps->o_cmds[i].c_msg_parser != nullptr) {
+            if (pOps->o_cmds[i].c_id == NEO_DRM_RAS_CMD_GET_ERROR_THRESHOLD && pOps->o_cmds[i].c_msg_parser != nullptr) {
                 if (0 == (pOps->o_cmds[i].c_msg_parser)(reinterpret_cast<struct nl_cache_ops *>(this), &pOps->o_cmds[i], &info, arg)) {
                     succeeded = true;
                 }

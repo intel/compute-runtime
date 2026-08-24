@@ -87,7 +87,7 @@ class DrmNlApi {
     struct genl_cmd newCmds[NEO_DRM_RAS_CMD_MAX] = {};
     struct nla_policy nodePolicy[DRM_RAS_A_NODE_ATTRS_MAX + 1] = {};
     struct nla_policy errorPolicy[DRM_RAS_A_ERROR_COUNTER_ATTRS_MAX + 1] = {};
-    struct nla_policy thresholdPolicy[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1] = {};
+    struct nla_policy thresholdPolicy[NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1] = {};
     struct genl_ops ops = {};
     std::string deviceName = {};
     DrmRasEvent pendingEvent = {};

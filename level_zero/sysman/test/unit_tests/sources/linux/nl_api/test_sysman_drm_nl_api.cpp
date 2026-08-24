@@ -1537,13 +1537,13 @@ TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceAndAllocMsgFailsWhenCallingGe
 
 TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiAndNoThresholdAttrsWhenCallingGetErrorThresholdRspThenThresholdRemainsZero) {
     DrmErrorThreshold threshold = {};
-    drmNlApi->currentOperation = std::make_unique<MockDrmNlApi::Operation>(DRM_RAS_CMD_GET_ERROR_THRESHOLD, &threshold);
+    drmNlApi->currentOperation = std::make_unique<MockDrmNlApi::Operation>(NEO_DRM_RAS_CMD_GET_ERROR_THRESHOLD, &threshold);
 
     auto pNlApi = std::make_unique<MockNlApi>();
     drmNlApi->pNlApi = std::move(pNlApi);
 
-    auto attrs = std::make_unique<struct nlattr *[]>(DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1);
-    std::fill(attrs.get(), attrs.get() + DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1, nullptr);
+    auto attrs = std::make_unique<struct nlattr *[]>(NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1);
+    std::fill(attrs.get(), attrs.get() + NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1, nullptr);
 
     struct genl_info info = {};
     info.attrs = attrs.get();
