@@ -42,16 +42,13 @@ HWTEST2_F(PreambleTest, givenDisableEUFusionWhenProgramVFEStateThenFusedEUDispat
     EXPECT_EQ(1u, cfeCmd->getFusedEuDispatch());
 }
 
-HWTEST2_F(PreambleTest, givenSpecificDeviceWhenProgramPipelineSelectIsCalledThenExtraPipeControlIsAdded, IsXeHpgCore) {
+HWTEST2_F(PreambleTest, givenSpecificCapsSetWhenProgramPipelineSelectIsCalledThenExtraPipeControlIsAdded, IsXeHpgCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.ipVersion.architecture = 12;
-    hwInfo.ipVersion.release = 74;
-    hwInfo.ipVersion.revision = 0;
-    setupCaps(hwInfo);
+    hwInfo.caps.pipeControlPriorToPipelineSelectWaRequired = true;
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex));
 
