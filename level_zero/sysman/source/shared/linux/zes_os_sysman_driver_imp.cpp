@@ -67,7 +67,7 @@ ze_result_t LinuxSysmanDriverImp::driverEventRegister(zes_event_type_flags_t eve
 
 ze_result_t LinuxSysmanDriverImp::getPciBdfAndUuidForHwDevice(NEO::HwDeviceId *hwDeviceId, std::string &pciBdf, std::string &pciUuid) {
     if (hwDeviceId->getDriverModelType() != NEO::DriverModelType::drm) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): driver model is not DRM and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNKNOWN);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): driver model is not DRM and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     auto hwDeviceIdDrm = hwDeviceId->as<NEO::HwDeviceIdDrm>();
@@ -80,7 +80,7 @@ ze_result_t LinuxSysmanDriverImp::getPciBdfAndUuidForHwDevice(NEO::HwDeviceId *h
     int fd = SysmanSysCallsWrapper::open(uuidPath.c_str(), O_RDONLY, errorNum);
     if (fd < 0) {
         pciUuid = "";
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): open() failed to open %s (errno:%d) and returning error:0x%x \n", __FUNCTION__, uuidPath.c_str(), errorNum, LinuxSysmanImp::getResult(errorNum));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): open() failed to open %s (errno:%d) and returning error:0x%x \n", NEO_FUNCTION_NAME, uuidPath.c_str(), errorNum, LinuxSysmanImp::getResult(errorNum));
         return LinuxSysmanImp::getResult(errorNum);
     }
 
@@ -89,7 +89,7 @@ ze_result_t LinuxSysmanDriverImp::getPciBdfAndUuidForHwDevice(NEO::HwDeviceId *h
 
     if (bytesRead <= 0) {
         pciUuid = "";
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): read() failed to read %s (errno:%d) and returning error:0x%x \n", __FUNCTION__, uuidPath.c_str(), errorNum, LinuxSysmanImp::getResult(errorNum));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): read() failed to read %s (errno:%d) and returning error:0x%x \n", NEO_FUNCTION_NAME, uuidPath.c_str(), errorNum, LinuxSysmanImp::getResult(errorNum));
         return LinuxSysmanImp::getResult(errorNum);
     }
 
@@ -106,7 +106,7 @@ ze_result_t LinuxSysmanDriverImp::updateHwDeviceId(SysmanDevice *sysmanDevice, c
     // Get the Drm object
     auto driverModel = rootDeviceEnv.osInterface->getDriverModel();
     if (driverModel->getDriverModelType() != NEO::DriverModelType::drm) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): driver model is not DRM and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): driver model is not DRM and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     auto drm = driverModel->as<NEO::Drm>();
@@ -116,7 +116,7 @@ ze_result_t LinuxSysmanDriverImp::updateHwDeviceId(SysmanDevice *sysmanDevice, c
     auto hwDeviceIds = NEO::Drm::discoverDevice(*executionEnvironment, newPciPath);
 
     if (hwDeviceIds.empty()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): discoverDevice() found no device at BDF %s and returning error:0x%x \n", __FUNCTION__, newBdf.c_str(), ZE_RESULT_ERROR_DEVICE_LOST);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): discoverDevice() found no device at BDF %s and returning error:0x%x \n", NEO_FUNCTION_NAME, newBdf.c_str(), ZE_RESULT_ERROR_DEVICE_LOST);
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
@@ -129,7 +129,7 @@ ze_result_t LinuxSysmanDriverImp::updateHwDeviceId(SysmanDevice *sysmanDevice, c
 
     // Re-query BDF from new hwDeviceId (updates adapterBDF and pciDomain)
     if (drm->queryAdapterBDF() != 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): queryAdapterBDF() failed for BDF %s and returning error:0x%x \n", __FUNCTION__, newBdf.c_str(), ZE_RESULT_ERROR_UNINITIALIZED);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): queryAdapterBDF() failed for BDF %s and returning error:0x%x \n", NEO_FUNCTION_NAME, newBdf.c_str(), ZE_RESULT_ERROR_UNINITIALIZED);
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
@@ -138,7 +138,7 @@ ze_result_t LinuxSysmanDriverImp::updateHwDeviceId(SysmanDevice *sysmanDevice, c
 
 ze_result_t LinuxSysmanDriverImp::rescanDevices(SysmanDriverHandleImp *driverHandle, uint32_t *pCount, zes_device_handle_t *phDevices) {
     if (driverHandle->sysmanDevices.empty()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): no sysman devices available and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNINITIALIZED);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): no sysman devices available and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNINITIALIZED);
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
@@ -160,7 +160,7 @@ ze_result_t LinuxSysmanDriverImp::rescanDevices(SysmanDriverHandleImp *driverHan
         std::string pciUuid;
         ze_result_t result = getPciBdfAndUuidForHwDevice(hwDeviceId.get(), pciBdf, pciUuid);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getPciBdfAndUuidForHwDevice() failed and returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getPciBdfAndUuidForHwDevice() failed and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
 
@@ -169,7 +169,7 @@ ze_result_t LinuxSysmanDriverImp::rescanDevices(SysmanDriverHandleImp *driverHan
         uint8_t bus = 0, device = 0, function = 0;
         constexpr int bdfTokensNum = 4;
         if (NEO::parseBdfString(pciBdf, domain, bus, device, function) != bdfTokensNum) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): parseBdfString() failed to parse BDF %s and returning error:0x%x \n", __FUNCTION__, pciBdf.c_str(), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): parseBdfString() failed to parse BDF %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pciBdf.c_str(), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
             return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }
 
@@ -191,20 +191,20 @@ ze_result_t LinuxSysmanDriverImp::rescanDevices(SysmanDriverHandleImp *driverHan
 
         int32_t deviceIndex = findDeviceIndexByPciUuid(driverHandle, pciUuid);
         if (deviceIndex < 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): findDeviceIndexByPciUuid() found no matching device for relocated BDF %s and returning error:0x%x \n", __FUNCTION__, pciBdf.c_str(), ZE_RESULT_ERROR_UNKNOWN);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): findDeviceIndexByPciUuid() found no matching device for relocated BDF %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pciBdf.c_str(), ZE_RESULT_ERROR_UNKNOWN);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
         auto relocatedSysmanDevice = static_cast<SysmanDeviceImp *>(driverHandle->sysmanDevices[deviceIndex]);
         result = updateHwDeviceId(relocatedSysmanDevice, pciBdf);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): updateHwDeviceId() failed for BDF %s and returning error:0x%x \n", __FUNCTION__, pciBdf.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): updateHwDeviceId() failed for BDF %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pciBdf.c_str(), result);
             return result;
         }
 
         result = static_cast<LinuxSysmanImp *>(relocatedSysmanDevice->pOsSysman)->updateBdfDependentData();
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): updateBdfDependentData() failed for BDF %s and returning error:0x%x \n", __FUNCTION__, pciBdf.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): updateBdfDependentData() failed for BDF %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pciBdf.c_str(), result);
             return result;
         }
         driverHandle->updatePciUuidMap(relocatedSysmanDevice);

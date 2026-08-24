@@ -14,6 +14,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_context.h"
@@ -82,7 +83,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
     TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) {
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskLevel", taskLevel);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "taskLevel", taskLevel);
 
     bool levelClosed = false;
     bool hasStallingCmdsOnTaskStream = false;
@@ -145,7 +146,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
         programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags.barrierTimestampPacketNodes, dispatchFlags.isDcFlushRequiredOnStallingCommandsOnNextFlush);
     }
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
 
     addPipeControlFlushTaskIfNeeded(commandStreamCSR, taskLevel);
 

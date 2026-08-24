@@ -19,6 +19,7 @@
 #include "shared/source/helpers/device_caps_reader.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
@@ -104,7 +105,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(),
                              stdout, "Info@ %s(): Mismatch of device ids. ForceDeviceId %s is used for platform with multiple deviceIds: [%s]. Consider using OverrideHwIpVersion flag.\n",
-                             __FUNCTION__,
+                             NEO_FUNCTION_NAME,
                              debugManager.flags.ForceDeviceId.get().c_str(),
                              devIds.str().substr(0, devIds.str().size() - 2).c_str());
             }

@@ -78,7 +78,7 @@ ze_result_t LinuxFanImp::getConfig(zes_fan_config_t *pConfig) {
     int32_t enableMode = pwmEnableAutoStockTable;
     ze_result_t readResult = pSysfsAccess->read(pwmEnableNode, enableMode);
     if (readResult != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read fan control mode from %s and returning error:0x%x \n", __FUNCTION__, pwmEnableNode.c_str(), readResult);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read fan control mode from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pwmEnableNode.c_str(), readResult);
         return readResult;
     }
 
@@ -95,7 +95,7 @@ ze_result_t LinuxFanImp::getConfig(zes_fan_config_t *pConfig) {
     int32_t refPwm = 0;
     readResult = pSysfsAccess->read(autoPointPwmNodes[0], refPwm);
     if (readResult != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read fan curve PWM value from %s and returning error:0x%x \n", __FUNCTION__, autoPointPwmNodes[0].c_str(), readResult);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read fan curve PWM value from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, autoPointPwmNodes[0].c_str(), readResult);
         return readResult;
     }
     bool isFixed = true;
@@ -104,7 +104,7 @@ ze_result_t LinuxFanImp::getConfig(zes_fan_config_t *pConfig) {
         int32_t pointPwm = 0;
         readResult = pSysfsAccess->read(autoPointPwmNodes[i], pointPwm);
         if (readResult != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read fan curve PWM value from %s and returning error:0x%x \n", __FUNCTION__, autoPointPwmNodes[i].c_str(), readResult);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read fan curve PWM value from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, autoPointPwmNodes[i].c_str(), readResult);
             return readResult;
         }
         if (pointPwm != refPwm) {
@@ -117,7 +117,7 @@ ze_result_t LinuxFanImp::getConfig(zes_fan_config_t *pConfig) {
         int32_t currentPwm = 0;
         readResult = pSysfsAccess->read(pwmNode, currentPwm);
         if (readResult != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read current fan PWM duty cycle from %s and returning error:0x%x \n", __FUNCTION__, pwmNode.c_str(), readResult);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read current fan PWM duty cycle from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pwmNode.c_str(), readResult);
             return readResult;
         }
         pConfig->mode = ZES_FAN_SPEED_MODE_FIXED;
@@ -154,7 +154,7 @@ ze_result_t LinuxFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) 
     int32_t rpm = 0;
     ze_result_t readResult = pSysfsAccess->read(fanInputNode, rpm);
     if (readResult != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read current fan speed (RPM) from %s and returning error:0x%x \n", __FUNCTION__, fanInputNode.c_str(), readResult);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read current fan speed (RPM) from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, fanInputNode.c_str(), readResult);
         return readResult;
     }
 
@@ -165,13 +165,13 @@ ze_result_t LinuxFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) 
 
     // Reject any unit value that is neither RPM nor PERCENT (e.g. FORCE_UINT32).
     if (units != ZES_FAN_SPEED_UNITS_PERCENT) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid fan speed units %d, returning error:0x%x \n", __FUNCTION__, units, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid fan speed units %d, returning error:0x%x \n", NEO_FUNCTION_NAME, units, ZE_RESULT_ERROR_INVALID_ARGUMENT);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     // For PERCENT units : linear mapping using maxRPM (0 RPM = 0%, maxRPM = 100%).
     if (maxRpm <= 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Fan max RPM is not available, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Fan max RPM is not available, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -183,7 +183,7 @@ ze_result_t LinuxFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) 
 ze_result_t LinuxFanImp::setDefaultMode() {
     ze_result_t result = pSysfsAccess->write(pwmEnableNode, pwmEnableAutoStockTable);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set fan control mode to auto/stock (pwm1_enable=2) via %s and returning error:0x%x \n", __FUNCTION__, pwmEnableNode.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set fan control mode to auto/stock (pwm1_enable=2) via %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pwmEnableNode.c_str(), result);
     }
     return result;
 }
@@ -192,20 +192,20 @@ ze_result_t LinuxFanImp::setFixedSpeedMode(const zes_fan_speed_t *pSpeed) {
     int32_t pwmVal = 0;
     ze_result_t result = speedToPwm(*pSpeed, pwmVal);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): speedToPwm() failed and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): speedToPwm() failed and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
     // Switch to manual mode so the direct PWM write takes effect.
     result = pSysfsAccess->write(pwmEnableNode, pwmEnableManualUserTable);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set fan control mode to manual (pwm1_enable=1) via %s and returning error:0x%x \n", __FUNCTION__, pwmEnableNode.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set fan control mode to manual (pwm1_enable=1) via %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pwmEnableNode.c_str(), result);
         return result;
     }
 
     result = pSysfsAccess->write(pwmNode, pwmVal);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write fixed fan PWM duty cycle (%d) to %s and returning error:0x%x \n", __FUNCTION__, pwmVal, pwmNode.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write fixed fan PWM duty cycle (%d) to %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pwmVal, pwmNode.c_str(), result);
     }
     return result;
 }
@@ -215,7 +215,7 @@ ze_result_t LinuxFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTa
     // (pwm1_auto_point1_* .. pwm1_auto_point10_*).
     if (pSpeedTable->numPoints <= 0 ||
         pSpeedTable->numPoints > static_cast<int32_t>(maxFanControlPoints)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid numPoints %d (valid range: 1..%u), returning error:0x%x \n", __FUNCTION__, pSpeedTable->numPoints, maxFanControlPoints, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid numPoints %d (valid range: 1..%u), returning error:0x%x \n", NEO_FUNCTION_NAME, pSpeedTable->numPoints, maxFanControlPoints, ZE_RESULT_ERROR_INVALID_ARGUMENT);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -227,7 +227,7 @@ ze_result_t LinuxFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTa
         ze_result_t result = speedToPwm(pSpeedTable->table[pointIndex].speed,
                                         pwmValues[static_cast<size_t>(pointIndex)]);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): speedToPwm() failed at point %d and returning error:0x%x \n", __FUNCTION__, pointIndex, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): speedToPwm() failed at point %d and returning error:0x%x \n", NEO_FUNCTION_NAME, pointIndex, result);
             return result;
         }
     }
@@ -237,7 +237,7 @@ ze_result_t LinuxFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTa
     // are written and others are not because the KMD exposes fewer nodes than requested.
     for (int32_t pointIndex = 0; pointIndex < pSpeedTable->numPoints; pointIndex++) {
         if (!pSysfsAccess->fileExists(autoPointTempNodes[static_cast<uint32_t>(pointIndex)])) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Fan curve temperature node %s does not exist (KMD supports fewer than %d points), returning error:0x%x \n", __FUNCTION__, autoPointTempNodes[static_cast<uint32_t>(pointIndex)].c_str(), pSpeedTable->numPoints, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Fan curve temperature node %s does not exist (KMD supports fewer than %d points), returning error:0x%x \n", NEO_FUNCTION_NAME, autoPointTempNodes[static_cast<uint32_t>(pointIndex)].c_str(), pSpeedTable->numPoints, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     }
@@ -247,7 +247,7 @@ ze_result_t LinuxFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTa
     // is in auto/stock mode (pwm1_enable = 2); manual mode must be active first.
     ze_result_t result = pSysfsAccess->write(pwmEnableNode, pwmEnableManualUserTable);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set fan control mode to manual (pwm1_enable=1) via %s and returning error:0x%x \n", __FUNCTION__, pwmEnableNode.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set fan control mode to manual (pwm1_enable=1) via %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pwmEnableNode.c_str(), result);
         return result;
     }
 
@@ -259,13 +259,13 @@ ze_result_t LinuxFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTa
         const int32_t tempMilliDeg = pSpeedTable->table[pointIndex].temperature * milliDegreesPerDegree;
         result = pSysfsAccess->write(autoPointTempNodes[static_cast<uint32_t>(pointIndex)], tempMilliDeg);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write fan curve temperature (%d mdeg) to %s and returning error:0x%x \n", __FUNCTION__, tempMilliDeg, autoPointTempNodes[static_cast<uint32_t>(pointIndex)].c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write fan curve temperature (%d mdeg) to %s and returning error:0x%x \n", NEO_FUNCTION_NAME, tempMilliDeg, autoPointTempNodes[static_cast<uint32_t>(pointIndex)].c_str(), result);
             return result;
         }
         result = pSysfsAccess->write(autoPointPwmNodes[static_cast<uint32_t>(pointIndex)],
                                      pwmValues[static_cast<size_t>(pointIndex)]);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write fan curve PWM duty cycle (%d) to %s and returning error:0x%x \n", __FUNCTION__, pwmValues[static_cast<size_t>(pointIndex)], autoPointPwmNodes[static_cast<uint32_t>(pointIndex)].c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write fan curve PWM duty cycle (%d) to %s and returning error:0x%x \n", NEO_FUNCTION_NAME, pwmValues[static_cast<size_t>(pointIndex)], autoPointPwmNodes[static_cast<uint32_t>(pointIndex)].c_str(), result);
             return result;
         }
     }
@@ -276,7 +276,7 @@ ze_result_t LinuxFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTa
 ze_result_t LinuxFanImp::speedToPwm(const zes_fan_speed_t &speed, int32_t &pwmOut) const {
     if (speed.units == ZES_FAN_SPEED_UNITS_PERCENT) {
         if (speed.speed < 0 || speed.speed > 100) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): PERCENT speed %d is out of range [0, 100], returning error:0x%x \n", __FUNCTION__, speed.speed, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): PERCENT speed %d is out of range [0, 100], returning error:0x%x \n", NEO_FUNCTION_NAME, speed.speed, ZE_RESULT_ERROR_INVALID_ARGUMENT);
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         pwmOut = static_cast<int32_t>((static_cast<int64_t>(speed.speed) * pwmMax) / 100);
@@ -284,18 +284,18 @@ ze_result_t LinuxFanImp::speedToPwm(const zes_fan_speed_t &speed, int32_t &pwmOu
     }
     if (speed.units == ZES_FAN_SPEED_UNITS_RPM) {
         if (speed.speed < 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): RPM speed %d is negative, returning error:0x%x \n", __FUNCTION__, speed.speed, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): RPM speed %d is negative, returning error:0x%x \n", NEO_FUNCTION_NAME, speed.speed, ZE_RESULT_ERROR_INVALID_ARGUMENT);
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         if (maxRpm <= 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Fan max RPM is not available, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Fan max RPM is not available, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         int64_t pwm64 = (static_cast<int64_t>(speed.speed) * pwmMax) / maxRpm;
         pwmOut = static_cast<int32_t>(std::min(pwm64, static_cast<int64_t>(pwmMax)));
         return ZE_RESULT_SUCCESS;
     }
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unrecognized fan speed units %d, returning error:0x%x \n", __FUNCTION__, speed.units, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unrecognized fan speed units %d, returning error:0x%x \n", NEO_FUNCTION_NAME, speed.units, ZE_RESULT_ERROR_INVALID_ARGUMENT);
     DEBUG_BREAK_IF(true);
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }

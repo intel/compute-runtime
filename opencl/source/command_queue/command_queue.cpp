@@ -24,6 +24,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
@@ -501,8 +502,8 @@ WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, s
 
     WaitStatus waitStatus{WaitStatus::ready};
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", gpgpuTaskCountToWait);
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", getHwTag());
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Waiting for taskCount:", gpgpuTaskCountToWait);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "Current taskCount:", getHwTag());
 
     if (!skipWait) {
         if (flushStampToWait == 0 && getGpgpuCommandStreamReceiver().isKmdWaitOnTaskCountAllowed()) {

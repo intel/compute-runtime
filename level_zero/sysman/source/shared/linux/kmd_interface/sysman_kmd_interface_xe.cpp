@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
@@ -182,7 +183,7 @@ ze_result_t SysmanKmdInterfaceXe::getPhysicalMemorySize(uint64_t &physicalMemSiz
             status = ZE_RESULT_ERROR_DEVICE_LOST;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s():getMemoryInfo() failed errno:%d \n", __FUNCTION__, errno);
+                     "Error@ %s():getMemoryInfo() failed errno:%d \n", NEO_FUNCTION_NAME, errno);
         return status;
     }
 
@@ -224,7 +225,7 @@ static ze_result_t getConfigs(PmuInterface *const &pPmuInterface,
         auto ret = pPmuInterface->getPmuConfigs(sysmanDeviceDir, engineClass->second, engineInstanceAndTileId.first, gtId, activeTicksConfig, totalTicksConfig);
         if (ret < 0) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs and returning error:0x%x\n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs and returning error:0x%x\n", NEO_FUNCTION_NAME, result);
             return result;
         }
 
@@ -240,7 +241,7 @@ static ze_result_t getConfigs(PmuInterface *const &pPmuInterface,
                                                                vfActiveTicksConfig, vfTotalTicksConfig);
                 if (vfRet < 0) {
                     result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs for VF and returning error:0x%x\n", __FUNCTION__, result);
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs for VF and returning error:0x%x\n", NEO_FUNCTION_NAME, result);
                     return result;
                 }
                 configs.push_back(vfActiveTicksConfig);
@@ -258,7 +259,7 @@ static uint32_t getNumberOfEnabledVfs(SysFsAccessInterface *pSysFsAccess) {
     auto result = pSysFsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
     if (result != ZE_RESULT_SUCCESS) {
         numberOfVfs = 0;
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Number Of Vfs with error 0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Number Of Vfs with error 0x%x \n", NEO_FUNCTION_NAME, result);
     }
     return numberOfVfs;
 }
@@ -360,7 +361,7 @@ ze_result_t SysmanKmdInterfaceXe::readBusynessFromGroupFd(PmuInterface *const &p
 
     auto ret = pPmuInterface->pmuRead(static_cast<int>(fdList[0]), readData.data(), sizeof(uint64_t) * (dataCount + dataOffset));
     if (ret < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNKNOWN);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", NEO_FUNCTION_NAME, ret, ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -418,7 +419,7 @@ void SysmanKmdInterfaceXe::getDriverVersion(char (&driverVersion)[ZES_STRING_PRO
     std::string strVal = {};
     ze_result_t result = pFsAccess->read(srcVersionFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x\n", __FUNCTION__, srcVersionFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x\n", NEO_FUNCTION_NAME, srcVersionFile.c_str(), result);
         std::strncpy(driverVersion, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     } else {
         std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
@@ -457,14 +458,14 @@ ze_result_t SysmanKmdInterfaceXe::getBusyAndTotalTicksConfigsForVf(PmuInterface 
     auto ret = pPmuInterface->getPmuConfigs(sysmanDeviceDir, engineClass, engineInstance, gtId, configPair.first, configPair.second);
     if (ret < 0) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs and returning error:0x%x\n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs and returning error:0x%x\n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
     ret = pPmuInterface->getPmuConfigsForVf(sysmanDeviceDir, fnNumber, configPair.first, configPair.second);
     if (ret < 0) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs for VF and returning error:0x%x\n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs for VF and returning error:0x%x\n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -520,7 +521,7 @@ bool SysmanKmdInterfaceXe::isDeviceInFdoMode() {
     std::string survivabilityFdoNodeVal = {};
     ze_result_t result = pFsAccess->read(survivabilitySysFsNodeName, survivabilityFdoNodeVal);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, survivabilitySysFsNodeName.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, survivabilitySysFsNodeName.c_str(), result);
         return false;
     }
     return survivabilityFdoNodeVal == "enabled";
@@ -531,7 +532,7 @@ bool SysmanKmdInterfaceXe::isDeviceInSurvivabilityMode() {
     std::string survivabilityModeVal = {};
     ze_result_t result = pFsAccess->read(survivabilityModeSysFsNodeName, survivabilityModeVal);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, survivabilityModeSysFsNodeName.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, survivabilityModeSysFsNodeName.c_str(), result);
         return false;
     }
     return (survivabilityModeVal == "Boot" || survivabilityModeVal == "Runtime");
@@ -541,7 +542,7 @@ ze_result_t SysmanKmdInterfaceXe::getVfLocalMemoryQuota(uint64_t &lMemQuota, con
     const std::string pathForDeviceMemQuota = "device/sriov_admin/vf" + std::to_string(vfId) + "/profile/vram_quota";
     auto result = pSysfsAccess->read(pathForDeviceMemQuota, lMemQuota);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     return ZE_RESULT_SUCCESS;

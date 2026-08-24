@@ -7,7 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/utilities/logger.h"
 
 #define API_ENTER(retValPointer) \
-    LoggerApiEnterWrapper<NEO::FileLogger<globalDebugFunctionalityLevel>::enabled()> ApiWrapperForSingleCall(__FUNCTION__, retValPointer)
+    LoggerApiEnterWrapper<NEO::FileLogger<globalDebugFunctionalityLevel>::enabled()> ApiWrapperForSingleCall(NEO_FUNCTION_NAME, retValPointer)

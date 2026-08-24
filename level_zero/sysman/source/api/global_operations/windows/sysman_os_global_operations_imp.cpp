@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/global_operations/windows/sysman_os_global_operations_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
@@ -24,13 +25,13 @@ bool WddmGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_PR
 bool WddmGlobalOperationsImp::getOemSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> &serialNumber, uint16_t &serialNumberLen) {
     auto pFwInterface = pWddmSysmanImp->getFwUtilInterface();
     if (pFwInterface == nullptr) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get firmware interface\n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get firmware interface\n", NEO_FUNCTION_NAME);
         return false;
     }
 
     ze_result_t result = pFwInterface->fwGetSerialNumber(serialNumber, serialNumberLen);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read serial number from firmware\n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read serial number from firmware\n", NEO_FUNCTION_NAME);
         return false;
     }
     return true;

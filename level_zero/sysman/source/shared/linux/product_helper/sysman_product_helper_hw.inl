@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
@@ -129,7 +130,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
         uint64_t physicalMemSize = 0;
         ze_result_t getPhysicalSizeStatus = pSysmanKmdInterface->getPhysicalMemorySize(physicalMemSize, isSubdevice, subDeviceId, pLinuxSysmanImp);
         if (ZE_RESULT_SUCCESS != getPhysicalSizeStatus) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get physical memory size, returning error:0x%x\n", __FUNCTION__, getPhysicalSizeStatus);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get physical memory size, returning error:0x%x\n", NEO_FUNCTION_NAME, getPhysicalSizeStatus);
         }
         pProperties->physicalSize = physicalMemSize;
     }
@@ -226,7 +227,7 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
         }
     } else {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read file %s, returning error 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read file %s, returning error 0x%x>\n", NEO_FUNCTION_NAME, throttleReasonStatusFile.c_str(), result);
     }
 
     return throttleReasons;
@@ -258,7 +259,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
 
     auto isValidTemperature = [](auto temperature) {
         if ((temperature > invalidMaxTemperature) || (temperature < invalidMinTemperature)) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", __FUNCTION__, temperature);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", NEO_FUNCTION_NAME, temperature);
             return false;
         }
         return true;
@@ -281,7 +282,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     uint64_t socTemperature = 0;
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     uint32_t maxSocTemperature = getMaxTemperature(socTemperature, numSocTemperatureEntries);
@@ -318,7 +319,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     std::string key = "SOC_TEMPERATURES";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     gpuMaxTemperature = static_cast<double>(socTemperature & 0xff);
@@ -424,7 +425,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getStandbyMode(SysFsAccessInterfa
     ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, standbyModeFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, standbyModeFile.c_str(), result);
         return result;
     }
     if (standbyPowerControlDefault == currentMode) {
@@ -434,7 +435,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getStandbyMode(SysFsAccessInterfa
     } else {
         result = ZE_RESULT_ERROR_UNKNOWN;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <unknown or internal error occurred> <currentMode: %s & result: 0x%x>\n", __func__, currentMode.c_str(), result);
+                     "error@<%s> <unknown or internal error occurred> <currentMode: %s & result: 0x%x>\n", NEO_FUNCTION_NAME, currentMode.c_str(), result);
     }
     return result;
 }

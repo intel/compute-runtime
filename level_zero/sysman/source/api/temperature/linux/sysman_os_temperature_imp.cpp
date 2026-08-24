@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/temperature/linux/sysman_os_temperature_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
@@ -31,7 +32,7 @@ ze_result_t LinuxTemperatureImp::getProperties(zes_temp_properties_t *pPropertie
 
     auto result = getMaxTemperature(pProperties->maxTemperature);
     if ((result != ZE_RESULT_SUCCESS) && (result != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get max temperature, leaving maxTemperature at default value %.2f. error:0x%x \n", __FUNCTION__, defaultMaxTemperature, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get max temperature, leaving maxTemperature at default value %.2f. error:0x%x \n", NEO_FUNCTION_NAME, defaultMaxTemperature, result);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -45,7 +46,7 @@ ze_result_t LinuxTemperatureImp::getMaxTemperature(double &temperature) {
     int32_t maxTemperature = 0;
     auto result = pSysfsAccess->read(temperatureEmergencyFile, maxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, temperatureEmergencyFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, temperatureEmergencyFile.c_str(), result);
         return result;
     }
 

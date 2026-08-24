@@ -15,6 +15,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/debug_env_reader.h"
@@ -4711,7 +4712,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSize(cl_command_queue commandQue
                                                      const size_t *globalWorkSize,
                                                      size_t *suggestedLocalWorkSize) {
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSize, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
-    auto retVal = getKernelSuggestedLocalWorkSizeImpl(__FUNCTION__,
+    auto retVal = getKernelSuggestedLocalWorkSizeImpl(NEO_FUNCTION_NAME,
                                                       commandQueue,
                                                       kernel,
                                                       workDim,
@@ -4730,7 +4731,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command
                                                         size_t *suggestedLocalWorkSize) {
 
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeKHR, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
-    auto retVal = getKernelSuggestedLocalWorkSizeImpl(__FUNCTION__,
+    auto retVal = getKernelSuggestedLocalWorkSizeImpl(NEO_FUNCTION_NAME,
                                                       commandQueue,
                                                       kernel,
                                                       workDim,
@@ -6171,7 +6172,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
                                                           size_t *suggestedLocalWorkSize) {
 
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeINTEL, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
-    auto retVal = getKernelSuggestedLocalWorkSizeImpl(__FUNCTION__,
+    auto retVal = getKernelSuggestedLocalWorkSizeImpl(NEO_FUNCTION_NAME,
                                                       commandQueue,
                                                       kernel,
                                                       workDim,

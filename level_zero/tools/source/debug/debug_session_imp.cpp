@@ -15,6 +15,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -769,7 +770,7 @@ size_t DebugSessionImp::calculateSrMagicOffset(const NEO::StateSaveAreaHeader *s
     } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
         srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
     } else {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", __func__);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", NEO_FUNCTION_NAME);
         DEBUG_BREAK_IF(true);
     }
     return srMagicOffset;
@@ -1188,7 +1189,7 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(const NEO::StateSaveAr
     }
 
     if (pStateSaveAreaHeader->versionHeader.version.major >= 5) {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", __func__);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", NEO_FUNCTION_NAME);
         DEBUG_BREAK_IF(true);
         return nullptr;
     }
@@ -1367,7 +1368,7 @@ std::optional<NEO::RegsetDescExt> DebugSessionImp::typeToRegsetDescExt(zet_debug
     }
     default:
         if (!sipLibInterface) {
-            PRINT_DEBUGGER_ERROR_LOG("%s: SipExternalLibInterface not available", __func__);
+            PRINT_DEBUGGER_ERROR_LOG("%s: SipExternalLibInterface not available", NEO_FUNCTION_NAME);
             DEBUG_BREAK_IF(true);
             return std::nullopt;
         }
@@ -1823,7 +1824,7 @@ std::vector<uint32_t> SipRegisterPacker::packRegisters(const std::vector<uint32_
         try {
             packed.push_back(unpacked.at(i));
         } catch (const std::out_of_range &) {
-            PRINT_DEBUGGER_ERROR_LOG("%s: Invalid register indices", __func__);
+            PRINT_DEBUGGER_ERROR_LOG("%s: Invalid register indices", NEO_FUNCTION_NAME);
             return {};
         }
     }
@@ -1837,7 +1838,7 @@ std::vector<uint32_t> SipRegisterPacker::unpackRegisters(const std::vector<uint3
         try {
             unpacked.at(unpackedIndices.at(i)) = packed.at(i);
         } catch (const std::out_of_range &) {
-            PRINT_DEBUGGER_ERROR_LOG("%s: Invalid register indices", __func__);
+            PRINT_DEBUGGER_ERROR_LOG("%s: Invalid register indices", NEO_FUNCTION_NAME);
             return {};
         }
     }
@@ -1920,7 +1921,7 @@ ze_result_t DebugSessionImp::getCommandRegisterDescriptor(const NEO::StateSaveAr
     } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
         *regdesc = stateSaveAreaHeader->regHeader.cmd;
     } else {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported State Save Area Header version %u\n", __func__, stateSaveAreaHeader->versionHeader.version.major);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported State Save Area Header version %u\n", NEO_FUNCTION_NAME, stateSaveAreaHeader->versionHeader.version.major);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -2329,7 +2330,7 @@ std::optional<SipTransferAddr> DebugSessionImp::getSlmAddresses(EuThread::Thread
 
     uint32_t slmStartOffset = 0;
     if (!getSlmStartOffset(memoryHandle, threadId, &slmStartOffset)) {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Getting SLM start offset failed\n", __func__);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Getting SLM start offset failed\n", NEO_FUNCTION_NAME);
         return std::nullopt;
     }
 
@@ -2350,7 +2351,7 @@ std::optional<SipTransferAddr> DebugSessionImp::getBarrierAddresses(EuThread::Th
 
     uint32_t barrierStartOffset = 0;
     if (!getBarrierStartOffset(memoryHandle, threadId, &barrierStartOffset)) {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Getting barrier start offset failed\n", __func__);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Getting barrier start offset failed\n", NEO_FUNCTION_NAME);
         return std::nullopt;
     }
 

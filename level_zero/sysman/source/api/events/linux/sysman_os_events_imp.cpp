@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_netlink.h"
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations.h"
@@ -148,7 +149,7 @@ ze_result_t LinuxEventsUtil::driverEventRegister(zes_event_type_flags_t events) 
 
     if (events & ~supportedDriverEventMask) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): events 0x%x contains a flag which is not a driver scoped event and returning error:0x%x \n", __FUNCTION__, events, ZE_RESULT_ERROR_INVALID_ENUMERATION);
+                     "Error@ %s(): events 0x%x contains a flag which is not a driver scoped event and returning error:0x%x \n", NEO_FUNCTION_NAME, events, ZE_RESULT_ERROR_INVALID_ENUMERATION);
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
@@ -199,7 +200,7 @@ ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));
         if (device == nullptr) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Error@ %s(): device handle at index %d could not be mapped to a sysman device and returning error:0x%x \n", __FUNCTION__, devIndex, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+                         "Error@ %s(): device handle at index %d could not be mapped to a sysman device and returning error:0x%x \n", NEO_FUNCTION_NAME, devIndex, ZE_RESULT_ERROR_INVALID_ARGUMENT);
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         {

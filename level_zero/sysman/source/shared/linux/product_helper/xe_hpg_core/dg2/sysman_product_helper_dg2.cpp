@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/preprocessor.h"
+
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 
@@ -147,7 +149,7 @@ ze_result_t readMcChannelCounters(std::map<std::string, uint64_t> keyOffsetMap, 
             std::string readCounterKey = nameOfCounters[counterIndex] + "[" + std::to_string(mcChannelIndex) + "]";
             ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, readCounterKey, telemOffset, val);
             if (result != ZE_RESULT_SUCCESS) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", NEO_FUNCTION_NAME, result);
                 return result;
             }
             counterValues[counterIndex] += val;
@@ -188,7 +190,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
 
     result = readMcChannelCounters(std::move(keyOffsetMap), pBandwidth->readCounter, pBandwidth->writeCounter, std::move(telemDir), telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     pBandwidth->maxBandwidth = 0u;
@@ -196,7 +198,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     uint64_t maxBw = 0;
     result = pSysFsAccess->read(std::move(maxBwFile), maxBw);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Sysfsread for maxBw returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Sysfsread for maxBw returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     pBandwidth->maxBandwidth = maxBw * mbpsToBytesPerSecond;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util_netlink_category_map.h"
@@ -131,14 +132,14 @@ ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t catego
 
     auto categoryToErrorNameIt = categoryToErrorNameMap.find(category);
     if (categoryToErrorNameIt == categoryToErrorNameMap.end()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): RAS error category not supported by Netlink and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): RAS error category not supported by Netlink and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     std::string_view errorName = categoryToErrorNameIt->second;
 
     auto rasErrorListIt = rasErrorList.find(rasNodeId);
     if (rasErrorListIt == rasErrorList.end()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     const auto &errorList = rasErrorListIt->second;
@@ -149,7 +150,7 @@ ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t catego
                             });
 
     if (err == errorList.end()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error counter found for RAS error category and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error counter found for RAS error category and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     uint32_t errorId = err->errorId;
@@ -162,7 +163,7 @@ ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_ras_config
     // corresponding Netlink error ID required for threshold queries.
     auto errListIt = rasErrorList.find(rasNodeId);
     if (errListIt == rasErrorList.end()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
@@ -173,7 +174,7 @@ ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_ras_config
         // Categories not supported by the netlink backend are skipped.
         auto categoryIt = categoryToErrorNameMap.find(pConfig[i].category);
         if (categoryIt == categoryToErrorNameMap.end()) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Debug@ %s(): RAS category 0x%x not supported by Netlink, skipping \n", __FUNCTION__, pConfig[i].category);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Debug@ %s(): RAS category 0x%x not supported by Netlink, skipping \n", NEO_FUNCTION_NAME, pConfig[i].category);
             continue;
         }
 
@@ -196,7 +197,7 @@ ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_ras_config
         DrmErrorThreshold threshold = {};
         ze_result_t result = drmNl->getErrorThreshold(rasNodeId, errIt->errorId, threshold);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getErrorThreshold failed and returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getErrorThreshold failed and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
 
@@ -218,7 +219,7 @@ ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_ras_
     // Netlink interface.
     auto errListIt = rasErrorList.find(rasNodeId);
     if (errListIt == rasErrorList.end()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     const auto &errorList = errListIt->second;
@@ -226,7 +227,7 @@ ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_ras_
     for (uint32_t i = 0; i < count; i++) {
         auto categoryIt = categoryToErrorNameMap.find(pConfig[i].category);
         if (categoryIt == categoryToErrorNameMap.end()) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Debug@ %s(): RAS category 0x%x not supported by Netlink, skipping \n", __FUNCTION__, pConfig[i].category);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Debug@ %s(): RAS category 0x%x not supported by Netlink, skipping \n", NEO_FUNCTION_NAME, pConfig[i].category);
             continue;
         }
 
@@ -240,7 +241,7 @@ ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_ras_
 
         ze_result_t result = drmNl->setErrorThreshold(rasNodeId, errIt->errorId, static_cast<uint32_t>(pConfig[i].threshold));
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): setErrorThreshold failed and returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): setErrorThreshold failed and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
     }

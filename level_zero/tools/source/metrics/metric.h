@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
@@ -51,9 +52,9 @@ struct METRICS_LOG_BITMASK {                    // NOLINT(readability-identifier
 #define METRICS_LOG(out, ...) \
     PRINT_STRING(true, out, __VA_ARGS__);
 
-#define METRICS_LOG_ERR(str, ...)                                                                           \
-    if (NEO::debugManager.flags.PrintL0MetricLogs.get() & METRICS_LOG_BITMASK::LOG_ERROR) {                 \
-        METRICS_LOG(stderr, "\n\nL0Metrics[E][@fn:%s,ln:%d]: " str "\n\n", __func__, __LINE__, __VA_ARGS__) \
+#define METRICS_LOG_ERR(str, ...)                                                                                    \
+    if (NEO::debugManager.flags.PrintL0MetricLogs.get() & METRICS_LOG_BITMASK::LOG_ERROR) {                          \
+        METRICS_LOG(stderr, "\n\nL0Metrics[E][@fn:%s,ln:%d]: " str "\n\n", NEO_FUNCTION_NAME, __LINE__, __VA_ARGS__) \
     }
 
 #define METRICS_LOG_INFO(str, ...)                                                         \
@@ -61,9 +62,9 @@ struct METRICS_LOG_BITMASK {                    // NOLINT(readability-identifier
         METRICS_LOG(stdout, "L0Metrics[I]: " str "\n", __VA_ARGS__)                        \
     }
 
-#define METRICS_LOG_DBG(str, ...)                                                                     \
-    if (NEO::debugManager.flags.PrintL0MetricLogs.get() & METRICS_LOG_BITMASK::LOG_DEBUG) {           \
-        METRICS_LOG(stdout, "L0Metrics[D][@fn:%s,ln:%d]: " str "\n", __func__, __LINE__, __VA_ARGS__) \
+#define METRICS_LOG_DBG(str, ...)                                                                              \
+    if (NEO::debugManager.flags.PrintL0MetricLogs.get() & METRICS_LOG_BITMASK::LOG_DEBUG) {                    \
+        METRICS_LOG(stdout, "L0Metrics[D][@fn:%s,ln:%d]: " str "\n", NEO_FUNCTION_NAME, __LINE__, __VA_ARGS__) \
     }
 
 #define METRICS_SAMPLING_TYPE_TIME_EVENT_BASED (static_cast<zet_metric_group_sampling_type_flags_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED))

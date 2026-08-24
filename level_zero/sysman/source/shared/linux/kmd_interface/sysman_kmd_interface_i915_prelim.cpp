@@ -160,7 +160,7 @@ ze_result_t SysmanKmdInterfaceI915Prelim::getPmuConfigsForGroupEngines(const Map
         busyTicksConfig = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY_TICKS(engineInfo.tileId);
         break;
     default:
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Engine Group Not Supported and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Engine Group Not Supported and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -195,7 +195,7 @@ ze_result_t SysmanKmdInterfaceI915Prelim::readBusynessFromGroupFd(PmuInterface *
 
     auto ret = pPmuInterface->pmuRead(static_cast<int>(fdList[0]), data, sizeof(data));
     if (ret < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNKNOWN);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", NEO_FUNCTION_NAME, ret, ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -248,7 +248,7 @@ void SysmanKmdInterfaceI915Prelim::getDriverVersion(char (&driverVersion)[ZES_ST
     std::string strVal = {};
     ze_result_t result = pFsAccess->read(agamaVersionFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x \n", __FUNCTION__, agamaVersionFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, agamaVersionFile.c_str(), result);
         std::strncpy(driverVersion, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     } else {
         std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);

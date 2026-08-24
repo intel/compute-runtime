@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -139,7 +140,7 @@ ze_result_t SysmanKmdInterfaceI915Upstream::readBusynessFromGroupFd(PmuInterface
     uint64_t data[2] = {};
     auto ret = pPmuInterface->pmuRead(static_cast<int>(fdList[0]), data, sizeof(data));
     if (ret < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNKNOWN);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", NEO_FUNCTION_NAME, ret, ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -183,7 +184,7 @@ void SysmanKmdInterfaceI915Upstream::getDriverVersion(char (&driverVersion)[ZES_
     std::string strVal = {};
     ze_result_t result = pFsAccess->read(srcVersionFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x\n", __FUNCTION__, srcVersionFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x\n", NEO_FUNCTION_NAME, srcVersionFile.c_str(), result);
         std::strncpy(driverVersion, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     } else {
         std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);

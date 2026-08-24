@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -72,7 +73,7 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s():createMemoryInfo failed errno:%d \n", __FUNCTION__, errno);
+                     "Error@ %s():createMemoryInfo failed errno:%d \n", NEO_FUNCTION_NAME, errno);
         return status;
     }
 

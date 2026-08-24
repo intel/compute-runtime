@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
@@ -27,7 +28,7 @@ void LinuxRasSourceHbm::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t>
         GscRasUtil::getSupportedRasErrorTypes(errorType, pLinuxSysmanImp, isSubDevice, subDeviceId);
         break;
     default:
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "No Supported Ras Error Types for HBM \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "No Supported Ras Error Types for HBM \n", NEO_FUNCTION_NAME);
         break;
     }
 }

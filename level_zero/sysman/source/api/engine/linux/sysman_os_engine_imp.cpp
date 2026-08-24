@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 
@@ -64,7 +65,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 
     if (!pLinuxSysmanImp->getFsAccess().isRootUser()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Not running as root user, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Not running as root user, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
 
@@ -81,7 +82,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
     }
 
     if (status == false) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error message:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error message:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -152,12 +153,12 @@ void LinuxEngineImp::init(MapOfEngineInfo &mapEngineInfo) {
     }
 
     if (initStatus != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to fetch Pmu Configs \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to fetch Pmu Configs \n", NEO_FUNCTION_NAME);
         return;
     } else {
         if (pmuConfigs.empty()) {
             initStatus = ZE_RESULT_ERROR_UNKNOWN;
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmu Configs Not Available \n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmu Configs Not Available \n", NEO_FUNCTION_NAME);
             return;
         } else {
             for (auto &config : pmuConfigs) {
@@ -169,14 +170,14 @@ void LinuxEngineImp::init(MapOfEngineInfo &mapEngineInfo) {
                         fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
                     }
                     if (fd < 0) {
-                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", __FUNCTION__);
+                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", NEO_FUNCTION_NAME);
                         initStatus = pSysmanKmdInterface->checkErrorNumberAndReturnStatus();
                         return;
                     }
                 } else {
                     fd = pPmuInterface->pmuInterfaceOpen(config, static_cast<int>(fdList[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
                     if (fd < 0) {
-                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", __FUNCTION__);
+                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", NEO_FUNCTION_NAME);
                         for (auto &fd : fdList) {
                             NEO::SysCalls::close(static_cast<int>(fd));
                         }

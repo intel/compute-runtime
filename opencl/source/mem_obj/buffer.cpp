@@ -20,6 +20,7 @@
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/patch_store_operation.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
@@ -560,7 +561,7 @@ Buffer *Buffer::create(Context *context,
         return nullptr;
     }
 
-    DBG_LOG(LogMemoryObject, __FUNCTION__, "Created Buffer: Handle: ", pBuffer, ", hostPtr: ", hostPtr, ", size: ", size,
+    DBG_LOG(LogMemoryObject, NEO_FUNCTION_NAME, "Created Buffer: Handle: ", pBuffer, ", hostPtr: ", hostPtr, ", size: ", size,
             ", memoryStorage: ", allocationInfo.memory->getUnderlyingBuffer(),
             ", GPU address: ", std::hex, allocationInfo.memory->getGpuAddress(),
             ", memoryPool: ", getMemoryPoolString(allocationInfo.memory));
@@ -785,7 +786,7 @@ bool Buffer::bufferRectPitchSet(const size_t *bufferOrigin,
 }
 
 void Buffer::transferData(void *dst, void *src, size_t copySize, size_t copyOffset) {
-    DBG_LOG(LogMemoryObject, __FUNCTION__, " hostPtr: ", hostPtr, ", size: ", copySize, ", offset: ", copyOffset, ", memoryStorage: ", memoryStorage);
+    DBG_LOG(LogMemoryObject, NEO_FUNCTION_NAME, " hostPtr: ", hostPtr, ", size: ", copySize, ", offset: ", copyOffset, ", memoryStorage: ", memoryStorage);
     auto dstPtr = ptrOffset(dst, copyOffset);
     auto srcPtr = ptrOffset(src, copyOffset);
     memcpy_s(dstPtr, copySize, srcPtr, copySize);

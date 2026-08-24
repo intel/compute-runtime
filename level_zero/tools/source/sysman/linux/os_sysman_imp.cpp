@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -296,7 +297,7 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
             if (force) {
                 pProcfsAccess->kill(pid);
             } else {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
         }

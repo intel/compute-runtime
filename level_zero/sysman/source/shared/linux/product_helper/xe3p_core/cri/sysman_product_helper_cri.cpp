@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
 
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
@@ -167,7 +168,7 @@ static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::string &rootPath,
     std::map<uint32_t, std::string> telemNodes;
     NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
     if (telemNodes.empty()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No telemetry nodes found in PCI path, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No telemetry nodes found in PCI path, returning error 0x%x>\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -196,7 +197,7 @@ static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::string &rootPath,
     }
 
     if (keyOffsetMap.empty()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find KeyOffsetMap, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find KeyOffsetMap, returning error 0x%x>\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -211,7 +212,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getEccState(LinuxSysmanImp *pLinu
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -220,7 +221,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getEccState(LinuxSysmanImp *pLinu
     if (eccStateKey == keyTelemInfoMap.end()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Error@ %s(): ECC_STATE key not found in telemetry map, returning error:0x%x \n",
-                     __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+                     NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -229,7 +230,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getEccState(LinuxSysmanImp *pLinu
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Error@ %s(): Failed to read ECC_STATE from PMT, returning error:0x%x \n",
-                     __FUNCTION__, result);
+                     NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -284,17 +285,17 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExt2(SysmanKmdInterface 
     if (sustainedPowerLimitFileExists) {
         result = pSysfsAccess->read(sustainedPowerLimitFile, powerLimit);
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimitFile.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sustainedPowerLimitFile.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
     } else if (burstPowerLimitFileExists) {
         result = pSysfsAccess->read(burstPowerLimitFile, powerLimit);
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, burstPowerLimitFile.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, burstPowerLimitFile.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
     } else {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No power limit files exist for given power domain , returning unsupported feature\n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No power limit files exist for given power domain , returning unsupported feature\n", NEO_FUNCTION_NAME);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
@@ -320,7 +321,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface 
         if (sustainedPowerLimitFileExists) {
             result = pSysfsAccess->write(sustainedPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sustainedPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;
@@ -329,7 +330,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface 
         if (burstPowerLimitFileExists) {
             result = pSysfsAccess->write(burstPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, burstPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, burstPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;
@@ -339,7 +340,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface 
             val = val * criticalLimitMultiplyFactor;
             result = pSysfsAccess->write(criticalPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, criticalPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, criticalPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;
@@ -349,7 +350,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface 
         if (sustainedPowerLimitFileExists) {
             result = pSysfsAccess->write(sustainedPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sustainedPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;
@@ -358,13 +359,13 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface 
         if (burstPowerLimitFileExists) {
             result = pSysfsAccess->write(burstPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, burstPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, burstPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;
         }
     } else {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Power Limits for given domain do not exist , returning error:0x%x\n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Power Limits for given domain do not exist , returning error:0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
@@ -385,7 +386,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
 
     auto powerDomainToKeyMapIter = powerDomainToKeyMap.find(powerDomain);
     if (powerDomainToKeyMapIter == powerDomainToKeyMap.end()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Power domain not supported for Energy counter, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Power domain not supported for Energy counter, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -401,7 +402,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     std::string key = powerDomainToKeyMapIter->second;
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -421,7 +422,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     key = "XTAL_COUNT";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestampValue);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -429,7 +430,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     key = "XTAL_CLK_FREQUENCY";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, frequency);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock frequency from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock frequency from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -454,7 +455,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
     std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -462,7 +463,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
     key = "AVERAGE_POWER_CONTAINER"; // 64-bit container with Average power values at different bit offsets
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, averagePowerValue);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Average Power from Telemetry, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Average Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -498,7 +499,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
         break;
     }
     default:
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unsupported power domain, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unsupported power domain, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -654,7 +655,7 @@ static ze_result_t getDetailedThrottleReasons(SysmanKmdInterface *pSysmanKmdInte
     auto result = pSysfsAccess->read(throttleReasonStatusFile, reasonStatusVal);
 
     if (ZE_RESULT_SUCCESS != result || reasonStatusVal == 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Throttle reason status file %s or no throttle reasons are active, returning error 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Throttle reason status file %s or no throttle reasons are active, returning error 0x%x>\n", NEO_FUNCTION_NAME, throttleReasonStatusFile.c_str(), result);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
@@ -694,7 +695,7 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
     zes_intel_freq_throttle_detailed_reason_exp_flags_t detailedThrottleReasons = 0u;
     ze_result_t result = getDetailedThrottleReasons(pSysmanKmdInterface, pSysfsAccess, subdeviceId, baseDir, baseDirectoryExists, detailedThrottleReasons);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Info@ %s(): Failed to get detailed throttle reasons, returning 0 reasons\n", __func__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Info@ %s(): Failed to get detailed throttle reasons, returning 0 reasons\n", NEO_FUNCTION_NAME);
         return static_cast<zes_freq_throttle_reason_flags_t>(0);
     }
 
@@ -724,7 +725,7 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
 
     // Set Utilization Limited reason flag if none of the detailed reasons are active
     if (detailedThrottleReasons == 0u) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Info@ %s(): No detailed throttle reasons are active, setting Utilization Limited reason flag\n", __func__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Info@ %s(): No detailed throttle reasons are active, setting Utilization Limited reason flag\n", NEO_FUNCTION_NAME);
         aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_REASON_EXP_FLAG_UTILIZATION_LIMITED);
     }
 
@@ -749,7 +750,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorMaxTemperature
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -762,12 +763,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorMaxTemperature
         uint32_t rawVrTemperature = 0;
         ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, rawVrTemperature);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
             return result;
         }
 
         if (rawVrTemperature == temperatureNotAvailable) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): VR temperature is not available for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): VR temperature is not available for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
 
@@ -787,7 +788,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSy
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -796,7 +797,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSy
     uint64_t ambientTemperatureContainer = 0;
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, ambientTemperatureContainer);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read ambient temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read ambient temperature value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
 
@@ -804,7 +805,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSy
     uint32_t rawAmbientTemperature2 = static_cast<uint32_t>(ambientTemperatureContainer >> 32);
 
     if (rawAmbientTemperature1 == temperatureNotAvailable || rawAmbientTemperature2 == temperatureNotAvailable) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Ambient temperature is not available for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Ambient temperature is not available for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -838,7 +839,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -847,7 +848,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp
     std::string key("VRAM_FREQUENCY");
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryActualFreq);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
     *pActual = static_cast<double>(memoryActualFreq & 0xFFFF);
@@ -863,7 +864,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp 
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -872,7 +873,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp 
     std::string key("VCCDDRQX_VID");
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryVoltage);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
 
@@ -898,7 +899,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -907,12 +908,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     std::string key("SOC_TOPDIE_TEMPERATURE");
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, rawGpuMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
 
     if (rawGpuMaxTemperature == temperatureNotAvailable) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): GPU temperature is not available for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): GPU temperature is not available for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -930,7 +931,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCompositeTemperature(LinuxSysm
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -939,12 +940,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCompositeTemperature(LinuxSysm
     std::string key("COMPOSITE_TEMPERATURE");
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, compositeTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
 
     if (compositeTemperature == temperatureNotAvailable) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Composite temperature is not reported by the hardware, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Composite temperature is not reported by the hardware, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -971,7 +972,7 @@ static ze_result_t getMemoryBandwidthCounterValues(const std::map<std::string, u
             uint64_t readCounterValue = 0;
             ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[readKey], readKey, telemOffset, readCounterValue);
             if (result != ZE_RESULT_SUCCESS) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, readKey.c_str(), result);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, readKey.c_str(), result);
                 return result;
             }
             msuReadCounter += readCounterValue;
@@ -980,7 +981,7 @@ static ze_result_t getMemoryBandwidthCounterValues(const std::map<std::string, u
             uint64_t writeCounterValue = 0;
             result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[writeKey], writeKey, telemOffset, writeCounterValue);
             if (result != ZE_RESULT_SUCCESS) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, writeKey.c_str(), result);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, writeKey.c_str(), result);
                 return result;
             }
             msuWriteCounter += writeCounterValue;
@@ -1003,7 +1004,7 @@ static ze_result_t getMemoryMaxBandwidth(const std::map<std::string, uint64_t> &
     std::string key = "VRAM_BANDWIDTH";
     ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, maxBandwidth);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
 
@@ -1022,7 +1023,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -1031,7 +1032,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
     std::string key("VRAM_TEMPERATURE");
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
     memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
@@ -1049,17 +1050,17 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
     if (ZE_RESULT_SUCCESS != getMemoryBandwidthCounterValues(keyOffsetMap, keyTelemInfoMap, pBandwidth)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the Read and Write Counter Values, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the Read and Write Counter Values, returning error 0x%x>\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     if (ZE_RESULT_SUCCESS != getMemoryMaxBandwidth(keyOffsetMap, keyTelemInfoMap, pBandwidth)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the Max Bandwidth Value, returning error 0x%x>\n", __func__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the Max Bandwidth Value, returning error 0x%x>\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -1107,7 +1108,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryVendorId(LinuxSysmanImp 
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -1116,7 +1117,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryVendorId(LinuxSysmanImp 
     std::string key("MEM_VENDOR_ID");
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memVendorId);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
 
@@ -1130,7 +1131,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
     uint64_t physicalMemorySize = 0;
     ze_result_t result = pSysmanKmdInterface->getPhysicalMemorySize(physicalMemorySize, isSubdevice, subDeviceId, pLinuxSysmanImp);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get physical memory size from KMD interface, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get physical memory size from KMD interface, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
     }
     pProperties->location = ZES_MEM_LOC_DEVICE;
     pProperties->type = static_cast<zes_mem_type_t>(ZES_INTEL_MEM_TYPE_LPDDR5X);
@@ -1213,7 +1214,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::memoryGetPageOfflineStateExp(SysF
 
     ze_result_t result = pSysFsAccess->read(pageOfflineInfoFile, memPageInfoData);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read memory page offline state file: %s, returning error:0x%x \n", __FUNCTION__, pageOfflineInfoFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read memory page offline state file: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, pageOfflineInfoFile.c_str(), result);
         return result;
     }
 
@@ -1234,7 +1235,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::memoryGetPageOfflineStateExp(SysF
 
         // If parsing fails then return error
         if (!parsePageOfflineInfoLine(line, parsedPageInfo)) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to parse memory page offline line: '%s', returning error:0x%x \n", __FUNCTION__, line.c_str(), ZE_RESULT_ERROR_UNKNOWN);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to parse memory page offline line: '%s', returning error:0x%x \n", NEO_FUNCTION_NAME, line.c_str(), ZE_RESULT_ERROR_UNKNOWN);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
@@ -1278,7 +1279,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMaxMemoryOfflinePages(SysFsAcc
 
     ze_result_t result = pSysFsAccess->read(pageOfflineInfoFile, memPageInfoData);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read memory page offline state file: %s, returning error:0x%x \n", __FUNCTION__, pageOfflineInfoFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read memory page offline state file: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, pageOfflineInfoFile.c_str(), result);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 

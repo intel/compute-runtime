@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
@@ -106,7 +107,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
             WddmAllocation *allocation = static_cast<WddmAllocation *>(backupResidencyContainer[i]);
             allocation->getResidencyData().resident[osContextId] = true;
             allocation->getResidencyData().updateCompletionData(currentFence, osContextId);
-            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), "fence value to reach for eviction = ", currentFence);
+            DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), "fence value to reach for eviction = ", currentFence);
             for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
                 auto residencyData = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency;
                 residencyData->resident[osContextId] = true;
@@ -133,7 +134,7 @@ size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocat
     handlesForResidency.clear();
     handlesForResidency.reserve(residencyCount);
 
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.getMonitoredFence().currentFenceValue);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "currentFenceValue =", osContext.getMonitoredFence().currentFenceValue);
 
     auto checkIfAlreadyResident = [&](GraphicsAllocation *alloc) {
         WddmAllocation *allocation = static_cast<WddmAllocation *>(alloc);
@@ -142,7 +143,7 @@ size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocat
         const auto fragmentCount = allocation->fragmentsStorage.fragmentCount;
         UNRECOVERABLE_IF(fragmentCount > maxFragments);
 
-        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), residencyData.resident[osContextId] ? "resident" : "not resident");
+        DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), residencyData.resident[osContextId] ? "resident" : "not resident");
         bool isAlreadyResident = true;
         if (fragmentCount > 0) {
             for (uint32_t allocationId = 0; allocationId < fragmentCount; allocationId++) {

@@ -19,6 +19,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -125,7 +126,7 @@ void Image::transferData(void *dest, size_t destRowPitch, size_t destSlicePitch,
     size_t pixelSize = surfaceFormatInfo.surfaceFormat.imageElementSizeInBytes;
     size_t lineWidth = copyRegion[0] * pixelSize;
 
-    DBG_LOG(LogMemoryObject, __FUNCTION__, "memcpy dest:", dest, "sizeRowToCopy:", lineWidth, "src:", src);
+    DBG_LOG(LogMemoryObject, NEO_FUNCTION_NAME, "memcpy dest:", dest, "sizeRowToCopy:", lineWidth, "src:", src);
 
     if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
         // For 1DArray type, array region and origin are stored on 2nd position. For 2Darray its on 3rd position.
@@ -285,7 +286,7 @@ Image *Image::create(Context *context,
         allocationInfo.memory->setMemObjectsAllocationWithWritableFlags(isWritable);
         allocationInfo.transferNeeded |= memoryProperties.flags.copyHostPtr;
 
-        DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", allocationInfo.memory->getUnderlyingBufferSize(),
+        DBG_LOG(LogMemoryObject, NEO_FUNCTION_NAME, "hostPtr:", hostPtr, "size:", allocationInfo.memory->getUnderlyingBufferSize(),
                 "memoryStorage:", allocationInfo.memory->getUnderlyingBuffer(), "GPU address:", std::hex, allocationInfo.memory->getGpuAddress());
 
         multiGraphicsAllocation.addAllocation(allocationInfo.memory);

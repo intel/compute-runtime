@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -62,7 +63,7 @@ ze_result_t SysmanKmdInterface::initAllAccessInterfaces(const NEO::Drm &drm) {
     std::string deviceName;
     auto result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), drm.getFileDescriptor(), deviceName);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     pSysfsAccess = SysFsAccessInterface::create(std::move(deviceName));
@@ -113,7 +114,7 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForSubDevices(std::m
         auto level0EngineType = sysfsEngineMapToLevel0EngineType.find(sysfEngineString);
         if (level0EngineType == sysfsEngineMapToLevel0EngineType.end()) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", __FUNCTION__, sysfEngineString.c_str(),
+                         "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sysfEngineString.c_str(),
                          ZE_RESULT_ERROR_UNKNOWN);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
@@ -137,7 +138,7 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForDevice(std::strin
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     for_each(localListOfAllEngines.begin(), localListOfAllEngines.end(),
@@ -224,7 +225,7 @@ bool SysmanKmdInterface::isDriverLoaded() {
 
 ze_result_t SysmanKmdInterface::checkErrorNumberAndReturnStatus() {
     if (errno == EMFILE || errno == ENFILE) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", NEO_FUNCTION_NAME);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -284,7 +285,7 @@ ze_result_t SysmanKmdInterfaceI915::getVfLocalMemoryQuotaI915(SysFsAccessInterfa
     std::string pathForDeviceMemQuota = "iov/vf" + std::to_string(vfId) + pathForLmemQuota;
     auto result = pSysfsAccess->read(std::move(pathForDeviceMemQuota), lMemQuota);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     return ZE_RESULT_SUCCESS;

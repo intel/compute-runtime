@@ -24,6 +24,7 @@
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/mt_helpers.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -820,7 +821,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
         }
 
         if (status != STATUS_SUCCESS) {
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", NEO_FUNCTION_NAME, status);
             DEBUG_BREAK_IF(status != STATUS_GRAPHICS_NO_VIDEO_MEMORY);
             break;
         }
@@ -834,7 +835,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
 
             if (!success) {
                 osHandles.fragmentStorageData[allocationIndex].freeTheFragment = true;
-                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", __FUNCTION__, success);
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", NEO_FUNCTION_NAME, success);
                 DEBUG_BREAK_IF(true);
                 return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
             }
@@ -1109,7 +1110,7 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
     if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(submitArguments.contextHandle)) {
         return false;
     }
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", submitArguments.monitorFence->currentFenceValue);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "currentFenceValue =", submitArguments.monitorFence->currentFenceValue);
 
     PRINT_STRING(debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get(), stdout,
                  "%u: Wddm Submission with context handle %u and HwQueue handle %u\n", SysCalls::getProcessId(), submitArguments.contextHandle, submitArguments.hwQueueHandle);
@@ -1174,7 +1175,7 @@ bool Wddm::getDeviceState() {
                                  pageFaultState.FaultedPipelineStage, pageFaultState.FaultedBindTableEntry, pageFaultState.PageFaultFlags,
                                  pageFaultState.FaultErrorCode.IsDeviceSpecificCode, pageFaultState.FaultErrorCode.IsDeviceSpecificCode ? pageFaultState.FaultErrorCode.DeviceSpecificCode : static_cast<UINT>(pageFaultState.FaultErrorCode.GeneralErrorCode));
 
-                    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Page fault detected at address = ", std::hex, pageFaultState.FaultedVirtualAddress);
+                    DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Page fault detected at address = ", std::hex, pageFaultState.FaultedVirtualAddress);
                 }
             } else if (executionState != D3DKMT_DEVICEEXECUTION_ACTIVE) {
                 PRINT_STRING(true, stderr, "Device execution error %d\n", executionState);

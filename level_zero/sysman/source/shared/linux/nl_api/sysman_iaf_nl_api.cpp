@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
 
@@ -732,7 +733,7 @@ ze_result_t IafNlApi::init() {
 
     int retval = pNlApi->genlRegisterFamily(&ops);
     if (-NLE_EXIST == retval) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to register netlink family and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to register netlink family and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     } else if (!retval) {
         nlSock = pNlApi->nlSocketAlloc();

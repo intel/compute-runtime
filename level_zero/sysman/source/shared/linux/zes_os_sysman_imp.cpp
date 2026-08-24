@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -287,7 +288,7 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
             if (force) {
                 pProcfsAccess->kill(pid);
             } else {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
         }
@@ -549,7 +550,7 @@ ze_result_t LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &tele
 
     uint32_t deviceCount = getSubDeviceCount() + 1;
     if (telemNodesInPciPath.size() < deviceCount) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Number of telemetry nodes:%d is less than device count: %d \n", __FUNCTION__, telemNodesInPciPath.size(), deviceCount);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Number of telemetry nodes:%d is less than device count: %d \n", NEO_FUNCTION_NAME, telemNodesInPciPath.size(), deviceCount);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -765,7 +766,7 @@ ze_result_t LinuxSysmanImp::updateBdfDependentData() {
         devNodePath);
 
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getFileName() failed to resolve device node for fd %d and returning error:0x%x \n", __FUNCTION__, myDeviceFd, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getFileName() failed to resolve device node for fd %d and returning error:0x%x \n", NEO_FUNCTION_NAME, myDeviceFd, result);
         return result;
     }
     pSysfsAccess->reinit(devNodePath);

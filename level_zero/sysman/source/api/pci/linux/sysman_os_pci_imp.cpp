@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/pci/linux/sysman_os_pci_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/utilities/directory.h"
 
@@ -54,7 +55,7 @@ ze_result_t LinuxPciImp::getPciBdf(zes_pci_properties_t &pciProperties) {
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readSymLink() failed to retrieve BDF from %s and returning error:0x%x \n", __FUNCTION__, deviceDir.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readSymLink() failed to retrieve BDF from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, deviceDir.c_str(), result);
         return result;
     }
     const auto loc = bdfDir.find_last_of('/');
@@ -129,11 +130,11 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
     std::vector<std::string> readBytes;
     ze_result_t result = pSysfsAccess->read(resourceFile, readBytes);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): read() failed to read %s and returning error:0x%x \n", __FUNCTION__, resourceFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, resourceFile.c_str(), result);
         return result;
     }
     if (readBytes.size() < (maxPciBars + 1)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): insufficient data in %s and returning error:0x%x \n", __FUNCTION__, resourceFile.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): insufficient data in %s and returning error:0x%x \n", NEO_FUNCTION_NAME, resourceFile.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     for (uint32_t i = 0; i <= maxPciBars; i++) {
@@ -161,7 +162,7 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
         }
     }
     if (pBarProperties.size() == 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): BarProperties = %d and returning error:0x%x \n", __FUNCTION__, pBarProperties.size(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): BarProperties = %d and returning error:0x%x \n", NEO_FUNCTION_NAME, pBarProperties.size(), result);
         result = ZE_RESULT_ERROR_UNKNOWN;
     }
     return result;
@@ -241,7 +242,7 @@ bool LinuxPciImp::resizableBarSupported() {
     pSysfsAccess->getRealPath("device/config", pciConfigNode);
     std::vector<uint8_t> configMemory(PCI_CFG_SPACE_EXP_SIZE);
     if (!getPciConfigMemory(pciConfigNode, configMemory)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", NEO_FUNCTION_NAME);
         return false;
     }
     return (L0::Sysman::LinuxPciImp::getRebarCapabilityPos(configMemory.data(), false) > 0);
@@ -256,7 +257,7 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
     pSysfsAccess->getRealPath("device/config", pciConfigNode);
     std::vector<uint8_t> configMemory(PCI_CFG_SPACE_EXP_SIZE);
     if (!getPciConfigMemory(pciConfigNode, configMemory)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", NEO_FUNCTION_NAME);
         return false;
     }
 
@@ -340,13 +341,13 @@ void LinuxPciImp::getPciLinkSpeed(zes_pci_speed_t &linkSpeed) {
     }
     std::vector<uint8_t> configMemory(PCI_CFG_SPACE_SIZE);
     if (!getPciConfigMemory(pciConfigNode, configMemory)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", NEO_FUNCTION_NAME);
         return;
     }
 
     auto linkStatusPos = L0::Sysman::LinuxPciImp::getLinkRegisterPos(configMemory.data(), PCI_EXP_LNK_STATUS);
     if (!linkStatusPos) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to find link status register in pci config space \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to find link status register in pci config space \n", NEO_FUNCTION_NAME);
         return;
     }
 
@@ -450,17 +451,17 @@ ze_result_t LinuxPciImp::getStats(zes_pci_stats_t *stats) {
 
 bool LinuxPciImp::getPciConfigMemory(const std::string &pciPath, std::vector<uint8_t> &configMem) {
     if (!pSysfsAccess->isRootUser()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Need to be root to read config space \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Need to be root to read config space \n", NEO_FUNCTION_NAME);
         return false;
     }
 
     auto fd = NEO::FileDescriptor(pciPath.c_str(), O_RDONLY);
     if (fd < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() Config File Open Failed \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() Config File Open Failed \n", NEO_FUNCTION_NAME);
         return false;
     }
     if (this->preadFunction(fd, configMem.data(), configMem.size(), 0) < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() Config Mem Read Failed \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() Config Mem Read Failed \n", NEO_FUNCTION_NAME);
         return false;
     }
     return true;

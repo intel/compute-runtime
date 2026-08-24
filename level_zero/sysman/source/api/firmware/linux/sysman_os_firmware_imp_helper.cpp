@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/api/firmware/linux/sysman_os_firmware_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
@@ -31,7 +32,7 @@ ze_result_t LinuxFirmwareImp::getFirmwareVersion(std::string fwType, zes_firmwar
         ze_result_t result = pSysfsAccess->scanDirEntries(iafPath, list);
         if (ZE_RESULT_SUCCESS != result) {
             // There should be a device directory
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directories at %s and returning error:0x%x \n", __FUNCTION__, iafPath.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directories at %s and returning error:0x%x \n", NEO_FUNCTION_NAME, iafPath.c_str(), result);
             return result;
         }
         for (const auto &entry : list) {
@@ -42,7 +43,7 @@ ze_result_t LinuxFirmwareImp::getFirmwareVersion(std::string fwType, zes_firmwar
         }
         if (path.empty()) {
             // This device does not have a PSC Version
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): device does not have a PSC version and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): device does not have a PSC version and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         std::string pscVersion;
@@ -50,7 +51,7 @@ ze_result_t LinuxFirmwareImp::getFirmwareVersion(std::string fwType, zes_firmwar
         result = pSysfsAccess->read(path, pscVersion);
         if (ZE_RESULT_SUCCESS != result) {
             // not able to read PSC version from iaf.x
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read PSC version from iaf.x at %s and returning error:0x%x \n", __FUNCTION__, path.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read PSC version from iaf.x at %s and returning error:0x%x \n", NEO_FUNCTION_NAME, path.c_str(), result);
             return result;
         }
         strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, pscVersion.c_str(), ZES_STRING_PROPERTY_SIZE - 1);

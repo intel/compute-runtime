@@ -7,6 +7,7 @@
 
 #include "shared/source/debugger/linux/debugger_xe.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/source/os_interface/linux/xe/xe_log_helper.h"
@@ -132,7 +133,7 @@ std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32
     static_assert(alignof(VmBindOpExtAttachDebug) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__,
                   "Alignment of a buffer returned via new[] operator must allow storing the required type!");
 
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     const auto bufferSize{sizeof(VmBindOpExtAttachDebug) * bindExtHandles.size()};
     auto extensionsBuffer = std::make_unique<uint8_t[]>(bufferSize);
 

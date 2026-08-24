@@ -44,7 +44,7 @@ static bool hexStringToBytes(const std::string &hexStr, std::vector<uint8_t> &by
     }
 
     if (cleanHex.length() % 2 != 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid hex string length: %zu\n", __FUNCTION__, cleanHex.length());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid hex string length: %zu\n", NEO_FUNCTION_NAME, cleanHex.length());
         return false;
     }
 
@@ -55,7 +55,7 @@ static bool hexStringToBytes(const std::string &hexStr, std::vector<uint8_t> &by
         char *end = nullptr;
         uint8_t byte = static_cast<uint8_t>(std::strtoul(byteStr.c_str(), &end, 16));
         if (end != byteStr.c_str() + 2) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid hex character at offset: %zu\n", __FUNCTION__, i);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid hex character at offset: %zu\n", NEO_FUNCTION_NAME, i);
             bytes.clear();
             return false;
         }
@@ -71,7 +71,7 @@ static std::string extractFieldValue(const std::string &line, const std::string 
     std::string searchStr = fieldName + "=";
     size_t pos = line.find(searchStr);
     if (pos == std::string::npos) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Field '%s' not found in trace line\n", __FUNCTION__, fieldName.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Field '%s' not found in trace line\n", NEO_FUNCTION_NAME, fieldName.c_str());
         return "";
     }
 
@@ -195,7 +195,7 @@ ze_result_t LinuxInfoLogImp::openTracePipe(struct tracefs_instance *instance) {
     auto pLinuxSysmanDriverImp = (globalSysmanDriver != nullptr) ? static_cast<LinuxSysmanDriverImp *>(globalSysmanDriver->pOsSysmanDriver) : nullptr;
     if (pLinuxSysmanDriverImp == nullptr) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): Os Sysman driver not initialized, returning error: 0x%x\n", __FUNCTION__, ZE_RESULT_ERROR_UNINITIALIZED);
+                     "Error@ %s(): Os Sysman driver not initialized, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNINITIALIZED);
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
@@ -209,7 +209,7 @@ ze_result_t LinuxInfoLogImp::openTracePipe(struct tracefs_instance *instance) {
         char *tracePipePath = pTraceFsApi->traceFsInstanceGetFile(instance, "trace_pipe");
         if (tracePipePath == nullptr) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get trace_pipe path for instance '%s'\n",
-                         __FUNCTION__, activeInstanceName.c_str());
+                         NEO_FUNCTION_NAME, activeInstanceName.c_str());
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
@@ -228,7 +228,7 @@ ze_result_t LinuxInfoLogImp::openTracePipe(struct tracefs_instance *instance) {
     if (fd < 0) {
         ze_result_t result = LinuxSysmanImp::getResult(errorNum);
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): Failed to open trace_pipe, returning error: 0x%x\n", __FUNCTION__, result);
+                     "Error@ %s(): Failed to open trace_pipe, returning error: 0x%x\n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -247,7 +247,7 @@ void LinuxInfoLogImp::setImmediateWakeBufferPercent(struct tracefs_instance *ins
     int currentPercent = pTraceFsApi->traceFsInstanceGetBufferPercent(instance);
     if (currentPercent < 0) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Info@ %s(): Failed to read tracefs buffer percent, event reporting may be delayed\n", __FUNCTION__);
+                     "Info@ %s(): Failed to read tracefs buffer percent, event reporting may be delayed\n", NEO_FUNCTION_NAME);
         return;
     }
 
@@ -258,7 +258,7 @@ void LinuxInfoLogImp::setImmediateWakeBufferPercent(struct tracefs_instance *ins
     if (pTraceFsApi->traceFsInstanceSetBufferPercent(instance, immediateWakeBufferPercent) != 0) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Info@ %s(): Failed to set tracefs buffer percent to %d, event reporting may be delayed\n",
-                     __FUNCTION__, immediateWakeBufferPercent);
+                     NEO_FUNCTION_NAME, immediateWakeBufferPercent);
         return;
     }
 
@@ -274,7 +274,7 @@ void LinuxInfoLogImp::restoreBufferPercent() {
     if (pTraceFsApi->traceFsInstanceSetBufferPercent(savedBufferPercentInstance, savedBufferPercent) != 0) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Info@ %s(): Failed to restore tracefs buffer percent to %d, the watermark stays overridden until a later attempt succeeds\n",
-                     __FUNCTION__, savedBufferPercent);
+                     NEO_FUNCTION_NAME, savedBufferPercent);
         return;
     }
 
@@ -334,7 +334,7 @@ ze_result_t LinuxInfoLogImp::extractCperRecords(int fd, uint32_t cperCount, uint
                 lineBuffer.clear();
                 result = LinuxSysmanImp::getResult(errorNum);
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read from trace_pipe, returning error: 0x%x\n",
-                             __FUNCTION__, result);
+                             NEO_FUNCTION_NAME, result);
             }
             break;
         }
@@ -374,13 +374,13 @@ ze_result_t LinuxInfoLogImp::extractCperRecords(int fd, uint32_t cperCount, uint
 
         if (cperData.size() != cperLen) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): CPER data size mismatch - expected: %u, got: %zu\n",
-                         __FUNCTION__, cperLen, cperData.size());
+                         NEO_FUNCTION_NAME, cperLen, cperData.size());
             continue;
         }
 
         if (cperLen > (bufferSize - aggregatedCperLen)) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Info@ %s(): Buffer full, truncating at %u bytes \n",
-                         __FUNCTION__, aggregatedCperLen);
+                         NEO_FUNCTION_NAME, aggregatedCperLen);
             result = ZE_RESULT_WARNING_DROPPED_DATA;
             break;
         }
@@ -396,14 +396,14 @@ ze_result_t LinuxInfoLogImp::extractCperRecords(int fd, uint32_t cperCount, uint
 ze_result_t LinuxInfoLogImp::infoLogRead(uint32_t *pSize, uint8_t *pBuffer) {
     if (pBuffer == nullptr || pSize == nullptr || *pSize == 0) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid argument - pBuffer: %p, pSize: %p, size: %u\n",
-                     __FUNCTION__, pBuffer, static_cast<void *>(pSize), pSize ? *pSize : 0);
+                     NEO_FUNCTION_NAME, pBuffer, static_cast<void *>(pSize), pSize ? *pSize : 0);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     int fd = getTracePipeFd();
     if (fd < 0) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Info log collection is not enabled, returning error: 0x%x\n",
-                     __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+                     NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
         *pSize = 0;
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -414,7 +414,7 @@ ze_result_t LinuxInfoLogImp::infoLogRead(uint32_t *pSize, uint8_t *pBuffer) {
     auto traceData = std::unique_ptr<char, decltype(&free)>(
         pTraceFsApi->traceFsInstanceFileRead(pTraceFsInstance, "trace", nullptr), free);
     if (!traceData) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read trace file and returning error 0x%x\n", __FUNCTION__, ZE_RESULT_ERROR_UNKNOWN);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read trace file and returning error 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNKNOWN);
         *pSize = 0;
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -431,7 +431,7 @@ ze_result_t LinuxInfoLogImp::infoLogRead(uint32_t *pSize, uint8_t *pBuffer) {
     uint32_t bytesExtracted = 0;
     ze_result_t result = extractCperRecords(fd, cperCount, pBuffer, *pSize, bytesExtracted);
     if (result != ZE_RESULT_SUCCESS && result != ZE_RESULT_WARNING_DROPPED_DATA) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to extract CPER records and returning error 0x%x\n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to extract CPER records and returning error 0x%x\n", NEO_FUNCTION_NAME, result);
         *pSize = 0;
         return result;
     }
@@ -501,7 +501,7 @@ ze_result_t LinuxInfoLogImp::infoLogEnable(zes_intel_info_log_enable_descriptor_
         if (!requestingGlobal && !currentIsGlobal && activeInstanceName == instanceName) {
             return ZE_RESULT_SUCCESS;
         }
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Already enabled with conflicting instance configuration\n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Already enabled with conflicting instance configuration\n", NEO_FUNCTION_NAME);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -510,7 +510,7 @@ ze_result_t LinuxInfoLogImp::infoLogEnable(zes_intel_info_log_enable_descriptor_
 
     if (instanceName != nullptr) {
         if (!isInstancedCollectionAvailable()) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Named tracefs instances not available\n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Named tracefs instances not available\n", NEO_FUNCTION_NAME);
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
 
@@ -518,7 +518,7 @@ ze_result_t LinuxInfoLogImp::infoLogEnable(zes_intel_info_log_enable_descriptor_
 
         instance = pTraceFsApi->traceFsInstanceCreate(instanceName);
         if (instance == nullptr) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to create tracefs instance '%s'\n", __FUNCTION__, instanceName);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to create tracefs instance '%s'\n", NEO_FUNCTION_NAME, instanceName);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
@@ -531,7 +531,7 @@ ze_result_t LinuxInfoLogImp::infoLogEnable(zes_intel_info_log_enable_descriptor_
     if (pBufferSizeInKb != nullptr && *pBufferSizeInKb > 0) {
         int result = pTraceFsApi->traceFsInstanceSetBufferSize(instance, static_cast<size_t>(*pBufferSizeInKb), -1); // -1 = all CPUs
         if (result != 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set buffer size to %u KB\n", __FUNCTION__, *pBufferSizeInKb);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set buffer size to %u KB\n", NEO_FUNCTION_NAME, *pBufferSizeInKb);
             cleanupInstanceOnFailure(instance, isNewInstance);
             instanceWasPreExisting = false;
             return ZE_RESULT_ERROR_UNKNOWN;
@@ -550,7 +550,7 @@ ze_result_t LinuxInfoLogImp::infoLogEnable(zes_intel_info_log_enable_descriptor_
         int result = pTraceFsApi->traceFsInstanceSetBufferPercent(instance, static_cast<int>(requestedPercent));
         if (result != 0) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set buffer percent threshold to %u%%\n",
-                         __FUNCTION__, requestedPercent);
+                         NEO_FUNCTION_NAME, requestedPercent);
             cleanupInstanceOnFailure(instance, isNewInstance);
             instanceWasPreExisting = false;
             return ZE_RESULT_ERROR_UNKNOWN;
@@ -572,7 +572,7 @@ ze_result_t LinuxInfoLogImp::infoLogEnable(zes_intel_info_log_enable_descriptor_
     if (!alreadyEnabled) {
         int result = pTraceFsApi->traceFsEventEnable(instance, "xe", "xe_error_cper");
         if (result != 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to enable xe_error_cper tracepoint\n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to enable xe_error_cper tracepoint\n", NEO_FUNCTION_NAME);
             restoreBufferPercent();
             cleanupInstanceOnFailure(instance, isNewInstance);
             instanceWasPreExisting = false;
@@ -583,7 +583,7 @@ ze_result_t LinuxInfoLogImp::infoLogEnable(zes_intel_info_log_enable_descriptor_
     if (!alreadyOn) {
         int result = pTraceFsApi->traceFsTraceOn(instance);
         if (result != 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to turn tracing on\n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to turn tracing on\n", NEO_FUNCTION_NAME);
             if (!alreadyEnabled) {
                 pTraceFsApi->traceFsEventDisable(instance, "xe", "xe_error_cper");
             }
@@ -631,7 +631,7 @@ ze_result_t LinuxInfoLogImp::infoLogDisable() {
     if (!eventWasAlreadyEnabled) {
         int result = pTraceFsApi->traceFsEventDisable(pTraceFsInstance, "xe", "xe_error_cper");
         if (result != 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable xe_error_cper tracepoint\n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable xe_error_cper tracepoint\n", NEO_FUNCTION_NAME);
             status = ZE_RESULT_ERROR_UNKNOWN;
         }
     }
@@ -639,7 +639,7 @@ ze_result_t LinuxInfoLogImp::infoLogDisable() {
     if (!tracingWasAlreadyOn) {
         int result = pTraceFsApi->traceFsTraceOff(pTraceFsInstance);
         if (result != 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to turn tracing off\n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to turn tracing off\n", NEO_FUNCTION_NAME);
             status = ZE_RESULT_ERROR_UNKNOWN;
         }
     }
@@ -777,7 +777,7 @@ static bool processCperLine(const std::string &line, CperExtractionState &state,
     uint32_t cperLen = static_cast<uint32_t>(std::strtoul(cperLenStr.c_str(), nullptr, 0));
     if (cperLen == 0) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Warning@ %s(): Skipping CPER record with zero or invalid cper_len field\n",
-                     __FUNCTION__);
+                     NEO_FUNCTION_NAME);
         return false;
     }
 
@@ -785,7 +785,7 @@ static bool processCperLine(const std::string &line, CperExtractionState &state,
     std::string cperHexStr = extractFieldValue(line, "cper_raw");
     if (cperHexStr.empty()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Warning@ %s(): Skipping CPER record with missing or empty cper_raw field\n",
-                     __FUNCTION__);
+                     NEO_FUNCTION_NAME);
         return false;
     }
 
@@ -793,21 +793,21 @@ static bool processCperLine(const std::string &line, CperExtractionState &state,
     std::vector<uint8_t> cperData;
     if (!hexStringToBytes(cperHexStr, cperData)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Warning@ %s(): Skipping CPER record due to invalid hex data in cper_raw field\n",
-                     __FUNCTION__);
+                     NEO_FUNCTION_NAME);
         return false;
     }
 
     // Validate data size matches expected length
     if (cperData.size() != cperLen) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): CPER data size mismatch - expected: %u, got: %zu\n",
-                     __FUNCTION__, cperLen, cperData.size());
+                     NEO_FUNCTION_NAME, cperLen, cperData.size());
         return false;
     }
 
     // Check if record fits in buffer
     if (cperLen > (state.bufferSize - state.aggregatedCperLen)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Info@ %s(): Buffer full, truncating at %u bytes\n",
-                     __FUNCTION__, state.aggregatedCperLen);
+                     NEO_FUNCTION_NAME, state.aggregatedCperLen);
         bufferFull = true;
         return false;
     }
@@ -840,7 +840,7 @@ ze_result_t LinuxInfoLogImp::infoLogReadWithMetaData(uint32_t *pSize, uint8_t *p
                                                      uint32_t *pEventCount, zes_intel_info_log_metadata_exp *pDescriptors) {
     if (pSize == nullptr || pEventCount == nullptr) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid argument - pSize: %p, pEventCount: %p\n",
-                     __FUNCTION__, static_cast<void *>(pSize), static_cast<void *>(pEventCount));
+                     NEO_FUNCTION_NAME, static_cast<void *>(pSize), static_cast<void *>(pEventCount));
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -851,7 +851,7 @@ ze_result_t LinuxInfoLogImp::infoLogReadWithMetaData(uint32_t *pSize, uint8_t *p
         if (!traceData) {
             std::string context = getTraceContext(pTraceFsInstance, activeInstanceName);
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read trace file from %s\n",
-                         __FUNCTION__, context.c_str());
+                         NEO_FUNCTION_NAME, context.c_str());
             *pSize = 0;
             *pEventCount = 0;
             return ZE_RESULT_ERROR_UNKNOWN;
@@ -869,7 +869,7 @@ ze_result_t LinuxInfoLogImp::infoLogReadWithMetaData(uint32_t *pSize, uint8_t *p
     // Extract mode: use trace_pipe for consuming read
     int tracePipeFd = getTracePipeFd();
     if (tracePipeFd < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): trace_pipe not opened - call infoLogEnable first\n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): trace_pipe not opened - call infoLogEnable first\n", NEO_FUNCTION_NAME);
         *pSize = 0;
         *pEventCount = 0;
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -882,7 +882,7 @@ ze_result_t LinuxInfoLogImp::infoLogReadWithMetaData(uint32_t *pSize, uint8_t *p
     if (dupedFd < 0) {
         std::string context = getTraceContext(pTraceFsInstance, activeInstanceName);
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to dup trace_pipe fd %d for %s, errno=%d\n",
-                     __FUNCTION__, tracePipeFd, context.c_str(), errorNum);
+                     NEO_FUNCTION_NAME, tracePipeFd, context.c_str(), errorNum);
         *pSize = 0;
         *pEventCount = 0;
         return ZE_RESULT_ERROR_UNKNOWN;
@@ -892,7 +892,7 @@ ze_result_t LinuxInfoLogImp::infoLogReadWithMetaData(uint32_t *pSize, uint8_t *p
     if (pTracePipeFile == nullptr) {
         std::string context = getTraceContext(pTraceFsInstance, activeInstanceName);
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to fdopen trace_pipe for %s, dup'd fd=%d, errno=%d\n",
-                     __FUNCTION__, context.c_str(), dupedFd, errorNum);
+                     NEO_FUNCTION_NAME, context.c_str(), dupedFd, errorNum);
         // Clean up the dup'd file descriptor to prevent leak
         SysmanSysCallsWrapper::close(dupedFd, errorNum);
         *pSize = 0;
@@ -929,7 +929,7 @@ ze_result_t LinuxInfoLogImp::infoLogReadWithMetaData(uint32_t *pSize, uint8_t *p
                 accumulatedLine.clear();
                 result = LinuxSysmanImp::getResult(errorNum);
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read from trace_pipe, returning error: 0x%x\n",
-                             __FUNCTION__, result);
+                             NEO_FUNCTION_NAME, result);
             }
             break;
         }
@@ -942,7 +942,7 @@ ze_result_t LinuxInfoLogImp::infoLogReadWithMetaData(uint32_t *pSize, uint8_t *p
         // Safety check: detect corrupted data with excessively long lines
         if (accumulatedLine.size() > kMaxAccumulatedLineSize) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Line exceeds maximum size (%zu bytes), treating as corrupted - skipping to next newline\n",
-                         __FUNCTION__, accumulatedLine.size());
+                         NEO_FUNCTION_NAME, accumulatedLine.size());
             accumulatedLine.clear();
             // Skip to next newline to resynchronize
             while (SysmanSysCallsWrapper::fgets(readBuffer, sizeof(readBuffer), pTracePipeFile, errorNum) != nullptr) {

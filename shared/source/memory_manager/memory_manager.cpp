@@ -26,6 +26,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -370,7 +371,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     if (isLocked) {
         freeAssociatedResourceImpl(*gfxAllocation);
     }
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Free allocation, gpu address = ", std::hex, gfxAllocation->getGpuAddress());
+    DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Free allocation, gpu address = ", std::hex, gfxAllocation->getGpuAddress());
 
     logFreeAllocation(fileLoggerInstance(), gfxAllocation);
     getLocalMemoryUsageBankSelector(gfxAllocation->getAllocationType(), rootDevIdx)->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());

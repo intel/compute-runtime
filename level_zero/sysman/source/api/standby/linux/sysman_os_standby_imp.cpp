@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/standby/linux/sysman_os_standby_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
@@ -36,7 +37,7 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
     if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <Unsupported feature> <result: 0x%x>\n", __func__, result);
+                     "error@<%s> <Unsupported feature> <result: 0x%x>\n", NEO_FUNCTION_NAME, result);
     }
     return result;
 }
@@ -46,7 +47,7 @@ ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
     if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <Unsupported feature> <result: 0x%x>\n", __func__, result);
+                     "error@<%s> <Unsupported feature> <result: 0x%x>\n", NEO_FUNCTION_NAME, result);
     }
     return result;
 }
