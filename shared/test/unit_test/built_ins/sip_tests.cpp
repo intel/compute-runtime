@@ -1067,7 +1067,7 @@ TEST_F(DebugBuiltinSipTest, givenDumpSipHeaderFileWhenGettingSipKernelThenSipHea
     builtins.getSipKernel(SipKernelType::dbgCsr, *pDevice);
 
     EXPECT_EQ(1u, NEO::virtualFileList.size());
-    EXPECT_TRUE(NEO::virtualFileList.find("sip_header.bin") != NEO::virtualFileList.end());
+    EXPECT_TRUE(NEO::virtualFileList.contains("sip_header.bin"));
 }
 
 TEST(SipTest, whenForcingBuiltinSipClassThenPreemptionSurfaceSizeIsSetBasedOnStateSaveAreaHeader) {

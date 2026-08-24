@@ -227,7 +227,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
 
 bool Context::isDeviceDefinedForThisContext(Device *inDevice) {
     uint32_t deviceIndex = inDevice->getRootDeviceIndex();
-    return (this->getDevices().find(deviceIndex) != this->getDevices().end());
+    return this->getDevices().contains(deviceIndex);
 }
 
 ze_result_t Context::checkMemSizeLimit(Device *inDevice, size_t size, bool relaxedSizeAllowed, void **ptr) {

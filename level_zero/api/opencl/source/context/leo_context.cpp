@@ -85,7 +85,7 @@ cl_int Context::initialize() {
 
     for (const auto clDevice : this->clDevices) {
         const auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-        if (this->internalCopyCmdLists.count(rootDeviceIndex) != 0) {
+        if (this->internalCopyCmdLists.contains(rootDeviceIndex)) {
             continue;
         }
         ze_command_list_handle_t internalCopyCmdList{};

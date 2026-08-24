@@ -271,7 +271,7 @@ ze_result_t LinuxRasSourceGt::osRasGetStateExp2(const uint32_t categoryCount, co
 ze_result_t LinuxRasSourceGt::osRasClearStateExp(zes_ras_error_category_exp_t category) {
     ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     // check requested category is already initialized
-    if (errorCategoryToEventCount.find(category) != errorCategoryToEventCount.end()) {
+    if (errorCategoryToEventCount.contains(category)) {
         closeFds();
         clearStatus |= (1 << category);
         initialErrorCount[category] = 0;

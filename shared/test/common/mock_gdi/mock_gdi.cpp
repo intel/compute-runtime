@@ -278,9 +278,9 @@ NTSTATUS __stdcall mockD3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATIO
 
     for (int i = 0; i < numOfAllocations; ++i) {
         if (allocationList != NULL && *allocationList != ALLOCATION_HANDLE) {
-            if (userPtrMap.find(*allocationList) != userPtrMap.end()) {
+            if (userPtrMap.contains(*allocationList)) {
                 userPtrMap.erase(*allocationList);
-            } else if (staticStorageMap.find(*allocationList) != staticStorageMap.end()) {
+            } else if (staticStorageMap.contains(*allocationList)) {
                 staticStorageMap.erase(*allocationList);
             } else {
                 return STATUS_UNSUCCESSFUL;
@@ -310,7 +310,7 @@ NTSTATUS __stdcall mockD3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADD
     if (mapGpuVA->hPagingQueue != PAGINGQUEUE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
-    if (userPtrMap.find(mapGpuVA->hAllocation) == userPtrMap.end() && staticStorageMap.find(mapGpuVA->hAllocation) == staticStorageMap.end() && mapGpuVA->hAllocation != ALLOCATION_HANDLE && mapGpuVA->hAllocation != NT_ALLOCATION_HANDLE) {
+    if (!userPtrMap.contains(mapGpuVA->hAllocation) && !staticStorageMap.contains(mapGpuVA->hAllocation) && mapGpuVA->hAllocation != ALLOCATION_HANDLE && mapGpuVA->hAllocation != NT_ALLOCATION_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
     if (mapGpuVA->MinimumAddress != 0) {

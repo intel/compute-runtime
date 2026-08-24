@@ -587,7 +587,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputNameOptionWhenBuildi
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
     EXPECT_EQ(4u, NEO::virtualFileList.size());
-    EXPECT_TRUE(NEO::virtualFileList.find("expected_output.bin") != NEO::virtualFileList.end());
+    EXPECT_TRUE(NEO::virtualFileList.contains("expected_output.bin"));
 
     for (const auto &product : expected) {
         resString << "Build succeeded for : " << product.str() + ".\n";
@@ -628,7 +628,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildin
 
         const std::string expectedFatbinaryFileName = "../expected_output_directory/some_kernel.ar";
         EXPECT_EQ(4u, NEO::virtualFileList.size());
-        EXPECT_TRUE(NEO::virtualFileList.find(expectedFatbinaryFileName) != NEO::virtualFileList.end());
+        EXPECT_TRUE(NEO::virtualFileList.contains(expectedFatbinaryFileName));
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -658,7 +658,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildin
 
         const std::string expectedFatbinaryFileName = "../expected_output_directory/expected_filename";
         EXPECT_EQ(5u, NEO::virtualFileList.size());
-        EXPECT_TRUE(NEO::virtualFileList.find(expectedFatbinaryFileName) != NEO::virtualFileList.end());
+        EXPECT_TRUE(NEO::virtualFileList.contains(expectedFatbinaryFileName));
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";

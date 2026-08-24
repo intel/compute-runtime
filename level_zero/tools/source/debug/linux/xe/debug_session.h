@@ -81,10 +81,10 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     Module &getModule(uint64_t moduleHandle) override {
         auto connection = clientHandleToConnection[clientHandle].get();
         if (euDebugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream) {
-            DEBUG_BREAK_IF(connection->elfHandleToModule.find(moduleHandle) == connection->elfHandleToModule.end());
+            DEBUG_BREAK_IF(!connection->elfHandleToModule.contains(moduleHandle));
             return connection->elfHandleToModule[moduleHandle];
         } else {
-            DEBUG_BREAK_IF(connection->metaDataToModule.find(moduleHandle) == connection->metaDataToModule.end());
+            DEBUG_BREAK_IF(!connection->metaDataToModule.contains(moduleHandle));
             return connection->metaDataToModule[moduleHandle];
         }
     }

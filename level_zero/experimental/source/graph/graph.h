@@ -657,7 +657,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     }
 
     bool segmentRequiresSeperateSubmission(GraphCommandId segmentStart) const {
-        return this->myOrderedSegments.end() != this->myOrderedSegments.find(segmentStart);
+        return this->myOrderedSegments.contains(segmentStart);
     }
 
     WeaklyShared<OrderedExecutableSegmentsList> getOrderedCommands() {

@@ -89,7 +89,7 @@ std::string getCompilerOutputFileName(const std::string &fileName, const std::st
 }
 
 bool compilerOutputExists(const std::string &fileName, const std::string &type) {
-    return NEO::virtualFileList.find(getCompilerOutputFileName(fileName, type)) != NEO::virtualFileList.end();
+    return NEO::virtualFileList.contains(getCompilerOutputFileName(fileName, type));
 }
 
 template <typename Predicate>

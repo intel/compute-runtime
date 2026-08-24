@@ -339,7 +339,7 @@ std::vector<CapturedCommandId> GraphDotExporter::collectVisibleCommands(const Gr
     std::vector<CapturedCommandId> visibleCommands;
     visibleCommands.reserve(commands.size());
     for (CapturedCommandId cmdId = 0; cmdId < static_cast<uint32_t>(commands.size()); ++cmdId) {
-        if (internalCommands.count(cmdId) > 0) {
+        if (internalCommands.contains(cmdId)) {
             continue;
         }
         visibleCommands.push_back(cmdId);

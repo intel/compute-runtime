@@ -210,7 +210,7 @@ struct DebugSessionLinux : DebugSessionImp {
         bool allInstancesPresent = true;
         for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
             if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
-                if (getClientConnection(clientHandle)->isaMap[i].find(isaVa) == getClientConnection(clientHandle)->isaMap[i].end()) {
+                if (!getClientConnection(clientHandle)->isaMap[i].contains(isaVa)) {
                     allInstancesPresent = false;
                     break;
                 }
@@ -223,7 +223,7 @@ struct DebugSessionLinux : DebugSessionImp {
         bool allInstancesRemoved = true;
         for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
             if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
-                if (getClientConnection(clientHandle)->isaMap[i].find(isaVa) != getClientConnection(clientHandle)->isaMap[i].end()) {
+                if (getClientConnection(clientHandle)->isaMap[i].contains(isaVa)) {
                     allInstancesRemoved = false;
                     break;
                 }

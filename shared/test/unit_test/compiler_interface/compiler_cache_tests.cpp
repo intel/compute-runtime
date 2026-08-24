@@ -220,7 +220,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     auto verifyHash = [&]() -> void {
         std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcRegKeys, libSize, libMTime);
 
-        ASSERT_TRUE(hashes.find(hash) == hashes.end());
+        ASSERT_FALSE(hashes.contains(hash));
         hashes.emplace(hash);
     };
     verifyHash();

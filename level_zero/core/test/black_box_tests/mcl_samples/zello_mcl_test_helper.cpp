@@ -185,7 +185,7 @@ MclProgram *MclProgram::loadProgramFromBinary(ArrayRef<const char> programData, 
 }
 
 int MclProgram::setVar(std::string varName, size_t size, void *pVal) {
-    if (vars.count(varName) == 0) {
+    if (!vars.contains(varName)) {
         std::cerr << "No variable found" << std::endl;
         std::terminate();
     }

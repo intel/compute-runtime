@@ -50,8 +50,8 @@ uint32_t getExtFuncDependencies(const FuncNameToIdMapT &funcNameToId, const Func
     outCalledBy.resize(numExternalFuncs);
     for (size_t i = 0; i < funcDependencies.size(); i++) {
         auto funcDep = funcDependencies[i];
-        if (funcNameToId.count(funcDep->callerFuncName) == 0 ||
-            funcNameToId.count(funcDep->usedFuncName) == 0) {
+        if (!funcNameToId.contains(funcDep->callerFuncName) ||
+            !funcNameToId.contains(funcDep->usedFuncName)) {
             if (funcDep->optional) {
                 continue;
             }
@@ -94,12 +94,12 @@ uint32_t resolveExtFuncDependencies(const ExternalFunctionInfosT &externalFuncti
 
 uint32_t resolveKernelDependencies(const ExternalFunctionInfosT &externalFunctionInfos, const FuncNameToIdMapT &funcNameToId, const KernelDependenciesT &kernelDependencies, const KernelDescriptorMapT &nameToKernelDescriptor) {
     for (auto &kernelDep : kernelDependencies) {
-        if (funcNameToId.count(kernelDep->usedFuncName) == 0) {
+        if (!funcNameToId.contains(kernelDep->usedFuncName)) {
             if (kernelDep->optional) {
                 continue;
             }
             return ERROR_EXTERNAL_FUNCTION_INFO_MISSING;
-        } else if (nameToKernelDescriptor.count(kernelDep->kernelName) == 0) {
+        } else if (!nameToKernelDescriptor.contains(kernelDep->kernelName)) {
             return ERROR_KERNEL_DESCRIPTOR_MISSING;
         }
         auto &kernelAttributes = nameToKernelDescriptor.at(kernelDep->kernelName)->kernelAttributes;

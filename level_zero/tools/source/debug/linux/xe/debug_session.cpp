@@ -344,7 +344,7 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         auto clientEvent = euDebugInterface->toEuDebugEventClient(event);
 
         if (event->flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitCreate)) {
-            DEBUG_BREAK_IF(clientHandleToConnection.find(clientEvent.clientHandle) != clientHandleToConnection.end());
+            DEBUG_BREAK_IF(clientHandleToConnection.contains(clientEvent.clientHandle));
             clientHandleToConnection[clientEvent.clientHandle].reset(new ClientConnectionXe(euDebugInterface.get()));
             clientHandleToConnection[clientEvent.clientHandle]->client = clientEvent;
         }
@@ -383,7 +383,7 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         auto execQueue = euDebugInterface->toEuDebugEventExecQueue(event);
 
         if (event->flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitCreate)) {
-            UNRECOVERABLE_IF(clientHandleToConnection.find(execQueue->clientHandle) == clientHandleToConnection.end());
+            UNRECOVERABLE_IF(!clientHandleToConnection.contains(execQueue->clientHandle));
 
             if (!processEntryEventGenerated) {
                 zet_debug_event_t debugEvent = {};
@@ -449,7 +449,7 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
                                 static_cast<uint64_t>(vmBind.numBinds), static_cast<uint32_t>(vmBind.flags));
 
         auto &connection = clientHandleToConnection[vmBind.clientHandle];
-        UNRECOVERABLE_IF(connection->vmBindMap.find(vmBind.base.seqno) != connection->vmBindMap.end());
+        UNRECOVERABLE_IF(connection->vmBindMap.contains(vmBind.base.seqno));
         auto &vmBindData = connection->vmBindMap[vmBind.base.seqno];
         vmBindData.vmBind = vmBind;
         vmBindData.pendingNumBinds = vmBind.numBinds;
@@ -461,7 +461,7 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
                                 static_cast<uint64_t>(vmBindOp.addr), static_cast<uint64_t>(vmBindOp.range));
         ClientConnectionXe *vmBindOpOwner = nullptr;
         for (const auto &conn : clientHandleToConnection) {
-            if (conn.second->vmBindMap.find(vmBindOp.vmBindRefSeqno) != conn.second->vmBindMap.end()) {
+            if (conn.second->vmBindMap.contains(vmBindOp.vmBindRefSeqno)) {
                 vmBindOpOwner = conn.second.get();
                 break;
             }
@@ -484,7 +484,7 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
 
         ClientConnectionXe *vmBindUfenceOwner = nullptr;
         for (const auto &conn : clientHandleToConnection) {
-            if (conn.second->vmBindMap.find(vmBindUfence.vmBindRefSeqno) != conn.second->vmBindMap.end()) {
+            if (conn.second->vmBindMap.contains(vmBindUfence.vmBindRefSeqno)) {
                 vmBindUfenceOwner = conn.second.get();
                 break;
             }
@@ -514,7 +514,7 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
 
         ClientConnectionXe *vmBindOpMetadataOwner = nullptr;
         for (const auto &conn : clientHandleToConnection) {
-            if (conn.second->vmBindIdentifierMap.find(vmBindOpMetadata.vmBindOpRefSeqno) != conn.second->vmBindIdentifierMap.end()) {
+            if (conn.second->vmBindIdentifierMap.contains(vmBindOpMetadata.vmBindOpRefSeqno)) {
                 vmBindOpMetadataOwner = conn.second.get();
                 break;
             }
@@ -704,7 +704,7 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                     }
                     if (metaDataEntry.metadata.type == euDebugInterface->getParamValue(NEO::EuDebugParam::metadataModuleArea)) {
                         isaAddr = vmBindOp.addr;
-                        if (connection->isaMap[tileIndex].find(vmBindOp.addr) == connection->isaMap[tileIndex].end()) {
+                        if (!connection->isaMap[tileIndex].contains(vmBindOp.addr)) {
                             auto &isaMap = connection->isaMap[tileIndex];
                             auto isa = std::make_unique<IsaAllocation>();
                             isa->bindInfo = {vmBindOp.addr, vmBindOp.range};
@@ -730,7 +730,7 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
 
                 if (metaDataEntry.metadata.type == euDebugInterface->getParamValue(NEO::EuDebugParam::metadataElfBinary)) {
                     isaAddr = vmBindOp.addr;
-                    if (connection->isaMap[tileIndex].find(vmBindOp.addr) == connection->isaMap[tileIndex].end()) {
+                    if (!connection->isaMap[tileIndex].contains(vmBindOp.addr)) {
                         auto &isaMap = connection->isaMap[tileIndex];
                         auto &elfMap = connection->elfMap;
                         auto isa = std::make_unique<IsaAllocation>();
@@ -880,7 +880,7 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
                                             vmBindData.vmBind.vmHandle, entry.addr, entry.range);
                     connection->vmToModuleDebugAreaBindInfo[vmBindData.vmBind.vmHandle] = {entry.addr, entry.range};
                     // needs to create isaMap entry for mirroring if not present already for this addr
-                    if (connection->isaMap[tileIndex].count(entry.addr) == 0) {
+                    if (!connection->isaMap[tileIndex].contains(entry.addr)) {
                         PRINT_DEBUGGER_INFO_LOG("Creating ISA Allocation for ModuleDebugArea at addr=0x%" SCNx64 "\n", entry.addr);
                         auto &isaMap = connection->isaMap[tileIndex];
                         auto isa = std::make_unique<IsaAllocation>();
@@ -928,7 +928,7 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
                 }
 
                 // now for all debug data in this bind, create isa allocations
-                if (connection->isaMap[tileIndex].count(entry.addr) == 0) {
+                if (!connection->isaMap[tileIndex].contains(entry.addr)) {
                     auto &isaMap = connection->isaMap[tileIndex];
                     auto isa = std::make_unique<IsaAllocation>();
 
@@ -978,7 +978,7 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
                     elfHandle++;
                 }
             } else if (entry.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitDestroy)) {
-                UNRECOVERABLE_IF(connection->isaMap[tileIndex].count(entry.addr) == 0)
+                UNRECOVERABLE_IF(!connection->isaMap[tileIndex].contains(entry.addr))
 
                 auto &isa = connection->isaMap[tileIndex][entry.addr];
 
@@ -1207,7 +1207,7 @@ int DebugSessionLinuxXe::threadControlInterruptAll() {
     euControl.bitmaskSize = 0;
     euControl.bitmaskPtr = 0;
 
-    DEBUG_BREAK_IF(clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end());
+    DEBUG_BREAK_IF(!clientHandleToConnection.contains(clientHandle));
     std::lock_guard<std::mutex> lock(asyncThreadMutex);
     for (const auto &execQueue : clientHandleToConnection[clientHandle]->execQueues) {
         euControl.execQueueHandle = execQueue.first;
@@ -1248,7 +1248,7 @@ int DebugSessionLinuxXe::threadControlStopped(std::unique_ptr<uint8_t[]> &bitmas
     euControl.bitmaskSize = static_cast<uint32_t>(bitmaskSize);
     euControl.bitmaskPtr = reinterpret_cast<uint64_t>(bitmask.get());
 
-    DEBUG_BREAK_IF(clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end());
+    DEBUG_BREAK_IF(!clientHandleToConnection.contains(clientHandle));
     std::lock_guard<std::mutex> lock(asyncThreadMutex);
     for (const auto &execQueue : clientHandleToConnection[clientHandle]->execQueues) {
         euControl.execQueueHandle = execQueue.first;

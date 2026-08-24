@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,21 +98,21 @@ struct MockCIFMain : MockCIF<CIF::CIFMain> {
     CIF::ICIF *CreateInterfaceImpl(CIF::InterfaceId_t intId, CIF::Version_t version) override;
 
     CIF::InterfaceId_t FindIncompatibleImpl(CIF::InterfaceId_t entryPointInterface, CIF::CompatibilityDataHandle handle) const override {
-        if (globalCreators.find(entryPointInterface) != globalCreators.end()) {
+        if (globalCreators.contains(entryPointInterface)) {
             return CIF::InvalidInterface;
         }
-        if (defaultCreators.find(entryPointInterface) != defaultCreators.end()) {
+        if (defaultCreators.contains(entryPointInterface)) {
             return CIF::InvalidInterface;
         }
         return entryPointInterface;
     }
 
     bool FindSupportedVersionsImpl(CIF::InterfaceId_t entryPointInterface, CIF::InterfaceId_t interfaceToFind, CIF::Version_t &verMin, CIF::Version_t &verMax) const override {
-        if (globalCreators.find(entryPointInterface) != globalCreators.end()) {
+        if (globalCreators.contains(entryPointInterface)) {
             verMin = verMax = 1;
             return true;
         }
-        if (defaultCreators.find(entryPointInterface) != defaultCreators.end()) {
+        if (defaultCreators.contains(entryPointInterface)) {
             verMin = verMax = 1;
             return true;
         }

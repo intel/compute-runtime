@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ bool isExcluded(const char *testName, const uint32_t family, std::unique_ptr<std
     if ((pExcludesPerTest == nullptr) || pExcludesPerTest->count(testName) == 0) {
         return false;
     }
-    return (pExcludesPerTest->at(testName).count(family) > 0);
+    return pExcludesPerTest->at(testName).contains(family);
 }
 
 void addExclude(const char *testName, const uint32_t family, std::unique_ptr<std::map<std::string, std::unordered_set<uint32_t>>> &pExcludesPerTest) {

@@ -437,7 +437,7 @@ bool Device::createEngines() {
                     continue;
                 }
 
-                UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
+                UNRECOVERABLE_IF(secondaryEngines.contains(engineType));
                 auto &secondaryEnginesForType = secondaryEngines[engineType];
 
                 auto primaryEngine = engineGroup->engines[engineIndex];
@@ -450,7 +450,7 @@ bool Device::createEngines() {
             auto engineType = hpCopyEngine->getEngineType();
             if ((static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0) {
 
-                UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
+                UNRECOVERABLE_IF(secondaryEngines.contains(engineType));
                 auto &secondaryEnginesForType = secondaryEngines[engineType];
 
                 auto primaryEngine = *hpCopyEngine;
@@ -1492,7 +1492,7 @@ bool Device::canAccessPeer(Device *peerDevice) {
     GraphicsAllocation *probeAllocation = nullptr;
 
     auto lock = executionEnvironment->obtainPeerAccessQueryLock();
-    if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) == this->crossAccessEnabledDevices.end()) {
+    if (!this->crossAccessEnabledDevices.contains(peerRootDeviceIndex)) {
         bool canAccess = this->queryPeerAccess(*peerDevice, &probeAllocation, &handle);
         this->updatePeerAccessCache(peerDevice, canAccess);
     }

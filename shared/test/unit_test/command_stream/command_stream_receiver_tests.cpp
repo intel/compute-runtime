@@ -1415,7 +1415,7 @@ HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerEnabledWhenIni
     EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
 
     EXPECT_EQ(controller->directSubmissions.size(), 1u);
-    EXPECT_TRUE(controller->directSubmissions.find(csr.get()) != controller->directSubmissions.end());
+    EXPECT_TRUE(controller->directSubmissions.contains(csr.get()));
 
     csr.reset();
     EXPECT_EQ(controller->directSubmissions.size(), 0u);

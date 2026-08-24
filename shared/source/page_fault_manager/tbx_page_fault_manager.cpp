@@ -70,7 +70,7 @@ void TbxPageFaultManager::removeAllocation(GraphicsAllocation *alloc) {
 void TbxPageFaultManager::insertAllocation(CommandStreamReceiver *csr, GraphicsAllocation *alloc, uint32_t bank, void *ptr, size_t size) {
     std::unique_lock<RecursiveSpinLock> lock{mtxTbx};
 
-    if (this->memoryDataTbx.find(ptr) == this->memoryDataTbx.end()) {
+    if (!this->memoryDataTbx.contains(ptr)) {
         PageFaultDataTbx pageFaultData{};
         pageFaultData.size = size;
         pageFaultData.gfxAllocation = alloc;

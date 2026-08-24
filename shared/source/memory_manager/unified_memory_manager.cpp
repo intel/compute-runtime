@@ -1439,7 +1439,7 @@ SVMAllocsManager::ContainerReadLockTypeRAIIHelper SVMAllocsManager::obtainReadCo
 void SVMAllocsManager::insertSVMAlloc(void *svmPtr, const SvmAllocationData &allocData) {
     ContainerReadWriteLockType lock(mtx);
     this->svmAllocs.insert(svmPtr, allocData);
-    UNRECOVERABLE_IF(internalAllocationsMap.count(allocData.getAllocId()) > 0);
+    UNRECOVERABLE_IF(internalAllocationsMap.contains(allocData.getAllocId()));
     for (auto alloc : allocData.gpuAllocations.getGraphicsAllocations()) {
         if (alloc != nullptr) {
             internalAllocationsMap.emplace(allocData.getAllocId(), alloc);

@@ -403,7 +403,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     bool isMadeResident(GraphicsAllocation *graphicsAllocation) const {
-        return makeResidentAllocations.find(graphicsAllocation) != makeResidentAllocations.end();
+        return makeResidentAllocations.contains(graphicsAllocation);
     }
 
     bool isMadeResident(GraphicsAllocation *graphicsAllocation, TaskCountType taskCount) const {

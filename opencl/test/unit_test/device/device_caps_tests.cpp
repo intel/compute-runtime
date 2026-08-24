@@ -535,7 +535,7 @@ TEST_F(DeviceGetCapsTest, GivenDeviceDependentSpirvCapabilitiesThenIgcPathReport
                                     spv::CapabilitySubgroupShuffleINTEL, spv::CapabilitySplitBarrierINTEL,
                                     spv::CapabilitySubgroupBufferPrefetchINTEL}) {
         const auto cap = static_cast<cl_uint>(deviceDependentCap);
-        if (legacyCapabilities.count(cap) != 0) {
+        if (legacyCapabilities.contains(cap)) {
             EXPECT_EQ(1u, igcCapabilities.count(cap)) << "device-dependent capability " << cap << " missing from the IGC path";
         }
     }
@@ -549,7 +549,7 @@ TEST_F(DeviceGetCapsTest, GivenDeviceDependentSpirvCapabilitiesThenIgcPathReport
                                                  "SPV_INTEL_bfloat16_conversion", "SPV_INTEL_device_side_avc_motion_estimation",
                                                  "SPV_INTEL_media_block_io", "SPV_INTEL_subgroups",
                                                  "SPV_INTEL_split_barrier", "SPV_INTEL_subgroup_buffer_prefetch"}) {
-        if (legacyExtensions.count(deviceDependentExtension) != 0) {
+        if (legacyExtensions.contains(deviceDependentExtension)) {
             EXPECT_EQ(1u, igcExtensions.count(deviceDependentExtension)) << "device-dependent extension " << deviceDependentExtension << " missing from the IGC path";
         }
     }

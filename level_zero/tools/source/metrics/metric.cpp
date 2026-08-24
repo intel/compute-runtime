@@ -690,7 +690,7 @@ std::vector<MetricImp *> removeDuplicatesPreserveOrder(const std::vector<MetricI
     std::vector<MetricImp *> result;
     result.reserve(input.size());
     for (auto *m : input) {
-        if (seen.find(m) == seen.end()) {
+        if (!seen.contains(m)) {
             seen.insert(m);
             result.push_back(m);
         }

@@ -54,7 +54,7 @@ bool LinkerInput::decodeGlobalVariablesSymbolTable(const void *data, uint32_t nu
     auto symbolEntryEnd = symbolEntryIt + numEntries;
     symbols.reserve(symbols.size() + numEntries);
     for (; symbolEntryIt != symbolEntryEnd; ++symbolEntryIt) {
-        DEBUG_BREAK_IF(symbols.count(symbolEntryIt->s_name) > 0);
+        DEBUG_BREAK_IF(symbols.contains(symbolEntryIt->s_name));
         SymbolInfo &symbolInfo = symbols[symbolEntryIt->s_name];
         symbolInfo.offset = symbolEntryIt->s_offset;
         symbolInfo.size = symbolEntryIt->s_size;
@@ -179,7 +179,7 @@ template void LinkerInput::addSymbolIfMissing(Elf::Elf<Elf::EI_CLASS_32> &elf, c
 template void LinkerInput::addSymbolIfMissing(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_64>::RelocationInfo &reloc);
 template <Elf::ElfIdentifierClass numBits>
 void LinkerInput::addSymbolIfMissing(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &reloc) {
-    if (symbols.find(reloc.symbolName) == symbols.end()) {
+    if (!symbols.contains(reloc.symbolName)) {
         addSymbol(elf, nameToSegmentId, reloc.symbolTableIndex);
     }
 }

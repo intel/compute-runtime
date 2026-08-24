@@ -478,7 +478,7 @@ HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenRe
     std::set<cl_command_type> typesToFlush = {CL_COMMAND_COPY_IMAGE, CL_COMMAND_WRITE_IMAGE, CL_COMMAND_FILL_IMAGE, CL_COMMAND_COPY_BUFFER_TO_IMAGE,
                                               CL_COMMAND_READ_IMAGE, CL_COMMAND_COPY_IMAGE_TO_BUFFER};
     for (auto operation = CL_COMMAND_NDRANGE_KERNEL; operation < CL_COMMAND_SVM_MIGRATE_MEM; operation++) {
-        if (typesToFlush.find(operation) != typesToFlush.end()) {
+        if (typesToFlush.contains(operation)) {
             commandStreamReceiver.directSubmissionAvailable = true;
 
             if (operation == CL_COMMAND_READ_IMAGE || operation == CL_COMMAND_COPY_IMAGE_TO_BUFFER) {

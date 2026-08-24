@@ -147,7 +147,7 @@ bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceB
             highPriorityContextCount = std::max(contextCount / 2, 1u);
         }
 
-        UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
+        UNRECOVERABLE_IF(secondaryEngines.contains(engineType));
         auto &secondaryEnginesForType = secondaryEngines[engineType];
 
         createSecondaryContexts(engine, secondaryEnginesForType, contextCount, highPriorityContextCount);

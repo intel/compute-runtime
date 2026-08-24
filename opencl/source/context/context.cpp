@@ -227,7 +227,7 @@ bool Context::createImpl(const cl_context_properties *properties,
         auto propertyValue = propertiesCurrent[1];
         propertiesCurrent += 2;
 
-        if (seenProperties.count(propertyType) > 0) {
+        if (seenProperties.contains(propertyType)) {
             errcodeRet = CL_INVALID_PROPERTY;
             return false;
         }

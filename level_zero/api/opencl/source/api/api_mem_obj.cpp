@@ -400,7 +400,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                 const auto primaryRootDeviceIndex = pContext->getL0Object()->getDevices().begin()->first;
                 for (auto clDevice : pContext->getClDevices()) {
                     const auto extraRootDeviceIndex = clDevice->getRootDeviceIndex();
-                    if (extraRootDeviceIndex == primaryRootDeviceIndex || extraImageHandles.count(extraRootDeviceIndex) != 0) {
+                    if (extraRootDeviceIndex == primaryRootDeviceIndex || extraImageHandles.contains(extraRootDeviceIndex)) {
                         continue;
                     }
                     ze_image_handle_t extraImageHandle{};

@@ -447,7 +447,7 @@ void StagingBufferManager::trackChunk(const StagingBufferTracker &tracker) {
 
 bool StagingBufferManager::registerHostPtr(const void *ptr) {
     auto lock = std::lock_guard<std::mutex>(mtx);
-    auto isHostPtrDetected = detectedHostPtrs.find(ptr) != detectedHostPtrs.end();
+    auto isHostPtrDetected = detectedHostPtrs.contains(ptr);
     detectedHostPtrs.insert(ptr);
     return isHostPtrDetected;
 }

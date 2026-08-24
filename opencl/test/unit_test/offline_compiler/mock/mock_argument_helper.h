@@ -84,7 +84,7 @@ class MockOclocArgHelper : public OclocArgHelper {
 
   protected:
     bool fileExists(const std::string &filename) const override {
-        if (filesMap.find(filename) != filesMap.end()) {
+        if (filesMap.contains(filename)) {
             return true;
         }
 

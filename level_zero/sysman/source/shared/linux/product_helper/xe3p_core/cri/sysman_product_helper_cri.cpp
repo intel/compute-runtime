@@ -1240,7 +1240,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::memoryGetPageOfflineStateExp(SysF
         }
 
         // Check if this address already exists to avoid duplicates
-        if (addressSet.find(parsedPageInfo.pageAddress) == addressSet.end()) {
+        if (!addressSet.contains(parsedPageInfo.pageAddress)) {
             addressSet.insert(parsedPageInfo.pageAddress);
             memPageInfoList.push_back(parsedPageInfo);
         }

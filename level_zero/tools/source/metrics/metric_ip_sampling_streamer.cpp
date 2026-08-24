@@ -203,7 +203,7 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
         std::unordered_set<MetricImp *> excludedMetricsSet(excludedMetrics.begin(), excludedMetrics.end());
 
         for (size_t i = 0; i < allMetrics.size(); i++) {
-            if (excludedMetricsSet.find(allMetrics[i]) == excludedMetricsSet.end()) {
+            if (!excludedMetricsSet.contains(allMetrics[i])) {
                 includedMetrics.push_back(allMetrics[i]);
                 includedMetricIndexes.push_back(allMetricIndexes[i]);
             }

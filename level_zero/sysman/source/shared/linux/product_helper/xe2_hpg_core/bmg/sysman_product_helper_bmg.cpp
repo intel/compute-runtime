@@ -1712,7 +1712,7 @@ static bool isPowerDomainSupported(zes_power_domain_t powerDomain) {
         ZES_POWER_DOMAIN_CARD,
         ZES_POWER_DOMAIN_MEMORY,
         ZES_POWER_DOMAIN_GPU};
-    return supportedPowerDomains.find(powerDomain) != supportedPowerDomains.end();
+    return supportedPowerDomains.contains(powerDomain);
 }
 
 static ze_result_t readEnergyCounter(const std::map<std::string, uint64_t> &keyOffsetMap,

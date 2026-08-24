@@ -283,7 +283,7 @@ ze_result_t PmuRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_erro
 ze_result_t PmuRasUtil::rasClearStateExp(zes_ras_error_category_exp_t category) {
     ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     // check requested category is already initialized
-    if (errorCategoryToEventCount.find(category) != errorCategoryToEventCount.end()) {
+    if (errorCategoryToEventCount.contains(category)) {
         closeFds();
         clearStatus |= (1 << category);
         absoluteErrorCount[category] = 0;

@@ -150,7 +150,7 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
     std::map<uint32_t, ze_sampler_handle_t> samplerHandles{};
     for (auto clDevice : pContext->getClDevices()) {
         const auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-        if (samplerHandles.count(rootDeviceIndex) != 0) {
+        if (samplerHandles.contains(rootDeviceIndex)) {
             continue;
         }
         ze_sampler_handle_t handle{};

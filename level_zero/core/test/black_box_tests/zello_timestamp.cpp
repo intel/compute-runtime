@@ -751,7 +751,7 @@ int main(int argc, char *argv[]) {
     const char *defaultString = "testKernelTimestampAppendQueryWithDeviceProperties";
     const char *test = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-t", "--test", defaultString);
     bool result = false;
-    if (supportedTests.find(test) != supportedTests.end()) {
+    if (supportedTests.contains(test)) {
         ze_context_handle_t context = nullptr;
         ze_driver_handle_t driverHandle = nullptr;
         auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
