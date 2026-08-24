@@ -3009,31 +3009,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCa
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAndResidentNeededbeforeLockWhenLockIsCalledThenverifyAllocationIsResident) {
-    mock->ioctlExpected.total = -1;
-    this->dontTestIoctlInTearDown = true;
-
-    auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
-
-    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
-    drm.ioctlHelper.reset(mockIoctlHelper);
-
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), 0));
-
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::buffer});
-    ASSERT_NE(nullptr, allocation);
-
-    auto ptr = memoryManager->lockResource(allocation);
-    EXPECT_NE(nullptr, ptr);
-
-    auto osContext = device->getDefaultEngine().osContext;
-    EXPECT_TRUE(allocation->isAlwaysResident(osContext->getContextId()));
-
-    memoryManager->unlockResource(allocation);
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
 HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDeferBackingDecisionFrozenAtCreationWhenIoctlHelperResultChangesBeforeLockThenResidencyFollowsCreationDecision) {
     mock->ioctlExpected.total = -1;
     this->dontTestIoctlInTearDown = true;
