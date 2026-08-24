@@ -47,7 +47,7 @@ const RuntimeCapabilityTable CRI::capabilityTable{
     .requiredPreemptionSurfaceSize = MemoryConstants::pageSize,
     .deviceName = "",
     .preferredPlatformName = nullptr,
-    .defaultPreemptionMode = PreemptionMode::MidThread,
+    .defaultPreemptionMode = PreemptionMode::ThreadGroup,
     .defaultEngineType = aub_stream::ENGINE_CCS,
     .maxRenderFrequency = 0,
     .extraQuantityThreadsPerEU = 0,
