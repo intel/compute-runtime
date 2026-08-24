@@ -7,6 +7,8 @@
 
 #include "level_zero/api/core/ze_cmdlist_api_entrypoints.h"
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
@@ -305,6 +307,12 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryFillWithParameters>(hCommandList, ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
+    }
+    if (false == Math::isPow2(patternSize)) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+    if (size % patternSize != 0) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
     }
     CmdListMemoryCopyParams memoryCopyParams{};
     return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);

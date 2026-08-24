@@ -7,6 +7,8 @@
 
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/ze_intel_gpu.h"
@@ -138,6 +140,9 @@ zexCommandListAppendMemoryFillWithParameters(
     auto ret = cmdList->capture<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(hCommandList, ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
+    }
+    if (false == Math::isPow2(patternSize)) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
     }
     if (size % patternSize != 0) {
         return ZE_RESULT_ERROR_INVALID_SIZE;

@@ -76,6 +76,76 @@ TEST(zeCommandListAppendMemoryFill, whenSizeNotMultipleOfPatternSizeThenReturnEr
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
 }
 
+TEST(zeCommandListAppendMemoryFill, whenPatternSizeIsZeroThenReturnError) {
+    MockCommandList commandList;
+    size_t bufferSize = 4096u;
+
+    int value = 0;
+    auto res = zeCommandListAppendMemoryFill(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                             0u, bufferSize, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
+}
+
+TEST(zeCommandListAppendMemoryFillWithParameters, whenCalledThenRedirectedToObject) {
+    MockCommandList commandList;
+    size_t bufferSize = 4096u;
+
+    int value = 0;
+    auto res = zeCommandListAppendMemoryFillWithParameters(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                                           sizeof(value), bufferSize, nullptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST(zeCommandListAppendMemoryFillWithParameters, whenPatternSizeNotPowerOf2ThenReturnError) {
+    MockCommandList commandList;
+    size_t bufferSize = 4096u;
+
+    int value = 0;
+    auto res = zeCommandListAppendMemoryFillWithParameters(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                                           3u, bufferSize, nullptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
+}
+
+TEST(zeCommandListAppendMemoryFillWithParameters, whenSizeNotMultipleOfPatternSizeThenReturnError) {
+    MockCommandList commandList;
+    size_t bufferSize = 4095u;
+
+    int value = 0;
+    auto res = zeCommandListAppendMemoryFillWithParameters(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                                           4u, bufferSize, nullptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
+}
+
+TEST(zeCommandListAppendMemoryFillWithParameters, whenPatternSizeIsZeroThenReturnError) {
+    MockCommandList commandList;
+    size_t bufferSize = 4096u;
+
+    int value = 0;
+    auto res = zeCommandListAppendMemoryFillWithParameters(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                                           0u, bufferSize, nullptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
+}
+
+TEST(zexCommandListAppendMemoryFillWithParameters, whenCalledThenRedirectedToObject) {
+    MockCommandList commandList;
+    size_t bufferSize = 4096u;
+
+    int value = 0;
+    auto res = L0::zexCommandListAppendMemoryFillWithParameters(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                                                sizeof(value), bufferSize, nullptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST(zexCommandListAppendMemoryFillWithParameters, whenPatternSizeNotPowerOf2ThenReturnError) {
+    MockCommandList commandList;
+    size_t bufferSize = 4096u;
+
+    int value = 0;
+    auto res = L0::zexCommandListAppendMemoryFillWithParameters(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                                                3u, bufferSize, nullptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
+}
+
 TEST(zexCommandListAppendMemoryFillWithParameters, whenSizeNotMultipleOfPatternSizeThenReturnError) {
     MockCommandList commandList;
     size_t bufferSize = 4095u;
@@ -83,6 +153,16 @@ TEST(zexCommandListAppendMemoryFillWithParameters, whenSizeNotMultipleOfPatternS
     int value = 0;
     auto res = L0::zexCommandListAppendMemoryFillWithParameters(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
                                                                 4u, bufferSize, nullptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
+}
+
+TEST(zexCommandListAppendMemoryFillWithParameters, whenPatternSizeIsZeroThenReturnError) {
+    MockCommandList commandList;
+    size_t bufferSize = 4096u;
+
+    int value = 0;
+    auto res = L0::zexCommandListAppendMemoryFillWithParameters(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                                                0u, bufferSize, nullptr, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
 }
 
