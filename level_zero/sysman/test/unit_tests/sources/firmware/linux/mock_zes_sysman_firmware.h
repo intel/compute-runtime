@@ -26,9 +26,20 @@ const std::string mockEmpty = {};
 
 // For FDO related tests
 constexpr uint32_t mockFwHandlesCountFdo = 1;
+
+// PCI BDF of the device under test: 0000:03:05.1
+constexpr uint32_t mockPciDomain = 0;
 constexpr uint32_t mockPciBus = 3;
 constexpr uint32_t mockPciDevice = 5;
 constexpr uint32_t mockPciFunction = 1;
+
+// Names of the MTD devices as exposed by the KMD in /proc/mtd. They hold the id of the auxiliary
+// device, which is derived from the PCI BDF, excluding the domain, by concatenating bus, device and
+// function as hex and reading the result back as hex. Hence 03:05.1 -> 0x351 -> 849 and
+// 04:00.0 -> 0x400 -> 1024
+const std::string mockMtdDataDeviceName = "xe.nvm.849.DATA";
+const std::string mockMtdOtherDeviceDataName = "xe.nvm.1024.DATA";
+
 const std::vector<std::string> mockSupportedFirmwareTypesFdo = {"Flash_Override"};
 
 class FirmwareInterface : public L0::Sysman::FirmwareUtil {};
@@ -100,32 +111,24 @@ struct MockFirmwareFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t readResult = ZE_RESULT_SUCCESS;
     std::string mockFdoValue = "disabled";
 
-    // Test control flags
-    enum class MtdRegionMode {
-        singleRegion,       // Default: Single MTD device with DESCRIPTOR and GSC regions
-        multipleRegions,    // Multiple MTD devices (mtd3-6) with various region types
-        noRegions,          // Empty /proc/mtd file with header only
-        emptyMtdFile,       // Completely empty /proc/mtd file (no lines at all)
-        bdfMisMatch,        // MTD entries that don't match expected device BDF
-        noDescriptorRegion, // MTD entries without required DESCRIPTOR region
-        mtdNumberNoColon,   // MTD entry without trailing colon (for coverage testing)
-        shortDeviceName,    // MTD entry with device name too short for region extraction
-        malformedQuotes,    // MTD entries with mismatched quotes (covers both quote conditions)
-        malformedMtdLine    // MTD entries with insufficient fields (covers parsing failure)
+    // Shapes of /proc/mtd which the flash flow has to handle
+    enum class MtdMode {
+        dataDevice,         // This device's DATA device only
+        noMtdDevices,       // Header line only
+        emptyMtdFile,       // No lines at all
+        otherDeviceOnly,    // Another PCI device's DATA device only
+        multipleDevices,    // This device's DATA device second, with a different size
+        noDataDevice,       // Other regions of this device, but no DATA one
+        mismatchedQuotes,   // DATA device names with mismatched quotes
+        malformedMtdLine,   // Entry with missing fields
+        malformedDeviceSize // DATA device entry with a non hexadecimal size
     };
 
-    MtdRegionMode regionMode = MtdRegionMode::singleRegion;
+    MtdMode mtdMode = MtdMode::dataDevice;
+    std::string dataDeviceName = mockMtdDataDeviceName;
 
-    // Mock constants for MTD device BDF
-    const std::string mockProcMtdStringPrefix = "xe.nvm.";
-    // Calculate expected BDF using the same hex conversion logic as the driver:
-    // Format BDF components as hex, concatenate, then parse as hex to get decimal
-    std::string expectedDeviceBdf = []() {
-        std::ostringstream hexStream;
-        hexStream << std::hex << mockPciBus << mockPciDevice << mockPciFunction;
-        uint64_t bdfValue = std::stoul(hexStream.str(), nullptr, 16);
-        return std::to_string(bdfValue);
-    }();
+    static constexpr uint32_t mockMtdDataDeviceSize = 0x800000;
+    static constexpr uint32_t mockMtdSecondDataDeviceSize = 0x400000;
 
     ze_result_t read(const std::string file, std::vector<std::string> &val) override {
         if (readResult != ZE_RESULT_SUCCESS) {
@@ -135,70 +138,51 @@ struct MockFirmwareFsAccess : public L0::Sysman::FsAccessInterface {
         if (!file.compare("/proc/mtd")) {
             val.clear();
 
-            switch (regionMode) {
-            case MtdRegionMode::noRegions:
-                val.push_back("dev: size erasesize name"); // Only header
-                return ZE_RESULT_SUCCESS;
-
-            case MtdRegionMode::emptyMtdFile:
-                // Completely empty file - no lines at all (tests mtdLines.empty() condition)
-                return ZE_RESULT_SUCCESS;
-
-            case MtdRegionMode::bdfMisMatch:
+            switch (mtdMode) {
+            case MtdMode::noMtdDevices:
                 val.push_back("dev: size erasesize name");
-                val.push_back("mtd0: 00800000 00001000 \"other.device.region1\"");
-                val.push_back("mtd1: 00800000 00001000 \"another.device.region2\"");
                 return ZE_RESULT_SUCCESS;
 
-            case MtdRegionMode::multipleRegions:
+            case MtdMode::emptyMtdFile:
+                return ZE_RESULT_SUCCESS;
+
+            case MtdMode::otherDeviceOnly:
                 val.push_back("dev: size erasesize name");
-                val.push_back("mtd3: 00800000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".DESCRIPTOR\"");
-                val.push_back("mtd4: 0054d000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".GSC\"");
-                val.push_back("mtd5: 00200000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".OptionROM\"");
-                val.push_back("mtd6: 00010000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".DAM\"");
+                val.push_back("mtd1: 00800000 00001000 \"" + mockMtdOtherDeviceDataName + "\"");
                 return ZE_RESULT_SUCCESS;
 
-            case MtdRegionMode::noDescriptorRegion:
+            case MtdMode::multipleDevices:
                 val.push_back("dev: size erasesize name");
-                val.push_back("mtd4: 00800000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".GSC\"");
-                val.push_back("mtd7: 00800000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".PADDING\"");
+                val.push_back("mtd1: 00800000 00001000 \"" + mockMtdOtherDeviceDataName + "\"");
+                val.push_back("mtd2: 00400000 00001000 \"" + dataDeviceName + "\"");
                 return ZE_RESULT_SUCCESS;
 
-            case MtdRegionMode::mtdNumberNoColon:
+            case MtdMode::noDataDevice:
                 val.push_back("dev: size erasesize name");
-                val.push_back("mtd3 00800000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".DESCRIPTOR\"");
-                val.push_back("mtd4: 00800000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".GSC\"");
+                val.push_back("mtd1: 00800000 00001000 \"xe.nvm.849.GSC\"");
+                val.push_back("mtd2: 00800000 00001000 \"xe.nvm.849.DATA.BACKUP\"");
                 return ZE_RESULT_SUCCESS;
 
-            case MtdRegionMode::shortDeviceName:
+            case MtdMode::mismatchedQuotes:
                 val.push_back("dev: size erasesize name");
-                // Device name exactly matches prefix (no region suffix) - tests the length check
-                val.push_back("mtd3: 00800000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + "\"");
-                // Device name with just the dot but no region - also too short
-                val.push_back("mtd4: 00800000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".\"");
-                // No valid DESCRIPTOR device - should cause flash operation to fail
+                val.push_back("mtd1: 00800000 00001000 \"" + dataDeviceName);
+                val.push_back("mtd2: 00800000 00001000 " + dataDeviceName + "\"");
                 return ZE_RESULT_SUCCESS;
 
-            case MtdRegionMode::malformedQuotes:
+            case MtdMode::malformedMtdLine:
                 val.push_back("dev: size erasesize name");
-                // One entry starts with quote but doesn't end with quote - tests first condition
-                val.push_back("mtd3: 00800000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".DESCRIPTOR");
-                // Another entry ends with quote but doesn't start with quote - tests second condition
-                val.push_back("mtd4: 00800000 00001000 " + mockProcMtdStringPrefix + expectedDeviceBdf + ".GSC\"");
+                val.push_back("mtd1: incomplete");
                 return ZE_RESULT_SUCCESS;
 
-            case MtdRegionMode::malformedMtdLine:
+            case MtdMode::malformedDeviceSize:
                 val.push_back("dev: size erasesize name");
-                // Malformed MTD line with insufficient fields - tests parsing failure of iss >> mtdNumber >> size >> eraseSize >> name
-                val.push_back("mtd3: incomplete"); // Only 2 fields instead of 4 - should fail parsing, no valid DESCRIPTOR found
+                val.push_back("mtd1: notasize 00001000 \"" + dataDeviceName + "\"");
                 return ZE_RESULT_SUCCESS;
 
-            case MtdRegionMode::singleRegion:
+            case MtdMode::dataDevice:
             default:
-                // Single region case with DESCRIPTOR and GSC regions (can be small or large)
                 val.push_back("dev: size erasesize name");
-                val.push_back("mtd3: 00800000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".DESCRIPTOR\"");
-                val.push_back("mtd4: 0054d000 00001000 \"" + mockProcMtdStringPrefix + expectedDeviceBdf + ".GSC\"");
+                val.push_back("mtd1: 00800000 00001000 \"" + dataDeviceName + "\"");
                 return ZE_RESULT_SUCCESS;
             }
         }

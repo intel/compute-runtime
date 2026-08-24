@@ -100,6 +100,7 @@ extern int mkstempCalled;
 extern int renameCalled;
 extern int pathFileExistsCalled;
 extern int flockCalled;
+extern int syncCalled;
 extern int fsyncCalled;
 extern int fsyncArgPassed;
 extern int fsyncRetVal;

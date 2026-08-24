@@ -23,6 +23,7 @@ class SysmanSysCallsWrapper {
     static ssize_t write(int fd, const void *buf, size_t count, int &errorNum);
     static off_t lseek(int fd, off_t offset, int whence, int &errorNum);
     static int ioctl(int fd, unsigned long request, void *arg, int &errorNum);
+    static void sync();
     static int close(int fd, int &errorNum);
     static int dup(int oldfd, int &errorNum);
     static int access(const char *pathname, int mode, int &errorNum);

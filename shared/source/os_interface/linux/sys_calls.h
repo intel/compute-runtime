@@ -22,6 +22,7 @@
 
 namespace NEO {
 namespace SysCalls {
+void sync();
 int fsync(int fd);
 int close(int fd);
 int mkdir(const std::string &path);

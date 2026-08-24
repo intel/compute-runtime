@@ -98,6 +98,10 @@ int openWithMode(const char *file, int flags, int mode) {
     return ::open(file, flags, mode);
 }
 
+void sync() {
+    ::sync();
+}
+
 int fsync(int fd) {
     return ::fsync(fd);
 }

@@ -79,6 +79,7 @@ int setsockoptCalled = 0;
 int dupCalled = 0;
 int getpidCalled = 0;
 int getrlimitCalled = 0;
+int syncCalled = 0;
 int fsyncCalled = 0;
 int fsyncArgPassed = 0;
 int fsyncRetVal = 0;
@@ -185,6 +186,10 @@ int close(int fileDescriptor) {
         return sysCallsClose(fileDescriptor);
     }
     return closeFuncRetVal;
+}
+
+void sync() {
+    syncCalled++;
 }
 
 int fsync(int fd) {

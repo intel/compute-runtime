@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/api/firmware/linux/sysman_os_firmware_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
@@ -15,7 +16,6 @@
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
-#include <iomanip>
 #include <sstream>
 
 namespace L0 {
@@ -24,6 +24,7 @@ namespace Sysman {
 static const std::string fdoFwType = "Flash_Override";
 static const std::string procMtdPath = "/proc/mtd";
 static const std::string procMtdStringPrefix = "xe.nvm.";
+static const std::string procMtdStringSuffix = ".DATA";
 
 void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
@@ -31,15 +32,13 @@ void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes,
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     supportedFwTypes.clear();
-    bool isDeviceInSurvivabilityMode = pLinuxSysmanImp->isDeviceInSurvivabilityMode();
 
-    if (isDeviceInSurvivabilityMode && pSysmanKmdInterface->isDeviceInFdoMode()) {
+    if (pLinuxSysmanImp->isDeviceInSurvivabilityMode() && pSysmanKmdInterface->isDeviceInFdoMode()) {
         supportedFwTypes.push_back(fdoFwType);
         return;
     }
 
-    bool isIgscAvailable = pFwInterface != nullptr;
-    if (isIgscAvailable) {
+    if (pFwInterface != nullptr) {
         pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, supportedFwTypes);
         pSysmanKmdInterface->getLateBindingSupportedFwTypes(supportedFwTypes);
     }
@@ -56,6 +55,7 @@ void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties)
 }
 
 ze_result_t LinuxFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
+    // Only the flash override firmware can be flashed while the device is in fdo mode
     if (pSysmanKmdInterface->isDeviceInFdoMode() && osFwType != fdoFwType) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -67,119 +67,89 @@ ze_result_t LinuxFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
 }
 
 ze_result_t LinuxFirmwareImp::osFirmwareFlashExtended(void *pImage, uint32_t size) {
-    // Get the current device's PCI BDF
+    // Validate the image before touching the device, since the device is erased before it is written
+    if (pImage == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Error: Firmware image is null\n");
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
     auto pciBdfInfo = pLinuxSysmanImp->getPciBdfInfo();
     if (pciBdfInfo == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Error: Could not get the pci bdf info of the device\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    // Format each BDF component as hex, concatenate, then parse as hex to get decimal
+    // The MTD device name holds the id of the auxiliary device created by the KMD, which is derived
+    // from the PCI BDF, excluding the domain. Format each BDF component as hex, concatenate, then
+    // parse as hex to get decimal. For example 0000:03:00.0 leads to the name xe.nvm.768.DATA
     std::ostringstream bdfHexStream;
     bdfHexStream << std::hex << pciBdfInfo->pciBus << pciBdfInfo->pciDevice << pciBdfInfo->pciFunction;
     uint64_t bdfValue = std::stoul(bdfHexStream.str(), nullptr, 16);
     std::string deviceBdf = std::to_string(bdfValue);
 
-    // Read /proc/mtd to find matching MTD devices
     std::vector<std::string> mtdLines;
     auto pFsAccess = &pLinuxSysmanImp->getFsAccess();
 
     ze_result_t result = pFsAccess->read(procMtdPath, mtdLines);
     if (result != ZE_RESULT_SUCCESS || mtdLines.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Could not read %s, result 0x%x\n", procMtdPath.c_str(), result);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    std::map<std::string, std::string> regionToDevicePathMap;
-    std::map<std::string, std::map<uint32_t, uint32_t>> mtdRegionDeviceInfoMap;
-    bool foundDescriptorDevice = false;
+    // The kernel reports the device name in quotes
+    const std::string expectedName = "\"" + procMtdStringPrefix + deviceBdf + procMtdStringSuffix + "\"";
+    std::string mtdDevicePath;
+    uint32_t mtdDeviceSize = 0;
 
-    // Create MTD device interface and perform the flash operation
+    // Entries are reported as: mtd0: 00800000 00001000 "device_name", after a header line
+    for (size_t i = 1; i < mtdLines.size(); i++) {
+        std::istringstream lineStream(mtdLines[i]);
+        std::string mtdNumber, deviceSize, eraseSize, name;
+
+        if (!(lineStream >> mtdNumber >> deviceSize >> eraseSize >> name)) {
+            continue;
+        }
+
+        if (name != expectedName) {
+            continue;
+        }
+
+        std::istringstream deviceSizeStream(deviceSize);
+        deviceSizeStream >> std::hex >> mtdDeviceSize;
+        if (deviceSizeStream.fail()) {
+            continue;
+        }
+
+        mtdDevicePath = "/dev/" + mtdNumber.substr(0, mtdNumber.find(':'));
+        break;
+    }
+
+    if (mtdDevicePath.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Mtd device %s was not found in %s\n", expectedName.c_str(), procMtdPath.c_str());
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    // The image is flashed as-is from the start of the device, hence it cannot exceed the device size
+    if (size == 0 || size > mtdDeviceSize) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Firmware image of %u bytes does not fit in mtd device %s of %u bytes\n", size, mtdDevicePath.c_str(), mtdDeviceSize);
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
     auto pMtdDevice = MemoryTechnologyDeviceInterface::create();
 
-    // Skip the header line and parse each MTD device entry
-    for (size_t i = 1; i < mtdLines.size(); ++i) {
-        const std::string &line = mtdLines[i];
-        std::istringstream iss(line);
-        std::string mtdNumber, size, eraseSize, name;
-
-        // Parse the line: mtd0: 00800000 00001000 "device_name"
-        if (iss >> mtdNumber >> size >> eraseSize >> name) {
-            // Remove quotes from device name if present
-            if (name.front() == '"' && name.back() == '"') {
-                name = name.substr(1, name.length() - 2);
-            }
-
-            // Check if the MTD device name matches procMtdStringPrefix + deviceBdf
-            std::string expectedName = procMtdStringPrefix + deviceBdf;
-            if (name.find(expectedName) == 0) {
-                // Remove expectedName + "." from the name to get the region
-                std::string prefixToRemove = expectedName + ".";
-                std::string region;
-                if (name.length() > prefixToRemove.length()) {
-                    region = name.substr(prefixToRemove.length());
-
-                    // Remove the colon from mtdNumber (e.g., "mtd0:" -> "mtd0")
-                    if (mtdNumber.back() == ':') {
-                        mtdNumber.pop_back();
-                    }
-
-                    std::string devicePath = "/dev/" + mtdNumber;
-
-                    // Add the region and device path to the map
-                    regionToDevicePathMap[region] = devicePath;
-
-                    if (region == "DESCRIPTOR") {
-                        result = pMtdDevice->getDeviceInfo(devicePath, mtdRegionDeviceInfoMap);
-                        if (result != ZE_RESULT_SUCCESS) {
-                            return result;
-                        }
-                        foundDescriptorDevice = true;
-                    }
-                }
-            }
-        }
+    // The whole device is erased, so that no stale contents are left beyond the image
+    result = pMtdDevice->erase(mtdDevicePath, 0, mtdDeviceSize);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Could not erase %u bytes of mtd device %s, result 0x%x\n", mtdDeviceSize, mtdDevicePath.c_str(), result);
+        return result;
     }
 
-    if (!foundDescriptorDevice) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+    result = pMtdDevice->write(mtdDevicePath, 0, static_cast<const uint8_t *>(pImage), size);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Could not write %u bytes to mtd device %s, result 0x%x\n", size, mtdDevicePath.c_str(), result);
     }
 
-    const uint8_t *pImageData = static_cast<const uint8_t *>(pImage);
-
-    // Iterate over each region and perform erase/write operations
-    for (const auto &regionEntry : regionToDevicePathMap) {
-        const std::string &regionName = regionEntry.first;
-        const std::string &mtdPath = regionEntry.second;
-
-        // Check if we have region info for this region
-        auto regionInfoIt = mtdRegionDeviceInfoMap.find(regionName);
-        if (regionInfoIt == mtdRegionDeviceInfoMap.end()) {
-            continue; // Skip if no region info available
-        }
-
-        uint32_t regionBegin = regionInfoIt->second[0];
-        uint32_t regionEnd = regionInfoIt->second[1];
-        uint32_t regionSize = regionEnd - regionBegin + 1;
-
-        // Check if image has enough data from regionBegin offset
-        // Check regionBegin first to avoid unsigned underflow when regionBegin > size
-        if (regionBegin > size || regionSize > (size - regionBegin)) {
-            return ZE_RESULT_ERROR_INVALID_SIZE;
-        }
-
-        // Erase the region (offset 0 for partition device)
-        result = pMtdDevice->erase(mtdPath, 0, regionSize);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-
-        // Write the firmware data to this region (offset 0 for partition, regionBegin for image data)
-        result = pMtdDevice->write(mtdPath, 0, pImageData + regionBegin, regionSize);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-    }
-
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 ze_result_t LinuxFirmwareImp::osGetSecurityVersion(char *pVersion) {

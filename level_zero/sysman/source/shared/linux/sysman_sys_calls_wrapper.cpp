@@ -49,6 +49,11 @@ int SysmanSysCallsWrapper::ioctl(int fd, unsigned long request, void *arg, int &
     return result;
 }
 
+// sync cannot fail and reports no status, hence no errno is captured
+void SysmanSysCallsWrapper::sync() {
+    NEO::SysCalls::sync();
+}
+
 int SysmanSysCallsWrapper::close(int fd, int &errorNum) {
     errno = 0;
     int result = NEO::SysCalls::close(fd);
