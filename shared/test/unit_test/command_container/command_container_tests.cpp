@@ -2698,10 +2698,9 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenThreadDataRegisteredAndExtr
 
     const uint8_t ctd[] = {1, 2, 3, 4};
     const uint8_t ptd[] = {5, 6, 7, 8};
-    const uint8_t combined[] = {1, 2, 3, 4, 5, 6, 7, 8};
     auto hash = ThreadDataHash::computeThreadDataHash({ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
 
-    cmdContainer->registerThreadData(hash, {combined, sizeof(combined)});
+    cmdContainer->registerThreadData(hash, {ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
 
     auto residencyBefore = cmdContainer->getResidencyContainer().size();
     cmdContainer->extractCommonThreadData();
@@ -2727,7 +2726,7 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenSurfaceStateHeapExhaustedTh
 
     const uint8_t data[] = {1, 2, 3, 4};
     auto hash = ThreadDataHash::computeThreadDataHash({data, sizeof(data)}, {});
-    cmdContainer->registerThreadData(hash, {data, sizeof(data)});
+    cmdContainer->registerThreadData(hash, {data, sizeof(data)}, {});
 
     auto ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
     ASSERT_NE(nullptr, ssh);
@@ -2754,10 +2753,10 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTwoDifferentThreadDataShare
     const uint8_t combinedA[] = {1, 2, 3, 4};
     const uint8_t combinedB[] = {5, 6, 7, 8};
 
-    cmdContainer->registerThreadData(collisionHash, {combinedA, sizeof(combinedA)});
+    cmdContainer->registerThreadData(collisionHash, {combinedA, sizeof(combinedA)}, {});
     cmdContainer->extractCommonThreadData();
 
-    cmdContainer->registerThreadData(collisionHash, {combinedB, sizeof(combinedB)});
+    cmdContainer->registerThreadData(collisionHash, {combinedB, sizeof(combinedB)}, {});
     cmdContainer->extractCommonThreadData();
 
     const uint8_t ctdA[] = {1, 2};
@@ -2784,7 +2783,7 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResident
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     const uint8_t data[] = {1, 2, 3, 4};
-    cmdContainer->registerThreadData(42u, {data, sizeof(data)});
+    cmdContainer->registerThreadData(42u, {data, sizeof(data)}, {});
     cmdContainer->extractCommonThreadData();
 
     auto expectedAlloc = cmdContainer->getThreadDataMapStorage()->getGraphicsAllocation();
@@ -2836,7 +2835,7 @@ TEST_F(CommandContainerTest, givenIndirectHeapInLocalMemoryWhenThreadDataInserte
 
     const uint8_t data1[] = {1, 2, 3};
     auto hash1 = ThreadDataHash::computeThreadDataHash({data1, sizeof(data1)}, {});
-    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)});
+    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)}, {});
     cmdContainer->extractCommonThreadData();
 
     auto offset1 = cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {});
@@ -2845,7 +2844,7 @@ TEST_F(CommandContainerTest, givenIndirectHeapInLocalMemoryWhenThreadDataInserte
     // Insert 5-byte data; align() pads from 3 to MemoryConstants::cacheLineSize before writing
     const uint8_t data2[] = {4, 5, 6, 7, 8};
     auto hash2 = ThreadDataHash::computeThreadDataHash({data2, sizeof(data2)}, {});
-    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)});
+    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)}, {});
     cmdContainer->extractCommonThreadData();
 
     auto offset2 = cmdContainer->getCachedIohOffset(hash2, {data2, sizeof(data2)}, {});
@@ -2866,13 +2865,13 @@ TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageHasSpaceThenPreviousEn
 
     const uint8_t data1[] = {1, 2, 3};
     auto hash1 = ThreadDataHash::computeThreadDataHash({data1, sizeof(data1)}, {});
-    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)});
+    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)}, {});
     cmdContainer->extractCommonThreadData();
     ASSERT_TRUE(cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {}).has_value());
 
     const uint8_t data2[] = {4, 5, 6, 7};
     auto hash2 = ThreadDataHash::computeThreadDataHash({data2, sizeof(data2)}, {});
-    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)});
+    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)}, {});
     cmdContainer->extractCommonThreadData();
 
     EXPECT_TRUE(cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {}).has_value());
@@ -2907,7 +2906,7 @@ TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageExhaustedThenReallocat
 
     const uint8_t data1[] = {1, 2, 3};
     auto hash1 = ThreadDataHash::computeThreadDataHash({data1, sizeof(data1)}, {});
-    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)});
+    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)}, {});
     cmdContainer->extractCommonThreadData();
     ASSERT_TRUE(cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {}).has_value());
 
@@ -2916,7 +2915,7 @@ TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageExhaustedThenReallocat
 
     const uint8_t data2[] = {4, 5, 6, 7, 8, 9, 10, 11};
     auto hash2 = ThreadDataHash::computeThreadDataHash({data2, sizeof(data2)}, {});
-    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)});
+    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)}, {});
     cmdContainer->extractCommonThreadData();
 
     EXPECT_FALSE(cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {}).has_value());
@@ -2935,10 +2934,9 @@ TEST_F(CommandContainerTest, givenCachedThreadDataWhenFindCalledWithMismatchedDa
 
     const uint8_t ctd[] = {1, 2, 3, 4};
     const uint8_t ptd[] = {5, 6, 7, 8};
-    const uint8_t combined[] = {1, 2, 3, 4, 5, 6, 7, 8};
     auto hash = ThreadDataHash::computeThreadDataHash({ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
 
-    cmdContainer->registerThreadData(hash, {combined, sizeof(combined)});
+    cmdContainer->registerThreadData(hash, {ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
     cmdContainer->extractCommonThreadData();
 
     EXPECT_TRUE(cmdContainer->getCachedIohOffset(hash, {ctd, sizeof(ctd)}, {ptd, sizeof(ptd)}).has_value());

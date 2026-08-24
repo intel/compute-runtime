@@ -45,15 +45,6 @@ class FlatHashMap : NEO::NonCopyableAndNonMovableClass {
         return const_cast<Value *>(static_cast<const FlatHashMap *>(this)->findBy(precomputedHash, std::forward<KeyComparator>(matches)));
     }
 
-    template <typename Func>
-    void forEach(Func &&func) const {
-        for (size_t i = 0; i < hashes.size(); ++i) {
-            if (hashes[i] != emptySlot) {
-                func(entries[i].first, entries[i].second);
-            }
-        }
-    }
-
     void insert(Key key, Value value) {
         ensureCapacity();
         const auto h = makeHash(key);

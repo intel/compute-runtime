@@ -18,37 +18,62 @@ namespace NEO {
 /**
  * @brief Registers thread data (combined cross and per-thread data) for a given hash.
  * If the same hash is registered multiple times, occurrence count is increased.
+ * Whenever a registration makes an entry the new most common one, its content is copied
+ * into a CPU side buffer owned by the tracker. Source spans must point to host memory.
  *
  * @param[in] hash hash of the thread data
- * @param[in] threadData thread data to be registered
+ * @param[in] crossThreadData cross-thread data to be registered
+ * @param[in] perThreadData per-thread data to be registered
  */
-void ThreadDataTracker::registerThreadData(uint64_t hash, std::span<const uint8_t> threadData) {
+void ThreadDataTracker::registerThreadData(uint64_t hash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) {
+    size_t occurrences = 1u;
     auto *existing = threadDataOccurences.findBy(hash, [hash](const uint64_t &key) { return key == hash; });
     if (existing != nullptr) {
-        existing->count++;
+        occurrences = ++(*existing);
+    } else {
+        threadDataOccurences.insert(hash, occurrences);
+    }
+
+    const bool commonThreadDataTracked = (commonThreadDataOccurrences != 0u);
+    if (commonThreadDataTracked && (hash == commonThreadDataHash)) {
+        commonThreadDataOccurrences = occurrences;
         return;
     }
-    threadDataOccurences.insert(hash, {1, threadData});
+
+    // Store new common thread data if it is the first registration, or if it has more occurrences than the previous one.
+    const size_t threadDataSize = crossThreadData.size() + perThreadData.size();
+    const bool isNewCommonThreadData = !commonThreadDataTracked ||
+                                       (occurrences > commonThreadDataOccurrences) ||
+                                       ((occurrences == commonThreadDataOccurrences) && (threadDataSize > commonThreadData.size()));
+    if (isNewCommonThreadData) {
+        storeCommonThreadData(hash, occurrences, crossThreadData, perThreadData);
+    }
+}
+
+void ThreadDataTracker::storeCommonThreadData(uint64_t hash, size_t occurrences, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) {
+    commonThreadData.clear();
+    commonThreadData.reserve(crossThreadData.size() + perThreadData.size());
+    commonThreadData.insert(commonThreadData.end(), crossThreadData.begin(), crossThreadData.end());
+    commonThreadData.insert(commonThreadData.end(), perThreadData.begin(), perThreadData.end());
+    commonThreadDataHash = hash;
+    commonThreadDataOccurrences = occurrences;
 }
 
 /**
- * @brief Finds most common thread data based on the occurrence count.
+ * @brief Returns the CPU copy of the most common thread data based on the occurrence count.
  * After this call, the tracker is cleared.
  *
  * @return A pair containing the hash and the most common thread data.
  */
 std::pair<uint64_t, std::span<const uint8_t>> ThreadDataTracker::getCommonThreadData() {
-    ThreadDataCounter mostFrequent = {0, {}};
-    uint64_t hash = 0;
-    threadDataOccurences.forEach([&mostFrequent, &hash](uint64_t h, const ThreadDataCounter &marker) {
-        if (marker.count > mostFrequent.count ||
-            (marker.count == mostFrequent.count && marker.threadData.size() > mostFrequent.threadData.size())) {
-            mostFrequent = marker;
-            hash = h;
-        }
-    });
+    std::pair<uint64_t, std::span<const uint8_t>> mostFrequent = {0u, {}};
+    if (commonThreadDataOccurrences != 0u) {
+        mostFrequent = {commonThreadDataHash, std::span<const uint8_t>(commonThreadData)};
+    }
     threadDataOccurences.clear();
-    return {hash, mostFrequent.threadData};
+    commonThreadDataHash = 0u;
+    commonThreadDataOccurrences = 0u;
+    return mostFrequent;
 }
 
 ThreadDataMap::ThreadDataMap(HeapHelper *heapHelper, uint32_t rootDeviceIndex, size_t heapAlignment) : heapHelper(heapHelper), rootDeviceIndex(rootDeviceIndex), heapAlignment(heapAlignment) {

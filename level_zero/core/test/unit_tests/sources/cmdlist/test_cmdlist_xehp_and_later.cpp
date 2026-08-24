@@ -3286,7 +3286,7 @@ HWTEST2_F(IOHCacheCommandListTest,
     const std::span<const uint8_t> perThreadSpan(kernel.getPerThreadData(), kernel.getPerThreadDataSizeForWholeThreadGroup());
     const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
 
-    commandList->commandContainer.registerThreadData(hash, crossThreadSpan);
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan, perThreadSpan);
     static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer).extractCommonThreadData();
 
     bool threadDataCacheMiss = true;
@@ -3316,7 +3316,7 @@ HWTEST2_F(IOHCacheCommandListTest,
     const std::span<const uint8_t> crossThreadSpan(kernel.getCrossThreadData(), kernel.getCrossThreadDataSize());
     const std::span<const uint8_t> perThreadSpan(kernel.getPerThreadData(), kernel.getPerThreadDataSizeForWholeThreadGroup());
     const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
-    commandList->commandContainer.registerThreadData(hash, crossThreadSpan);
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan, perThreadSpan);
 
     // Fill the current indirect object heap so the next required allocation forces a new heap.
     // Allocating a new heap extracts the common thread data into the thread data map, and - thanks to
@@ -3376,11 +3376,7 @@ HWTEST2_F(IOHCacheCommandListTest,
                                                  kernel->getPerThreadDataSizeForWholeThreadGroup());
     const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
 
-    std::vector<uint8_t> combinedData(crossThreadSpan.size() + perThreadSpan.size());
-    std::copy(crossThreadSpan.begin(), crossThreadSpan.end(), combinedData.begin());
-    std::copy(perThreadSpan.begin(), perThreadSpan.end(), combinedData.begin() + crossThreadSpan.size());
-
-    commandList->commandContainer.registerThreadData(hash, std::span<const uint8_t>(combinedData));
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan, perThreadSpan);
     static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer).extractCommonThreadData();
     auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
     ASSERT_NE(nullptr, cacheStorage);
@@ -3388,7 +3384,7 @@ HWTEST2_F(IOHCacheCommandListTest,
     EXPECT_NE(cacheStorage->getGraphicsAllocation(),
               commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation());
 
-    const auto expectedIohOffset = cacheStorage->getUsed() - combinedData.size();
+    const auto expectedIohOffset = cacheStorage->getUsed() - (crossThreadSpan.size() + perThreadSpan.size());
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     const auto expectedPrefetchGpuVa = gmmHelper->decanonize(cacheStorage->getGraphicsAllocation()->getGpuAddress()) + expectedIohOffset;
 
@@ -3542,12 +3538,8 @@ HWTEST2_F(IOHCacheCommandListTest,
     const std::span<const uint8_t> perThreadSpan(kernel->getPerThreadData(), kernel->getPerThreadDataSizeForWholeThreadGroup());
     const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
 
-    std::vector<uint8_t> combinedData(crossThreadSpan.size() + perThreadSpan.size());
-    std::copy(crossThreadSpan.begin(), crossThreadSpan.end(), combinedData.begin());
-    std::copy(perThreadSpan.begin(), perThreadSpan.end(), combinedData.begin() + crossThreadSpan.size());
-
     auto &containerAccessor = static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer);
-    commandList->commandContainer.registerThreadData(hash, std::span<const uint8_t>(combinedData));
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan, perThreadSpan);
     containerAccessor.extractCommonThreadData();
     ASSERT_TRUE(commandList->commandContainer.getCachedIohOffset(crossThreadSpan, perThreadSpan).has_value());
     ASSERT_TRUE(containerAccessor.threadDataTracker->isEmpty());

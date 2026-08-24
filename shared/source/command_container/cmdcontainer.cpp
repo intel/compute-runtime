@@ -771,8 +771,8 @@ void CommandContainer::extractCommonThreadData() {
     }
 }
 
-void CommandContainer::registerThreadData(uint64_t hash, std::span<const uint8_t> threadData) {
-    this->threadDataTracker->registerThreadData(hash, threadData);
+void CommandContainer::registerThreadData(uint64_t hash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) {
+    this->threadDataTracker->registerThreadData(hash, crossThreadData, perThreadData);
 }
 
 std::optional<uint64_t> CommandContainer::getCachedIohOffset(uint64_t threadDataHash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const {

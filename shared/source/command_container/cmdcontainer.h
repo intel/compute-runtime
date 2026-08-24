@@ -230,7 +230,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     bool getIOHCacheEnabled() const { return isIOHCacheEnabled; }
     std::optional<uint64_t> getCachedIohOffset(uint64_t threadDataHash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const;
     std::optional<uint64_t> getCachedIohOffset(std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const;
-    void registerThreadData(uint64_t hash, std::span<const uint8_t> threadData);
+    void registerThreadData(uint64_t hash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData);
     void makeThreadDataMapResident();
     IndirectHeap *getThreadDataMapStorage() const;
 

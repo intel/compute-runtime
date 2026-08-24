@@ -25,7 +25,7 @@ TEST(ThreadDataTrackerTest, givenNewHashWhenRegisteringThreadDataThenEntryAddedW
     ThreadDataTracker tracker;
     const uint8_t data[] = {1, 2, 3, 4};
 
-    tracker.registerThreadData(42u, {data, sizeof(data)});
+    tracker.registerThreadData(42u, {data, sizeof(data)}, {});
     auto [hash, threadData] = tracker.getCommonThreadData();
 
     EXPECT_EQ(42u, hash);
@@ -36,8 +36,8 @@ TEST(ThreadDataTrackerTest, givenExistingHashWhenRegisteringThreadDataThenCountI
     ThreadDataTracker tracker;
     const uint8_t data[] = {1, 2, 3, 4};
 
-    tracker.registerThreadData(42u, {data, sizeof(data)});
-    tracker.registerThreadData(42u, {data, sizeof(data)});
+    tracker.registerThreadData(42u, {data, sizeof(data)}, {});
+    tracker.registerThreadData(42u, {data, sizeof(data)}, {});
     auto [hash, threadData] = tracker.getCommonThreadData();
 
     EXPECT_EQ(42u, hash);
@@ -49,10 +49,10 @@ TEST(ThreadDataTrackerTest, givenMultipleHashesWhenGetCommonThreadDataThenMostFr
     const uint8_t dataA[] = {1, 2};
     const uint8_t dataB[] = {3, 4};
     const uint8_t dataC[] = {3, 4};
-    tracker.registerThreadData(1u, {dataA, sizeof(dataA)});
-    tracker.registerThreadData(2u, {dataB, sizeof(dataB)});
-    tracker.registerThreadData(2u, {dataB, sizeof(dataB)});
-    tracker.registerThreadData(3u, {dataC, sizeof(dataC)});
+    tracker.registerThreadData(1u, {dataA, sizeof(dataA)}, {});
+    tracker.registerThreadData(2u, {dataB, sizeof(dataB)}, {});
+    tracker.registerThreadData(2u, {dataB, sizeof(dataB)}, {});
+    tracker.registerThreadData(3u, {dataC, sizeof(dataC)}, {});
 
     auto [hash, threadData] = tracker.getCommonThreadData();
 
@@ -66,9 +66,9 @@ TEST(ThreadDataTrackerTest, givenSameCountWhenGetCommonThreadDataThenLargestSize
     const uint8_t dataLargeA[] = {1, 2, 3, 4};
     const uint8_t dataLargeB[] = {5, 6, 7, 8};
 
-    tracker.registerThreadData(1u, {dataSmall, sizeof(dataSmall)});
-    tracker.registerThreadData(2u, {dataLargeA, sizeof(dataLargeA)});
-    tracker.registerThreadData(3u, {dataLargeB, sizeof(dataLargeB)});
+    tracker.registerThreadData(1u, {dataSmall, sizeof(dataSmall)}, {});
+    tracker.registerThreadData(2u, {dataLargeA, sizeof(dataLargeA)}, {});
+    tracker.registerThreadData(3u, {dataLargeB, sizeof(dataLargeB)}, {});
 
     auto [hash, threadData] = tracker.getCommonThreadData();
 
@@ -76,14 +76,30 @@ TEST(ThreadDataTrackerTest, givenSameCountWhenGetCommonThreadDataThenLargestSize
     EXPECT_EQ(sizeof(dataLargeA), threadData.size());
 }
 
+TEST(ThreadDataTrackerTest, givenSourceBuffersModifiedAfterRegisterWhenGetCommonThreadDataThenSnapshotIsReturned) {
+    ThreadDataTracker tracker;
+    uint8_t ctd[] = {1, 2, 3, 4};
+    uint8_t ptd[] = {5, 6, 7, 8};
+    const uint8_t expected[] = {1, 2, 3, 4, 5, 6, 7, 8};
+
+    tracker.registerThreadData(42u, {ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
+    std::fill(std::begin(ctd), std::end(ctd), uint8_t{0xAA});
+    std::fill(std::begin(ptd), std::end(ptd), uint8_t{0xBB});
+
+    auto [hash, threadData] = tracker.getCommonThreadData();
+    EXPECT_EQ(42u, hash);
+    ASSERT_EQ(sizeof(expected), threadData.size());
+    EXPECT_TRUE(std::equal(std::begin(expected), std::end(expected), threadData.begin()));
+}
+
 TEST(ThreadDataTrackerTest, givenEntriesLargeEnoughWhenMapRehashedThenEntriesArePreserved) {
     ThreadDataTracker tracker;
     const uint8_t data[] = {1, 2, 3, 4};
 
     for (uint64_t h = 1; h <= 6; ++h) {
-        tracker.registerThreadData(h, {data, sizeof(data)});
+        tracker.registerThreadData(h, {data, sizeof(data)}, {});
     }
-    tracker.registerThreadData(1u, {data, sizeof(data)});
+    tracker.registerThreadData(1u, {data, sizeof(data)}, {});
 
     auto [hash, threadData] = tracker.getCommonThreadData();
 
@@ -95,8 +111,8 @@ TEST(ThreadDataTrackerTest, givenZeroHashWhenRegisteringThreadDataThenEntryStore
     ThreadDataTracker tracker;
     const uint8_t data[] = {1, 2, 3, 4};
 
-    tracker.registerThreadData(0u, {data, sizeof(data)});
-    tracker.registerThreadData(0u, {data, sizeof(data)});
+    tracker.registerThreadData(0u, {data, sizeof(data)}, {});
+    tracker.registerThreadData(0u, {data, sizeof(data)}, {});
 
     auto [hash, threadData] = tracker.getCommonThreadData();
 
@@ -108,7 +124,7 @@ TEST(ThreadDataTrackerTest, givenTrackerWhenGetCommonCalledThenContainerIsCleare
     ThreadDataTracker tracker;
     const uint8_t data[] = {1, 2, 3, 4};
 
-    tracker.registerThreadData(42u, {data, sizeof(data)});
+    tracker.registerThreadData(42u, {data, sizeof(data)}, {});
     tracker.getCommonThreadData();
 
     auto [hash, threadData] = tracker.getCommonThreadData();
@@ -126,7 +142,7 @@ TEST_P(ComputeThreadDataHashTest, givenDataWhenHashComputedThenHashIsCorrect) {
     EXPECT_NE(0u, hash);
     EXPECT_EQ(hash, ThreadDataHash::computeThreadDataHash({crossThreadData.data(), crossThreadData.size()}, {}));
 
-    tracker.registerThreadData(hash, {crossThreadData.data(), crossThreadData.size()});
+    tracker.registerThreadData(hash, {crossThreadData.data(), crossThreadData.size()}, {});
     auto [resultHash, resultData] = tracker.getCommonThreadData();
     EXPECT_EQ(hash, resultHash);
 }

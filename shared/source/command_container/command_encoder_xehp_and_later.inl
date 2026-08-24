@@ -263,6 +263,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         void *ptr = nullptr;
         auto perThreadDataPtr = args.dispatchInterface->getPerThreadData();
         std::optional<uint64_t> cachedThreadDataOffset = std::nullopt;
+        const std::span<const uint8_t> crossThreadSpan(crossThreadData, sizeCrossThreadData);
+        const std::span<const uint8_t> perThreadSpan(perThreadDataPtr, sizePerThreadDataForWholeGroup);
 
         if (!args.makeCommandView) {
             auto heap = container.getIndirectHeap(HeapType::indirectObject);
@@ -270,8 +272,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             uint64_t threadDataHash = 0ull;
             const bool isThreadDataMapAllowed = container.getIOHCacheEnabled() && (sizeThreadData != 0u) && !args.isIndirect && (pImplicitArgs == nullptr) && !scratchPointerInCrossThreadData;
             if (isThreadDataMapAllowed) {
-                const std::span<const uint8_t> crossThreadSpan(crossThreadData, sizeCrossThreadData);
-                const std::span<const uint8_t> perThreadSpan(perThreadDataPtr, sizePerThreadDataForWholeGroup);
                 threadDataHash = ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
                 if (args.threadDataCacheHitOnPrefetch) {
                     cachedThreadDataOffset = container.getCachedIohOffset(threadDataHash, crossThreadSpan, perThreadSpan);
@@ -314,7 +314,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr, &encodeIndirectParamsArgs);
                 }
                 if (isThreadDataMapAllowed) {
-                    container.registerThreadData(threadDataHash, std::span<const uint8_t>{reinterpret_cast<const uint8_t *>(ptr), sizeThreadData});
+                    container.registerThreadData(threadDataHash, crossThreadSpan, perThreadSpan);
                 }
             }
         } else {
