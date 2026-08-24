@@ -17,7 +17,6 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
@@ -174,11 +173,6 @@ EventPool::~EventPool() {
     if (this->hasExportedIpcHandle && context) {
         context->releaseIpcEventPoolHandle(this->exportedIpcHandle);
         this->hasExportedIpcHandle = false;
-    }
-    // Release the opaque-handle import cache ref taken while opening this imported pool.
-    if (this->importedIpcCacheId != 0 && this->importedIpcDriverHandle) {
-        this->importedIpcDriverHandle->clearCachedImportHandle(this->importedIpcCacheId);
-        this->importedIpcCacheId = 0;
     }
     if (eventPoolAllocations) {
         auto graphicsAllocations = eventPoolAllocations->getGraphicsAllocations();
@@ -590,17 +584,9 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     ImportedCbAllocationsForIpc imported;
 
     if (useOpaqueHandle) {
-        // Non-empty reservedHandleData: exporter captured a fallback handle for getMemHandlePtr to
-        // retry with if the primary import fails. Only the 2-way path populates it on export.
-        static const uint8_t emptyReservedHandleData[sizeof(ipcData.reservedHandleData)] = {0};
-        void *reservedHandleData = nullptr;
-        if (std::memcmp(ipcData.reservedHandleData, emptyReservedHandleData, sizeof(ipcData.reservedHandleData)) != 0) {
-            reservedHandleData = const_cast<uint8_t *>(ipcData.reservedHandleData);
-        }
-
         auto cacheId = Context::computeIpcCacheId(ipcData.communicationAllocHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
         communicationAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
-                                                               context->getMemHandlePtr(device->toHandle(), ipcData.communicationAllocHandle, NEO::InOrderExecEventDataNodeType::getAllocationType(), true, ipcData.processId, 0, cacheId, reservedHandleData, false, true, 0u).first);
+                                                               context->getMemHandlePtr(device->toHandle(), ipcData.communicationAllocHandle, NEO::InOrderExecEventDataNodeType::getAllocationType(), true, ipcData.processId, 0, cacheId, nullptr, false, true, 0u).first);
 
         if (!communicationAlloc) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -613,7 +599,6 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
             return imported.result;
         }
     } else {
-        // 1-way path never carries reserved handle data - pass nullptr.
         auto cacheId = Context::computeIpcCacheId(ipcData.oneWayAllocCounterHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
         imported.deviceAlloc = context->getMemHandlePtr(device->toHandle(), ipcData.oneWayAllocCounterHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), true, ipcData.processId, 0, cacheId, nullptr, false, false, 0u).first;
 
@@ -711,9 +696,9 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
     }
 
     ipcData = {};
-    ipcData.counterBasedFlags = static_cast<uint8_t>(this->counterBasedFlags);
-    ipcData.signalScopeFlags = static_cast<uint8_t>(this->signalScope);
-    ipcData.waitScopeFlags = static_cast<uint8_t>(this->waitScope);
+    ipcData.counterBasedFlags = this->counterBasedFlags;
+    ipcData.signalScopeFlags = this->signalScope;
+    ipcData.waitScopeFlags = this->waitScope;
     ipcData.processId = NEO::SysCalls::getCurrentProcessId();
 
     if (auto ret = exportCbAllocationsFor2WayIpcSharing(inOrderExecHelper.is2WayIpcSharingEnabled()); ret != ZE_RESULT_SUCCESS) {
@@ -724,17 +709,14 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
         auto eventData = inOrderExecHelper.getEventData();
 
         ipcData.oneWayCounterValue = eventData->counterValue;
-        ipcData.oneWayPartitionCount = static_cast<uint8_t>(eventData->devicePartitions);
+        ipcData.oneWayPartitionCount = eventData->devicePartitions;
         ipcData.oneWayAllocCounterHandle = eventData->deviceAllocIpcHandle;
-        ipcData.allocOffset = static_cast<uint32_t>(eventData->deviceIpcAllocOffset);
+        ipcData.allocOffset = eventData->deviceIpcAllocOffset;
 
-        // 1-way device alloc handle is captured earlier (not via createInternalHandle here), so no
-        // reserved fallback handle is available on this path.
         return ZE_RESULT_SUCCESS;
     }
 
     uint64_t communicationHandle = 0;
-    // Primary handle first - must not be affected by reserved handle data availability.
     if (int retCode = sharableEventDataHelper.getAllocation()->createInternalHandle(memoryManager, 0, communicationHandle, nullptr); retCode != 0) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -745,18 +727,7 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
     }
 
     ipcData.communicationAllocHandle = communicationHandle;
-    ipcData.allocOffset = static_cast<uint32_t>(sharableEventDataHelper.getAllocationOffset());
-
-    // Best-effort reserved fallback handle for the importer, only when fabric access is supported.
-    // Never fails the export - reservedHandleData is left zero-filled if unavailable.
-    if (context->settings.useOpaqueHandle != OpaqueHandlingType::none &&
-        device->getDriverHandle()->isFabricAccessSupported()) {
-        uint64_t unusedHandle = communicationHandle;
-        uint8_t reservedHandleDataStorage[32] = {0};
-        if (sharableEventDataHelper.getAllocation()->createInternalHandle(memoryManager, 0, unusedHandle, reservedHandleDataStorage) == 0) {
-            memcpy_s(ipcData.reservedHandleData, sizeof(ipcData.reservedHandleData), reservedHandleDataStorage, sizeof(reservedHandleDataStorage));
-        }
-    }
+    ipcData.allocOffset = sharableEventDataHelper.getAllocationOffset();
 
     return ZE_RESULT_SUCCESS;
 }
@@ -768,9 +739,6 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
 
     auto memoryManager = context->getDriverHandle()->getMemoryManager();
     auto allocation = eventPoolAllocations->getDefaultGraphicsAllocation();
-
-    // Get the primary handle first, exactly as before - this must not be affected by whether
-    // reserved handle data is available or not.
     uint64_t handle{};
     if (allocation->peekInternalHandle(memoryManager, handle, nullptr) != 0) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -782,23 +750,13 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     this->exportedIpcHandle = handle;
     this->hasExportedIpcHandle = true;
 
-    // Best-effort reserved fallback handle for the importer, only when fabric access is supported.
-    // Never fails the export - reservedHandleData is left zero-filled if unavailable.
-    uint8_t reservedHandleDataStorage[32] = {0};
-    bool hasReservedHandleData = false;
-    if (context->settings.useOpaqueHandle &&
-        getDevice()->getDriverHandle()->isFabricAccessSupported()) {
-        uint64_t unusedHandle = handle;
-        hasReservedHandleData = (allocation->peekInternalHandle(memoryManager, unusedHandle, reservedHandleDataStorage) == 0);
-    }
-
     IpcOpaqueEventPoolData &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle->data);
     ipcData = {};
     ipcData.handle.val = handle;
-    ipcData.numEvents = static_cast<uint32_t>(numEvents);
-    ipcData.rootDeviceIndex = static_cast<uint16_t>(getDevice()->getRootDeviceIndex());
-    ipcData.maxEventPackets = static_cast<uint8_t>(getEventMaxPackets());
-    ipcData.numDevices = static_cast<uint8_t>(devices.size());
+    ipcData.numEvents = numEvents;
+    ipcData.rootDeviceIndex = getDevice()->getRootDeviceIndex();
+    ipcData.maxEventPackets = getEventMaxPackets();
+    ipcData.numDevices = static_cast<uint16_t>(devices.size());
     ipcData.isDeviceEventPoolAllocation = isDeviceEventPoolAllocation;
     ipcData.isHostVisibleEventPoolAllocation = isHostVisibleEventPoolAllocation;
     ipcData.isImplicitScalingCapable = isImplicitScalingCapable;
@@ -809,17 +767,13 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
         ipcData.processId = NEO::SysCalls::getCurrentProcessId();
         // Set opaqueHandle to same value as handle (similar to IPC memory)
         ipcData.opaqueHandle.val = handle;
-        if (hasReservedHandleData) {
-            memcpy_s(ipcData.reservedHandleData, sizeof(ipcData.reservedHandleData), reservedHandleDataStorage, sizeof(reservedHandleDataStorage));
-        }
     }
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,
                                               DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
-    // IpcOpaqueEventPoolData is the wire format written by getIpcHandle - parse it directly (see event.h).
-    const IpcOpaqueEventPoolData &poolData = *reinterpret_cast<const IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
+    const IpcEventPoolData &poolData = *reinterpret_cast<const IpcEventPoolData *>(ipcEventPoolHandle.data);
 
     ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     if (poolData.isEventPoolKernelMappedTsFlagSet) {
@@ -838,48 +792,33 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     UNRECOVERABLE_IF(numDevices == 0);
     auto device = Device::fromHandle(*deviceHandles);
     auto neoDevice = device->getNEODevice();
-    NEO::MemoryManager::OsHandleData osHandleData{static_cast<uint64_t>(poolData.handle.val)};
+    NEO::MemoryManager::OsHandleData osHandleData{poolData.handle};
 
     uint32_t parentID = 0;
     uint32_t shareWithNoNTHandle = 0;
-    uint64_t importHandle = static_cast<uint64_t>(poolData.handle.val);
-
-    // Non-empty reservedHandleData: exporter captured a fallback handle. Only trust it if this side
-    // also enables useOpaqueHandle.
-    static const uint8_t emptyReservedHandleData[sizeof(poolData.reservedHandleData)] = {0};
-    void *reservedHandleData = nullptr;
-    if (context->settings.useOpaqueHandle &&
-        std::memcmp(poolData.reservedHandleData, emptyReservedHandleData, sizeof(poolData.reservedHandleData)) != 0) {
-        reservedHandleData = const_cast<uint8_t *>(poolData.reservedHandleData);
-    }
-
+    uint64_t importHandle = poolData.handle;
     if (context->settings.useOpaqueHandle) {
-        parentID = poolData.processId;
+        IpcOpaqueEventPoolData ipcData = *reinterpret_cast<const IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
+        parentID = ipcData.processId;
 
         // Check if opaque handle should be used (similar to IPC memory)
-        uint64_t handle = static_cast<uint64_t>(poolData.handle.val);
-        uint64_t opaqueHandle = static_cast<uint64_t>(poolData.opaqueHandle.val);
+        uint64_t handle = static_cast<uint64_t>(ipcData.handle.val);
+        uint64_t opaqueHandle = static_cast<uint64_t>(ipcData.opaqueHandle.val);
         bool isOpaqueHandle = (handle == opaqueHandle);
 
         if (isOpaqueHandle) {
-            // Per-handle cacheId so the importer-side fd cache is not keyed on a constant across pools.
-            auto cacheId = Context::computeIpcCacheId(handle, 0, parentID, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
-
+            // Use helper to import opaque handle with fallback
             auto importResult = context->importOpaqueHandleWithFallback(
                 handle,
                 parentID,
-                cacheId,
-                reservedHandleData,
+                0,       // cacheID not used for event pools
+                nullptr, // reservedHandleData not used for event pools
                 neoDevice);
 
             if (!importResult.success) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
             importHandle = importResult.importHandle;
-
-            // Record the cache ref taken above so ~EventPool releases it on both success and open-failure paths.
-            eventPool->importedIpcCacheId = cacheId;
-            eventPool->importedIpcDriverHandle = driver;
         }
 
         if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
@@ -930,20 +869,6 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
                                                                                              eventPool->isHostVisibleEventPoolAllocation,
                                                                                              false,
                                                                                              nullptr);
-
-    // Primary import failed - retry via the reserved fallback handle (mirrors getMemHandlePtr).
-    if (alloc == nullptr && reservedHandleData != nullptr) {
-        int fallbackFd = memoryManager->getImportHandleFromReservedHandleData(reservedHandleData, poolData.rootDeviceIndex);
-        if (fallbackFd != -1) {
-            osHandleData.handle = static_cast<NEO::osHandle>(fallbackFd);
-            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData,
-                                                                            unifiedMemoryProperties,
-                                                                            false,
-                                                                            eventPool->isHostVisibleEventPoolAllocation,
-                                                                            false,
-                                                                            nullptr);
-        }
-    }
 
     if (alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;

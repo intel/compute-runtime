@@ -29,7 +29,6 @@
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/mock_timestamp_packet.h"
-#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/internal/l0_event.h"
@@ -45,7 +44,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -57,7 +55,6 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <cstring>
 #include <limits>
 #include <memory>
 #include <thread>
@@ -470,15 +467,11 @@ struct EventPoolIpcMockGraphicsAllocation : public NEO::MockGraphicsAllocation {
 
     int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
         handle = peekInternalHandleValue;
-        if (reservedHandleData != nullptr) {
-            memset(reservedHandleData, 0xab, reservedHandleDataSize);
-        }
         return peekInternalHandleRetCode;
     }
 
     int peekInternalHandleRetCode = 0;
     uint64_t peekInternalHandleValue = 0;
-    size_t reservedHandleDataSize = 32;
 };
 class MemoryManagerEventPoolIpcMock : public NEO::MockMemoryManager {
   public:
@@ -528,33 +521,6 @@ class MemoryManagerEventPoolIpcReleaseMock : public MemoryManagerEventPoolIpcMoc
     GraphicsAllocation *lastGraphicsAllocation = nullptr;
 };
 
-class MemoryManagerEventPoolIpcReservedHandleMock : public MemoryManagerEventPoolIpcMock {
-  public:
-    using MemoryManagerEventPoolIpcMock::MemoryManagerEventPoolIpcMock;
-
-    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
-        createFromSharedHandleCalled++;
-        if (failPrimaryImport && createFromSharedHandleCalled == 1) {
-            return nullptr;
-        }
-        return MemoryManagerEventPoolIpcMock::createGraphicsAllocationFromSharedHandle(osHandleData, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
-    }
-
-    int getImportHandleFromReservedHandleData(void *reservedHandleData, uint32_t rootDeviceIndex) override {
-        getImportHandleFromReservedHandleDataCalled++;
-        lastReservedHandleData = reservedHandleData;
-        lastRootDeviceIndex = rootDeviceIndex;
-        return importHandleFromReservedHandleDataResult;
-    }
-
-    bool failPrimaryImport = false;
-    uint32_t createFromSharedHandleCalled = 0;
-    uint32_t getImportHandleFromReservedHandleDataCalled = 0;
-    void *lastReservedHandleData = nullptr;
-    uint32_t lastRootDeviceIndex = 0;
-    int importHandleFromReservedHandleDataResult = -1;
-};
-
 class ContextWhiteboxForEventPoolIpcTesting : public ::L0::Context {
   public:
     ContextWhiteboxForEventPoolIpcTesting(L0::DriverHandle *driverHandle) : ::L0::Context(driverHandle) {}
@@ -586,9 +552,9 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNum
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
-    EXPECT_NE(expectedHandle, ipcHandleData.handle.val);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
     EXPECT_EQ(numEvents, ipcHandleData.numEvents);
 
     res = eventPool->destroy();
@@ -826,8 +792,8 @@ TEST_F(EventPoolIPCHandleTests, givenUnknownIpcHandleWhenPuttingIpcHandleThenSuc
     context->settings.useOpaqueHandle = OpaqueHandlingType::none;
 
     ze_ipc_event_pool_handle_t ipcHandle = {};
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
-    ipcHandleData.handle.val = 0xdeadbeef;
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    ipcHandleData.handle = 0xdeadbeef;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->putIpcEventPoolHandle(ipcHandle));
     EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
@@ -981,9 +947,9 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndIsH
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
-    EXPECT_NE(expectedHandle, ipcHandleData.handle.val);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
 
     EXPECT_TRUE(ipcHandleData.isHostVisibleEventPoolAllocation);
 
@@ -1014,9 +980,9 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenIsImplicitSc
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
-    EXPECT_NE(expectedHandle, ipcHandleData.handle.val);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
 
     EXPECT_EQ(ipcHandleData.numEvents, 2u);
     EXPECT_EQ(ipcHandleData.numDevices, 1u);
@@ -1050,9 +1016,9 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNum
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
-    EXPECT_NE(expectedHandle, ipcHandleData.handle.val);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
 
     EXPECT_EQ(ipcHandleData.numDevices, 1u);
 
@@ -1089,9 +1055,9 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWithDeviceAllocT
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
-    EXPECT_NE(expectedHandle, ipcHandleData.handle.val);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
 
     EXPECT_EQ(numEvents, ipcHandleData.numEvents);
 
@@ -1244,183 +1210,6 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleThenEventPool
     EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
     delete memManager;
     driverHandle->setMemoryManager(curMemManager);
-}
-
-struct FabricAccessEventPoolIpcFixture {
-    void setUp() {
-        deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, 0);
-        NEO::DeviceVector inputDevices;
-        inputDevices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[0]));
-
-        for (auto *devicePtr : driverHandle.devices) {
-            delete devicePtr;
-        }
-        driverHandle.devices.clear();
-
-        EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle.initialize(std::move(inputDevices)));
-
-        ze_context_handle_t hContext = nullptr;
-        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle.createContext(&desc, 0u, nullptr, &hContext));
-        context = Context::fromHandle(hContext);
-
-        device = driverHandle.devices[0];
-        neoDevice = device->getNEODevice();
-    }
-
-    void tearDown() {
-        context->destroy();
-    }
-
-    std::unique_ptr<NEO::UltDeviceFactory> deviceFactory;
-    Mock<DriverHandle> driverHandle;
-    Context *context = nullptr;
-    L0::Device *device = nullptr;
-    NEO::Device *neoDevice = nullptr;
-};
-
-using EventPoolIpcFabricAccessTests = Test<FabricAccessEventPoolIpcFixture>;
-
-TEST_F(EventPoolIpcFabricAccessTests, whenGettingOpaqueEventPoolIpcHandleAndFabricAccessIsSupportedThenReservedHandleDataIsCaptured) {
-    uint32_t numEvents = 4;
-    ze_event_pool_desc_t poolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
-        numEvents};
-
-    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
-    driverHandle.isFabricAccessSupportedResult = true;
-
-    auto deviceHandle = device->toHandle();
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto curMemManager = driverHandle.getMemoryManager();
-    MemoryManagerEventPoolIpcMock *memManager = new MemoryManagerEventPoolIpcMock(*neoDevice->getExecutionEnvironment());
-    memManager->callParentAllocateGraphicsMemoryWithProperties = false;
-    driverHandle.setMemoryManager(memManager);
-    auto eventPool = EventPool::create(&driverHandle, context, 1, &deviceHandle, &poolDesc, result);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_NE(nullptr, eventPool);
-
-    ze_ipc_event_pool_handle_t ipcHandle = {};
-    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-
-    auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
-    static const uint8_t emptyReservedHandleData[sizeof(ipcData.reservedHandleData)] = {0};
-    EXPECT_NE(0, std::memcmp(ipcData.reservedHandleData, emptyReservedHandleData, sizeof(emptyReservedHandleData)));
-
-    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
-    delete memManager;
-    driverHandle.setMemoryManager(curMemManager);
-}
-
-TEST_F(EventPoolIpcFabricAccessTests, whenGettingOpaqueEventPoolIpcHandleAndFabricAccessIsNotSupportedThenReservedHandleDataIsNotCaptured) {
-    uint32_t numEvents = 4;
-    ze_event_pool_desc_t poolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
-        numEvents};
-
-    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
-    driverHandle.isFabricAccessSupportedResult = false;
-
-    auto deviceHandle = device->toHandle();
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto curMemManager = driverHandle.getMemoryManager();
-    MemoryManagerEventPoolIpcMock *memManager = new MemoryManagerEventPoolIpcMock(*neoDevice->getExecutionEnvironment());
-    memManager->callParentAllocateGraphicsMemoryWithProperties = false;
-    driverHandle.setMemoryManager(memManager);
-    auto eventPool = EventPool::create(&driverHandle, context, 1, &deviceHandle, &poolDesc, result);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_NE(nullptr, eventPool);
-
-    ze_ipc_event_pool_handle_t ipcHandle = {};
-    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-
-    auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
-    static const uint8_t emptyReservedHandleData[sizeof(ipcData.reservedHandleData)] = {0};
-    EXPECT_EQ(0, std::memcmp(ipcData.reservedHandleData, emptyReservedHandleData, sizeof(emptyReservedHandleData)));
-
-    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
-    delete memManager;
-    driverHandle.setMemoryManager(curMemManager);
-}
-
-TEST_F(EventPoolIpcFabricAccessTests, whenOpeningOpaqueIpcEventPoolHandleAndPrimaryImportFailsThenReservedHandleDataFallbackIsUsed) {
-    uint32_t numEvents = 4;
-    ze_event_pool_desc_t poolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
-        numEvents};
-
-    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
-    driverHandle.isFabricAccessSupportedResult = true;
-
-    auto deviceHandle = device->toHandle();
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto curMemManager = driverHandle.getMemoryManager();
-    auto *memManager = new MemoryManagerEventPoolIpcReservedHandleMock(*neoDevice->getExecutionEnvironment());
-    memManager->callParentAllocateGraphicsMemoryWithProperties = false;
-    driverHandle.setMemoryManager(memManager);
-    auto eventPool = EventPool::create(&driverHandle, context, 1, &deviceHandle, &poolDesc, result);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_NE(nullptr, eventPool);
-
-    ze_ipc_event_pool_handle_t ipcHandle = {};
-    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-
-    memManager->failPrimaryImport = true;
-    memManager->importHandleFromReservedHandleDataResult = 123;
-
-    ze_event_pool_handle_t ipcPoolHandle = {};
-    res = context->openEventPoolIpcHandle(ipcHandle, &ipcPoolHandle);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-
-    EXPECT_EQ(2u, memManager->createFromSharedHandleCalled);
-    EXPECT_EQ(1u, memManager->getImportHandleFromReservedHandleDataCalled);
-    EXPECT_NE(nullptr, memManager->lastReservedHandleData);
-
-    auto ipcPool = L0::EventPool::fromHandle(ipcPoolHandle);
-    EXPECT_EQ(ipcPool->closeIpcHandle(), ZE_RESULT_SUCCESS);
-
-    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
-    delete memManager;
-    driverHandle.setMemoryManager(curMemManager);
-}
-
-TEST_F(EventPoolIpcFabricAccessTests, whenDestroyingImportedOpaqueEventPoolThenOpaqueHandleImportCacheRefIsReleased) {
-    constexpr uint64_t cacheId = 0x1234;
-    auto &cacheEntry = driverHandle.opaqueHandleImportCache[cacheId];
-    cacheEntry.fd = -1;
-    cacheEntry.refCount = 5;
-
-    auto pool = new WhiteBox<::L0::EventPool>();
-    pool->importedIpcCacheId = cacheId;
-    pool->importedIpcDriverHandle = &driverHandle;
-
-    delete pool;
-
-    EXPECT_EQ(4u, driverHandle.opaqueHandleImportCache[cacheId].refCount);
-}
-
-TEST_F(EventPoolIpcFabricAccessTests, whenDestroyingImportedOpaqueEventPoolWithoutDriverHandleThenOpaqueHandleImportCacheRefIsNotReleased) {
-    constexpr uint64_t cacheId = 0x1234;
-    auto &cacheEntry = driverHandle.opaqueHandleImportCache[cacheId];
-    cacheEntry.fd = -1;
-    cacheEntry.refCount = 5;
-
-    auto pool = new WhiteBox<::L0::EventPool>();
-    pool->importedIpcCacheId = cacheId;
-    pool->importedIpcDriverHandle = nullptr;
-
-    delete pool;
-
-    EXPECT_EQ(5u, driverHandle.opaqueHandleImportCache[cacheId].refCount);
 }
 
 TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleWithipcSupportedAllocationByDefaultEnabledThenEventPoolIsCreatedAndProcessIDsAreTheSame) {
@@ -1712,7 +1501,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithDeviceAllocT
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     EXPECT_TRUE(ipcHandleData.isDeviceEventPoolAllocation);
 
     auto ipcEventPool = whiteboxCast(L0::EventPool::fromHandle(ipcEventPoolHandle));
@@ -2077,7 +1866,7 @@ TEST_F(EventPoolCreateMultiDevice, GivenIPCEventPoolCreatedWithMultiDeviceThenHo
     ze_ipc_event_pool_handle_t ipcHandle = {};
     result = eventPool->getIpcHandle(&ipcHandle);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     EXPECT_TRUE(ipcHandleData.isHostVisibleEventPoolAllocation);
 
     auto prevMemoryManager = driverHandle->getMemoryManager();
@@ -2133,7 +1922,7 @@ TEST_F(EventPoolCreateMultiDevice, GivenContextCreatedWithAllDriverDevicesWhenOp
     result = eventPool->getIpcHandle(&ipcHandle);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     EXPECT_EQ(ipcHandleData.numDevices, 4u);
 
     auto prevMemoryManager = driverHandle->getMemoryManager();
@@ -2191,7 +1980,7 @@ TEST_F(EventPoolCreateMultiDevice, GivenContextCreatedWithSingleDeviceWhenOpenin
     result = eventPool->getIpcHandle(&ipcHandle);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     EXPECT_EQ(ipcHandleData.numDevices, 1u);
 
     auto prevMemoryManager = driverHandle->getMemoryManager();

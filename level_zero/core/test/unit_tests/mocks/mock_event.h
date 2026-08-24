@@ -82,8 +82,6 @@ struct WhiteBox<::L0::EventPool> : public ::L0::EventPool {
     using BaseClass::eventPackets;
     using BaseClass::exportedIpcHandle;
     using BaseClass::hasExportedIpcHandle;
-    using BaseClass::importedIpcCacheId;
-    using BaseClass::importedIpcDriverHandle;
     using BaseClass::isDeviceEventPoolAllocation;
     using BaseClass::isHostVisibleEventPoolAllocation;
     using BaseClass::isImportedIpcPool;
