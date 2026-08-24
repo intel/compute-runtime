@@ -360,6 +360,11 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return retVal;
     }
 
+    [[nodiscard]] std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() override {
+        lockVirtualMemoryReservationMapCalled++;
+        return MemoryManager::lockVirtualMemoryReservationMap();
+    }
+
     void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override {
         registerIpcExportedAllocationCalled++;
         if (storeIpcAllocations) {
@@ -390,6 +395,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t createGraphicsAllocationFromExistingStorageCalled = 0u;
     mutable uint32_t allocInUseCalled = 0u;
     uint32_t registerIpcExportedAllocationCalled = 0;
+    std::atomic<uint32_t> lockVirtualMemoryReservationMapCalled{0u};
     int32_t overrideAllocateAsPackReturn = -1;
     std::vector<GraphicsAllocation *> allocationsFromExistingStorage{};
     AllocationData alignAllocationData;

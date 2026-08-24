@@ -396,7 +396,7 @@ class MemoryManager {
     std::unordered_map<std::string, KernelAllocationInfo> &getKernelAllocationMap() { return this->kernelAllocationMap; };
     [[nodiscard]] std::unique_lock<std::mutex> lockKernelAllocationMap() { return std::unique_lock<std::mutex>(this->kernelAllocationMutex); };
     std::map<void *, VirtualMemoryReservation *> &getVirtualMemoryReservationMap() { return this->virtualMemoryReservationMap; };
-    [[nodiscard]] std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() { return std::unique_lock<std::mutex>(this->virtualMemoryReservationMapMutex); };
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() { return std::unique_lock<std::mutex>(this->virtualMemoryReservationMapMutex); };
     std::map<void *, PhysicalMemoryAllocation *> &getPhysicalMemoryAllocationMap() { return this->physicalMemoryAllocationMap; };
     [[nodiscard]] std::unique_lock<std::mutex> lockPhysicalMemoryAllocationMap() { return std::unique_lock<std::mutex>(this->physicalMemoryAllocationMapMutex); };
     virtual bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) = 0;

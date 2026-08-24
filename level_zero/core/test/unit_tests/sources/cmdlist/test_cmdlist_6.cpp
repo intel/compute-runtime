@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
@@ -1833,6 +1834,111 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDevic
     res = context->destroyPhysicalMem(phPhysicalMemory);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = context->destroyPhysicalMem(phPhysicalMemory2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+HWTEST_F(CommandListTest, givenReservedDeviceAllocationWhenResolvingAlignedAllocationThenVirtualMemoryReservationMapLockIsTaken) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto memoryManager = static_cast<NEO::MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+
+    void *dstBuffer = nullptr;
+    size_t size = MemoryConstants::pageSize64k;
+    size_t reservationSize = size * 2;
+
+    auto res = context->reserveVirtualMem(nullptr, reservationSize, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, dstBuffer);
+    ze_physical_mem_desc_t desc = {};
+    desc.size = size;
+    ze_physical_mem_handle_t phPhysicalMemory = nullptr;
+    res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_handle_t phPhysicalMemory2 = nullptr;
+    res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory2);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->mapVirtualMem(dstBuffer, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(dstBuffer) + size);
+    res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto lockCountBefore = memoryManager->lockVirtualMemoryReservationMapCalled.load();
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, dstBuffer, size, nullptr, {});
+    EXPECT_EQ(lockCountBefore + 1u, memoryManager->lockVirtualMemoryReservationMapCalled.load());
+    EXPECT_NE(nullptr, outData.alloc);
+
+    bool phys2Resident = false;
+    for (auto alloc : commandList->getCmdContainer().getResidencyContainer()) {
+        if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
+            phys2Resident = true;
+        }
+    }
+    EXPECT_TRUE(phys2Resident);
+
+    res = context->unMapVirtualMem(dstBuffer, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->unMapVirtualMem(offsetAddress, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->freeVirtualMem(dstBuffer, reservationSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->destroyPhysicalMem(phPhysicalMemory);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->destroyPhysicalMem(phPhysicalMemory2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+HWTEST_F(CommandListTest, givenReservedAndPlainDeviceAllocationsWhenResolvingAlignedAllocationThenReservationMapLockIsTakenOnlyForTheReservedOne) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto memoryManager = static_cast<NEO::MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+
+    void *reservedBuffer = nullptr;
+    size_t size = MemoryConstants::pageSize64k;
+    size_t reservationSize = size * 2;
+
+    auto res = context->reserveVirtualMem(nullptr, reservationSize, &reservedBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, reservedBuffer);
+    ze_physical_mem_desc_t desc = {};
+    desc.size = size;
+    ze_physical_mem_handle_t phPhysicalMemory = nullptr;
+    res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->mapVirtualMem(reservedBuffer, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *plainBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, size, &plainBuffer));
+
+    // The reservation-backed pointer must take the lock exactly once...
+    auto lockCountBefore = memoryManager->lockVirtualMemoryReservationMapCalled.load();
+    AlignedAllocationData reservedData = commandList->resolveAlignedAllocation(device, reservedBuffer, size, nullptr, {});
+    EXPECT_EQ(lockCountBefore + 1u, memoryManager->lockVirtualMemoryReservationMapCalled.load());
+    EXPECT_NE(nullptr, reservedData.alloc);
+
+    // ...while an allocation with no reservation must not reach the lock at all, so that the early
+    // return in addVirtualReservationToResidency keeps the common append path lock free.
+    lockCountBefore = memoryManager->lockVirtualMemoryReservationMapCalled.load();
+    AlignedAllocationData plainData = commandList->resolveAlignedAllocation(device, plainBuffer, size, nullptr, {});
+    EXPECT_EQ(lockCountBefore, memoryManager->lockVirtualMemoryReservationMapCalled.load());
+    EXPECT_NE(nullptr, plainData.alloc);
+
+    context->freeMem(plainBuffer);
+    res = context->unMapVirtualMem(reservedBuffer, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->freeVirtualMem(reservedBuffer, reservationSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = context->destroyPhysicalMem(phPhysicalMemory);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 

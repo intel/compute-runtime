@@ -3375,6 +3375,7 @@ void CommandListCoreFamily<gfxCoreFamily>::addVirtualReservationToResidency(NEO:
     if (!svmAlloc->virtualReservationData) {
         return;
     }
+    auto lock = device->getDriverHandle()->getMemoryManager()->lockVirtualMemoryReservationMap();
     for (const auto &mappedAllocationData : svmAlloc->virtualReservationData->mappedAllocations) {
         if (buffer != mappedAllocationData.second->ptr) {
             commandContainer.addToResidencyContainer(mappedAllocationData.second->mappedAllocation.allocation);
