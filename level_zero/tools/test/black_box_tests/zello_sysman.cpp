@@ -1327,8 +1327,18 @@ void testSysmanStandby(ze_device_handle_t &device) {
         if (iamroot) {
             std::cout << "Setting Standby Mode Default" << std::endl;
             VALIDATECALL(zesStandbySetMode(handle, ZES_STANDBY_PROMO_MODE_DEFAULT));
+            VALIDATECALL(zesStandbyGetMode(handle, &standbyMode));
+            if (verbose) {
+                std::cout << "standbyMode.type = " << getStandbyMode(standbyMode) << std::endl;
+            }
+
             std::cout << "Setting Standby Mode Never" << std::endl;
             VALIDATECALL(zesStandbySetMode(handle, ZES_STANDBY_PROMO_MODE_NEVER));
+            VALIDATECALL(zesStandbyGetMode(handle, &standbyMode));
+            if (verbose) {
+                std::cout << "standbyMode.type = " << getStandbyMode(standbyMode) << std::endl;
+            }
+
             // Restore the original mode after the test.
             std::cout << "Restore Standby Mode" << std::endl;
             VALIDATECALL(zesStandbyGetMode(handle, &standbyMode));

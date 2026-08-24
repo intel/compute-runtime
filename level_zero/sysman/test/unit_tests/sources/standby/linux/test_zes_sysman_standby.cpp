@@ -6,59 +6,11 @@
  */
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
-#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
-#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
 #include "level_zero/sysman/test/unit_tests/sources/standby/linux/mock_sysfs_standby.h"
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
-
-constexpr int standbyModeDefault = 1;
-constexpr int standbyModeNever = 0;
-constexpr int standbyModeInvalid = 0xff;
-constexpr uint32_t mockHandleCount = 1u;
-uint32_t mockSubDeviceHandleCount = 0u;
-
-class ZesStandbyFixture : public SysmanDeviceFixture {
-  protected:
-    L0::Sysman::SysmanDevice *device = nullptr;
-    uint32_t subDeviceCount;
-    ze_bool_t onSubdevice;
-    uint32_t subdeviceId = 0;
-};
-
-class ZesStandbyFixtureI915 : public ZesStandbyFixture {
-  protected:
-    zes_standby_handle_t hSysmanStandby = {};
-    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
-    MockStandbySysfsAccessInterface *pSysfsAccess = nullptr;
-
-    void SetUp() override {
-        SysmanDeviceFixture::SetUp();
-        device = pSysmanDevice;
-        pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
-        subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-        onSubdevice = (subDeviceCount == 0) ? false : true;
-    }
-    void TearDown() override {
-        SysmanDeviceFixture::TearDown();
-    }
-
-    void mockKMDInterfaceSetup() {
-        pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
-        pSysfsAccess = new MockStandbySysfsAccessInterface();
-        pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
-        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
-        pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
-    }
-
-    std::vector<zes_standby_handle_t> getStandbyHandles(uint32_t count) {
-        std::vector<zes_standby_handle_t> handles(count, nullptr);
-        EXPECT_EQ(zesDeviceEnumStandbyDomains(device, &count, handles.data()), ZE_RESULT_SUCCESS);
-        return handles;
-    }
-};
 
 TEST_F(ZesStandbyFixtureI915, GivenStandbyModeFilesNotAvailableWhenCallingEnumerateThenCallSucceedsAndZeroCountIsReturned) {
 
@@ -82,8 +34,8 @@ TEST_F(ZesStandbyFixtureI915, GivenValidDeviceHandleAndStandbyNotSupportedWhenCa
 
     struct MockSysmanProductHelperStandby : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
         MockSysmanProductHelperStandby() = default;
-        bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) override {
-            return false;
+        std::string getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) override {
+            return {};
         }
     };
 
@@ -359,71 +311,126 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandleWhenCallingZesStandbySet
     }
 }
 
-class ZesStandbyFixtureXe : public ZesStandbyFixture {
-  protected:
-    zes_standby_handle_t hSysmanStandby = {};
-    std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
-
-    void SetUp() override {
-        SysmanDeviceFixture::SetUp();
-
-        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
-        device = pSysmanDevice;
-        pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
-        subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-        onSubdevice = (subDeviceCount == 0) ? false : true;
-    }
-    void TearDown() override {
-        SysmanDeviceFixture::TearDown();
-    }
-};
-
-TEST_F(ZesStandbyFixtureXe, GivenKmdInterfaceWhenQueryingSupportForStandbyForXeVersionThenProperStatusIsReturned) {
-    EXPECT_EQ(false, pSysmanKmdInterface->isStandbyModeControlAvailable());
-}
-
-TEST_F(ZesStandbyFixtureXe, GivenValidDeviceHandleAndStandbyControlNotAvailableWhenCallingEnumerateThenVerifyStandbyDomainsAreZero) {
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, [](const std::string &filePath, struct stat *statbuf) -> int {
-        statbuf->st_mode = S_IRUSR;
-        return 0;
-    });
-
-    std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
-    auto pSysFsAccess = std::make_unique<MockStandbySysfsAccessInterface>();
-    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysFsAccess.get());
-
-    struct MockSysmanProductHelperStandby : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
-        MockSysmanProductHelperStandby() = default;
-    };
-
-    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperStandby>();
-    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+TEST_F(ZesStandbyFixtureXe, GivenValidDeviceHandleWhenCallingEnumerateThenOneStandbyDomainIsReturned) {
+    mockKMDInterfaceSetup();
 
     uint32_t count = 0;
-    ze_result_t result = zesDeviceEnumStandbyDomains(device, &count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumStandbyDomains(device, &count, nullptr));
+    EXPECT_EQ(count, mockHandleCount);
+
+    auto handles = getStandbyHandles(count);
+    for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
+        zes_standby_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetProperties(hSysmanStandby, &properties));
+        EXPECT_EQ(ZES_STANDBY_TYPE_GLOBAL, properties.type);
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(0u, properties.subdeviceId);
+    }
 }
 
-class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
-  protected:
-    L0::Sysman::SysmanDevice *device = nullptr;
-    uint32_t subDeviceCount;
-    ze_bool_t onSubdevice;
-    uint32_t subdeviceId = 0;
-    void SetUp() override {
-        SysmanMultiDeviceFixture::SetUp();
-        device = pSysmanDevice;
-        mockSubDeviceHandleCount = pLinuxSysmanImp->getSubDeviceCount();
-        pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
-        subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-        onSubdevice = (subDeviceCount == 0) ? false : true;
+TEST_F(ZesStandbyFixtureXe, GivenValidStandbyHandleWhenCallingZesStandbyGetModeThenModeIsReadFromPciRuntimePowerManagementNode) {
+    mockKMDInterfaceSetup();
+    auto handles = getStandbyHandles(mockHandleCount);
+
+    for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
+        zes_standby_promo_mode_t mode = {};
+        pSysfsAccess->mockStandbyModeString = standbyPowerControlDefault;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_DEFAULT, mode);
+
+        pSysfsAccess->mockStandbyModeString = standbyPowerControlNever;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_NEVER, mode);
     }
-    void TearDown() override {
-        SysmanMultiDeviceFixture::TearDown();
+}
+
+TEST_F(ZesStandbyFixtureXe, GivenValidStandbyHandleWhenCallingZesStandbySetModeThenPciRuntimePowerManagementNodeIsUpdated) {
+    mockKMDInterfaceSetup();
+    auto handles = getStandbyHandles(mockHandleCount);
+
+    for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
+        zes_standby_promo_mode_t mode = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER));
+        EXPECT_STREQ(standbyPowerControlNever.c_str(), pSysfsAccess->mockStandbyModeString.c_str());
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_NEVER, mode);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_DEFAULT));
+        EXPECT_STREQ(standbyPowerControlDefault.c_str(), pSysfsAccess->mockStandbyModeString.c_str());
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_DEFAULT, mode);
     }
-};
+}
+
+TEST_F(ZesStandbyFixtureXe, GivenValidStandbyHandleWhenCallingZesStandbyGetModeWithUnknownNodeValueThenCallFailsWithUnknownError) {
+    mockKMDInterfaceSetup();
+    auto handles = getStandbyHandles(mockHandleCount);
+    pSysfsAccess->mockStandbyModeString = "unknown";
+
+    for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
+        zes_standby_promo_mode_t mode = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesStandbyGetMode(hSysmanStandby, &mode));
+    }
+}
+
+TEST_F(ZesStandbyFixtureXe, GivenValidStandbyHandleWhenCallingZesStandbyGetModeOnUnavailableFileThenCallFailsWithUnsupportedFeature) {
+    mockKMDInterfaceSetup();
+    auto handles = getStandbyHandles(mockHandleCount);
+    pSysfsAccess->isStandbyModeFileAvailable = false;
+
+    for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
+        zes_standby_promo_mode_t mode = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesStandbyGetMode(hSysmanStandby, &mode));
+    }
+}
+
+TEST_F(ZesStandbyFixtureXe, GivenValidStandbyHandleWhenCallingZesStandbyGetModeWithInsufficientPermissionsThenCallFailsWithInsufficientPermissions) {
+    mockKMDInterfaceSetup();
+    auto handles = getStandbyHandles(mockHandleCount);
+    pSysfsAccess->mockStandbyFileMode &= ~S_IRUSR;
+
+    for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
+        zes_standby_promo_mode_t mode = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesStandbyGetMode(hSysmanStandby, &mode));
+    }
+}
+
+TEST_F(ZesStandbyFixtureXe, GivenValidStandbyHandleWhenCallingZesStandbySetModeWithUnwritableFileThenCallFailsWithInsufficientPermissions) {
+    mockKMDInterfaceSetup();
+    auto handles = getStandbyHandles(mockHandleCount);
+    pSysfsAccess->mockStandbyFileMode &= ~S_IWUSR;
+
+    for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER));
+    }
+}
+
+TEST_F(ZesStandbyFixtureXe, GivenValidStandbyHandleWhenCallingZesStandbySetModeOnUnavailableFileThenCallFailsWithUnsupportedFeature) {
+    mockKMDInterfaceSetup();
+    auto handles = getStandbyHandles(mockHandleCount);
+    pSysfsAccess->isStandbyModeFileAvailable = false;
+
+    for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER));
+    }
+}
+
+TEST_F(ZesStandbyFixtureXe, GivenStandbyModeControlFileIsNotTilePrefixedWhenValidatingSupportForSubdeviceHandleThenSupportIsReportedForEverySubdevice) {
+    mockKMDInterfaceSetup();
+
+    for (uint32_t subdeviceId = 0; subdeviceId < 2u; subdeviceId++) {
+        std::unique_ptr<PublicLinuxStandbyImp> pLinuxStandbyImp = std::make_unique<PublicLinuxStandbyImp>(pOsSysman, true, subdeviceId);
+        EXPECT_TRUE(pLinuxStandbyImp->isStandbySupported());
+    }
+}
 
 HWTEST2_F(ZesStandbyMultiDeviceFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumStandbyDomainsThenCallSucceedsAndNonZeroCountIsReturned, IsXeCore) {
 
@@ -494,11 +501,35 @@ HWTEST2_F(ZesStandbyFixtureI915, GivenValidStandbyHandlesWhenCallingReInitOnStan
     }
 }
 
-using SysmanProductHelperStandbyTest = SysmanDeviceFixture;
+TEST_F(ZesStandbyMultiDeviceFixture, GivenXeKmdInterfaceWhenCallingEnumerateThenOneHandlePerSubdeviceIsReturned) {
 
-TEST_F(SysmanProductHelperStandbyTest, GivenValidProductHelperHandleWhenQueryingStandbySupportThenFalseIsReturned) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    EXPECT_EQ(true, pSysmanProductHelper->isStandbySupported(pLinuxSysmanImp->getSysmanKmdInterface()));
+    std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterfaceXe = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
+    std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterfaceXe);
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<SysmanProductHelperHw<IGFX_UNKNOWN>>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    auto pSysfsAccess = std::make_unique<MockStandbySysfsAccessInterface>();
+    pSysfsAccess->mockStandbyModeString = standbyPowerControlDefault;
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysfsAccess.get());
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumStandbyDomains(device, &count, nullptr));
+    EXPECT_EQ(count, mockSubDeviceHandleCount);
+
+    std::vector<zes_standby_handle_t> handles(count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumStandbyDomains(device, &count, handles.data()));
+
+    for (uint32_t subdeviceId = 0; subdeviceId < count; subdeviceId++) {
+        ASSERT_NE(nullptr, handles[subdeviceId]);
+        zes_standby_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetProperties(handles[subdeviceId], &properties));
+        EXPECT_EQ(ZES_STANDBY_TYPE_GLOBAL, properties.type);
+        EXPECT_TRUE(properties.onSubdevice);
+        EXPECT_EQ(subdeviceId, properties.subdeviceId);
+    }
+
+    pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
+    std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterfaceXe);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 }
 
 } // namespace ult

@@ -32,40 +32,17 @@ bool LinuxStandbyImp::isStandbySupported(void) {
 }
 
 ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
-    int currentMode = -1;
-    ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
-    if (ZE_RESULT_SUCCESS != result) {
-        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
+    ze_result_t result = pSysmanProductHelper->getStandbyMode(pSysfsAccess, standbyModeFile, mode);
+    if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, standbyModeFile.c_str(), result);
-        return result;
-    }
-    if (standbyModeDefault == currentMode) {
-        mode = ZES_STANDBY_PROMO_MODE_DEFAULT;
-    } else if (standbyModeNever == currentMode) {
-        mode = ZES_STANDBY_PROMO_MODE_NEVER;
-    } else {
-        result = ZE_RESULT_ERROR_UNKNOWN;
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <unknown or internal error occurred> <currentMode: %d & result: 0x%x>\n", __func__, currentMode, result);
+                     "error@<%s> <Unsupported feature> <result: 0x%x>\n", __func__, result);
     }
     return result;
 }
 
 ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    if (!pSysmanProductHelper->isSetStandbyModeSupported()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    if (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) {
-        result = pSysfsAccess->write(standbyModeFile, standbyModeDefault);
-    } else {
-        result = pSysfsAccess->write(standbyModeFile, standbyModeNever);
-    }
-
+    ze_result_t result = pSysmanProductHelper->setStandbyMode(pSysfsAccess, standbyModeFile, mode);
     if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -80,16 +57,7 @@ void LinuxStandbyImp::reInit() {
 }
 
 void LinuxStandbyImp::init() {
-    const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
-    bool baseDirectoryExists = false;
-
-    if (pSysfsAccess->directoryExists(std::move(baseDir))) {
-        baseDirectoryExists = true;
-    }
-
-    if (pSysmanProductHelper->isStandbySupported(pSysmanKmdInterface)) {
-        standbyModeFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, subdeviceId, baseDirectoryExists);
-    }
+    standbyModeFile = pSysmanProductHelper->getStandbyModeFile(pSysmanKmdInterface, pSysfsAccess, subdeviceId);
 }
 
 LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
