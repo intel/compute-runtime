@@ -60,7 +60,7 @@ class CommandListWaitOnMemFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, ptr);
 
-        signalAllPackets = L0GfxCoreHelper::useSignalAllEventPackets(device->getHwInfo());
+        signalAllPackets = true;
     }
 
     void tearDown() {
@@ -1014,7 +1014,7 @@ class ImmediateCommandListWaitOnMemFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, ptr);
 
-        signalAllPackets = L0GfxCoreHelper::useSignalAllEventPackets(device->getHwInfo());
+        signalAllPackets = true;
     }
 
     void tearDown() {

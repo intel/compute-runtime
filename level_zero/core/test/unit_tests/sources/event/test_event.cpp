@@ -306,14 +306,10 @@ HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKerne
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
 
-    auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
 
-    uint32_t maxPacketCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketConstants::preferredPacketCount;
-    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPacketCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
-    }
+    uint32_t maxPacketCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
 
     uint32_t packetsSize = maxPacketCount *
                            static_cast<uint32_t>(NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize());
@@ -2119,7 +2115,6 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
 
-    auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     auto event = std::unique_ptr<L0::Event>(l0GfxCoreHelper.createEvent(eventPool.get(), &eventDesc, device, result));
     ASSERT_NE(nullptr, event);
@@ -2131,10 +2126,7 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     }
 
     uint32_t *eventCompletionMemory = reinterpret_cast<uint32_t *>(event->getCompletionFieldHostAddress());
-    uint32_t maxPacketsCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketConstants::preferredPacketCount;
-    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPacketsCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
-    }
+    uint32_t maxPacketsCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
 
     for (uint32_t i = 0; i < maxPacketsCount; i++) {
         EXPECT_EQ(Event::STATE_INITIAL, *eventCompletionMemory);
@@ -2444,7 +2436,7 @@ HWTEST_F(EventPoolCreateMultiDevice, GivenEnabledTimestampPoolAllocatorAndForced
 
 using EventSynchronizeTest = Test<EventFixture<1, 0>>;
 using EventSynchronizeTimestampTest = Test<EventFixture<1, 1>>;
-using EventUsedPacketSignalSynchronizeTest = Test<EventUsedPacketSignalFixture<1, 0, 0, -1>>;
+using EventUsedPacketSignalSynchronizeTest = Test<EventCompactL3FlushFixture<1, 0, -1>>;
 
 HWTEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturned) {
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -2988,7 +2980,6 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyAndSignalAllPacketsWhen
     csr.waitUserFenceParams.forceRetStatusEnabled = true;
     csr.waitUserFenceParams.forceRetStatusValue = false;
 
-    event->signalAllEventPackets = true;
     for (uint32_t packetId = 0; packetId < maxPackets; packetId++) {
         auto packetAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), packetId * event->getSinglePacketSize() + event->getCompletionFieldOffset()));
         *packetAddress = Event::STATE_CLEARED;
@@ -3522,32 +3513,16 @@ struct EventCreateAllocationResidencyTest : public ::testing::Test {
     L0::Device *device = nullptr;
 };
 
-struct TimestampEventCreateMultiKernelFixture : public EventFixture<1, 1> {
-    void setUp() {
-        debugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
-        debugManager.flags.SignalAllEventPackets.set(0);
-        EventFixture<1, 1>::setUp();
-    }
-
-    DebugManagerStateRestore restorer;
-};
-
 using TimestampEventCreate = Test<EventFixture<1, 1>>;
-using TimestampEventCreateMultiKernel = Test<TimestampEventCreateMultiKernelFixture>;
-using TimestampEventUsedPacketSignalCreate = Test<EventUsedPacketSignalFixture<1, 1, 0, -1>>;
+using TimestampEventUsedPacketSignalCreate = Test<EventCompactL3FlushFixture<1, 1, -1>>;
 
 TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventFlagSet) {
     EXPECT_TRUE(event->isEventTimestampFlagSet());
 }
 
 TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCorrectDataAreSet) {
-    auto &hwInfo = device->getHwInfo();
-    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    uint32_t maxKernelCount = EventPacketsCount::maxKernelSplit;
-    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxKernelCount = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
-    }
+    constexpr uint32_t maxKernelCount = 1;
 
     EXPECT_NE(nullptr, event->kernelEventCompletionData);
     for (auto j = 0u; j < maxKernelCount; j++) {
@@ -3583,27 +3558,6 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsDependentIfAllo
     } else {
         EXPECT_EQ(NEO::AllocationType::timestampPacketTagBuffer, allocation->getAllocationType());
     }
-}
-
-HWTEST2_F(TimestampEventCreateMultiKernel, givenEventTimestampWhenPacketCountIsSetThenCorrectOffsetIsReturned, IsAtLeastXeCore) {
-    EXPECT_EQ(1u, event->getPacketsInUse());
-    auto gpuAddr = event->getGpuAddress(device);
-    EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
-
-    event->setPacketsInUse(4u);
-    EXPECT_EQ(4u, event->getPacketsInUse());
-
-    gpuAddr += (4u * event->getSinglePacketSize());
-
-    event->increaseKernelCount();
-    event->setPacketsInUse(2u);
-    EXPECT_EQ(6u, event->getPacketsInUse());
-    EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
-
-    gpuAddr += (2u * event->getSinglePacketSize());
-    event->increaseKernelCount();
-    EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
-    EXPECT_EQ(7u, event->getPacketsInUse());
 }
 
 TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAreSet) {
@@ -3667,7 +3621,6 @@ using EventQueryTimestampExpWithRootDeviceAndSubDevices = Test<MultiDeviceFixtur
 
 TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytimestampExpWithRootDeviceAndSubDevicesThenReturnsCorrectValuesReturned) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.SignalAllEventPackets.set(0);
 
     std::unique_ptr<L0::EventPool> eventPool;
     std::unique_ptr<EventImp<uint32_t>> eventRoot;
@@ -3794,7 +3747,7 @@ TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytim
     }
 }
 
-using EventqueryKernelTimestampsExt = Test<EventUsedPacketSignalFixture<1, 1, 0, -1>>;
+using EventqueryKernelTimestampsExt = Test<EventCompactL3FlushFixture<1, 1, -1>>;
 
 TEST_F(EventqueryKernelTimestampsExt, givenpCountLargerThanSupportedWhenCallingQueryKernelTimestampsExtThenpCountSetProperly) {
     uint32_t pCount = 10;
@@ -4062,6 +4015,44 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampEventCreate, givenEventTimestampsWhenQue
     EXPECT_EQ(data.globalEnd, result.global.kernelEnd);
 }
 
+HWTEST_F(TimestampEventCreate, givenOverflowingTimeStampDataOnMultiplePacketsWhenQueryKernelTimestampIsCalledOverflowIsObserved) {
+    typename MockTimestampPackets32::Packet packetData[3] = {};
+    event->hostAddressFromPool = packetData;
+
+    // 1st packet - both timestamps overflowing, starts the overflow tracking
+    packetData[0].contextStart = 100u;
+    packetData[0].contextEnd = 50u;
+    packetData[0].globalStart = 1000u;
+    packetData[0].globalEnd = 500u;
+
+    // 2nd packet - both timestamps overflowing again, tracked while already overflowed
+    packetData[1].contextStart = 200u;
+    packetData[1].contextEnd = 60u;
+    packetData[1].globalStart = 2000u;
+    packetData[1].globalEnd = 600u;
+
+    // 3rd packet - not overflowing, must not extend the end timestamps
+    packetData[2].contextStart = 10u;
+    packetData[2].contextEnd = 300u;
+    packetData[2].globalStart = 20u;
+    packetData[2].globalEnd = 3000u;
+
+    EXPECT_EQ(1u, event->getKernelCount());
+    event->setPacketsInUse(3u);
+
+    ze_kernel_timestamp_result_t results = {};
+    event->queryKernelTimestamp(&results);
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (gfxCoreHelper.useOnlyGlobalTimestamps() == false) {
+        EXPECT_EQ(10u, results.context.kernelStart);
+        EXPECT_EQ(60u, results.context.kernelEnd);
+    }
+
+    EXPECT_EQ(20u, results.global.kernelStart);
+    EXPECT_EQ(600u, results.global.kernelEnd);
+}
+
 HWTEST_F(TimestampEventCreate, givenFlagPrintCalculatedTimestampsWhenCallQueryKernelTimestampThenProperLogIsPrinted) {
     debugManager.flags.PrintCalculatedTimestamps.set(1);
     typename MockTimestampPackets32::Packet data = {};
@@ -4176,66 +4167,6 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWithBlitAdditionalPropert
     EXPECT_EQ(packetData[2].globalEnd, event->globalEndTS);
 }
 
-HWTEST2_F(TimestampEventCreateMultiKernel, givenFlagPrintTimestampPacketContentsWhenMultiKernelsAndMultiPacketsAndCallQueryKernelTimestampThenProperLogIsPrinted, IsAtLeastXeCore) {
-    debugManager.flags.PrintTimestampPacketContents.set(1);
-    typename MockTimestampPackets32::Packet packetData[4];
-
-    event->hostAddressFromPool = packetData;
-
-    // 1st kernel 1st packet
-    packetData[0].contextStart = 1;
-    packetData[0].contextEnd = 2;
-    packetData[0].globalStart = 3;
-    packetData[0].globalEnd = 4;
-
-    // 1st kernel 2nd packet
-    packetData[1].contextStart = 5;
-    packetData[1].contextEnd = 6;
-    packetData[1].globalStart = 7;
-    packetData[1].globalEnd = 8;
-
-    // 2nd kernel 1st packet
-    packetData[2].contextStart = 9;
-    packetData[2].contextEnd = 10;
-    packetData[2].globalStart = 11;
-    packetData[2].globalEnd = 12;
-
-    // 2nd kernel 2st packet
-    packetData[3].contextStart = 13;
-    packetData[3].contextEnd = 14;
-    packetData[3].globalStart = 15;
-    packetData[3].globalEnd = 16;
-
-    auto packedCount = 2u;
-    auto kernelCount = 2u;
-
-    // set packet for first kernel
-    event->setPacketsInUse(packedCount);
-    event->setKernelCount(kernelCount);
-    // set packet for second kernel
-    event->setPacketsInUse(packedCount);
-
-    ze_kernel_timestamp_result_t results;
-    StreamCapture capture;
-    capture.captureStdout();
-    event->queryKernelTimestamp(&results);
-    std::string output = capture.getCapturedStdout();
-    std::stringstream expected;
-    auto i = 0u;
-    for (uint32_t kernelId = 0u; kernelId < kernelCount; kernelId++) {
-        for (uint32_t packet = 0; packet < packedCount; packet++) {
-            expected << "kernel id: " << kernelId << ", "
-                     << "packet: " << packet << ", "
-                     << "globalStartTS: " << packetData[i].globalStart << ", "
-                     << "globalEndTS: " << packetData[i].globalEnd << ", "
-                     << "contextStartTS: " << packetData[i].contextStart << ", "
-                     << "contextEndTS: " << packetData[i].contextEnd << std::endl;
-            i++;
-        }
-    }
-    EXPECT_EQ(0, output.compare(expected.str().c_str()));
-}
-
 TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSet) {
     typename MockTimestampPackets32::Packet packetData[2];
     event->setPacketsInUse(2u);
@@ -4269,135 +4200,6 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWhenQueryingTimestampExpT
         EXPECT_EQ(packetData[i].globalStart, results[i].global.kernelStart);
         EXPECT_EQ(packetData[i].globalEnd, results[i].global.kernelEnd);
     }
-}
-
-HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnFirstKernelThenDoNotUseSecondPacketOfFirstKernel, IsAtLeastXeCore) {
-    typename MockTimestampPackets32::Packet packetData[4];
-
-    event->hostAddressFromPool = packetData;
-
-    constexpr uint32_t kernelStartValue = 5u;
-    constexpr uint32_t kernelEndValue = 10u;
-
-    constexpr uint32_t waStartValue = 2u;
-    constexpr uint32_t waEndValue = 15u;
-
-    // 1st kernel 1st packet
-    packetData[0].contextStart = kernelStartValue;
-    packetData[0].contextEnd = kernelEndValue;
-    packetData[0].globalStart = kernelStartValue;
-    packetData[0].globalEnd = kernelEndValue;
-
-    // 1st kernel 2nd packet for L3 Flush
-    packetData[1].contextStart = waStartValue;
-    packetData[1].contextEnd = waEndValue;
-    packetData[1].globalStart = waStartValue;
-    packetData[1].globalEnd = waEndValue;
-
-    // 2nd kernel 1st packet
-    packetData[2].contextStart = kernelStartValue;
-    packetData[2].contextEnd = kernelEndValue;
-    packetData[2].globalStart = kernelStartValue;
-    packetData[2].globalEnd = kernelEndValue;
-
-    event->setPacketsInUse(2u);
-    event->setL3FlushForCurrentKernel();
-
-    event->increaseKernelCount();
-    EXPECT_EQ(1u, event->getPacketsUsedInLastKernel());
-
-    ze_kernel_timestamp_result_t results;
-    event->queryKernelTimestamp(&results);
-
-    EXPECT_EQ(static_cast<uint64_t>(kernelStartValue), results.context.kernelStart);
-    EXPECT_EQ(static_cast<uint64_t>(kernelStartValue), results.global.kernelStart);
-    EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.context.kernelEnd);
-    EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.global.kernelEnd);
-}
-
-HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnSecondKernelThenDoNotUseSecondPacketOfSecondKernel, IsAtLeastXeCore) {
-    typename MockTimestampPackets32::Packet packetData[4];
-
-    event->hostAddressFromPool = packetData;
-
-    constexpr uint32_t kernelStartValue = 5u;
-    constexpr uint32_t kernelEndValue = 10u;
-
-    constexpr uint32_t waStartValue = 2u;
-    constexpr uint32_t waEndValue = 15u;
-
-    // 1st kernel 1st packet
-    packetData[0].contextStart = kernelStartValue;
-    packetData[0].contextEnd = kernelEndValue;
-    packetData[0].globalStart = kernelStartValue;
-    packetData[0].globalEnd = kernelEndValue;
-
-    // 2nd kernel 1st packet
-    packetData[1].contextStart = kernelStartValue;
-    packetData[1].contextEnd = kernelEndValue;
-    packetData[1].globalStart = kernelStartValue;
-    packetData[1].globalEnd = kernelEndValue;
-
-    // 2nd kernel 2nd packet for L3 Flush
-    packetData[2].contextStart = waStartValue;
-    packetData[2].contextEnd = waEndValue;
-    packetData[2].globalStart = waStartValue;
-    packetData[2].globalEnd = waEndValue;
-
-    EXPECT_EQ(1u, event->getPacketsUsedInLastKernel());
-
-    event->increaseKernelCount();
-    event->setPacketsInUse(2u);
-    event->setL3FlushForCurrentKernel();
-
-    ze_kernel_timestamp_result_t results;
-    event->queryKernelTimestamp(&results);
-
-    EXPECT_EQ(static_cast<uint64_t>(kernelStartValue), results.context.kernelStart);
-    EXPECT_EQ(static_cast<uint64_t>(kernelStartValue), results.global.kernelStart);
-    EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.context.kernelEnd);
-    EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.global.kernelEnd);
-}
-
-HWTEST2_F(TimestampEventCreateMultiKernel, givenOverflowingTimeStampDataOnTwoKernelsWhenQueryKernelTimestampIsCalledOverflowIsObserved, IsAtLeastXeCore) {
-    typename MockTimestampPackets32::Packet packetData[4] = {};
-    event->hostAddressFromPool = packetData;
-
-    uint32_t maxTimeStampValue = std::numeric_limits<uint32_t>::max();
-
-    // 1st kernel 1st packet (overflowing context timestamp)
-    packetData[0].contextStart = maxTimeStampValue - 1;
-    packetData[0].contextEnd = maxTimeStampValue + 1;
-    packetData[0].globalStart = maxTimeStampValue - 2;
-    packetData[0].globalEnd = maxTimeStampValue - 1;
-
-    // 2nd kernel 1st packet (overflowing global timestamp)
-    packetData[1].contextStart = maxTimeStampValue - 2;
-    packetData[1].contextEnd = maxTimeStampValue - 1;
-    packetData[1].globalStart = maxTimeStampValue - 1;
-    packetData[1].globalEnd = maxTimeStampValue + 1;
-
-    // 2nd kernel 2nd packet (overflowing context timestamp)
-    memcpy(&packetData[2], &packetData[0], sizeof(MockTimestampPackets32::Packet));
-    packetData[2].contextStart = maxTimeStampValue;
-    packetData[2].contextEnd = maxTimeStampValue + 2;
-
-    EXPECT_EQ(1u, event->getPacketsUsedInLastKernel());
-
-    event->increaseKernelCount();
-    event->setPacketsInUse(2u);
-
-    ze_kernel_timestamp_result_t results;
-    event->queryKernelTimestamp(&results);
-
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    if (gfxCoreHelper.useOnlyGlobalTimestamps() == false) {
-        EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue - 2), results.context.kernelStart);
-        EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue + 2), results.context.kernelEnd);
-    }
-
-    EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue - 2), results.global.kernelStart);
-    EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue + 1), results.global.kernelEnd);
 }
 
 HWTEST_EXCLUDE_PRODUCT(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet, IGFX_GEN12LP_CORE);
@@ -4701,7 +4503,7 @@ TEST_F(EventPoolCreateNegativeTest, whenInitializingEventPoolButMemoryManagerFai
 }
 
 using EventTests = Test<EventFixture<1, 0>>;
-using EventUsedPacketSignalTests = Test<EventUsedPacketSignalFixture<1, 0, 0, -1>>;
+using EventUsedPacketSignalTests = Test<EventCompactL3FlushFixture<1, 0, -1>>;
 
 TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
     ze_result_t returnValue;
@@ -4860,33 +4662,6 @@ TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThe
     }
 }
 
-using EventUsedPacketSignalNoCompactionTests = Test<EventUsedPacketSignalFixture<1, 0, 0, 0>>;
-HWTEST2_F(EventUsedPacketSignalNoCompactionTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel, IsAtLeastXeCore) {
-    ze_result_t result;
-    auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result));
-    ASSERT_NE(event, nullptr);
-    EXPECT_FALSE(event->getL3FlushForCurrentKernel());
-
-    event->setL3FlushForCurrentKernel();
-    EXPECT_TRUE(event->getL3FlushForCurrentKernel());
-
-    event->increaseKernelCount();
-    EXPECT_EQ(2u, event->getKernelCount());
-
-    EXPECT_FALSE(event->getL3FlushForCurrentKernel());
-
-    event->setL3FlushForCurrentKernel();
-    EXPECT_TRUE(event->getL3FlushForCurrentKernel());
-
-    event->reset();
-    EXPECT_FALSE(event->getL3FlushForCurrentKernel());
-
-    constexpr size_t expectedL3FlushOnKernelCount = 0;
-    EXPECT_EQ(expectedL3FlushOnKernelCount, event->l3FlushAppliedOnKernel.count());
-
-    event->destroy();
-}
-
 struct EventSizeFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
@@ -4939,14 +4714,10 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto &hwInfo = device->getHwInfo();
 
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    uint32_t packetCount = EventPacketsCount::eventPackets;
-    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
-    }
+    uint32_t packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
 
     auto expectedAlignment = static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment());
     auto singlePacketSize = TimestampPackets<typename FamilyType::TimestampPacketType, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize();
@@ -4974,15 +4745,11 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
 
 HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto &hwInfo = device->getHwInfo();
     auto expectedAlignment = static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment());
 
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    uint32_t packetCount = EventPacketsCount::eventPackets;
-    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
-    }
+    uint32_t packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
 
     {
         debugManager.flags.OverrideTimestampPacketSize.set(4);
@@ -6125,13 +5892,10 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
     using BaseClass::gpuStartTimestamp;
     using BaseClass::hostAddressFromPool;
     using BaseClass::maxPacketCount;
-    using BaseClass::signalAllEventPackets;
     using BaseClass::statusQueryAssignedCompletionData;
 
     MockEventCompletion(MultiGraphicsAllocation *alloc, uint32_t eventSize, uint32_t maxKernelCount, uint32_t maxPacketsCount, int index, L0::Device *device) : BaseClass::EventImp(index, device, false) {
         auto neoDevice = device->getNEODevice();
-        auto &hwInfo = neoDevice->getHardwareInfo();
-        this->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
 
         this->eventPoolAllocation = alloc;
 
@@ -6521,30 +6285,29 @@ HWTEST_F(EventTests, Given64BitEventAndDrmKmdWaitStrategyWhenSignalAllPacketsUse
         return testedEvent;
     };
 
-    auto eventWithoutSignalAll = prepareEvent();
-    std::vector<uint64_t> regularEventStorage(alignUp(eventWithoutSignalAll->getMaxPacketsCount() * eventWithoutSignalAll->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
-    eventWithoutSignalAll->hostAddressFromPool = regularEventStorage.data();
-    auto regularPacketAddress = static_cast<uint64_t *>(eventWithoutSignalAll->getCompletionFieldHostAddress());
-    *regularPacketAddress = Event::STATE_CLEARED;
+    auto eventWithFirstPacketPending = prepareEvent();
+    std::vector<uint64_t> firstPacketPendingStorage(alignUp(eventWithFirstPacketPending->getMaxPacketsCount() * eventWithFirstPacketPending->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
+    eventWithFirstPacketPending->hostAddressFromPool = firstPacketPendingStorage.data();
+    auto pendingFirstPacketAddress = static_cast<uint64_t *>(eventWithFirstPacketPending->getCompletionFieldHostAddress());
+    *pendingFirstPacketAddress = Event::STATE_CLEARED;
     csr.waitUserFenceParams.forceRetStatusValue = true;
-    csr.waitUserFenceParams.onWait = [&]() { *regularPacketAddress = Event::STATE_SIGNALED; };
+    csr.waitUserFenceParams.onWait = [&]() { *pendingFirstPacketAddress = Event::STATE_SIGNALED; };
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, eventWithoutSignalAll->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventWithFirstPacketPending->hostSynchronize(std::numeric_limits<uint64_t>::max()));
     EXPECT_EQ(NEO::UserFenceValueWidth::u64, csr.waitUserFenceParams.latestWaitValueWidth);
 
-    auto signalAllEvent = prepareEvent();
-    std::vector<uint64_t> signalAllStorage(alignUp(signalAllEvent->getMaxPacketsCount() * signalAllEvent->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
-    signalAllEvent->hostAddressFromPool = signalAllStorage.data();
-    signalAllEvent->signalAllEventPackets = true;
-    auto firstPacketAddress = static_cast<uint64_t *>(signalAllEvent->getCompletionFieldHostAddress());
-    auto remainingPacketAddress = static_cast<uint64_t *>(ptrOffset(signalAllEvent->getHostAddress(), signalAllEvent->getSinglePacketSize() + signalAllEvent->getCompletionFieldOffset()));
+    auto eventWithRemainingPacketPending = prepareEvent();
+    std::vector<uint64_t> remainingPacketPendingStorage(alignUp(eventWithRemainingPacketPending->getMaxPacketsCount() * eventWithRemainingPacketPending->getSinglePacketSize() + sizeof(NEO::TimeStampData), sizeof(uint64_t)) / sizeof(uint64_t));
+    eventWithRemainingPacketPending->hostAddressFromPool = remainingPacketPendingStorage.data();
+    auto firstPacketAddress = static_cast<uint64_t *>(eventWithRemainingPacketPending->getCompletionFieldHostAddress());
+    auto remainingPacketAddress = static_cast<uint64_t *>(ptrOffset(eventWithRemainingPacketPending->getHostAddress(), eventWithRemainingPacketPending->getSinglePacketSize() + eventWithRemainingPacketPending->getCompletionFieldOffset()));
     *firstPacketAddress = Event::STATE_SIGNALED;
     *remainingPacketAddress = Event::STATE_CLEARED;
     csr.waitUserFenceParams.callCountWithOperation = 0;
     csr.waitUserFenceParams.forceRetStatusValue = false;
     csr.waitUserFenceParams.onWait = [&]() { *remainingPacketAddress = Event::STATE_SIGNALED; };
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, signalAllEvent->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventWithRemainingPacketPending->hostSynchronize(std::numeric_limits<uint64_t>::max()));
     EXPECT_EQ(1u, csr.waitUserFenceParams.callCountWithOperation);
     EXPECT_EQ(NEO::UserFenceValueWidth::u64, csr.waitUserFenceParams.latestWaitValueWidth);
     EXPECT_EQ(castToUint64(remainingPacketAddress), csr.waitUserFenceParams.latestWaitedAddress);
@@ -6749,16 +6512,6 @@ TEST_F(EventTests, givenCallToEventQueryStatusWithNullKernelPointerReturnsCounte
     EXPECT_EQ(nullptr, event->getKernelWithPrintfDeviceMutex());
 }
 
-HWTEST_F(EventTests, givenSignalAllPacketsValueWhenGettingEventPacketToWaitThenReturnCorrectValue) {
-    event->maxPacketCount = 4;
-
-    event->signalAllEventPackets = true;
-    EXPECT_EQ(4u, event->getPacketsToWait());
-
-    event->signalAllEventPackets = false;
-    EXPECT_EQ(event->getPacketsInUse(), event->getPacketsToWait());
-}
-
 TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
     const auto mockCsr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
@@ -6771,24 +6524,17 @@ TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {
     EXPECT_EQ(event->csrs[0], defaultCsr);
 }
 
-template <int32_t multiTile, int32_t signalRemainingPackets>
+template <int32_t multiTile>
 struct EventDynamicPacketUseFixture : public DeviceFixture {
     void setUp() {
-        NEO::debugManager.flags.UseDynamicEventPacketsCount.set(1);
         if constexpr (multiTile == 1) {
             debugManager.flags.CreateMultipleSubDevices.set(2);
             debugManager.flags.EnableImplicitScaling.set(1);
-        }
-        NEO::debugManager.flags.SignalAllEventPackets.set(signalRemainingPackets);
-        if constexpr (signalRemainingPackets == 1) {
-            NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
-            NEO::debugManager.flags.CompactL3FlushEventPacket.set(0);
         }
         DeviceFixture::setUp();
     }
 
     void testAllDevices() {
-        auto &hwInfo = device->getHwInfo();
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
 
@@ -6803,7 +6549,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, eventPool);
 
-        auto expectedMaxKernelCount = driverHandle->getEventMaxKernelCount(0, nullptr);
+        constexpr uint32_t expectedMaxKernelCount = 1;
         EXPECT_EQ(expectedMaxKernelCount, eventPool->getMaxKernelCount());
 
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
@@ -6828,9 +6574,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
         EXPECT_EQ(expectedPoolMaxPackets, event->getMaxPacketsCount());
 
-        uint32_t maxKernels = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
-        EXPECT_EQ(expectedMaxKernelCount, maxKernels);
-        EXPECT_EQ(maxKernels, event->getMaxKernelCount());
+        EXPECT_EQ(expectedMaxKernelCount, event->getMaxKernelCount());
     }
 
     void testSingleDevice() {
@@ -6838,7 +6582,6 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
         device->getNEODevice()->getExecutionEnvironment()->setDeviceHierarchyMode(DeviceHierarchyMode::composite);
 
-        auto &hwInfo = device->getHwInfo();
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
 
@@ -6866,7 +6609,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, eventPool);
 
-        auto expectedMaxKernelCount = driverHandle->getEventMaxKernelCount(1, deviceHandles.data());
+        constexpr uint32_t expectedMaxKernelCount = 1;
         EXPECT_EQ(expectedMaxKernelCount, eventPool->getMaxKernelCount());
 
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
@@ -6889,12 +6632,10 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
         EXPECT_EQ(expectedPoolMaxPackets, event->getMaxPacketsCount());
 
-        uint32_t maxKernels = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
-        EXPECT_EQ(expectedMaxKernelCount, maxKernels);
-        EXPECT_EQ(maxKernels, event->getMaxKernelCount());
+        EXPECT_EQ(expectedMaxKernelCount, event->getMaxKernelCount());
     }
 
-    void testSignalAllPackets(uint32_t eventValueAfterSignal, uint32_t queryRetAfterPartialReset, ze_event_pool_flags_t flags, bool signalAll) {
+    void testSignalAllPackets(uint32_t eventValueAfterSignal, uint32_t queryRetAfterPartialReset, ze_event_pool_flags_t flags) {
         ze_result_t result = ZE_RESULT_SUCCESS;
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
@@ -6989,11 +6730,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
             uint32_t *completionField = reinterpret_cast<uint32_t *>(remainingPacketsAddress);
 
             // manually signaled free packet will not be cleared when signal all is not active
-            if (!signalAll && i == 0) {
-                eventValueAfterReset = Event::STATE_SIGNALED;
-            } else {
-                eventValueAfterReset = Event::STATE_CLEARED;
-            }
+            eventValueAfterReset = (i == 0) ? Event::STATE_SIGNALED : Event::STATE_CLEARED;
             EXPECT_EQ(eventValueAfterReset, *completionField);
             remainingPacketsAddress = ptrOffset(remainingPacketsAddress, packetSize);
         }
@@ -7005,7 +6742,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
     DebugManagerStateRestore restorer;
 };
 
-using EventDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<0, 0>>;
+using EventDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<0>>;
 HWTEST_F(EventDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromAllDevicesThenMaxPossibleSelected) {
     testAllDevices();
 }
@@ -7014,7 +6751,7 @@ HWTEST_F(EventDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPa
     testSingleDevice();
 }
 
-using EventMultiTileDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<1, 0>>;
+using EventMultiTileDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<1>>;
 HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromAllDevicesThenMaxPossibleSelected, IsAtLeastXeCore) {
     testAllDevices();
 }
@@ -7086,8 +6823,12 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     ultCsr2->makeResident(*eventAllocation);
     rootCsr->makeResident(*eventAllocation);
 
-    auto hostAddress = static_cast<uint64_t *>(event->getCompletionFieldHostAddress());
-    *hostAddress = Event::STATE_SIGNALED;
+    // all packets are signaled and waited on, so the whole event must be completed for
+    // hostSynchronize to succeed and reach the download path under test
+    for (uint32_t packetId = 0; packetId < event->getMaxPacketsCount(); packetId++) {
+        auto packetAddress = static_cast<uint64_t *>(ptrOffset(event->getHostAddress(), packetId * event->getSinglePacketSize() + event->getCompletionFieldOffset()));
+        *packetAddress = Event::STATE_SIGNALED;
+    }
 
     event->hostSynchronize(1);
 
@@ -7194,25 +6935,16 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGe
     testSingleDevice();
 }
 
-using EventSignalAllPacketsTest = Test<EventDynamicPacketUseFixture<0, 1>>;
-HWTEST2_F(EventSignalAllPacketsTest, givenDynamicPacketEstimationWhenImmediateEventSignalMaxPacketThenAllPacketCompletionSignaled, IsAtLeastXeCore) {
-    testSignalAllPackets(Event::STATE_SIGNALED, ZE_RESULT_NOT_READY, 0, true);
-}
-
-HWTEST2_F(EventSignalAllPacketsTest, givenDynamicPacketEstimationWhenTimestampEventSignalMaxPacketThenAllPacketCompletionSignaled, IsAtLeastXeCore) {
-    testSignalAllPackets(Event::STATE_SIGNALED, ZE_RESULT_NOT_READY, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, true);
-}
-
-using EventSignalUsedPacketsTest = Test<EventDynamicPacketUseFixture<0, 0>>;
+using EventSignalUsedPacketsTest = Test<EventDynamicPacketUseFixture<0>>;
 HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenImmediateSignalUsedPacketThenUsedPacketCompletionSignaled, IsAtLeastXeCore) {
-    testSignalAllPackets(Event::STATE_CLEARED, ZE_RESULT_SUCCESS, 0, false);
+    testSignalAllPackets(Event::STATE_CLEARED, ZE_RESULT_SUCCESS, 0);
 }
 
 HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenTimestampSignalUsedPacketThenUsedPacketCompletionSignaled, IsAtLeastXeCore) {
-    testSignalAllPackets(Event::STATE_CLEARED, ZE_RESULT_SUCCESS, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false);
+    testSignalAllPackets(Event::STATE_CLEARED, ZE_RESULT_SUCCESS, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
 
-void testQueryAllPackets(L0::Event *event, bool singlePacket) {
+void testQueryAllPackets(L0::Event *event) {
     auto result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 
@@ -7229,22 +6961,7 @@ void testQueryAllPackets(L0::Event *event, bool singlePacket) {
         eventHostAddress = ptrOffset(eventHostAddress, packetSize);
     }
 
-    if (singlePacket) {
-        EXPECT_EQ(maxPackets, usedPackets);
-    } else {
-        result = event->queryStatus(0);
-        EXPECT_EQ(ZE_RESULT_NOT_READY, result);
-
-        ASSERT_LT(usedPackets, maxPackets);
-
-        uint32_t remainingPackets = maxPackets - usedPackets;
-        for (uint32_t i = 0; i < remainingPackets; i++) {
-            uint32_t *completionField = reinterpret_cast<uint32_t *>(eventHostAddress);
-            EXPECT_EQ(Event::STATE_INITIAL, *completionField);
-            *completionField = Event::STATE_SIGNALED;
-            eventHostAddress = ptrOffset(eventHostAddress, packetSize);
-        }
-    }
+    EXPECT_EQ(maxPackets, usedPackets);
 
     result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -7276,28 +6993,14 @@ void testQueryAllPackets(L0::Event *event, bool singlePacket) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using TimestampEventAllPacketSignalMultiPacketUseTest = Test<EventUsedPacketSignalFixture<1, 1, 1, 0>>;
-HWTEST2_F(TimestampEventAllPacketSignalMultiPacketUseTest,
-          givenSignalAllEventPacketWhenQueryingAndSignalingTimestampEventThenUseEventMaxPackets,
-          IsAtLeastXeCore) {
-    testQueryAllPackets(event.get(), false);
-}
-
-using ImmediateEventAllPacketSignalMultiPacketUseTest = Test<EventUsedPacketSignalFixture<1, 0, 1, 0>>;
-HWTEST2_F(ImmediateEventAllPacketSignalMultiPacketUseTest,
-          givenSignalAllEventPacketWhenQueryingAndSignalingImmediateEventThenUseEventMaxPackets,
-          IsAtLeastXeCore) {
-    testQueryAllPackets(event.get(), false);
-}
-
-using TimestampEventAllPacketSignalSinglePacketUseTest = Test<EventUsedPacketSignalFixture<1, 1, 1, 1>>;
+using TimestampEventAllPacketSignalSinglePacketUseTest = Test<EventCompactL3FlushFixture<1, 1, 1>>;
 TEST_F(TimestampEventAllPacketSignalSinglePacketUseTest, givenSignalAllEventPacketWhenQueryingAndSignalingTimestampEventThenUseEventMaxPackets) {
-    testQueryAllPackets(event.get(), true);
+    testQueryAllPackets(event.get());
 }
 
-using ImmediateEventAllPacketSignalSinglePacketUseTest = Test<EventUsedPacketSignalFixture<1, 0, 1, 1>>;
+using ImmediateEventAllPacketSignalSinglePacketUseTest = Test<EventCompactL3FlushFixture<1, 0, 1>>;
 TEST_F(ImmediateEventAllPacketSignalSinglePacketUseTest, givenSignalAllEventPacketWhenQueryingAndSignalingImmediateEventThenUseEventMaxPackets) {
-    testQueryAllPackets(event.get(), true);
+    testQueryAllPackets(event.get());
 }
 
 struct LocalMemoryEnabledDeviceFixture : public DeviceFixture {

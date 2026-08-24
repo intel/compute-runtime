@@ -68,10 +68,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     static bool enableStateComputeModeTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enableStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool cmdlistSupport);
-    static bool usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo);
     static bool useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo, bool flushL3AfterPostSync);
-    static bool useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo);
-    static bool useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo);
     static NEO::HeapAddressModel getHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool dispatchCmdListBatchBufferAsPrimary(bool allowPrimary);
     static bool useImmediateComputeFlushTask(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
@@ -100,7 +97,6 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool platformSupportsFrontEndTracking() const = 0;
     virtual bool platformSupportsPipelineSelectTracking() const = 0;
     virtual bool platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual NEO::HeapAddressModel getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual ze_rtas_format_exp_t getSupportedRTASFormatExp() const = 0;
@@ -167,7 +163,6 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool platformSupportsFrontEndTracking() const override;
     bool platformSupportsPipelineSelectTracking() const override;
     bool platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
-    uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     NEO::HeapAddressModel getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     ze_rtas_format_exp_t getSupportedRTASFormatExp() const override;

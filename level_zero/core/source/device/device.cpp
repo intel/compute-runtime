@@ -2206,13 +2206,6 @@ uint32_t Device::getEventMaxPacketCount() const {
     return basePackets;
 }
 
-uint32_t Device::getEventMaxKernelCount() const {
-    const auto &hardwareInfo = this->getHwInfo();
-    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-
-    return l0GfxCoreHelper.getEventMaxKernelCount(hardwareInfo);
-}
-
 ze_result_t Device::synchronize() {
 
     auto waitForCsr = [](NEO::CommandStreamReceiver *csr) -> ze_result_t {

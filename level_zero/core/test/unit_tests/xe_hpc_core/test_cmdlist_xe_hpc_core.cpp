@@ -1626,10 +1626,8 @@ struct AppendKernelXeHpcTestInput {
     L0::Device *device = nullptr;
 };
 
-template <int32_t usePipeControlMultiPacketEventSync>
 struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModuleFixture {
     void setUp() {
-        debugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
         LocalMemoryModuleFixture::setUp();
 
         input.driver = driverHandle.get();
@@ -1764,26 +1762,14 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
     AppendKernelXeHpcTestInput input;
 };
 
-using CommandListAppendLaunchMultiKernelEventDisabledSinglePacketXeHpcCore = Test<CommandListAppendLaunchMultiKernelEventFixture<0>>;
+using CommandListAppendLaunchMultiKernelEventSinglePacketXeHpcCore = Test<CommandListAppendLaunchMultiKernelEventFixture>;
 
-HWTEST2_F(CommandListAppendLaunchMultiKernelEventDisabledSinglePacketXeHpcCore,
+HWTEST2_F(CommandListAppendLaunchMultiKernelEventSinglePacketXeHpcCore,
           givenHwSupportsSystemFenceWhenKernelUsingDeviceMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceNotUsed, IsXeHpcCore) {
     testHostSignalScopeDeviceMemoryAppendMultiKernelCopy<FamilyType::gfxCoreFamily>(input);
 }
 
-HWTEST2_F(CommandListAppendLaunchMultiKernelEventDisabledSinglePacketXeHpcCore,
-          givenHwSupportsSystemFenceWhenKernelUsingUsmHostMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
-    testHostSignalScopeHostMemoryAppendMultiKernelCopy<FamilyType::gfxCoreFamily>(input);
-}
-
-using CommandListAppendLaunchMultiKernelEventEnabledSinglePacketXeHpcCore = Test<CommandListAppendLaunchMultiKernelEventFixture<1>>;
-
-HWTEST2_F(CommandListAppendLaunchMultiKernelEventEnabledSinglePacketXeHpcCore,
-          givenHwSupportsSystemFenceWhenKernelUsingDeviceMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceNotUsed, IsXeHpcCore) {
-    testHostSignalScopeDeviceMemoryAppendMultiKernelCopy<FamilyType::gfxCoreFamily>(input);
-}
-
-HWTEST2_F(CommandListAppendLaunchMultiKernelEventEnabledSinglePacketXeHpcCore,
+HWTEST2_F(CommandListAppendLaunchMultiKernelEventSinglePacketXeHpcCore,
           givenHwSupportsSystemFenceWhenKernelUsingUsmHostMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
     testHostSignalScopeHostMemoryAppendMultiKernelCopy<FamilyType::gfxCoreFamily>(input);
 }

@@ -65,13 +65,6 @@ bool L0GfxCoreHelper::enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnv
     return cmdlistSupport;
 }
 
-bool L0GfxCoreHelper::usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo) {
-    if (NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.get() != -1) {
-        return !!NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.get();
-    }
-    return true;
-}
-
 bool L0GfxCoreHelper::useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo, bool flushL3AfterPostSync) {
 
     if (NEO::debugManager.flags.CompactL3FlushEventPacket.get() != -1) {
@@ -79,20 +72,6 @@ bool L0GfxCoreHelper::useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwIn
     }
 
     return !flushL3AfterPostSync;
-}
-
-bool L0GfxCoreHelper::useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo) {
-    if (NEO::debugManager.flags.UseDynamicEventPacketsCount.get() != -1) {
-        return !!NEO::debugManager.flags.UseDynamicEventPacketsCount.get();
-    }
-    return true;
-}
-
-bool L0GfxCoreHelper::useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo) {
-    if (NEO::debugManager.flags.SignalAllEventPackets.get() != -1) {
-        return !!NEO::debugManager.flags.SignalAllEventPackets.get();
-    }
-    return true;
 }
 
 NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {

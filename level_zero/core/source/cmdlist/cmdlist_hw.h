@@ -440,8 +440,7 @@ struct CommandListCoreFamily : public CommandList {
         return this->compactL3FlushEventPacket && dcFlush;
     }
     bool eventSignalPipeControl(bool splitKernel, bool dcFlush) const {
-        return (this->pipeControlMultiKernelEventSync && splitKernel) ||
-               compactL3FlushEvent(dcFlush);
+        return splitKernel || compactL3FlushEvent(dcFlush);
     }
     MOCKABLE_VIRTUAL void allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse);
     virtual void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread);
@@ -450,7 +449,7 @@ struct CommandListCoreFamily : public CommandList {
     void dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition, void **outCmdBuffer);
     void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming, bool copyOperation);
     void dispatchEventRemainingPacketsPostSyncOperation(Event *event, bool copyOperation);
-    void dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl,
+    void dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useLastPipeControl,
                                         bool skipPartitionOffsetProgramming, bool copyOperation);
 
     static constexpr bool checkIfAllocationImportedRequired();
@@ -482,7 +481,6 @@ struct CommandListCoreFamily : public CommandList {
     bool isDeviceToHostCopyEventFenceRequired(Event *signalEvent) const;
     bool isDeviceToHostBcsCopy(NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation, bool copyEngineOperation) const;
     bool singleEventPacketRequired(bool inputSinglePacketEventRequest) const;
-    void programEventL3Flush(Event *event);
     virtual ze_result_t flushInOrderCounterSignal() { return ZE_RESULT_SUCCESS; };
     bool isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool remoteCopy, bool localToLocalAllowed, uint32_t mipLevel) const;
     bool isSharedSystemEnabled() const;

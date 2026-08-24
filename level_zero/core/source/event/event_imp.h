@@ -51,7 +51,6 @@ struct EventImp : public Event {
 
     uint64_t getPacketAddress(Device *device) override;
     uint32_t getPacketsInUse() const override;
-    uint32_t getPacketsUsedInLastKernel() override;
     void setPacketsInUse(uint32_t value) override;
     ze_result_t hostEventSetValue(State eventState) override;
 

@@ -875,11 +875,9 @@ struct CommandList : _ze_command_list_handle_t {
     bool systolicModeSupport = false;
     bool pipelineSelectStateTracking = false;
     bool stateComputeModeTracking = false;
-    bool signalAllEventPackets = false;
     bool stateBaseAddressTracking = false;
     bool doubleSbaWa = false;
     bool containsAnyKernel = false;
-    bool pipeControlMultiKernelEventSync = false;
     bool compactL3FlushEventPacket = false;
     bool dynamicHeapRequired = false;
     bool kernelWithAssertAppended = false;

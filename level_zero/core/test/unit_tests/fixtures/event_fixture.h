@@ -45,12 +45,9 @@ struct EventFixture : public EventFixtureImpl {
     }
 };
 
-template <int32_t eventPoolHostFlag, int32_t eventPoolTimestampFlag, int32_t signalAllEventPackets, int32_t compactEventPackets>
-struct EventUsedPacketSignalFixture : public EventFixture<eventPoolHostFlag, eventPoolTimestampFlag> {
+template <int32_t eventPoolHostFlag, int32_t eventPoolTimestampFlag, int32_t compactEventPackets>
+struct EventCompactL3FlushFixture : public EventFixture<eventPoolHostFlag, eventPoolTimestampFlag> {
     void setUp() {
-        NEO::debugManager.flags.SignalAllEventPackets.set(signalAllEventPackets);
-
-        NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(compactEventPackets);
         NEO::debugManager.flags.CompactL3FlushEventPacket.set(compactEventPackets);
 
         EventFixture<eventPoolHostFlag, eventPoolTimestampFlag>::setUp();

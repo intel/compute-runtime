@@ -1037,12 +1037,6 @@ HWTEST2_F(L0GfxCoreHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturn
     EXPECT_FALSE(l0GfxCoreHelper.alwaysAllocateEventInLocalMem());
 }
 
-TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultValueForUsePipeControlMultiKernelEventSyncThenReturnTrue) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    bool defaultValue = L0::L0GfxCoreHelper::usePipeControlMultiKernelEventSync(hwInfo);
-    EXPECT_TRUE(defaultValue);
-}
-
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultValueForCompactL3FlushEventPacketThenReturnTrue) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     bool useL3FlushAfterPostSync = false;
@@ -1057,24 +1051,15 @@ TEST_F(L0GfxCoreHelperTest, givenL3FlushAfterPostSyncWhenUseCompactL3FlushEventP
     EXPECT_FALSE(compactL3FlushEventEnabled);
 }
 
-TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultValueForDynamicEventPacketCountThenReturnTrue) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    bool defaultValue = L0::L0GfxCoreHelper::useDynamicEventPacketsCount(hwInfo);
-    EXPECT_TRUE(defaultValue);
-}
-
-HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxKernelAndMaxPacketThenExpectBothReturnOne, MultiTileNotSupported) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxPacketThenExpectReturnOne, MultiTileNotSupported) {
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(1u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
     EXPECT_EQ(1u, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 }
 
-template <int32_t usePipeControlMultiPacketEventSync, int32_t compactL3FlushEventPacket>
+template <int32_t compactL3FlushEventPacket>
 struct L0GfxCoreHelperMultiPacketEventFixture {
     void setUp() {
-        debugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
         debugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
         debugManager.flags.EnableL3FlushAfterPostSync.set(0);
     }
@@ -1086,40 +1071,10 @@ struct L0GfxCoreHelperMultiPacketEventFixture {
     MockExecutionEnvironment executionEnvironment;
 };
 
-using L0GfxCoreHelperEventMultiKernelEnabledL3FlushCompactDisabledTest = Test<L0GfxCoreHelperMultiPacketEventFixture<0, 0>>;
-HWTEST2_F(L0GfxCoreHelperEventMultiKernelEnabledL3FlushCompactDisabledTest,
-          givenL0GfxCoreHelperWhenGettingMaxKernelAndMaxPacketThenExpectKernelThreeAndPacketThreeWithL3PacketWhenApplicable,
+using L0GfxCoreHelperEventL3FlushCompactDisabledTest = Test<L0GfxCoreHelperMultiPacketEventFixture<0>>;
+HWTEST2_F(L0GfxCoreHelperEventL3FlushCompactDisabledTest,
+          givenL0GfxCoreHelperWhenGettingMaxPacketThenExpectPacketOneWithL3PacketWhenApplicable,
           IsAtLeastXeCore) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
-
-    uint32_t expectedPacket = 3;
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *executionEnvironment.rootDeviceEnvironments[0])) {
-        expectedPacket++;
-    }
-
-    EXPECT_EQ(3u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
-    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
-}
-
-using L0GfxCoreHelperEventMultiKernelEnabledL3FlushCompactEnabledTest = Test<L0GfxCoreHelperMultiPacketEventFixture<0, 1>>;
-HWTEST2_F(L0GfxCoreHelperEventMultiKernelEnabledL3FlushCompactEnabledTest,
-          givenL0GfxCoreHelperWhenGettingMaxKernelAndMaxPacketThenExpectKernelThreeAndPacketThree,
-          IsAtLeastXeCore) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
-
-    uint32_t expectedPacket = 3;
-
-    EXPECT_EQ(3u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
-    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
-}
-
-using L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactDisabledTest = Test<L0GfxCoreHelperMultiPacketEventFixture<1, 0>>;
-HWTEST2_F(L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactDisabledTest,
-          givenL0GfxCoreHelperWhenGettingMaxKernelAndMaxPacketThenExpectKernelOneAndPacketOneWithL3PacketWhenApplicable,
-          IsAtLeastXeCore) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
     uint32_t expectedPacket = 1;
@@ -1127,27 +1082,18 @@ HWTEST2_F(L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactDisabledTest,
         expectedPacket++;
     }
 
-    EXPECT_EQ(1u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
     EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 }
 
-using L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactEnabledTest = Test<L0GfxCoreHelperMultiPacketEventFixture<1, 1>>;
-HWTEST2_F(L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactEnabledTest,
-          givenL0GfxCoreHelperWhenGettingMaxKernelAndMaxPacketThenExpectKernelOneAndPacketOne,
+using L0GfxCoreHelperEventL3FlushCompactEnabledTest = Test<L0GfxCoreHelperMultiPacketEventFixture<1>>;
+HWTEST2_F(L0GfxCoreHelperEventL3FlushCompactEnabledTest,
+          givenL0GfxCoreHelperWhenGettingMaxPacketThenExpectPacketOne,
           IsAtLeastXeCore) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
     uint32_t expectedPacket = 1;
 
-    EXPECT_EQ(1u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
     EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
-}
-
-TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultValueForSignalAllEventPacketThenReturnTrue) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    bool defaultValue = L0::L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
-    EXPECT_TRUE(defaultValue);
 }
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultHeapModelThenUsePlatformDefaultHeapModel) {

@@ -20,7 +20,6 @@
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
 #include <atomic>
-#include <bitset>
 #include <chrono>
 #include <limits>
 #include <memory>
@@ -117,7 +116,6 @@ static_assert(sizeof(IpcCounterBasedEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcCo
 
 namespace EventPacketsCount {
 inline constexpr uint32_t maxKernelSplit = 3;
-inline constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketConstants::preferredPacketCount;
 } // namespace EventPacketsCount
 
 struct ImportedCbAllocationsForIpc {
@@ -211,7 +209,6 @@ struct Event : _ze_event_handle_t {
 
     MOCKABLE_VIRTUAL uint64_t getGpuAddress(Device *device) const;
     virtual uint32_t getPacketsInUse() const = 0;
-    virtual uint32_t getPacketsUsedInLastKernel() = 0;
     virtual uint64_t getPacketAddress(Device *device) = 0;
     MOCKABLE_VIRTUAL void resetPackets(bool resetAllPackets);
     virtual void resetKernelCountAndPacketUsedCount() = 0;
@@ -303,12 +300,6 @@ struct Event : _ze_event_handle_t {
     void setKernelCount(uint32_t newKernelCount) {
         kernelCount = newKernelCount;
     }
-    bool getL3FlushForCurrentKernel() {
-        return l3FlushAppliedOnKernel.test(kernelCount - 1);
-    }
-    void setL3FlushForCurrentKernel() {
-        l3FlushAppliedOnKernel.set(kernelCount - 1);
-    }
 
     void resetCompletionStatus() {
         if (this->isCompleted.load() != HOST_CACHING_DISABLED_PERMANENT) {
@@ -328,9 +319,6 @@ struct Event : _ze_event_handle_t {
 
     uint32_t getMaxPacketsCount() const {
         return maxPacketCount;
-    }
-    void setMaxKernelCount(uint32_t value) {
-        maxKernelCount = value;
     }
     uint32_t getMaxKernelCount() const {
         return maxKernelCount;
@@ -399,7 +387,7 @@ struct Event : _ze_event_handle_t {
     uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
 
     uint32_t getPacketsToWait() const {
-        return this->signalAllEventPackets ? getMaxPacketsCount() : getPacketsInUse();
+        return getMaxPacketsCount();
     }
 
     void setExternalInterruptId(uint32_t interruptId) { externalInterruptId = interruptId; }
@@ -486,7 +474,6 @@ struct Event : _ze_event_handle_t {
     uint64_t contextEndTS = 1;
 
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
-    std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
 
     size_t contextStartOffset = 0u;
     size_t contextEndOffset = 0u;
@@ -537,7 +524,6 @@ struct Event : _ze_event_handle_t {
     std::atomic<State> isCompleted{STATE_INITIAL};
 
     bool isTimestampEvent = false;
-    bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
     bool kmdWaitMode = false;
     bool interruptMode = false;

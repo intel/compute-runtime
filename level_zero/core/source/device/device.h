@@ -204,7 +204,6 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     NEO::Device *getActiveDevice() const;
     MOCKABLE_VIRTUAL ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex);
     MOCKABLE_VIRTUAL uint32_t getEventMaxPacketCount() const;
-    MOCKABLE_VIRTUAL uint32_t getEventMaxKernelCount() const;
     MOCKABLE_VIRTUAL void bcsSplitReleaseResources();
     NEO::TagAllocatorBase *getDeviceInOrderCounterAllocator();
     NEO::TagAllocatorBase *getHostInOrderCounterAllocator();

@@ -49,8 +49,6 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
     }
     event->hasKernelMappedTsCapability = eventDescriptor.kernelMappedTsPoolFlag;
 
-    event->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
-
     void *baseHostAddress = 0;
     if (event->eventPoolAllocation) {
         baseHostAddress = event->eventPoolAllocation->getGraphicsAllocation(neoDevice->getRootDeviceIndex())->getUnderlyingBuffer();
@@ -180,7 +178,6 @@ EventImp<TagSizeT>::EventImp(int index, Device *device, bool tbxMode)
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
-    constexpr uint32_t skipL3EventPacketIndex = 2u;
     globalStartTS = kernelEventCompletionData[0].getGlobalStartValue(0);
     globalEndTS = kernelEventCompletionData[0].getGlobalEndValue(0);
     contextStartTS = kernelEventCompletionData[0].getContextStartValue(0);
@@ -219,9 +216,6 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
         numPackets += static_cast<uint32_t>(inOrderExecHelper.getAdditionalTimestampNodesCount());
 
         for (auto packetId = 0u; packetId < numPackets; packetId++) {
-            if (this->l3FlushAppliedOnKernel.test(kernelId) && ((packetId % skipL3EventPacketIndex) != 0)) {
-                continue;
-            }
             const std::pair<uint64_t, uint64_t> currentGlobal(eventCompletion.getGlobalStartValue(packetId),
                                                               eventCompletion.getGlobalEndValue(packetId));
             const std::pair<uint64_t, uint64_t> currentContext(eventCompletion.getContextStartValue(packetId),
@@ -514,7 +508,7 @@ NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t t
         }
     }
 
-    if (this->signalAllEventPackets && (packets < getMaxPacketsCount())) {
+    if (packets < getMaxPacketsCount()) {
         for (uint32_t packetId = packets; packetId < getMaxPacketsCount(); packetId++) {
             auto queryAddress = ptrOffset(getHostAddress(), packetId * this->singlePacketSize + this->getCompletionFieldOffset());
             if (!waitForPacket(queryAddress)) {
@@ -603,25 +597,23 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
             }
         }
     }
-    if (this->signalAllEventPackets) {
-        if (packets < getMaxPacketsCount()) {
-            uint32_t remainingPackets = getMaxPacketsCount() - packets;
-            auto remainingPacketSyncAddress = ptrOffset(getHostAddress(), packets * this->singlePacketSize);
-            remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->getCompletionFieldOffset());
-            for (uint32_t i = 0; i < remainingPackets; i++) {
-                void const *queryAddress = remainingPacketSyncAddress;
-                bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
-                    static_cast<TagSizeT const *>(queryAddress),
-                    queryVal,
-                    std::not_equal_to<TagSizeT>(),
-                    timeSinceWait,
-                    NEO::WaitUtils::counterValueForEventHostSync,
-                    NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
-                if (!ready) {
-                    return ZE_RESULT_NOT_READY;
-                }
-                remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->singlePacketSize);
+    if (packets < getMaxPacketsCount()) {
+        uint32_t remainingPackets = getMaxPacketsCount() - packets;
+        auto remainingPacketSyncAddress = ptrOffset(getHostAddress(), packets * this->singlePacketSize);
+        remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->getCompletionFieldOffset());
+        for (uint32_t i = 0; i < remainingPackets; i++) {
+            void const *queryAddress = remainingPacketSyncAddress;
+            bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
+                static_cast<TagSizeT const *>(queryAddress),
+                queryVal,
+                std::not_equal_to<TagSizeT>(),
+                timeSinceWait,
+                NEO::WaitUtils::counterValueForEventHostSync,
+                NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
+            if (!ready) {
+                return ZE_RESULT_NOT_READY;
             }
+            remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->singlePacketSize);
         }
     }
 
@@ -778,11 +770,9 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(Event::State eventSt
             baseGpuAddr += singlePacketSize;
         }
     }
-    if (this->signalAllEventPackets) {
-        baseHostAddr = ptrOffset(baseHostAddr, this->contextEndOffset);
-        baseGpuAddr += this->contextEndOffset;
-        setRemainingPackets(eventVal, baseGpuAddr, baseHostAddr, packets);
-    }
+    baseHostAddr = ptrOffset(baseHostAddr, this->contextEndOffset);
+    baseGpuAddr += this->contextEndOffset;
+    setRemainingPackets(eventVal, baseGpuAddr, baseHostAddr, packets);
 
     const auto dataSize = 4u * EventPacketsCount::maxKernelSplit * NEO::TimestampPacketConstants::preferredPacketCount;
     TagSizeT tagValues[dataSize];
@@ -881,9 +871,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(Event::State eventState) {
         copyDataToEventAlloc(basePacketHostAddr, basePacketGpuAddr, totalSizeToCopy, &tempCopyData[0]);
     }
 
-    if (this->signalAllEventPackets) {
-        setRemainingPackets(eventVal, packetGpuAddr, packetHostAddr, packets);
-    }
+    setRemainingPackets(eventVal, packetGpuAddr, packetHostAddr, packets);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1136,7 +1124,6 @@ ze_result_t EventImp<TagSizeT>::reset() {
     this->clearCleanupTaskCounts();
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
-    this->l3FlushAppliedOnKernel.reset();
     this->resetAdditionalTimestampNode(nullptr, 0, true);
     return ZE_RESULT_SUCCESS;
 }
@@ -1386,11 +1373,6 @@ uint32_t EventImp<TagSizeT>::getPacketsInUse() const {
 }
 
 template <typename TagSizeT>
-uint32_t EventImp<TagSizeT>::getPacketsUsedInLastKernel() {
-    return kernelEventCompletionData[getCurrKernelDataIndex()].getPacketsUsed();
-}
-
-template <typename TagSizeT>
 void EventImp<TagSizeT>::setPacketsInUse(uint32_t value) {
     kernelEventCompletionData[getCurrKernelDataIndex()].setPacketsUsed(value);
 }
@@ -1405,12 +1387,7 @@ void EventImp<TagSizeT>::resetKernelCountAndPacketUsedCount() {
 
 template <typename TagSizeT>
 uint64_t EventImp<TagSizeT>::getPacketAddress(Device *device) {
-    uint64_t address = getGpuAddress(device);
-    for (uint32_t i = 0; i < kernelCount - 1; i++) {
-        address += kernelEventCompletionData[i].getPacketsUsed() *
-                   singlePacketSize;
-    }
-    return address;
+    return getGpuAddress(device);
 }
 
 template <typename TagSizeT>

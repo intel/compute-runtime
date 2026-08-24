@@ -298,8 +298,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->frontEndStateTracking = L0GfxCoreHelper::enableFrontEndStateTracking(rootDeviceEnvironment);
     this->pipelineSelectStateTracking = L0GfxCoreHelper::enablePipelineSelectStateTracking(rootDeviceEnvironment);
     this->stateBaseAddressTracking = L0GfxCoreHelper::enableStateBaseAddressTracking(rootDeviceEnvironment);
-    this->pipeControlMultiKernelEventSync = L0GfxCoreHelper::usePipeControlMultiKernelEventSync(hwInfo);
-    this->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
     this->dynamicHeapRequired = NEO::EncodeDispatchKernel<GfxFamily>::isDshNeeded(device->getDeviceInfo());
     this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
     this->defaultMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);
@@ -576,9 +574,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     Event *event = nullptr;
     if (hEvent) {
         event = Event::fromHandle(hEvent);
-        if (!launchParams.isKernelSplitOperation) {
-            event->resetKernelCountAndPacketUsedCount();
-        }
+        event->resetKernelCountAndPacketUsedCount();
 
         registerWalkerWithProfilingEnqueued(event);
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
@@ -796,11 +792,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     event->disableHostCaching(!isImmediateType());
     commandContainer.addToResidencyContainer(event->getAllocation(this->device));
 
-    // default state of event is single packet, handle case when reset is used 1st, launchkernel 2nd - just reset all packets then, use max
-    bool useMaxPackets = event->isEventTimestampFlagSet() || (event->getPacketsInUse() < this->partitionCount);
-
     bool appendPipeControlWithPostSync = (!isCopyOnly(false)) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync, false, isCopyOnly(false));
+    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_CLEARED, false, appendPipeControlWithPostSync, false, isCopyOnly(false));
 
     if (!isCopyOnly(false)) {
         if (this->partitionCount > 1) {
@@ -3262,7 +3255,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
         }
 
         event->setPacketsInUse(copyOperation ? 1 : this->partitionCount);
-        dispatchEventPostSyncOperation(event, syncCmdBuffer, nullptr, Event::STATE_SIGNALED, false, false, !copyOperation, false, copyOperation);
+        dispatchEventPostSyncOperation(event, syncCmdBuffer, nullptr, Event::STATE_SIGNALED, false, !copyOperation, false, copyOperation);
     }
     if (event->isSignalWithUserInterrupt()) {
         NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
@@ -3280,7 +3273,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
     } else {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         encodeMiFlush(0, 0, args);
-        dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, false, true);
+        dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, true);
     }
     appendWriteKernelTimestamp(event, nullptr, beforeWalker, false, false, true);
 }
@@ -3543,7 +3536,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 
     event->setPacketsInUse(this->partitionCount);
     bool appendPipeControlWithPostSync = (!isCopyOnly(false)) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false, isCopyOnly(false));
+    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, false, appendPipeControlWithPostSync, false, isCopyOnly(false));
 
     if (event->isSignalWithUserInterrupt()) {
         NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
@@ -4092,7 +4085,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             bool workloadPartition = setupTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, outTimeStampSyncCmds, beforeWalker, true, workloadPartition, copyOperation);
         } else {
-            dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, true, copyOperation);
+            dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, true, copyOperation);
 
             const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
 
@@ -5198,17 +5191,13 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useMax,
+void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation,
                                                                           bool useLastPipeControl, bool skipPartitionOffsetProgramming, bool copyOeration) {
     if (!event->getAllocation(this->device)) {
         return;
     }
 
-    uint32_t packets = event->getPacketsInUse();
-    if (this->signalAllEventPackets || useMax) {
-        packets = event->getMaxPacketsCount();
-    }
-    auto eventPostSync = estimateEventPostSync(event, packets);
+    auto eventPostSync = estimateEventPostSync(event, event->getMaxPacketsCount());
 
     uint64_t gpuAddress = event->getCompletionFieldGpuAddress(this->device);
     if (omitFirstOperation) {
@@ -5548,56 +5537,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
         } else {
             appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, false, skipAddingEventToResidency, copyOperation);
         }
-    } else {
-        if (event) {
-            if (beforeWalker) {
-                event->resetKernelCountAndPacketUsedCount();
-                event->zeroKernelCount();
-            } else {
-                if (event->getKernelCount() > 1) {
-                    if (getDcFlushRequired(event->isSignalScope())) {
-                        programEventL3Flush(event);
-                    }
-                    dispatchEventRemainingPacketsPostSyncOperation(event, copyOperation);
-                    if (event->isSignalWithUserInterrupt()) {
-                        NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
-                    }
-                }
-            }
-        }
+    } else if (event && beforeWalker) {
+        event->resetKernelCountAndPacketUsedCount();
+        event->zeroKernelCount();
     }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programEventL3Flush(Event *event) {
-    auto eventPartitionOffset = (partitionCount > 1) ? (partitionCount * event->getSinglePacketSize())
-                                                     : event->getSinglePacketSize();
-    uint64_t eventAddress = event->getPacketAddress(device) + eventPartitionOffset;
-    if (event->isEventTimestampFlagSet()) {
-        eventAddress += event->getContextEndOffset();
-    }
-
-    if (partitionCount > 1) {
-        event->setPacketsInUse(event->getPacketsUsedInLastKernel() + partitionCount);
-    } else {
-        event->setPacketsInUse(event->getPacketsUsedInLastKernel() + 1);
-    }
-
-    event->setL3FlushForCurrentKernel();
-
-    auto &cmdListStream = *commandContainer.getCommandStream();
-    NEO::PipeControlArgs args;
-    args.dcFlushEnable = true;
-    args.workloadPartitionOffset = partitionCount > 1;
-    args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
-
-    NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-        cmdListStream,
-        NEO::PostSyncMode::immediateData,
-        eventAddress,
-        Event::STATE_SIGNALED,
-        device->getNEODevice()->getRootDeviceEnvironment(),
-        args);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

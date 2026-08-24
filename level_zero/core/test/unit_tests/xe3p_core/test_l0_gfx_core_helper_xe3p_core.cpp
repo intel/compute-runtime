@@ -186,12 +186,11 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXep3WhenGetGrfRegisterCountIsCalle
     EXPECT_EQ(expectedMask, l0GfxCoreHelper.getGrfRegisterCount(val.data()));
 }
 
-XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, givenL3FlushInPostSyncWhenGettingMaxKernelAndMaxPacketThenExpectKernelOneAndPacketOne) {
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, givenL3FlushInPostSyncWhenGettingMaxPacketThenExpectPacketOne) {
 
     REQUIRE_DC_FLUSH_OR_SKIP(neoDevice);
 
     DebugManagerStateRestore restorer;
-    debugManager.flags.UsePipeControlMultiKernelEventSync.set(1);
     debugManager.flags.CompactL3FlushEventPacket.set(0);
     debugManager.flags.EnableL3FlushAfterPostSync.set(1);
 
@@ -205,15 +204,12 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, givenL3FlushInPostSyncWhenGettingMaxKer
     }
 
     uint32_t expectedPacket = 1;
-    HardwareInfo hwInfo = *NEO::defaultHwInfo;
 
-    EXPECT_EQ(1u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
     EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 
     debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
     expectedPacket = 2;
-    EXPECT_EQ(1u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
     EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 }
 

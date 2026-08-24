@@ -139,7 +139,6 @@ class MockEmptyEvent : public ::L0::Event {
     ze_result_t getWaitScope(ze_event_scope_flags_t *) override { return ZE_RESULT_SUCCESS; };
 
     uint32_t getPacketsInUse() const override { return 0u; };
-    uint32_t getPacketsUsedInLastKernel() override { return 0u; };
     uint64_t getPacketAddress(L0::Device *) override { return 0u; };
 
     void resetKernelCountAndPacketUsedCount() override {};

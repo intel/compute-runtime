@@ -3810,7 +3810,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenMultipleAllocationsForWri
 
 HWTEST_F(InOrderCmdListTests, givenSignalAllPacketsSetWhenProgrammingRemainingPacketsThenSkip) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-    immCmdList->signalAllEventPackets = true;
 
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->maxPacketCount = 2;
@@ -6262,7 +6261,7 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCoreCbEventThen
     eventObj = Event::fromHandle(handle);
 
     ASSERT_NE(nullptr, eventObj);
-    EXPECT_EQ(eventObj->getMaxKernelCount(), device->getEventMaxKernelCount());
+    EXPECT_EQ(1u, eventObj->getMaxKernelCount());
     EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);

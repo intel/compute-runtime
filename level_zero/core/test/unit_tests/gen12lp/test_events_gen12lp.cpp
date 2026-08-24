@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ namespace L0 {
 namespace ult {
 
 using TimestampEvent = Test<EventFixture<1, 1>>;
-using TimestampUsedPacketSignalEvent = Test<EventUsedPacketSignalFixture<1, 1, 0, -1>>;
+using TimestampUsedPacketSignalEvent = Test<EventCompactL3FlushFixture<1, 1, -1>>;
 
 GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
     typename MockTimestampPackets32::Packet data = {};

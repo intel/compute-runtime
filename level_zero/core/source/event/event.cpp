@@ -225,19 +225,12 @@ ze_result_t EventPool::getFlags(ze_event_pool_flags_t *pFlags) {
 
 void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandle &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
 
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
 
     setEventAlignment(static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
 
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    bool useDynamicEventPackets = l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo);
-    eventPackets = EventPacketsCount::eventPackets;
-    maxKernelCount = EventPacketsCount::maxKernelSplit;
-    if (useDynamicEventPackets) {
-        eventPackets = driver.getEventMaxPacketCount(numDevices, deviceHandles);
-        maxKernelCount = driver.getEventMaxKernelCount(numDevices, deviceHandles);
-    }
+    eventPackets = driver.getEventMaxPacketCount(numDevices, deviceHandles);
+    maxKernelCount = 1;
 
     auto eventSize = eventPackets * gfxCoreHelper.getSingleTimestampPacketSize();
     if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
@@ -339,7 +332,7 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
         .eventPoolAllocation = nullptr,
         .extensions = counterBasedEventDesc->pNext,
         .totalEventSize = 0,
-        .maxKernelCount = device->getEventMaxKernelCount(),
+        .maxKernelCount = 1,
         .maxPacketsCount = 1,
         .counterBasedFlags = inputCbFlags,
         .index = 0,
@@ -615,7 +608,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
         .eventPoolAllocation = nullptr,
         .extensions = nullptr,
         .totalEventSize = 0,
-        .maxKernelCount = device->getEventMaxKernelCount(),
+        .maxKernelCount = 1,
         .maxPacketsCount = 1,
         .counterBasedFlags = ipcData.counterBasedFlags,
         .index = 0,

@@ -478,13 +478,6 @@ void AppendFillFixture::tearDown() {
     delete[] dstPtr;
 }
 
-void CommandListEventUsedPacketSignalFixture::setUp() {
-    NEO::debugManager.flags.SignalAllEventPackets.set(0);
-    NEO::debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
-
-    CommandListFixture::setUp();
-}
-
 void CommandListSecondaryBatchBufferFixture::setUp() {
     NEO::debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 

@@ -296,12 +296,6 @@ struct TestExpectedValues {
     bool workloadPartition = false;
 };
 
-struct CommandListEventUsedPacketSignalFixture : public CommandListFixture {
-    void setUp();
-
-    DebugManagerStateRestore restorer;
-};
-
 struct CommandListSecondaryBatchBufferFixture : public CommandListFixture {
     void setUp();
 

@@ -340,7 +340,6 @@ struct AppendKernelTestInput {
 template <uint32_t multiTile>
 struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFixture {
     void setUp() {
-        debugManager.flags.SignalAllEventPackets.set(0);
         if constexpr (multiTile == 1) {
             debugManager.flags.CreateMultipleSubDevices.set(2);
             debugManager.flags.EnableImplicitScaling.set(1);
@@ -521,16 +520,11 @@ HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
 }
 
 template <uint32_t multiTile, uint32_t limitEventPacketes, uint32_t copyOnly>
-struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
+struct CommandListCompactL3FlushEventPacketFixture : public ModuleFixture {
     void setUp() {
-        NEO::debugManager.flags.UseDynamicEventPacketsCount.set(1);
-        NEO::debugManager.flags.SignalAllEventPackets.set(1);
-
         if constexpr (limitEventPacketes == 1) {
-            NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(1);
             NEO::debugManager.flags.CompactL3FlushEventPacket.set(1);
         } else {
-            NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
             NEO::debugManager.flags.CompactL3FlushEventPacket.set(0);
         }
         if constexpr (multiTile == 1) {
@@ -1219,7 +1213,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
     bool alignEventPacketsForReset = true;
 };
 
-using CommandListSignalAllEventPacketTest = Test<CommandListSignalAllEventPacketFixture<0, 0, 0>>;
+using CommandListSignalAllEventPacketTest = Test<CommandListCompactL3FlushEventPacketFixture<0, 0, 0>>;
 HWTEST2_F(CommandListSignalAllEventPacketTest, givenSignalPacketsTimestampEventWhenAppendKernelThenAllPacketCompletionDispatched, IsAtLeastXeCore) {
     testAppendKernel<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1264,7 +1258,7 @@ HWTEST2_F(CommandListSignalAllEventPacketTest, givenSignalPacketsImmediateEventW
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using MultiTileCommandListSignalAllEventPacketTest = Test<CommandListSignalAllEventPacketFixture<1, 0, 0>>;
+using MultiTileCommandListSignalAllEventPacketTest = Test<CommandListCompactL3FlushEventPacketFixture<1, 0, 0>>;
 HWTEST2_F(MultiTileCommandListSignalAllEventPacketTest, givenSignalPacketsTimestampEventWhenAppendKernelThenAllPacketCompletionDispatched, IsAtLeastXeCore) {
     testAppendKernel<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1337,7 +1331,7 @@ HWTEST2_F(MultiTileCommandListSignalAllEventPacketTest, givenSignalPacketsImmedi
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using CommandListSignalAllEventPacketForCompactEventTest = Test<CommandListSignalAllEventPacketFixture<0, 1, 0>>;
+using CommandListSignalAllEventPacketForCompactEventTest = Test<CommandListCompactL3FlushEventPacketFixture<0, 1, 0>>;
 HWTEST2_F(CommandListSignalAllEventPacketForCompactEventTest, givenSignalPacketsTimestampEventWhenAppendKernelThenAllPacketCompletionDispatchNotNeeded, IsAtLeastXeCore) {
     testAppendKernel<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1382,7 +1376,7 @@ HWTEST2_F(CommandListSignalAllEventPacketForCompactEventTest, givenSignalPackets
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using MultiTileCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListSignalAllEventPacketFixture<1, 1, 0>>;
+using MultiTileCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListCompactL3FlushEventPacketFixture<1, 1, 0>>;
 HWTEST2_F(MultiTileCommandListSignalAllEventPacketForCompactEventTest, givenSignalPacketsTimestampEventWhenAppendKernelThenAllPacketCompletionDispatchNotNeeded, IsAtLeastXeCore) {
     testAppendKernel<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1439,7 +1433,7 @@ HWTEST2_F(MultiTileCommandListSignalAllEventPacketForCompactEventTest, givenSign
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using CopyCommandListSignalAllEventPacketTest = Test<CommandListSignalAllEventPacketFixture<0, 0, 1>>;
+using CopyCommandListSignalAllEventPacketTest = Test<CommandListCompactL3FlushEventPacketFixture<0, 0, 1>>;
 HWTEST2_F(CopyCommandListSignalAllEventPacketTest, givenSignalPacketsTimestampEventWhenAppendSignalEventThenAllPacketCompletionDispatched, IsAtLeastXeCore) {
     testAppendSignalEvent<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1464,7 +1458,7 @@ HWTEST2_F(CopyCommandListSignalAllEventPacketTest, givenSignalPacketsImmediateEv
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using MultiTileCopyCommandListSignalAllEventPacketTest = Test<CommandListSignalAllEventPacketFixture<1, 0, 1>>;
+using MultiTileCopyCommandListSignalAllEventPacketTest = Test<CommandListCompactL3FlushEventPacketFixture<1, 0, 1>>;
 HWTEST2_F(MultiTileCopyCommandListSignalAllEventPacketTest, givenSignalPacketsTimestampEventWhenAppendSignalEventThenAllPacketCompletionDispatched, IsAtLeastXeCore) {
     testAppendSignalEvent<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1489,7 +1483,7 @@ HWTEST2_F(MultiTileCopyCommandListSignalAllEventPacketTest, givenSignalPacketsIm
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using CopyCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListSignalAllEventPacketFixture<0, 1, 1>>;
+using CopyCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListCompactL3FlushEventPacketFixture<0, 1, 1>>;
 HWTEST2_F(CopyCommandListSignalAllEventPacketForCompactEventTest, givenSignalPacketsTimestampEventWhenAppendSignalEventThenAllPacketCompletionDispatchNotNeeded, IsAtLeastXeCore) {
     testAppendSignalEvent<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1514,7 +1508,7 @@ HWTEST2_F(CopyCommandListSignalAllEventPacketForCompactEventTest, givenSignalPac
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using MultiTileCopyCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListSignalAllEventPacketFixture<1, 1, 1>>;
+using MultiTileCopyCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListCompactL3FlushEventPacketFixture<1, 1, 1>>;
 HWTEST2_F(MultiTileCopyCommandListSignalAllEventPacketForCompactEventTest, givenSignalPacketsTimestampEventWhenAppendSignalEventThenAllPacketCompletionDispatchNotNeeded, IsAtLeastXeCore) {
     testAppendSignalEvent<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }

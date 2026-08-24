@@ -59,7 +59,6 @@ struct Mock<DriverHandle> : public DriverHandle {
     ADDMETHOD_NOBASE(findHostPointerAllocation, NEO::GraphicsAllocation *, nullptr, (void *ptr, size_t size, uint32_t rootDeviceIndex))
     ADDMETHOD_NOBASE(importFdHandle, void *, nullptr, (NEO::Device * neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset))
     ADDMETHOD_CONST_NOBASE(getEventMaxPacketCount, uint32_t, 8, (uint32_t, ze_device_handle_t *))
-    ADDMETHOD_CONST_NOBASE(getEventMaxKernelCount, uint32_t, 3, (uint32_t, ze_device_handle_t *))
 
     void setupDevices(std::vector<std::unique_ptr<NEO::Device>> devices);
 

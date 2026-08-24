@@ -22,7 +22,7 @@ namespace L0 {
 namespace ult {
 
 using CommandListAppendEventReset = Test<CommandListFixture>;
-using CommandListAppendUsedPacketSignalEvent = Test<CommandListEventUsedPacketSignalFixture>;
+using CommandListAppendUsedPacketSignalEvent = Test<CommandListSecondaryBatchBufferFixture>;
 using CommandListAppendEventResetSecondaryBatchBuffer = Test<CommandListSecondaryBatchBufferFixture>;
 
 HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenStoreDataImmIsGenerated) {
@@ -86,13 +86,9 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
     ASSERT_NE(0u, itorPC.size());
     auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
-    auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    uint32_t maxPackets = EventPacketsCount::eventPackets;
-    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
-    }
+    uint32_t maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
 
     auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
 
@@ -265,7 +261,6 @@ HWTEST_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInResetT
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->getCmdContainer();
 
-    auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -287,10 +282,7 @@ HWTEST_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInResetT
     auto baseAddr = event->getGpuAddress(device);
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
 
-    uint32_t maxPackets = EventPacketsCount::eventPackets;
-    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
-    }
+    uint32_t maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     gpuAddress += ((maxPackets - 1) * event->getSinglePacketSize());
 
     GenCmdList cmdList;
@@ -381,6 +373,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
+    event->maxPacketCount = packets;
     returnValue = commandList->appendEventReset(event->toHandle());
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, event->getPacketsInUse());
@@ -446,6 +439,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     constexpr uint32_t packets = 2u;
+    event->maxPacketCount = packets;
     event->setPacketsInUse(packets);
 
     size_t usedBeforeSize = cmdStream->getUsed();

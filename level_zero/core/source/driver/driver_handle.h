@@ -128,7 +128,6 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     ze_result_t fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA, ze_fabric_vertex_handle_t hVertexB,
                                  uint32_t *pCount, ze_fabric_edge_handle_t *phEdges);
     MOCKABLE_VIRTUAL uint32_t getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const;
-    MOCKABLE_VIRTUAL uint32_t getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const;
 
     MOCKABLE_VIRTUAL ze_result_t loadRTASLibrary();
     MOCKABLE_VIRTUAL ze_result_t createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc, ze_rtas_builder_exp_handle_t *phBuilder);

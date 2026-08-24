@@ -311,7 +311,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (inOrderExecSignalRequired) {
             if (inOrderNonWalkerSignalling) {
                 if (!event->isCounterBased()) {
-                    dispatchEventPostSyncOperation(event, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
+                    dispatchEventPostSyncOperation(event, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false);
                 }
             } else {
                 if (!skipWalkerPostSync) {
