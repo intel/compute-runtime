@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -17,6 +18,92 @@ namespace L0 {
 namespace ult {
 
 using MutableCommandListPostSyncL3FlushTest = Test<MutableCommandListFixture<true, true>>;
+
+HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
+          givenHostVisibleEventAndSystemSharedBufferArgWhenArgIsMutatedThenL2TransientFlushIsUpdated,
+          IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DisableSystemPointerKernelArgument.set(0);
+    NEO::debugManager.flags.EnableRecoverablePageFaults.set(1);
+    NEO::debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access;
+    mutableCommandList = createMutableCmdList();
+    ASSERT_TRUE(mutableCommandList->getBase()->areSharedSystemAllocationsAllowed());
+    sharedSystemMemCapabilities = 0u;
+    ASSERT_FALSE(neoDevice->areSharedSystemAllocationsAllowed());
+    ASSERT_TRUE(mutableCommandList->getBase()->areSharedSystemAllocationsAllowed());
+
+    auto *event = createTestEvent(true, true, false, false, false);
+    ASSERT_NE(nullptr, event);
+
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+
+    void *systemShared = reinterpret_cast<void *>(0x12340000);
+    void *deviceUsm = allocateDeviceUsm(4096);
+    ASSERT_NE(nullptr, deviceUsm);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &systemShared));
+    ASSERT_EQ(nullptr, kernel->getArgumentsResidencyContainer()[0]);
+    ASSERT_EQ(systemShared, kernel->getKernelArgInfos()[0].value);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
+
+    if (this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    }
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
+
+    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    argDesc.commandId = commandId;
+    argDesc.argIndex = 0;
+    argDesc.argSize = sizeof(void *);
+    argDesc.pArgValue = &deviceUsm;
+    mutableCommandsDesc.pNext = &argDesc;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
+
+    argDesc.pArgValue = &systemShared;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+    if (this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    }
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
+
+    argDesc.pArgValue = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
+
+    argDesc.pArgValue = &systemShared;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+    if (this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    }
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
+}
 
 HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
           givenHostVisibleEventWhenLastHostBufferArgMutatedToDeviceThenL2TransientFlushIsCleared,

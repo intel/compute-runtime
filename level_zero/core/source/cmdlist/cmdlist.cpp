@@ -39,6 +39,33 @@ namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {}
 
+bool CommandList::containsSystemAllocation(const NEO::ResidencyContainer &residencyContainer) {
+    for (const auto allocation : residencyContainer) {
+        if (allocation != nullptr && isUsingSystemAllocation(allocation->getAllocationType())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CommandList::isKernelUsingSystemMemory(const KernelImp &kernel, bool sharedSystemAllocationsAllowed) {
+    const auto &argumentsResidencyContainer = kernel.getArgumentsResidencyContainer();
+
+    if (sharedSystemAllocationsAllowed) {
+        const auto &kernelArgInfos = kernel.getKernelArgInfos();
+        for (size_t index = 0; index < argumentsResidencyContainer.size(); index++) {
+            const auto argValue = index < kernelArgInfos.size() ? kernelArgInfos[index].value : nullptr;
+            if (isUsingSystemMemory(argValue, argumentsResidencyContainer[index], true)) {
+                return true;
+            }
+        }
+    } else if (containsSystemAllocation(argumentsResidencyContainer)) {
+        return true;
+    }
+
+    return containsSystemAllocation(kernel.getInternalResidencyContainer());
+}
+
 CommandList::~CommandList() {
     if (cmdQImmediate) {
         cmdQImmediate->destroy();

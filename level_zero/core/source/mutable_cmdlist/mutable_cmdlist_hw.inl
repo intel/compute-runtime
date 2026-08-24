@@ -415,7 +415,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
                         if (trackL3FlushAfterPostSync) {
 
-                            if (varDescriptor.bufferAlloc != nullptr && this->isUsingSystemAllocation(varDescriptor.bufferAlloc->getAllocationType())) {
+                            if (CommandList::isUsingSystemMemory(varDescriptor.argValue, varDescriptor.bufferAlloc, this->sharedSystemAllocationsAllowed)) {
                                 ++systemMemoryAllocsCount;
                             }
                             if (varDescriptor.bufferAlloc != nullptr && varDescriptor.bufferAlloc->getIsImported()) {

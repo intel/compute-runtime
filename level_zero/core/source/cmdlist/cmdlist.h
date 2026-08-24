@@ -62,6 +62,7 @@ struct Device;
 struct EventPool;
 struct Event;
 struct Kernel;
+struct KernelImp;
 struct CommandListExecutionInternalOptions;
 struct CommandQueue;
 struct CmdListKernelLaunchParams;
@@ -95,6 +96,15 @@ struct CommandList : _ze_command_list_handle_t {
                 (allocType == NEO::AllocationType::svmZeroCopy) ||
                 (allocType == NEO::AllocationType::externalHostPtr));
     }
+
+    static bool containsSystemAllocation(const NEO::ResidencyContainer &residencyContainer);
+
+    static bool isUsingSystemMemory(const void *argValue, const NEO::GraphicsAllocation *allocation, bool sharedSystemAllocationsAllowed) {
+        return (allocation != nullptr && isUsingSystemAllocation(allocation->getAllocationType())) ||
+               (sharedSystemAllocationsAllowed && argValue != nullptr && allocation == nullptr);
+    }
+
+    static bool isKernelUsingSystemMemory(const KernelImp &kernel, bool sharedSystemAllocationsAllowed);
 
     CommandList() = delete;
     CommandList(uint32_t numIddsPerBlock);
@@ -517,6 +527,10 @@ struct CommandList : _ze_command_list_handle_t {
         return statelessBuiltinsEnabled;
     }
 
+    bool areSharedSystemAllocationsAllowed() const {
+        return sharedSystemAllocationsAllowed;
+    }
+
     bool isTextureCacheFlushPending() const {
         return textureCacheFlushPending;
     }
@@ -891,6 +905,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool statelessBuiltinsEnabled = false;
     bool l3FlushAfterPostSyncEnabled = false;
     bool systemMemoryFenceInPostSyncRequired = false;
+    bool sharedSystemAllocationsAllowed = false;
     bool textureCacheFlushPending = false;
     bool closedCmdList = false;
     bool isWalkerWithProfilingEnqueued = false;

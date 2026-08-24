@@ -214,8 +214,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (!launchParams.isBuiltInKernel) {
         if (!launchParams.makeKernelCommandView) {
             if (systemAllocationScanRequired) {
-                isKernelUsingSystemAllocation = this->containsSystemAllocation(kernel->getArgumentsResidencyContainer()) ||
-                                                this->containsSystemAllocation(kernel->getInternalResidencyContainer());
+                isKernelUsingSystemAllocation = CommandList::isKernelUsingSystemMemory(*kernelImp, this->sharedSystemAllocationsAllowed);
             }
             if (externalAllocationScanRequired) {
                 isKernelUsingExternalAllocation = this->containsExternalAllocation(kernel->getArgumentsResidencyContainer());

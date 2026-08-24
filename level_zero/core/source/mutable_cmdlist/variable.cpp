@@ -405,6 +405,7 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
                  desc.allocIdMemoryManagerCounter);
 
     auto oldBufferAlloc = desc.bufferAlloc;
+    auto oldArgValue = desc.argValue;
     GpuAddress gpuAddress = 0u;
     NEO::GraphicsAllocation *newBufferAlloc = nullptr;
     uint32_t newAllocId = undefined<uint32_t>;
@@ -454,7 +455,7 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel argument variable %p buffer gpuva %" PRIx64 " arg value %p from allocation %p alloc id %u alloc id from manager %u\n",
                  this, gpuAddress, argValue, newBufferAlloc, newAllocId, newAllocIdMemoryManagerCounter);
 
-    this->handleBufferTypeChange(oldBufferAlloc, newBufferAlloc);
+    this->handleBufferTypeChange(oldArgValue, oldBufferAlloc, argValue, newBufferAlloc);
 
     if (bufferUsages.statelessWithoutOffset.size() > 0) {
         for (const auto statelessPatch : bufferUsages.statelessWithoutOffset) {
@@ -489,14 +490,16 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
     return ZE_RESULT_SUCCESS;
 }
 
-void Variable::handleBufferTypeChange(NEO::GraphicsAllocation *oldAllocation, NEO::GraphicsAllocation *newAllocation) {
+void Variable::handleBufferTypeChange(const void *oldArgValue, NEO::GraphicsAllocation *oldAllocation,
+                                      const void *newArgValue, NEO::GraphicsAllocation *newAllocation) {
 
     if (usedInDispatch.empty()) {
         return;
     }
 
-    bool isOldAllocSystemMemory = oldAllocation != nullptr && L0::CommandList::isUsingSystemAllocation(oldAllocation->getAllocationType());
-    bool isNewAllocSystemMemory = newAllocation != nullptr && L0::CommandList::isUsingSystemAllocation(newAllocation->getAllocationType());
+    const bool sharedSystemAllocationsAllowed = cmdList->getBase()->areSharedSystemAllocationsAllowed();
+    bool isOldAllocSystemMemory = L0::CommandList::isUsingSystemMemory(oldArgValue, oldAllocation, sharedSystemAllocationsAllowed);
+    bool isNewAllocSystemMemory = L0::CommandList::isUsingSystemMemory(newArgValue, newAllocation, sharedSystemAllocationsAllowed);
 
     bool isOldAllocImported = oldAllocation != nullptr && oldAllocation->getIsImported();
     bool isNewAllocImported = newAllocation != nullptr && newAllocation->getIsImported();
