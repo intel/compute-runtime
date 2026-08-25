@@ -36,6 +36,7 @@
 #include "aubstream/stepping_values.h"
 #include "ocl_igc_shared/indirect_access_detection/version.h"
 
+#include <algorithm>
 #include <bitset>
 
 namespace NEO {
@@ -569,6 +570,14 @@ bool ProductHelperHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo
         return !!debugManager.flags.EnableMemoryPrefetch.get();
     }
     return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const {
+    constexpr size_t defaultLimitValue = MemoryConstants::kiloByte;
+
+    uint32_t limitValue = debugManager.flags.LimitIsaPrefetchSize.getIfNotDefault(static_cast<uint32_t>(defaultLimitValue));
+    return std::min(isaSize, limitValue);
 }
 
 template <PRODUCT_FAMILY gfxProduct>

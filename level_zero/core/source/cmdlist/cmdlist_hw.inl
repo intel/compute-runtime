@@ -455,8 +455,7 @@ void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStrea
 
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *iohAllocation, kernel.getIndirectSize(), iohOffset, rootExecEnv);
 
-    auto isaPrefetchSizeLimit = CommandList::getLimitIsaPrefetchSize();
-    auto isaSizeToPrefetch = std::min(kernel.getImmutableData()->getIsaSize(), isaPrefetchSizeLimit);
+    auto isaSizeToPrefetch = rootExecEnv.getHelper<NEO::ProductHelper>().getIsaPrefetchSize(kernel.getImmutableData()->getIsaSize());
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel.getIsaAllocation(), isaSizeToPrefetch, kernel.getIsaOffsetInParentAllocation(), rootExecEnv);
 
     auto cmdStreamSizeConsumed = cmdStream.getUsed() - cmdStreamOffset;

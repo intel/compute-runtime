@@ -1427,3 +1427,23 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingIsRayTracingWalkerAdjus
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned, IsNotLeoSupported) {
     EXPECT_FALSE(productHelper->isLEOSupported());
 }
+
+HWTEST_F(ProductHelperTest, givenIsaSizeExceedingDefaultLimitWhenGettingIsaPrefetchSizeThenDefaultLimitIsReturned) {
+    constexpr uint32_t isaSize = 4 * MemoryConstants::kiloByte;
+
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(isaSize));
+}
+
+HWTEST_F(ProductHelperTest, givenIsaSizeSmallerThanDefaultLimitWhenGettingIsaPrefetchSizeThenIsaSizeIsReturned) {
+    constexpr uint32_t isaSize = MemoryConstants::kiloByte / 2;
+
+    EXPECT_EQ(isaSize, productHelper->getIsaPrefetchSize(isaSize));
+}
+
+HWTEST_F(ProductHelperTest, givenLimitIsaPrefetchSizeDebugFlagSetWhenGettingIsaPrefetchSizeThenDebugFlagValueLimitsIsaSize) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.LimitIsaPrefetchSize.set(2 * MemoryConstants::kiloByte);
+
+    EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte)));
+}

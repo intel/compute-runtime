@@ -14,6 +14,7 @@
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -695,8 +696,7 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
-    uint32_t isaPrefetchSizeLimit = L0::CommandList::getLimitIsaPrefetchSize();
-    auto groupMaxIsaSizeToPrefetch = std::min(mutation.kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
+    auto groupMaxIsaSizeToPrefetch = this->device->getProductHelper().getIsaPrefetchSize(mutation.kernelGroup->getMaxIsaSize());
 
     auto expectedMaxSize =
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(),
@@ -783,8 +783,7 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
-    uint32_t isaPrefetchSizeLimit = L0::CommandList::getLimitIsaPrefetchSize();
-    auto groupMaxIsaSizeToPrefetch = std::min(mutation.kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
+    auto groupMaxIsaSizeToPrefetch = this->device->getProductHelper().getIsaPrefetchSize(mutation.kernelGroup->getMaxIsaSize());
 
     auto expectedMaxSize =
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(),
@@ -868,8 +867,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto &prefetchCmdToPatch = mutation.kernelGroup->getPrefetchCmd();
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
-    uint32_t isaPrefetchSizeLimit = L0::CommandList::getLimitIsaPrefetchSize();
-    auto groupMaxIsaSizeToPrefetch = std::min(mutation.kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
+    auto groupMaxIsaSizeToPrefetch = this->device->getProductHelper().getIsaPrefetchSize(mutation.kernelGroup->getMaxIsaSize());
 
     auto expectedMaxSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(), this->device->getNEODevice()->getRootDeviceEnvironment()) +
                            NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch, this->device->getNEODevice()->getRootDeviceEnvironment());

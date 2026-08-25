@@ -106,6 +106,7 @@ class ProductHelperHw : public ProductHelper {
     BcsSplitSettings getBcsSplitSettings(const HardwareInfo &hwInfo) const override;
     bool isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const override;
     bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const override;
+    uint32_t getIsaPrefetchSize(uint32_t isaSize) const override;
     bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const override;
     bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const override;
     bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const override;

@@ -170,6 +170,7 @@ class ProductHelper {
     virtual bool isTimestampWaitSupportedForEvents() const = 0;
     virtual bool isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getIsaPrefetchSize(uint32_t isaSize) const = 0;
     virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual BcsSplitSettings getBcsSplitSettings(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const = 0;

@@ -12,6 +12,7 @@
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
@@ -73,8 +74,7 @@ size_t MutableCommandListCoreFamily<gfxCoreFamily>::ensureCmdBufferSpaceForPrefe
         return 0;
     }
 
-    uint32_t isaPrefetchSizeLimit = CommandList::getLimitIsaPrefetchSize();
-    auto groupMaxIsaSizeToPrefetch = std::min(kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
+    auto groupMaxIsaSizeToPrefetch = this->device->getProductHelper().getIsaPrefetchSize(kernelGroup->getMaxIsaSize());
 
     auto expectedSize = NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(kernelGroup->getMaxAppendIndirectHeapSize(), this->device->getNEODevice()->getRootDeviceEnvironment()) +
                         NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch, this->device->getNEODevice()->getRootDeviceEnvironment());
