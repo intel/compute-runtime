@@ -216,17 +216,14 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
         constexpr uint64_t telemOffset = 0;
         std::string_view validOobmsmGuid = "";
         std::string_view validPunitGuid = "";
-        size_t xtalReturnCount = 0;
         ssize_t ret = count;
 
         if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
             validOobmsmGuid = "0x5e2f8211";
             validPunitGuid = "0x1e2f8200";
-            xtalReturnCount = sizeof(uint64_t);
         } else if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
             validOobmsmGuid = "0x5e2fa230";
             validPunitGuid = "0x1e2fa030";
-            xtalReturnCount = sizeof(uint32_t);
         }
 
         if (fd == 4) {
@@ -271,7 +268,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
                     errno = ENOENT;
                     ret = -1;
                 } else {
-                    ret = static_cast<ssize_t>(xtalReturnCount);
+                    ret = sizeof(uint64_t); // XTAL_COUNT is read as a 64 bit value
                 }
                 break;
             default:
@@ -373,17 +370,14 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
         constexpr uint32_t mockEnergyCounter = 0xabcd;
         constexpr uint32_t mockMemoryEnergyCounter = 0x12345678; // Non-zero upper and lower 16 bits for memory domain
         constexpr uint32_t mockXtalFrequency = 0xef;
-        constexpr uint64_t mockTimestamp = 0xabef;
-        size_t xtalReturnCount = 0;
+        constexpr uint64_t mockTimestamp = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
 
         if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
             validOobmsmGuid = "0x5e2f8211";
             validPunitGuid = "0x1e2f8200";
-            xtalReturnCount = sizeof(uint64_t);
         } else if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
             validOobmsmGuid = "0x5e2fa230";
             validPunitGuid = "0x1e2fa030";
-            xtalReturnCount = sizeof(uint32_t);
         }
 
         if (fd == 4) {
@@ -407,7 +401,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
                 memcpy(buf, &mockXtalFrequency, count);
                 break;
             case 1024:
-                memcpy(buf, &mockTimestamp, xtalReturnCount);
+                memcpy(buf, &mockTimestamp, count);
                 break;
             case 44:
             case 48:
@@ -429,7 +423,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     constexpr uint32_t mockEnergyCounter = 0xabcd;
     constexpr uint32_t mockMemoryEnergyCounter = 0x12345678; // Non-zero upper and lower 16 bits for memory domain
     constexpr uint32_t mockXtalFrequency = 0xef;
-    constexpr uint64_t mockTimestamp = 0xabef;
+    constexpr uint64_t mockTimestamp = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
     constexpr double indexToXtalClockFrequencyMap[4] = {24, 19.2, 38.4, 25};
 
     auto handles = getPowerHandles();

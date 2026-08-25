@@ -422,7 +422,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     pEnergy->energy = static_cast<uint64_t>(energyInJoules * microFactor);
 
     // Timestamp calculation
-    uint32_t timestampValue = 0;
+    uint64_t timestampValue = 0;
     key = "XTAL_COUNT";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestampValue);
     if (result != ZE_RESULT_SUCCESS) {
