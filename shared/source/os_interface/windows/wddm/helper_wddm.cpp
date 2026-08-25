@@ -19,7 +19,7 @@ NTSTATUS Wddm::createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHan
     OBJECT_ATTRIBUTES objAttr = {};
     objAttr.Length = sizeof(OBJECT_ATTRIBUTES);
 
-    return getGdi()->shareObjects(1, resourceHandle, &objAttr, SHARED_ALLOCATION_WRITE, ntHandle);
+    return getGdi()->shareObjects(1, resourceHandle, &objAttr, SHARED_ALLOCATION_ALL_ACCESS, ntHandle);
 }
 
 bool Wddm::getReadOnlyFlagValue(const void *cpuPtr) const {

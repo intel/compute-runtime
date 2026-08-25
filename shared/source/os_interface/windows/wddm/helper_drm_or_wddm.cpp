@@ -11,7 +11,7 @@
 
 namespace NEO {
 NTSTATUS Wddm::createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle) {
-    return getGdi()->shareObjects(1, resourceHandle, nullptr, SHARED_ALLOCATION_WRITE, ntHandle);
+    return getGdi()->shareObjects(1, resourceHandle, nullptr, SHARED_ALLOCATION_ALL_ACCESS, ntHandle);
 }
 bool Wddm::getReadOnlyFlagValue(const void *cpuPtr) const {
     return false;

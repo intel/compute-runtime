@@ -1441,4 +1441,87 @@ TEST_F(WddmCreateAllocationNTHandleTests, givenCreateNTHandleSucceedsThenSharedH
     EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, resourceHandle));
 }
 
+namespace {
+struct ShareObjectsCapture {
+    static NTSTATUS APIENTRY shareObjects(UINT cObjects, const D3DKMT_HANDLE *hObjects,
+                                          POBJECT_ATTRIBUTES pObjectAttributes, DWORD dwDesiredAccess,
+                                          HANDLE *phSharedNtHandle) {
+        callCount++;
+        lastObjectCount = cObjects;
+        lastResourceHandle = hObjects ? *hObjects : 0u;
+        lastObjectAttributes = pObjectAttributes;
+        lastDesiredAccess = dwDesiredAccess;
+        *phSharedNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x1234u));
+        return returnValue;
+    }
+
+    static void reset() {
+        callCount = 0u;
+        lastObjectCount = 0u;
+        lastResourceHandle = 0u;
+        lastObjectAttributes = nullptr;
+        lastDesiredAccess = 0u;
+        returnValue = STATUS_SUCCESS;
+    }
+
+    inline static uint32_t callCount = 0u;
+    inline static UINT lastObjectCount = 0u;
+    inline static D3DKMT_HANDLE lastResourceHandle = 0u;
+    inline static POBJECT_ATTRIBUTES lastObjectAttributes = nullptr;
+    inline static DWORD lastDesiredAccess = 0u;
+    inline static NTSTATUS returnValue = STATUS_SUCCESS;
+};
+
+constexpr DWORD expectedSharedResourceAccess = 0x000F0001u;
+} // namespace
+
+using WddmCreateNTHandleAccessTests = WddmTestWithMockGdiDll;
+
+TEST_F(WddmCreateNTHandleAccessTests, givenResourceHandleWhenCreatingNTHandleThenResourceIsSharedWithReadAndWriteAccess) {
+    ShareObjectsCapture::reset();
+    VariableBackup<decltype(wddm->getGdi()->shareObjects)> shareObjectsBackup(&wddm->getGdi()->shareObjects,
+                                                                              ShareObjectsCapture::shareObjects);
+
+    D3DKMT_HANDLE resourceHandle = 0x40u;
+    HANDLE ntHandle = nullptr;
+
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createNTHandle(&resourceHandle, &ntHandle));
+
+    EXPECT_EQ(1u, ShareObjectsCapture::callCount);
+    EXPECT_EQ(1u, ShareObjectsCapture::lastObjectCount);
+    EXPECT_EQ(resourceHandle, ShareObjectsCapture::lastResourceHandle);
+    EXPECT_EQ(expectedSharedResourceAccess, ShareObjectsCapture::lastDesiredAccess);
+    EXPECT_EQ(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x1234u)), ntHandle);
+}
+
+TEST_F(WddmCreateNTHandleAccessTests, givenResourceHandleWhenCreatingNTHandleThenWriteOnlyAccessIsNotRequested) {
+    ShareObjectsCapture::reset();
+    VariableBackup<decltype(wddm->getGdi()->shareObjects)> shareObjectsBackup(&wddm->getGdi()->shareObjects,
+                                                                              ShareObjectsCapture::shareObjects);
+
+    D3DKMT_HANDLE resourceHandle = 0x40u;
+    HANDLE ntHandle = nullptr;
+
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createNTHandle(&resourceHandle, &ntHandle));
+
+    EXPECT_NE(static_cast<DWORD>(SHARED_ALLOCATION_WRITE), ShareObjectsCapture::lastDesiredAccess);
+    EXPECT_EQ(static_cast<DWORD>(SHARED_ALLOCATION_WRITE),
+              ShareObjectsCapture::lastDesiredAccess & static_cast<DWORD>(SHARED_ALLOCATION_WRITE));
+    EXPECT_NE(0u, ShareObjectsCapture::lastDesiredAccess & 0x00020000u);
+}
+
+TEST_F(WddmCreateNTHandleAccessTests, givenShareObjectsFailureWhenCreatingNTHandleThenStatusIsPropagated) {
+    ShareObjectsCapture::reset();
+    ShareObjectsCapture::returnValue = STATUS_UNSUCCESSFUL;
+    VariableBackup<decltype(wddm->getGdi()->shareObjects)> shareObjectsBackup(&wddm->getGdi()->shareObjects,
+                                                                              ShareObjectsCapture::shareObjects);
+
+    D3DKMT_HANDLE resourceHandle = 0x40u;
+    HANDLE ntHandle = nullptr;
+
+    EXPECT_EQ(STATUS_UNSUCCESSFUL, wddm->createNTHandle(&resourceHandle, &ntHandle));
+    EXPECT_EQ(1u, ShareObjectsCapture::callCount);
+    EXPECT_EQ(expectedSharedResourceAccess, ShareObjectsCapture::lastDesiredAccess);
+}
+
 } // namespace NEO
