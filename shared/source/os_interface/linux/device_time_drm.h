@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ class DeviceTimeDrm : public DeviceTime {
     double getDynamicDeviceTimerResolution() const override;
     uint64_t getDynamicDeviceTimerClock() const override;
     bool isTimestampsRefreshEnabled() const override;
+    volatile uint64_t *getTimestampPtr() override;
 
   protected:
     Drm *pDrm = nullptr;

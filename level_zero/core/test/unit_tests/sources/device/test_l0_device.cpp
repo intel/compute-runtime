@@ -38,6 +38,7 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -1967,6 +1968,26 @@ TEST_F(GetGlobalTimestampTest, whenTbxModeThenSetGlobalTimestampViaSubmission) {
     EXPECT_NE(0u, hostTs);
     EXPECT_NE(0u, deviceTs);
     EXPECT_TRUE(mockCommandList->isAppendWriteGlobalTimestampCalled);
+}
+
+TEST_F(GetGlobalTimestampTest, givenTbxModeAndTimestampPtrWhenGettingGlobalTimestampThenOsInterfaceIsUsed) {
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
+    uint64_t timestampValue = 0x500001234u;
+
+    auto osTime = std::make_unique<NEO::MockOSTime>();
+    osTime->deviceTime->timestampPtr = &timestampValue;
+
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.osTime = std::move(osTime);
+
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(NEO::CommandStreamReceiverType::tbx));
+
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0x500001234u, deviceTs);
+    EXPECT_FALSE(mockCommandList->isAppendWriteGlobalTimestampCalled);
 }
 
 TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithOsInterfaceThenSuccessIsReturnedAndValuesSetCorrectly) {

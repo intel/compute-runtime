@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
@@ -449,4 +450,56 @@ TEST_F(DrmTimeTest, givenReusingTimestampsDisabledWhenGetGpuCpuTimeThenAlwaysCal
 
     osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
+}
+
+TEST_F(DrmTimeTest, givenNoKmdSupportWhenInitializingTimestampPtrThenItIsNotAvailable) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableTimestampMmioRead.set(1);
+
+    auto drm = static_cast<DrmMockTime *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+
+    osTime->initTimestampPtr();
+    EXPECT_TRUE(mockIoctlHelper->getTimestampPtrCalled);
+    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+}
+
+TEST_F(DrmTimeTest, givenTimestampPtrWhenGettingGpuCpuTimeThenKmdIsNotCalled) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableTimestampMmioRead.set(1);
+
+    uint64_t timestampValue = 0x200000100u;
+    auto drm = static_cast<DrmMockTime *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    mockIoctlHelper->timestampPtrReturnValue = &timestampValue;
+    drm->ioctlHelper.reset(mockIoctlHelper);
+
+    osTime->initTimestampPtr();
+    EXPECT_TRUE(osTime->isTimestampPtrAvailable());
+
+    deviceTime->callBaseGetGpuCpuTimeImpl = false;
+    TimeStampData gpuCpuTime{};
+    EXPECT_EQ(TimeQueryStatus::success, osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(0x200000100u, gpuCpuTime.gpuTimeStamp);
+    EXPECT_NE(0ull, gpuCpuTime.cpuTimeinNS);
+    EXPECT_EQ(0u, deviceTime->getGpuCpuTimeImplCalled);
+}
+
+TEST_F(DrmTimeTest, givenDebugKeyNotForcedWhenInitializingTimestampPtrThenKmdIsNotAsked) {
+    uint64_t timestampValue = 0x200000100u;
+    auto drm = static_cast<DrmMockTime *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    mockIoctlHelper->timestampPtrReturnValue = &timestampValue;
+    drm->ioctlHelper.reset(mockIoctlHelper);
+
+    osTime->initTimestampPtr();
+    EXPECT_FALSE(mockIoctlHelper->getTimestampPtrCalled);
+    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableTimestampMmioRead.set(0);
+    osTime->initTimestampPtr();
+    EXPECT_FALSE(mockIoctlHelper->getTimestampPtrCalled);
+    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
 }

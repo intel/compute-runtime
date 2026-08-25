@@ -100,5 +100,12 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         pciBarrierMmapCalled = true;
         return pciBarrierMmapReturnValue;
     }
+
+    void *timestampPtrReturnValue = nullptr;
+    bool getTimestampPtrCalled = false;
+    void *getTimestampPtr() override {
+        getTimestampPtrCalled = true;
+        return timestampPtrReturnValue;
+    }
 };
 } // namespace NEO

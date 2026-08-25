@@ -224,6 +224,7 @@ class IoctlHelper {
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool requiresUserFenceSetup(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
+    virtual void *getTimestampPtr() { return nullptr; };
     void setupIpVersion();
     virtual bool isImmediateVmBindRequired() const { return false; }
 

@@ -145,6 +145,7 @@ void RootDeviceEnvironment::initGmm() {
 void RootDeviceEnvironment::initOsTime() {
     if (!osTime) {
         osTime = OSTime::create(osInterface.get());
+        osTime->initTimestampPtr();
         osTime->setDeviceTimerResolution();
     }
 }

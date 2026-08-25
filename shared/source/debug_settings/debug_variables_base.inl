@@ -451,6 +451,7 @@ DECLARE_DEBUG_VARIABLE(bool, WddmOnLinuxForceNoCpuAccessCachingFlagCleared, fals
 DECLARE_DEBUG_VARIABLE(bool, DisableNoVmOvercommitFlag, false, "Disable DRM_XE_VM_CREATE_NO_VM_OVERCOMMIT flag for XeKMD")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceNonCoherentModeForTimestamps, -1, "When active timestamp buffers are allocated in non coherent memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableReusingGpuTimestamps, -1, "Reuse GPU timestamp for next device time requests. -1: os-specific, 0: disable, 1: enable")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampMmioRead, -1, "Read GPU timestamp directly from mapped MMIO instead of calling KMD. -1: default (disabled), 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AllowZeroCopyWithoutCoherency, -1, "Use cacheline flush instead of memory copy for map/unmap mem object")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPtrTracking, -1, "Enable host ptr tracking: -1 - default platform setting, 0 - disabled, 1 - enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, MaxHwThreadsPercent, 0, "If not zero then maximum number of used HW threads is capped to max * MaxHwThreadsPercent / 100")

@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/device_time_wddm.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_ostime.h"
@@ -369,4 +370,48 @@ TEST_F(OSTimeWinTest, givenReusingTimestampsDisabledWhenGetGpuCpuTimeThenAlwaysC
 
     osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
+}
+
+TEST_F(OSTimeWinTest, givenNoKmdSupportWhenInitializingTimestampPtrThenItIsNotAvailable) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableTimestampMmioRead.set(1);
+
+    auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
+    osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
+
+    osTime->initTimestampPtr();
+    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+}
+
+TEST_F(OSTimeWinTest, givenTimestampPtrWhenGettingGpuCpuTimeThenValueIsReadFromPointer) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableTimestampMmioRead.set(1);
+
+    uint64_t timestampValue = 0x200000100u;
+    auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
+    wddm->timestampPtrResult = &timestampValue;
+    osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
+    osTime->setDeviceTimerResolution();
+
+    osTime->initTimestampPtr();
+    EXPECT_TRUE(osTime->isTimestampPtrAvailable());
+
+    TimeStampData gpuCpuTime{};
+    EXPECT_EQ(TimeQueryStatus::success, osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(0x200000100u, gpuCpuTime.gpuTimeStamp);
+}
+
+TEST_F(OSTimeWinTest, givenDebugKeyNotForcedWhenInitializingTimestampPtrThenKmdIsNotAsked) {
+    uint64_t timestampValue = 0x200000100u;
+    auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
+    wddm->timestampPtrResult = &timestampValue;
+    osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
+
+    osTime->initTimestampPtr();
+    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableTimestampMmioRead.set(0);
+    osTime->initTimestampPtr();
+    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
 }

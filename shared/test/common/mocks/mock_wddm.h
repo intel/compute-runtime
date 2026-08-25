@@ -166,6 +166,8 @@ class WddmMock : public Wddm {
     NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) override;
     NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand) override;
     uint32_t getTimestampFrequency() const override;
+    void *getTimestampPtr() override { return timestampPtrResult; }
+    void *timestampPtrResult = nullptr;
     bool perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize) override;
     bool perfDisableEuStallStream() override;
     bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) override;

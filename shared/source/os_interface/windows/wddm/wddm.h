@@ -98,6 +98,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL WaitStatus waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds);
 
     MOCKABLE_VIRTUAL NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
+    MOCKABLE_VIRTUAL void *getTimestampPtr() { return nullptr; }
     WddmResidencyController &getResidencyController() { return residencyController; }
     MOCKABLE_VIRTUAL VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback);
     void unregisterTrimCallback() override {

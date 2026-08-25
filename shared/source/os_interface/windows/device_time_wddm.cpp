@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,14 @@ bool DeviceTimeWddm::runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
 
 DeviceTimeWddm::DeviceTimeWddm(Wddm *wddm) {
     this->wddm = wddm;
+}
+
+volatile uint64_t *DeviceTimeWddm::getTimestampPtr() {
+    if (!wddm) {
+        return nullptr;
+    }
+
+    return static_cast<volatile uint64_t *>(wddm->getTimestampPtr());
 }
 
 double DeviceTimeWddm::getDynamicDeviceTimerResolution() const {

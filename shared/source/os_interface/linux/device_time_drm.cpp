@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,10 @@ namespace NEO {
 
 DeviceTimeDrm::DeviceTimeDrm(OSInterface &osInterface) {
     pDrm = osInterface.getDriverModel()->as<Drm>();
+}
+
+volatile uint64_t *DeviceTimeDrm::getTimestampPtr() {
+    return static_cast<volatile uint64_t *>(pDrm->getIoctlHelper()->getTimestampPtr());
 }
 
 TimeQueryStatus DeviceTimeDrm::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {

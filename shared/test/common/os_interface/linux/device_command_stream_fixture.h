@@ -93,6 +93,7 @@ class DrmMockFail : public Drm {
 
 class DrmMockTime : public DrmMockSuccess {
   public:
+    using Drm::ioctlHelper;
     using DrmMockSuccess::DrmMockSuccess;
     int ioctl(DrmIoctl request, void *arg) override {
         if (DrmIoctl::regRead == request) {
