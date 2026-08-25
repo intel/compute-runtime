@@ -293,8 +293,8 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsInCacheWhenCallingTrimThenUse
     allocationCache.trim();
     EXPECT_EQ(0u, allocationCache.allocations.size());
 
-    EXPECT_EQ(ptr, svmAllocsManager.freeSVMAllocImplLastPtr);
-    EXPECT_EQ(SVMAllocsManager::FreePolicyType::blocking, svmAllocsManager.freeSVMAllocImplLastFreePolicy);
+    EXPECT_EQ(ptr, svmAllocsManager.freeSVMAllocImplLastPtr.load());
+    EXPECT_EQ(SVMAllocsManager::FreePolicyType::blocking, svmAllocsManager.freeSVMAllocImplLastFreePolicy.load());
 }
 
 TEST(SvmAllocationCacheSimpleTest, givenReuseCleanerWhenInsertingAllocationIntoCacheThenStartThread) {

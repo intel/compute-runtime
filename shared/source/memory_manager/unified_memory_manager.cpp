@@ -17,6 +17,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -31,6 +32,8 @@
 #include "shared/source/utilities/logger.h"
 
 #include <algorithm>
+#include <chrono>
+#include <thread>
 
 namespace NEO {
 
@@ -781,7 +784,7 @@ void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
-    if (svmDeferFreeAllocs.allocations.size() > 0) {
+    if (getNumClaimableDeferFreeAllocs() > 0) {
         this->freeSVMAllocDeferImpl();
     }
     SvmAllocationData *svmData = getSVMAlloc(ptr);
@@ -821,7 +824,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
 
 bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
 
-    if (svmDeferFreeAllocs.allocations.size() > 0) {
+    if (getNumClaimableDeferFreeAllocs() > 0) {
         this->freeSVMAllocDeferImpl();
     }
 
@@ -967,18 +970,50 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
     }
 }
 
-void SVMAllocsManager::freeSVMAllocDeferImpl(FreePolicyType policy) {
-    std::vector<const void *> freedKeys;
-    for (auto iter = svmDeferFreeAllocs.allocations.begin(); iter != svmDeferFreeAllocs.allocations.end(); ++iter) {
-        void *ptr = reinterpret_cast<void *>(iter->second.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
-        this->freeSVMAllocImpl(ptr, policy, this->getSVMAlloc(ptr));
+SVMAllocsManager::MapBasedAllocationTracker::SvmAllocationContainer SVMAllocsManager::claimQueuedDeferFreeAllocsAsInFlight() {
+    MapBasedAllocationTracker::SvmAllocationContainer claimedAllocs;
 
-        if (this->getSVMAlloc(ptr) == nullptr) {
-            freedKeys.push_back(iter->first);
+    ContainerReadWriteLockType lock(mtx);
+    deferFreeInFlight.fetch_add(svmDeferFreeAllocs.allocations.size());
+    claimedAllocs.swap(svmDeferFreeAllocs.allocations);
+
+    return claimedAllocs;
+}
+
+void SVMAllocsManager::freeSVMAllocDeferImpl(FreePolicyType policy) {
+    auto claimedAllocs = this->claimQueuedDeferFreeAllocsAsInFlight();
+
+    for (const auto &claimedAlloc : claimedAllocs) {
+        void *ptr = reinterpret_cast<void *>(claimedAlloc.second.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+        auto *svmData = this->getSVMAlloc(ptr);
+        if (svmData != nullptr) {
+            this->freeSVMAllocImpl(ptr, policy, svmData);
         }
+        deferFreeInFlight.fetch_sub(1u);
     }
-    for (const auto &key : freedKeys) {
-        svmDeferFreeAllocs.allocations.erase(key);
+}
+
+void SVMAllocsManager::drainAllDeferFreeAllocsBlocking() {
+    constexpr uint32_t yieldsBeforeSleeping = 64u;
+    constexpr auto sleepDuration = std::chrono::microseconds(100);
+    uint32_t yieldsSpent = 0u;
+
+    while (true) {
+        const auto counts = this->getDeferFreeAllocCounts();
+        if (0u == counts.outstanding()) {
+            return;
+        }
+        if (counts.claimable > 0u) {
+            this->freeSVMAllocDeferImplBlocking();
+            yieldsSpent = 0u;
+            continue;
+        }
+        if (yieldsSpent < yieldsBeforeSleeping) {
+            yieldsSpent++;
+            std::this_thread::yield();
+        } else {
+            NEO::sleep(sleepDuration);
+        }
     }
 }
 

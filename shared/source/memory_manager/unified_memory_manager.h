@@ -274,6 +274,7 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData);
     void freeSVMAllocDeferImpl() { this->freeSVMAllocDeferImpl(FreePolicyType::defer); }
     void freeSVMAllocDeferImplBlocking() { this->freeSVMAllocDeferImpl(FreePolicyType::blocking); }
+    void drainAllDeferFreeAllocsBlocking();
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
     void cleanupUSMAllocCaches();
     MOCKABLE_VIRTUAL void trimUSMAllocCaches();
@@ -285,7 +286,8 @@ class SVMAllocsManager {
     void reinsertToAllocsForIndirectAccess(SvmAllocationData &svmData);
     void removeFromAllocsForIndirectAccess(SvmAllocationData &svmData);
     size_t getNumAllocs() const { return svmAllocs.getNumAllocs(); }
-    MOCKABLE_VIRTUAL size_t getNumDeferFreeAllocs() const { return svmDeferFreeAllocs.getNumAllocs(); }
+    size_t getNumClaimableDeferFreeAllocs() { return this->getDeferFreeAllocCounts().claimable; }
+    MOCKABLE_VIRTUAL size_t getNumDeferFreeAllocs() { return this->getDeferFreeAllocCounts().outstanding(); }
     SortedVectorBasedAllocationTracker *getSVMAllocs() { return &svmAllocs; }
 
     MOCKABLE_VIRTUAL void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
@@ -323,7 +325,24 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL void applyIndirectAccessTaskCountFloor(SvmAllocationData *allocationData);
 
   protected:
+    // An unfreed entry is counted by exactly one of these two fields at rest: claimable while it sits
+    // on svmDeferFreeAllocs, inFlight while a drain is processing it - and by both for the moment in
+    // between, when a drain puts a still-in-use entry back. Sampling the two separately could catch
+    // claimable before the put-back and inFlight after the matching decrement, and so report nothing
+    // outstanding while entries are still pending, which is the one thing a caller draining until
+    // zero must never see.
+    struct DeferFreeAllocCounts {
+        size_t claimable = 0u;
+        size_t inFlight = 0u;
+        size_t outstanding() const { return claimable + inFlight; }
+    };
+    DeferFreeAllocCounts getDeferFreeAllocCounts() {
+        ContainerReadLockType lock(mtx);
+        return {svmDeferFreeAllocs.getNumAllocs(), deferFreeInFlight.load()};
+    }
+
     void freeSVMAllocDeferImpl(FreePolicyType policy);
+    MapBasedAllocationTracker::SvmAllocationContainer claimQueuedDeferFreeAllocsAsInFlight();
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
                                       const RootDeviceIndicesContainer &rootDeviceIndices,
                                       const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields);
@@ -342,6 +361,7 @@ class SVMAllocsManager {
     SortedVectorBasedAllocationTracker svmAllocs;
     MapOperationsTracker svmMapOperations;
     MapBasedAllocationTracker svmDeferFreeAllocs;
+    std::atomic<size_t> deferFreeInFlight{0u};
     MemoryManager *memoryManager;
     ContainerMutexType mtx;
     std::mutex mtxForIndirectAccess;

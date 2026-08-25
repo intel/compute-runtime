@@ -13,6 +13,8 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
+#include <atomic>
+
 namespace NEO {
 struct MockSVMAllocsManager : public SVMAllocsManager {
   public:
@@ -25,7 +27,6 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     using SVMAllocsManager::mtxForIndirectAccess;
     using SVMAllocsManager::svmAllocs;
     using SVMAllocsManager::SVMAllocsManager;
-    using SVMAllocsManager::svmDeferFreeAllocs;
     using SVMAllocsManager::svmMapOperations;
     using SVMAllocsManager::usmDeviceAllocationsCache;
     using SVMAllocsManager::usmHostAllocationsCache;
@@ -56,8 +57,8 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
         }
     }
     bool freeSVMAllocImplCallBase = true;
-    void *freeSVMAllocImplLastPtr = nullptr;
-    FreePolicyType freeSVMAllocImplLastFreePolicy = FreePolicyType::none;
+    std::atomic<void *> freeSVMAllocImplLastPtr{nullptr};
+    std::atomic<FreePolicyType> freeSVMAllocImplLastFreePolicy{FreePolicyType::none};
 
     void trimUSMAllocCaches() override {
         trimUSMAllocCachesCalled++;

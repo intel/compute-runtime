@@ -15,6 +15,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <atomic>
+#include <functional>
 #include <mutex>
 
 namespace NEO {
@@ -163,6 +164,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     bool allocInUse(GraphicsAllocation &graphicsAllocation) override {
         allocInUseCalled++;
+
+        if (allocInUseCallback) {
+            allocInUseCallback();
+        }
 
         if (callBaseAllocInUse) {
             return OsAgnosticMemoryManager::allocInUse(graphicsAllocation);
@@ -393,7 +398,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
     uint32_t createGraphicsAllocationFromExistingStorageCalled = 0u;
-    mutable uint32_t allocInUseCalled = 0u;
+    std::atomic<uint32_t> allocInUseCalled{0u};
     uint32_t registerIpcExportedAllocationCalled = 0;
     std::atomic<uint32_t> lockVirtualMemoryReservationMapCalled{0u};
     int32_t overrideAllocateAsPackReturn = -1;
@@ -449,6 +454,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool isMockHostMemoryManager = false;
     bool deferAllocInUse = false;
     bool callBaseAllocInUse = false;
+    std::function<void()> allocInUseCallback;
     bool isMockEventPoolCreateMemoryManager = false;
     bool limitedGPU = false;
     bool returnFakeAllocation = false;

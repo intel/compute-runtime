@@ -41,9 +41,7 @@ enum class AtomicAccessMode : uint32_t;
 namespace L0 {
 
 ze_result_t Context::destroy() {
-    while (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
-        this->driverHandle->svmAllocsManager->freeSVMAllocDeferImplBlocking();
-    }
+    this->driverHandle->svmAllocsManager->drainAllDeferFreeAllocsBlocking();
     delete this;
 
     return ZE_RESULT_SUCCESS;
@@ -208,7 +206,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
     auto usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
                                                                                           unifiedMemoryProperties);
     if (usmPtr == nullptr) {
-        if (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
+        if (driverHandle->svmAllocsManager->getNumClaimableDeferFreeAllocs() > 0) {
             this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
             usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
                                                                                              unifiedMemoryProperties);
@@ -370,7 +368,7 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
     void *usmPtr =
         this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (usmPtr == nullptr) {
-        if (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
+        if (driverHandle->svmAllocsManager->getNumClaimableDeferFreeAllocs() > 0) {
             this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
             usmPtr =
                 this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
@@ -474,7 +472,7 @@ ze_result_t Context::allocSharedMem(ze_device_handle_t hDevice,
                                                                                             unifiedMemoryProperties,
                                                                                             static_cast<void *>(neoDevice->getSpecializedDevice<L0::Device>()));
     if (usmPtr == nullptr) {
-        if (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
+        if (driverHandle->svmAllocsManager->getNumClaimableDeferFreeAllocs() > 0) {
             this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
             usmPtr = this->driverHandle->svmAllocsManager->createSharedUnifiedMemoryAllocation(size,
                                                                                                unifiedMemoryProperties,
