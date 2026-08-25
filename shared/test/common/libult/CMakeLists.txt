@@ -132,6 +132,12 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/utilities/cpuintrinsics.cpp
 )
 
+if(${NEO_TARGET_PROCESSOR} STREQUAL "x86_64")
+  list(APPEND neo_libult_common_SRCS_LIB_ULT
+       ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/x86_64/stream_copy_ult.cpp
+  )
+endif()
+
 if(TESTS_XEHP_AND_LATER)
   list(APPEND neo_libult_common_SRCS_LIB_ULT
        ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_xehp_and_later.inl

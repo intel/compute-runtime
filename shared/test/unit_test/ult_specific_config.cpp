@@ -56,6 +56,7 @@ void applyWorkarounds() {
     mockCpuInfo->features = CpuInfo::featureNone;
     mockCpuInfo->featuresDetected = true;
     mockCpuInfo->virtualAddressSize = is32bit ? 32u : 48u;
+    mockCpuInfo->lastLevelCacheSize = 0u;
     mockCpuInfo->cpuFlags.clear();
     const std::array<ConstStringRef, 12> builtinBaseNames{"copy_buffer_to_buffer",
                                                           "copy_buffer_rect",

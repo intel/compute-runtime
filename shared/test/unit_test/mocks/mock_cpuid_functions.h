@@ -15,8 +15,11 @@ struct MockCpuInfo : public NEO::CpuInfo {
     using CpuInfo::cpuFlags;
     using CpuInfo::features;
     using CpuInfo::featuresDetected;
+    using CpuInfo::lastLevelCacheSize;
     using CpuInfo::virtualAddressSize;
 };
+
+inline constexpr size_t mockLastLevelCacheSize = static_cast<size_t>(8u * MemoryConstants::megaByte);
 
 inline MockCpuInfo *getMockCpuInfo(const NEO::CpuInfo &cpuInfo) {
     return static_cast<MockCpuInfo *>(const_cast<NEO::CpuInfo *>(&CpuInfo::getInstance()));
@@ -33,6 +36,10 @@ void mockCpuidReport36BitVirtualAddressSize(int *cpuInfo, int functionId);
 void mockCpuidEnableAllExceptAvx512FoundationBit(int *cpuInfo, int functionId);
 
 void mockCpuidEnableAllExceptAvx2Bit(int *cpuInfo, int functionId);
+
+size_t mockGetLastLevelCacheSize();
+
+size_t mockGetLastLevelCacheSizeUnavailable();
 
 uint64_t mockXgetbvEnableAll(uint32_t index);
 

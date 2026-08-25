@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,4 +15,6 @@ extern const char *sysFsPciPathPrefix;
 extern const char *pciDevicesDirectory;
 // Proc Path
 extern const char *sysFsProcPathPrefix;
+// Cpu Path
+extern const char *sysFsSystemCpuPathPrefix;
 } // namespace Os

@@ -33,6 +33,7 @@ void CpuInfo::detect() const {
         cpuid(cpuInfo, processorInfo);
         {
             features |= cpuInfo[edx] & BIT(19) ? featureClflush : featureNone;
+            features |= cpuInfo[ecx] & BIT(19) ? featureSse41 : featureNone;
             osXsave = !!(cpuInfo[ecx] & BIT(27));
         }
     }
@@ -62,6 +63,8 @@ void CpuInfo::detect() const {
         }
     }
 
+    lastLevelCacheSize = getLastLevelCacheSizeFunc();
+
     cpuid(cpuInfo, extendedFunctionId);
     auto maxExtendedId = cpuInfo[eax];
     if (maxExtendedId >= addressSize) {
@@ -72,8 +75,8 @@ void CpuInfo::detect() const {
     }
     featuresDetected = true;
     PRINT_STRING(debugManager.flags.PrintCpuFlags.get(), stdout,
-                 "CPUFlags:\nCLFlush: %d Avx2: %d Avx512: %d WaitPkg: %d\nVirtual Address Size %u\n",
-                 !!(features & featureClflush), !!(features & featureAvX2), !!(features & featureAvX512), !!(features & featureWaitPkg), virtualAddressSize);
+                 "CPUFlags:\nCLFlush: %d Avx2: %d Avx512: %d WaitPkg: %d\nVirtual Address Size %u\nLast Level Cache Size %zu\n",
+                 !!(features & featureClflush), !!(features & featureAvX2), !!(features & featureAvX512), !!(features & featureWaitPkg), virtualAddressSize, lastLevelCacheSize);
 }
 
 uint64_t CpuInfo::getMaxCpuVirtualAddress() const {

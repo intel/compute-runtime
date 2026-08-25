@@ -20,6 +20,7 @@ namespace NEO {
 struct CpuInfo {
     static const uint64_t featureNone = 0x000000000ULL;
     static const uint64_t featureWaitPkg = 0x000000001ULL;
+    static const uint64_t featureSse41 = 0x000400000ULL;
     static const uint64_t featureAvX2 = 0x000800000ULL;
     static const uint64_t featureNeon = 0x001000000ULL;
     static const uint64_t featureAvX512 = 0x002000000ULL;
@@ -54,6 +55,14 @@ struct CpuInfo {
 
     uint64_t getMaxCpuVirtualAddress() const;
 
+    size_t getLastLevelCacheSize() const {
+        if (!featuresDetected) {
+            detect();
+        }
+
+        return lastLevelCacheSize;
+    }
+
     bool isCpuFlagPresent(const char *cpuFlag) const {
         if (cpuFlags.empty()) {
             getCpuFlagsFunc(cpuFlags);
@@ -69,12 +78,14 @@ struct CpuInfo {
     static void (*cpuidexFunc)(int *, int, int);
     static void (*cpuidFunc)(int *, int);
     static void (*getCpuFlagsFunc)(std::string &);
+    static size_t (*getLastLevelCacheSizeFunc)();
     static uint64_t (*xgetbvFunc)(uint32_t);
 
   protected:
     mutable uint64_t features{featureNone};
     mutable bool featuresDetected{false};
     mutable uint32_t virtualAddressSize = is32bit ? 32 : 48;
+    mutable size_t lastLevelCacheSize = 0;
     mutable std::string cpuFlags;
     static const CpuInfo instance;
 };

@@ -27,6 +27,7 @@ const char *dxcoreDllName = "";
 const char *sysFsPciPathPrefix = "/linux/devices/";
 const char *pciDevicesDirectory = "/linux/by-path";
 const char *sysFsProcPathPrefix = "/linux/proc/";
+const char *sysFsSystemCpuPathPrefix = "/linux/devices/system/cpu";
 } // namespace Os
 
 namespace ContextGroup {

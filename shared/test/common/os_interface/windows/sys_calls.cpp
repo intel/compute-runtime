@@ -284,6 +284,15 @@ BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr) {
     return systemPowerStatusRetVal;
 }
 
+BOOL (*sysCallsGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP relationshipType, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer, PDWORD returnedLength) = nullptr;
+
+BOOL getLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP relationshipType, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer, PDWORD returnedLength) {
+    if (sysCallsGetLogicalProcessorInformationEx != nullptr) {
+        return sysCallsGetLogicalProcessorInformationEx(relationshipType, buffer, returnedLength);
+    }
+    return FALSE;
+}
+
 BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
     constexpr auto expectedFlags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
     if (dwFlags != expectedFlags) {

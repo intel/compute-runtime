@@ -99,6 +99,9 @@ BOOL closeHandle(HANDLE hObject) {
 BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr) {
     return GetSystemPowerStatus(systemPowerStatusPtr);
 }
+BOOL getLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP relationshipType, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer, PDWORD returnedLength) {
+    return GetLogicalProcessorInformationEx(relationshipType, buffer, returnedLength);
+}
 BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
     return GetModuleHandleEx(dwFlags, lpModuleName, phModule);
 }

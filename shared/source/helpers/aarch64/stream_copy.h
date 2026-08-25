@@ -5,12 +5,15 @@
  *
  */
 
-#include "shared/source/helpers/cpu_copy_helper.h"
+#pragma once
 #include "shared/source/helpers/string.h"
+
+#include <cstddef>
 
 namespace NEO {
 
-void streamCopy(void *dst, const void *src, size_t bytes) noexcept {
+template <bool emitSfenceAfterCopy = true>
+inline void streamCopy(void *dst, const void *src, size_t bytes) noexcept {
     memcpy_s(dst, bytes, src, bytes);
 }
 

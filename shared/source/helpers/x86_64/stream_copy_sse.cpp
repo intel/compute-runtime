@@ -11,8 +11,8 @@
 
 namespace NEO {
 
-void streamCopyFromWriteCombinedAvx512(void *dst, const void *src, size_t bytes) noexcept {
-    streamCopyFromWriteCombinedImpl<StreamBlockAvx512>(dst, src, bytes);
+void streamCopyFromWriteCombinedSse(void *dst, const void *src, size_t bytes) noexcept {
+    streamCopyFromWriteCombinedImpl<StreamBlockSse>(dst, src, bytes);
 }
 
 } // namespace NEO

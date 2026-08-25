@@ -17,19 +17,27 @@ using namespace NEO;
 
 struct CpuInfoFixture {
     using CpuIdFuncT = void (*)(int *, int);
+    using CpuIdexFuncT = void (*)(int *, int, int);
     using XgetbvFuncT = uint64_t (*)(uint32_t);
+    using GetLastLevelCacheSizeFuncT = size_t (*)();
     void setUp() {
         defaultCpuidFunc = CpuInfo::cpuidFunc;
+        defaultCpuidexFunc = CpuInfo::cpuidexFunc;
         defaultXgetbvFunc = CpuInfo::xgetbvFunc;
+        defaultGetLastLevelCacheSizeFunc = CpuInfo::getLastLevelCacheSizeFunc;
     }
 
     void tearDown() {
         CpuInfo::cpuidFunc = defaultCpuidFunc;
+        CpuInfo::cpuidexFunc = defaultCpuidexFunc;
         CpuInfo::xgetbvFunc = defaultXgetbvFunc;
+        CpuInfo::getLastLevelCacheSizeFunc = defaultGetLastLevelCacheSizeFunc;
     }
 
     CpuIdFuncT defaultCpuidFunc;
+    CpuIdexFuncT defaultCpuidexFunc;
     XgetbvFuncT defaultXgetbvFunc;
+    GetLastLevelCacheSizeFuncT defaultGetLastLevelCacheSizeFunc;
 };
 
 using CpuInfoTest = Test<CpuInfoFixture>;
@@ -83,6 +91,39 @@ TEST_F(CpuInfoTest, WhenGettingVirtualAddressSizeThenCorrectResultIsReturned) {
     EXPECT_EQ(36u, testCpuInfo.getVirtualAddressSize());
 }
 
+TEST_F(CpuInfoTest, WhenGettingLastLevelCacheSizeThenOperatingSystemReportedSizeIsReturned) {
+    CpuInfo::cpuidFunc = mockCpuidEnableAll;
+    CpuInfo::xgetbvFunc = mockXgetbvEnableAll;
+    CpuInfo::getLastLevelCacheSizeFunc = mockGetLastLevelCacheSize;
+
+    CpuInfo testCpuInfo;
+
+    EXPECT_EQ(mockLastLevelCacheSize, testCpuInfo.getLastLevelCacheSize());
+}
+
+TEST_F(CpuInfoTest, GivenCacheSizeUnavailableWhenGettingLastLevelCacheSizeThenZeroIsReturned) {
+    CpuInfo::cpuidFunc = mockCpuidEnableAll;
+    CpuInfo::xgetbvFunc = mockXgetbvEnableAll;
+    CpuInfo::getLastLevelCacheSizeFunc = mockGetLastLevelCacheSizeUnavailable;
+
+    MockCpuInfo testCpuInfo;
+    testCpuInfo.lastLevelCacheSize = MemoryConstants::megaByte;
+
+    EXPECT_EQ(0u, testCpuInfo.getLastLevelCacheSize());
+}
+
+TEST_F(CpuInfoTest, GivenFeaturesAlreadyDetectedWhenGettingLastLevelCacheSizeThenDetectionIsNotRepeated) {
+    CpuInfo::cpuidFunc = mockCpuidEnableAll;
+    CpuInfo::xgetbvFunc = mockXgetbvEnableAll;
+    CpuInfo::getLastLevelCacheSizeFunc = mockGetLastLevelCacheSize;
+
+    MockCpuInfo testCpuInfo;
+    testCpuInfo.lastLevelCacheSize = MemoryConstants::kiloByte;
+    testCpuInfo.featuresDetected = true;
+
+    EXPECT_EQ(MemoryConstants::kiloByte, testCpuInfo.getLastLevelCacheSize());
+}
+
 TEST(CpuInfo, WhenGettingCpuidexThenOperationSucceeds) {
     const CpuInfo &cpuInfo = CpuInfo::getInstance();
 
@@ -97,6 +138,7 @@ TEST_F(CpuInfoTest, GivenPrintCpuFlagsEnabledWhenGettingVirtualAddressSizeThenCp
 
     CpuInfo::cpuidFunc = mockCpuidReport36BitVirtualAddressSize;
     CpuInfo::xgetbvFunc = mockXgetbvEnableAll;
+    CpuInfo::getLastLevelCacheSizeFunc = mockGetLastLevelCacheSize;
 
     CpuInfo testCpuInfo;
 
@@ -106,7 +148,7 @@ TEST_F(CpuInfoTest, GivenPrintCpuFlagsEnabledWhenGettingVirtualAddressSizeThenCp
     std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(36u, addressSize);
-    std::string expectedString = "CPUFlags:\nCLFlush: 1 Avx2: 1 Avx512: 1 WaitPkg: 1\nVirtual Address Size 36\n";
+    std::string expectedString = "CPUFlags:\nCLFlush: 1 Avx2: 1 Avx512: 1 WaitPkg: 1\nVirtual Address Size 36\nLast Level Cache Size " + std::to_string(mockLastLevelCacheSize) + "\n";
     EXPECT_STREQ(output.c_str(), expectedString.c_str());
 }
 

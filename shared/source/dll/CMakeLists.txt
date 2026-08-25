@@ -32,4 +32,21 @@ set(NEO_SHARED_DLLS
 add_library(neo_shared_dlls_precompiled_objects OBJECT ${NEO_SHARED_DLLS})
 target_include_directories(neo_shared_dlls_precompiled_objects PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_RELEASE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
 target_compile_definitions(neo_shared_dlls_precompiled_objects PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_RELEASE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+if(${NEO_TARGET_PROCESSOR} STREQUAL "x86_64")
+  set(NEO_STREAM_COPY_DIR ${NEO_SHARED_DIRECTORY}/helpers/x86_64)
+  target_sources(neo_shared_dlls_precompiled_objects PRIVATE
+                 ${NEO_STREAM_COPY_DIR}/stream_copy_sse.cpp
+                 ${NEO_STREAM_COPY_DIR}/stream_copy_avx2.cpp
+                 ${NEO_STREAM_COPY_DIR}/stream_copy_avx512.cpp
+  )
+  if(MSVC)
+    set_source_files_properties(${NEO_STREAM_COPY_DIR}/stream_copy_avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX2)
+    set_source_files_properties(${NEO_STREAM_COPY_DIR}/stream_copy_avx512.cpp PROPERTIES COMPILE_FLAGS /arch:AVX512)
+  else()
+    set_source_files_properties(${NEO_STREAM_COPY_DIR}/stream_copy_sse.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
+    set_source_files_properties(${NEO_STREAM_COPY_DIR}/stream_copy_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
+    set_source_files_properties(${NEO_STREAM_COPY_DIR}/stream_copy_avx512.cpp PROPERTIES COMPILE_FLAGS -mavx512f)
+  endif()
+endif()
+
 add_subdirectories()

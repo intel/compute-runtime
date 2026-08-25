@@ -1705,7 +1705,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     }
 
     if (NEO::debugManager.flags.EnableCpuStreamMemcpy.get() != 0) {
-        NEO::streamCopy(cpuMemcpyDstPtr, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
+        NEO::streamCopy<false>(cpuMemcpyDstPtr, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
     } else {
         memcpy_s(cpuMemcpyDstPtr, cpuMemCopyInfo.size, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
     }
