@@ -53,7 +53,8 @@ enum class ClientApi : uint32_t
     Unknown = 0,
     // 1-5 reserved.
     OpenCL = 6,
-    // 7-8 reserved.
+    Vulkan = 7,
+    // 8 reserved.
     OneApi = 9,
     // 10 reserved.
     // ...
@@ -742,6 +743,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 234
+#define METRICS_LIBRARY_BUILD_NUMBER 238
 
 } // namespace MetricsLibraryApi
