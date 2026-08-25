@@ -286,6 +286,37 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
     }
 }
 
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterForMemoryDomainAndReadValueFailsThenFailureIsReturned, IsCRI) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<int> mockErrno(&errno);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr uint64_t telemOffset = 0;
+        constexpr std::string_view validOobmsmGuid = "0x5e2fa230";
+        constexpr std::string_view validPunitGuid = "0x1e2fa030";
+        constexpr off_t vramEnergyAccumulatorOffset = 200;
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5) {
+            memcpy(buf, validOobmsmGuid.data(), validOobmsmGuid.size());
+        } else if (fd == 6) {
+            memcpy(buf, validPunitGuid.data(), validPunitGuid.size());
+        } else if ((fd == 8) && (offset == vramEnergyAccumulatorOffset)) {
+            errno = ENOENT;
+            return -1;
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_power_energy_counter_t energyCounter = {};
+    auto result = pSysmanProductHelper->getPowerEnergyCounter(&energyCounter, pLinuxSysmanImp, ZES_POWER_DOMAIN_MEMORY, 0u);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+}
+
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPowerEnergyCounterThenValidValuesAreReturnedFromBothOobmsmAndPunitPath, IsBMG) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
@@ -367,7 +398,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
         std::string_view validOobmsmGuid = "";
         std::string_view validPunitGuid = "";
         constexpr uint32_t mockEnergyCounter = 0xabcd;
-        constexpr uint32_t mockMemoryEnergyCounter = 0x12345678; // Non-zero upper and lower 16 bits for memory domain
+        constexpr uint64_t mockMemoryEnergyCounter = 0x12345678abcdef01; // Non-zero upper and lower 32 bits for memory domain
         constexpr uint32_t mockXtalFrequency = 0xef;
         constexpr uint64_t mockTimestamp = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
 
@@ -409,7 +440,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
             case 1640:
                 memcpy(buf, &mockEnergyCounter, count);
                 break;
-            case 188:
+            case 200: // CRI: 64 bit VRAM energy accumulator container
                 memcpy(buf, &mockMemoryEnergyCounter, count);
                 break;
             default:
@@ -420,7 +451,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     });
 
     constexpr uint32_t mockEnergyCounter = 0xabcd;
-    constexpr uint32_t mockMemoryEnergyCounter = 0x12345678; // Non-zero upper and lower 16 bits for memory domain
+    constexpr uint64_t mockMemoryEnergyCounter = 0x12345678abcdef01; // Non-zero upper and lower 32 bits for memory domain
     constexpr uint32_t mockXtalFrequency = 0xef;
     constexpr uint64_t mockTimestamp = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
     constexpr double indexToXtalClockFrequencyMap[4] = {24, 19.2, 38.4, 25};
@@ -443,7 +474,9 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
         uint64_t expectedEnergyCounter = 0;
 
         if ((defaultHwInfo->platform.eProductFamily == IGFX_CRI) && (extProperties.domain == ZES_POWER_DOMAIN_MEMORY)) {
-            const double finalValue = convertU18p14((mockMemoryEnergyCounter >> 16) & 0xFFFF) + convertU18p14(mockMemoryEnergyCounter & 0xFFFF);
+            // VCCDDRQ_ENERGY_ACCUMULATOR: bits [0:31] and VCCDDRQX_ENERGY_ACCUMULATOR: bits [32:63]
+            const double finalValue = convertU18p14(static_cast<uint32_t>(mockMemoryEnergyCounter & 0xFFFFFFFF)) +
+                                      convertU18p14(static_cast<uint32_t>(mockMemoryEnergyCounter >> 32));
             expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
         } else {
             const double finalValue = convertU18p14(mockEnergyCounter);
@@ -1415,7 +1448,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
                 EXPECT_EQ(expectedBmgAveragePower, averagePower);                                                                        // BMG: average power from energy counter delta
             } else {
                 EXPECT_EQ(static_cast<uint32_t>((convertU13p3((instantPowerContainerValue >> 16) & 0xFFFF) + convertU13p3((instantPowerContainerValue >> 48) & 0xFFFF)) * milliFactor), instantPower); // instantaneous memory power: bits [16:31] + bits [48:63]
-                EXPECT_EQ(static_cast<uint32_t>((convertU13p3((averagePowerContainerValue >> 16) & 0xFFFF) + convertU13p3((averagePowerContainerValue >> 48) & 0xFFFF)) * milliFactor), averagePower); // average memory power: bits [16:31] + bits [48:63]
+                EXPECT_EQ(0u, averagePower);                                                                                                                                                           // CRI: no VRAM average power in Container 17
             }
             break;
         case ZES_POWER_DOMAIN_CARD:

@@ -55,12 +55,12 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"COMPOSITE_TEMPERATURE", 272},
       {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"VCCGT_ENERGY_ACCUMULATOR", 44},
-      {"VCCDDRQ_ENERGY_ACCUMULATOR", 188},
       {"VR_TEMPERATURE_0", 224},
       {"VR_TEMPERATURE_1", 228},
       {"VR_TEMPERATURE_2", 232},
       {"VR_TEMPERATURE_3", 236},
       {"VRAM_BANDWIDTH", 56},
+      {"VRAM_ENERGY_ACCUM_CONTAINER", 200},
       {"VRAM_FREQUENCY", 56},
       {"VCCDDRQX_VID", 60},
       {"VCCDDRQ_VID", 60},
@@ -225,16 +225,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getEccState(LinuxSysmanImp *pLinu
     }
 
     const std::string key = "ECC_STATE";
-    auto eccStateKey = keyTelemInfoMap.find(key);
-    if (eccStateKey == keyTelemInfoMap.end()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): ECC_STATE key not found in telemetry map, returning error:0x%x \n",
-                     NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     uint32_t eccState = 0;
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, eccStateKey->second, key, 0, eccState);
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, eccState);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Error@ %s(): Failed to read ECC_STATE from PMT, returning error:0x%x \n",
@@ -390,7 +382,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
         {ZES_POWER_DOMAIN_PACKAGE, "ACCUM_PACKAGE_ENERGY"},
         {ZES_POWER_DOMAIN_CARD, "ACCUM_PSYS_ENERGY"},
         {ZES_POWER_DOMAIN_GPU, "VCCGT_ENERGY_ACCUMULATOR"},
-        {ZES_POWER_DOMAIN_MEMORY, "VCCDDRQ_ENERGY_ACCUMULATOR"}};
+        {ZES_POWER_DOMAIN_MEMORY, "VRAM_ENERGY_ACCUM_CONTAINER"}};
 
     auto powerDomainToKeyMapIter = powerDomainToKeyMap.find(powerDomain);
     if (powerDomainToKeyMapIter == powerDomainToKeyMap.end()) {
@@ -406,19 +398,27 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
         return result;
     }
 
-    uint32_t energyCounter = 0;
-    std::string key = powerDomainToKeyMapIter->second;
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
-        return result;
-    }
-
     // Energy Counter calculation
     double energyInJoules = 0.0;
+    std::string key = powerDomainToKeyMapIter->second;
     if (powerDomain == ZES_POWER_DOMAIN_MEMORY) {
-        energyInJoules = convertU18p14((energyCounter >> 16) & 0xFFFF) + convertU18p14(energyCounter & 0xFFFF);
+        // Memory energy is the sum of the two accumulators packed into the container:
+        // bits [0:31] - VCCDDRQ_ENERGY_ACCUMULATOR, bits [32:63] - VCCDDRQX_ENERGY_ACCUMULATOR
+        uint64_t vramEnergyContainer = 0;
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vramEnergyContainer);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+            return result;
+        }
+        energyInJoules = convertU18p14(static_cast<uint32_t>(vramEnergyContainer & 0xFFFFFFFF)) +
+                         convertU18p14(static_cast<uint32_t>(vramEnergyContainer >> 32));
     } else {
+        uint32_t energyCounter = 0;
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+            return result;
+        }
         energyInJoules = convertU18p14(energyCounter);
     }
 
@@ -490,19 +490,14 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
         *pAveragePower = static_cast<uint32_t>(convertU13p3(averagePowerValue & 0xFFFF) * milliFactor);
         break;
     case ZES_POWER_DOMAIN_MEMORY: {
-        // bits [16:31] INSTANTANEOUS_VRAM_VCCDRQX_POWER + bits [48:63] INSTANTANEOUS_VRAM_VCCDDRQ_POWER
+        // bits [16:31] INSTANTANEOUS_VRAM_VCCDDRQX_POWER + bits [48:63] INSTANTANEOUS_VRAM_VCCDDRQ_POWER
         double instVccdrqx = convertU13p3((instantaneousPowerValue >> 16) & 0xFFFF);
         double instVccddrq = convertU13p3((instantaneousPowerValue >> 48) & 0xFFFF);
         double instTotalWatts = instVccdrqx + instVccddrq;
         double instMilliWatts = instTotalWatts * milliFactor;
         *pInstantPower = static_cast<uint32_t>(instMilliWatts);
-
-        // bits [16:31] SUSTAINED_POWER_VCCDDRQX + bits [48:63] SUSTAINED_POWER_VCCDDRQ
-        double avgVccdrqx = convertU13p3((averagePowerValue >> 16) & 0xFFFF);
-        double avgVccddrq = convertU13p3((averagePowerValue >> 48) & 0xFFFF);
-        double avgTotalWatts = avgVccdrqx + avgVccddrq;
-        double avgMilliWatts = avgTotalWatts * milliFactor;
-        *pAveragePower = static_cast<uint32_t>(avgMilliWatts);
+        // VRAM average power offsets are not available, setting to 0
+        *pAveragePower = 0u;
 
         break;
     }
