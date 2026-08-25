@@ -156,6 +156,7 @@ struct MockModule : public L0::ModuleImp {
     using ModuleImp::kernelImmData;
     using ModuleImp::populateHostGlobalSymbolsMap;
     using ModuleImp::setIsaGraphicsAllocations;
+    using ModuleImp::sharedIsaAllocation;
     using ModuleImp::symbols;
     using ModuleImp::translationUnit;
 

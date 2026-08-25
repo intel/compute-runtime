@@ -5444,6 +5444,9 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         this->mockModule.reset(new MockModule{this->device, nullptr, ModuleType::user});
         this->mockModule->translationUnit.reset(new MockModuleTranslationUnit{this->device});
         this->isaAllocationPageSize = this->mockModule->getIsaAllocationPageSize();
+        this->maxIsaSizeInPage = this->isaAllocationPageSize > this->isaPadding
+                                     ? alignDown(this->isaAllocationPageSize - this->isaPadding, this->kernelStartPointerAlignment)
+                                     : this->kernelStartPointerAlignment;
     }
 
     void tearDown() {
@@ -5483,7 +5486,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
 
     template <typename FamilyType>
     void givenMultipleKernelIsasWhichExceedSinglePageAndDebuggerEnabledWhenKernelImmutableDataAreInitializedThenKernelIsasGetSeparateAllocations() {
-        auto maxAllocationSizeInPage = alignDown(isaAllocationPageSize - this->isaPadding, this->kernelStartPointerAlignment);
+        auto maxAllocationSizeInPage = this->maxIsaSizeInPage;
         this->prepareKernelInfoAndAddToTranslationUnit(maxAllocationSizeInPage);
 
         auto tinyAllocationSize = 0x8;
@@ -5519,7 +5522,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
     }
 
     void givenMultipleKernelIsasWhichExceedSinglePageWhenKernelImmutableDataAreInitializedThenKernelIsasShareParentAllocation() {
-        auto maxAllocationSizeInPage = alignDown(isaAllocationPageSize - this->isaPadding, this->kernelStartPointerAlignment);
+        auto maxAllocationSizeInPage = this->maxIsaSizeInPage;
         this->prepareKernelInfoAndAddToTranslationUnit(maxAllocationSizeInPage);
 
         auto tinyAllocationSize = 0x8;
@@ -5587,6 +5590,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
     size_t isaPadding;
     size_t kernelStartPointerAlignment;
     size_t isaAllocationPageSize;
+    size_t maxIsaSizeInPage;
     NEO::Device *neoDevice = nullptr;
     MockMemoryManager *mockMemoryManager = nullptr;
     std::unique_ptr<MockModule> mockModule = nullptr;
@@ -5671,7 +5675,7 @@ TEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhenKernelI
 
 using ModuleIsaAllocationsInSystemMemoryTest = Test<ModuleIsaAllocationsFixture<false>>;
 
-TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPages4KBWhenKernelImmutableDataInitializedThenKernelIsasCanGetSeparateAllocationsDependingOnPaddingSize) {
+TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPages4KBWhenKernelImmutableDataInitializedThenKernelIsasShareParentAllocationFromPoolOrModuleRegion) {
     EXPECT_EQ(this->mockModule->isaAllocationPageSize, isaAllocationPageSize);
 
     const auto requestedSize1 = 0x8;
@@ -5682,31 +5686,26 @@ TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPage
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize2);
     auto isaAllocationAlignedSize2 = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*this->neoDevice, requestedSize2, true);
 
-    // for 4kB pages, 2x isaPaddings alone could exceed isaAllocationPageSize, which precludes page sharing
+    // for 4kB pages, isaPadding alone can exceed isaAllocationPageSize, which precludes pool sharing
     const bool isasShouldShareSamePage = (isaAllocationAlignedSize1 + isaAllocationAlignedSize2 <= isaAllocationPageSize);
 
     this->mockModule->initializeKernelImmutableData();
     auto &kernelImmData = this->mockModule->getKernelImmutableDataVector();
+    EXPECT_NE(nullptr, this->mockModule->getKernelsIsaParentAllocation());
     if (isasShouldShareSamePage) {
-        EXPECT_EQ(kernelImmData[0]->getIsaGraphicsAllocation(), kernelImmData[0]->getIsaParentAllocation());
-        EXPECT_EQ(kernelImmData[0]->getIsaOffsetInParentAllocation(), 0lu);
-        EXPECT_EQ(kernelImmData[0]->getIsaSize(), isaAllocationAlignedSize1);
-        EXPECT_EQ(kernelImmData[1]->getIsaGraphicsAllocation(), kernelImmData[1]->getIsaParentAllocation());
-        EXPECT_EQ(kernelImmData[1]->getIsaOffsetInParentAllocation(), isaAllocationAlignedSize1);
-        EXPECT_EQ(kernelImmData[1]->getIsaSubAllocationSize(), isaAllocationAlignedSize2);
-        EXPECT_EQ(kernelImmData[1]->getIsaSize(), isaAllocationAlignedSize2);
+        EXPECT_NE(nullptr, this->mockModule->sharedIsaAllocation.get());
     } else {
-        EXPECT_EQ(nullptr, kernelImmData[0]->getIsaParentAllocation());
-        EXPECT_NE(nullptr, kernelImmData[0]->getIsaGraphicsAllocation());
-        EXPECT_EQ(kernelImmData[0]->getIsaOffsetInParentAllocation(), 0lu);
-        EXPECT_EQ(kernelImmData[0]->getIsaSubAllocationSize(), 0lu);
-        EXPECT_EQ(kernelImmData[0]->getIsaSize(), computeKernelIsaAllocationSizeWithPadding(requestedSize1));
-        EXPECT_EQ(nullptr, kernelImmData[1]->getIsaParentAllocation());
-        EXPECT_NE(nullptr, kernelImmData[1]->getIsaGraphicsAllocation());
-        EXPECT_EQ(kernelImmData[1]->getIsaOffsetInParentAllocation(), 0lu);
-        EXPECT_EQ(kernelImmData[1]->getIsaSubAllocationSize(), 0lu);
-        EXPECT_EQ(kernelImmData[1]->getIsaSize(), computeKernelIsaAllocationSizeWithPadding(requestedSize2));
+        EXPECT_EQ(nullptr, this->mockModule->sharedIsaAllocation.get());
     }
+
+    EXPECT_EQ(kernelImmData[0]->getIsaGraphicsAllocation(), kernelImmData[0]->getIsaParentAllocation());
+    EXPECT_EQ(kernelImmData[0]->getIsaOffsetInParentAllocation(), 0lu);
+    EXPECT_EQ(kernelImmData[0]->getIsaSubAllocationSize(), isaAllocationAlignedSize1);
+    EXPECT_EQ(kernelImmData[0]->getIsaSize(), isaAllocationAlignedSize1);
+    EXPECT_EQ(kernelImmData[1]->getIsaGraphicsAllocation(), kernelImmData[1]->getIsaParentAllocation());
+    EXPECT_EQ(kernelImmData[1]->getIsaOffsetInParentAllocation(), isaAllocationAlignedSize1);
+    EXPECT_EQ(kernelImmData[1]->getIsaSubAllocationSize(), isaAllocationAlignedSize2);
+    EXPECT_EQ(kernelImmData[1]->getIsaSize(), isaAllocationAlignedSize2);
 
     EXPECT_EQ(kernelImmData[0]->getIsaGraphicsAllocation()->getMemoryPool(), isaAllocationMemoryPool);
     EXPECT_EQ(kernelImmData[1]->getIsaGraphicsAllocation()->getMemoryPool(), isaAllocationMemoryPool);
