@@ -108,6 +108,8 @@ struct CommandQueuePatchPreambleCounter {
     NEO::TagNodeBase *deviceCounterNode = nullptr;
     uint64_t deviceNodeGpuAddress = 0;
     NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
+    size_t offset = 0;
+    size_t deviceNodeSize = 0;
     std::mutex mutex;
     bool use32bSemaphore = false;
 

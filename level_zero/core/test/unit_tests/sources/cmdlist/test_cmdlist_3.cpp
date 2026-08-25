@@ -803,6 +803,122 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenGettingPatchPreamble
     EXPECT_EQ(2u, counter);
 }
 
+TEST_F(CommandListCreateTests, givenImmediateCommandListOnSemWait32bPreambleCounterWhenGettingPatchPreambleDataAndCounterExceeds32bBoundryThenCorrectOffsetDeviceGpuAddressProvided) {
+    const ze_command_queue_desc_t desc = {};
+
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                              device,
+                                                                              &desc,
+                                                                              false,
+                                                                              NEO::EngineGroupType::compute,
+                                                                              ret));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+    auto whiteBoxCmdQueue = static_cast<CommandQueue *>(whiteBoxCmdList->cmdQImmediate);
+
+    whiteBoxCmdQueue->patchPreambleCounter.use32bSemaphore = true;
+
+    uint64_t *hostAddress = nullptr;
+    uint64_t counter = 0;
+    uint64_t hostNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
+    uint64_t deviceNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
+    size_t tagSize = device->getDeviceInOrderCounterAllocator()->getTagSize();
+    size_t offset = 0;
+    std::vector<uint8_t> zeroBuffer(tagSize / 2);
+
+    constexpr uint64_t overflow32b = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1;
+
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    EXPECT_EQ(1u, counter);
+    EXPECT_NE(nullptr, hostAddress);
+    EXPECT_NE(0u, hostNodeGpuAddress);
+    EXPECT_NE(nullptr, hostNodeAllocation);
+    EXPECT_NE(0u, deviceNodeGpuAddress);
+    EXPECT_NE(nullptr, deviceNodeAllocation);
+
+    EXPECT_EQ(0u, whiteBoxCmdQueue->patchPreambleCounter.offset);
+
+    EXPECT_NE(0u, whiteBoxCmdQueue->patchPreambleCounter.deviceNodeSize);
+    EXPECT_EQ(tagSize, whiteBoxCmdQueue->patchPreambleCounter.deviceNodeSize);
+
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, hostNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, hostNodeGpuAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, hostAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeAllocation, deviceNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, deviceNodeGpuAddress);
+
+    auto baseDeviceNodeGpuAddress = deviceNodeGpuAddress;
+    void *devNodeCpuBase = whiteBoxCmdQueue->patchPreambleCounter.deviceCounterNode->getCpuBase();
+
+    hostNodeGpuAddress = 0;
+    hostNodeAllocation = nullptr;
+    deviceNodeGpuAddress = 0;
+    deviceNodeAllocation = nullptr;
+
+    whiteBoxCmdQueue->patchPreambleCounter.counter = 1 * overflow32b - 2;
+    uint64_t expectedCounter = overflow32b - 1;
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+
+    // counter is at max, next iteration is overflow
+    EXPECT_EQ(expectedCounter, counter);
+
+    hostNodeGpuAddress = 0;
+    hostNodeAllocation = nullptr;
+    deviceNodeGpuAddress = 0;
+    deviceNodeAllocation = nullptr;
+
+    offset = tagSize / 2;
+    // next sets non zero lower 32b
+    expectedCounter = overflow32b + 1u;
+
+    // simulate node is filled and check it is clean
+    memset(ptrOffset(devNodeCpuBase, offset), 0xFF, tagSize / 2);
+
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    EXPECT_EQ(expectedCounter, counter);
+    EXPECT_NE(nullptr, hostNodeAllocation);
+    EXPECT_NE(0u, hostNodeGpuAddress);
+    EXPECT_NE(nullptr, deviceNodeAllocation);
+    EXPECT_NE(0u, deviceNodeGpuAddress);
+
+    EXPECT_NE(0u, whiteBoxCmdQueue->patchPreambleCounter.offset);
+    EXPECT_EQ(offset, whiteBoxCmdQueue->patchPreambleCounter.offset);
+
+    EXPECT_EQ(baseDeviceNodeGpuAddress + offset, deviceNodeGpuAddress);
+
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, hostNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, hostNodeGpuAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, hostAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeAllocation, deviceNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress + offset, deviceNodeGpuAddress);
+
+    // half node is cleared
+    EXPECT_EQ(0, memcmp(zeroBuffer.data(), ptrOffset(devNodeCpuBase, offset), tagSize / 2));
+
+    hostNodeGpuAddress = 0;
+    hostNodeAllocation = nullptr;
+    deviceNodeGpuAddress = 0;
+    deviceNodeAllocation = nullptr;
+
+    // next iteration will reach overflow, but with offset comeback to 0
+    whiteBoxCmdQueue->patchPreambleCounter.counter = 2 * overflow32b - 1;
+    offset = 0;
+    expectedCounter = 2 * overflow32b + 1;
+
+    memset(ptrOffset(devNodeCpuBase, offset), 0xFF, tagSize / 2);
+
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    EXPECT_EQ(expectedCounter, counter);
+    EXPECT_EQ(offset, whiteBoxCmdQueue->patchPreambleCounter.offset);
+    EXPECT_EQ(baseDeviceNodeGpuAddress, deviceNodeGpuAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, deviceNodeGpuAddress);
+
+    EXPECT_EQ(0, memcmp(zeroBuffer.data(), ptrOffset(devNodeCpuBase, offset), tagSize / 2));
+}
+
 HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
