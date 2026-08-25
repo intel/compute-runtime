@@ -2585,7 +2585,8 @@ TEST_F(DeviceHasNoFp64HasFp64EmulationTest, givenDefaultFp64EmulationSettingsAnd
 }
 
 TEST_F(DeviceHasNoFp64HasFp64EmulationTest, givenFp64EmulationEnabledAndDeviceSupportingFp64EmulationAndWithoutNativeFp64ThenReportCorrectFp64Flags) {
-    neoDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.NEO_FP64_EMULATION.set(true);
     ze_device_module_properties_t kernelProperties = {};
     memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
     kernelProperties.pNext = nullptr;

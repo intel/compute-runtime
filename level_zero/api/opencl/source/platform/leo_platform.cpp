@@ -11,7 +11,6 @@
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/pin/pin.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
@@ -157,8 +156,7 @@ cl_int Platform::getInfo(cl_platform_info paramName,
 
 void Platform::tryNotifyGtpinInit() {
     std::call_once(oclInitGtpinOnce, []() {
-        EnvironmentVariableReader envReader;
-        if (envReader.getSetting("ZET_ENABLE_PROGRAM_INSTRUMENTATION", false)) {
+        if (NEO::debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.get()) {
             const std::string gtpinFuncName{"OpenGTPinOCL"};
             PinContext::init(gtpinFuncName);
         }

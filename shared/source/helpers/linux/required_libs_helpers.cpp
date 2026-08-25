@@ -7,8 +7,6 @@
 
 #include "shared/source/helpers/required_libs_helpers.h"
 
-#include "shared/source/utilities/io_functions.h"
-
 #include <algorithm>
 #include <array>
 #include <ranges>
@@ -38,14 +36,11 @@ const std::span<const std::string_view> RequiredLibsHelpers::getOptionalBinarySe
         return *optionalPathsCache;
     }
 
-    const char *ldPathsStr = NEO::IoFunctions::getEnvironmentVariable("LD_LIBRARY_PATH");
-    if (nullptr == ldPathsStr) {
+    const std::string &ldLibraryPath = NEO::debugManager.flags.EnvLdLibraryPath.getRef();
+    if (ldLibraryPath.empty()) {
         return {};
     }
-    auto ldPathsView = std::string_view(ldPathsStr);
-    if (ldPathsView.empty()) {
-        return {};
-    }
+    auto ldPathsView = std::string_view(ldLibraryPath);
 
     optionalPathsCache->reserve(std::ranges::count(ldPathsView, ':') + 1);
     std::ranges::for_each(

@@ -32,7 +32,6 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 
@@ -1209,9 +1208,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             return retVal;
         }
     }
-    NEO::EnvironmentVariableReader envReader;
-
-    if (envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true) == false) {
+    if (NEO::debugManager.flags.EnvOneapiPvcSendWarWa.get() == false) {
         CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::optDisableSendWarWa);
     }
     parseDebugSettings();

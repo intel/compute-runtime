@@ -1847,7 +1847,7 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCo
 }
 
 TEST_F(BuiltInTests, givenOneApiPvcSendWarWaEnvFalseWhenGettingBuiltinCodeThenSourceCodeTypeIsUsed) {
-    pDevice->getExecutionEnvironment()->setOneApiPvcWaEnv(false);
+    debugManager.flags.EnvOneapiPvcSendWarWa.set(false);
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::any, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::source, code.type);

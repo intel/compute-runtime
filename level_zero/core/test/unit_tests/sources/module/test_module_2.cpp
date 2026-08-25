@@ -464,9 +464,11 @@ TEST_F(ModuleTests, givenDefaultGrfFlagSetWhenCreatingModuleThenOverrideInternal
 }
 
 TEST_F(ModuleTests, givenFP64EmulationDisabledWhenCreatingModuleThenEnableFP64GenEmuOptionIsNotPresent) {
+    DebugManagerStateRestore restorer;
+    ASSERT_FALSE(NEO::debugManager.flags.NEO_FP64_EMULATION.get());
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
-    ASSERT_FALSE(device->getNEODevice()->getExecutionEnvironment()->isFP64EmulationEnabled());
 
     uint8_t binary[10];
     ze_module_desc_t moduleDesc = {};
@@ -484,9 +486,11 @@ TEST_F(ModuleTests, givenFP64EmulationDisabledWhenCreatingModuleThenEnableFP64Ge
 };
 
 TEST_F(ModuleTests, givenFP64EmulationEnabledWhenCreatingModuleThenEnableFP64GenEmuOptionIsPresent) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.NEO_FP64_EMULATION.set(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
-    device->getNEODevice()->getExecutionEnvironment()->setFP64EmulationEnabled();
 
     uint8_t binary[10];
     ze_module_desc_t moduleDesc = {};

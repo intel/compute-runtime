@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,16 +7,13 @@
 
 #pragma once
 
-#include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "gtest/gtest.h"
 
 extern bool sysmanUltsEnable;
 
 using namespace NEO;
-
-using envVariableMap = std::unordered_map<std::string, std::string>;
 
 namespace L0 {
 namespace ult {
@@ -27,14 +24,11 @@ class SysmanEnabledFixture : public ::testing::Test {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        mockableEnvValues = std::make_unique<envVariableMap>();
-        (*mockableEnvValues)["ZES_ENABLE_SYSMAN"] = "1";
-        mockableEnvValuesBackup = std::make_unique<VariableBackup<envVariableMap *>>(&IoFunctions::mockableEnvValues, mockableEnvValues.get());
+        debugManager.flags.ZES_ENABLE_SYSMAN.set(true);
     }
 
   protected:
-    std::unique_ptr<VariableBackup<envVariableMap *>> mockableEnvValuesBackup;
-    std::unique_ptr<envVariableMap> mockableEnvValues;
+    DebugManagerStateRestore restorer;
 };
 
 } // namespace ult

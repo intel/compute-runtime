@@ -5723,10 +5723,8 @@ TEST(OfflineCompilerTest, GivenPathWithPermissionDeniedWhenCreatingDirectoryThen
 
 TEST_F(OfflineCompilerTests, givenOneApiPvcSendWarWaEnvSetToFalseWhenInitializingThenInternalOptionShouldContainInternalOption) {
 
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "0"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnvOneapiPvcSendWarWa.set(false);
 
     std::vector<std::string> argv = {
         "ocloc",

@@ -21,7 +21,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -244,8 +243,7 @@ bool ExecutionEnvironment::getSubDeviceHierarchy(uint32_t index, std::tuple<uint
 void ExecutionEnvironment::parseAffinityMask() {
     const auto &affinityMaskString = debugManager.flags.ZE_AFFINITY_MASK.get();
 
-    if (affinityMaskString.compare("default") == 0 ||
-        affinityMaskString.empty()) {
+    if (!isAffinityMaskSet(affinityMaskString)) {
         return;
     }
 
@@ -343,8 +341,7 @@ void ExecutionEnvironment::sortNeoDevices() {
 }
 
 void ExecutionEnvironment::setDeviceHierarchyMode(const GfxCoreHelper &gfxCoreHelper) {
-    NEO::EnvironmentVariableReader envReader;
-    std::string deviceHierarchyMode = envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string(""));
+    std::string deviceHierarchyMode = NEO::debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get();
     if (strcmp(deviceHierarchyMode.c_str(), "COMPOSITE") == 0) {
         this->deviceHierarchyMode = DeviceHierarchyMode::composite;
     } else if (strcmp(deviceHierarchyMode.c_str(), "FLAT") == 0) {

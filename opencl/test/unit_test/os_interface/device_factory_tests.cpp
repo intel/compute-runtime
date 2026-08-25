@@ -129,10 +129,8 @@ TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenCreatingDevicesThenForceImagesSup
 }
 
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
     DebugManagerStateRestore restorer;
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
     debugManager.flags.CreateMultipleRootDevices.set(5);
     debugManager.flags.CreateMultipleSubDevices.set(4);
     debugManager.flags.ZE_AFFINITY_MASK.set("1.0,2.3,2.1,1.3,0,2.0,4.0,4.2,4.3,4.1");
@@ -149,10 +147,8 @@ TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetWhenCreateDevicesThenProperNumbe
 }
 
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterRootDeviceThanAvailableWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
     DebugManagerStateRestore restorer;
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
     debugManager.flags.CreateMultipleRootDevices.set(2);
     debugManager.flags.CreateMultipleSubDevices.set(4);
     debugManager.flags.ZE_AFFINITY_MASK.set("0,92,1.1");
@@ -168,10 +164,8 @@ TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterRootDeviceThanAvailable
 }
 
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterSubDeviceThanAvailableWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
     DebugManagerStateRestore restorer;
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
     debugManager.flags.CreateMultipleRootDevices.set(2);
     debugManager.flags.CreateMultipleSubDevices.set(4);
     debugManager.flags.ZE_AFFINITY_MASK.set("0,1.54");
@@ -185,10 +179,8 @@ TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterSubDeviceThanAvailableW
 }
 
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToRootDevicesOnlyWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
     DebugManagerStateRestore restorer;
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
     debugManager.flags.CreateMultipleRootDevices.set(2);
     debugManager.flags.CreateMultipleSubDevices.set(4);
     debugManager.flags.ZE_AFFINITY_MASK.set("0,1");

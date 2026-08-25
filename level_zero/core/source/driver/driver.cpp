@@ -7,9 +7,9 @@
 
 #include "level_zero/core/source/driver/driver.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/pin/pin.h"
@@ -29,37 +29,17 @@ void Driver::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
     pid = NEO::SysCalls::getCurrentProcessId();
 
-    NEO::EnvironmentVariableReader envReader;
-    L0EnvVariables envVariables = {};
-    envVariables.programDebugging =
-        envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", 0);
-    envVariables.metrics =
-        envReader.getSetting("ZET_ENABLE_METRICS", false);
-    envVariables.pin =
-        envReader.getSetting("ZET_ENABLE_PROGRAM_INSTRUMENTATION", false);
-    envVariables.sysman =
-        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
-    envVariables.pciIdDeviceOrder =
-        envReader.getSetting("ZE_ENABLE_PCI_ID_DEVICE_ORDER", false);
-    envVariables.fp64Emulation =
-        envReader.getSetting("NEO_FP64_EMULATION", false);
-
-    bool oneApiPvcWa = envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true);
+    auto &flags = NEO::debugManager.flags;
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
 
-    if (!NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
-        const auto dbgMode = NEO::getDebuggingMode(envVariables.programDebugging);
+    if (!flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
+        const auto dbgMode = NEO::getDebuggingMode(flags.ZET_ENABLE_PROGRAM_DEBUGGING.get());
         executionEnvironment->setDebuggingMode(dbgMode);
     }
 
-    if (envVariables.fp64Emulation) {
-        executionEnvironment->setFP64EmulationEnabled();
-    }
-
-    executionEnvironment->setMetricsEnabled(envVariables.metrics);
-    executionEnvironment->setOneApiPvcWaEnv(oneApiPvcWa);
+    executionEnvironment->setMetricsEnabled(flags.ZET_ENABLE_METRICS.get());
 
     executionEnvironment->incRefInternal();
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
@@ -74,7 +54,7 @@ void Driver::initialize(ze_result_t *result) {
 
     auto deviceGroups = NEO::Device::groupDevices(std::move(neoDevices));
     for (auto &devices : deviceGroups) {
-        auto driverHandle = DriverHandle::create(std::move(devices), envVariables, result);
+        auto driverHandle = DriverHandle::create(std::move(devices), result);
         if (driverHandle) {
             globalDriverHandles->push_back(driverHandle);
 
@@ -93,7 +73,7 @@ void Driver::initialize(ze_result_t *result) {
     if (globalDriverHandles->size() > 0) {
         *result = ZE_RESULT_SUCCESS;
 
-        if (envVariables.metrics) {
+        if (flags.ZET_ENABLE_METRICS.get()) {
             *result = MetricDeviceContext::enableMetricApi();
         }
         if (*result != ZE_RESULT_SUCCESS) {
@@ -101,7 +81,7 @@ void Driver::initialize(ze_result_t *result) {
                 delete static_cast<BaseDriver *>(driverHandle);
             }
             globalDriverHandles->clear();
-        } else if (envVariables.pin) {
+        } else if (flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.get()) {
             std::unique_lock<std::mutex> mtx{this->gtpinInitMtx};
             this->gtPinInitializationNeeded = true;
         }

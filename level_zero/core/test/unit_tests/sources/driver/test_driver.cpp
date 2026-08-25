@@ -21,7 +21,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
@@ -359,7 +358,7 @@ TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertie
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice2));
 
     ze_result_t res;
-    auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &res);
+    auto driverHandle = DriverHandle::create(std::move(devices), &res);
 
     uint32_t count = 0;
     res = driverHandle->getExtensionProperties(&count, nullptr);
@@ -643,7 +642,7 @@ TEST(DriverTestFamilySupport, whenInitializingDriverOnSupportedFamilyThenDriverI
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue);
+    auto driverHandle = DriverHandle::create(std::move(devices), &returnValue);
     EXPECT_NE(nullptr, driverHandle);
     delete driverHandle;
 }
@@ -655,7 +654,7 @@ TEST(DriverTest, givenDriverHandleWhenInitializingThenSvmAllocsManagerIsSetBefor
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     ASSERT_NE(nullptr, driverHandle);
 
     auto builtinsLib = static_cast<MockBuiltInKernelLibImpl *>(driverHandle->devices[0]->getBuiltinFunctionsLib());
@@ -667,6 +666,8 @@ TEST(DriverTest, givenDriverHandleWhenInitializingThenSvmAllocsManagerIsSetBefor
 }
 
 TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggingIsFalse) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(0);
 
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
@@ -674,10 +675,8 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
     NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    L0EnvVariables envVariables = {};
-    envVariables.programDebugging = false;
 
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_EQ(NEO::DebuggingMode::disabled, driverHandle->enableProgramDebugging);
@@ -688,14 +687,10 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
 using DriverImpTest = ::testing::Test;
 
 TEST_F(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
     driver.initialize(&result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_LE(3u, IoFunctions::mockGetenvCalled);
 
     auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
 
@@ -714,9 +709,8 @@ TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImp
         GTEST_SKIP();
     }
 
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_METRICS", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_METRICS.set(true);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -725,45 +719,10 @@ TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImp
     EXPECT_TRUE(globalDriverHandles->empty());
 }
 
-TEST_F(DriverImpTest, givenOneApiPvcSendWarWaEnvWhenCreatingExecutionEnvironmentThenCorrectEnvValueIsStored) {
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    {
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "1"}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-        ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-        Driver driver;
-        driver.initialize(&result);
-
-        ASSERT_FALSE(globalDriverHandles->empty());
-        auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
-        EXPECT_TRUE(driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv());
-
-        delete driverHandle;
-        globalDriverHandles->clear();
-    }
-    {
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "0"}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-        ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-        Driver driver;
-        driver.initialize(&result);
-
-        ASSERT_FALSE(globalDriverHandles->empty());
-        auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
-        EXPECT_FALSE(driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv());
-
-        delete driverHandle;
-        globalDriverHandles->clear();
-    }
-}
-
 TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -779,9 +738,8 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironme
 
 TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -795,31 +753,10 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecution
     globalDriverHandles->clear();
 }
 
-TEST_F(DriverImpTest, givenEnabledFP64EmulationWhenCreatingExecutionEnvironmentThenFP64EmulationIsEnabled) {
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_FP64_EMULATION", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    Driver driver;
-    driver.initialize(&result);
-
-    ASSERT_FALSE(globalDriverHandles->empty());
-    auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
-    EXPECT_TRUE(driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->isFP64EmulationEnabled());
-
-    delete driverHandle;
-    globalDriverHandles->clear();
-}
-
 TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -836,10 +773,7 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWh
 TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -876,10 +810,10 @@ TEST(DriverTest, givenProgramDebuggingEnvVarValue1WhenCreatingDriverThenEnablePr
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    L0EnvVariables envVariables = {};
-    envVariables.programDebugging = 1;
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
 
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::online);
@@ -896,10 +830,10 @@ TEST(DriverTest, givenProgramDebuggingEnvVarValue2WhenCreatingDriverThenEnablePr
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    L0EnvVariables envVariables = {};
-    envVariables.programDebugging = 2;
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
 
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::offline);
@@ -916,9 +850,7 @@ TEST(DriverTest, whenCreatingDriverThenDefaultContextWithAllDevicesIsCreated) {
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    L0EnvVariables envVariables = {};
-
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     auto defaultContext = driverHandle->getDefaultContext();
@@ -945,9 +877,7 @@ TEST(DriverTest, givenDriverWhenGetDefaultContextApiIsCalledThenProperHandleIsRe
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    L0EnvVariables envVariables = {};
-
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     auto defaultContext = ::zeDriverGetDefaultContext(driverHandle);
@@ -961,9 +891,8 @@ TEST(DriverTest, givenDriverWhenGetDefaultContextApiIsCalledThenProperHandleIsRe
 
 TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIsReturned) {
     VariableBackup<bool> backupUseMockSip{&MockSipData::useMockSip};
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
     backupUseMockSip = true;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -981,9 +910,8 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIs
 
 TEST(DriverTest, givenInvalidCompilerEnvironmentAndEnableProgramDebuggingWithValue2ThenDependencyUnavailableErrorIsReturned) {
     VariableBackup<bool> backupUseMockSip{&MockSipData::useMockSip};
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
     backupUseMockSip = true;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -1046,6 +974,7 @@ struct MaskArray {
 
 struct DriverHandleZeInitTest : public ::testing::Test {
     void SetUp() override {
+        NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
         globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
 
         ze_result_t returnValue;
@@ -1055,16 +984,14 @@ struct DriverHandleZeInitTest : public ::testing::Test {
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-        L0EnvVariables envVariables = {};
-        envVariables.programDebugging = true;
-
-        driverHandle = whiteboxCast(L0::DriverHandle::create(std::move(devices), envVariables, &returnValue));
+        driverHandle = whiteboxCast(L0::DriverHandle::create(std::move(devices), &returnValue));
         globalDriverHandles->push_back(driverHandle);
     }
     void TearDown() override {
         delete driverHandle;
         delete globalDriverHandles;
     }
+    DebugManagerStateRestore restorer;
     L0::DriverHandle *driverHandle;
     VariableBackup<decltype(globalDriverHandles)> globalDriverHandleBackup{&globalDriverHandles, nullptr};
 };
@@ -1984,6 +1911,7 @@ TEST_F(DriverExperimentalApiTest, givenGetVersionStringAPIExistsThenGetCurrentVe
 
 struct GtPinInitTest : public ::testing::Test {
     void SetUp() override {
+        NEO::debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.set(true);
         globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
         gtpinInitTimesCalled = 0u;
         driver.driverInitCallBase = true;
@@ -2028,12 +1956,10 @@ struct GtPinInitTest : public ::testing::Test {
         gtpinInitTimesCalled = 0u;
     }
 
+    DebugManagerStateRestore restorer;
     Mock<Driver> driver;
     static uint32_t gtpinInitTimesCalled;
     VariableBackup<uint32_t> gtpinCounterBackup{&gtpinInitTimesCalled, 0};
-    VariableBackup<uint32_t> mockGetenvCalledBackup{&IoFunctions::mockGetenvCalled, 0};
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_INSTRUMENTATION", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup{&IoFunctions::mockableEnvValues, &mockableEnvs};
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     VariableBackup<NEO::OsLibrary *> osLibraryBackup{&MockOsLibrary::loadLibraryNewObject, nullptr};
     VariableBackup<decltype(globalDriverHandles)> globalDriverHandleBackup{&globalDriverHandles, nullptr};

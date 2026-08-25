@@ -981,11 +981,10 @@ HWTEST2_F(DeviceTests, givenZexNumberOfCssAndZeAffinityMaskSetWhenDeviceIsCreate
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevicesModelThenProperSubDeviceHierarchyMapisSet) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("FLAT");
 
     uint32_t numRootDevices = 4;
     uint32_t numSubDevices = 4;
@@ -1030,7 +1029,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevice
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("FLAT");
     debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3,"
                                             "5,7,"
                                             "11,"
@@ -1045,7 +1044,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevice
     debugManager.flags.ContextGroupSize.set(0);
     debugManager.flags.ForcePreemptionMode.set(1);
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
 
@@ -1092,7 +1090,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevice
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("FLAT");
     debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3,"
                                             "5,7,"
                                             "11,"
@@ -1107,7 +1105,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevice
     debugManager.flags.ContextGroupSize.set(0);
     debugManager.flags.ForcePreemptionMode.set(1);
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
 
@@ -1149,7 +1146,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDev
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
     debugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.2,0.3,"
                                             "1.1,1.3,"
                                             "2.3,"
@@ -1164,7 +1161,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDev
     debugManager.flags.ContextGroupSize.set(0);
     debugManager.flags.ForcePreemptionMode.set(1);
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
 
@@ -1211,7 +1207,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDev
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
     debugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.2,0.3,"
                                             "1.1,1.3,"
                                             "2.3,"
@@ -1226,7 +1222,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDev
     debugManager.flags.ContextGroupSize.set(0);
     debugManager.flags.ForcePreemptionMode.set(1);
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
 
@@ -1260,12 +1255,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDev
 }
 
 TEST_F(DeviceTests, givenZeAffinityMaskSetThenProperSubDeviceHierarchyMapIsSet) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
 
     uint32_t numRootDevices = 4;
     uint32_t numSubDevices = 4;
@@ -1302,12 +1295,10 @@ TEST_F(DeviceTests, givenZeAffinityMaskSetThenProperSubDeviceHierarchyMapIsSet) 
 }
 
 TEST_F(DeviceTests, givenZeAffinityMaskSetWithoutTilesThenProperSubDeviceHierarchyMapisUnset) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
 
     uint32_t numRootDevices = 4;
     uint32_t numSubDevices = 4;
@@ -1336,12 +1327,10 @@ TEST_F(DeviceTests, givenZeAffinityMaskSetWithoutTilesThenProperSubDeviceHierarc
 }
 
 TEST_F(DeviceTests, givenZeAffinityMaskSetWhenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsAllocated) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
 
     uint32_t numRootDevices = 4;
     uint32_t numSubDevices = 4;
@@ -1378,8 +1367,7 @@ TEST_F(DeviceTests, givenDifferentHierarchiesWithoutSubDevicesThenNumSubDevicesI
 
     std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
     for (std::string hierarchy : hierarchies) {
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set(hierarchy);
 
         MockExecutionEnvironment executionEnvironment(&hwInfo, false, numRootDevices);
         executionEnvironment.incRefInternal();
@@ -1410,8 +1398,7 @@ TEST_F(DeviceTests, givenZeAffinityMaskSetWithDifferentHierarchiesThenNumSubDevi
 
     std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
     for (std::string hierarchy : hierarchies) {
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set(hierarchy);
 
         MockExecutionEnvironment executionEnvironment(&hwInfo, false, numRootDevices);
         executionEnvironment.incRefInternal();
@@ -1499,8 +1486,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCrea
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useFirstSubmissionInitDevice = true;
 
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_L0_SYSMAN_NO_CONTEXT_MODE", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.set(true);
 
     auto hwInfo = *defaultHwInfo;
     auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
@@ -1524,9 +1511,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCrea
     ultHwConfig.useFirstSubmissionInitDevice = true;
     DebugManagerStateRestore restorer;
     debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(-1);
-
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_L0_SYSMAN_NO_CONTEXT_MODE", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.set(true);
 
     auto hwInfo = *defaultHwInfo;
     auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);

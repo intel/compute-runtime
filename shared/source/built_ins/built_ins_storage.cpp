@@ -130,7 +130,7 @@ BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::BaseKernel kernel
 
     if (requestedCodeType == BuiltIn::CodeType::any) {
         uint32_t codeType = static_cast<uint32_t>(BuiltIn::CodeType::binary);
-        bool requiresRebuild = !device.getExecutionEnvironment()->isOneApiPvcWaEnv();
+        bool requiresRebuild = !debugManager.flags.EnvOneapiPvcSendWarWa.get();
         if (requiresRebuild || debugManager.flags.RebuildPrecompiledKernels.get()) {
             codeType = static_cast<uint32_t>(BuiltIn::CodeType::source);
         }

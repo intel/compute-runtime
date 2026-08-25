@@ -7,10 +7,9 @@
 
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/path.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
-#include "shared/source/utilities/io_functions.h"
 
 #include "os_inc.h"
 
@@ -40,12 +39,11 @@ bool createCompilerCachePath(std::string &cacheDir) {
     return false;
 }
 
-bool checkDefaultCacheDirSettings(std::string &cacheDir, NEO::EnvironmentVariableReader &reader) {
-    std::string emptyString = "";
-    cacheDir = reader.getSetting("XDG_CACHE_HOME", emptyString);
+bool checkDefaultCacheDirSettings(std::string &cacheDir) {
+    cacheDir = NEO::debugManager.flags.EnvXdgCacheHome.get();
 
     if (cacheDir.empty()) {
-        cacheDir = reader.getSetting("HOME", emptyString);
+        cacheDir = NEO::debugManager.flags.EnvHome.get();
         if (cacheDir.empty()) {
             return false;
         }

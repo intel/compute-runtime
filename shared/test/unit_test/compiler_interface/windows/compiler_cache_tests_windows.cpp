@@ -9,7 +9,6 @@
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -172,9 +171,8 @@ class CompilerCacheMockWindows : public CompilerCache {
 };
 
 TEST(CompilerCacheHelper, GivenHomeEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperDirectoryIsReturned) {
-    NEO::EnvironmentVariableReader envReader;
     std::string cacheDir = "";
-    EXPECT_FALSE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_FALSE(checkDefaultCacheDirSettings(cacheDir));
 }
 
 namespace SysCalls {

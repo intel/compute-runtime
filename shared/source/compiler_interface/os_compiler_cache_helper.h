@@ -9,8 +9,7 @@
 #include <string>
 
 namespace NEO {
-class EnvironmentVariableReader;
-bool checkDefaultCacheDirSettings(std::string &cacheDir, NEO::EnvironmentVariableReader &reader);
+bool checkDefaultCacheDirSettings(std::string &cacheDir);
 time_t getFileModificationTime(const std::string &path);
 size_t getFileSize(const std::string &path);
 } // namespace NEO

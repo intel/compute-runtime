@@ -428,8 +428,9 @@ HWTEST_F(BuiltInTestsL0, givenDeviceWithUnregisteredBinaryBuiltinWhenGettingBuil
 }
 
 HWTEST_F(BuiltInTestsL0, givenOneApiPvcSendWarWaEnvFalseWhenGettingBuiltinThenIntermediateFormatIsUsed) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnvOneapiPvcSendWarWa.set(false);
     pDevice->incRefInternal();
-    pDevice->getExecutionEnvironment()->setOneApiPvcWaEnv(false);
 
     MockDeviceForBuiltinTests testDevice(pDevice);
     testDevice.builtins.reset(new BuiltInKernelLibImpl(&testDevice, pDevice->getBuiltIns()));

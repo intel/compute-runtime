@@ -115,8 +115,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsThenAllRootDevi
     std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
     for (std::string hierarchy : hierarchies) {
         platformsImpl->clear();
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set(hierarchy);
 
         auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, numEntries, devices, &numDevices);
         EXPECT_EQ(retVal, CL_SUCCESS);
@@ -138,8 +137,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIs
     std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
     for (std::string hierarchy : hierarchies) {
         platformsImpl->clear();
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set(hierarchy);
 
         auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, 0, nullptr, &maxNumDevices);
         EXPECT_EQ(retVal, CL_SUCCESS);
@@ -177,8 +175,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootAndSubDevicesWhenCallClGetDeviceIDsThe
     std::string hierarchies[] = {"FLAT", "COMBINED"};
     for (std::string hierarchy : hierarchies) {
         platformsImpl->clear();
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set(hierarchy);
 
         auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, 0, nullptr, &maxNumDevices);
         EXPECT_EQ(retVal, CL_SUCCESS);
@@ -214,8 +211,7 @@ TEST(clGetDeviceIDsTest, givenCompositeHierarchyWithMultipleRootAndSubDevicesWhe
     cl_uint maxNumDevices;
 
     platformsImpl->clear();
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
 
     auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, 0, nullptr, &maxNumDevices);
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -251,8 +247,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesAndLimitedNumberOfReturnedDevic
     std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
     for (std::string hierarchy : hierarchies) {
         platformsImpl->clear();
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set(hierarchy);
 
         cl_uint numDevices = 0;
         cl_uint numEntries = numRootDevices;
@@ -274,6 +269,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesAndLimitedNumberOfReturnedDevic
 }
 
 TEST(clGetDeviceIDsNegativeTests, whenFailToCreateDeviceThenclGetDeviceIDsReturnsNoDeviceError) {
+    DebugManagerStateRestore restorer;
     VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createFuncBackup{&DeviceFactory::createRootDeviceFunc};
     DeviceFactory::createRootDeviceFunc = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
         return nullptr;
@@ -282,8 +278,7 @@ TEST(clGetDeviceIDsNegativeTests, whenFailToCreateDeviceThenclGetDeviceIDsReturn
     std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
     for (std::string hierarchy : hierarchies) {
         platformsImpl->clear();
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set(hierarchy);
 
         constexpr auto numRootDevices = 3u;
         cl_uint numDevices = 0;
@@ -310,8 +305,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWithAffinityMaskWhenGetDeviceId
     std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
     for (std::string hierarchy : hierarchies) {
         platformsImpl->clear();
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set(hierarchy);
 
         const auto dummyDevice = reinterpret_cast<cl_device_id>(0x1357);
         for (auto i = 0u; i < numRootDevices; i++) {
@@ -346,8 +340,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGettingDeviceIdsWithDeviceT
     std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
     for (std::string hierarchy : hierarchies) {
         platformsImpl->clear();
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set(hierarchy);
 
         const auto dummyDevice = reinterpret_cast<cl_device_id>(0x1357);
         for (auto i = 0u; i < numRootDevices; i++) {

@@ -19,7 +19,6 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/usm_pool_params.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/pin/pin.h"
 
@@ -202,8 +201,7 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
 
 void Platform::tryNotifyGtpinInit() {
     auto notifyGTPin = []() {
-        EnvironmentVariableReader envReader;
-        if (envReader.getSetting("ZET_ENABLE_PROGRAM_INSTRUMENTATION", false)) {
+        if (debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.get()) {
             const std::string gtpinFuncName{"OpenGTPinOCL"};
             PinContext::init(gtpinFuncName);
         }

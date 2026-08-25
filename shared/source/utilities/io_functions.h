@@ -62,14 +62,6 @@ inline int snprintf(char *buff, size_t buffLen, char const *const formatStr, ...
     return ret;
 }
 
-inline bool getEnvToBool(const char *name) {
-    const char *env = getenvPtr(name);
-    if ((nullptr == env) || (0 == strcmp("0", env))) {
-        return false;
-    }
-    return (0 == strcmp("1", env));
-}
-
 char *getEnvironmentVariable(const char *name);
 
 #ifdef _WIN32

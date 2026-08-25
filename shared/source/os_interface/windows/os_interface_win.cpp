@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/os_interface/debug_env_reader.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
@@ -38,9 +38,7 @@ uint32_t OSInterface::getAggregatedProcessCount() const {
 void OSInterface::registerTrimCallback() {
     if (driverModel && driverModel->getDriverModelType() == DriverModelType::wddm) {
 
-        NEO::EnvironmentVariableReader envReader;
-        bool noContextMode = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
-        if (noContextMode) {
+        if (NEO::debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.get()) {
             return;
         }
 

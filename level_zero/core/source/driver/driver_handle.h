@@ -45,7 +45,6 @@ struct IpcSocketServerDeleter {
 
 namespace L0 {
 struct Device;
-struct L0EnvVariables;
 class HostPointerManager;
 struct FabricVertex;
 struct FabricEdge;
@@ -241,7 +240,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }
 
-    static DriverHandle *create(std::vector<std::unique_ptr<NEO::Device>> devices, const L0EnvVariables &envVariables, ze_result_t *returnValue);
+    static DriverHandle *create(std::vector<std::unique_ptr<NEO::Device>> devices, ze_result_t *returnValue);
 
   protected:
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,

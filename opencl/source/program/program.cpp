@@ -108,7 +108,7 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     }
 
-    if (pClDevice->getDevice().getExecutionEnvironment()->isFP64EmulationEnabled()) {
+    if (debugManager.flags.NEO_FP64_EMULATION.get()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableFP64GenEmu);
     }
 
@@ -116,7 +116,7 @@ std::string Program::getInternalOptions() const {
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
     CompilerOptions::applyExtraInternalOptions(internalOptions, hwInfo, compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
 
-    if (pClDevice->getDevice().getExecutionEnvironment()->isOneApiPvcWaEnv() == false) {
+    if (debugManager.flags.EnvOneapiPvcSendWarWa.get() == false) {
         NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::optDisableSendWarWa);
     }
     return internalOptions;
@@ -288,7 +288,7 @@ cl_int Program::createProgramFromBinary(
             this->indirectAccessBufferMajorVersion = singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection;
 
             bool rebuild = AddressingModeHelper::containsBindlessKernel(decodedSingleDeviceBinary.programInfo.kernelInfos);
-            rebuild |= !clDevice.getDevice().getExecutionEnvironment()->isOneApiPvcWaEnv();
+            rebuild |= !debugManager.flags.EnvOneapiPvcSendWarWa.get();
 
             bool flagRebuild = debugManager.flags.RebuildPrecompiledKernels.get();
 

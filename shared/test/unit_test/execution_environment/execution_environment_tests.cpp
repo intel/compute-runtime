@@ -389,7 +389,11 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
 #include "debug_variables.inl"
 #define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT
+#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
 #undef DECLARE_DEBUG_VARIABLE_OPT
@@ -428,7 +432,11 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
 #include "debug_variables.inl"
 #define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT
+#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
 #undef DECLARE_DEBUG_VARIABLE_OPT
@@ -470,14 +478,14 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
                                                   sizeof(std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>>) +
                                                   sizeof(std::unordered_map<std::thread::id, std::string>) +
                                                   2 * sizeof(std::mutex) +
-                                                  5 * sizeof(bool) +
+                                                  3 * sizeof(bool) +
                                                   sizeof(DeviceHierarchyMode) +
                                                   sizeof(DebuggingMode) +
                                                   sizeof(std::unordered_map<uint32_t, uint32_t>) +
                                                   sizeof(std::mutex) +
                                                   sizeof(std::vector<std::tuple<std::string, uint32_t>>) +
                                                   sizeof(std::mutex) +
-                                                  (is64bit ? 19 : 15),
+                                                  (is64bit ? 21 : 13),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
@@ -642,18 +650,6 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
 
         EXPECT_EQ(expectedOsContextCount + expectedOsContextCountForCcs, MemoryManager::maxOsContextCount);
     }
-}
-
-TEST(ExecutionEnvironment, givenDefaultExecutionEnvironmentSettingsWhenCheckingFP64EmulationThenFP64EmulationIsDisabled) {
-    ExecutionEnvironment executionEnvironment{};
-    EXPECT_FALSE(executionEnvironment.isFP64EmulationEnabled());
-}
-
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSettingFP64EmulationEnabledThenFP64EmulationIsEnabled) {
-    ExecutionEnvironment executionEnvironment{};
-    ASSERT_FALSE(executionEnvironment.isFP64EmulationEnabled());
-    executionEnvironment.setFP64EmulationEnabled();
-    EXPECT_TRUE(executionEnvironment.isFP64EmulationEnabled());
 }
 
 TEST(ExecutionEnvironment, givenCorrectZeAffinityMaskWithFlatOrCombinedHierarchyThenMapOfSubDeviceIndicesIsSet) {

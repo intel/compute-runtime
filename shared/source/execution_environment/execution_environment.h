@@ -60,21 +60,12 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool getSubDeviceHierarchy(uint32_t index, std::tuple<uint32_t, uint32_t, uint32_t> *subDeviceMap);
     bool areMetricsEnabled() { return this->metricsEnabled; }
     int setErrorDescription(const std::string &str);
-    void setFP64EmulationEnabled() {
-        fp64EmulationEnabled = true;
-    }
-    bool isFP64EmulationEnabled() const { return fp64EmulationEnabled; }
     void setDevicePermissionError(bool value) {
         devicePermissionError = value;
     }
     bool isDevicePermissionError() const { return devicePermissionError; }
     bool isResourceDecompressionEnabled() const { return resourceDecompressionEnabled; };
     void setResourceDecompressionEnabled(bool value) { resourceDecompressionEnabled = value; };
-
-    void setOneApiPvcWaEnv(bool val) {
-        oneApiPvcWaEnv = val;
-    }
-    bool isOneApiPvcWaEnv() const { return oneApiPvcWaEnv; }
 
     DirectSubmissionController *initializeDirectSubmissionController();
     void initializeUnifiedMemoryReuseCleaner(bool isAnyDirectSubmissionLightEnabled);
@@ -111,8 +102,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void configureNeoEnvironment();
     void restoreCcsMode();
     bool metricsEnabled = false;
-    bool fp64EmulationEnabled = false;
-    bool oneApiPvcWaEnv = true;
     bool devicePermissionError = false;
     bool resourceDecompressionEnabled = false;
 

@@ -793,7 +793,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
                 pKernelProperties->fp32flags |= ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT;
             }
         } else if (hardwareInfo.capabilityTable.ftrSupportsFP64Emulation) {
-            if (neoDevice->getExecutionEnvironment()->isFP64EmulationEnabled()) {
+            if (NEO::debugManager.flags.NEO_FP64_EMULATION.get()) {
                 pKernelProperties->flags |= ZE_DEVICE_MODULE_FLAG_FP64;
                 pKernelProperties->fp64flags = defaultFpFlags | ZE_DEVICE_FP_FLAG_SOFT_FLOAT;
             }

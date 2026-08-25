@@ -17,7 +17,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/software_tags_manager.h"
@@ -52,10 +51,7 @@ Device *RootDevice::getRootDevice() const {
 
 void RootDevice::createBindlessHeapsHelper() {
 
-    EnvironmentVariableReader envReader;
-    bool disableGlobalBindless = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
-
-    if (!disableGlobalBindless && ApiSpecificConfig::getGlobalBindlessHeapConfiguration(this->getHardwareInfo()) && ApiSpecificConfig::getBindlessMode(*this)) {
+    if (!NEO::debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.get() && ApiSpecificConfig::getGlobalBindlessHeapConfiguration(this->getHardwareInfo()) && ApiSpecificConfig::getBindlessMode(*this)) {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createBindlessHeapsHelper(this, getNumGenericSubDevices() > 1);
     }
 }

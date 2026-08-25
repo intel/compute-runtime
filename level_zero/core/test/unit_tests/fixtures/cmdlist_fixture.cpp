@@ -624,7 +624,7 @@ void CommandQueueThreadArbitrationPolicyFixture::setUp() {
     std::vector<std::unique_ptr<NEO::Device>> devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    auto driverHandleUlt = whiteboxCast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
+    auto driverHandleUlt = whiteboxCast(DriverHandle::create(std::move(devices), &returnValue));
     driverHandle.reset(driverHandleUlt);
 
     ASSERT_NE(nullptr, driverHandle);

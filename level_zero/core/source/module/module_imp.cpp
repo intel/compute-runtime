@@ -198,7 +198,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, BuildOptions::hasBufferOffsetArg);
     auto &neoDevice = *device->getNEODevice();
 
-    if (neoDevice.getExecutionEnvironment()->isFP64EmulationEnabled()) {
+    if (NEO::debugManager.flags.NEO_FP64_EMULATION.get()) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::enableFP64GenEmu);
     }
 
@@ -469,7 +469,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         this->isGeneratedByIgc = singleDeviceBinary.generator == NEO::GeneratorType::igc;
 
         bool rebuild = NEO::debugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
-        rebuild |= !device->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv();
+        rebuild |= !NEO::debugManager.flags.EnvOneapiPvcSendWarWa.get();
 
         auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
         auto &productHelper = rootDeviceEnvironment.getProductHelper();
@@ -1215,7 +1215,7 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         this->isFunctionSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
         this->isGlobalSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
 
-        if (getDevice()->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv() == false) {
+        if (NEO::debugManager.flags.EnvOneapiPvcSendWarWa.get() == false) {
             NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::optDisableSendWarWa);
         }
     }

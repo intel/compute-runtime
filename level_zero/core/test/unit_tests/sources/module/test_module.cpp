@@ -4141,11 +4141,12 @@ HWTEST_F(ModuleTranslationUnitTest, GivenZebinWithSpecConstantsWhenCreatingFromN
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseAndFileWithIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiledWithInternalOption) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnvOneapiPvcSendWarWa.set(false);
 
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
-    this->neoDevice->executionEnvironment->setOneApiPvcWaEnv(false);
 
     auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
@@ -4171,11 +4172,12 @@ HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseAndFileWithIn
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseWhenCreatingModuleFromSpirvBinaryThenModuleIsCompiledWithInternalOption) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnvOneapiPvcSendWarWa.set(false);
 
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
-    this->neoDevice->executionEnvironment->setOneApiPvcWaEnv(false);
 
     uint8_t binary[10];
     ze_module_desc_t moduleDesc = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,8 +38,7 @@ struct MultipleDeviceBdfUuidTest : public ::testing::Test {
 
 HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithCombinationOfAffinityMaskThenUuidIsCorrectForRootAndSubDevices, MatchAny) {
 
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
@@ -242,8 +241,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMas
 
 HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMaskSetToSubDeviceThenUuidOfRootDeviceIsBasedOnAffinityMask, MatchAny) {
 
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);

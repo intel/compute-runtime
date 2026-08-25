@@ -210,9 +210,23 @@ struct DebugVariablesT {                                // NOLINT(clang-analyzer
 #define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVarBase<dataType> variableName{defaultValue};
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT
+#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
+#define DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description) \
+    DECLARE_RUNTIME_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RAW_ENV_SCOPED_V(dataType, variableName, envVarName, defaultValue, scope, description) \
+    DebugVarBase<dataType> variableName{defaultValue, scope};
+#define DECLARE_RAW_ENV_VARIABLE_OPT(enabled, dataType, variableName, envVarName, defaultValue, description) \
+    DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description)
+#include "env_variables.inl"
+#undef DECLARE_RAW_ENV_VARIABLE_OPT
+#undef DECLARE_RAW_ENV_SCOPED_V
+#undef DECLARE_RAW_ENV_VARIABLE
 #undef S_OCLOC
 #undef S_RT
 #undef S_L0
@@ -291,7 +305,7 @@ class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
         return loopingEnabled;
     }
     template <typename DataType>
-    static void dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValuep, std::ostringstream &ostring);
+    static void dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValuep, std::ostringstream &ostring, bool isEnvOnly);
 
     void dumpFlags() const;
     static const char *settingsDumpFileName;

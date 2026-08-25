@@ -365,13 +365,13 @@ ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> n
     return ZE_RESULT_SUCCESS;
 }
 
-DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> devices, const L0EnvVariables &envVariables, ze_result_t *returnValue) {
+DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> devices, ze_result_t *returnValue) {
     DriverHandle *driverHandle = new DriverHandle;
     UNRECOVERABLE_IF(nullptr == driverHandle);
 
-    driverHandle->enableProgramDebugging = static_cast<NEO::DebuggingMode>(envVariables.programDebugging);
-    driverHandle->enableSysman = envVariables.sysman;
-    driverHandle->enablePciIdDeviceOrder = envVariables.pciIdDeviceOrder;
+    driverHandle->enableProgramDebugging = static_cast<NEO::DebuggingMode>(NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.get());
+    driverHandle->enableSysman = NEO::debugManager.flags.ZES_ENABLE_SYSMAN.get();
+    driverHandle->enablePciIdDeviceOrder = NEO::debugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.get();
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     if (res != ZE_RESULT_SUCCESS) {

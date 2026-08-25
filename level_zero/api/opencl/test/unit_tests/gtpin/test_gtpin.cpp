@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/os_interface/os_library.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -45,16 +45,15 @@ struct LeoGtpinInitTest : public Test<OclFixture> {
 
     static uint32_t gtpinInitTimesCalled;
 
+    DebugManagerStateRestore restorer;
     VariableBackup<uint32_t> gtpinCounterBackup{&gtpinInitTimesCalled, 0};
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup{&IoFunctions::mockableEnvValues, &mockableEnvs};
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     VariableBackup<NEO::OsLibrary *> osLibraryBackup{&MockOsLibrary::loadLibraryNewObject, nullptr};
 };
 uint32_t LeoGtpinInitTest::gtpinInitTimesCalled = 0u;
 
 TEST_F(LeoGtpinInitTest, givenInstrumentationEnabledWhenTryNotifyGtpinInitThenOpensOclGtpinFrontend) {
-    mockableEnvs["ZET_ENABLE_PROGRAM_INSTRUMENTATION"] = "1";
+    debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.set(true);
 
     platform->tryNotifyGtpinInit();
 
@@ -68,7 +67,7 @@ TEST_F(LeoGtpinInitTest, givenInstrumentationDisabledWhenTryNotifyGtpinInitThenD
 }
 
 TEST_F(LeoGtpinInitTest, givenInstrumentationEnabledWhenTryNotifyGtpinInitCalledMultipleTimesThenGtpinIsInitializedOnlyOnce) {
-    mockableEnvs["ZET_ENABLE_PROGRAM_INSTRUMENTATION"] = "1";
+    debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.set(true);
 
     platform->tryNotifyGtpinInit();
     platform->tryNotifyGtpinInit();
@@ -77,7 +76,7 @@ TEST_F(LeoGtpinInitTest, givenInstrumentationEnabledWhenTryNotifyGtpinInitCalled
 }
 
 TEST_F(LeoGtpinInitTest, givenPopulatedPlatformsWhenGtPinTryNotifyInitThenDelegatesToFirstPlatform) {
-    mockableEnvs["ZET_ENABLE_PROGRAM_INSTRUMENTATION"] = "1";
+    debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.set(true);
 
     std::vector<std::unique_ptr<Platform>> platforms;
     platforms.push_back(std::make_unique<Platform>(driverHandle->toHandle()));
@@ -89,7 +88,7 @@ TEST_F(LeoGtpinInitTest, givenPopulatedPlatformsWhenGtPinTryNotifyInitThenDelega
 }
 
 TEST_F(LeoGtpinInitTest, givenNullPlatformsWhenGtPinTryNotifyInitThenDoesNotInitializeGtpin) {
-    mockableEnvs["ZET_ENABLE_PROGRAM_INSTRUMENTATION"] = "1";
+    debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.set(true);
     VariableBackup<decltype(platformsImpl)> platformsBackup{&platformsImpl, nullptr};
 
     gtPinTryNotifyInit();
@@ -98,7 +97,7 @@ TEST_F(LeoGtpinInitTest, givenNullPlatformsWhenGtPinTryNotifyInitThenDoesNotInit
 }
 
 TEST_F(LeoGtpinInitTest, givenEmptyPlatformsWhenGtPinTryNotifyInitThenDoesNotInitializeGtpin) {
-    mockableEnvs["ZET_ENABLE_PROGRAM_INSTRUMENTATION"] = "1";
+    debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.set(true);
     std::vector<std::unique_ptr<Platform>> platforms;
     VariableBackup<decltype(platformsImpl)> platformsBackup{&platformsImpl, &platforms};
 

@@ -1084,13 +1084,15 @@ TEST_F(DeviceGetCapsTest, givenFp64EmulationSupportWithoutFp64EmulationEnvVarWhe
 }
 
 TEST_F(DeviceGetCapsTest, givenFp64EmulationSupportWithFp64EmulationEnvVarSetWhenCreatingDeviceThenDeviceCapsAreSetCorrectly) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.NEO_FP64_EMULATION.set(true);
+
     auto hwInfo = *defaultHwInfo;
 
     hwInfo.capabilityTable.ftrSupportsFP64 = false;
     hwInfo.capabilityTable.ftrSupportsFP64Emulation = true;
 
     auto executionEnvironment = MockClDevice::prepareExecutionEnvironment(&hwInfo, 0);
-    executionEnvironment->setFP64EmulationEnabled();
     auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
 
     auto &caps = pClDevice->getDeviceInfo();

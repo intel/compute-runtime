@@ -65,7 +65,7 @@ void ClDevice::setupFp64Flags() {
             deviceInfo.preferredVectorWidthDouble = 1;
         } else {
             if (hwInfo.capabilityTable.ftrSupportsFP64Emulation) {
-                if (getDevice().getExecutionEnvironment()->isFP64EmulationEnabled()) {
+                if (debugManager.flags.NEO_FP64_EMULATION.get()) {
                     deviceInfo.doubleFpConfig = defaultFpFlags | CL_FP_SOFT_FLOAT;
                     deviceInfo.nativeVectorWidthDouble = 1;
                     deviceInfo.preferredVectorWidthDouble = 1;

@@ -89,7 +89,7 @@ std::unique_ptr<BuiltInKernelLibImpl::BuiltInKernelData> BuiltInKernelLibImpl::l
     using BuiltInCodeType = NEO::BuiltIn::CodeType;
 
     StackVec<BuiltInCodeType, 2> supportedTypes{};
-    bool requiresRebuild = !device->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv();
+    bool requiresRebuild = !NEO::debugManager.flags.EnvOneapiPvcSendWarWa.get();
     if (!requiresRebuild && !NEO::debugManager.flags.RebuildPrecompiledKernels.get()) {
         supportedTypes.push_back(BuiltInCodeType::binary);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,8 +116,7 @@ TEST_F(ClCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenSubDevi
 }
 
 TEST_F(ClCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceApiReferenceCountIsIncreasedEveryTime) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
     setup(2);
 
     EXPECT_EQ(0, device->getSubDevice(0)->getRefApiCount());
@@ -135,8 +134,7 @@ TEST_F(ClCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceA
 }
 
 TEST_F(ClCreateSubDevicesTests, GivenValidInputAndFlatHierarchyWhenCreatingSubDevicesThenDeviceApiReferenceCountIsNotIncreased) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("FLAT");
     setup(2);
 
     EXPECT_EQ(0, device->getSubDevice(0)->getRefApiCount());
@@ -197,8 +195,7 @@ TEST_F(ClCreateSubDevicesTests, GivenExposeSingleDeviceModeWhenQueryingDeviceCap
 }
 
 TEST_F(ClCreateSubDevicesTests, GivenExposeSingleDeviceModeAndFlatHierarchyWhenCreatingSubDevicesThenErrorIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("FLAT");
     debugManager.flags.CreateMultipleSubDevices.set(2);
     mockDeviceCreateSingleDeviceBackup = false;
 
@@ -223,8 +220,7 @@ TEST_F(ClCreateSubDevicesTests, GivenExposeSingleDeviceModeAndFlatHierarchyWhenC
 
 struct ClCreateSubDevicesDeviceInfoTests : ClCreateSubDevicesTests {
     void setup(int numberOfDevices) {
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+        debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
         ClCreateSubDevicesTests::setup(numberOfDevices);
         expectedSubDeviceParentDevice = device.get();
         expectedRootDevicePartitionMaxSubDevices = numberOfDevices;

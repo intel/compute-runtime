@@ -73,8 +73,7 @@ using SubDevicesHwTest = ::testing::Test;
 
 HWTEST2_F(SubDevicesHwTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChangedThenChangeIsPropagatedToRootDevice, IsHeapfulRequired) {
     DebugManagerStateRestore restorer;
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
     debugManager.flags.CreateMultipleSubDevices.set(2);
 
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);

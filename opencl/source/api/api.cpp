@@ -18,7 +18,6 @@
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
@@ -99,17 +98,11 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             auto executionEnvironment = new ClExecutionEnvironment();
             executionEnvironment->incRefInternal();
 
-            NEO::EnvironmentVariableReader envReader;
             if (NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
-                const auto programDebugging = envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", 0);
+                const auto programDebugging = NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.get();
                 const auto dbgMode = NEO::getDebuggingMode(programDebugging);
                 executionEnvironment->setDebuggingMode(dbgMode);
             }
-            if (envReader.getSetting("NEO_FP64_EMULATION", false)) {
-                executionEnvironment->setFP64EmulationEnabled();
-            }
-            bool oneApiPvcWa = envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true);
-            executionEnvironment->setOneApiPvcWaEnv(oneApiPvcWa);
 
             std::vector<std::unique_ptr<Device>> allDevices;
             bool leoSupported = false;

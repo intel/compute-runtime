@@ -8,11 +8,9 @@
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -28,14 +26,10 @@ int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
 TEST(ClCacheDefaultConfigLinuxTest, GivenPrintDebugMessagesWhenCacheIsEnabledThenMessageWithPathIsPrintedToStdout) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(true);
-
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheDir.set("ult\\directory\\");
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, AllPathsExist::statMock);
-
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
 
     StreamCapture capture;
     capture.captureStdout();
@@ -58,12 +52,11 @@ int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
 } // namespace AllVariablesCorrectlySet
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenAllEnvVarWhenProperlySetThenProperConfigIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvCacheDir.set("ult/directory/");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, AllVariablesCorrectlySet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -82,12 +75,11 @@ int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
 } // namespace NonExistingPathIsSet
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenNonExistingPathWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvCacheDir.set("ult/directory/");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, NonExistingPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -113,12 +105,11 @@ int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
 } // namespace XDGEnvPathIsSet
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenXdgCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvXdgCacheHome.set("xdg/directory/");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XDGEnvPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -130,12 +121,11 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgCachePathSetWhenGetCompilerCacheConf
 }
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenXdgCachePathWithoutTrailingSlashSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvXdgCacheHome.set("xdg/directory");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XDGEnvPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -164,12 +154,11 @@ int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
 } // namespace HomeEnvPathIsSet
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["HOME"] = "home/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvHome.set("home/directory/");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, HomeEnvPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -181,12 +170,11 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathSetWhenGetCompilerCacheCon
 }
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathWithoutTrailingSlashSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["HOME"] = "home/directory";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvHome.set("home/directory");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, HomeEnvPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -198,12 +186,11 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathWithoutTrailingSlashSetWhe
 }
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigThenCacheSizeIsSetToMaxSize) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "0";
-    mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(0);
+    debugManager.flags.EnvCacheDir.set("ult/directory/");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, AllVariablesCorrectlySet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -242,12 +229,11 @@ int mkdirMock(const std::string &dir) {
 } // namespace HomeEnvPathIsSetButDotCacheDoesNotExist
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathSetWithoutExistingDotCacheWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["HOME"] = "home/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvHome.set("home/directory/");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, HomeEnvPathIsSetButDotCacheDoesNotExist::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, HomeEnvPathIsSetButDotCacheDoesNotExist::mkdirMock);
 
@@ -260,12 +246,11 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathSetWithoutExistingDotCache
 }
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathWithoutExistingDotCacheWithoutTrailingSlashSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["HOME"] = "home/directory";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvHome.set("home/directory");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, HomeEnvPathIsSetButDotCacheDoesNotExist::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, HomeEnvPathIsSetButDotCacheDoesNotExist::mkdirMock);
 
@@ -298,12 +283,11 @@ int mkdirMock(const std::string &dir) {
 } // namespace XdgPathIsSetAndNeedToCreate
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWhenNeoCompilerCacheNotExistsThenCreateNeoCompilerCacheFolder) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvXdgCacheHome.set("xdg/directory/");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XdgPathIsSetAndNeedToCreate::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, XdgPathIsSetAndNeedToCreate::mkdirMock);
 
@@ -316,12 +300,11 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWhenNeoCompilerCacheNotExistsThen
 }
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWithoutTrailingSlashWhenNeoCompilerCacheNotExistsThenCreateNeoCompilerCacheFolder) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvXdgCacheHome.set("xdg/directory");
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XdgPathIsSetAndNeedToCreate::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, XdgPathIsSetAndNeedToCreate::mkdirMock);
 
@@ -360,13 +343,12 @@ int mkdirMock(const std::string &dir) {
 } // namespace XdgPathIsSetAndOtherProcessCreatesPath
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperConfigIsReturned) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvXdgCacheHome.set("xdg/directory/");
     bool mkdirCalledTemp = false;
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XdgPathIsSetAndOtherProcessCreatesPath::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, XdgPathIsSetAndOtherProcessCreatesPath::mkdirMock);
     VariableBackup<bool> mkdirCalledBackup(&XdgPathIsSetAndOtherProcessCreatesPath::mkdirCalled, mkdirCalledTemp);
@@ -381,8 +363,8 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWhenOtherProcessCreatesNeoCompile
 }
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenNeoCachePersistentSetToZeroWhenGetDefaultCompilerCacheConfigThenCacheIsDisabled) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvCachePersistent.set(0);
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
 
@@ -392,18 +374,16 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenNeoCachePersistentSetToZeroWhenGetDefau
 TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetThenCacheConfigRemainsEnabled) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.EnvCachePersistent.set(1);
+    debugManager.flags.EnvCacheMaxSize.set(22);
+    debugManager.flags.EnvCacheDir.set("ult/directory/");
 
     std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
-    mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
-
     std::vector<std::string> envStorage;
 
     {
         auto environVec = NEO::ULT::MockEnvironBackup::buildEnvironFromMap(mockableEnvs, envStorage);
         NEO::ULT::MockEnvironBackup mockEnvBackup(environVec.data());
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
         VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, NEO::ULT::MockEnvironBackup::defaultStatMock);
 
         auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
@@ -414,7 +394,6 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetThenCacheConfigRemainsEnabl
         mockableEnvs["IGC_DEBUG"] = "1";
         auto environVec = NEO::ULT::MockEnvironBackup::buildEnvironFromMap(mockableEnvs, envStorage);
         NEO::ULT::MockEnvironBackup mockEnvBackup(environVec.data());
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
         VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, NEO::ULT::MockEnvironBackup::defaultStatMock);
 
         auto cacheConfig = NEO::getDefaultCompilerCacheConfig();

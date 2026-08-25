@@ -252,7 +252,6 @@ class ZesPciFixture : public SysmanDeviceFixture {
         }
         pPciImp->pOsPci = pOsPciPrev;
         pPciImp = nullptr;
-        unsetenv("ZES_ENABLE_SYSMAN");
         pLinuxSysmanImp->pSysfsAccess = pOriginalSysfsAccess;
         if (memoryManager != nullptr) {
             delete memoryManager;

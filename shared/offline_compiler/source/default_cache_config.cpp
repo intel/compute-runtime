@@ -7,52 +7,20 @@
 
 #include "shared/source/compiler_interface/default_cache_config.h"
 
-#include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/utilities/io_functions.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 
 namespace NEO {
 
-const std::string neoCachePersistent = "NEO_CACHE_PERSISTENT";
-const std::string neoCacheMaxSize = "NEO_CACHE_MAX_SIZE";
-const std::string neoCacheDir = "NEO_CACHE_DIR";
-const std::string neoCacheStats = "NEO_CACHE_STATS";
-
-const int64_t neoCacheMaxSizeDefault = static_cast<int64_t>(1 * 1024 * 1024 * 1024); // 1 Gigabyte
-
-int64_t getSetting(const char *settingName, int64_t defaultValue) {
-    int64_t value = defaultValue;
-    char *envValue;
-
-    envValue = IoFunctions::getenvPtr(settingName);
-    if (envValue) {
-        value = atoll(envValue);
-        return value;
-    }
-
-    return value;
-}
-
-std::string getSetting(const char *settingName, const std::string &value) {
-    std::string keyValue = value;
-    char *envValue = IoFunctions::getEnvironmentVariable(settingName);
-    if (envValue) {
-        keyValue.assign(envValue);
-    }
-
-    return keyValue;
-}
-
 CompilerCacheConfig getDefaultCompilerCacheConfig() {
     CompilerCacheConfig ret;
-    int64_t compilerCacheDefaultEnabled = 0;
+    auto &flags = NEO::debugManager.flags;
 
-    if (NEO::getSetting(neoCachePersistent.c_str(), compilerCacheDefaultEnabled) != 0) {
+    if (flags.EnvCachePersistent.get() == 1) {
         ret.enabled = true;
 
-        ret.statsEnabled = (NEO::getSetting(neoCacheStats.c_str(), 0) != 0);
+        ret.statsEnabled = flags.EnvCacheStats.get();
 
-        std::string emptyString = "";
-        ret.cacheDir = NEO::getSetting(neoCacheDir.c_str(), emptyString);
+        ret.cacheDir = flags.EnvCacheDir.get();
 
         if (ret.cacheDir.empty()) {
             ret.enabled = false;
@@ -61,7 +29,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
         }
 
         ret.cacheFileExtension = ".ocloc_cache";
-        ret.cacheSize = static_cast<size_t>(NEO::getSetting(neoCacheMaxSize.c_str(), neoCacheMaxSizeDefault));
+        ret.cacheSize = static_cast<size_t>(flags.EnvCacheMaxSize.get());
 
         if (ret.cacheSize == 0u) {
             ret.cacheSize = std::numeric_limits<size_t>::max();

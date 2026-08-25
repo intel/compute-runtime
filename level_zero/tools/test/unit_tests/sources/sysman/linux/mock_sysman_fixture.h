@@ -66,7 +66,7 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = *device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<SysmanMockDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
-        setenv("ZES_ENABLE_SYSMAN", "1", 1);
+        debugManager.flags.ZES_ENABLE_SYSMAN.set(true);
         device->setSysmanHandle(new SysmanDeviceImp(device->toHandle()));
         pSysmanDevice = device->getSysmanHandle();
         pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);
@@ -98,7 +98,6 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         }
 
         DeviceFixture::tearDown();
-        unsetenv("ZES_ENABLE_SYSMAN");
     }
     DebugManagerStateRestore restorer;
     SysmanDevice *pSysmanDevice = nullptr;
@@ -122,7 +121,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = *device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<SysmanMockDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
-        setenv("ZES_ENABLE_SYSMAN", "1", 1);
+        debugManager.flags.ZES_ENABLE_SYSMAN.set(true);
         device->setSysmanHandle(new SysmanDeviceImp(device->toHandle()));
         pSysmanDevice = device->getSysmanHandle();
         for (auto &subDevice : device->subDevices) {
@@ -156,10 +155,10 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
             delete globalOsSysmanDriver;
             globalOsSysmanDriver = nullptr;
         }
-        unsetenv("ZES_ENABLE_SYSMAN");
         MultiDeviceFixture::tearDown();
     }
 
+    DebugManagerStateRestore restorer;
     SysmanDevice *pSysmanDevice = nullptr;
     SysmanDeviceImp *pSysmanDeviceImp = nullptr;
     OsSysman *pOsSysman = nullptr;

@@ -67,9 +67,7 @@ TEST(DriverHandleBuiltinInitMtTest, givenAsyncInitEnabledWhenDriverHandleCreated
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    L0EnvVariables envVariables = {};
-
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     L0::Device *device = driverHandle->devices[0];

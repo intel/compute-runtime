@@ -1,28 +1,17 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/compiler_interface/default_cache_config.h"
-#include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
-std::unordered_map<std::string, std::string> mockableEnvValues;
-
-char *mockGetenv(const char *name) noexcept {
-    if (mockableEnvValues.find(name) != mockableEnvValues.end()) {
-        return const_cast<char *>(mockableEnvValues.find(name)->second.c_str());
-    }
-    return nullptr;
-};
-
-using getenvMockFuncPtr = char *(*)(const char *);
-
 TEST(CompilerCache, GivenDefaultCacheConfigThenValuesAreProperlyPopulated) {
-    VariableBackup<getenvMockFuncPtr> getenvBkp(reinterpret_cast<getenvMockFuncPtr *>(&NEO::IoFunctions::getenvPtr), &mockGetenv);
+    DebugManagerStateRestore restorer;
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
     EXPECT_STREQ("ocloc_cache", cacheConfig.cacheDir.c_str());
@@ -32,13 +21,10 @@ TEST(CompilerCache, GivenDefaultCacheConfigThenValuesAreProperlyPopulated) {
 }
 
 TEST(CompilerCache, GivenEnvVariableWhenDefaultConfigIsCreatedThenValuesAreProperlyPopulated) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "1024";
-    mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
-
-    VariableBackup<decltype(mockableEnvValues)> mockableEnvValuesBackup(&mockableEnvValues, mockableEnvs);
-    VariableBackup<getenvMockFuncPtr> getenvBkp(reinterpret_cast<getenvMockFuncPtr *>(&NEO::IoFunctions::getenvPtr), &mockGetenv);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnvCachePersistent.set(1);
+    NEO::debugManager.flags.EnvCacheMaxSize.set(1024);
+    NEO::debugManager.flags.EnvCacheDir.set("ult/directory/");
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
     EXPECT_STREQ("ult/directory/", cacheConfig.cacheDir.c_str());
@@ -46,15 +32,15 @@ TEST(CompilerCache, GivenEnvVariableWhenDefaultConfigIsCreatedThenValuesArePrope
     EXPECT_EQ(1024u, cacheConfig.cacheSize);
     EXPECT_TRUE(cacheConfig.enabled);
 
-    mockableEnvValues["NEO_CACHE_MAX_SIZE"] = "0";
+    NEO::debugManager.flags.EnvCacheMaxSize.set(0);
     cacheConfig = NEO::getDefaultCompilerCacheConfig();
     EXPECT_STREQ("ult/directory/", cacheConfig.cacheDir.c_str());
     EXPECT_STREQ(".ocloc_cache", cacheConfig.cacheFileExtension.c_str());
     EXPECT_EQ(std::numeric_limits<size_t>::max(), cacheConfig.cacheSize);
     EXPECT_TRUE(cacheConfig.enabled);
 
-    mockableEnvValues["NEO_CACHE_MAX_SIZE"] = "1048576";
-    mockableEnvValues.erase("NEO_CACHE_DIR");
+    NEO::debugManager.flags.EnvCacheMaxSize.set(1048576);
+    NEO::debugManager.flags.EnvCacheDir.set("");
     cacheConfig = NEO::getDefaultCompilerCacheConfig();
     EXPECT_STREQ("", cacheConfig.cacheDir.c_str());
     EXPECT_STREQ("", cacheConfig.cacheFileExtension.c_str());

@@ -1177,10 +1177,12 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAndExtraExtensionsA
 }
 
 TEST_F(ProgramFromSourceTest, givenFp64EmulationEnabledWhenBuildingProgramThenExtraExtensionsAreAdded) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.NEO_FP64_EMULATION.set(true);
+
     zebinPtr->setAsMockCompilerReturnedBinary();
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = static_cast<ClDevice *>(devices[0]);
-    pClDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
     auto extensionsOption = pClDevice->peekCompilerExtensions();
@@ -1280,9 +1282,11 @@ TEST_F(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesAndExtraExtensions
 }
 
 TEST_F(ProgramFromSourceTest, givenFp64EmulationEnabledWhenCompilingProgramThenExtraExtensionsAreAdded) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.NEO_FP64_EMULATION.set(true);
+
     auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = static_cast<ClDevice *>(devices[0]);
-    pClDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
     auto extensionsOption = pClDevice->peekCompilerExtensions();
     auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
@@ -1986,9 +1990,11 @@ TEST_F(ProgramTests, givenFp64EmulationInDefaultStateWhenProgramIsCreatedThenEna
 }
 
 TEST_F(ProgramTests, givenFp64EmulationEnabledTheWhenProgramIsCreatedThenEnableFP64GenEmuBuildOptionIsPresent) {
+    DebugManagerStateRestore restorer;
+    ASSERT_FALSE(NEO::debugManager.flags.NEO_FP64_EMULATION.get());
+    NEO::debugManager.flags.NEO_FP64_EMULATION.set(true);
+
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
-    ASSERT_FALSE(pDevice->getExecutionEnvironment()->isFP64EmulationEnabled());
-    pDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
     auto internalOptions = program->getInternalOptions();
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::enableFP64GenEmu)) << internalOptions;
 }
@@ -2379,6 +2385,7 @@ TEST_F(ProgramTests, GivenGtpinReraFlagWhenBuildingProgramThenCorrectOptionsAreS
 }
 
 TEST_F(ProgramTests, givenOneApiPvcSendWarWaEnvFalseWhenBuildingProgramThenInternalOptionIsAdded) {
+    DebugManagerStateRestore restorer;
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pDevice = pContext->getDevice(0);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -2394,7 +2401,7 @@ TEST_F(ProgramTests, givenOneApiPvcSendWarWaEnvFalseWhenBuildingProgramThenInter
 
     cip->buildOptions.clear();
     cip->buildInternalOptions.clear();
-    pDevice->getExecutionEnvironment()->setOneApiPvcWaEnv(false);
+    NEO::debugManager.flags.EnvOneapiPvcSendWarWa.set(false);
 
     retVal = program->build(program->getDevices(), CompilerOptions::concatenate(CompilerOptions::gtpinRera, CompilerOptions::finiteMathOnly).c_str());
     EXPECT_EQ(CL_SUCCESS, retVal);

@@ -9,7 +9,6 @@
 
 #include "shared/source/helpers/path.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
-#include "shared/source/utilities/debug_settings_reader.h"
 
 #include <ShlObj.h>
 #include <algorithm>
@@ -52,7 +51,7 @@ bool createCompilerCachePath(std::string &cacheDir) {
     return false;
 }
 
-bool checkDefaultCacheDirSettings(std::string &cacheDir, NEO::EnvironmentVariableReader &reader) {
+bool checkDefaultCacheDirSettings(std::string &cacheDir) {
     cacheDir = getKnownFolderPath(FOLDERID_LocalAppData);
 
     if (cacheDir.empty()) {
