@@ -62,7 +62,6 @@ class HostPtrManager;
 class OsContext;
 class PrefetchManager;
 class HeapAllocator;
-class ReleaseHelper;
 
 using MultiDeviceEngineControlContainer = StackVec<EngineControlContainer, 6u>;
 
@@ -469,7 +468,7 @@ class MemoryManager {
     void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size);
     void updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex);
     virtual DeviceBitfield computeStorageInfoMemoryBanks(const AllocationProperties &properties, DeviceBitfield preferredBank, DeviceBitfield allBanks);
-    virtual bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const;
+    virtual bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const;
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;

@@ -15,11 +15,6 @@ namespace NEO {
 constexpr auto release = ReleaseType::release2001;
 
 template <>
-bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::programmAdditionalStallPriorToBarrierWithTimestamp() const {
     return true;
 }

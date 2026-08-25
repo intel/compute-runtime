@@ -137,8 +137,8 @@ size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize(uint32_t iddCount) {
 
 template <typename GfxFamily>
 void UnitTestHelper<GfxFamily>::verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator) {
-    const auto &releaseHelper = rootDeviceEnvironment->getReleaseHelper();
-    if (releaseHelper.isDummyBlitWaRequired()) {
+    const auto &hwInfo = *rootDeviceEnvironment->getHardwareInfo();
+    if (hwInfo.caps.dummyBlitWaRequired) {
         using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
         auto dummyBltCmd = genCmdCast<XY_COLOR_BLT *>(*(cmdIterator++));
         EXPECT_NE(nullptr, dummyBltCmd);

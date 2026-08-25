@@ -1312,8 +1312,8 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
             cmdIterator++;
         }
     }
-    const auto &releaseHelper = pDevice->getReleaseHelper();
-    if (releaseHelper.isDummyBlitWaRequired()) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    if (hwInfo.caps.dummyBlitWaRequired) {
         UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
     }
     auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));

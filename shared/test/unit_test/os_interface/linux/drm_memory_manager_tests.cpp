@@ -6485,8 +6485,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWit
     properties.flags.preferCompressed = true;
     auto storageInfo = memoryManager.createStorageInfoFromProperties(properties);
 
-    const auto &releaseHelper{executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper()};
-    EXPECT_EQ(storageInfo.localOnlyRequired, (releaseHelper.isLocalOnlyAllowed()));
+    const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    EXPECT_EQ(storageInfo.localOnlyRequired, hwInfo.caps.localOnlyAllowed);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnAllocationInLocalMemoryThenReturnNullPtr) {
@@ -10986,12 +10986,14 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenGfxPartitionWhenReleasedAndReiniti
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDeviceUsmAllocationWhenLocalOnlyFlagValueComputedThenProductHelperIsNotUsed) {
     constexpr bool preferCompressed{false};
     MockProductHelper productHelper{};
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.caps.localOnlyAllowed = true;
 
     EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
 
     productHelper.getStorageInfoLocalOnlyFlagResult = false;
-    EXPECT_EQ(memoryManager->getLocalOnlyRequired(AllocationType::buffer, productHelper, nullptr, preferCompressed), true);
-    EXPECT_EQ(memoryManager->getLocalOnlyRequired(AllocationType::svmGpu, productHelper, nullptr, preferCompressed), true);
+    EXPECT_EQ(memoryManager->getLocalOnlyRequired(AllocationType::buffer, productHelper, hwInfo, preferCompressed), true);
+    EXPECT_EQ(memoryManager->getLocalOnlyRequired(AllocationType::svmGpu, productHelper, hwInfo, preferCompressed), true);
 
     EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
 }

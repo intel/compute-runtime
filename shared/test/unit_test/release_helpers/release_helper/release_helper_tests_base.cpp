@@ -61,26 +61,6 @@ void ReleaseHelperTestsBase::whenGettingTotalMemBankSizeThenReturn32GB() {
     }
 }
 
-void ReleaseHelperTestsBase::whenIsLocalOnlyAllowedCalledThenTrueReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-
-        EXPECT_TRUE(releaseHelper->isLocalOnlyAllowed());
-    }
-}
-
-void ReleaseHelperTestsBase::whenIsLocalOnlyAllowedCalledThenFalseReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-
-        EXPECT_FALSE(releaseHelper->isLocalOnlyAllowed());
-    }
-}
-
 void ReleaseHelperTestsBase::whenGettingPreferredSlmSizeThenAllEntriesEmpty() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
@@ -127,24 +107,6 @@ void ReleaseHelperTestsBase::whenGettingThreadsPerEuConfigsThenCorrectValueIsRet
             EXPECT_EQ(8U, configs[3]);
             EXPECT_EQ(10U, configs[4]);
         }
-    }
-}
-
-void ReleaseHelperTestsBase::whenIsDummyBlitWaRequiredCalledThenTrueReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isDummyBlitWaRequired());
-    }
-}
-
-void ReleaseHelperTestsBase::whenIsDummyBlitWaRequiredCalledThenFalseReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->isDummyBlitWaRequired());
     }
 }
 

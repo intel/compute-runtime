@@ -20,11 +20,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getTotalMemBankSize, uint64_t, 32ull * MemoryConstants::gigaByte, ());
     ADDMETHOD_CONST_NOBASE(getThreadsPerEUConfigs, const ThreadsPerEUConfigs, {}, (uint32_t numThreadsPerEu));
     ADDMETHOD_CONST_NOBASE(getStackSizePerRay, uint32_t, {}, ());
-    ADDMETHOD_CONST_NOBASE(isLocalOnlyAllowed, bool, {}, ());
-    ADDMETHOD_CONST_NOBASE(isDummyBlitWaRequired, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isNumRtStacksPerDssFixedValue, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isBlitImageAllowedForDepthFormat, bool, true, ());
-    ADDMETHOD_CONST_NOBASE(isDirectSubmissionLightSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(computeSlmValues, uint32_t, {}, (uint32_t slmSize));
     ADDMETHOD_CONST_NOBASE(alignSlmSizePerThreadGroup, uint32_t, {}, (uint32_t slmSize));
     ADDMETHOD_CONST_NOBASE(programmAdditionalStallPriorToBarrierWithTimestamp, bool, false, ());

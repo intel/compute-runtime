@@ -20,6 +20,9 @@ struct CapsXeHpcCore {
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool dummyBlitWaRequired = true;
+    static constexpr bool localOnlyAllowed = true;
+    static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool rcsExposureDisabled = true;
     static constexpr bool rayTracingSupported = true;
 };

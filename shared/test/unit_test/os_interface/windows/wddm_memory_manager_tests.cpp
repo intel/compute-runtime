@@ -2650,9 +2650,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = true;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[mockRootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &memoryManagerHwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[mockRootDeviceIndex]->getMutableHardwareInfo();
+    memoryManagerHwInfo.caps.localOnlyAllowed = true;
     AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmGpu, mockDeviceBitfield};
     properties.allFlags = 0;
     properties.size = MemoryConstants::pageSize;

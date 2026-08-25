@@ -3725,11 +3725,9 @@ void DrmMemoryManager::releaseDeviceSpecificGfxPartition(uint32_t rootDeviceInde
     gfxPartitions.at(rootDeviceIndex).reset();
 }
 
-bool DrmMemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const {
-    const bool enabledForRelease{!releaseHelper || releaseHelper->isLocalOnlyAllowed()};
-
+bool DrmMemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const {
     if (preferCompressed || allocationType == AllocationType::buffer || allocationType == AllocationType::svmGpu) {
-        return enabledForRelease;
+        return hwInfo.caps.localOnlyAllowed;
     }
 
     return false;

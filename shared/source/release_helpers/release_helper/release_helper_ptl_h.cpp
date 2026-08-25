@@ -20,11 +20,6 @@ const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
-    return false;
-}
-
-template <>
 uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
     return 64u;
 }

@@ -16,8 +16,12 @@ struct Caps {
     bool bindlessAddressingDisabled = false;
     bool deviceConfigStringTileCountIncluded = false;
     bool deviceConfigStringXeCuSegmentIncluded = false;
+    bool directSubmissionLightSupported = false;
     bool dotProductAccumulateSystolicSupported = false;
+    bool dummyBlitWaRequired = false;
     bool globalBindlessAllocatorEnabled = false;
+    bool localOnlyAllowed = false;
+    bool numRtStacksPerDssFixedValue = false;
     bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = false;
     bool pipeControlPriorToPipelineSelectWaRequired = false;
     bool programAllStateComputeCommandFieldsWARequired = false;

@@ -3367,9 +3367,8 @@ HWTEST_F(MemoryAllocatorTest, givenUseLocalPreferredForCacheableBuffersAndCompre
     allocData.flags.preferCompressed = false;
     AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
     MockMemoryManager mockMemoryManager;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = true;
-    mockMemoryManager.executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *mockMemoryManager.executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo.caps.localOnlyAllowed = true;
     AllocationType shouldUseLocalPreferredAllocationTypes[] = {
         AllocationType::buffer,
         AllocationType::svmGpu,
@@ -3417,12 +3416,11 @@ HWTEST_F(MemoryAllocatorTest, givenNonDefaultLocalMemoryAllocationModeAndLocalPr
     properties.flags.uncacheable = false;
 
     MockMemoryManager mockMemoryManager;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    mockMemoryManager.executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.get());
+    auto &hwInfo = *mockMemoryManager.executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
 
     for (const auto debugKeyValue : std::to_array({1, 2})) {
         mockMemoryManager.usmDeviceAllocationMode = toLocalMemAllocationMode(debugKeyValue);
-        releaseHelper->isLocalOnlyAllowedResult = (debugKeyValue == 1);
+        hwInfo.caps.localOnlyAllowed = (debugKeyValue == 1);
         auto storageInfo{mockMemoryManager.createStorageInfoFromProperties(properties)};
         bool expectedValue{storageInfo.localOnlyRequired};
 
@@ -3430,7 +3428,6 @@ HWTEST_F(MemoryAllocatorTest, givenNonDefaultLocalMemoryAllocationModeAndLocalPr
         mockMemoryManager.getAllocationData(allocData, properties, nullptr, storageInfo);
         EXPECT_EQ(expectedValue, allocData.storageInfo.localOnlyRequired);
     }
-    releaseHelper.release();
 }
 
 TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallbackToCopyOnCPU) {

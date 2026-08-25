@@ -19,11 +19,6 @@ const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
     return {32u, 64u, 96u, 128u, 160u, 192u, 256u};
 }
 
-template <>
-bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
-    return false;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helpers/release_helper/release_helper_common_xe3_and_later.inl"

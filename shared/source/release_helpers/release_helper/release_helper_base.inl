@@ -26,11 +26,6 @@ bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isDirectSubmissionLightSupported() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 const SupportedNumGrfs ReleaseHelperHw<releaseType>::getSupportedNumGrfs() const {
     return {128u, 256u};
 }
@@ -51,24 +46,9 @@ uint32_t ReleaseHelperHw<releaseType>::getStackSizePerRay() const {
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isLocalOnlyAllowed() const {
-    return true;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isDummyBlitWaRequired() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 const SizeToPreferredSlmValueArray &ReleaseHelperHw<releaseType>::getSizeToPreferredSlmValue() const {
     static const SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
     return sizeToPreferredSlmValue;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isNumRtStacksPerDssFixedValue() const {
-    return true;
 }
 
 template <ReleaseType releaseType>

@@ -22,6 +22,7 @@ struct CapsXe2HpgCore {
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool rcsExposureDisabled = true;
     static constexpr bool rayTracingSupported = true;
 };

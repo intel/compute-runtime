@@ -21,6 +21,7 @@ struct CapsXe3Core {
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool rcsExposureDisabled = true;
 };
 

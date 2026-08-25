@@ -17,7 +17,6 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include <bitset>
 
@@ -39,9 +38,10 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     }
 
     const auto *rootDeviceEnv{executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex].get()};
+    const auto &hwInfo = *rootDeviceEnv->getHardwareInfo();
 
-    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(rootDeviceEnv->getHardwareInfo());
-    const auto &multiTileArchInfo = rootDeviceEnv->getHardwareInfo()->gtSystemInfo.MultiTileArchInfo;
+    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
+    const auto &multiTileArchInfo = hwInfo.gtSystemInfo.MultiTileArchInfo;
     const bool isMultiTilePlatform = multiTileArchInfo.IsValid && multiTileArchInfo.TileCount > 1;
     const auto leastOccupiedBank = getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
     const auto subDevicesMask = rootDeviceEnv->deviceAffinityMask.getGenericSubDevicesMask().to_ulong();
@@ -163,7 +163,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
 
     storageInfo.localOnlyRequired = getLocalOnlyRequired(properties.allocationType,
                                                          rootDeviceEnv->getProductHelper(),
-                                                         &rootDeviceEnv->getReleaseHelper(),
+                                                         hwInfo,
                                                          properties.flags.preferCompressed);
 
     storageInfo.needsToBeZeroedAtInit = [](NEO::AllocationType allocType) {

@@ -40,9 +40,13 @@ TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_TRUE(capsCri.bFloat16ConversionSupported);
     EXPECT_TRUE(capsCri.deviceConfigStringTileCountIncluded);
     EXPECT_TRUE(capsCri.deviceConfigStringXeCuSegmentIncluded);
+    EXPECT_FALSE(capsCri.directSubmissionLightSupported);
     EXPECT_TRUE(capsCri.bindlessAddressingDisabled);
     EXPECT_TRUE(capsCri.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsCri.dummyBlitWaRequired);
     EXPECT_TRUE(capsCri.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsCri.localOnlyAllowed);
+    EXPECT_FALSE(capsCri.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsCri.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsCri.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsCri.programAllStateComputeCommandFieldsWARequired);
@@ -58,9 +62,13 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_TRUE(capsNvlP.bFloat16ConversionSupported);
     EXPECT_TRUE(capsNvlP.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsNvlP.deviceConfigStringXeCuSegmentIncluded);
+    EXPECT_FALSE(capsNvlP.directSubmissionLightSupported);
     EXPECT_TRUE(capsNvlP.bindlessAddressingDisabled);
     EXPECT_TRUE(capsNvlP.dotProductAccumulateSystolicSupported);
+    EXPECT_FALSE(capsNvlP.dummyBlitWaRequired);
     EXPECT_TRUE(capsNvlP.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsNvlP.localOnlyAllowed);
+    EXPECT_FALSE(capsNvlP.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsNvlP.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsNvlP.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsNvlP.programAllStateComputeCommandFieldsWARequired);

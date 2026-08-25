@@ -44,9 +44,13 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_TRUE(capsPvc.bFloat16ConversionSupported);
     EXPECT_FALSE(capsPvc.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsPvc.deviceConfigStringXeCuSegmentIncluded);
+    EXPECT_FALSE(capsPvc.directSubmissionLightSupported);
     EXPECT_TRUE(capsPvc.bindlessAddressingDisabled);
     EXPECT_TRUE(capsPvc.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsPvc.dummyBlitWaRequired);
     EXPECT_FALSE(capsPvc.globalBindlessAllocatorEnabled);
+    EXPECT_TRUE(capsPvc.localOnlyAllowed);
+    EXPECT_TRUE(capsPvc.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsPvc.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPvc.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsPvc.programAllStateComputeCommandFieldsWARequired);
@@ -62,9 +66,13 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_TRUE(capsPvcVg.bFloat16ConversionSupported);
     EXPECT_FALSE(capsPvcVg.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsPvcVg.deviceConfigStringXeCuSegmentIncluded);
+    EXPECT_FALSE(capsPvcVg.directSubmissionLightSupported);
     EXPECT_TRUE(capsPvcVg.bindlessAddressingDisabled);
     EXPECT_FALSE(capsPvcVg.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsPvcVg.dummyBlitWaRequired);
     EXPECT_FALSE(capsPvcVg.globalBindlessAllocatorEnabled);
+    EXPECT_TRUE(capsPvcVg.localOnlyAllowed);
+    EXPECT_TRUE(capsPvcVg.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsPvcVg.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPvcVg.pipeControlPriorToPipelineSelectWaRequired);
     EXPECT_FALSE(capsPvcVg.programAllStateComputeCommandFieldsWARequired);

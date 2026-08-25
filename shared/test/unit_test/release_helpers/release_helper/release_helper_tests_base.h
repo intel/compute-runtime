@@ -26,10 +26,6 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenGettingSupportedNumGrfsThenValues128And256Returned();
     void whenGettingThreadsPerEuConfigsThen4And8AreReturned();
     void whenGettingTotalMemBankSizeThenReturn32GB();
-    void whenIsDummyBlitWaRequiredCalledThenTrueReturned();
-    void whenIsDummyBlitWaRequiredCalledThenFalseReturned();
-    void whenIsLocalOnlyAllowedCalledThenTrueReturned();
-    void whenIsLocalOnlyAllowedCalledThenFalseReturned();
     void whenGettingPreferredSlmSizeThenAllEntriesEmpty();
     void whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
     void whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();

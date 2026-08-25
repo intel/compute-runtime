@@ -429,18 +429,16 @@ TEST_F(MultiDeviceStorageInfoTest, givenNonMultiStorageResourceWhenCreatingStora
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferThenLocalOnlyFlagIsRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = true;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo.caps.localOnlyAllowed = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCreatingStorageInfoForBufferThenLocalOnlyFlagIsNotRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = false;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo.caps.localOnlyAllowed = false;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.localOnlyRequired);
 }
@@ -448,9 +446,8 @@ TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCre
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThenLocalOnlyFlagIsRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
     properties.flags.preferCompressed = true;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = true;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo.caps.localOnlyAllowed = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
 }
@@ -458,27 +455,24 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThe
 TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCreatingStorageInfoForBufferCompressedThenLocalOnlyFlagIsNotRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
     properties.flags.preferCompressed = true;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = false;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo.caps.localOnlyAllowed = false;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.localOnlyRequired);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSvmGpuThenLocalOnlyFlagIsRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = true;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo.caps.localOnlyAllowed = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCreatingStorageInfoForSvmGpuThenLocalOnlyFlagIsNotRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = false;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo.caps.localOnlyAllowed = false;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.localOnlyRequired);
 }
@@ -486,9 +480,8 @@ TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCre
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForShareableSvmGpuThenLocalOnlyFlagIsRequiredAndIsNotLocable) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
     properties.flags.shareable = 1u;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = true;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo.caps.localOnlyAllowed = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
     EXPECT_FALSE(storageInfo.isLockable);
@@ -497,9 +490,8 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForShareableSvmGpuThen
 TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCreatingStorageInfoForShareableSvmGpuThenLocalOnlyFlagIsNotRequiredAndIsNotLocable) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
     properties.flags.shareable = 1u;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = false;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo.caps.localOnlyAllowed = false;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.localOnlyRequired);
     EXPECT_FALSE(storageInfo.isLockable);
@@ -832,30 +824,24 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageE
 TEST_F(MultiDeviceStorageInfoTest, givenBufferOrSvmGpuAllocationWhenLocalOnlyFlagValueComputedThenProductHelperIsUsed) {
     constexpr bool preferCompressed{false};
     MockProductHelper productHelper{};
-    MockReleaseHelper mockReleaseHelper{};
+    auto hwInfo = *defaultHwInfo;
 
     EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
 
-    const auto isEnabledForRelease{[](ReleaseHelper *releaseHelper) { return (!releaseHelper || releaseHelper->isLocalOnlyAllowed()); }};
-
     for (const auto allocationType : std::array{AllocationType::buffer, AllocationType::svmGpu}) {
-        productHelper.getStorageInfoLocalOnlyFlagResult = isEnabledForRelease(nullptr);
-        EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, nullptr, preferCompressed),
-                  productHelper.getStorageInfoLocalOnlyFlagResult);
-
         for (const bool allowed : std::array{false, true}) {
-            mockReleaseHelper.isLocalOnlyAllowedResult = allowed;
-            productHelper.getStorageInfoLocalOnlyFlagResult = isEnabledForRelease(&mockReleaseHelper);
-            EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, &mockReleaseHelper, preferCompressed),
+            hwInfo.caps.localOnlyAllowed = allowed;
+            productHelper.getStorageInfoLocalOnlyFlagResult = allowed;
+            EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, hwInfo, preferCompressed),
                       productHelper.getStorageInfoLocalOnlyFlagResult);
         }
     }
-    EXPECT_EQ(6U, productHelper.getStorageInfoLocalOnlyFlagCalled);
+    EXPECT_EQ(4U, productHelper.getStorageInfoLocalOnlyFlagCalled);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenNeitherBufferNorSvmGpuAllocationWhenLocalOnlyFlagValueComputedThenProductHelperIsNotUsed) {
     MockProductHelper productHelper{};
-    MockReleaseHelper mockReleaseHelper{};
+    auto hwInfo = *defaultHwInfo;
 
     EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
 
@@ -863,15 +849,15 @@ TEST_F(MultiDeviceStorageInfoTest, givenNeitherBufferNorSvmGpuAllocationWhenLoca
 
     bool preferCompressed{true};
     for (const bool allowed : std::array{false, true}) {
-        mockReleaseHelper.isLocalOnlyAllowedResult = allowed;
-        EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, &mockReleaseHelper, preferCompressed),
-                  mockReleaseHelper.isLocalOnlyAllowedResult);
+        hwInfo.caps.localOnlyAllowed = allowed;
+        EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, hwInfo, preferCompressed),
+                  hwInfo.caps.localOnlyAllowed);
     }
 
     preferCompressed = false;
     for (const bool allowed : std::array{false, true}) {
-        mockReleaseHelper.isLocalOnlyAllowedResult = allowed;
-        EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, &mockReleaseHelper, preferCompressed),
+        hwInfo.caps.localOnlyAllowed = allowed;
+        EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, hwInfo, preferCompressed),
                   false);
     }
     EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);

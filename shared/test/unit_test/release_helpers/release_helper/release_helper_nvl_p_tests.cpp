@@ -30,7 +30,6 @@ TEST_F(ReleaseHelperNvlPTests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
         EXPECT_FALSE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_EQ(64u, releaseHelper->getStackSizePerRay());
-        EXPECT_FALSE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
@@ -59,14 +58,6 @@ TEST_F(ReleaseHelperNvlPTests, whenGettingThreadsPerEuConfigsThenCorrectValueIsR
 
 TEST_F(ReleaseHelperNvlPTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
-}
-
-TEST_F(ReleaseHelperNvlPTests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
-    whenIsLocalOnlyAllowedCalledThenFalseReturned();
-}
-
-TEST_F(ReleaseHelperNvlPTests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
-    whenIsDummyBlitWaRequiredCalledThenFalseReturned();
 }
 
 TEST_F(ReleaseHelperNvlPTests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {

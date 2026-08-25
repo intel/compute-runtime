@@ -27,21 +27,12 @@ TEST_F(ReleaseHelperPvcVgTests, whenGettingCapabilitiesThenCorrectPropertiesAreR
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
-        EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
 
 TEST_F(ReleaseHelperPvcVgTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
-}
-
-TEST_F(ReleaseHelperPvcVgTests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
-    whenIsLocalOnlyAllowedCalledThenTrueReturned();
-}
-
-TEST_F(ReleaseHelperPvcVgTests, whenIsDummyBlitWaRequiredCalledThenTrueReturned) {
-    whenIsDummyBlitWaRequiredCalledThenTrueReturned();
 }
 
 TEST_F(ReleaseHelperPvcVgTests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {

@@ -3518,11 +3518,11 @@ HWTEST2_F(DeviceTestRayTracing, WhenAllocateRTDispatchGlobalsIsCalledThenStackSi
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
     RTDispatchGlobals dispatchGlobals = *reinterpret_cast<RTDispatchGlobals *>(pDevice->getRTDispatchGlobals(3)->rtDispatchGlobalsArray->getUnderlyingBuffer());
 
-    auto expectedNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(*pDevice), 2048u);
-    auto expectedSyncNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(*pDevice), 4096u);
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    auto expectedNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(hwInfo), 2048u);
+    auto expectedSyncNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(hwInfo), 4096u);
 
-    const auto &releaseHelper = getReleaseHelper();
-    EXPECT_FALSE(releaseHelper.isNumRtStacksPerDssFixedValue());
+    EXPECT_FALSE(hwInfo.caps.numRtStacksPerDssFixedValue);
 
     EXPECT_EQ(expectedNumDSSRTStacks, dispatchGlobals.numDSSRTStacks);
     EXPECT_EQ(expectedSyncNumDSSRTStacks, dispatchGlobals.syncNumDSSRTStacks);
@@ -3540,11 +3540,11 @@ HWTEST2_F(DeviceTestRayTracing, giveSetMaxBVHLevelsWhenAllocateRTDispatchGlobals
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
     RTDispatchGlobals dispatchGlobals = *reinterpret_cast<RTDispatchGlobals *>(pDevice->getRTDispatchGlobals(3)->rtDispatchGlobalsArray->getUnderlyingBuffer());
 
-    auto expectedNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(*pDevice), 2048u);
-    auto expectedSyncNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(*pDevice), 4096u);
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    auto expectedNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(hwInfo), 2048u);
+    auto expectedSyncNumDSSRTStacks = std::min(RayTracingHelper::getNumRtStacksPerDss(hwInfo), 4096u);
 
-    const auto &releaseHelper = getReleaseHelper();
-    EXPECT_FALSE(releaseHelper.isNumRtStacksPerDssFixedValue());
+    EXPECT_FALSE(hwInfo.caps.numRtStacksPerDssFixedValue);
 
     EXPECT_EQ(expectedNumDSSRTStacks, dispatchGlobals.numDSSRTStacks);
     EXPECT_EQ(expectedSyncNumDSSRTStacks, dispatchGlobals.syncNumDSSRTStacks);

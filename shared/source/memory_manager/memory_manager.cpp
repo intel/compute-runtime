@@ -46,7 +46,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/logger_neo_only.h"
 
@@ -1454,13 +1453,11 @@ void MemoryManager::removeCustomHeapAllocatorConfig(AllocationType allocationTyp
     customHeapAllocators.erase({allocationType, isFrontWindowPool, rootDeviceIndex});
 }
 
-bool MemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const {
-    const bool enabledForRelease{!releaseHelper || releaseHelper->isLocalOnlyAllowed()};
-
+bool MemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const {
     if (allocationType == AllocationType::buffer || allocationType == AllocationType::svmGpu) {
-        return productHelper.getStorageInfoLocalOnlyFlag(usmDeviceAllocationMode, enabledForRelease);
+        return productHelper.getStorageInfoLocalOnlyFlag(usmDeviceAllocationMode, hwInfo.caps.localOnlyAllowed);
     }
-    return (preferCompressed ? enabledForRelease : false);
+    return (preferCompressed ? hwInfo.caps.localOnlyAllowed : false);
 }
 
 void MemoryManager::destroyPageFaultManager() {

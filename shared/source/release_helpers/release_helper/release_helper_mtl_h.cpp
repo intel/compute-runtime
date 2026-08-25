@@ -17,11 +17,6 @@
 namespace NEO {
 constexpr auto release = ReleaseType::release1271;
 
-template <>
-bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
-    return true;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helpers/release_helper/release_helper_common_xe_lpg.inl"

@@ -346,8 +346,8 @@ bool BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(const EncodeDummyBlitWaA
         if (debugManager.flags.ForceDummyBlitWa.get() != -1) {
             return debugManager.flags.ForceDummyBlitWa.get();
         }
-        const auto &releaseHelper = waArgs.rootDeviceEnvironment->getReleaseHelper();
-        return releaseHelper.isDummyBlitWaRequired();
+        const auto &hwInfo = *waArgs.rootDeviceEnvironment->getHardwareInfo();
+        return hwInfo.caps.dummyBlitWaRequired;
     }
     return false;
 }

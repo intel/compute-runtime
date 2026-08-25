@@ -1223,8 +1223,9 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         tileCount = this->getNumSubDevices();
     }
 
+    const auto &hwInfo = this->getHardwareInfo();
     auto dispatchGlobalsSize = tileCount * dispatchGlobalsStride;
-    auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(*this, tileCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
+    auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(hwInfo, tileCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
 
     std::unique_ptr<RTDispatchGlobalsInfo> dispatchGlobalsInfo = std::make_unique<RTDispatchGlobalsInfo>();
 
@@ -1264,7 +1265,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
             break;
         }
 
-        auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(*this);
+        auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(hwInfo);
         const auto &releaseHelper = getReleaseHelper();
 
         RTDispatchGlobals dispatchGlobals = {

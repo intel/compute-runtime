@@ -18,11 +18,6 @@ namespace NEO {
 constexpr auto release = ReleaseType::release2004;
 
 template <>
-bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isLatePreemptionStartSupportedHelper() const {
     return true;
 }

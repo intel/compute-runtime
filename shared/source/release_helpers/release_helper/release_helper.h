@@ -44,11 +44,7 @@ class ReleaseHelper {
     virtual uint64_t getTotalMemBankSize() const = 0;
     virtual const ThreadsPerEUConfigs getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const = 0;
     virtual uint32_t getStackSizePerRay() const = 0;
-    virtual bool isLocalOnlyAllowed() const = 0;
-    virtual bool isDummyBlitWaRequired() const = 0;
-    virtual bool isDirectSubmissionLightSupported() const = 0;
     virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const = 0;
-    virtual bool isNumRtStacksPerDssFixedValue() const = 0;
     virtual bool programmAdditionalStallPriorToBarrierWithTimestamp() const = 0;
     virtual uint32_t computeSlmValues(uint32_t slmSize) const = 0;
     virtual uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize) const = 0;
@@ -84,11 +80,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     uint64_t getTotalMemBankSize() const override;
     const StackVec<uint32_t, 6> getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const override;
     uint32_t getStackSizePerRay() const override;
-    bool isLocalOnlyAllowed() const override;
-    bool isDummyBlitWaRequired() const override;
-    bool isDirectSubmissionLightSupported() const override;
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const override;
-    bool isNumRtStacksPerDssFixedValue() const override;
     bool programmAdditionalStallPriorToBarrierWithTimestamp() const override;
     uint32_t computeSlmValues(uint32_t slmSize) const override;
     uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize) const override;
