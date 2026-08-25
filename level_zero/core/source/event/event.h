@@ -125,10 +125,6 @@ struct IpcCounterBasedEventData {
 #pragma pack()
 static_assert(sizeof(IpcCounterBasedEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcCounterBasedEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
-namespace EventPacketsCount {
-inline constexpr uint32_t maxKernelSplit = 3;
-} // namespace EventPacketsCount
-
 struct ImportedCbAllocationsForIpc {
     NEO::GraphicsAllocation *deviceAlloc = nullptr;
     NEO::GraphicsAllocation *hostAlloc = nullptr;
@@ -142,7 +138,6 @@ struct EventDescriptor {
     const void *extensions = nullptr;
     size_t offsetInSharedAlloc = 0;
     uint32_t totalEventSize = 0;
-    uint32_t maxKernelCount = 0;
     uint32_t maxPacketsCount = 0;
     uint32_t counterBasedFlags = 0;
     uint32_t index = 0;
@@ -222,11 +217,10 @@ struct Event : _ze_event_handle_t {
     virtual uint32_t getPacketsInUse() const = 0;
     virtual uint64_t getPacketAddress(Device *device) = 0;
     MOCKABLE_VIRTUAL void resetPackets(bool resetAllPackets);
-    virtual void resetKernelCountAndPacketUsedCount() = 0;
+    virtual void resetPacketsUsedCount() = 0;
     void *getHostAddress() const;
     uint32_t getPoolIndex() const { return totalEventSize ? static_cast<uint32_t>(eventPoolOffset / totalEventSize) : 0; }
     virtual void setPacketsInUse(uint32_t value) = 0;
-    uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
     MOCKABLE_VIRTUAL void setGpuStartTimestamp();
     MOCKABLE_VIRTUAL void setGpuEndTimestamp();
     size_t getCompletionFieldOffset() const {
@@ -301,17 +295,6 @@ struct Event : _ze_event_handle_t {
         return this->csrForCacheFlush;
     }
 
-    void increaseKernelCount();
-    uint32_t getKernelCount() const {
-        return kernelCount;
-    }
-    void zeroKernelCount() {
-        kernelCount = 0;
-    }
-    void setKernelCount(uint32_t newKernelCount) {
-        kernelCount = newKernelCount;
-    }
-
     void resetCompletionStatus() {
         if (this->isCompleted.load() != HOST_CACHING_DISABLED_PERMANENT) {
             this->isCompleted.store(STATE_CLEARED);
@@ -330,9 +313,6 @@ struct Event : _ze_event_handle_t {
 
     uint32_t getMaxPacketsCount() const {
         return maxPacketCount;
-    }
-    uint32_t getMaxKernelCount() const {
-        return maxKernelCount;
     }
     void setKernelForPrintf(std::weak_ptr<Kernel> inputKernelWeakPtr) {
         kernelWithPrintf = inputKernelWeakPtr;
@@ -530,8 +510,6 @@ struct Event : _ze_event_handle_t {
     NEO::InOrderExecEventHelper inOrderExecHelper;
     CommandQueue *latestUsedCmdQueue = nullptr;
 
-    uint32_t maxKernelCount = 0;
-    uint32_t kernelCount = 1u;
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
     uint32_t counterBasedFlags = 0;
@@ -609,10 +587,6 @@ struct EventPool : _ze_event_pool_handle_t {
         return false;
     }
 
-    uint32_t getMaxKernelCount() const {
-        return maxKernelCount;
-    }
-
     ze_result_t initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
 
     void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandle &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
@@ -649,7 +623,6 @@ struct EventPool : _ze_event_pool_handle_t {
     uint32_t eventAlignment = 0;
     uint32_t eventSize = 0;
     uint32_t eventPackets = 0;
-    uint32_t maxKernelCount = 0;
 
     uint32_t counterBasedFlags = 0;
 

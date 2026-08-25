@@ -85,7 +85,6 @@ struct EventValueProperties {
     std::vector<MutableStoreDataImm *> storeDataImmCmds;
     std::vector<MutableStoreRegisterMem *> storeRegMemCmds;
 
-    uint32_t kernelCount = 0;
     uint32_t packetCount = 0;
     uint32_t waitPackets = 0;
     uint32_t inOrderAllocationOffset = 0;

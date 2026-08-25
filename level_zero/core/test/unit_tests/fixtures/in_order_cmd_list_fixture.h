@@ -150,7 +150,6 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
             .eventPoolAllocation = nullptr,
             .extensions = pNext,
             .totalEventSize = 0,
-            .maxKernelCount = EventPacketsCount::maxKernelSplit,
             .maxPacketsCount = 0,
             .counterBasedFlags = counterBasedFlags,
             .index = 0,

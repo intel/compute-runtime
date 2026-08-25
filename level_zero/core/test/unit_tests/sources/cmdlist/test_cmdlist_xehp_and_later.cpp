@@ -393,7 +393,6 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-        EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -460,7 +459,6 @@ using CommandListAppendLaunchKernelCompactL3FlushEnabledTest = Test<CommandListA
 HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
           givenAppendKernelWithSignalScopeTimestampEventWhenRegisterTimestampPostsyncUsedThenExpectNoComputeWalkerAndPipeControlPostsync,
           IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 1;
     arg.expectedPostSyncPipeControls = 0;
     arg.expectedWalkerPostSyncOp = 0;
@@ -475,7 +473,6 @@ HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
 HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
           givenAppendKernelWithSignalScopeImmediateEventWhenL3ImmediatePostsyncUsedThenExpectPipeControlPostsync,
           IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -492,7 +489,6 @@ using CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest = Test<Com
 HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
           givenAppendMultiTileKernelWithSignalScopeTimestampEventWhenRegisterTimestampPostsyncUsedThenExpectNoComputeWalkerAndPipeControlPostsync,
           IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 2;
     arg.expectedPostSyncPipeControls = 0;
     arg.expectedWalkerPostSyncOp = 0;
@@ -507,7 +503,6 @@ HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
 HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
           givenAppendMultiTileKernelWithSignalScopeImmediateEventWhenL3ImmediatePostsyncUsedThenExpectPipeControlPostsync,
           IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 2;
     arg.expectedPostSyncPipeControls = 1;
     arg.expectedWalkerPostSyncOp = 0;

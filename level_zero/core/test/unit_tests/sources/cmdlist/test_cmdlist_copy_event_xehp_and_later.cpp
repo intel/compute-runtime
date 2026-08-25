@@ -120,7 +120,6 @@ void testSingleTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpect
     EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-    EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -209,7 +208,6 @@ void testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, 
     EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-    EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -312,7 +310,6 @@ void testSingleTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpect
     EXPECT_EQ(1u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-    EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -388,7 +385,6 @@ void testSingleTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, 
     EXPECT_EQ(1u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-    EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -544,7 +540,6 @@ void testMultiTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpecte
     EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-    EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -639,7 +634,6 @@ void testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, T
     EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-    EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -752,7 +746,6 @@ void testMultiTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpecte
     EXPECT_EQ(1u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-    EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -836,7 +829,6 @@ void testMultiTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, T
     EXPECT_EQ(1u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-    EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -911,10 +903,42 @@ void testMultiTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, T
 using AppendMemoryCopyXeHpAndLaterSinglePacket = Test<AppendMemoryCopyEventPacketFixture<0, 0>>;
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
+          givenZeroSizeMemoryCopyWithSignalEventWhenNoKernelIsDispatchedThenEventKeepsSinglePacketInUse,
+          IsAtLeastXeCore) {
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
+    commandList.appendMemoryCopyKernelWithGACallBase = true;
+    commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(input.driver, input.context, 0, nullptr, &eventPoolDesc, result));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, input.device, result));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // dirty the packet count first, so the expectation below proves the append actually rewrote it
+    event->setPacketsInUse(3u);
+
+    CmdListMemoryCopyParams copyParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList.appendMemoryCopy(reinterpret_cast<void *>(0x20000000), reinterpret_cast<void *>(0x1234),
+                                                              0, event->toHandle(), 0, nullptr, copyParams));
+
+    // a zero-size copy splits into no kernels at all, so the pre-walker reset is the only thing that touches
+    // the packet count. The event must still report one packet in use - queryTimestampsExp returns this as
+    // *pCount and appendQueryKernelTimestamps programs it as packetsInUse, so it is app-visible.
+    EXPECT_EQ(0u, commandList.appendMemoryCopyKernelWithGACalled);
+    EXPECT_EQ(1u, event->getPacketsInUse());
+}
+
+HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
           givenCommandListWhenTimestampProvidedByRegisterPostSyncPassedToMemoryCopyThenAppendProfilingCalledForRegisterOnly,
           IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.postSyncAddressZero = true;
 
@@ -938,7 +962,6 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
           givenCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForSingleKernel,
           IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
     arg.postSyncAddressZero = false;
 
@@ -962,7 +985,6 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
           givenCommandListAndTimestampEventWithSignalScopeWhenTimestampProvidedByRegisterPostSyncPassedToMemoryCopyThenAppendProfilingCalledForRegisterAndL3FlushWithNoPostSyncAddedOnce,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 0;
     arg.postSyncAddressZero = true;
@@ -986,7 +1008,6 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
           givenCommandListAndEventWithSignalScopeWhenImmediateProvidedByPipeControlPostSyncPassedToMemoryCopyThenEventProfilingCalledForPipeControlAndL3FlushWithPostSyncAddedOnce,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = true;
@@ -1020,7 +1041,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
           givenMultiTileCommandListWhenTimestampProvidedByRegisterPostSyncPassedToMemoryCopyThenAppendProfilingCalledForMultiTileRegisterPipeControlPacket,
           IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.postSyncAddressZero = true;
 
@@ -1043,7 +1063,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
           givenMultiTileCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForSingleSeparateMultiTileKernel,
           IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
     arg.postSyncAddressZero = false;
 
@@ -1064,7 +1083,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
           givenMultiTileCommandListAndTimestampEventWithSignalScopeWhenTimestampProvidedByRegisterPostSyncPassedToMemoryCopyThenAppendProfilingCalledForMultiTileRegisterPostSyncAndL3FlushForScopedEvent,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 0;
     arg.postSyncAddressZero = true;
@@ -1088,7 +1106,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
           givenMultiTileCommandListAndEventWithSignalScopeWhenImmediateProvidedByPipeControlPostSyncPassedToMemoryCopyThenAppendProfilingCalledForPipeControlPostSyncAndL3FlushAddedForScopedEvent,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = true;
@@ -1113,7 +1130,6 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenCommandListWhenTimestampProvidedByRegisterPostSyncPassedToMemoryCopyThenAppendProfilingCalledForSinglePacket,
           IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.postSyncAddressZero = true;
 
@@ -1128,7 +1144,6 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForSingleKernel,
           IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
     arg.postSyncAddressZero = false;
 
@@ -1143,7 +1158,6 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenCommandListCopyUsingThreeKernelsAndTimestampEventWithSignalScopeWhenTimestampProvidedByRegisterPostSyncPassedToMemoryCopyThenAppendProfilingCalledForL3FlushWithPostSyncAddedOnce,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 0;
     arg.postSyncAddressZero = true;
@@ -1161,7 +1175,6 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenCommandListCopyUsingThreeKernelsAndEventWithSignalScopeWhenImmediateProvidedByPipeControlPostSyncPassedToMemoryCopyThenAppendProfilingCalledForL3FlushWithPostSyncAddedOnce,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = true;
@@ -1179,7 +1192,6 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenCommandListCopyUsingSingleKernelAndTimestampEventWithSignalScopeWhenTimestampProvidedByRegisterPostSyncPassedToMemoryCopyThenAppendProfilingCalledForL3FlushWithPostSyncAddedOnce,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 0;
     arg.postSyncAddressZero = true;
@@ -1197,7 +1209,6 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenCommandListCopyUsingSingleKernelAndEventWithSignalScopeWhenImmediateProvidedByPipeControlPostSyncPassedToMemoryCopyThenAppendProfilingCalledForL3FlushWithPostSyncAddedOnce,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = true;
@@ -1218,7 +1229,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenMultiTileCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateMultiTileKernels,
           IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.postSyncAddressZero = true;
 
@@ -1233,7 +1243,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenMultiTileCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForSingleMultiTileKernel,
           IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
     arg.postSyncAddressZero = false;
 
@@ -1248,7 +1257,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenMultiTileCommandListCopyUsingThreeKernelsAndTimestampEventWithSignalScopeWhenTimestampProvidedByRegisterPostSyncPassedToMemoryCopyThenAppendProfilingCalledForL3FlushWithPostSyncAddedForScopedEvent,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 0;
     arg.postSyncAddressZero = true;
@@ -1266,7 +1274,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenMultiTileCommandListCopyUsingThreeKernelsAndEventWithSignalScopeWhenImmdiateProvidedByPipeControlPostSyncPassedToMemoryCopyThenAppendProfilingCalledForL3FlushWithPostSyncAddedForScopedEvent,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = true;
@@ -1284,7 +1291,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenMultiTileCommandListCopyUsingThreeKernelAndTimestampEventWithSignalScopeWhenTimestampProvidedByRegisterPostSyncPassedToMemoryCopyThenAppendProfilingCalledForL3FlushWithPostSyncAddedForScopedEvent,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 0;
     arg.postSyncAddressZero = true;
@@ -1302,7 +1308,6 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
           givenMultiTileCommandListCopyUsingSingleKernelAndEventWithSignalScopeWhenImmdiateProvidedByPipeControlPostSyncPassedToMemoryCopyThenAppendProfilingCalledForL3FlushWithPostSyncAddedForScopedEvent,
           IsXeHpgCore) {
     arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = true;

@@ -642,12 +642,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
                                                                           const ze_group_count_t &threadGroupDimensions,
                                                                           Event *event,
                                                                           CmdListKernelLaunchParams &launchParams) {
-    if (event) {
-        if (eventSignalPipeControl(launchParams.isKernelSplitOperation, getDcFlushRequired(event->isFlushRequiredForSignal()))) {
-            event = nullptr;
-        } else {
-            event->increaseKernelCount();
-        }
+    if (event && eventSignalPipeControl(launchParams.isKernelSplitOperation, getDcFlushRequired(event->isFlushRequiredForSignal()))) {
+        event = nullptr;
     }
     return appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
 }

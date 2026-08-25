@@ -33,7 +33,6 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::hostAddressFromPool;
     using BaseClass::inOrderExecHelper;
     using BaseClass::isFromIpcPool;
-    using BaseClass::maxKernelCount;
     using BaseClass::maxPacketCount;
     using BaseClass::signalScope;
     using BaseClass::totalEventSize;
@@ -60,7 +59,6 @@ struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass::inOrderExecHelper;
     using BaseClass::isDualCopyOffloadEvent;
     using BaseClass::isFromIpcPool;
-    using BaseClass::maxKernelCount;
     using BaseClass::maxPacketCount;
     using BaseClass::signalScope;
     using BaseClass::totalEventSize;
@@ -109,7 +107,7 @@ struct Mock<Event> : public Event {
     ADDMETHOD_NOBASE(getSignalScope, ze_result_t, ZE_RESULT_SUCCESS, (ze_event_scope_flags_t * pSignalScope));
     ADDMETHOD_NOBASE(getWaitScope, ze_result_t, ZE_RESULT_SUCCESS, (ze_event_scope_flags_t * pWaitScope));
     ADDMETHOD_CONST_NOBASE(getPacketsInUse, uint32_t, 0, ());
-    ADDMETHOD_NOBASE_VOIDRETURN(resetKernelCountAndPacketUsedCount, ());
+    ADDMETHOD_NOBASE_VOIDRETURN(resetPacketsUsedCount, ());
     ADDMETHOD_NOBASE_VOIDRETURN(setPacketsInUse, (uint32_t value));
     ADDMETHOD_NOBASE(hostEventSetValue, ze_result_t, ZE_RESULT_SUCCESS, (State eventState));
     ADDMETHOD_NOBASE(getPacketAddress, uint64_t, 0, (L0::Device * device));
@@ -141,7 +139,6 @@ class MockEvent : public ::L0::Event {
     using ::L0::Event::gpuStartTimestamp;
     using ::L0::Event::isCompleted;
     using ::L0::Event::isFromIpcPool;
-    using ::L0::Event::maxKernelCount;
     using ::L0::Event::maxPacketCount;
     using ::L0::Event::signalScope;
     using ::L0::Event::waitScope;
@@ -163,7 +160,6 @@ class MockEvent : public ::L0::Event {
         this->globalEndOffset = 12;
         this->singlePacketSize = 16;
 
-        this->maxKernelCount = EventPacketsCount::maxKernelSplit;
         // getPacketsInUse() is hardcoded to 1 below, so the max must match: all packets are
         // always signaled/waited, and a larger max would make the mock internally inconsistent.
         this->maxPacketCount = 1;
@@ -219,7 +215,7 @@ class MockEvent : public ::L0::Event {
     void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) override {}
     uint32_t getPacketsInUse() const override { return 1; }
     void resetPackets(bool resetAllPackets) override {}
-    void resetKernelCountAndPacketUsedCount() override {}
+    void resetPacketsUsedCount() override {}
     void setPacketsInUse(uint32_t value) override {}
     uint64_t getPacketAddress(L0::Device *) override { return 0; }
     void setGpuStartTimestamp() override {}

@@ -565,7 +565,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     Event *event = nullptr;
     if (hEvent) {
         event = Event::fromHandle(hEvent);
-        event->resetKernelCountAndPacketUsedCount();
+        event->resetPacketsUsedCount();
 
         registerWalkerWithProfilingEnqueued(event);
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
@@ -3249,7 +3249,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
     if (event->isEventTimestampFlagSet()) {
         appendEventForProfiling(event, outTimeStampSyncCmds, false, skipBarrierForEndProfiling, skipAddingEventToResidency, copyOperation);
     } else {
-        event->resetKernelCountAndPacketUsedCount();
+        event->resetPacketsUsedCount();
         if (!skipAddingEventToResidency) {
             commandContainer.addToResidencyContainer(event->getAllocation(this->device));
         }
@@ -3269,7 +3269,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
     }
     commandContainer.addToResidencyContainer(event->getAllocation(this->device));
     if (beforeWalker) {
-        event->resetKernelCountAndPacketUsedCount();
+        event->resetPacketsUsedCount();
     } else {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         encodeMiFlush(0, 0, args);
@@ -3525,7 +3525,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         handleInOrderImplicitDependencies(relaxedOrderingDispatch, false);
     }
 
-    event->resetKernelCountAndPacketUsedCount();
+    event->resetPacketsUsedCount();
 
     if (!handleCounterBasedEventOperations(event, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -4053,7 +4053,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
         appendDispatchOffsetRegister(workloadPartition, true);
 
         if (beforeWalker) {
-            event->resetKernelCountAndPacketUsedCount();
+            event->resetPacketsUsedCount();
             bool workloadPartition = setupTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, outTimeStampSyncCmds, beforeWalker, true, workloadPartition, copyOperation);
         } else {
@@ -5521,8 +5521,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
             appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, false, skipAddingEventToResidency, copyOperation);
         }
     } else if (event && beforeWalker) {
-        event->resetKernelCountAndPacketUsedCount();
-        event->zeroKernelCount();
+        event->resetPacketsUsedCount();
     }
 }
 

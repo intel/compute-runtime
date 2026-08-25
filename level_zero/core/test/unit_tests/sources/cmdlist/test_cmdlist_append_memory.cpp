@@ -876,7 +876,6 @@ HWTEST2_F(AppendMemoryCopyTests,
     EXPECT_EQ(2u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -936,7 +935,6 @@ HWTEST2_F(AppendMemoryCopyTests,
     EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1682,7 +1680,6 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndProfilingThen
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, event->toHandle(), 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     uint64_t globalStartAddress = event->getGpuAddress(device) + event->getGlobalStartOffset();
     uint64_t contextStartAddress = event->getGpuAddress(device) + event->getContextStartOffset();
@@ -1729,7 +1726,6 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndEventWithoutP
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, event->toHandle(), 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     uint64_t contextStartAddress = event->getGpuAddress(device) + event->getContextStartOffset();
     GenCmdList parsedCmdList;
@@ -1770,7 +1766,6 @@ HWTEST2_F(StagingBuffersFixture, givenSingleTransferStagingAndEventWithoutProfil
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, transferSize, event->toHandle(), 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     uint64_t contextStartAddress = event->getGpuAddress(device) + event->getContextStartOffset();
     GenCmdList parsedCmdList;

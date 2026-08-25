@@ -716,10 +716,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEven
             hostAddressFromPool = eventPoolAllocation->getGraphicsAllocation(0)->getUnderlyingBuffer();
             this->csrs[0] = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
-            this->maxKernelCount = 1;
             this->maxPacketCount = 1;
-
-            this->kernelEventCompletionData = std::make_unique<KernelEventCompletionData<uint64_t>[]>(1);
         }
 
         uint32_t assignKernelEventCompletionDataCalled = 0;
@@ -6275,7 +6272,6 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCoreCbEventThen
     eventObj = Event::fromHandle(handle);
 
     ASSERT_NE(nullptr, eventObj);
-    EXPECT_EQ(1u, eventObj->getMaxKernelCount());
     EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);

@@ -47,14 +47,14 @@ struct EventImp : public Event {
     ze_result_t getWaitScope(ze_event_scope_flags_t *pWaitScope) override;
 
     void resetDeviceCompletionData(bool resetAllPackets);
-    void resetKernelCountAndPacketUsedCount() override;
+    void resetPacketsUsedCount() override;
 
     uint64_t getPacketAddress(Device *device) override;
     uint32_t getPacketsInUse() const override;
     void setPacketsInUse(uint32_t value) override;
     ze_result_t hostEventSetValue(State eventState) override;
 
-    std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;
+    KernelEventCompletionData<TagSizeT> kernelEventCompletionData;
 
     const bool tbxMode = false;
     const bool isHeaplessModeEnabled = false;

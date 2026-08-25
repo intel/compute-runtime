@@ -133,7 +133,6 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
     this->desc.eventValue.inOrderIncrementEvent = event->getInOrderIncrementValue(cmdList->getBase()->getPartitionCount()) > 0;
     this->desc.eventValue.walkerCmd = walkerCmd;
     this->desc.eventValue.postSyncCmd = postSyncCmd;
-    this->desc.eventValue.kernelCount = event->getKernelCount();
     this->desc.eventValue.packetCount = event->getPacketsInUse();
     this->desc.eventValue.waitPackets = event->getPacketsToWait();
     this->desc.eventValue.hasStandaloneProfilingNode = event->hasInOrderTimestampNode();
@@ -157,7 +156,6 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     this->desc.eventValue.event = event;
     this->desc.eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
     this->desc.eventValue.counterBasedEvent = event->isCounterBased();
-    this->desc.eventValue.kernelCount = event->getKernelCount();
     this->desc.eventValue.packetCount = event->getPacketsInUse();
     if (this->desc.eventValue.counterBasedEvent) {
         const bool lriUsed = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(cmdList->isQwordInOrderCounter(), cmdList->isSemaphore64bCmdSupported());
@@ -699,7 +697,6 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
         }
     }
 
-    newEvent->setKernelCount(this->desc.eventValue.kernelCount);
     newEvent->setPacketsInUse(this->desc.eventValue.packetCount);
 
     this->desc.eventValue.event = newEvent;

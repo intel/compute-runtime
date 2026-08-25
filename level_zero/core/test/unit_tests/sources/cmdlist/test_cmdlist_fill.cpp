@@ -486,7 +486,6 @@ HWTEST2_F(AppendFillTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -542,7 +541,6 @@ HWTEST2_F(AppendFillTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
