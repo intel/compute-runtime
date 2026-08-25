@@ -329,6 +329,12 @@ ze_result_t DebugSessionLinux::resumeImp(const std::vector<EuThread::ThreadId> &
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize;
 
+    // SIP transactions resume a thread that stays in the stopped state, so EuThread::resumeThread()
+    // is never reached for them.
+    for (const auto &threadId : threads) {
+        allThreads.at(threadId)->setStateSaveAreaCoherent(false);
+    }
+
     auto result = threadControl(threads, deviceIndex, ThreadControlCmd::resume, bitmask, bitmaskSize);
 
     return result == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;

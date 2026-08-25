@@ -99,6 +99,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
     int flushVmCache(int vmfd) override;
+    ze_result_t readRegsetForStoppedThread(const EuThread *thread, char *output, size_t size, uint64_t gpuVa) override;
     void closeVmFd(int vmfd) override {};
     void closeAllCachedVmFds() override {
         this->closeVmFdCache();

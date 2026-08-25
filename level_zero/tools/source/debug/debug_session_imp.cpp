@@ -1773,8 +1773,11 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
     int ret = 0;
     if (write) {
         ret = writeGpuMemory(thread->getMemoryHandle(), static_cast<const char *>(pRegisterValues), count * regdesc->bytes, gpuVa + startRegOffset);
-    } else {
+    } else if (type == NEO::SipRegisterType::eCommand) {
+        // SIP writes the command register while parked, so this read must never skip the flush.
         ret = readGpuMemory(thread->getMemoryHandle(), static_cast<char *>(pRegisterValues), count * regdesc->bytes, gpuVa + startRegOffset);
+    } else {
+        ret = readRegsetForStoppedThread(thread, static_cast<char *>(pRegisterValues), count * regdesc->bytes, gpuVa + startRegOffset);
     }
 
     return ret == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
@@ -1881,7 +1884,7 @@ ze_result_t DebugSessionImp::registersAccessHelperPacked(const EuThread &thread,
     if (write) {
         return writePackedRegisters(memHandle, regStartGpuVa, packer, pRegisterValues);
     } else {
-        return readPackedRegisters(memHandle, regStartGpuVa, packer, pRegisterValues);
+        return readPackedRegisters(thread, regStartGpuVa, packer, pRegisterValues);
     }
 }
 
@@ -1897,13 +1900,13 @@ ze_result_t DebugSessionImp::writePackedRegisters(uint64_t memHandle, uint64_t r
     return writeGpuMemory(memHandle, data, size, gpuVa);
 }
 
-ze_result_t DebugSessionImp::readPackedRegisters(uint64_t memHandle, uint64_t regStartGpuVa, const SipRegisterPacker &packer, void *dest) {
+ze_result_t DebugSessionImp::readPackedRegisters(const EuThread &thread, uint64_t regStartGpuVa, const SipRegisterPacker &packer, void *dest) {
     std::vector<uint32_t> packed(packer.unpackedIndices.size());
 
     char *data = reinterpret_cast<char *>(packed.data());
     const size_t packedDataSize = sizeof(packed[0]) * packed.size();
     const uint64_t gpuVa = (packer.packedOffset * sizeof(packed[0])) + regStartGpuVa;
-    ze_result_t status = readGpuMemory(memHandle, data, packedDataSize, gpuVa);
+    ze_result_t status = readRegsetForStoppedThread(&thread, data, packedDataSize, gpuVa);
     if (status != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -2113,6 +2116,11 @@ ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
+    // SIP writes READY only after fencing whatever the command produced, and the poll above always
+    // flushes, so the whole slot is back in memory. Does not rely on a fifo entry being published
+    // on command completion.
+    allThreads.at(threadId)->setStateSaveAreaCoherent(true);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2218,7 +2226,16 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
                     return retVal;
                 }
                 UNRECOVERABLE_IF(!nodes[i].valid);
-                threadsWithAttention.emplace_back(0, nodes[i].slice_id, nodes[i].subslice_id, nodes[i].eu_id, nodes[i].thread_id);
+                const EuThread::ThreadId threadId(0, nodes[i].slice_id, nodes[i].subslice_id, nodes[i].eu_id, nodes[i].thread_id);
+
+                // SIP publishes this node only after fencing its state save, and the read above
+                // flushed, so the whole slot for this thread is now in memory.
+                auto thread = allThreads.find(threadId);
+                if (thread != allThreads.end()) {
+                    thread->second->setStateSaveAreaCoherent(true);
+                }
+
+                threadsWithAttention.push_back(threadId);
                 nodes[i].valid = 0;
             }
             retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(nodes.data()), readSize * sizeof(SIP::fifo_node), currentFifoOffset);

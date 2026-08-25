@@ -3253,6 +3253,127 @@ TEST_F(DebugApiLinuxTestXe, GivenFailingFsyncAndFlushBeforeReadNotRequestedWhenC
     EXPECT_EQ(1, handler->preadCalled);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenCoherentStateSaveAreaWhenReadingRegsetForStoppedThreadThenVmCacheIsNotFlushed) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    session->allThreads[threadId]->stopThread(7);
+    session->allThreads[threadId]->setStateSaveAreaCoherent(true);
+
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+
+    auto retVal = session->readRegsetForStoppedThread(session->allThreads[threadId].get(), output, bufferSize, 0x23000);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(0, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenNonCoherentStateSaveAreaWhenReadingRegsetForStoppedThreadThenVmCacheIsFlushed) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    session->allThreads[threadId]->stopThread(7);
+    EXPECT_FALSE(session->allThreads[threadId]->isStateSaveAreaCoherent());
+
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+
+    auto retVal = session->readRegsetForStoppedThread(session->allThreads[threadId].get(), output, bufferSize, 0x23000);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(1, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenCoherentStateSaveAreaWhenReadingPackedRegistersThenVmCacheIsNotFlushed) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    session->allThreads[threadId]->stopThread(7);
+    session->allThreads[threadId]->setStateSaveAreaCoherent(true);
+
+    const MockDebugSessionLinuxXe::SipRegisterPacker packer = {
+        .stride = 4,
+        .majorStart = 0,
+        .majorCount = 2,
+        .packedOffset = 0x53,
+        .unpackedIndices = {0, 1, 4, 5, 6},
+    };
+    handler->preadRetVal = static_cast<int64_t>(packer.unpackedIndices.size() * sizeof(uint32_t));
+
+    std::vector<uint32_t> readData(packer.majorCount * packer.stride);
+    auto retVal = session->readPackedRegisters(*session->allThreads[threadId], 0x23000, packer, readData.data());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(0, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenNonCoherentStateSaveAreaWhenReadingPackedRegistersThenVmCacheIsFlushed) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    session->allThreads[threadId]->stopThread(7);
+    EXPECT_FALSE(session->allThreads[threadId]->isStateSaveAreaCoherent());
+
+    const MockDebugSessionLinuxXe::SipRegisterPacker packer = {
+        .stride = 4,
+        .majorStart = 0,
+        .majorCount = 2,
+        .packedOffset = 0x53,
+        .unpackedIndices = {0, 1, 4, 5, 6},
+    };
+    handler->preadRetVal = static_cast<int64_t>(packer.unpackedIndices.size() * sizeof(uint32_t));
+
+    std::vector<uint32_t> readData(packer.majorCount * packer.stride);
+    auto retVal = session->readPackedRegisters(*session->allThreads[threadId], 0x23000, packer, readData.data());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(1, handler->fsyncCalled);
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenCoherentStateSaveAreaWhenCallingResumeImpThenCoherencyIsCleared) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    EuThread::ThreadId secondThreadId(0, 0, 0, 0, 1);
+    session->allThreads[threadId]->stopThread(7);
+    session->allThreads[secondThreadId]->stopThread(7);
+    session->allThreads[threadId]->setStateSaveAreaCoherent(true);
+    session->allThreads[secondThreadId]->setStateSaveAreaCoherent(true);
+
+    session->resumeImp({threadId, secondThreadId}, 0);
+
+    EXPECT_FALSE(session->allThreads[threadId]->isStateSaveAreaCoherent());
+    EXPECT_FALSE(session->allThreads[secondThreadId]->isStateSaveAreaCoherent());
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenSuccessfulWriteGpuMemoryWhenCallingWriteGpuMemoryThenFsyncIsCalledBeforeAndAfterWriting) {
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);

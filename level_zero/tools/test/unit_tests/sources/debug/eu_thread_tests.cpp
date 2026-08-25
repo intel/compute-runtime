@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,6 +83,49 @@ TEST(EuThread, GivenEuThreadWhenChangingAndQueryingStatesThenStateIsChanged) {
     EXPECT_FALSE(euThread.isStopped());
     EXPECT_TRUE(euThread.isRunning());
     EXPECT_EQ(EuThread::invalidHandle, euThread.getMemoryHandle());
+}
+
+TEST(EuThread, GivenStateSaveAreaCoherentWhenResumingThreadThenCoherencyIsCleared) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    EXPECT_FALSE(euThread.isStateSaveAreaCoherent());
+
+    euThread.stopThread(0x1234);
+    euThread.setStateSaveAreaCoherent(true);
+    EXPECT_TRUE(euThread.isStateSaveAreaCoherent());
+
+    EXPECT_TRUE(euThread.resumeThread());
+    EXPECT_FALSE(euThread.isStateSaveAreaCoherent());
+}
+
+TEST(EuThread, GivenStateSaveAreaCoherentWhenVerifyingStoppedFindsThreadRunningThenCoherencyIsCleared) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    euThread.verifyStopped(1);
+    euThread.stopThread(0x1234);
+    euThread.setStateSaveAreaCoherent(true);
+
+    EXPECT_FALSE(euThread.verifyStopped(2));
+    EXPECT_TRUE(euThread.isRunning());
+    EXPECT_FALSE(euThread.isStateSaveAreaCoherent());
+}
+
+TEST(EuThread, GivenStateSaveAreaCoherentWhenVerifyingStoppedWithSameOddCounterThenCoherencyIsPreserved) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    euThread.verifyStopped(1);
+    euThread.stopThread(0x1234);
+    euThread.setStateSaveAreaCoherent(true);
+
+    EXPECT_TRUE(euThread.verifyStopped(1));
+    EXPECT_TRUE(euThread.isStopped());
+    EXPECT_TRUE(euThread.isStateSaveAreaCoherent());
 }
 
 TEST(EuThread, GivenEuThreadWhenToStringCalledThenCorrectStringReturned) {

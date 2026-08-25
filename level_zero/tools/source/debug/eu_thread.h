@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,7 @@ class EuThread {
             }
             state = State::running;
             systemRoutineCounter = newCounter;
+            stateSaveAreaCoherent = false;
 
             return false;
         }
@@ -125,7 +126,18 @@ class EuThread {
         reportedAsStopped = false;
         state = State::running;
         memoryHandle = invalidHandle;
+        stateSaveAreaCoherent = false;
         return true;
+    }
+
+    // Set only where the thread's whole state save area slot is known to be in memory: after a
+    // flushed read that observed a valid SIP fifo node for this thread, or one that observed SIP
+    // back in the READY state. Cleared wherever the thread is about to execute again.
+    void setStateSaveAreaCoherent(bool coherent) {
+        stateSaveAreaCoherent = coherent;
+    }
+    bool isStateSaveAreaCoherent() const {
+        return stateSaveAreaCoherent;
     }
 
     bool isStopped() const {
@@ -193,6 +205,7 @@ class EuThread {
     uint8_t systemRoutineCounter = 0;
     std::atomic<uint64_t> memoryHandle = invalidHandle;
     std::atomic<bool> reportedAsStopped = false;
+    std::atomic<bool> stateSaveAreaCoherent = false;
     bool hasPageFault = false;
     uint64_t contextHandle = 0;
     uint64_t lrcHandle = 0;

@@ -1129,6 +1129,11 @@ void DebugSessionLinuxXe::closeVmFdCache() {
     this->vmFdCache.clear();
 }
 
+ze_result_t DebugSessionLinuxXe::readRegsetForStoppedThread(const EuThread *thread, char *output, size_t size, uint64_t gpuVa) {
+    const bool flushBeforeRead = !thread->isStateSaveAreaCoherent();
+    return readGpuMemoryImp(thread->getMemoryHandle(), output, size, gpuVa, flushBeforeRead);
+}
+
 int DebugSessionLinuxXe::flushVmCache(int vmfd) {
     const bool logFlushDuration = (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_MEM) != 0;
     std::chrono::steady_clock::time_point flushStartTime;

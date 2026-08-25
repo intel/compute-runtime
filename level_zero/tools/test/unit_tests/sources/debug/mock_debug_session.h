@@ -358,6 +358,12 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return interruptImpResult;
     }
 
+    uint32_t readRegsetForStoppedThreadCallCount = 0;
+    ze_result_t readRegsetForStoppedThread(const EuThread *thread, char *output, size_t size, uint64_t gpuVa) override {
+        readRegsetForStoppedThreadCallCount++;
+        return L0::DebugSessionImp::readRegsetForStoppedThread(thread, output, size, gpuVa);
+    }
+
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
         readGpuMemoryCallCount++;
         if (forcereadGpuMemoryFailOnCount == readGpuMemoryCallCount) {

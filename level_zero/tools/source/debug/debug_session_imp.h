@@ -140,6 +140,13 @@ struct DebugSessionImp : DebugSession {
     virtual ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) = 0;
     virtual ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) = 0;
 
+    // Reads a register set out of a stopped thread's state save area. Backends whose reads carry a
+    // cache flush may skip it when the thread is marked coherent, since the slot cannot change
+    // until the thread resumes.
+    virtual ze_result_t readRegsetForStoppedThread(const EuThread *thread, char *output, size_t size, uint64_t gpuVa) {
+        return readGpuMemory(thread->getMemoryHandle(), output, size, gpuVa);
+    }
+
     template <class BufferType, bool write>
     ze_result_t slmMemoryAccess(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, BufferType buffer);
 
@@ -208,7 +215,7 @@ struct DebugSessionImp : DebugSession {
                                                              uint32_t start, uint32_t count,
                                                              zet_debug_regset_type_intel_gpu_t type, void *pRegisterValues, bool write);
     MOCKABLE_VIRTUAL ze_result_t writePackedRegisters(uint64_t memHandle, uint64_t regStartGpuVa, const SipRegisterPacker &packer, const void *pRegisterValues);
-    MOCKABLE_VIRTUAL ze_result_t readPackedRegisters(uint64_t memHandle, uint64_t regStartGpuVa, const SipRegisterPacker &packer, void *pRegisterValues);
+    MOCKABLE_VIRTUAL ze_result_t readPackedRegisters(const EuThread &thread, uint64_t regStartGpuVa, const SipRegisterPacker &packer, void *pRegisterValues);
 
     void slmSipVersionCheck();
     MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, NEO::SipCommandRegisterValues &command, bool write);
