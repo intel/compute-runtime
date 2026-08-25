@@ -584,8 +584,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenAgamaFileIsAbsentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenAgamaFileIsAbsentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -603,8 +603,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenAgamaFileIsPresentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenAgamaFileIsPresentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -621,8 +621,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == driverVersion.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenSrcVersionFileIsAbsentUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenSrcVersionFileIsAbsentUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -640,8 +640,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenSrcVersionFileIsPresentAndUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenSrcVersionFileIsPresentAndUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -659,8 +659,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == srcVersion.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionWhenDriverVersionFileReadFailsThenVerifyzesDeviceGetPropertiesCallSucceeds) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionWhenDriverVersionFileReadFailsThenVerifyzesDeviceGetPropertiesCallSucceeds, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();

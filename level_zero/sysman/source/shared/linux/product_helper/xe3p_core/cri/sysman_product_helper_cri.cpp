@@ -5,15 +5,19 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
 
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
+
+#include "driver_version.h"
 
 #include <algorithm>
 #include <bit>
@@ -1308,6 +1312,23 @@ bool SysmanProductHelperHw<gfxProduct>::isNetlinkEventSupported() {
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isFlashOverrideSupported() {
     return true;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
+    uint32_t versionBuild = static_cast<uint32_t>(NEO_VERSION_BUILD);
+    if (NEO::debugManager.flags.OverrideVersionBuild.get() > -1) {
+        versionBuild = static_cast<uint32_t>(NEO::debugManager.flags.OverrideVersionBuild.get());
+    }
+
+    uint32_t version = L0::DriverHandle::initialDriverVersionValue + versionBuild;
+    if (NEO::debugManager.flags.OverrideDriverVersion.get() > -1) {
+        version = static_cast<uint32_t>(NEO::debugManager.flags.OverrideDriverVersion.get());
+    }
+
+    const std::string versionString = std::to_string(version);
+    strncpy_s(driverVersion, ZES_STRING_PROPERTY_SIZE, versionString.c_str(), versionString.size());
+    return ZE_RESULT_SUCCESS;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

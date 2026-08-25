@@ -173,6 +173,11 @@ void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPE
 }
 
 void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
+    // Platforms reporting the UMD version handle this in the product helper, others query the KMD interface.
+    if (pLinuxSysmanImp->getSysmanProductHelper()->getDriverVersion(driverVersion) == ZE_RESULT_SUCCESS) {
+        return;
+    }
+
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysmanKmdInterface->getDriverVersion(driverVersion);
 }
