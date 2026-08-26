@@ -998,6 +998,28 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteGlobalTime
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendQueryKernelTimestamps(
+    uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
+    const size_t *pOffsets, ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+    CmdListWaitEventParameters &waitEventsParameters) {
+
+    bool relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
+    waitEventsParameters.relaxedOrderingAllowed = relaxedOrderingDispatch;
+
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
+
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(numEvents, phEvents, dstptr, pOffsets, hSignalEvent,
+                                                                                 numWaitEvents, phWaitEvents, waitEventsParameters);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    const auto appendOperation = (numEvents > 0) ? NEO::AppendOperations::kernel : NEO::AppendOperations::nonKernel;
+    return flushImmediate(ret, true, true, relaxedOrderingDispatch, appendOperation, false, hSignalEvent, false, nullptr, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyFromContext(
     void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
     size_t size, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {

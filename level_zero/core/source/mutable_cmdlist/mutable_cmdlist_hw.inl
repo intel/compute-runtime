@@ -1374,6 +1374,41 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(uint32_t numEvents,
+                                                                                     ze_event_handle_t *phEvents,
+                                                                                     void *dstptr,
+                                                                                     const size_t *pOffsets,
+                                                                                     ze_event_handle_t hSignalEvent,
+                                                                                     uint32_t numWaitEvents,
+                                                                                     ze_event_handle_t *phWaitEvents,
+                                                                                     CmdListWaitEventParameters &waitEventsParameters) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MutableAppendEvents mutableEventParams = {};
+
+    if (this->nextAppendKernelMutable) {
+        storeWaitEventsVariables(numWaitEvents, phWaitEvents, mutableEventParams);
+
+        waitEventsParameters.skipAddingWaitEventsToResidency = mutableEventParams.omitWaitEventResidency;
+        waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
+    }
+
+    result = CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(numEvents, phEvents, dstptr, pOffsets, hSignalEvent,
+                                                                               numWaitEvents, phWaitEvents, waitEventsParameters);
+    if (result != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return result;
+    }
+
+    if (this->nextAppendKernelMutable) {
+        if (mutableEventParams.waitEvents) {
+            processWaitEventVariables(numWaitEvents);
+        }
+        clearMutableAppendData();
+    }
+    return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyFromContext(void *dstptr,
                                                                                      ze_context_handle_t hContextSrc,
                                                                                      const void *srcptr,

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -686,6 +687,491 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
     EXPECT_EQ(eventData[1].timestampSizeInDw, event.getTimestampSizeInDw());
 
     context->freeMem(dstAlloc);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListImmediateForAppendQueryKernelTimestamps : public MockCommandListImmediateHw<gfxCoreFamily> {
+  public:
+    CmdListHelper cmdListHelper;
+    ze_result_t appendLaunchKernelWithParamsReturnValue = ZE_RESULT_SUCCESS;
+    ze_result_t appendLaunchKernelWithParams(::L0::Kernel *kernel,
+                                             const ze_group_count_t &threadGroupDimensions,
+                                             ::L0::Event *event,
+                                             CmdListKernelLaunchParams &launchParams) override {
+        if (appendLaunchKernelWithParamsReturnValue != ZE_RESULT_SUCCESS) {
+            return appendLaunchKernelWithParamsReturnValue;
+        }
+        cmdListHelper.isaAllocation = kernel->getIsaAllocation();
+        cmdListHelper.argumentsResidencyContainer = kernel->getArgumentsResidencyContainer();
+        cmdListHelper.groupSize = kernel->getGroupSize();
+        cmdListHelper.threadGroupDimensions = threadGroupDimensions;
+
+        auto kernelName = kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName;
+        NEO::ArgDescriptor arg;
+        if (kernelName == "QueryKernelTimestamps") {
+            arg = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[2u];
+        } else if (kernelName == "QueryKernelTimestampsWithOffsets") {
+            arg = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[3u];
+        } else {
+            return ZE_RESULT_SUCCESS;
+        }
+        auto crossThreadData = kernel->getCrossThreadData();
+        auto element = arg.as<NEO::ArgDescValue>().elements[0];
+        auto pDst = ptrOffset(crossThreadData, element.offset);
+        cmdListHelper.useOnlyGlobalTimestamp = *(uint32_t *)(pDst);
+        cmdListHelper.isBuiltInKernel = launchParams.isBuiltInKernel;
+        cmdListHelper.isDstInSystem = launchParams.isDestinationAllocationInSystemMemory;
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    bool forceRelaxedOrdering = false;
+    bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override {
+        return forceRelaxedOrdering;
+    }
+
+    bool capturedHasRelaxedOrderingDependencies = false;
+    NEO::AppendOperations capturedAppendOperation = NEO::AppendOperations::nonKernel;
+    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation,
+                                                         bool copyOffloadSubmission, bool requireTaskCountUpdate,
+                                                         MutexLock *outerLock,
+                                                         std::unique_lock<std::mutex> *outerLockForIndirect) override {
+        capturedHasRelaxedOrderingDependencies = hasRelaxedOrderingDependencies;
+        capturedAppendOperation = appendOperation;
+        return MockCommandListImmediateHw<gfxCoreFamily>::executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation,
+                                                                                                   copyOffloadSubmission, requireTaskCountUpdate, outerLock, outerLockForIndirect);
+    }
+};
+
+using AppendQueryKernelTimestampsImmediate = CommandListCreate;
+
+inline std::unique_ptr<MockDeviceForSpv> createDeviceWithTimestampBuiltins(L0::Device *device, L0::DriverHandle *driverHandle) {
+    auto testDevice = std::make_unique<MockDeviceForSpv>(device->getNEODevice(), driverHandle);
+    testDevice->builtins.reset(new MockBuiltInKernelLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
+    auto bindlessEnabled = NEO::ApiSpecificConfig::getBindlessMode(*testDevice->getNEODevice());
+    auto mode = testDevice->getCompilerProductHelper().getDefaultBuiltInAddressingMode(bindlessEnabled);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps, mode);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsets, mode);
+    return testDevice;
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsWithoutOffsetsThenBuiltinDispatchedWithSingleFlush) {
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    auto dstAlloc = driverHandle->getSvmAllocsManager()->getSVMAlloc(dstPtr)->gpuAllocations.getDefaultGraphicsAllocation();
+
+    ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
+
+    bool containsDstAlloc = false;
+    bool gpuTimeStampAlloc = false;
+    for (auto &residentGfxAlloc : commandList.cmdListHelper.argumentsResidencyContainer) {
+        if (residentGfxAlloc != nullptr) {
+            if (residentGfxAlloc->getGpuAddress() == dstAlloc->getGpuAddress()) {
+                containsDstAlloc = true;
+            }
+            if (residentGfxAlloc->getAllocationType() == NEO::AllocationType::gpuTimestampDeviceBuffer) {
+                gpuTimeStampAlloc = true;
+            }
+        }
+    }
+    EXPECT_TRUE(containsDstAlloc);
+    EXPECT_TRUE(gpuTimeStampAlloc);
+    EXPECT_TRUE(commandList.cmdListHelper.isBuiltInKernel);
+    EXPECT_EQ(2u, commandList.cmdListHelper.groupSize[0]);
+
+    device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsWithOffsetsThenOffsetsBuiltinDispatchedWithSingleFlush) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    void *offsetPtr;
+    result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &offsetPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
+    size_t offsets[2] = {0, sizeof(ze_kernel_timestamp_result_t)};
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, offsets, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
+    EXPECT_TRUE(commandList.cmdListHelper.isBuiltInKernel);
+
+    device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+    context->freeMem(dstPtr);
+    context->freeMem(offsetPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndSignalOnlyThenSingleFlush) {
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    MockEvent signalEvent;
+    signalEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    signalEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, signalEvent.toHandle(), 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndWaitEventsAndNoSignalThenWaitIsSubmittedWithSingleFlush) {
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    MockEvent waitEvent;
+    waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    waitEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t waitEventHandle = waitEvent.toHandle();
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, nullptr, 1u, &waitEventHandle, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndWaitEventsAndSignalThenSingleFlushWithoutDoubleSubmission) {
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    MockEvent waitEvent;
+    waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    waitEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t waitEventHandle = waitEvent.toHandle();
+
+    MockEvent signalEvent;
+    signalEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    signalEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, signalEvent.toHandle(), 1u, &waitEventHandle, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWithRelaxedOrderingWhenAppendQueryKernelTimestampsWithZeroEventsAndWaitEventsThenRelaxedOrderingDependencyIsPropagatedWithSingleFlush) {
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    commandList.forceRelaxedOrdering = true;
+
+    MockEvent waitEvent;
+    waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    waitEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t waitEventHandle = waitEvent.toHandle();
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, nullptr, 1u, &waitEventHandle, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(waitEventsParameters.relaxedOrderingAllowed);
+    EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
+    EXPECT_TRUE(commandList.capturedHasRelaxedOrderingDependencies);
+    EXPECT_EQ(NEO::AppendOperations::nonKernel, commandList.capturedAppendOperation);
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWithoutRelaxedOrderingWhenAppendQueryKernelTimestampsWithZeroEventsAndWaitEventsThenNoRelaxedOrderingDependency) {
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    commandList.forceRelaxedOrdering = false;
+
+    MockEvent waitEvent;
+    waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    waitEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t waitEventHandle = waitEvent.toHandle();
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, nullptr, 1u, &waitEventHandle, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(waitEventsParameters.relaxedOrderingAllowed);
+    EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
+    EXPECT_FALSE(commandList.capturedHasRelaxedOrderingDependencies);
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsThenTimestampAllocationStoredAsTemporaryInsteadOfDeallocationContainer) {
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(commandList.commandContainer.getDeallocationContainer().empty());
+
+    bool timestampTempAllocFound = false;
+    auto currentAlloc = csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead();
+    while (currentAlloc != nullptr) {
+        if (currentAlloc->getAllocationType() == NEO::AllocationType::gpuTimestampDeviceBuffer) {
+            timestampTempAllocFound = true;
+        }
+        currentAlloc = currentAlloc->next;
+    }
+    EXPECT_TRUE(timestampTempAllocFound);
+
+    csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsFailsAfterTimestampAllocationThenTimestampAllocationRemainsReclaimable) {
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    commandList.appendLaunchKernelWithParamsReturnValue = ZE_RESULT_ERROR_UNKNOWN;
+
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_EQ(0u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
+
+    bool timestampTempAllocFound = false;
+    auto currentAlloc = csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead();
+    while (currentAlloc != nullptr) {
+        if (currentAlloc->getAllocationType() == NEO::AllocationType::gpuTimestampDeviceBuffer) {
+            timestampTempAllocFound = true;
+            EXPECT_EQ(0u, currentAlloc->getHostPtrTaskCountAssignment());
+        }
+        currentAlloc = currentAlloc->next;
+    }
+    EXPECT_TRUE(timestampTempAllocFound);
+
+    csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+    context->freeMem(dstPtr);
 }
 
 HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendSignalEventThenMiFlushDWIsProgrammed) {
@@ -3569,8 +4055,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndWaitEventsAndNoSignalEventThenWaitOnEventsAndSuccessIsReturned) {
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
-    commandList.appendWaitOnEventsCallBase = false;
-    commandList.appendSignalEventCallBase = false;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     MockEvent waitEvent;
     waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
@@ -3588,10 +4073,10 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .dualStreamCopyOffloadOperation = false,
         .apiRequest = false,
         .skipFlush = true};
+    auto usedSpaceBefore = commandList.commandContainer.getCommandStream()->getUsed();
     auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, nullptr, 1u, &waitEventHandle, waitEventsParameters);
-    EXPECT_EQ(commandList.appendWaitOnEventsCalled, 1u);
-    EXPECT_EQ(commandList.appendSignalEventCalled, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_LT(usedSpaceBefore, commandList.commandContainer.getCommandStream()->getUsed());
 
     context->freeMem(alloc);
 }
@@ -3599,7 +4084,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndSignalEventThenSignalEventAndSuccessIsReturned) {
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendWaitOnEventsCallBase = false;
-    commandList.appendSignalEventCallBase = false;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     MockEvent signalEvent;
     signalEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
@@ -3619,18 +4104,18 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .apiRequest = false,
         .skipFlush = true};
 
+    auto usedSpaceBefore = commandList.commandContainer.getCommandStream()->getUsed();
     auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(commandList.appendWaitOnEventsCalled, 0u);
-    EXPECT_EQ(commandList.appendSignalEventCalled, 1u);
+    EXPECT_LT(usedSpaceBefore, commandList.commandContainer.getCommandStream()->getUsed());
 
     context->freeMem(alloc);
 }
 
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndWaitEventsAndSignalEventThenWaitAndSignalAndSuccessIsReturned) {
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
-    commandList.appendWaitOnEventsCallBase = false;
-    commandList.appendSignalEventCallBase = false;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     MockEvent waitEvent;
     waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
@@ -3655,23 +4140,17 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .apiRequest = false,
         .skipFlush = true};
 
+    auto usedSpaceBefore = commandList.commandContainer.getCommandStream()->getUsed();
     auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &waitEventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(commandList.appendWaitOnEventsCalled, 1u);
-    EXPECT_EQ(commandList.appendSignalEventCalled, 1u);
+    EXPECT_LT(usedSpaceBefore, commandList.commandContainer.getCommandStream()->getUsed());
 
     context->freeMem(alloc);
 }
 
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendWaitEventReturnErrorThenSignalEventNotCalledAndErrorPropagated) {
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
-    commandList.appendWaitOnEventsCallBase = false;
-    commandList.appendSignalEventCallBase = false;
-    commandList.appendWaitOnEventsResult = ZE_RESULT_ERROR_DEVICE_LOST;
-
-    MockEvent waitEvent;
-    waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
-    waitEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     MockEvent signalEvent;
     signalEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
@@ -3679,7 +4158,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendWaitEventReturnE
 
     void *alloc = reinterpret_cast<void *>(0x87651234uLL);
 
-    auto waitEventHandle = waitEvent.toHandle();
+    ze_event_handle_t invalidWaitEventHandle = nullptr;
     auto signalEventHandle = signalEvent.toHandle();
     CmdListWaitEventParameters waitEventsParameters{
         .outWaitCmds = nullptr,
@@ -3690,10 +4169,10 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendWaitEventReturnE
         .dualStreamCopyOffloadOperation = false,
         .apiRequest = false,
         .skipFlush = true};
-    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &waitEventHandle, waitEventsParameters);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
-    EXPECT_EQ(commandList.appendWaitOnEventsCalled, 1u);
-    EXPECT_EQ(commandList.appendSignalEventCalled, 0u);
+    auto usedSpaceBefore = commandList.commandContainer.getCommandStream()->getUsed();
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &invalidWaitEventHandle, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(usedSpaceBefore, commandList.commandContainer.getCommandStream()->getUsed());
 
     context->freeMem(alloc);
 }

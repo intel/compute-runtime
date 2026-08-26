@@ -40,6 +40,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -4148,10 +4149,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     if (numEvents == 0) {
         ze_result_t ret = ZE_RESULT_SUCCESS;
         if (numWaitEvents > 0) {
-            ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, waitEventsParameters);
+            ret = addEventsToCmdList(numWaitEvents, phWaitEvents, waitEventsParameters);
         }
         if (ret == ZE_RESULT_SUCCESS && hSignalEvent != nullptr) {
-            ret = appendSignalEvent(hSignalEvent, false);
+            ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, false);
         }
         return ret;
     }
@@ -4187,7 +4188,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     UNRECOVERABLE_IF(timestampsGPUData == nullptr);
 
     commandContainer.addToResidencyContainer(timestampsGPUData);
-    commandContainer.getDeallocationContainer().push_back(timestampsGPUData);
+    if (isImmediateType()) {
+        auto csr = this->getCsr(false);
+        csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(timestampsGPUData), NEO::AllocationUsage::TEMPORARY_ALLOCATION, csr->peekTaskCount() + 1);
+    } else {
+        commandContainer.getDeallocationContainer().push_back(timestampsGPUData);
+    }
 
     bool result = device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(timestampsGPUData, 0, timestampsData.get(), sizeof(EventData) * numEvents);
 
@@ -4259,8 +4265,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     launchParams.outListCommands = waitEventsParameters.outWaitCmds;
     launchParams.omitAddingWaitEventsResidency = waitEventsParameters.skipAddingWaitEventsToResidency;
     launchParams.relaxedOrderingDispatch = waitEventsParameters.relaxedOrderingAllowed;
-    auto appendResult = appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, hSignalEvent, numWaitEvents,
-                                           phWaitEvents, launchParams);
+    auto appendResult = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, hSignalEvent, numWaitEvents,
+                                                                                 phWaitEvents, launchParams);
     waitEventsParameters.skipAddingWaitEventsToResidency = launchParams.omitAddingWaitEventsResidency;
     waitEventsParameters.outWaitCmds = launchParams.outListCommands;
     if (appendResult != ZE_RESULT_SUCCESS) {

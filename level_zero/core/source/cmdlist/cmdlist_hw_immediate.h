@@ -121,6 +121,11 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                            CmdListWaitEventParameters &waitEventParams) override;
 
+    ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
+                                            const size_t *pOffsets, ze_event_handle_t hSignalEvent,
+                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                            CmdListWaitEventParameters &waitEventsParameters) override;
+
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
                                             size_t size, ze_event_handle_t hSignalEvent,
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
