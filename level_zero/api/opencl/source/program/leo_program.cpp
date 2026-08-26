@@ -19,9 +19,9 @@
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/module/defines_ext.h"
 #include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include <cstring>
 #include <memory>

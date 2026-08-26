@@ -26,6 +26,7 @@ extern "C" {
 /// @brief Module format is PISA intermediate representation
 #if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 18)
 #define ZE_MODULE_FORMAT_PISA static_cast<ze_module_format_t>(2U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+#define ZE_MODULE_FORMAT_OCLC static_cast<ze_module_format_t>(3U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////

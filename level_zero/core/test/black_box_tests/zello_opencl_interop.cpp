@@ -6,7 +6,7 @@
  */
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
-#include "level_zero/core/source/module/defines_ext.h"
+#include "level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"

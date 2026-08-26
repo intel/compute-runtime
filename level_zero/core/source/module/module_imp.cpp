@@ -57,7 +57,6 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/helpers/pnext.h"
 #include "level_zero/core/source/kernel/kernel.h"
-#include "level_zero/core/source/module/defines_ext.h"
 #include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/modules_package_binary.h"
