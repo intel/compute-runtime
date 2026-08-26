@@ -145,6 +145,24 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32
     }
 }
 
+template <typename StateComputeModeType>
+void appendMidthreadPreemptionDelayTimerOverride(StateComputeModeType &stateComputeMode, uint32_t &maskBits2) {
+    using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename StateComputeModeType::MIDTHREAD_PREEMPTION_DELAY_TIMER;
+
+    // STATE_COMPUTE_MODE DWORD 2, bits [2:0] - the field mask is also its highest encoding
+    constexpr uint32_t midthreadPreemptionDelayTimerMask = 0b111u;
+
+    const int32_t requestedTimer = debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.get();
+    if ((requestedTimer < 0) || (requestedTimer > static_cast<int32_t>(midthreadPreemptionDelayTimerMask))) {
+        return;
+    }
+
+    DEBUG_BREAK_IF(requestedTimer > MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150);
+
+    stateComputeMode.setMidthreadPreemptionDelayTimer(static_cast<MIDTHREAD_PREEMPTION_DELAY_TIMER>(requestedTimer));
+    maskBits2 |= midthreadPreemptionDelayTimerMask;
+}
+
 template <typename Family>
 void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
 }

@@ -21,6 +21,8 @@
 #include "shared/test/unit_test/fixtures/implicit_scaling_fixture.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
+#include <array>
+
 using namespace NEO;
 
 using CommandEncodeStatesTestXe2AndLater = Test<CommandEncodeStatesFixture>;
@@ -118,5 +120,51 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenDebugFlagWhenProgrammingState
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
         EXPECT_EQ(STATE_COMPUTE_MODE::UAV_COHERENCY_MODE::UAV_COHERENCY_MODE_DRAIN_DATAPORT_MODE, stateComputeModeCmd.getUavCoherencyMode());
+    }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenDebugFlagWhenProgrammingStateComputeModeThenMidthreadPreemptionDelayTimerIsOverridden, IsAtLeastXe2HpgCore) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_DELAY_TIMER;
+
+    constexpr uint32_t midthreadPreemptionDelayTimerMask = 0b111u;
+
+    DebugManagerStateRestore restore;
+
+    alignas(STATE_COMPUTE_MODE) uint8_t buffer[sizeof(STATE_COMPUTE_MODE)]{};
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    auto programStateComputeMode = [&]() -> STATE_COMPUTE_MODE & {
+        LinearStream linearStream(buffer, sizeof(buffer));
+
+        StreamProperties streamProperties{};
+        streamProperties.initSupport(rootDeviceEnvironment);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
+
+        return *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
+    };
+
+    for (auto outsideField : {-1, -2, 8}) {
+        // not representable in the 3-bit field - neither the field nor its mask bits are touched
+        debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.set(outsideField);
+
+        auto &stateComputeModeCmd = programStateComputeMode();
+        EXPECT_EQ(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
+        EXPECT_EQ(0u, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
+    }
+
+    const std::array<MIDTHREAD_PREEMPTION_DELAY_TIMER, 4> expectedTimers = {
+        MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0,
+        MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_50,
+        MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_100,
+        MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150};
+
+    for (uint32_t flagValue = 0; flagValue < expectedTimers.size(); flagValue++) {
+        debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.set(static_cast<int32_t>(flagValue));
+
+        auto &stateComputeModeCmd = programStateComputeMode();
+        EXPECT_EQ(expectedTimers[flagValue], stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
+        EXPECT_EQ(midthreadPreemptionDelayTimerMask, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
     }
 }

@@ -208,6 +208,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceZPassAsyncComputeThreadLimit, -1, "-1: defa
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePixelAsyncComputeThreadLimit, -1, "-1: default, >0: Limit value in STATE_COMPUTE_MODE")
 DECLARE_DEBUG_VARIABLE(int32_t, LSCSamplerBackingThreshold, -1, "-1: default, >=0: set thresholds for LSC sampler backing")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableSystemMemoryReadFence, -1, "Enable system memory read fence bit in StateComputeMode, -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, ScmMidthreadPreemptionDelayTimerOverride, -1, "-1: default, 0-7: program Midthread Preemption Delay Timer field in StateComputeMode with this value. Any other value is treated as default")
 DECLARE_DEBUG_VARIABLE(int32_t, DecompressInL3ForImage2dFromBuffer, -1, "-1: default, 0: WA Disabled, 1: WA enabled - Enable DecompressInL3 for image 2d from compressed buffer")
 DECLARE_DEBUG_VARIABLE(int32_t, ToggleHintKernelDisableCompression, -1, "-1: default - use kernel as source of hint, 0: provide hint to disable compression, 1: provide hint to enable compression")
 DECLARE_DEBUG_VARIABLE(int32_t, CFEComputeDispatchAllWalkerEnable, -1, "Set Compute Dispatch All Walker flag in CFE_STATE on XE_HPC_CORE platforms, -1: do not set")
