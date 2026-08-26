@@ -814,7 +814,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     EXPECT_EQ(properties.physicalSize, NEO::probedSizeRegionFour);
 }
 
-constexpr uint32_t mockMemVendorIdOffset = 128;
+constexpr uint32_t mockMemVendorIdOffset = 132;
 constexpr uint32_t mockMemVendorId = 0xADu;
 const std::string mockGfspGuid("0x5e2fa270");
 const std::string mockNonGfspGuid("0xABCDEF");

@@ -35,6 +35,7 @@ static int mockReadLinkNoTelemNodes(const char *path, char *buf, size_t bufsize)
 inline constexpr int eccTelem1OffsetFd = 4;
 inline constexpr int eccTelem1GuidFd = 5;
 inline constexpr int eccTelem1TelemFd = 6;
+inline constexpr off_t mockEccStateOffset = 56;
 
 static int mockOpenEccSuccess(const char *pathname, int flags) {
     int returnValue = -1;
@@ -326,7 +327,7 @@ HWTEST2_F(ZesEccFixture, GivenEccEnabledInPmtWhenGetEccStateIsCalledThenEnabledS
             size_t toCopy = std::min(count, validGuid.size());
             memcpy(buf, validGuid.data(), toCopy);
             return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd) {
+        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
             size_t toCopy = std::min(count, sizeof(mockEccStateValue));
             memcpy(buf, &mockEccStateValue, toCopy);
             return static_cast<ssize_t>(toCopy);
@@ -356,7 +357,7 @@ HWTEST2_F(ZesEccFixture, GivenEccDisabledInPmtWhenGetEccStateIsCalledThenDisable
             size_t toCopy = std::min(count, validGuid.size());
             memcpy(buf, validGuid.data(), toCopy);
             return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd) {
+        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
             size_t toCopy = std::min(count, sizeof(mockEccStateValue));
             memcpy(buf, &mockEccStateValue, toCopy);
             return static_cast<ssize_t>(toCopy);
@@ -384,7 +385,7 @@ HWTEST2_F(ZesEccFixture, GivenOnlyNonBit0SetInEccStateWhenGetEccStateIsCalledThe
             size_t toCopy = std::min(count, validGuid.size());
             memcpy(buf, validGuid.data(), toCopy);
             return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd) {
+        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
             size_t toCopy = std::min(count, sizeof(mockEccStateValue));
             memcpy(buf, &mockEccStateValue, toCopy);
             return static_cast<ssize_t>(toCopy);
@@ -412,7 +413,7 @@ HWTEST2_F(ZesEccFixture, GivenDefaultPropertiesExtInPNextWhenGetEccStateIsCalled
             size_t toCopy = std::min(count, validGuid.size());
             memcpy(buf, validGuid.data(), toCopy);
             return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd) {
+        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
             size_t toCopy = std::min(count, sizeof(mockEccStateValue));
             memcpy(buf, &mockEccStateValue, toCopy);
             return static_cast<ssize_t>(toCopy);
@@ -444,7 +445,7 @@ HWTEST2_F(ZesEccFixture, GivenWrongStypeInPNextChainWhenGetEccStateIsCalledThenD
             size_t toCopy = std::min(count, validGuid.size());
             memcpy(buf, validGuid.data(), toCopy);
             return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd) {
+        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
             size_t toCopy = std::min(count, sizeof(mockEccStateValue));
             memcpy(buf, &mockEccStateValue, toCopy);
             return static_cast<ssize_t>(toCopy);
@@ -476,7 +477,7 @@ HWTEST2_F(ZesEccFixture, GivenEccEnabledInPmtWhenGetEccAvailableIsCalledThenAvai
             size_t toCopy = std::min(count, validGuid.size());
             memcpy(buf, validGuid.data(), toCopy);
             return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd) {
+        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
             size_t toCopy = std::min(count, sizeof(mockEccStateValue));
             memcpy(buf, &mockEccStateValue, toCopy);
             return static_cast<ssize_t>(toCopy);
@@ -504,7 +505,7 @@ HWTEST2_F(ZesEccFixture, GivenEccDisabledInPmtWhenGetEccAvailableIsCalledThenAva
             size_t toCopy = std::min(count, validGuid.size());
             memcpy(buf, validGuid.data(), toCopy);
             return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd) {
+        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
             size_t toCopy = std::min(count, sizeof(mockEccStateValue));
             memcpy(buf, &mockEccStateValue, toCopy);
             return static_cast<ssize_t>(toCopy);
