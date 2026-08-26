@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 namespace L0::MCL {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -19,7 +19,7 @@ uint64_t MutableCommandListCoreFamily<gfxCoreFamily>::getCurrentScratchPatchAddr
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) {
 }
 
 } // namespace L0::MCL

@@ -2180,12 +2180,12 @@ void CommandListScratchPatchFixtureInit::testScratchUndefinedPatching() {
 
     struct TestParam {
         uint8_t pointerSize;
-        InlineDataOffset offset;
+        CrossThreadDataOffset offset;
     };
 
     std::vector<TestParam> testParams = {
         {undefined<uint8_t>, 0u},
-        {8u, undefined<InlineDataOffset>}};
+        {8u, undefined<CrossThreadDataOffset>}};
 
     for (const auto &testParam : testParams) {
         mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = testParam.pointerSize;

@@ -2375,6 +2375,28 @@ TEST_F(CommandContainerTest, givenInitializedContainerWhenSearchedAddressIsOutsi
     EXPECT_EQ(nullptr, cpuBase);
 }
 
+TEST_F(CommandContainerTest, givenIndirectHeapInDeallocationContainerWhenSearchedAddressIsWithinOldIndirectHeapThenReturnThatAllocation) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer());
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    auto currentIndirectHeapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::indirectObject);
+    ASSERT_NE(nullptr, currentIndirectHeapAllocation);
+    EXPECT_EQ(currentIndirectHeapAllocation, cmdContainer->findGraphicsAllocationForCpuAddress(currentIndirectHeapAllocation->getUnderlyingBuffer()));
+
+    uint8_t oldIndirectHeapStorage[256] = {};
+    constexpr uint64_t oldIndirectHeapGpuAddress = 0x1234000u;
+    MockGraphicsAllocation oldIndirectHeapAllocation(oldIndirectHeapStorage, oldIndirectHeapGpuAddress, sizeof(oldIndirectHeapStorage));
+    cmdContainer->getDeallocationContainer().push_back(&oldIndirectHeapAllocation);
+
+    void *addressWithinOldHeap = ptrOffset(oldIndirectHeapStorage, 0x40);
+    EXPECT_EQ(&oldIndirectHeapAllocation, cmdContainer->findGraphicsAllocationForCpuAddress(addressWithinOldHeap));
+
+    void *addressOutsideAnyAllocation = reinterpret_cast<void *>(std::numeric_limits<uintptr_t>::max());
+    EXPECT_EQ(nullptr, cmdContainer->findGraphicsAllocationForCpuAddress(addressOutsideAnyAllocation));
+
+    cmdContainer->getDeallocationContainer().clear();
+}
+
 TEST_F(CommandContainerTest, givenPoolAllocatorEnabledWhenAllocatingCommandBufferThenViewAllocationIsReturned) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableCommandBufferPoolAllocator.set(1);

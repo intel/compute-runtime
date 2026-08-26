@@ -229,6 +229,44 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndScratchPointerAddr
     EXPECT_EQ(0, memcmp(&expectedScratchPointer, inlineData, sizeof(expectedScratchPointer)));
 }
 
+XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndScratchPointerInCrossThreadDataWhenSendCrossThreadDataThenScratchPointerIsPatchedInIndirectHeap) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
+    MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
+    commandQueue.heaplessModeEnabled = true;
+
+    auto &indirectHeap = commandQueue.getIndirectHeap(IndirectHeap::Type::indirectObject, 8192);
+
+    constexpr uint32_t inlineDataSize = DefaultWalkerType::getInlineDataSize();
+    const uint32_t crossThreadDataSize = inlineDataSize + 64u;
+    std::vector<uint8_t> crossThreadData(crossThreadDataSize, 0x0);
+    kernel.mockKernel->setCrossThreadData(crossThreadData.data(), crossThreadDataSize);
+
+    uint64_t expectedScratchPointer = 0x1234u;
+    const CrossThreadDataOffset scratchOffset = static_cast<CrossThreadDataOffset>(inlineDataSize + 8u);
+    kernel.kernelInfo.kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = scratchOffset;
+    kernel.kernelInfo.kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = sizeof(expectedScratchPointer);
+
+    auto offsetCrossThreadData = indirectHeap.getUsed();
+    auto sizeCrossThreadData = crossThreadDataSize;
+
+    DefaultWalkerType cmd;
+    HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
+        indirectHeap,
+        *kernel.mockKernel,
+        true,
+        &cmd,
+        sizeCrossThreadData,
+        expectedScratchPointer,
+        pClDevice->getRootDeviceEnvironment());
+
+    auto iohCpuBase = reinterpret_cast<uint8_t *>(indirectHeap.getCpuBase());
+    auto crossThreadScratch = reinterpret_cast<uint64_t *>(iohCpuBase + offsetCrossThreadData + (scratchOffset - inlineDataSize));
+    EXPECT_EQ(expectedScratchPointer, *crossThreadScratch);
+}
+
 XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndPartOfScratchPointerAddressUndefinedWhenSendCrossThreadDataThenInlineDataIsNotProgrammed) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 

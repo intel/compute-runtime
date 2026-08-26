@@ -140,7 +140,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void programStateBaseAddressHook(size_t cmdBufferOffset, bool surfaceBaseAddressModify) override;
     void setBufferSurfaceState(void *address, NEO::GraphicsAllocation *alloc, Variable *variable) override;
 
-    MutableComputeWalker *getCommandWalker(CommandBufferOffset offsetToWalkerCommand, uint8_t indirectOffset, uint8_t scratchOffset) override;
+    MutableComputeWalker *getCommandWalker(CommandBufferOffset offsetToWalkerCommand, uint16_t indirectOffset, uint16_t scratchOffset) override;
     uint32_t getInlineDataSize() const;
 
     void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent) override;
@@ -188,8 +188,8 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void processWaitEventVariables(uint32_t numWaitEvents);
     void clearMutableAppendData();
 
-    void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) override;
-    void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) override;
+    void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) override;
+    void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) override;
     uint64_t getCurrentScratchPatchAddress(size_t scratchAddressPatchIndex) const override;
     void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) override;
     size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) override;

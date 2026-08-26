@@ -1438,8 +1438,26 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
     case Types::Kernel::argTypePrivateBaseStateless:
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.privateMemoryAddress);
 
-    case Types::Kernel::argTypeScratchPointer:
-        return populateArgToInlineData(dst.payloadMappings.implicitArgs.scratchPointerAddress, Tags::Kernel::PayloadArgument::ArgType::scratchPointer);
+    case Types::Kernel::argTypeScratchPointer: {
+        auto &scratchPointerAddress = dst.payloadMappings.implicitArgs.scratchPointerAddress;
+        if (isValidOffset(scratchPointerAddress.offset) || isDefined(scratchPointerAddress.pointerSize)) {
+            outErrReason.append("DeviceBinaryFormat::zebin : Multiple scratch_pointer arguments are not allowed in context of : " + kernelName + ".\n");
+            return DecodeError::invalidBinary;
+        }
+        if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
+            if (src.offset >= static_cast<int32_t>(undefined<CrossThreadDataOffset>)) {
+                outErrReason.append("DeviceBinaryFormat::zebin : scratch_pointer offset " + std::to_string(src.offset) + " is out of representable range in context of : " + kernelName + ".\n");
+                return DecodeError::invalidBinary;
+            }
+            constexpr int32_t compliantScratchPointerOffset = static_cast<int32_t>(sizeof(uint64_t));
+            if (src.offset != compliantScratchPointerOffset) {
+                outWarning.append("DeviceBinaryFormat::zebin : Module is not compliant with xeABI which requires scratch_pointer to be placed as the second qword of indirect data (offset " + std::to_string(compliantScratchPointerOffset) + "). scratch_pointer at offset " + std::to_string(src.offset) + " with size " + std::to_string(src.size) + " in context of : " + kernelName + ".\n");
+            }
+        }
+        scratchPointerAddress.offset = static_cast<CrossThreadDataOffset>(src.offset);
+        scratchPointerAddress.pointerSize = static_cast<uint8_t>(src.size);
+        return DecodeError::success;
+    }
 
     case Types::Kernel::argTypeIndirectDataPointer:
         return populateArgToInlineData(dst.payloadMappings.implicitArgs.indirectDataPointerAddress, Tags::Kernel::PayloadArgument::ArgType::indirectDataPointer);

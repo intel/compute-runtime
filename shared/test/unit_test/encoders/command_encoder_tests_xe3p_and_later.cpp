@@ -523,14 +523,14 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenUsingCsrHeapWithoutScratchNo
 
     struct TestParam {
         uint8_t scratchPointerSize;
-        InlineDataOffset scratchOffset;
+        CrossThreadDataOffset scratchOffset;
         uint8_t indirectDataPointerSize;
         InlineDataOffset indirectDataOffset;
     };
 
     std::vector<TestParam> testParams = {
         {undefined<uint8_t>, 0u, undefined<uint8_t>, 8u},
-        {8u, undefined<InlineDataOffset>, 8u, undefined<InlineDataOffset>}};
+        {8u, undefined<CrossThreadDataOffset>, 8u, undefined<InlineDataOffset>}};
 
     for (const auto &testParam : testParams) {
         dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = testParam.scratchPointerSize;

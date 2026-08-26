@@ -506,6 +506,57 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndScratchRequiredWhenEnc
     EXPECT_EQ(expectedAddress, scratchAddressProgrammed);
 }
 
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchPointerBeyondInlineDataWhenEncodeComputeWalker2ThenScratchAddressPatchedIntoCrossThreadDataAndNotInlineData) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    constexpr uint32_t inlineDataSize = WalkerType::getInlineDataSize();
+    const uint32_t scratchOffset = inlineDataSize + 8u;
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    dispatchInterface->getCrossThreadDataSizeResult = 256u;
+    dispatchInterface->kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 1024u;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.passInlineData = true;
+    dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = static_cast<InlineDataOffset>(scratchOffset);
+    dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    dispatchArgs.isHeaplessModeEnabled = true;
+    dispatchArgs.immediateScratchAddressPatching = true;
+
+    auto *csr = dispatchArgs.device->getDefaultEngine().commandStreamReceiver;
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    EncodeDispatchKernel<FamilyType>::template encode<WalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+
+    auto itor = find<WalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto walkerCmd = genCmdCast<WalkerType *>(*itor);
+    auto inlineData = reinterpret_cast<uint64_t *>(walkerCmd->getInlineDataPointer());
+
+    IndirectHeap *ssh = nullptr;
+    if (csr->getGlobalStatelessHeapAllocation() != nullptr) {
+        ssh = csr->getGlobalStatelessHeap();
+    } else {
+        ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
+    }
+    auto scratchController = csr->getScratchSpaceController();
+    auto expectedAddress = scratchController->getScratchPatchAddress() + ssh->getGpuBase();
+
+    ASSERT_NE(nullptr, dispatchArgs.outCrossThreadDataPtr);
+    auto crossThreadDataScratch = *reinterpret_cast<uint64_t *>(ptrOffset(dispatchArgs.outCrossThreadDataPtr, scratchOffset - inlineDataSize));
+    EXPECT_EQ(expectedAddress, crossThreadDataScratch);
+
+    const uint32_t inlineScratchQwordIndex = scratchOffset / sizeof(uint64_t);
+    EXPECT_GE(inlineScratchQwordIndex, inlineDataSize / sizeof(uint64_t));
+    for (uint32_t qwordIndex = 0; qwordIndex < inlineDataSize / sizeof(uint64_t); qwordIndex++) {
+        EXPECT_NE(expectedAddress, inlineData[qwordIndex]);
+    }
+}
+
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndBindlessHeapsHelperWhenEncodeKernelWithSamplerThenCorrectSamplerAddressIsPassedToPatch) {
 
     if (!pDevice->getDeviceInfo().imageSupport) {

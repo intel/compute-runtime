@@ -13,6 +13,8 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_indirect_data.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
 
 namespace L0 {
@@ -58,6 +60,24 @@ HWTEST2_F(MutableCommandListInOrderTest,
     baseGpuVa = reinterpret_cast<uint64_t>(this->externalStorages[1]);
     walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(baseGpuVa, walkerPostSyncAddress);
+}
+
+HWTEST2_F(MutableCommandListKernelTest,
+          givenKernelWithScratchPointerBeyondInlineDataWhenAppendedToMutableCommandListThenScratchPatchIsCreated, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    constexpr auto inlineDataSize = WalkerType::getInlineDataSize();
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x100;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+    mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.offset = static_cast<NEO::InlineDataOffset>(inlineDataSize + 8u);
+    mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
 }
 
 HWTEST2_F(MutableCommandListKernelTest,
@@ -131,6 +151,73 @@ HWTEST2_F(MutableCommandListKernelTest,
     memcpy(&programmedScratchAddress, scratchSrcPtr, sizeof(uint64_t));
     EXPECT_EQ(expectedScratchAddress, programmedScratchAddress);
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 1u);
+}
+
+HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingBetweenInlineAndCrossThreadDataThenPatchGpuAddressIsUpdated, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    constexpr uint32_t inlineDataSize = WalkerType::getInlineDataSize();
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+    auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress.offset = static_cast<uint16_t>(8u);
+
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+    auto &scratchPointerAddress2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress2.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress2.offset = static_cast<uint16_t>(inlineDataSize + 8u);
+
+    ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernels[0], this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    overridePatchedScratchAddress(0xABCD0000);
+
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    auto scratchPatchIndex = mutation.kernelGroup->getScratchAddressPatchIndex();
+    auto &cmdContainer = mutableCommandList->getBase()->getCmdContainer();
+    auto ioh = cmdContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+    auto walkerCpu = mutation.kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer();
+
+    uint64_t inlineGpuAddress = 0u;
+    {
+        auto cmdsToPatch = mutableCommandList->getBase()->getCommandsToPatch();
+        ASSERT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
+        auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
+        inlineGpuAddress = patch.gpuAddress;
+        EXPECT_NE(0u, inlineGpuAddress);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+
+    auto crossThreadCpu = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->varDispatch->getIndirectData()->getCrossThreadDataBaseAddress();
+    auto iohAllocation = ioh->getGraphicsAllocation();
+    uint64_t expectedCrossThreadGpuAddress = iohAllocation->getGpuAddress() +
+                                             (reinterpret_cast<uintptr_t>(crossThreadCpu) - reinterpret_cast<uintptr_t>(iohAllocation->getUnderlyingBuffer()));
+    {
+        auto cmdsToPatch = mutableCommandList->getBase()->getCommandsToPatch();
+        auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
+        EXPECT_EQ(expectedCrossThreadGpuAddress, patch.gpuAddress);
+        EXPECT_NE(inlineGpuAddress, patch.gpuAddress);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[0]));
+    {
+        auto cmdsToPatch = mutableCommandList->getBase()->getCommandsToPatch();
+        auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
+        auto walkerAllocation = cmdContainer.findGraphicsAllocationForCpuAddress(walkerCpu);
+        ASSERT_NE(nullptr, walkerAllocation);
+        uint64_t expectedWalkerGpuAddress = walkerAllocation->getGpuAddress() +
+                                            (reinterpret_cast<uintptr_t>(walkerCpu) - reinterpret_cast<uintptr_t>(walkerAllocation->getUnderlyingBuffer()));
+        EXPECT_EQ(expectedWalkerGpuAddress, patch.gpuAddress);
+        EXPECT_NE(expectedCrossThreadGpuAddress, patch.gpuAddress);
+    }
 }
 
 HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWhenAppendLaunchKernelIsDoneThenScratchPatchAndScratchPatchIndexAreValid, IsAtLeastXe3pCore) {
@@ -508,12 +595,190 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsAndScratchPatchIndexU
 
     const size_t undefinedScratchPatchIndex = L0::MCL::undefined<size_t>;
 
-    mutableCommandList->updateScratchAddress(undefinedScratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker());
+    mutableCommandList->updateScratchAddress(undefinedScratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker(), nullptr);
 
     auto scratchPatchAddress = ptrOffset(kernelsInGroup[1]->getMutableComputeWalker()->getInlineDataPointer(), kernelsInGroup[1]->getMutableComputeWalker()->getScratchOffset());
     uint64_t scratchPatchAddressValue = 0;
     memcpy(&scratchPatchAddressValue, scratchPatchAddress, sizeof(uint64_t));
     EXPECT_EQ(0u, scratchPatchAddressValue);
+}
+
+HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWithScratchInCrossThreadDataWhenMutatingThenCrossThreadDataIsSeededAndPatchTargetsCrossThreadData, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    constexpr uint64_t inlineDataSize = WalkerType::getInlineDataSize();
+    const uint64_t scratchOffset1 = inlineDataSize;
+    const uint64_t scratchOffset2 = inlineDataSize + 8u;
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress.offset = static_cast<uint8_t>(scratchOffset1);
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    auto &scratchPointerAddress2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress2.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress2.offset = static_cast<uint8_t>(scratchOffset2);
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+
+    ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernels[0], this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    uint64_t mockScratchPatchAddress = 0xABCD0000;
+    overridePatchedScratchAddress(mockScratchPatchAddress);
+
+    auto scratchPatchIndex = mutableCommandList->kernelMutations[0].kernelGroup->getScratchAddressPatchIndex();
+    auto cmdsToPatch = mutableCommandList->getBase()->getCommandsToPatch();
+    ASSERT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
+    auto &scratchPatchCommand = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
+
+    auto walkerCmd0 = mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer();
+    EXPECT_NE(walkerCmd0, scratchPatchCommand.pDestination);
+    EXPECT_EQ(scratchOffset1 - inlineDataSize, scratchPatchCommand.offset);
+    EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+
+    uint64_t expectedProgrammedScratchPatchAddress = mockScratchPatchAddress;
+    auto ssh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
+    if (ssh != nullptr) {
+        expectedProgrammedScratchPatchAddress += ssh->getGpuBase();
+    }
+
+    auto cmdsToPatchAfterMutation = mutableCommandList->getBase()->getCommandsToPatch();
+    auto &scratchPatchCommandAfterMutation = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatchAfterMutation[scratchPatchIndex]);
+
+    auto walkerCmd1 = mutableCommandList->mutableWalkerCmds[1]->getWalkerCmdPointer();
+    EXPECT_NE(walkerCmd1, scratchPatchCommandAfterMutation.pDestination);
+    EXPECT_EQ(scratchOffset2 - inlineDataSize, scratchPatchCommandAfterMutation.offset);
+    EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
+
+    auto programmedScratchAddress = reinterpret_cast<uint64_t *>(ptrOffset(scratchPatchCommandAfterMutation.pDestination, scratchPatchCommandAfterMutation.offset));
+    EXPECT_EQ(expectedProgrammedScratchPatchAddress, *programmedScratchAddress);
+}
+
+HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWithScratchInInlineDataWhenMutatingToKernelWithScratchInCrossThreadDataThenPatchDestinationSwitchesToCrossThreadData, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    constexpr uint64_t inlineDataSize = WalkerType::getInlineDataSize();
+    const uint64_t scratchOffsetInline = 8u;
+    const uint64_t scratchOffsetCrossThread = inlineDataSize + 8u;
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress.offset = static_cast<uint8_t>(scratchOffsetInline);
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    auto &scratchPointerAddress2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress2.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress2.offset = static_cast<uint8_t>(scratchOffsetCrossThread);
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+
+    ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernels[0], this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    uint64_t mockScratchPatchAddress = 0xABCD0000;
+    overridePatchedScratchAddress(mockScratchPatchAddress);
+
+    auto scratchPatchIndex = mutableCommandList->kernelMutations[0].kernelGroup->getScratchAddressPatchIndex();
+    auto cmdsToPatch = mutableCommandList->getBase()->getCommandsToPatch();
+    ASSERT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
+    auto &scratchPatchCommand = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
+
+    auto walkerCmd0 = mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer();
+    EXPECT_EQ(walkerCmd0, scratchPatchCommand.pDestination);
+    EXPECT_EQ(mutableCommandList->mutableWalkerCmds[0]->getInlineDataOffset() + scratchOffsetInline, scratchPatchCommand.offset);
+    EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+
+    uint64_t expectedProgrammedScratchPatchAddress = mockScratchPatchAddress;
+    auto ssh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
+    if (ssh != nullptr) {
+        expectedProgrammedScratchPatchAddress += ssh->getGpuBase();
+    }
+
+    auto cmdsToPatchAfterMutation = mutableCommandList->getBase()->getCommandsToPatch();
+    auto &scratchPatchCommandAfterMutation = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatchAfterMutation[scratchPatchIndex]);
+
+    auto walkerCmd1 = mutableCommandList->mutableWalkerCmds[1]->getWalkerCmdPointer();
+    EXPECT_NE(walkerCmd1, scratchPatchCommandAfterMutation.pDestination);
+    EXPECT_EQ(scratchOffsetCrossThread - inlineDataSize, scratchPatchCommandAfterMutation.offset);
+    EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
+
+    auto programmedScratchAddress = reinterpret_cast<uint64_t *>(ptrOffset(scratchPatchCommandAfterMutation.pDestination, scratchPatchCommandAfterMutation.offset));
+    EXPECT_EQ(expectedProgrammedScratchPatchAddress, *programmedScratchAddress);
+}
+
+HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWithScratchInCrossThreadDataWhenMutatingToKernelWithScratchInInlineDataThenPatchDestinationSwitchesToWalker, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    constexpr uint64_t inlineDataSize = WalkerType::getInlineDataSize();
+    const uint64_t scratchOffsetCrossThread = inlineDataSize + 8u;
+    const uint64_t scratchOffsetInline = 8u;
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress.offset = static_cast<uint8_t>(scratchOffsetCrossThread);
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    auto &scratchPointerAddress2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress2.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress2.offset = static_cast<uint8_t>(scratchOffsetInline);
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+
+    ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernels[0], this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    uint64_t mockScratchPatchAddress = 0xABCD0000;
+    overridePatchedScratchAddress(mockScratchPatchAddress);
+
+    auto scratchPatchIndex = mutableCommandList->kernelMutations[0].kernelGroup->getScratchAddressPatchIndex();
+    auto cmdsToPatch = mutableCommandList->getBase()->getCommandsToPatch();
+    ASSERT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
+    auto &scratchPatchCommand = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
+
+    auto walkerCmd0 = mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer();
+    EXPECT_NE(walkerCmd0, scratchPatchCommand.pDestination);
+    EXPECT_EQ(scratchOffsetCrossThread - inlineDataSize, scratchPatchCommand.offset);
+    EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+
+    uint64_t expectedProgrammedScratchPatchAddress = mockScratchPatchAddress;
+    auto ssh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
+    if (ssh != nullptr) {
+        expectedProgrammedScratchPatchAddress += ssh->getGpuBase();
+    }
+
+    auto cmdsToPatchAfterMutation = mutableCommandList->getBase()->getCommandsToPatch();
+    auto &scratchPatchCommandAfterMutation = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatchAfterMutation[scratchPatchIndex]);
+
+    auto walkerCmd1 = mutableCommandList->mutableWalkerCmds[1]->getWalkerCmdPointer();
+    EXPECT_EQ(walkerCmd1, scratchPatchCommandAfterMutation.pDestination);
+    EXPECT_EQ(mutableCommandList->mutableWalkerCmds[1]->getInlineDataOffset() + scratchOffsetInline, scratchPatchCommandAfterMutation.offset);
+    EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
+
+    auto walkerCmd1Typed = reinterpret_cast<WalkerType *>(walkerCmd1);
+    auto programmedScratchAddress = reinterpret_cast<uint64_t *>(ptrOffset(walkerCmd1Typed->getInlineDataPointer(), scratchOffsetInline));
+    EXPECT_EQ(expectedProgrammedScratchPatchAddress, *programmedScratchAddress);
 }
 
 } // namespace ult

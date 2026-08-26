@@ -30,6 +30,7 @@ struct InterfaceLabelDescriptor;
 struct InterfaceVariableDescriptor;
 struct Label;
 struct MutableComputeWalker;
+class MutableIndirectData;
 struct Variable;
 
 enum MclAluReg : uint32_t {
@@ -216,7 +217,7 @@ struct MutableCommandList {
 
     virtual void setBufferSurfaceState(void *address, NEO::GraphicsAllocation *alloc, Variable *variable) = 0;
 
-    virtual MutableComputeWalker *getCommandWalker(size_t offsetToWalkerCommand, uint8_t indirectOffset, uint8_t scratchOffset) = 0;
+    virtual MutableComputeWalker *getCommandWalker(size_t offsetToWalkerCommand, uint16_t indirectOffset, uint16_t scratchOffset) = 0;
 
     virtual void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent) = 0;
 
@@ -225,8 +226,8 @@ struct MutableCommandList {
     virtual bool isQwordInOrderCounter() const = 0;
     virtual bool isSemaphore64bCmdSupported() const = 0;
 
-    virtual void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) = 0;
-    virtual void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) = 0;
+    virtual void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) = 0;
+    virtual void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) = 0;
     virtual uint64_t getCurrentScratchPatchAddress(size_t scratchAddressPatchIndex) const = 0;
     virtual void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) = 0;
     virtual size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) = 0;

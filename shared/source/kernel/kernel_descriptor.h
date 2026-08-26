@@ -236,7 +236,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             CrossThreadDataOffset localMemoryStatelessWindowStartAddres = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset implicitArgsBuffer = undefined<CrossThreadDataOffset>;
             ArgDescInlineDataPointer indirectDataPointerAddress;
-            ArgDescInlineDataPointer scratchPointerAddress;
+            ArgDescScratchPointer scratchPointerAddress;
         } implicitArgs;
     } payloadMappings;
 

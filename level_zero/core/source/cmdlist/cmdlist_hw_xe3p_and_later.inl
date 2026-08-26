@@ -20,37 +20,76 @@ constexpr bool CommandListCoreFamily<gfxCoreFamily>::checkIfAllocationImportedRe
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInInlineData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsScratchSpace, bool kernelNeedsImplicitArgs) {
+void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddress(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsScratchSpace, bool kernelNeedsImplicitArgs) {
     if (this->scratchAddressPatchingEnabled && kernelNeedsScratchSpace) {
         auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
-        launchParams.scratchAddressPatchIndex = commandsToPatch.size();
-        commandsToPatch.push_back(PatchComputeWalkerInlineDataScratch{});
 
-        auto &scratchInlineData =
-            std::get<PatchComputeWalkerInlineDataScratch>(commandsToPatch[launchParams.scratchAddressPatchIndex]);
-
-        scratchInlineData.pDestination = dispatchKernelArgs.outWalkerPtr;
-        scratchInlineData.gpuAddress = dispatchKernelArgs.outWalkerGpuVa;
-        scratchInlineData.scratchAddressAfterPatch = 0;
-        scratchInlineData.offset = NEO::isDefined(scratchPointerAddress.offset)
-                                       ? NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset
-                                       : NEO::undefined<size_t>;
-        scratchInlineData.patchSize = NEO::isDefined(scratchPointerAddress.pointerSize)
-                                          ? scratchPointerAddress.pointerSize
-                                          : NEO::undefined<size_t>;
-        if (NEO::isDefined(scratchPointerAddress.offset)) {
-            this->activeScratchPatchElements++;
-        }
-
-        auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
-        if (ssh != nullptr) {
-            scratchInlineData.baseAddress = ssh->getGpuBase();
-        }
-
-        if (NEO::isDefined(scratchPointerAddress.pointerSize) && NEO::isValidOffset(scratchPointerAddress.offset)) {
-            addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
+        constexpr auto inlineDataSize = GfxFamily::DefaultWalkerType::getInlineDataSize();
+        if (NEO::isValidOffset(scratchPointerAddress.offset) && (static_cast<uint32_t>(scratchPointerAddress.offset) >= inlineDataSize)) {
+            addPatchScratchAddressInCrossThreadData(commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, kernelNeedsImplicitArgs);
+        } else {
+            addPatchScratchAddressInInlineData(commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, kernelNeedsImplicitArgs);
         }
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInInlineData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsImplicitArgs) {
+    auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+
+    launchParams.scratchAddressPatchIndex = commandsToPatch.size();
+    commandsToPatch.push_back(PatchComputeWalkerInlineDataScratch{});
+
+    auto &scratchInlineData =
+        std::get<PatchComputeWalkerInlineDataScratch>(commandsToPatch[launchParams.scratchAddressPatchIndex]);
+
+    scratchInlineData.pDestination = dispatchKernelArgs.outWalkerPtr;
+    scratchInlineData.gpuAddress = dispatchKernelArgs.outWalkerGpuVa;
+    scratchInlineData.scratchAddressAfterPatch = 0;
+    scratchInlineData.offset = NEO::isDefined(scratchPointerAddress.offset)
+                                   ? NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset
+                                   : NEO::undefined<size_t>;
+    scratchInlineData.patchSize = NEO::isDefined(scratchPointerAddress.pointerSize)
+                                      ? scratchPointerAddress.pointerSize
+                                      : NEO::undefined<size_t>;
+    if (NEO::isDefined(scratchPointerAddress.offset)) {
+        this->activeScratchPatchElements++;
+    }
+
+    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
+    if (ssh != nullptr) {
+        scratchInlineData.baseAddress = ssh->getGpuBase();
+    }
+
+    if (NEO::isDefined(scratchPointerAddress.pointerSize) && NEO::isValidOffset(scratchPointerAddress.offset)) {
+        addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInCrossThreadData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsImplicitArgs) {
+    auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+    constexpr auto inlineDataSize = GfxFamily::DefaultWalkerType::getInlineDataSize();
+
+    launchParams.scratchAddressPatchIndex = commandsToPatch.size();
+    commandsToPatch.push_back(PatchComputeWalkerInlineDataScratch{});
+
+    auto &scratchCrossThreadData =
+        std::get<PatchComputeWalkerInlineDataScratch>(commandsToPatch[launchParams.scratchAddressPatchIndex]);
+
+    scratchCrossThreadData.pDestination = dispatchKernelArgs.outCrossThreadDataPtr;
+    scratchCrossThreadData.gpuAddress = dispatchKernelArgs.outCrossThreadDataGpuVa;
+    scratchCrossThreadData.scratchAddressAfterPatch = 0;
+    scratchCrossThreadData.offset = static_cast<uint32_t>(scratchPointerAddress.offset) - inlineDataSize;
+    scratchCrossThreadData.patchSize = scratchPointerAddress.pointerSize;
+    this->activeScratchPatchElements++;
+
+    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
+    if (ssh != nullptr) {
+        scratchCrossThreadData.baseAddress = ssh->getGpuBase();
+    }
+
+    addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -984,8 +984,8 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     auto &kernelsInGroup = mutation.kernelGroup->getKernelsInGroup();
     ASSERT_EQ(2u, kernelsInGroup.size());
-    mutableCommandList->updateCmdListScratchPatchCommand(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker());
-    mutableCommandList->updateScratchAddress(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker());
+    mutableCommandList->updateCmdListScratchPatchCommand(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker(), nullptr);
+    mutableCommandList->updateScratchAddress(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker(), nullptr);
 
     auto scratchPatchAddress = mutableCommandList->getCurrentScratchPatchAddress(scratchPatchIndex);
     EXPECT_EQ(0u, scratchPatchAddress);

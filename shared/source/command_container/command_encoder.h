@@ -136,6 +136,8 @@ struct EncodeDispatchKernelArgs {
     void *cpuPayloadBuffer = nullptr;
     void *outImplicitArgsPtr = nullptr;
     uint64_t outImplicitArgsGpuVa = 0;
+    void *outCrossThreadDataPtr = nullptr;
+    uint64_t outCrossThreadDataGpuVa = 0;
     std::list<void *> *additionalCommands = nullptr;
     EncodeKernelArgsExt *extendedArgs = nullptr;
     NEO::EncodePostSyncArgs postSyncArgs{};

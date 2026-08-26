@@ -118,15 +118,15 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     }
 
     uint32_t sizeToCopy = sizeCrossThreadData;
+    uint32_t inlineDataBytesConsumed = 0u;
     if (inlineDataProgrammingRequired == true) {
 
         constexpr uint32_t inlineDataSize = WalkerType::getInlineDataSize();
-        sizeToCopy = std::min(inlineDataSize, sizeCrossThreadData);
+        sizeToCopy = inlineDataBytesConsumed = std::min(inlineDataSize, sizeCrossThreadData);
         dest = reinterpret_cast<char *>(walkerCmd->getInlineDataPointer());
         memcpy_s(dest, sizeToCopy, kernel.getCrossThreadData(), sizeToCopy);
-        auto offset = std::min(inlineDataSize, sizeCrossThreadData);
-        sizeCrossThreadData -= offset;
-        src += offset;
+        sizeCrossThreadData -= inlineDataBytesConsumed;
+        src += inlineDataBytesConsumed;
 
         if constexpr (heaplessModeEnabled) {
             uint64_t indirectDataAddress = indirectHeap.getHeapGpuBase();
@@ -142,6 +142,15 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         }
         dest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
         memcpy_s(dest, sizeCrossThreadData, src, sizeCrossThreadData);
+
+        if constexpr (heaplessModeEnabled) {
+            const auto &scratchPointerAddress = kernel.getDescriptor().payloadMappings.implicitArgs.scratchPointerAddress;
+            if (isDefined(scratchPointerAddress.pointerSize) && isValidOffset(scratchPointerAddress.offset) &&
+                (static_cast<uint32_t>(scratchPointerAddress.offset) >= inlineDataBytesConsumed)) {
+                char *crossThreadScratchPtr = dest + (static_cast<uint32_t>(scratchPointerAddress.offset) - inlineDataBytesConsumed);
+                memcpy_s(crossThreadScratchPtr, scratchPointerAddress.pointerSize, &scratchAddress, scratchPointerAddress.pointerSize);
+            }
+        }
     }
 
     if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {

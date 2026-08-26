@@ -38,7 +38,10 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
     using BaseClass::addHostFunctionToPatchCommands;
+    using BaseClass::addPatchScratchAddress;
+    using BaseClass::addPatchScratchAddressInCrossThreadData;
     using BaseClass::addPatchScratchAddressInImplicitArgs;
+    using BaseClass::addPatchScratchAddressInInlineData;
     using BaseClass::alignSvmAllocationData;
     using BaseClass::allocateOrReuseKernelPrivateMemoryIfNeeded;
     using BaseClass::allowCbWaitEventsNoopDispatch;

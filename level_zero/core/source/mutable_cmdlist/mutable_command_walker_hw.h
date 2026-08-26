@@ -14,7 +14,7 @@ namespace L0::MCL {
 
 template <typename GfxFamily>
 struct MutableComputeWalkerHw : public MutableComputeWalker, NEO::NonCopyableAndNonMovableClass {
-    MutableComputeWalkerHw(void *walker, uint8_t indirectOffset, uint8_t scratchOffset, void *cpuBuffer, bool stageCommitMode)
+    MutableComputeWalkerHw(void *walker, uint16_t indirectOffset, uint16_t scratchOffset, void *cpuBuffer, bool stageCommitMode)
         : MutableComputeWalker(walker, indirectOffset, scratchOffset, stageCommitMode),
           cpuBuffer(cpuBuffer) {}
     ~MutableComputeWalkerHw() override {

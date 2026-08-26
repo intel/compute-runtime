@@ -1,23 +1,29 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist_hw.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_indirect_data.h"
 
 namespace L0::MCL {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::updateScratchAddress(size_t scratchAddressPatchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::updateScratchAddress(size_t scratchAddressPatchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) {
     if (isUndefined(scratchAddressPatchIndex)) {
         return;
     }
 
     auto scratchPatchAddress = this->getCurrentScratchPatchAddress(scratchAddressPatchIndex);
-    newWalker.updateWalkerScratchPatchAddress(scratchPatchAddress);
-    this->updateCmdListScratchPatchCommand(scratchAddressPatchIndex, oldWalker, newWalker);
+    auto newScratchOffset = newWalker.getScratchOffset();
+    if (isDefined(newScratchOffset) && (newScratchOffset >= newWalker.getInlineDataSize())) {
+        newKernelIndirectData->setAddress(newScratchOffset, scratchPatchAddress, sizeof(uint64_t));
+    } else {
+        newWalker.updateWalkerScratchPatchAddress(scratchPatchAddress);
+    }
+    this->updateCmdListScratchPatchCommand(scratchAddressPatchIndex, oldWalker, newWalker, newKernelIndirectData);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -35,19 +41,38 @@ uint64_t MutableCommandListCoreFamily<gfxCoreFamily>::getCurrentScratchPatchAddr
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) {
     auto newScratchOffset = newWalker.getScratchOffset();
     auto oldScratchOffset = oldWalker.getScratchOffset();
     if (newScratchOffset != oldScratchOffset) {
         // scratch offset has changed: update scratch patch command with current scratch offset
+        const auto inlineDataSize = newWalker.getInlineDataSize();
+        const bool scratchInCrossThreadData = isDefined(newScratchOffset) && (newScratchOffset >= inlineDataSize);
+
         size_t patchSize = isDefined(newScratchOffset) ? sizeof(uint64_t) : undefined<size_t>;
-        size_t patchOffset = isDefined(newScratchOffset) ? newWalker.getInlineDataOffset() + newScratchOffset : undefined<size_t>;
+        size_t patchOffset = undefined<size_t>;
+        void *patchDestination = newWalker.getWalkerCmdPointer();
+        if (scratchInCrossThreadData) {
+            patchDestination = newKernelIndirectData->getCrossThreadDataBaseAddress();
+            patchOffset = newScratchOffset - inlineDataSize;
+        } else if (isDefined(newScratchOffset)) {
+            patchOffset = newWalker.getInlineDataOffset() + newScratchOffset;
+        }
+
+        uint64_t patchGpuAddress = 0u;
+        if (isDefined(newScratchOffset)) {
+            auto patchAllocation = this->commandContainer.findGraphicsAllocationForCpuAddress(patchDestination);
+            UNRECOVERABLE_IF(patchAllocation == nullptr);
+            patchGpuAddress = patchAllocation->getGpuAddress() +
+                              (reinterpret_cast<uintptr_t>(patchDestination) - reinterpret_cast<uintptr_t>(patchAllocation->getUnderlyingBuffer()));
+        }
 
         auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
         UNRECOVERABLE_IF(patchIndex >= commandsToPatch.size());
 
         auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(commandsToPatch[patchIndex]);
-        patch.pDestination = newWalker.getWalkerCmdPointer();
+        patch.pDestination = patchDestination;
+        patch.gpuAddress = patchGpuAddress;
         patch.patchSize = patchSize;
         patch.offset = patchOffset;
 

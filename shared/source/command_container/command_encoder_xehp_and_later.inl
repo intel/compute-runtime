@@ -250,6 +250,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         inlineDataProgramming = inlineDataProgrammingOffset != 0;
     }
 
+    const auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+    const bool scratchPointerInCrossThreadData = isValidOffset(scratchPointerAddress.offset) && isDefined(scratchPointerAddress.pointerSize) && (static_cast<uint32_t>(scratchPointerAddress.offset) >= inlineDataProgrammingOffset);
+
     auto scratchAddressForImmediatePatching = EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(container, args);
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
@@ -265,7 +268,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             auto heap = container.getIndirectHeap(HeapType::indirectObject);
             UNRECOVERABLE_IF(!heap);
             uint64_t threadDataHash = 0ull;
-            const bool isThreadDataMapAllowed = container.getIOHCacheEnabled() && (sizeThreadData != 0u) && !args.isIndirect && (pImplicitArgs == nullptr);
+            const bool isThreadDataMapAllowed = container.getIOHCacheEnabled() && (sizeThreadData != 0u) && !args.isIndirect && (pImplicitArgs == nullptr) && !scratchPointerInCrossThreadData;
             if (isThreadDataMapAllowed) {
                 const std::span<const uint8_t> crossThreadSpan(crossThreadData, sizeCrossThreadData);
                 const std::span<const uint8_t> perThreadSpan(perThreadDataPtr, sizePerThreadDataForWholeGroup);
@@ -297,6 +300,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     args.outImplicitArgsGpuVa = heap->getGraphicsAllocation()->getGpuAddress() + ptrDiff(args.outImplicitArgsPtr, heap->getCpuBase());
                 }
 
+                if (scratchPointerInCrossThreadData) {
+                    args.outCrossThreadDataPtr = ptr;
+                    args.outCrossThreadDataGpuVa = heap->getGraphicsAllocation()->getGpuAddress() + ptrDiff(ptr, heap->getCpuBase());
+                }
+
                 if (args.isIndirect) {
                     auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
                     uint64_t implicitArgsGpuPtr = 0u;
@@ -317,6 +325,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             if (sizeCrossThreadData > 0) {
                 memcpy_s(ptr, sizeCrossThreadData,
                          crossThreadData, sizeCrossThreadData);
+            }
+
+            if (scratchPointerInCrossThreadData && args.immediateScratchAddressPatching) {
+                auto crossThreadDataScratchPtr = ptrOffset(ptr, static_cast<uint32_t>(scratchPointerAddress.offset) - inlineDataProgrammingOffset);
+                memcpy_s(crossThreadDataScratchPtr, scratchPointerAddress.pointerSize, &scratchAddressForImmediatePatching, scratchPointerAddress.pointerSize);
             }
 
             if (perThreadDataPtr != nullptr) {

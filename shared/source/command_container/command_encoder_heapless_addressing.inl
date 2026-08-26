@@ -27,7 +27,8 @@ void EncodeDispatchKernel<Family>::programInlineDataHeapless(uint8_t *inlineData
 
         if (args.immediateScratchAddressPatching) {
             auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
-            if (isDefined(scratchPointerAddress.pointerSize) && isValidOffset(scratchPointerAddress.offset)) {
+            if (isDefined(scratchPointerAddress.pointerSize) && isValidOffset(scratchPointerAddress.offset) &&
+                (static_cast<uint32_t>(scratchPointerAddress.offset) + scratchPointerAddress.pointerSize <= inlineDataSize)) {
                 uint32_t maxBytesToCopy = std::max(0, static_cast<int32_t>(inlineDataSize - scratchPointerAddress.offset));
                 memcpy_s(inlineDataPtr + scratchPointerAddress.offset, maxBytesToCopy, &scratchPtr, scratchPointerAddress.pointerSize);
             }

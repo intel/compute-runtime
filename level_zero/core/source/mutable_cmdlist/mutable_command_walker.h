@@ -36,7 +36,7 @@ struct MutableWalkerSpecificFieldsArguments {
 };
 
 struct MutableComputeWalker {
-    MutableComputeWalker(void *walker, uint8_t indirectOffset, uint8_t scratchOffset, bool stageCommitMode)
+    MutableComputeWalker(void *walker, uint16_t indirectOffset, uint16_t scratchOffset, bool stageCommitMode)
         : walker(walker),
           indirectOffset(indirectOffset),
           scratchOffset(scratchOffset),
@@ -72,11 +72,11 @@ struct MutableComputeWalker {
         return walker;
     }
 
-    uint8_t getIndirectOffset() const {
+    uint16_t getIndirectOffset() const {
         return indirectOffset;
     }
 
-    uint8_t getScratchOffset() const {
+    uint16_t getScratchOffset() const {
         return scratchOffset;
     }
 
@@ -86,8 +86,8 @@ struct MutableComputeWalker {
 
   protected:
     void *walker;
-    uint8_t indirectOffset;
-    uint8_t scratchOffset;
+    uint16_t indirectOffset;
+    uint16_t scratchOffset;
     bool stageCommitMode = false;
 };
 

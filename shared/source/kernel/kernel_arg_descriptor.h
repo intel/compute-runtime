@@ -65,6 +65,11 @@ struct ArgDescInlineDataPointer {
     uint8_t pointerSize = undefined<uint8_t>;
 };
 
+struct ArgDescScratchPointer {
+    CrossThreadDataOffset offset = undefined<CrossThreadDataOffset>;
+    uint8_t pointerSize = undefined<uint8_t>;
+};
+
 enum class NEOImageType : uint8_t {
     imageTypeUnknown,
     imageTypeBuffer,

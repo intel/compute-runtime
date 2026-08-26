@@ -442,7 +442,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    addPatchScratchAddressInInlineData(commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, kernelNeedsScratchSpace, kernelNeedsImplicitArgs);
+    addPatchScratchAddress(commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, kernelNeedsScratchSpace, kernelNeedsImplicitArgs);
 
     if (!isImmediateType()) {
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;

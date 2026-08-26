@@ -404,7 +404,7 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::setBufferSurfaceState(v
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline MutableComputeWalker *MutableCommandListCoreFamily<gfxCoreFamily>::getCommandWalker(CommandBufferOffset offsetToWalkerCommand, uint8_t indirectOffset, uint8_t scratchOffset) {
+inline MutableComputeWalker *MutableCommandListCoreFamily<gfxCoreFamily>::getCommandWalker(CommandBufferOffset offsetToWalkerCommand, uint16_t indirectOffset, uint16_t scratchOffset) {
     void *walkerCpuBuffer = MutableComputeWalkerHw<GfxFamily>::createCommandBuffer();
     void *walkerCmd = ptrOffset(this->base->getCmdContainer().getCommandStream()->getCpuBase(), offsetToWalkerCommand);
 

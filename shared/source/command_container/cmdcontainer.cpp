@@ -728,6 +728,41 @@ void *CommandContainer::findCpuBaseForCmdBufferAddress(void *cmdBufferAddress) {
     return nullptr;
 }
 
+GraphicsAllocation *CommandContainer::findGraphicsAllocationForCpuAddress(void *cpuAddress) {
+    uintptr_t cpuAddressValue = reinterpret_cast<uintptr_t>(cpuAddress);
+
+    auto containsCpuAddress = [cpuAddressValue](GraphicsAllocation *allocation) {
+        if (allocation == nullptr) {
+            return false;
+        }
+        uintptr_t allocationCpuBase = reinterpret_cast<uintptr_t>(allocation->getUnderlyingBuffer());
+        return (allocationCpuBase <= cpuAddressValue) && (cpuAddressValue < (allocationCpuBase + allocation->getUnderlyingBufferSize()));
+    };
+
+    if (containsCpuAddress(commandStream->getGraphicsAllocation())) {
+        return commandStream->getGraphicsAllocation();
+    }
+
+    for (auto *cmdBufferAllocation : cmdBufferAllocations) {
+        if (containsCpuAddress(cmdBufferAllocation)) {
+            return cmdBufferAllocation;
+        }
+    }
+
+    if (auto *indirectObjectAllocation = getIndirectHeapAllocation(HeapType::indirectObject); containsCpuAddress(indirectObjectAllocation)) {
+        return indirectObjectAllocation;
+    }
+
+    // indirect heaps replaced by createAndAssignNewHeap are retained for deferred deallocation - an older heap may still back the address
+    for (auto *deallocation : deallocationContainer) {
+        if (containsCpuAddress(deallocation)) {
+            return deallocation;
+        }
+    }
+
+    return nullptr;
+}
+
 void CommandContainer::extractCommonThreadData() {
     if (this->isIOHCacheEnabled && !this->threadDataTracker->isEmpty()) {
         auto [hash, threadData] = this->threadDataTracker->getCommonThreadData();

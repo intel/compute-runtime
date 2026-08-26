@@ -55,6 +55,10 @@ class MutableIndirectData {
 
     void setAddress(CrossThreadDataOffset offset, uint64_t address, size_t addressSize);
 
+    void *getCrossThreadDataBaseAddress() {
+        return crossThreadData.begin();
+    }
+
   protected:
     IndirectObjectHeapOffset offsetInHeap{};
     std::unique_ptr<Offsets> offsets;

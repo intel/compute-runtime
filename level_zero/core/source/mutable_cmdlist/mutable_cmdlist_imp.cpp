@@ -646,7 +646,8 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
         if (kernelGroup->isScratchNeeded()) {
             // update walker with latest patched scratch address
             auto scratchAddressPatchIndex = kernelGroup->getScratchAddressPatchIndex();
-            this->updateScratchAddress(scratchAddressPatchIndex, *oldKernelComputeWalker, *newKernelComputeWalker);
+            auto newKernelIndirectData = newMutableKernel->getKernelDispatch()->varDispatch->getIndirectData();
+            this->updateScratchAddress(scratchAddressPatchIndex, *oldKernelComputeWalker, *newKernelComputeWalker, newKernelIndirectData);
         }
 
         // save new host view inline data/post sync into command buffer
