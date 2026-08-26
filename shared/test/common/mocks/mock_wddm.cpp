@@ -294,6 +294,39 @@ bool WddmMock::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monito
     return waitFromCpuResult.success = true;
 }
 
+WaitStatus WddmMock::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds) {
+    this->waitFromCpuWithTimeoutCalled++;
+    this->waitFromCpuWithTimeoutFenceValue = lastFenceValue;
+    this->waitFromCpuTimeoutNanoseconds = timeoutNanoseconds;
+    this->waitFromCpuWithTimeoutOsContext = &osContext;
+    if (this->callBaseWaitFromCpuWithTimeout) {
+        return Wddm::waitFromCpu(lastFenceValue, osContext, timeoutNanoseconds);
+    }
+    return this->waitFromCpuWithTimeoutReturnValue;
+}
+
+HANDLE WddmMock::createMonitoredFenceKmdWaitEvent() {
+    this->monitoredFenceKmdWaitEventResult.createCalled++;
+    return this->monitoredFenceKmdWaitEventResult.eventHandle;
+}
+
+bool WddmMock::resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) {
+    this->monitoredFenceKmdWaitEventResult.resetCalled++;
+    this->monitoredFenceKmdWaitEventResult.resetEventHandle = eventHandle;
+    return this->monitoredFenceKmdWaitEventResult.resetSuccess;
+}
+
+bool WddmMock::waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) {
+    this->monitoredFenceKmdWaitEventResult.waitCalled++;
+    this->monitoredFenceKmdWaitEventResult.waitEventHandle = eventHandle;
+    this->monitoredFenceKmdWaitEventResult.timeoutMilliseconds = timeoutMilliseconds;
+    if (this->monitoredFenceKmdWaitEventResult.waitResult &&
+        this->monitoredFenceKmdWaitEventResult.fenceAddressToSignal != nullptr) {
+        *this->monitoredFenceKmdWaitEventResult.fenceAddressToSignal = this->monitoredFenceKmdWaitEventResult.fenceValueToSignal;
+    }
+    return this->monitoredFenceKmdWaitEventResult.waitResult;
+}
+
 void *WddmMock::virtualAlloc(void *inPtr, size_t size, bool topDownHint) {
     void *address = Wddm::virtualAlloc(inPtr, size, topDownHint);
     virtualAllocAddress = reinterpret_cast<uintptr_t>(address);

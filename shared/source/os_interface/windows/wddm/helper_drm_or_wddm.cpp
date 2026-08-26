@@ -19,6 +19,19 @@ bool Wddm::getReadOnlyFlagValue(const void *cpuPtr) const {
 bool Wddm::isReadOnlyFlagFallbackSupported() const {
     return false;
 }
+
+HANDLE Wddm::createMonitoredFenceKmdWaitEvent() {
+    return nullptr;
+}
+
+bool Wddm::resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) {
+    return false;
+}
+
+bool Wddm::waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) {
+    return false;
+}
+
 HANDLE Wddm::getSharedHandle(const MemoryManager::OsHandleData &osHandleData) {
     HANDLE sharedNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
     return sharedNtHandle;

@@ -74,7 +74,8 @@ struct EventImp : public Event {
     NEO::WaitStatus tryKmdWaitForHostSynchronize(NEO::CommandStreamReceiver &csrForCacheFlush,
                                                  bool cacheFlushRequiredForHostSync,
                                                  TaskCountType &taskCountToWaitForCacheFlush,
-                                                 bool &taskCountWaitedForCacheFlush);
+                                                 bool &taskCountWaitedForCacheFlush,
+                                                 uint64_t timeoutNanoseconds);
     NEO::WaitStatus tryUserFenceWaitForHostSynchronize(int64_t timeSinceWait);
 
     ze_result_t calculateProfilingData();

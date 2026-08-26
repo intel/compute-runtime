@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
     using BaseUltCsrClass::BaseUltCsrClass;
     using BaseUltCsrClass::debugPauseStateLock;
     using BaseUltCsrClass::preemptionAllocation;
+    using BaseUltCsrClass::waitForTaskCountWithKmdNotifyFallback;
 
     MockCsrBase() = delete;
 

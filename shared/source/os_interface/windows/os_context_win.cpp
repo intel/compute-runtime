@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/windows/sys_calls_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 
@@ -56,6 +57,7 @@ void OsContextWin::reInitializeContext() {
             wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
             wddm.destroyContext(wddmContextHandle);
         }
+        releaseMonitoredFenceKmdWaitEvent();
         UNRECOVERABLE_IF(!wddm.createContext(*this));
         auto wddmInterface = wddm.getWddmInterface();
         if (wddmInterface->hwQueuesSupported()) {
@@ -127,6 +129,17 @@ OsContextWin::~OsContextWin() {
             (isPartOfContextGroup() && getPrimaryContext() == nullptr)) {
             wddm.destroyContext(wddmContextHandle);
         }
+    }
+    releaseMonitoredFenceKmdWaitEvent();
+}
+
+void OsContextWin::releaseMonitoredFenceKmdWaitEvent() {
+    std::lock_guard lock(monitoredFenceKmdWaitData.mutex);
+    auto eventHandle = monitoredFenceKmdWaitData.eventHandle;
+    monitoredFenceKmdWaitData.eventHandle = nullptr;
+    monitoredFenceKmdWaitData.pendingFenceValue = 0;
+    if (eventHandle != nullptr) {
+        SysCalls::closeHandle(eventHandle);
     }
 }
 

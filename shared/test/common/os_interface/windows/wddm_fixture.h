@@ -145,13 +145,12 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
 };
 
 struct NoCleanupWddmMock : WddmMock {
-    using WddmMock::WddmMock;
-    bool isDriverAvailable() override {
-        return false;
+    NoCleanupWddmMock(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {
+        this->skipResourceCleanupVar = true;
     }
 
-    bool skipResourceCleanup() {
-        return true;
+    bool isDriverAvailable() override {
+        return false;
     }
 };
 

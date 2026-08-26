@@ -903,6 +903,21 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
 }
 
 template <typename GfxFamily>
+inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle, uint64_t timeoutNanoseconds) {
+    auto status = waitForCompletionWithTimeout(WaitParams{false, true, false, 0}, taskCountToWait);
+    if (status != WaitStatus::notReady) {
+        return status;
+    }
+
+    status = waitForFlushStamp(flushStampToWait, timeoutNanoseconds);
+    if (status != WaitStatus::ready) {
+        return status;
+    }
+
+    return waitForCompletionWithTimeout(WaitParams{false, true, false, 0}, taskCountToWait);
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags) {
     PreemptionHelper::programCmdStream<GfxFamily>(csr, dispatchFlags.preemptionMode, this->lastPreemptionMode, getPreemptionAllocation());
     this->lastPreemptionMode = dispatchFlags.preemptionMode;

@@ -46,6 +46,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     TaskCountType waitForCompletionOfTaskCount(TaskCountType taskCountToWait);
 
   public:
+    using BaseClass::waitForTaskCountWithKmdNotifyFallback;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfo;

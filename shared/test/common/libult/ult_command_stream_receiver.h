@@ -363,17 +363,29 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return waitForCompletionWithTimeout(WaitParams{false, enableTimeout, false, timeoutMicroseconds}, taskCountToWait);
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
-        if (captureWaitForTaskCountWithKmdNotifyInputParams) {
-            static std::mutex waitForTaskCountWithKmdNotifyInputParamsMtx;
-            std::unique_lock<std::mutex> lock(waitForTaskCountWithKmdNotifyInputParamsMtx);
-            waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
+    void captureWaitForTaskCountWithKmdNotifyFallbackInputParams(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) {
+        if (this->captureWaitForTaskCountWithKmdNotifyInputParams) {
+            std::lock_guard<std::mutex> guard(this->mutex);
+            this->waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
         }
+    }
+
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
+        this->captureWaitForTaskCountWithKmdNotifyFallbackInputParams(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
         if (waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
             return *waitForTaskCountWithKmdNotifyFallbackReturnValue;
         }
 
         return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
+    }
+
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle, uint64_t timeoutNanoseconds) override {
+        this->captureWaitForTaskCountWithKmdNotifyFallbackInputParams(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
+        if (waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
+            return *waitForTaskCountWithKmdNotifyFallbackReturnValue;
+        }
+
+        return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle, timeoutNanoseconds);
     }
 
     WaitStatus waitForTaskCount(TaskCountType requiredTaskCount) override {

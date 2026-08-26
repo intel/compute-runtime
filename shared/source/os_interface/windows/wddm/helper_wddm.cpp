@@ -29,6 +29,18 @@ bool Wddm::isReadOnlyFlagFallbackSupported() const {
     return true;
 }
 
+HANDLE Wddm::createMonitoredFenceKmdWaitEvent() {
+    return SysCalls::createEvent(nullptr, TRUE, FALSE, nullptr);
+}
+
+bool Wddm::resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) {
+    return SysCalls::resetEvent(eventHandle);
+}
+
+bool Wddm::waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) {
+    return SysCalls::waitForSingleObject(eventHandle, timeoutMilliseconds) == WAIT_OBJECT_0;
+}
+
 HANDLE Wddm::getSharedHandle(const MemoryManager::OsHandleData &osHandleData) {
     HANDLE sharedNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
     if (osHandleData.parentProcessId != 0) {

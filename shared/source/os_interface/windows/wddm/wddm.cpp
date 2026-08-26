@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/client_context/map_gpu_va_gmm.h"
@@ -1209,17 +1210,22 @@ bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
     return status == STATUS_SUCCESS;
 }
 
+CommandStreamReceiver *Wddm::getCsrForMonitoredFence(const MonitoredFence &monitoredFence) {
+    CommandStreamReceiver *csr = nullptr;
+    this->forEachContextWithinWddm<false>([&monitoredFence, &csr](const EngineControl &engine) {
+        auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getMonitoredFence();
+        if (contextMonitoredFence.cpuAddress == monitoredFence.cpuAddress) {
+            csr = engine.commandStreamReceiver;
+        }
+    });
+    return csr;
+}
+
 bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait) {
     NTSTATUS status = STATUS_SUCCESS;
 
     if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
-        CommandStreamReceiver *csr = nullptr;
-        this->forEachContextWithinWddm<false>([&monitoredFence, &csr](const EngineControl &engine) {
-            auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getMonitoredFence();
-            if (contextMonitoredFence.cpuAddress == monitoredFence.cpuAddress) {
-                csr = engine.commandStreamReceiver;
-            }
-        });
+        auto csr = getCsrForMonitoredFence(monitoredFence);
 
         if (csr != nullptr && lastFenceValue > monitoredFence.lastSubmittedFence) {
             auto lock = csr->obtainUniqueOwnership();
@@ -1253,6 +1259,102 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
         }
     }
     return status == STATUS_SUCCESS;
+}
+
+WaitStatus Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds) {
+    auto &monitoredFence = osContext.getMonitoredFence();
+    if (skipResourceCleanup()) {
+        return WaitStatus::ready;
+    }
+    if (*monitoredFence.cpuAddress == gpuHangIndication) {
+        return WaitStatus::gpuHang;
+    }
+    if (lastFenceValue <= *monitoredFence.cpuAddress) {
+        return WaitStatus::ready;
+    }
+
+    auto csr = getCsrForMonitoredFence(monitoredFence);
+    if (csr != nullptr && lastFenceValue > monitoredFence.lastSubmittedFence) {
+        auto lock = csr->obtainUniqueOwnership();
+        csr->flushMonitorFence(false);
+    }
+
+    if (*monitoredFence.cpuAddress == gpuHangIndication) {
+        return WaitStatus::gpuHang;
+    }
+    if (lastFenceValue <= *monitoredFence.cpuAddress) {
+        return WaitStatus::ready;
+    }
+
+    auto &waitData = osContext.getMonitoredFenceKmdWaitData();
+    auto lock = std::unique_lock<std::mutex>(waitData.mutex, std::try_to_lock);
+    if (!lock.owns_lock()) {
+        return WaitStatus::notReady;
+    }
+
+    auto pendingFenceValue = waitData.pendingFenceValue;
+    if (pendingFenceValue == 0 || *monitoredFence.cpuAddress >= pendingFenceValue) {
+        auto eventHandle = waitData.eventHandle;
+        const bool pendingWaitCompleted = pendingFenceValue != 0 &&
+                                          *monitoredFence.cpuAddress >= pendingFenceValue &&
+                                          eventHandle != nullptr &&
+                                          this->waitForMonitoredFenceKmdWaitEvent(eventHandle, 0);
+        if (pendingFenceValue == 0 || pendingWaitCompleted) {
+            if (eventHandle == nullptr) {
+                eventHandle = this->createMonitoredFenceKmdWaitEvent();
+                waitData.eventHandle = eventHandle;
+            }
+
+            waitData.pendingFenceValue = 0;
+            if (eventHandle != nullptr && this->resetMonitoredFenceKmdWaitEvent(eventHandle)) {
+                if (csr != nullptr) {
+                    auto csrLock = csr->obtainUniqueOwnership();
+                    csr->flushMonitorFence(isNativeFenceAvailable());
+                }
+                D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
+                waitFromCpu.ObjectCount = 1;
+                waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
+                waitFromCpu.FenceValueArray = &lastFenceValue;
+                waitFromCpu.hDevice = device;
+                waitFromCpu.hAsyncEvent = eventHandle;
+                const auto status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
+                if (status == STATUS_SUCCESS) {
+                    waitData.pendingFenceValue = lastFenceValue;
+                }
+            }
+        }
+        pendingFenceValue = waitData.pendingFenceValue;
+    }
+
+    if (lastFenceValue <= *monitoredFence.cpuAddress) {
+        return *monitoredFence.cpuAddress == gpuHangIndication ? WaitStatus::gpuHang : WaitStatus::ready;
+    }
+
+    if (pendingFenceValue == 0 || pendingFenceValue > lastFenceValue) {
+        return WaitStatus::notReady;
+    }
+
+    constexpr uint64_t nanosecondsPerMillisecond = 1000000;
+    auto timeoutMilliseconds = timeoutNanoseconds / nanosecondsPerMillisecond;
+    if (timeoutMilliseconds == 0) {
+        return WaitStatus::notReady;
+    }
+    constexpr uint64_t maximumFiniteTimeoutMilliseconds = std::numeric_limits<uint32_t>::max() - 1u;
+    timeoutMilliseconds = std::min(timeoutMilliseconds, maximumFiniteTimeoutMilliseconds);
+
+    const auto eventHandle = waitData.eventHandle;
+    if (eventHandle == nullptr) {
+        return WaitStatus::notReady;
+    }
+
+    if (!this->waitForMonitoredFenceKmdWaitEvent(eventHandle, static_cast<uint32_t>(timeoutMilliseconds))) {
+        return WaitStatus::notReady;
+    }
+
+    if (*monitoredFence.cpuAddress == gpuHangIndication) {
+        return WaitStatus::gpuHang;
+    }
+    return lastFenceValue <= *monitoredFence.cpuAddress ? WaitStatus::ready : WaitStatus::notReady;
 }
 
 bool Wddm::isGpuHangDetected(OsContext &osContext) {

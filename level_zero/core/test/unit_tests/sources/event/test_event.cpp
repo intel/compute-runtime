@@ -2637,7 +2637,26 @@ TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhen
     EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
     EXPECT_EQ(20000, NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.get());
     EXPECT_EQ(12000, NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get());
+    EXPECT_FALSE(NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.get());
     EXPECT_EQ(750000, NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWaitTimeoutNanoseconds.get());
+}
+
+TEST(EventHostSynchronizeWaitTest, givenFiniteTimeoutWhenCalculatingKmdWaitTimeoutThenFinalPollingWindowIsReserved) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.set(20000);
+
+    EXPECT_EQ(70000000u, EventHostSynchronize::getKmdWaitTimeout(100000000u, 10000000u));
+    EXPECT_EQ(0u, EventHostSynchronize::getKmdWaitTimeout(32999999u, 12000000u));
+    EXPECT_EQ(0u, EventHostSynchronize::getKmdWaitTimeout(30000000u, 10000000u));
+    EXPECT_EQ(0u, EventHostSynchronize::getKmdWaitTimeout(10000000u, 10000000u));
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), EventHostSynchronize::getKmdWaitTimeout(std::numeric_limits<uint64_t>::max(), 10000000u));
+}
+
+TEST(EventHostSynchronizeWaitTest, givenDisabledFinalPollingWindowWhenCalculatingKmdWaitTimeoutThenAllRemainingTimeIsReturned) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.set(0);
+
+    EXPECT_EQ(90000000u, EventHostSynchronize::getKmdWaitTimeout(100000000u, 10000000u));
 }
 
 HWTEST_F(EventSynchronizeTest, GivenWaitControllerWhenStrategiesAndInputsAreChangedThenExpectedWaitActionsAreReturned) {
@@ -5007,7 +5026,20 @@ struct KmdWaitTrackingCsr : public CacheFlushTrackingCsr<GfxFamily> {
         return NEO::WaitStatus::ready;
     }
 
+    NEO::WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, NEO::QueueThrottle throttle, uint64_t timeoutNanoseconds) override {
+        this->waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
+        boundedKmdWaitTimeouts.push_back(timeoutNanoseconds);
+        if (onKmdWait) {
+            onKmdWait();
+        }
+        if (this->waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
+            return *this->waitForTaskCountWithKmdNotifyFallbackReturnValue;
+        }
+        return NEO::WaitStatus::ready;
+    }
+
     std::function<void()> onKmdWait;
+    std::vector<uint64_t> boundedKmdWaitTimeouts;
 };
 
 HWTEST_F(EventContextGroupTests, givenPendingSelectedSecondaryCsrTaskWhenHostSynchronizeRequiresCacheFlushThenFlushAndWaitAreCalledOnSelectedCsrOnly) {
@@ -5133,7 +5165,7 @@ HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndInfiniteTimeoutWhenHostS
     EXPECT_EQ(NEO::QueueThrottle::LOW, secondaryCsrPtr->waitForTaskCountWithKmdNotifyInputParams[0].throttle);
 }
 
-HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndFiniteTimeoutWhenHostSynchronizeRequiresCacheFlushThenKmdWaitIsNotUsed) {
+HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndShortFiniteTimeoutWhenHostSynchronizeRequiresCacheFlushThenKmdWaitIsNotUsed) {
     if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
         GTEST_SKIP();
     }
@@ -5145,6 +5177,7 @@ HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndFiniteTimeoutWhenHostSyn
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
     NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.set(true);
 
     neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
@@ -5172,6 +5205,92 @@ HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndFiniteTimeoutWhenHostSyn
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
     EXPECT_FALSE(secondaryCsrPtr->flushTagUpdateCalled);
     EXPECT_TRUE(secondaryCsrPtr->waitForTaskCountWithKmdNotifyInputParams.empty());
+}
+
+HWTEST_F(EventContextGroupTests, givenDisabledFiniteTimeoutKmdWaitAndLongFiniteTimeoutWhenHostSynchronizeRequiresCacheFlushThenBoundedKmdWaitIsNotUsed) {
+    if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+        GTEST_SKIP();
+    }
+
+    if (!event->isDcFlushAllowed) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.set(false);
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.set(0);
+
+    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+
+    auto secondaryCsr = std::make_unique<KmdWaitTrackingCsr<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
+    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
+    secondaryCsr->setupContext(osContext);
+    secondaryCsr->initializeResources(device->getDevicePreemptionMode());
+    secondaryCsr->taskCount = 1;
+    secondaryCsr->latestFlushedTaskCount = 0;
+    secondaryCsr->flushStamp->setStamp(0);
+
+    *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_INITIAL;
+    event->setCsrForCacheFlush(secondaryCsr.get());
+    event->setDualCopyOffload(true);
+
+    constexpr uint64_t timeoutNanoseconds = 5000000u;
+    auto result = event->hostSynchronize(timeoutNanoseconds);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    EXPECT_TRUE(secondaryCsr->boundedKmdWaitTimeouts.empty());
+    EXPECT_TRUE(secondaryCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
+}
+
+HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndLongFiniteTimeoutWhenHostSynchronizeRequiresCacheFlushThenBoundedKmdWaitIsUsed) {
+    if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+        GTEST_SKIP();
+    }
+
+    if (!event->isDcFlushAllowed) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.set(true);
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.set(20000);
+
+    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+
+    auto secondaryCsr = std::make_unique<KmdWaitTrackingCsr<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
+    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
+    secondaryCsr->setupContext(osContext);
+    secondaryCsr->initializeResources(device->getDevicePreemptionMode());
+    secondaryCsr->taskCount = 1;
+    secondaryCsr->latestFlushedTaskCount = 0;
+    secondaryCsr->flushStamp->setStamp(0);
+
+    auto eventAddress = static_cast<uint32_t *>(event->getHostAddress());
+    *eventAddress = Event::STATE_INITIAL;
+    secondaryCsr->onKmdWait = [&]() {
+        *eventAddress = Event::STATE_SIGNALED;
+    };
+    event->setCsrForCacheFlush(secondaryCsr.get());
+    event->setDualCopyOffload(true);
+
+    constexpr uint64_t timeoutNanoseconds = 1000000000u;
+    auto result = event->hostSynchronize(timeoutNanoseconds);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, secondaryCsr->boundedKmdWaitTimeouts.size());
+    EXPECT_GT(secondaryCsr->boundedKmdWaitTimeouts[0], 0u);
+    EXPECT_LE(secondaryCsr->boundedKmdWaitTimeouts[0], timeoutNanoseconds - 20000000u);
+    EXPECT_EQ(1u, secondaryCsr->waitForTaskCountWithKmdNotifyInputParams.size());
 }
 
 HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndCounterBasedEventWithoutCacheFlushWhenHostSynchronizeThenKmdWaitIsNotUsed) {

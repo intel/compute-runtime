@@ -3160,6 +3160,102 @@ HWTEST_F(CommandStreamReceiverTest,
 
 using CommandStreamReceiverHwTest = Test<CommandStreamReceiverFixture>;
 
+template <typename GfxFamily>
+struct BoundedKmdWaitCsr : UltCommandStreamReceiver<GfxFamily> {
+    using BaseClass = UltCommandStreamReceiver<GfxFamily>;
+    using BaseClass::BaseClass;
+
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
+        this->completionWaitParams.push_back(params);
+        this->completionTaskCounts.push_back(taskCountToWait);
+        return this->completionWaitResults.at(this->completionWaitResultIndex++);
+    }
+
+    WaitStatus waitForFlushStamp(FlushStamp &flushStampToWait, uint64_t timeoutNanoseconds) override {
+        this->waitForFlushStampCalled++;
+        this->waitedFlushStamp = flushStampToWait;
+        this->waitedTimeoutNanoseconds = timeoutNanoseconds;
+        return this->waitForFlushStampResult;
+    }
+
+    WaitStatus callBoundedKmdWait(TaskCountType taskCountToWait, FlushStamp flushStampToWait, uint64_t timeoutNanoseconds) {
+        return CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, false, QueueThrottle::LOW, timeoutNanoseconds);
+    }
+
+    std::vector<WaitStatus> completionWaitResults;
+    std::vector<WaitParams> completionWaitParams;
+    std::vector<TaskCountType> completionTaskCounts;
+    size_t completionWaitResultIndex = 0;
+    WaitStatus waitForFlushStampResult = WaitStatus::notReady;
+    uint32_t waitForFlushStampCalled = 0;
+    FlushStamp waitedFlushStamp = 0;
+    uint64_t waitedTimeoutNanoseconds = 0;
+};
+
+HWTEST_F(CommandStreamReceiverHwTest, givenReadyInitialTaskCountWhenUsingBoundedKmdWaitThenFlushStampIsNotWaitedFor) {
+    BoundedKmdWaitCsr<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.completionWaitResults = {WaitStatus::ready};
+
+    EXPECT_EQ(WaitStatus::ready, csr.callBoundedKmdWait(7u, 11u, 13000000u));
+    ASSERT_EQ(1u, csr.completionWaitParams.size());
+    EXPECT_TRUE(csr.completionWaitParams[0].enableTimeout);
+    EXPECT_EQ(7u, csr.completionTaskCounts[0]);
+    EXPECT_EQ(0u, csr.waitForFlushStampCalled);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenGpuHangFromInitialTaskCountCheckWhenUsingBoundedKmdWaitThenGpuHangIsReturned) {
+    BoundedKmdWaitCsr<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.completionWaitResults = {WaitStatus::gpuHang};
+
+    EXPECT_EQ(WaitStatus::gpuHang, csr.callBoundedKmdWait(7u, 11u, 13000000u));
+    EXPECT_EQ(1u, csr.completionWaitParams.size());
+    EXPECT_EQ(0u, csr.waitForFlushStampCalled);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenNotReadyFlushStampWaitWhenUsingBoundedKmdWaitThenNotReadyIsReturned) {
+    BoundedKmdWaitCsr<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.completionWaitResults = {WaitStatus::notReady};
+    csr.waitForFlushStampResult = WaitStatus::notReady;
+
+    EXPECT_EQ(WaitStatus::notReady, csr.callBoundedKmdWait(7u, 11u, 13000000u));
+    EXPECT_EQ(1u, csr.completionWaitParams.size());
+    EXPECT_EQ(1u, csr.waitForFlushStampCalled);
+    EXPECT_EQ(11u, csr.waitedFlushStamp);
+    EXPECT_EQ(13000000u, csr.waitedTimeoutNanoseconds);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenGpuHangFromFlushStampWaitWhenUsingBoundedKmdWaitThenGpuHangIsReturned) {
+    BoundedKmdWaitCsr<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.completionWaitResults = {WaitStatus::notReady};
+    csr.waitForFlushStampResult = WaitStatus::gpuHang;
+
+    EXPECT_EQ(WaitStatus::gpuHang, csr.callBoundedKmdWait(7u, 11u, 13000000u));
+    EXPECT_EQ(1u, csr.completionWaitParams.size());
+    EXPECT_EQ(1u, csr.waitForFlushStampCalled);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenReadyFlushStampWaitWhenUsingBoundedKmdWaitThenTaskCountIsCheckedAgain) {
+    BoundedKmdWaitCsr<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.completionWaitResults = {WaitStatus::notReady, WaitStatus::ready};
+    csr.waitForFlushStampResult = WaitStatus::ready;
+
+    EXPECT_EQ(WaitStatus::ready, csr.callBoundedKmdWait(7u, 11u, 13000000u));
+    ASSERT_EQ(2u, csr.completionWaitParams.size());
+    EXPECT_TRUE(csr.completionWaitParams[1].enableTimeout);
+    EXPECT_EQ(7u, csr.completionTaskCounts[1]);
+    EXPECT_EQ(1u, csr.waitForFlushStampCalled);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenReadyFlushStampWaitAndIncompleteTaskCountWhenUsingBoundedKmdWaitThenNotReadyIsReturned) {
+    BoundedKmdWaitCsr<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.completionWaitResults = {WaitStatus::notReady, WaitStatus::notReady};
+    csr.waitForFlushStampResult = WaitStatus::ready;
+
+    EXPECT_EQ(WaitStatus::notReady, csr.callBoundedKmdWait(7u, 11u, 13000000u));
+    EXPECT_EQ(2u, csr.completionWaitParams.size());
+    EXPECT_EQ(1u, csr.waitForFlushStampCalled);
+}
+
 HWTEST2_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerformedThenSbaProgammedSurfaceBaseAddressToZero, IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;

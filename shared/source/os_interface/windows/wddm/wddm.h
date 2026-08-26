@@ -22,6 +22,7 @@ typedef struct _SYSTEM_INFO SYSTEM_INFO;
 
 namespace NEO {
 enum PreemptionMode : uint32_t;
+enum class WaitStatus;
 class Gdi;
 class GfxPartition;
 class Gmm;
@@ -94,6 +95,7 @@ class Wddm : public DriverModel {
 
     MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments);
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait);
+    MOCKABLE_VIRTUAL WaitStatus waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds);
 
     MOCKABLE_VIRTUAL NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
     WddmResidencyController &getResidencyController() { return residencyController; }
@@ -246,6 +248,10 @@ class Wddm : public DriverModel {
 
   protected:
     bool translateTopologyInfo(TopologyMapping &mapping);
+    CommandStreamReceiver *getCsrForMonitoredFence(const MonitoredFence &monitoredFence);
+    MOCKABLE_VIRTUAL HANDLE createMonitoredFenceKmdWaitEvent();
+    MOCKABLE_VIRTUAL bool resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle);
+    MOCKABLE_VIRTUAL bool waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds);
 
     Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);

@@ -16,5 +16,6 @@ else()
   target_sources(neo_shared_mt_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_thread_win_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/windows/residency_controller_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/windows/wddm_tests.cpp
   )
 endif()

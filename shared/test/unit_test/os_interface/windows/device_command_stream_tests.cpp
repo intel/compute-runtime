@@ -190,6 +190,19 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitF
     EXPECT_EQ(stampToWait, wddm->waitFromCpuResult.uint64ParamPassed);
 }
 
+HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenFlushStampAndTimeoutWhenWaitCalledThenWaitForSpecifiedMonitoredFenceWithTimeout) {
+    constexpr uint64_t timeoutNanoseconds = 123456789u;
+    uint64_t stampToWait = 123u;
+    wddm->callBaseWaitFromCpuWithTimeout = false;
+    wddm->waitFromCpuWithTimeoutReturnValue = WaitStatus::gpuHang;
+
+    EXPECT_EQ(WaitStatus::gpuHang, csr->waitForFlushStamp(stampToWait, timeoutNanoseconds));
+    EXPECT_EQ(1u, wddm->waitFromCpuWithTimeoutCalled);
+    EXPECT_EQ(stampToWait, wddm->waitFromCpuWithTimeoutFenceValue);
+    EXPECT_EQ(timeoutNanoseconds, wddm->waitFromCpuTimeoutNanoseconds);
+    EXPECT_EQ(&csr->getOsContext(), wddm->waitFromCpuWithTimeoutOsContext);
+}
+
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenWddmInterfaceBeforeWddm3ThenCreatingNativeFenceFails) {
     MonitoredFence fence;
     WddmMockInterface23 *wddmMockInterface = new WddmMockInterface23(*wddm);

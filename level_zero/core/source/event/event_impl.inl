@@ -373,7 +373,8 @@ template <typename TagSizeT>
 NEO::WaitStatus EventImp<TagSizeT>::tryKmdWaitForHostSynchronize(NEO::CommandStreamReceiver &csrForCacheFlush,
                                                                  bool cacheFlushRequiredForHostSync,
                                                                  TaskCountType &taskCountToWaitForCacheFlush,
-                                                                 bool &taskCountWaitedForCacheFlush) {
+                                                                 bool &taskCountWaitedForCacheFlush,
+                                                                 uint64_t timeoutNanoseconds) {
     auto isUsableTaskCount = [](TaskCountType taskCount) {
         return taskCount && (taskCount != NEO::GraphicsAllocation::objectNotUsed);
     };
@@ -402,10 +403,16 @@ NEO::WaitStatus EventImp<TagSizeT>::tryKmdWaitForHostSynchronize(NEO::CommandStr
         flushStampToWait = taskCountToWait;
     }
 
-    const auto waitStatus = csrForTaskCountWait->waitForTaskCountWithKmdNotifyFallback(taskCountToWait,
-                                                                                       flushStampToWait,
-                                                                                       false,
-                                                                                       NEO::QueueThrottle::LOW);
+    const auto waitStatus = timeoutNanoseconds == std::numeric_limits<uint64_t>::max()
+                                ? csrForTaskCountWait->waitForTaskCountWithKmdNotifyFallback(taskCountToWait,
+                                                                                             flushStampToWait,
+                                                                                             false,
+                                                                                             NEO::QueueThrottle::LOW)
+                                : csrForTaskCountWait->waitForTaskCountWithKmdNotifyFallback(taskCountToWait,
+                                                                                             flushStampToWait,
+                                                                                             false,
+                                                                                             NEO::QueueThrottle::LOW,
+                                                                                             timeoutNanoseconds);
     if ((waitStatus == NEO::WaitStatus::ready) && cacheFlushTaskCount) {
         taskCountWaitedForCacheFlush = true;
         taskCountToWaitForCacheFlush = 0;
@@ -956,8 +963,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     const bool cacheFlushRequiredForHostSync = this->isCacheFlushRequiredForHostSync();
     const bool secondaryContextsSupported = this->device->getGfxCoreHelper().areSecondaryContextsSupported();
     const bool waitForTaskCountUsingKmd = (NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get() == 3) &&
+                                          ((timeout == std::numeric_limits<uint64_t>::max()) || NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.get()) &&
                                           cacheFlushRequiredForHostSync &&
-                                          (timeout == std::numeric_limits<uint64_t>::max()) &&
                                           EventHostSynchronize::isNativeWddm(*csrForCacheFlush) &&
                                           neoDevice->getHardwareInfo().capabilityTable.isIntegratedDevice;
     const bool waitForUserFenceUsingKmd = (NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get() == 3) &&
@@ -1054,10 +1061,14 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         }
 
         if (waitForTaskCountUsingKmd && (elapsedTimeSinceWaitStartUs >= kmdWaitInitialPollUs)) {
-            const auto waitStatus = tryKmdWaitForHostSynchronize(*csrForCacheFlush,
-                                                                 cacheFlushRequiredForHostSync,
-                                                                 taskCountToWaitForCacheFlush,
-                                                                 taskCountWaitedForCacheFlush);
+            const auto kmdWaitTimeoutNanoseconds = EventHostSynchronize::getKmdWaitTimeout(timeout, elapsedTimeSinceWaitStartNs);
+            const auto waitStatus = kmdWaitTimeoutNanoseconds == 0
+                                        ? NEO::WaitStatus::notReady
+                                        : tryKmdWaitForHostSynchronize(*csrForCacheFlush,
+                                                                       cacheFlushRequiredForHostSync,
+                                                                       taskCountToWaitForCacheFlush,
+                                                                       taskCountWaitedForCacheFlush,
+                                                                       kmdWaitTimeoutNanoseconds);
             if (waitStatus == NEO::WaitStatus::gpuHang) {
                 if (assertHndlr) {
                     assertHndlr->printAssertAndAbort();

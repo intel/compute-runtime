@@ -185,6 +185,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     uint64_t getUcTagGPUAddress() const;
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
+    virtual WaitStatus waitForFlushStamp(FlushStamp &flushStampToWait, uint64_t timeoutNanoseconds) { return WaitStatus::notReady; }
 
     TaskCountType peekTaskCount() const { return taskCount; }
 
@@ -262,6 +263,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     }
 
     virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
+    virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle, uint64_t timeoutNanoseconds) { return WaitStatus::notReady; }
     virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait);
     WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait);
     MOCKABLE_VIRTUAL bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait);

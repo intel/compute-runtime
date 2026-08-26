@@ -933,10 +933,15 @@ TEST(WddmConstructorTest, givenEnableDeviceStateVerificationSetFalseWhenCreateWd
 }
 
 uint64_t waitForSynchronizationObjectFromCpuCounter = 0u;
+HANDLE waitForSynchronizationObjectFromCpuAsyncEvent = nullptr;
+uint64_t waitForSynchronizationObjectFromCpuFenceValue = 0u;
+NTSTATUS waitForSynchronizationObjectFromCpuReturnValue = STATUS_SUCCESS;
 
 NTSTATUS __stdcall waitForSynchronizationObjectFromCpuNoOpMock(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {
     waitForSynchronizationObjectFromCpuCounter++;
-    return STATUS_SUCCESS;
+    waitForSynchronizationObjectFromCpuAsyncEvent = waitStruct->hAsyncEvent;
+    waitForSynchronizationObjectFromCpuFenceValue = *waitStruct->FenceValueArray;
+    return waitForSynchronizationObjectFromCpuReturnValue;
 }
 
 class WddmSkipResourceCleanupMock : public WddmMock {
@@ -998,6 +1003,8 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
 
 TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFromCpuWhenSkipResourceCleanupIsFalseThenSuccessIsReturnedAndGdiFunctionIsCalled) {
     VariableBackup<uint64_t> varBackup(&waitForSynchronizationObjectFromCpuCounter);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue);
     init();
     executionEnvironment->initializeMemoryManager();
     wddm->skipResourceCleanupVar = false;
@@ -1025,6 +1032,206 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
     monitoredFence.lastSubmittedFence = 0u;
     monitoredFence.cpuAddress = &fenceValue;
     EXPECT_TRUE(wddm->waitFromCpu(1u, monitoredFence, true));
+    EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenFiniteTimeoutWhenWaitingFromCpuThenAsyncEventIsUsedAndTimeoutIsConvertedToMilliseconds) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 123456789u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_NE(nullptr, waitForSynchronizationObjectFromCpuAsyncEvent);
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuFenceValue);
+    EXPECT_EQ(1u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+    EXPECT_EQ(123u, wddm->monitoredFenceKmdWaitEventResult.timeoutMilliseconds);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenPendingFiniteWaitWhenWaitingAgainForSameFenceThenKmdWaitRegistrationIsReused) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(2u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenAsyncEventSignalWhenWaitingFromCpuThenReadyIsReturned) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+    wddm->monitoredFenceKmdWaitEventResult.waitResult = true;
+    wddm->monitoredFenceKmdWaitEventResult.fenceAddressToSignal = monitoredFence.cpuAddress;
+    wddm->monitoredFenceKmdWaitEventResult.fenceValueToSignal = 1u;
+
+    EXPECT_EQ(WaitStatus::ready, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenPendingWaitForNewerFenceWhenWaitingForOlderFenceThenActivePollingFallbackIsUsed) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 2u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(2u, *osContext, 10000000u));
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(1u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenSubMillisecondTimeoutWhenWaitingFromCpuThenAsyncWaitIsRegisteredWithoutBlocking) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 999999u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(0u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenCompletedPendingWaitWhenWaitingForNewerFenceThenAsyncWaitIsRegisteredAgain) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 2u;
+    wddm->monitoredFenceKmdWaitEventResult.waitResult = true;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    *monitoredFence.cpuAddress = 1u;
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(2u, *osContext, 10000000u));
+    EXPECT_EQ(2u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(3u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+    EXPECT_EQ(2u, waitForSynchronizationObjectFromCpuFenceValue);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenCompletedFenceWithPendingEventNotSignaledWhenWaitingForNewerFenceThenPendingRegistrationIsKept) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 2u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    *monitoredFence.cpuAddress = 1u;
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(2u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(3u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuFenceValue);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenAsyncWaitRegistrationFailureWhenWaitingFromCpuThenNotReadyIsReturnedWithoutWaitingOnEvent) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_UNSUCCESSFUL);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(0u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+    EXPECT_EQ(0u, osContext->getMonitoredFenceKmdWaitData().pendingFenceValue);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenGpuHangIndicationWhenWaitingFromCpuThenGpuHangIsReturnedWithoutRegisteringWait) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = Wddm::gpuHangIndication;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::gpuHang, wddm->waitFromCpu(1u, *osContext, 10000000u));
     EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
 }
 

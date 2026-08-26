@@ -28,6 +28,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
   public:
     using BaseClass::peekExecutionEnvironment;
+    using BaseClass::waitForTaskCountWithKmdNotifyFallback;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfo;

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -73,6 +74,7 @@ class WddmMock : public Wddm {
     using Wddm::temporaryResources;
     using Wddm::timestampFrequency;
     using Wddm::useAdditionalEngine;
+    using Wddm::waitFromCpu;
     using Wddm::wddmInterface;
 
     WddmMock(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceId), rootDeviceEnvironment) {}
@@ -103,6 +105,10 @@ class WddmMock : public Wddm {
     void setHeap32(uint64_t base, uint64_t size);
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
     bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait) override;
+    WaitStatus waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds) override;
+    HANDLE createMonitoredFenceKmdWaitEvent() override;
+    bool resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) override;
+    bool waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) override;
     void *virtualAlloc(void *inPtr, size_t size, bool topDownHint) override;
     void virtualFree(void *ptr, size_t size) override;
     void releaseReservedAddress(void *reservedAddress) override;
@@ -181,6 +187,11 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult lockResult;
     WddmMockHelpers::CallResult unlockResult;
     WddmMockHelpers::WaitFromCpuResult waitFromCpuResult;
+    WddmMockHelpers::MonitoredFenceKmdWaitEventResult monitoredFenceKmdWaitEventResult;
+    uint32_t waitFromCpuWithTimeoutCalled = 0;
+    uint64_t waitFromCpuWithTimeoutFenceValue = 0;
+    uint64_t waitFromCpuTimeoutNanoseconds = 0;
+    OsContextWin *waitFromCpuWithTimeoutOsContext = nullptr;
     WddmMockHelpers::CallResult releaseReservedAddressResult;
     WddmMockHelpers::CallResult reserveValidAddressRangeResult;
     WddmMockHelpers::CallResult registerTrimCallbackResult;
@@ -216,6 +227,8 @@ class WddmMock : public Wddm {
     bool shutdownStatus = false;
     bool callBaseSetAllocationPriority = true;
     bool callBaseWaitFromCpu = true;
+    bool callBaseWaitFromCpuWithTimeout = true;
+    WaitStatus waitFromCpuWithTimeoutReturnValue = WaitStatus::ready;
     bool failFreeGpuVirtualAddress = false;
     bool callBaseIsNativeFenceAvailable = true;
     bool isNativeFenceAvailableReturnValue = false;
