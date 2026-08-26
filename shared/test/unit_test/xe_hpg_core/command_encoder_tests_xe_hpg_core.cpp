@@ -103,14 +103,12 @@ void testProgrammingStateComputeModeXeLpgWithDisabledWa(ExecutionEnvironment &ex
 using CommandEncoderXeHpgTests = ::testing::Test;
 
 HWTEST2_F(CommandEncoderXeHpgTests, whenProgrammingStateComputeModeThenProperFieldsAreSet, IsXeLpg) {
-    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_U_A0, AOT::MTL_U_B0, AOT::MTL_H_A0, AOT::MTL_H_B0, AOT::ARL_H_A0, AOT::ARL_H_B0};
-    for (auto &ipRelease : ipReleases) {
+    for (auto stateComputeCommandWARequired : {true, false}) {
 
         MockExecutionEnvironment executionEnvironment{};
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
         auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-        hwInfo->ipVersion = ipRelease;
-        setupCaps(*hwInfo);
+        hwInfo->caps.programAllStateComputeCommandFieldsWARequired = stateComputeCommandWARequired;
         if (hwInfo->caps.programAllStateComputeCommandFieldsWARequired) {
             testProgrammingStateComputeModeXeLpgWithEnabledWa(executionEnvironment);
         } else {
