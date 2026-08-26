@@ -102,6 +102,8 @@ class SysmanProductHelper {
     virtual ze_result_t getPowerUsage(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) = 0;
 
     // standby
+    virtual bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) = 0;
+    virtual bool isSetStandbyModeSupported() = 0;
     virtual std::string getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) = 0;
     virtual ze_result_t getStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t &mode) = 0;
     virtual ze_result_t setStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t mode) = 0;
