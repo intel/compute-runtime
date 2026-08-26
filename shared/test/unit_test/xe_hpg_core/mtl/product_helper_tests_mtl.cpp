@@ -108,3 +108,7 @@ MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckingIsUsmAllocationReuseSu
         EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
     }
 }
+
+MTLTEST_F(MtlProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
+    EXPECT_EQ(RTASDeviceFormat::version1, productHelper->getSupportedRtasFormat());
+}

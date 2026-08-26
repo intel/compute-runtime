@@ -74,16 +74,6 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
 }
 
 template <typename Family>
-ze_rtas_format_exp_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExp() const {
-    return static_cast<ze_rtas_format_exp_t>(RTASDeviceFormatInternal::version2);
-}
-
-template <typename Family>
-ze_rtas_format_ext_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExt() const {
-    return static_cast<ze_rtas_format_ext_t>(RTASDeviceFormatInternal::version2);
-}
-
-template <typename Family>
 zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
     return ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU;
 }

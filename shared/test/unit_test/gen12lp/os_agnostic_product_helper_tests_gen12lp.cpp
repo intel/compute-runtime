@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,4 +47,8 @@ GEN12LPTEST_F(Gen12lpProductHelper, givenCompressionFtrEnabledWhenAskingForPageT
 GEN12LPTEST_F(Gen12lpProductHelper, givenProductHelperThenCompressionIsForbidden) {
     auto hwInfo = *defaultHwInfo;
     EXPECT_TRUE(productHelper->isCompressionForbidden(hwInfo));
+}
+
+GEN12LPTEST_F(Gen12lpProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
+    EXPECT_EQ(RTASDeviceFormat::invalid, productHelper->getSupportedRtasFormat());
 }

@@ -131,3 +131,7 @@ NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCac
     allocationData.type = AllocationType::buffer;
     EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
 }
+
+NVLPTEST_F(NvlProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
+    EXPECT_EQ(RTASDeviceFormat::version2, productHelper->getSupportedRtasFormat());
+}

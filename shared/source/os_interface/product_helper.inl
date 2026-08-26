@@ -820,6 +820,11 @@ bool ProductHelperHw<gfxProduct>::is48bResourceNeededForRayTracing() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+RTASDeviceFormat ProductHelperHw<gfxProduct>::getSupportedRtasFormat() const {
+    return RTASDeviceFormat::invalid;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const {
     if (debugManager.flags.ForceLinearImages.get() || forceLinearStorage || isImage1d) {
         return true;

@@ -117,4 +117,9 @@ std::optional<uint8_t> ProductHelperHw<gfxProduct>::getBcsCompressionFormat() co
     return uint8_t{0x2};
 }
 
+template <>
+RTASDeviceFormat ProductHelperHw<gfxProduct>::getSupportedRtasFormat() const {
+    return RTASDeviceFormat::version2;
+}
+
 } // namespace NEO

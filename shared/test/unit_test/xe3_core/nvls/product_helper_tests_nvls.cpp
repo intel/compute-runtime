@@ -58,3 +58,7 @@ NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingInitializeInternalEn
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
     EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
 }
+
+NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
+    EXPECT_EQ(RTASDeviceFormat::version2, productHelper->getSupportedRtasFormat());
+}

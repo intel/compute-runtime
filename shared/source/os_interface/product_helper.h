@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/rtas_device_format.h"
 
 #include "aubstream/engine_node.h"
 #include "neo_igfxfmid.h"
@@ -239,6 +240,7 @@ class ProductHelper {
     virtual bool isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumberOfPartsInTileForConcurrentKernel(uint32_t ccsCount) const = 0;
     virtual bool is48bResourceNeededForRayTracing() const = 0;
+    virtual RTASDeviceFormat getSupportedRtasFormat() const = 0;
     virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const = 0;
     virtual uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const = 0;

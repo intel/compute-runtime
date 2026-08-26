@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,16 +96,6 @@ XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingPlatformDefaultHea
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenCheckingL0HelperForPlatformSupportsImmediateFlushTaskThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
-}
-
-XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingSupportedRTASFormatExpThenExpectedFormatIsReturned) {
-    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExp()));
-}
-
-XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingSupportedRTASFormatExtThenExpectedFormatIsReturned) {
-    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExt()));
 }
 
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenGettingCmdlistUpdateCapabilityThenReturnCorrectValue) {

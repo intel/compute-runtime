@@ -147,3 +147,7 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoheren
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
+
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
+    EXPECT_EQ(RTASDeviceFormat::version1, productHelper->getSupportedRtasFormat());
+}

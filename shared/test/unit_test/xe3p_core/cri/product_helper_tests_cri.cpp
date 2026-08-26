@@ -267,3 +267,7 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnC
 
     EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::sharedUsmToSharedUsm));
 }
+
+CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
+    EXPECT_EQ(RTASDeviceFormat::version2, productHelper->getSupportedRtasFormat());
+}

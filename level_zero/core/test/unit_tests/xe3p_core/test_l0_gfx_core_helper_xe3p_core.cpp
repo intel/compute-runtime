@@ -135,16 +135,6 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenCheckingL0HelperForPlatfor
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
 }
 
-XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreWhenGettingSupportedRTASFormatExpThenExpectedFormatIsReturned) {
-    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExp()));
-}
-
-XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreWhenGettingSupportedRTASFormatExtThenExpectedFormatIsReturned) {
-    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExt()));
-}
-
 XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenGettingCmdlistUpdateCapabilityThenReturnCorrectValue) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(127u, l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities());

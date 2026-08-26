@@ -20,6 +20,7 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
 
     ADDMETHOD_CONST_NOBASE(setupHardwareInfo, bool, true, (HardwareInfo & hwInfo, const DeviceCapsReader &capsReader));
     ADDMETHOD_CONST_NOBASE(is48bResourceNeededForRayTracing, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(getSupportedRtasFormat, RTASDeviceFormat, RTASDeviceFormat::invalid, ());
     ADDMETHOD_CONST_NOBASE(overrideAllocationCpuCacheable, bool, false, (const AllocationData &allocationData));
     ADDMETHOD_NOBASE(configureHwInfoWddm, int, 0, (const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment));
     ADDMETHOD_CONST_NOBASE(supportReadOnlyAllocations, bool, false, ());

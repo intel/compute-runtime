@@ -43,11 +43,6 @@ class RootDeviceIndicesContainer;
 
 namespace L0 {
 
-enum class RTASDeviceFormatInternal {
-    version1 = 1,
-    version2 = 2,
-};
-
 struct CopyOffloadMode;
 struct Event;
 struct Device;
@@ -99,8 +94,6 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual NEO::HeapAddressModel getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual ze_rtas_format_exp_t getSupportedRTASFormatExp() const = 0;
-    virtual ze_rtas_format_ext_t getSupportedRTASFormatExt() const = 0;
     virtual bool platformSupportsImmediateComputeFlushTask() const = 0;
     virtual zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const = 0;
     virtual uint32_t getGrfRegisterCount(uint32_t *regPtr) const = 0;
@@ -165,8 +158,6 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     NEO::HeapAddressModel getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
-    ze_rtas_format_exp_t getSupportedRTASFormatExp() const override;
-    ze_rtas_format_ext_t getSupportedRTASFormatExt() const override;
     bool platformSupportsImmediateComputeFlushTask() const override;
     zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const override;
     uint32_t getGrfRegisterCount(uint32_t *regPtr) const override;

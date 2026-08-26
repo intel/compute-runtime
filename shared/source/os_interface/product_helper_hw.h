@@ -171,6 +171,7 @@ class ProductHelperHw : public ProductHelper {
     bool isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount, const HardwareInfo &hwInfo) const override;
     bool isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const override;
     bool is48bResourceNeededForRayTracing() const override;
+    RTASDeviceFormat getSupportedRtasFormat() const override;
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
     bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const override;
     uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const override;

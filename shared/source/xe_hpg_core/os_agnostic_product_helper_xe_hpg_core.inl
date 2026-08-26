@@ -28,4 +28,9 @@ uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
     return 1u;
 }
 
+template <>
+RTASDeviceFormat ProductHelperHw<gfxProduct>::getSupportedRtasFormat() const {
+    return RTASDeviceFormat::version1;
+}
+
 } // namespace NEO

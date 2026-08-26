@@ -49,16 +49,6 @@ NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(con
 }
 
 template <>
-ze_rtas_format_exp_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExp() const {
-    return ZE_RTAS_FORMAT_EXP_INVALID;
-}
-
-template <>
-ze_rtas_format_ext_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExt() const {
-    return ZE_RTAS_FORMAT_EXT_INVALID;
-}
-
-template <>
 bool L0GfxCoreHelperHw<Family>::platformSupportsImmediateComputeFlushTask() const {
     return false;
 }

@@ -235,3 +235,7 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnB
 
     EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::sharedUsmToSharedUsm));
 }
+
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
+    EXPECT_EQ(RTASDeviceFormat::version1, productHelper->getSupportedRtasFormat());
+}

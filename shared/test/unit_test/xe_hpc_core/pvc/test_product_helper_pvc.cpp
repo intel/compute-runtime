@@ -275,3 +275,7 @@ PVCTEST_F(ProductHelperTest, givenProductHelperThenCompressionIsForbidden) {
     auto hwInfo = *defaultHwInfo;
     EXPECT_TRUE(productHelper->isCompressionForbidden(hwInfo));
 }
+
+PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
+    EXPECT_EQ(RTASDeviceFormat::version1, productHelper->getSupportedRtasFormat());
+}
