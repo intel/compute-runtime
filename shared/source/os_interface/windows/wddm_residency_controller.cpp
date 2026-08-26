@@ -167,7 +167,7 @@ size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocat
         return isAlreadyResident;
     };
 
-    allocationsForResidency.erase(std::remove_if(allocationsForResidency.begin(), allocationsForResidency.end(), checkIfAlreadyResident), allocationsForResidency.end());
+    std::erase_if(allocationsForResidency, checkIfAlreadyResident);
     return totalSize;
 }
 

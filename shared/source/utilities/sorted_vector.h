@@ -46,14 +46,10 @@ class BaseSortedPointerWithValueVector {
     }
 
     bool remove(const void *ptr) {
-        auto removeIt = std::remove_if(allocations.begin(), allocations.end(), [&ptr](const PointerPair &other) {
+        auto numRemoved = std::erase_if(allocations, [&ptr](const PointerPair &other) {
             return ptr == other.first;
         });
-        if (removeIt == allocations.end()) {
-            return false;
-        }
-        allocations.erase(removeIt, allocations.end());
-        return true;
+        return numRemoved > 0;
     }
 
     template <bool allowOffset>

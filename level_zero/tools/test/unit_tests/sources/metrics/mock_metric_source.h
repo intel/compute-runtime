@@ -160,9 +160,7 @@ class MockMetricSource : public L0::MetricSource {
     }
 
     void removeTestMetricScope(const std::string &name) {
-        testMetricScopes.erase(std::remove_if(testMetricScopes.begin(), testMetricScopes.end(),
-                                              [&name](const TestMetricScope &scope) { return scope.name == name; }),
-                               testMetricScopes.end());
+        std::erase_if(testMetricScopes, [&name](const TestMetricScope &scope) { return scope.name == name; });
     }
 
     uint32_t enableCallCount = 0;

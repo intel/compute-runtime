@@ -339,10 +339,7 @@ TEST_F(AotDeviceInfoTests, givenProductAcronymWhenRemoveDashesFromTheNameThenSti
         numSupportedAcronyms++;
         std::string acronymCopy = acronym;
 
-        auto findDash = acronymCopy.find('-');
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
+        std::erase(acronymCopy, '-');
 
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronymCopy), value);
     }
@@ -353,10 +350,7 @@ TEST_F(AotDeviceInfoTests, givenProductAcronymWhenRemoveDashesFromTheNameThenSti
         numSupportedAcronyms++;
         std::string acronymCopy = acronym;
 
-        auto findDash = acronymCopy.find('-');
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
+        std::erase(acronymCopy, '-');
 
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronymCopy), value);
     }
@@ -372,10 +366,7 @@ TEST_F(AotDeviceInfoTests, givenReleaseAcronymWhenRemoveDashesFromTheNameThenSti
         numSupportedAcronyms++;
         std::string acronymCopy = acronym;
 
-        auto findDash = acronymCopy.find('-');
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
+        std::erase(acronymCopy, '-');
 
         EXPECT_EQ(productConfigHelper->getReleaseFromDeviceName(acronymCopy), value);
     }
@@ -391,10 +382,7 @@ TEST_F(AotDeviceInfoTests, givenFamilyAcronymWhenRemoveDashesFromTheNameThenStil
         numSupportedAcronyms++;
         std::string acronymCopy = acronym;
 
-        auto findDash = acronymCopy.find('-');
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
+        std::erase(acronymCopy, '-');
 
         EXPECT_EQ(productConfigHelper->getFamilyFromDeviceName(acronymCopy), value);
     }
@@ -548,10 +536,7 @@ TEST_F(AotDeviceInfoTests, givenEnabledFamilyAcronymsWithoutDashesWhenCheckIfIsF
     for (const auto &acronym : enabledFamiliesAcronyms) {
         std::string acronymCopy = acronym.str();
 
-        auto findDash = acronymCopy.find('-');
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
+        std::erase(acronymCopy, '-');
 
         auto family = productConfigHelper->getFamilyFromDeviceName(acronymCopy);
         EXPECT_TRUE(productConfigHelper->isSupportedFamily(family));
@@ -564,10 +549,7 @@ TEST_F(AotDeviceInfoTests, givenEnabledReleaseAcronymsWithoutDashesWhenCheckIfIs
     for (const auto &acronym : enabledReleasesAcronyms) {
         std::string acronymCopy = acronym.str();
 
-        auto findDash = acronymCopy.find('-');
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
+        std::erase(acronymCopy, '-');
 
         auto release = productConfigHelper->getReleaseFromDeviceName(acronymCopy);
         EXPECT_TRUE(productConfigHelper->isSupportedRelease(release));
@@ -580,10 +562,7 @@ TEST_F(AotDeviceInfoTests, givenEnabledProductAcronymsWithoutDashesWhenCheckIfIs
     for (const auto &acronym : enabledProductsAcronyms) {
         std::string acronymCopy = acronym.str();
 
-        auto findDash = acronymCopy.find('-');
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
+        std::erase(acronymCopy, '-');
 
         auto config = productConfigHelper->getProductConfigFromDeviceName(acronymCopy);
         EXPECT_TRUE(productConfigHelper->isSupportedProductConfig(config));

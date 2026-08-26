@@ -817,7 +817,7 @@ TEST_F(SysmanEventsNetlinkFixture, GivenNullOsInterfaceWhenNetlinkProcessRasEven
     EXPECT_EQ(events[0], 0u);
 
     auto &devs = L0::Sysman::globalSysmanDriver->sysmanDevices;
-    devs.erase(std::remove(devs.begin(), devs.end(), &mockDevice), devs.end());
+    std::erase(devs, &mockDevice);
 }
 
 TEST_F(SysmanEventsNetlinkFixture, GivenUdevAndNetlinkBothReadySimultaneouslyWhenListenSystemEventsCalledThenBothEventsAreReturnedInSinglePass) {

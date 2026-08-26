@@ -2394,12 +2394,8 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
         sysMemAllocsSize -= allocation->getUnderlyingBufferSize();
     }
     std::lock_guard<std::mutex> lock(this->allocMutex);
-    sysMemAllocs.erase(std::remove(sysMemAllocs.begin(), sysMemAllocs.end(), allocation),
-                       sysMemAllocs.end());
-    localMemAllocs[allocation->getRootDeviceIndex()].erase(std::remove(localMemAllocs[allocation->getRootDeviceIndex()].begin(),
-                                                                       localMemAllocs[allocation->getRootDeviceIndex()].end(),
-                                                                       allocation),
-                                                           localMemAllocs[allocation->getRootDeviceIndex()].end());
+    std::erase(sysMemAllocs, allocation);
+    std::erase(localMemAllocs[allocation->getRootDeviceIndex()], allocation);
 }
 
 void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {

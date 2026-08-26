@@ -660,17 +660,15 @@ bool testProgrammableMetricGroupStreamer() {
                                                                &metricGroupCount, metricGroupHandles.data()));
         metricGroupHandles.resize(metricGroupCount);
         // filter out non-streamer metric groups
-        metricGroupHandles.erase(std::remove_if(metricGroupHandles.begin(), metricGroupHandles.end(),
-                                                [&](zet_metric_group_handle_t metricGroup) {
-                                                    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-                                                    VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &metricGroupProperties));
-                                                    auto toBeRemoved = metricGroupProperties.samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
-                                                    if (toBeRemoved) {
-                                                        VALIDATECALL(zetMetricGroupDestroyExp(metricGroup));
-                                                    }
-                                                    return toBeRemoved;
-                                                }),
-                                 metricGroupHandles.end());
+        std::erase_if(metricGroupHandles, [&](zet_metric_group_handle_t metricGroup) {
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+            VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &metricGroupProperties));
+            auto toBeRemoved = metricGroupProperties.samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
+            if (toBeRemoved) {
+                VALIDATECALL(zetMetricGroupDestroyExp(metricGroup));
+            }
+            return toBeRemoved;
+        });
 
         // print the finalized list of metric groups
         for (auto &metricGroup : metricGroupHandles) {
@@ -806,17 +804,15 @@ bool testProgrammableMetricGroupQuery() {
                                                                &metricGroupCount, metricGroupHandles.data()));
         metricGroupHandles.resize(metricGroupCount);
         // filter out non-query metric groups
-        metricGroupHandles.erase(std::remove_if(metricGroupHandles.begin(), metricGroupHandles.end(),
-                                                [](zet_metric_group_handle_t metricGroup) {
-                                                    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-                                                    VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &metricGroupProperties));
-                                                    auto toBeRemoved = metricGroupProperties.samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
-                                                    if (toBeRemoved) {
-                                                        VALIDATECALL(zetMetricGroupDestroyExp(metricGroup));
-                                                    }
-                                                    return toBeRemoved;
-                                                }),
-                                 metricGroupHandles.end());
+        std::erase_if(metricGroupHandles, [](zet_metric_group_handle_t metricGroup) {
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+            VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &metricGroupProperties));
+            auto toBeRemoved = metricGroupProperties.samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+            if (toBeRemoved) {
+                VALIDATECALL(zetMetricGroupDestroyExp(metricGroup));
+            }
+            return toBeRemoved;
+        });
 
         // print the finalized list of metric groups
         for (auto &metricGroup : metricGroupHandles) {

@@ -23,7 +23,6 @@
 #include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
 
-#include <algorithm>
 #include <cstring>
 #include <memory>
 #include <string_view>
@@ -109,9 +108,7 @@ std::vector<const char *> Program::getUserKernelNames() const {
     zeModuleGetKernelNames(moduleHandle, &numKernels, nullptr);
     std::vector<const char *> kernelNames(numKernels, nullptr);
     zeModuleGetKernelNames(moduleHandle, &numKernels, kernelNames.data());
-    kernelNames.erase(std::remove_if(kernelNames.begin(), kernelNames.end(),
-                                     [](const char *name) { return NEO::Zebin::Elf::SectionNames::externalFunctions == name; }),
-                      kernelNames.end());
+    std::erase_if(kernelNames, [](const char *name) { return NEO::Zebin::Elf::SectionNames::externalFunctions == name; });
     return kernelNames;
 }
 

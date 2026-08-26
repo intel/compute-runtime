@@ -208,9 +208,7 @@ DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection
                 outWarning.append("DeviceBinaryFormat::zebin : Empty owner name.\n");
             } else {
                 std::string invalidOwnerName{ownerName, nameSz};
-                invalidOwnerName.erase(std::remove_if(invalidOwnerName.begin(),
-                                                      invalidOwnerName.end(),
-                                                      [](unsigned char c) { return '\0' == c; }));
+                std::erase(invalidOwnerName, '\0');
                 outWarning.append("DeviceBinaryFormat::zebin : Invalid owner name : " + invalidOwnerName + " for IntelGTNote - note will not be used.\n");
             }
             continue;

@@ -387,8 +387,7 @@ LinkingStatus Program::linkAgainstRequiredLibs(uint32_t rootDeviceIndex,
         return true;
     };
 
-    auto unpatchedEnd = std::remove_if(unresolvedExternalsInfo.begin(), unresolvedExternalsInfo.end(), patchFromLibs);
-    unresolvedExternalsInfo.erase(unpatchedEnd, unresolvedExternalsInfo.end());
+    std::erase_if(unresolvedExternalsInfo, patchFromLibs);
     return unresolvedExternalsInfo.empty() ? LinkingStatus::linkedFully : LinkingStatus::linkedPartially;
 }
 

@@ -47,10 +47,7 @@ void ProductConfigHelper::adjustDeviceName(std::string &device) {
         device = device.substr(0, findCore);
     }
 
-    auto findUnderscore = device.find('_');
-    if (findUnderscore != std::string::npos) {
-        device.erase(std::remove(device.begin(), device.end(), '_'), device.end());
-    }
+    std::erase(device, '_');
 }
 
 void ProductConfigHelper::adjustClosedRangeDeviceLegacyAcronyms(std::string &rangeFromStr, std::string &rangeToStr) {
