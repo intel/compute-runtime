@@ -15,11 +15,6 @@ namespace NEO {
 constexpr auto release = ReleaseType::release2002;
 
 template <>
-bool ReleaseHelperHw<release>::programmAdditionalStallPriorToBarrierWithTimestamp() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::shouldQueryPeerAccess() const {
     return true;
 }

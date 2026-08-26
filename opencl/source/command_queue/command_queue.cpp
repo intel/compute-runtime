@@ -1156,14 +1156,13 @@ bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const {
     const auto &hwInfo = device->getHardwareInfo();
     auto &productHelper = device->getProductHelper();
-    const auto &releaseHelper = device->getDevice().getReleaseHelper();
     auto blitEnqueueImageAllowed = productHelper.isBlitterForImagesSupported();
 
     if (debugManager.flags.EnableBlitterForEnqueueImageOperations.get() != -1) {
         blitEnqueueImageAllowed = debugManager.flags.EnableBlitterForEnqueueImageOperations.get();
     }
 
-    blitEnqueueImageAllowed &= !(Image::isDepthFormat(image.getImageFormat()) && !releaseHelper.isBlitImageAllowedForDepthFormat());
+    blitEnqueueImageAllowed &= !(Image::isDepthFormat(image.getImageFormat()) && !hwInfo.caps.blitImageAllowedForDepthFormat);
 
     blitEnqueueImageAllowed &= !isMipMapped(image.getImageDesc());
 

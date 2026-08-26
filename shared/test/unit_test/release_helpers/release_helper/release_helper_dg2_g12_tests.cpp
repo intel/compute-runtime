@@ -45,27 +45,6 @@ TEST_F(ReleaseHelperDg2G12Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelperDg2G12Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
-    whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
-}
-
-TEST_F(ReleaseHelperDg2G12Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
-    whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
-}
-
-TEST_F(ReleaseHelperDg2G12Tests, whenIsPostImageWriteFlushRequiredCalledThenTrueReturned) {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isPostImageWriteFlushRequired());
-    }
-}
-
-TEST_F(ReleaseHelperDg2G12Tests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
-    whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
-}
-
 TEST_F(ReleaseHelperDg2G12Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

@@ -13,6 +13,7 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/source/utilities/tag_allocator.h"

@@ -57,6 +57,7 @@ TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsPtlH.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPtlH.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsPtlH.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsPtlH.blitImageAllowedForDepthFormat);
     EXPECT_TRUE(capsPtlH.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsPtlH.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsPtlH.directSubmissionLightSupported);
@@ -68,7 +69,10 @@ TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_TRUE(capsPtlH.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsPtlH.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPtlH.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsPtlH.postImageWriteFlushRequired);
+    EXPECT_TRUE(capsPtlH.preImageReadFlushRequired);
     EXPECT_FALSE(capsPtlH.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsPtlH.programAdditionalStallPriorToBarrierWithTimestamp);
     EXPECT_TRUE(capsPtlH.rayTracingSupported);
     EXPECT_TRUE(capsPtlH.rcsExposureDisabled);
     EXPECT_FALSE(capsPtlH.splitMatrixMultiplyAccumulateSupported);
@@ -79,6 +83,7 @@ TEST(CapsXe3Test, givenPtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsPtlU.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPtlU.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsPtlU.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsPtlU.blitImageAllowedForDepthFormat);
     EXPECT_TRUE(capsPtlU.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsPtlU.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsPtlU.directSubmissionLightSupported);
@@ -90,7 +95,10 @@ TEST(CapsXe3Test, givenPtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_TRUE(capsPtlU.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsPtlU.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPtlU.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsPtlU.postImageWriteFlushRequired);
+    EXPECT_TRUE(capsPtlU.preImageReadFlushRequired);
     EXPECT_FALSE(capsPtlU.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsPtlU.programAdditionalStallPriorToBarrierWithTimestamp);
     EXPECT_TRUE(capsPtlU.rayTracingSupported);
     EXPECT_TRUE(capsPtlU.rcsExposureDisabled);
     EXPECT_FALSE(capsPtlU.splitMatrixMultiplyAccumulateSupported);
@@ -101,6 +109,7 @@ TEST(CapsXe3Test, givenWclReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect
     EXPECT_FALSE(capsWcl.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsWcl.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsWcl.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsWcl.blitImageAllowedForDepthFormat);
     EXPECT_TRUE(capsWcl.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsWcl.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsWcl.directSubmissionLightSupported);
@@ -112,7 +121,10 @@ TEST(CapsXe3Test, givenWclReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect
     EXPECT_TRUE(capsWcl.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsWcl.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsWcl.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsWcl.postImageWriteFlushRequired);
+    EXPECT_TRUE(capsWcl.preImageReadFlushRequired);
     EXPECT_FALSE(capsWcl.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsWcl.programAdditionalStallPriorToBarrierWithTimestamp);
     EXPECT_FALSE(capsWcl.rayTracingSupported);
     EXPECT_TRUE(capsWcl.rcsExposureDisabled);
     EXPECT_FALSE(capsWcl.splitMatrixMultiplyAccumulateSupported);
@@ -123,6 +135,7 @@ TEST(CapsXe3Test, givenNvlSReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsNvlS.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsNvlS.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsNvlS.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsNvlS.blitImageAllowedForDepthFormat);
     EXPECT_TRUE(capsNvlS.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsNvlS.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsNvlS.directSubmissionLightSupported);
@@ -134,7 +147,10 @@ TEST(CapsXe3Test, givenNvlSReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_TRUE(capsNvlS.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsNvlS.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsNvlS.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsNvlS.postImageWriteFlushRequired);
+    EXPECT_TRUE(capsNvlS.preImageReadFlushRequired);
     EXPECT_FALSE(capsNvlS.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsNvlS.programAdditionalStallPriorToBarrierWithTimestamp);
     EXPECT_FALSE(capsNvlS.rayTracingSupported);
     EXPECT_TRUE(capsNvlS.rcsExposureDisabled);
     EXPECT_FALSE(capsNvlS.splitMatrixMultiplyAccumulateSupported);
@@ -145,6 +161,7 @@ TEST(CapsXe3Test, givenNvlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsNvlU.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsNvlU.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsNvlU.bFloat16ConversionSupported);
+    EXPECT_TRUE(capsNvlU.blitImageAllowedForDepthFormat);
     EXPECT_TRUE(capsNvlU.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsNvlU.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsNvlU.directSubmissionLightSupported);
@@ -156,7 +173,10 @@ TEST(CapsXe3Test, givenNvlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_TRUE(capsNvlU.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsNvlU.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsNvlU.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_FALSE(capsNvlU.postImageWriteFlushRequired);
+    EXPECT_TRUE(capsNvlU.preImageReadFlushRequired);
     EXPECT_FALSE(capsNvlU.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsNvlU.programAdditionalStallPriorToBarrierWithTimestamp);
     EXPECT_TRUE(capsNvlU.rayTracingSupported);
     EXPECT_TRUE(capsNvlU.rcsExposureDisabled);
     EXPECT_FALSE(capsNvlU.splitMatrixMultiplyAccumulateSupported);

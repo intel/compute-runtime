@@ -1613,9 +1613,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListAndCsrNotRequir
 
 HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteArgAndPlatformRequiresFlushWhenLaunchingKernelThenPipeControlWithTextureCacheInvalidationIsAdded, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isPostImageWriteFlushRequiredResult = true;
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.postImageWriteFlushRequired = true;
 
     auto kernel = std::make_unique<Mock<KernelImp>>();
     kernel->setModule(module.get());
@@ -1661,9 +1660,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     kernel->setModule(module.get());
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isPostImageWriteFlushRequiredResult = true;
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.postImageWriteFlushRequired = true;
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -1714,9 +1712,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendi
     StackVec<ze_command_list_flags_t, 2> testedCmdListFlags = {ZE_COMMAND_LIST_FLAG_IN_ORDER,
                                                                ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING};
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isPostImageWriteFlushRequiredResult = true;
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.postImageWriteFlushRequired = true;
     for (auto cmdListFlags : testedCmdListFlags) {
         auto kernel = std::make_unique<Mock<KernelImp>>();
         kernel->setModule(module.get());
@@ -1775,9 +1772,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenText
     kernel->setModule(module.get());
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isPostImageWriteFlushRequiredResult = true;
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.postImageWriteFlushRequired = true;
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
     ze_command_list_flags_t flags = ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING;
@@ -1973,19 +1969,17 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKer
     EXPECT_FALSE(textureCacheInvBeforeWalker);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenCreatedThenIsPreImageReadFlushRequiredMatchesReleaseHelper, IsAtLeastXeCore) {
-    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
-    auto *releaseHelperPtr = mockReleaseHelper.get();
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(mockReleaseHelper);
+HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenCreatedThenPreImageReadFlushRequiredMatchesCaps, IsAtLeastXeCore) {
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
 
     ze_result_t returnValue;
 
-    releaseHelperPtr->isPreImageReadFlushRequiredResult = true;
+    hwInfo.caps.preImageReadFlushRequired = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto *cmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList.get());
     EXPECT_TRUE(cmdListHw->isPreImageReadFlushRequired);
 
-    releaseHelperPtr->isPreImageReadFlushRequiredResult = false;
+    hwInfo.caps.preImageReadFlushRequired = false;
     std::unique_ptr<L0::CommandList> commandList2(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto *cmdListHw2 = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList2.get());
     EXPECT_FALSE(cmdListHw2->isPreImageReadFlushRequired);

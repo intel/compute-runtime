@@ -18,6 +18,7 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(adjustWalkOrderAvailable)                                  \
     NEO_COPY_CAP_FUNC(auxSurfaceModeOverrideRequired)                            \
     NEO_COPY_CAP_FUNC(bFloat16ConversionSupported)                               \
+    NEO_COPY_CAP_FUNC(blitImageAllowedForDepthFormat)                            \
     NEO_COPY_CAP_FUNC(bindlessAddressingDisabled)                                \
     NEO_COPY_CAP_FUNC(deviceConfigStringTileCountIncluded)                       \
     NEO_COPY_CAP_FUNC(deviceConfigStringXeCuSegmentIncluded)                     \
@@ -29,7 +30,10 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(numRtStacksPerDssFixedValue)                               \
     NEO_COPY_CAP_FUNC(pipeControlPriorToNonPipelinedStateCommandsBaseWARequired) \
     NEO_COPY_CAP_FUNC(pipeControlPriorToPipelineSelectWaRequired)                \
+    NEO_COPY_CAP_FUNC(postImageWriteFlushRequired)                               \
+    NEO_COPY_CAP_FUNC(preImageReadFlushRequired)                                 \
     NEO_COPY_CAP_FUNC(programAllStateComputeCommandFieldsWARequired)             \
+    NEO_COPY_CAP_FUNC(programAdditionalStallPriorToBarrierWithTimestamp)         \
     NEO_COPY_CAP_FUNC(rcsExposureDisabled)                                       \
     NEO_COPY_CAP_FUNC(rayTracingSupported)                                       \
     NEO_COPY_CAP_FUNC(splitMatrixMultiplyAccumulateSupported)

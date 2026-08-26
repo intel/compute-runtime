@@ -50,23 +50,6 @@ TEST_P(ReleaseHelperGen12LpTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_P(ReleaseHelperGen12LpTests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
-    whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
-}
-
-TEST_P(ReleaseHelperGen12LpTests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
-    whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
-}
-
-TEST_P(ReleaseHelperGen12LpTests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->isPostImageWriteFlushRequired());
-    }
-}
-
 TEST_P(ReleaseHelperGen12LpTests, whenGettingPreferredSlmSizeThenAllEntriesEmpty) {
     whenGettingPreferredSlmSizeThenAllEntriesEmpty();
 }

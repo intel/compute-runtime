@@ -44,18 +44,6 @@ TEST_F(ReleaseHelperArlHTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelperArlHTests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
-    whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
-}
-
-TEST_F(ReleaseHelperArlHTests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
-    whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
-}
-
-TEST_F(ReleaseHelperArlHTests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
-    whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
-}
-
 TEST_F(ReleaseHelperArlHTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
@@ -82,14 +70,6 @@ TEST_F(ReleaseHelperArlHTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
 
         EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);
         EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
-    }
-}
-TEST_F(ReleaseHelperArlHTests, whenIsBlitImageAllowedForDepthFormatCalledThenFalseReturned) {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->isBlitImageAllowedForDepthFormat());
     }
 }
 

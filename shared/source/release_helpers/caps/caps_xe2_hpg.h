@@ -19,16 +19,22 @@ namespace NEO {
 struct CapsXe2HpgCore {
     static constexpr bool auxSurfaceModeOverrideRequired = true;
     static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool blitImageAllowedForDepthFormat = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
-    static constexpr bool rcsExposureDisabled = true;
+    static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rayTracingSupported = true;
+    static constexpr bool rcsExposureDisabled = true;
 };
 
-struct CapsBmgG21 : CapsXe2HpgCore {};
-struct CapsBmgG31 : CapsXe2HpgCore {};
+struct CapsBmgG21 : CapsXe2HpgCore {
+    static constexpr bool programAdditionalStallPriorToBarrierWithTimestamp = true;
+};
+struct CapsBmgG31 : CapsXe2HpgCore {
+    static constexpr bool programAdditionalStallPriorToBarrierWithTimestamp = true;
+};
 struct CapsLnl : CapsXe2HpgCore {};
 
 constexpr std::optional<Caps> resolveCapsBmgG21(HardwareIpVersion ipVersion) {

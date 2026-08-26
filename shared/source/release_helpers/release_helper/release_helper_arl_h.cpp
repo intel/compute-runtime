@@ -14,11 +14,6 @@
 namespace NEO {
 constexpr auto release = ReleaseType::release1274;
 
-template <>
-bool ReleaseHelperHw<release>::isBlitImageAllowedForDepthFormat() const {
-    return false;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helpers/release_helper/release_helper_common_xe_lpg.inl"

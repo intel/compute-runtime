@@ -45,18 +45,6 @@ TEST_F(ReleaseHelperBmgG31Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelperBmgG31Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
-    whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
-}
-
-TEST_F(ReleaseHelperBmgG31Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
-    whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
-}
-
-TEST_F(ReleaseHelperBmgG31Tests, whenIsPreImageReadFlushRequiredCalledThenTrueReturned) {
-    whenIsPreImageReadFlushRequiredCalledThenTrueReturned();
-}
-
 TEST_F(ReleaseHelperBmgG31Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

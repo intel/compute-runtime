@@ -18,10 +18,12 @@ namespace NEO {
 
 struct CapsXe3Core {
     static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool blitImageAllowedForDepthFormat = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
+    static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rcsExposureDisabled = true;
 };
 

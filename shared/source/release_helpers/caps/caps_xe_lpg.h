@@ -27,6 +27,7 @@ struct CapsXeLpgCore {
 
 struct CapsMtlU : CapsXeLpgCore {
     static constexpr bool auxSurfaceModeOverrideRequired = true;
+    static constexpr bool blitImageAllowedForDepthFormat = true;
     static constexpr bool dummyBlitWaRequired = true;
 };
 struct CapsMtlUA0 : CapsMtlU {
@@ -37,6 +38,7 @@ struct CapsMtlUB0 : CapsMtlU {};
 
 struct CapsMtlH : CapsXeLpgCore {
     static constexpr bool auxSurfaceModeOverrideRequired = true;
+    static constexpr bool blitImageAllowedForDepthFormat = true;
     static constexpr bool dummyBlitWaRequired = true;
 };
 struct CapsMtlHA0 : CapsMtlH {

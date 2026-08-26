@@ -11,11 +11,6 @@
 namespace NEO {
 
 template <>
-bool ReleaseHelperHw<release>::isPostImageWriteFlushRequired() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
     if (debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
         return debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();

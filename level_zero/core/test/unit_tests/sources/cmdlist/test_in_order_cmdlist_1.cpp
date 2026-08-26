@@ -3321,8 +3321,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, address);
             EXPECT_EQ(2u, pcCmd->getImmediateData());
 
-            const auto &releaseHelper = device->getNEODevice()->getReleaseHelper();
-            const bool textureFlushRequired = releaseHelper.isPostImageWriteFlushRequired() &&
+            const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+            const bool textureFlushRequired = hwInfo.caps.postImageWriteFlushRequired &&
                                               kernel->getImmutableData()->getKernelInfo()->kernelDescriptor.kernelAttributes.hasImageWriteArg;
             EXPECT_EQ(textureFlushRequired, pcCmd->getTextureCacheInvalidationEnable());
         } else {

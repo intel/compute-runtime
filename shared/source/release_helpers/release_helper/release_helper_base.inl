@@ -52,11 +52,6 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<releaseType>::getSizeToPrefe
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::programmAdditionalStallPriorToBarrierWithTimestamp() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize) const {
     return 0u;
 }
@@ -64,20 +59,6 @@ uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize) const 
 template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::alignSlmSizePerThreadGroup(uint32_t slmSize) const {
     return 0u;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isBlitImageAllowedForDepthFormat() const {
-    return true;
-}
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isPostImageWriteFlushRequired() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isPreImageReadFlushRequired() const {
-    return false;
 }
 
 template <ReleaseType releaseType>

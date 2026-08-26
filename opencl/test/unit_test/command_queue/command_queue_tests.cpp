@@ -2326,9 +2326,8 @@ TEST(CommandQueue, givenImageWithDepthTypeWhenDepthNotAllowedForBlitThenBlitEnqu
     debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
-    releaseHelper->isBlitImageAllowedForDepthFormatResult = false;
-    context.getDevice(0)->getDevice().getRootDeviceEnvironmentRef().releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *context.getDevice(0)->getDevice().getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.blitImageAllowedForDepthFormat = false;
     size_t correctRegion[3] = {10u, 10u, 0};
     size_t correctOrigin[3] = {1u, 1u, 0};
     MockImageBase image;
@@ -2342,9 +2341,8 @@ TEST(CommandQueue, givenImageWithNotDepthTypeWhenDepthNotAllowedForBlitThenBlitE
     debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
-    releaseHelper->isBlitImageAllowedForDepthFormatResult = false;
-    context.getDevice(0)->getDevice().getRootDeviceEnvironmentRef().releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *context.getDevice(0)->getDevice().getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.blitImageAllowedForDepthFormat = false;
     size_t correctRegion[3] = {10u, 10u, 0};
     size_t correctOrigin[3] = {1u, 1u, 0};
     MockImageBase image;
@@ -2358,9 +2356,8 @@ TEST(CommandQueue, givenImageWithDepthTypeWhenDepthAllowedForBlitThenBlitEnqueue
     debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
-    releaseHelper->isBlitImageAllowedForDepthFormatResult = true;
-    context.getDevice(0)->getDevice().getRootDeviceEnvironmentRef().releaseHelper.reset(releaseHelper.release());
+    auto &hwInfo = *context.getDevice(0)->getDevice().getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.blitImageAllowedForDepthFormat = true;
     size_t correctRegion[3] = {10u, 10u, 0};
     size_t correctOrigin[3] = {1u, 1u, 0};
     MockImageBase image;

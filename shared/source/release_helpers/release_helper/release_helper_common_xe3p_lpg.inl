@@ -28,11 +28,6 @@ uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isPostImageWriteFlushRequired() const {
-    return true;
-}
-
-template <>
 uint32_t ReleaseHelperHw<release>::adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const {
     auto adjustedMaxThreadsPerEuCount = maxThreadsPerEuCount;
 
@@ -56,11 +51,6 @@ bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired(bool isImmedia
         return enableStateCacheInvalidationWa;
     }
     return (hardwareIpVersion.value == AOT::NVL_P_A0);
-}
-
-template <>
-bool ReleaseHelperHw<release>::isPreImageReadFlushRequired() const {
-    return true;
 }
 
 } // namespace NEO

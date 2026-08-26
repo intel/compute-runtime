@@ -376,7 +376,7 @@ template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
         MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(&cmd);
@@ -384,7 +384,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffe
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
 
         MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, NEO::FenceType::release, rootDeviceEnvironment);
-    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper.programmAdditionalStallPriorToBarrierWithTimestamp()) {
+    } else if (postSyncMode == PostSyncMode::timestamp && hwInfo.caps.programAdditionalStallPriorToBarrierWithTimestamp) {
         PipeControlArgs additionalArgs = {};
         additionalArgs.csStallOnly = true;
 
@@ -433,11 +433,11 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOp
 template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
     size_t size = 0;
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         size = getSizeForSingleBarrier() +
                getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
-    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper.programmAdditionalStallPriorToBarrierWithTimestamp()) {
+    } else if (postSyncMode == PostSyncMode::timestamp && hwInfo.caps.programAdditionalStallPriorToBarrierWithTimestamp) {
         size = getSizeForStallingBarrier();
     }
     return size;

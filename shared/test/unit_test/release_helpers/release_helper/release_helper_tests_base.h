@@ -29,11 +29,6 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenGettingPreferredSlmSizeThenAllEntriesEmpty();
     void whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
     void whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
-    void whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
-    void whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
-    void whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
-    void whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
-    void whenIsPreImageReadFlushRequiredCalledThenTrueReturned();
     void whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
     void whenShouldQueryPeerAccessCalledThenFalseReturned();
     void whenShouldQueryPeerAccessCalledThenTrueReturned();

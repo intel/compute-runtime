@@ -24,9 +24,10 @@ struct CapsXeHpgCore {
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = true;
+    static constexpr bool postImageWriteFlushRequired = true;
     static constexpr bool programAllStateComputeCommandFieldsWARequired = true;
-    static constexpr bool rcsExposureDisabled = true;
     static constexpr bool rayTracingSupported = true;
+    static constexpr bool rcsExposureDisabled = true;
     static constexpr bool splitMatrixMultiplyAccumulateSupported = true;
 };
 

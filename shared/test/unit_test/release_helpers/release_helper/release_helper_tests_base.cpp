@@ -110,51 +110,6 @@ void ReleaseHelperTestsBase::whenGettingThreadsPerEuConfigsThenCorrectValueIsRet
     }
 }
 
-void ReleaseHelperTestsBase::whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isBlitImageAllowedForDepthFormat());
-    }
-}
-
-void ReleaseHelperTestsBase::whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp());
-    }
-}
-
-void ReleaseHelperTestsBase::whenIsPostImageWriteFlushRequiredCalledThenFalseReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->isPostImageWriteFlushRequired());
-    }
-}
-
-void ReleaseHelperTestsBase::whenIsPreImageReadFlushRequiredCalledThenFalseReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->isPreImageReadFlushRequired());
-    }
-}
-
-void ReleaseHelperTestsBase::whenIsPreImageReadFlushRequiredCalledThenTrueReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isPreImageReadFlushRequired());
-    }
-}
-
 void ReleaseHelperTestsBase::whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

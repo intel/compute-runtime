@@ -25,6 +25,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/image_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/kernel_helpers.h"
@@ -44,7 +45,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -277,7 +277,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    const auto &releaseHelper = neoDevice->getReleaseHelper();
     auto &l0GfxCoreHelper = device->getL0GfxCoreHelper();
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
@@ -312,8 +311,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->sharedSystemAllocationsAllowed = neoDevice->areSharedSystemAllocationsAllowed();
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, this->l3FlushAfterPostSyncEnabled);
     this->useAdditionalBlitProperties = productHelper.useAdditionalBlitProperties();
-    this->isPostImageWriteFlushRequired = releaseHelper.isPostImageWriteFlushRequired();
-    this->isPreImageReadFlushRequired = releaseHelper.isPreImageReadFlushRequired();
+    this->isPostImageWriteFlushRequired = hwInfo.caps.postImageWriteFlushRequired;
+    this->isPreImageReadFlushRequired = hwInfo.caps.preImageReadFlushRequired;
     this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
     this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->dcFlushSupport);
     this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();
