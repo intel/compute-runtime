@@ -142,6 +142,7 @@ void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainC
     }
 
     if (!events.isAggregatedEventMode()) {
+        auto lock = events.obtainLock();
         mainCmdList->appendSignalEventPostWalker(markerEvent, nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
     }
 
