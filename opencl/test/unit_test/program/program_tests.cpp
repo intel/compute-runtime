@@ -1979,12 +1979,6 @@ TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenG
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
 }
 
-TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwaysHavePreserveVec3TypeInternalOptionSet) {
-    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr));
-    auto internalOptions = program->getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::preserveVec3Type)) << internalOptions;
-}
-
 TEST_F(ProgramTests, givenFp64EmulationInDefaultStateWhenProgramIsCreatedThenEnableFP64GenEmuBuildOptionIsNotPresent) {
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
     auto internalOptions = program->getInternalOptions();

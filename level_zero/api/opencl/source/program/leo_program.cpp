@@ -309,7 +309,6 @@ bool Program::populateModuleConstants(ze_module_constants_t &moduleConstants,
 std::string Program::computeOclCContractInternalOptions(const std::string &buildOptions) const {
     std::string internalOptions;
     NEO::appendExtensionsToInternalOptions(this->context->getClDevice()->getHardwareInfo(), buildOptions, internalOptions);
-    NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::preserveVec3Type);
     return internalOptions;
 }
 
