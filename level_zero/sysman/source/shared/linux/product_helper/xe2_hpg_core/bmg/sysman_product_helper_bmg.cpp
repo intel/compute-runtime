@@ -24,6 +24,10 @@ namespace Sysman {
 constexpr static auto gfxProduct = IGFX_BMG;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
 
+constexpr static std::string_view standbyPowerControlDefault("auto");
+constexpr static std::string_view standbyPowerControlNever("on");
+static const std::string standbyPowerControlFile("device/power/control");
+
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 
@@ -1871,6 +1875,47 @@ int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryDomainSupported() {
     return false;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) {
+    return true;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isSetStandbyModeSupported() {
+    return true;
+}
+
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) {
+    return standbyPowerControlFile;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t &mode) {
+    std::string currentMode;
+    ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
+    if (ZE_RESULT_SUCCESS != result) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, standbyModeFile.c_str(), result);
+        return result;
+    }
+    if (standbyPowerControlDefault == currentMode) {
+        mode = ZES_STANDBY_PROMO_MODE_DEFAULT;
+    } else if (standbyPowerControlNever == currentMode) {
+        mode = ZES_STANDBY_PROMO_MODE_NEVER;
+    } else {
+        result = ZE_RESULT_ERROR_UNKNOWN;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <unknown or internal error occurred> <currentMode: %s & result: 0x%x>\n", NEO_FUNCTION_NAME, currentMode.c_str(), result);
+    }
+    return result;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::setStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t mode) {
+    return pSysfsAccess->write(standbyModeFile, (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) ? standbyPowerControlDefault : standbyPowerControlNever);
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

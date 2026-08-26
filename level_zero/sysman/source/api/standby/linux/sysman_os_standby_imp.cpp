@@ -43,6 +43,10 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
 }
 
 ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
+    if (!pSysmanProductHelper->isSetStandbyModeSupported()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     ze_result_t result = pSysmanProductHelper->setStandbyMode(pSysfsAccess, standbyModeFile, mode);
     if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -58,7 +62,9 @@ void LinuxStandbyImp::reInit() {
 }
 
 void LinuxStandbyImp::init() {
-    standbyModeFile = pSysmanProductHelper->getStandbyModeFile(pSysmanKmdInterface, pSysfsAccess, subdeviceId);
+    if (pSysmanProductHelper->isStandbySupported(pSysmanKmdInterface)) {
+        standbyModeFile = pSysmanProductHelper->getStandbyModeFile(pSysmanKmdInterface, pSysfsAccess, subdeviceId);
+    }
 }
 
 LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {

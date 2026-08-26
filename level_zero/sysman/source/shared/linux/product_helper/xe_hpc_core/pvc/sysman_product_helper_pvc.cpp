@@ -19,8 +19,6 @@ namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_PVC;
 static const uint32_t numHbmModules = 4;
-constexpr int standbyModeRc6Default = 1;
-constexpr int standbyModeRc6Never = 0;
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 
@@ -441,35 +439,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
 }
 
 template <>
-std::string SysmanProductHelperHw<gfxProduct>::getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) {
-    const bool baseDirectoryExists = pSysfsAccess->directoryExists(pSysmanKmdInterface->getBasePath(subDeviceId));
-    return pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, subDeviceId, baseDirectoryExists);
-}
-
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t &mode) {
-    int currentMode = -1;
-    ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
-    if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, standbyModeFile.c_str(), result);
-        return result;
-    }
-    if (standbyModeRc6Default == currentMode) {
-        mode = ZES_STANDBY_PROMO_MODE_DEFAULT;
-    } else if (standbyModeRc6Never == currentMode) {
-        mode = ZES_STANDBY_PROMO_MODE_NEVER;
-    } else {
-        result = ZE_RESULT_ERROR_UNKNOWN;
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <unknown or internal error occurred> <currentMode: %d & result: 0x%x>\n", NEO_FUNCTION_NAME, currentMode, result);
-    }
-    return result;
-}
-
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::setStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t mode) {
-    return pSysfsAccess->write(standbyModeFile, (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) ? standbyModeRc6Default : standbyModeRc6Never);
+bool SysmanProductHelperHw<gfxProduct>::isSetStandbyModeSupported() {
+    return true;
 }
 
 template <>

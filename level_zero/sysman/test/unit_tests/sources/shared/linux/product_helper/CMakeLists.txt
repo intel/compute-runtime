@@ -28,7 +28,6 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_ecc_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_firmware_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_firmware_tests_xe.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_standby_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_standby_tests_xe.cpp
   )
 

@@ -151,6 +151,7 @@ class SysmanKmdInterface {
     virtual ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) = 0;
     virtual std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const = 0;
     virtual std::string getTemperatureEmergencyFileName() const = 0;
+    virtual bool isStandbyModeControlAvailable() const = 0;
     virtual bool clientInfoAvailableInFdInfo() const = 0;
     virtual bool isGroupEngineInterfaceAvailable() const = 0;
     ze_result_t initAllAccessInterfaces(const NEO::Drm &drm);
@@ -263,6 +264,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     std::string getTemperatureEmergencyFileName() const override;
+    bool isStandbyModeControlAvailable() const override { return true; }
     bool clientInfoAvailableInFdInfo() const override { return false; }
     bool isGroupEngineInterfaceAvailable() const override { return false; }
     std::string getEngineBasePath(uint32_t subDeviceId) const override;
@@ -334,6 +336,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     std::string getTemperatureEmergencyFileName() const override;
+    bool isStandbyModeControlAvailable() const override { return true; }
     bool clientInfoAvailableInFdInfo() const override { return false; }
     bool isGroupEngineInterfaceAvailable() const override { return true; }
     std::string getEngineBasePath(uint32_t subDeviceId) const override;
@@ -406,6 +409,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     std::string getTemperatureEmergencyFileName() const override;
+    bool isStandbyModeControlAvailable() const override { return false; }
     bool clientInfoAvailableInFdInfo() const override { return true; }
     bool isGroupEngineInterfaceAvailable() const override { return true; }
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,

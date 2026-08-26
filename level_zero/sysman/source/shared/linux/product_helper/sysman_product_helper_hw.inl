@@ -27,8 +27,8 @@
 namespace L0 {
 namespace Sysman {
 
-inline constexpr std::string_view standbyPowerControlDefault("auto");
-inline constexpr std::string_view standbyPowerControlNever("on");
+inline constexpr int standbyModeRc6Default = 1;
+inline constexpr int standbyModeRc6Never = 0;
 
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_hw.inl"
 
@@ -415,34 +415,51 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) {
+    return pSysmanKmdInterface->isStandbyModeControlAvailable();
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isSetStandbyModeSupported() {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 std::string SysmanProductHelperHw<gfxProduct>::getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) {
-    return pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, subDeviceId, false);
+    const std::string baseDir = pSysmanKmdInterface->getBasePath(subDeviceId);
+    bool baseDirectoryExists = false;
+
+    if (pSysfsAccess->directoryExists(std::move(baseDir))) {
+        baseDirectoryExists = true;
+    }
+
+    return pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, subDeviceId, baseDirectoryExists);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t &mode) {
-    std::string currentMode;
+    int currentMode = -1;
     ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, standbyModeFile.c_str(), result);
         return result;
     }
-    if (standbyPowerControlDefault == currentMode) {
+    if (standbyModeRc6Default == currentMode) {
         mode = ZES_STANDBY_PROMO_MODE_DEFAULT;
-    } else if (standbyPowerControlNever == currentMode) {
+    } else if (standbyModeRc6Never == currentMode) {
         mode = ZES_STANDBY_PROMO_MODE_NEVER;
     } else {
         result = ZE_RESULT_ERROR_UNKNOWN;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <unknown or internal error occurred> <currentMode: %s & result: 0x%x>\n", NEO_FUNCTION_NAME, currentMode.c_str(), result);
+                     "error@<%s> <unknown or internal error occurred> <currentMode: %d & result: 0x%x>\n", NEO_FUNCTION_NAME, currentMode, result);
     }
     return result;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::setStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t mode) {
-    return pSysfsAccess->write(standbyModeFile, (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) ? standbyPowerControlDefault : standbyPowerControlNever);
+    return pSysfsAccess->write(standbyModeFile, (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) ? standbyModeRc6Default : standbyModeRc6Never);
 }
 
 template <PRODUCT_FAMILY gfxProduct>

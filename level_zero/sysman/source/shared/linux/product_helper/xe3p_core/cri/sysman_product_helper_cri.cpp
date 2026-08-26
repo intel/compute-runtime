@@ -38,6 +38,10 @@ constexpr static uint32_t maxVrTemperatureSensorCount = 4;
 constexpr static uint32_t temperatureNotAvailable = 0xFFFFFFFF;
 const std::string throttleReasonPath = "freq0/throttle/";
 
+constexpr static std::string_view standbyPowerControlDefault("auto");
+constexpr static std::string_view standbyPowerControlNever("on");
+static const std::string standbyPowerControlFile("device/power/control");
+
 // XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
 // This vector defines the predefined value for each integer represented by the index of the vector.
 static const std::vector<double> indexToXtalClockFrequencyMap = {24, 19.2, 38.4, 25};
@@ -1329,6 +1333,47 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getDriverVersion(char (&driverVer
     const std::string versionString = std::to_string(version);
     strncpy_s(driverVersion, ZES_STRING_PROPERTY_SIZE, versionString.c_str(), versionString.size());
     return ZE_RESULT_SUCCESS;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) {
+    return true;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isSetStandbyModeSupported() {
+    return true;
+}
+
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) {
+    return standbyPowerControlFile;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t &mode) {
+    std::string currentMode;
+    ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
+    if (ZE_RESULT_SUCCESS != result) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, standbyModeFile.c_str(), result);
+        return result;
+    }
+    if (standbyPowerControlDefault == currentMode) {
+        mode = ZES_STANDBY_PROMO_MODE_DEFAULT;
+    } else if (standbyPowerControlNever == currentMode) {
+        mode = ZES_STANDBY_PROMO_MODE_NEVER;
+    } else {
+        result = ZE_RESULT_ERROR_UNKNOWN;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <unknown or internal error occurred> <currentMode: %s & result: 0x%x>\n", NEO_FUNCTION_NAME, currentMode.c_str(), result);
+    }
+    return result;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::setStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t mode) {
+    return pSysfsAccess->write(standbyModeFile, (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) ? standbyPowerControlDefault : standbyPowerControlNever);
 }
 
 template class SysmanProductHelperHw<gfxProduct>;
