@@ -2637,7 +2637,6 @@ TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhen
     EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
     EXPECT_EQ(20000, NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.get());
     EXPECT_EQ(12000, NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get());
-    EXPECT_FALSE(NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.get());
     EXPECT_EQ(750000, NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWaitTimeoutNanoseconds.get());
 }
 
@@ -5177,7 +5176,6 @@ HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndShortFiniteTimeoutWhenHo
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
     NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
-    NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.set(true);
 
     neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
@@ -5207,46 +5205,6 @@ HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndShortFiniteTimeoutWhenHo
     EXPECT_TRUE(secondaryCsrPtr->waitForTaskCountWithKmdNotifyInputParams.empty());
 }
 
-HWTEST_F(EventContextGroupTests, givenDisabledFiniteTimeoutKmdWaitAndLongFiniteTimeoutWhenHostSynchronizeRequiresCacheFlushThenBoundedKmdWaitIsNotUsed) {
-    if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
-        GTEST_SKIP();
-    }
-
-    if (!event->isDcFlushAllowed) {
-        GTEST_SKIP();
-    }
-
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
-    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
-    NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.set(false);
-    NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.set(0);
-
-    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-
-    auto secondaryCsr = std::make_unique<KmdWaitTrackingCsr<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
-    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
-    secondaryCsr->setupContext(osContext);
-    secondaryCsr->initializeResources(device->getDevicePreemptionMode());
-    secondaryCsr->taskCount = 1;
-    secondaryCsr->latestFlushedTaskCount = 0;
-    secondaryCsr->flushStamp->setStamp(0);
-
-    *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_INITIAL;
-    event->setCsrForCacheFlush(secondaryCsr.get());
-    event->setDualCopyOffload(true);
-
-    constexpr uint64_t timeoutNanoseconds = 5000000u;
-    auto result = event->hostSynchronize(timeoutNanoseconds);
-
-    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
-    EXPECT_TRUE(secondaryCsr->boundedKmdWaitTimeouts.empty());
-    EXPECT_TRUE(secondaryCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
-}
-
 HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndLongFiniteTimeoutWhenHostSynchronizeRequiresCacheFlushThenBoundedKmdWaitIsUsed) {
     if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
         GTEST_SKIP();
@@ -5259,7 +5217,6 @@ HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndLongFiniteTimeoutWhenHos
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
     NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
-    NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.set(true);
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.set(20000);
 
     neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();

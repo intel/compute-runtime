@@ -365,7 +365,6 @@ DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizePollMicroseconds, 750, "Powe
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeSleepMicroseconds, 50, "Power/CPU efficiency mode for zeEventHostSynchronize: sleep phase duration in microseconds after initial active polling")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds, 20000, "Power/CPU efficiency mode for zeEventHostSynchronize: minimum finite timeout eligible for wait strategy, also used as final active polling window before deadline")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeKmdWaitInitialPollMicroseconds, 12000, "Initial active polling duration before zeEventHostSynchronize may use KMD wait for cache-flush-required host synchronization")
-DECLARE_DEBUG_VARIABLE(bool, EventHostSynchronizeKmdWaitFiniteTimeout, false, "Enable Windows KMD wait for finite zeEventHostSynchronize timeouts when EventHostSynchronizeWaitStrategy is 3")
 DECLARE_DEBUG_VARIABLE(bool, EventHostSynchronizeLinuxUserFenceKmdWait, true, "Enable Linux DRM user-fence KMD wait for long infinite zeEventHostSynchronize when EventHostSynchronizeWaitStrategy is 3")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeLinuxUserFenceKmdWaitTimeoutNanoseconds, 750000, "Timeout in nanoseconds for each Linux DRM user-fence KMD wait in zeEventHostSynchronize when EventHostSynchronizeLinuxUserFenceKmdWait is enabled. -1: infinite")
 

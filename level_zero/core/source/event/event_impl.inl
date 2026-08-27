@@ -967,7 +967,6 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     const bool cacheFlushRequiredForHostSync = this->isCacheFlushRequiredForHostSync();
     const bool secondaryContextsSupported = this->device->getGfxCoreHelper().areSecondaryContextsSupported();
     const bool waitForTaskCountUsingKmd = (NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get() == 3) &&
-                                          ((timeout == std::numeric_limits<uint64_t>::max()) || NEO::debugManager.flags.EventHostSynchronizeKmdWaitFiniteTimeout.get()) &&
                                           cacheFlushRequiredForHostSync &&
                                           EventHostSynchronize::isNativeWddm(*csrForCacheFlush) &&
                                           neoDevice->getHardwareInfo().capabilityTable.isIntegratedDevice;
