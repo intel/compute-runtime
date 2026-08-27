@@ -100,3 +100,12 @@ inline constexpr double defaultProfilingTimerResolution = 83.333;
 inline constexpr uint64_t nsecPerSec = 1000000000ull;
 inline constexpr uint32_t maxAllowedEnvVariableSize = 4096u;
 } // namespace CommonConstants
+
+namespace DeviceVectorWidthConstants {
+inline constexpr uint32_t charWidth = 16u;
+inline constexpr uint32_t shortWidth = 8u;
+inline constexpr uint32_t intWidth = 4u;
+inline constexpr uint32_t longWidth = 1u;
+inline constexpr uint32_t floatWidth = 1u;
+inline constexpr uint32_t halfWidth = 8u;
+} // namespace DeviceVectorWidthConstants

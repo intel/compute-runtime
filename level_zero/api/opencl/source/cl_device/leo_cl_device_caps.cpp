@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -217,18 +218,18 @@ void ClDevice::initializeCaps() {
         deviceInfo.partitionAffinityDomain = 0;
     }
     deviceInfo.partitionType[0] = 0;
-    deviceInfo.preferredVectorWidthChar = gfxCoreHelper.getPreferredVectorWidthChar(simdSizeUsed);
-    deviceInfo.preferredVectorWidthShort = gfxCoreHelper.getPreferredVectorWidthShort(simdSizeUsed);
-    deviceInfo.preferredVectorWidthInt = gfxCoreHelper.getPreferredVectorWidthInt(simdSizeUsed);
-    deviceInfo.preferredVectorWidthLong = gfxCoreHelper.getPreferredVectorWidthLong(simdSizeUsed);
-    deviceInfo.preferredVectorWidthFloat = gfxCoreHelper.getPreferredVectorWidthFloat(simdSizeUsed);
-    deviceInfo.preferredVectorWidthHalf = gfxCoreHelper.getPreferredVectorWidthHalf(simdSizeUsed);
-    deviceInfo.nativeVectorWidthChar = gfxCoreHelper.getNativeVectorWidthChar(simdSizeUsed);
-    deviceInfo.nativeVectorWidthShort = gfxCoreHelper.getNativeVectorWidthShort(simdSizeUsed);
-    deviceInfo.nativeVectorWidthInt = gfxCoreHelper.getNativeVectorWidthInt(simdSizeUsed);
-    deviceInfo.nativeVectorWidthLong = gfxCoreHelper.getNativeVectorWidthLong(simdSizeUsed);
-    deviceInfo.nativeVectorWidthFloat = gfxCoreHelper.getNativeVectorWidthFloat(simdSizeUsed);
-    deviceInfo.nativeVectorWidthHalf = gfxCoreHelper.getNativeVectorWidthHalf(simdSizeUsed);
+    deviceInfo.preferredVectorWidthChar = DeviceVectorWidthConstants::charWidth;
+    deviceInfo.preferredVectorWidthShort = DeviceVectorWidthConstants::shortWidth;
+    deviceInfo.preferredVectorWidthInt = DeviceVectorWidthConstants::intWidth;
+    deviceInfo.preferredVectorWidthLong = DeviceVectorWidthConstants::longWidth;
+    deviceInfo.preferredVectorWidthFloat = DeviceVectorWidthConstants::floatWidth;
+    deviceInfo.preferredVectorWidthHalf = DeviceVectorWidthConstants::halfWidth;
+    deviceInfo.nativeVectorWidthChar = DeviceVectorWidthConstants::charWidth;
+    deviceInfo.nativeVectorWidthShort = DeviceVectorWidthConstants::shortWidth;
+    deviceInfo.nativeVectorWidthInt = DeviceVectorWidthConstants::intWidth;
+    deviceInfo.nativeVectorWidthLong = DeviceVectorWidthConstants::longWidth;
+    deviceInfo.nativeVectorWidthFloat = DeviceVectorWidthConstants::floatWidth;
+    deviceInfo.nativeVectorWidthHalf = DeviceVectorWidthConstants::halfWidth;
     deviceInfo.maxReadWriteImageArgs = hwInfo.capabilityTable.supportsImages ? 128 : 0;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
 

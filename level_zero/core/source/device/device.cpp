@@ -904,18 +904,18 @@ ze_result_t Device::getVectorWidthPropertiesExt(uint32_t *pCount, ze_device_vect
     auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
     auto vectorWidthSize = gfxCoreHelper.getMinimalSIMDSize();
     pVectorWidthProperties[0].vector_width_size = vectorWidthSize;
-    pVectorWidthProperties[0].preferred_vector_width_char = gfxCoreHelper.getPreferredVectorWidthChar(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_short = gfxCoreHelper.getPreferredVectorWidthShort(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_int = gfxCoreHelper.getPreferredVectorWidthInt(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_long = gfxCoreHelper.getPreferredVectorWidthLong(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_float = gfxCoreHelper.getPreferredVectorWidthFloat(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_half = gfxCoreHelper.getPreferredVectorWidthHalf(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_char = gfxCoreHelper.getNativeVectorWidthChar(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_short = gfxCoreHelper.getNativeVectorWidthShort(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_int = gfxCoreHelper.getNativeVectorWidthInt(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_long = gfxCoreHelper.getNativeVectorWidthLong(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_float = gfxCoreHelper.getNativeVectorWidthFloat(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_half = gfxCoreHelper.getNativeVectorWidthHalf(vectorWidthSize);
+    pVectorWidthProperties[0].preferred_vector_width_char = DeviceVectorWidthConstants::charWidth;
+    pVectorWidthProperties[0].preferred_vector_width_short = DeviceVectorWidthConstants::shortWidth;
+    pVectorWidthProperties[0].preferred_vector_width_int = DeviceVectorWidthConstants::intWidth;
+    pVectorWidthProperties[0].preferred_vector_width_long = DeviceVectorWidthConstants::longWidth;
+    pVectorWidthProperties[0].preferred_vector_width_float = DeviceVectorWidthConstants::floatWidth;
+    pVectorWidthProperties[0].preferred_vector_width_half = DeviceVectorWidthConstants::halfWidth;
+    pVectorWidthProperties[0].native_vector_width_char = DeviceVectorWidthConstants::charWidth;
+    pVectorWidthProperties[0].native_vector_width_short = DeviceVectorWidthConstants::shortWidth;
+    pVectorWidthProperties[0].native_vector_width_int = DeviceVectorWidthConstants::intWidth;
+    pVectorWidthProperties[0].native_vector_width_long = DeviceVectorWidthConstants::longWidth;
+    pVectorWidthProperties[0].native_vector_width_float = DeviceVectorWidthConstants::floatWidth;
+    pVectorWidthProperties[0].native_vector_width_half = DeviceVectorWidthConstants::halfWidth;
 
     return ZE_RESULT_SUCCESS;
 }
