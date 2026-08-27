@@ -12,7 +12,6 @@
 
 #include <atomic>
 #include <memory>
-#include <type_traits>
 
 namespace NEO {
 
@@ -104,34 +103,39 @@ class IFList : NEO::NonCopyableAndNonMovableClass {
         this->cleanup();
     }
 
-    template <bool c = threadSafe>
-    typename std::enable_if<c, void>::type pushFrontOne(NodeObjectType &node) {
+    template <bool listIsThreadSafe = threadSafe>
+        requires(listIsThreadSafe)
+    void pushFrontOne(NodeObjectType &node) {
         node.next = head;
         compareExchangeHead(node.next, &node);
     }
 
-    template <bool c = threadSafe>
-    typename std::enable_if<c, NodeObjectType *>::type detachNodes() {
+    template <bool listIsThreadSafe = threadSafe>
+        requires(listIsThreadSafe)
+    NodeObjectType *detachNodes() {
         NodeObjectType *rest = head;
         compareExchangeHead(rest, nullptr);
         return rest;
     }
 
-    template <bool c = threadSafe>
-    typename std::enable_if<!c, void>::type pushFrontOne(NodeObjectType &node) {
+    template <bool listIsThreadSafe = threadSafe>
+        requires(!listIsThreadSafe)
+    void pushFrontOne(NodeObjectType &node) {
         node.next = head;
         head = &node;
     }
 
-    template <bool c = threadSafe>
-    typename std::enable_if<!c, NodeObjectType *>::type detachNodes() {
+    template <bool listIsThreadSafe = threadSafe>
+        requires(!listIsThreadSafe)
+    NodeObjectType *detachNodes() {
         NodeObjectType *rest = head;
         head = nullptr;
         return rest;
     }
 
-    template <bool c = threadSafe>
-    typename std::enable_if<!c, void>::type splice(NodeObjectType &nodes) {
+    template <bool listIsThreadSafe = threadSafe>
+        requires(!listIsThreadSafe)
+    void splice(NodeObjectType &nodes) {
         if (head == nullptr) {
             head = &nodes;
         } else {
@@ -155,18 +159,21 @@ class IFList : NEO::NonCopyableAndNonMovableClass {
     }
 
   protected:
-    template <bool c = ownsNodes>
-    typename std::enable_if<c, void>::type cleanup() {
+    template <bool listOwnsNodes = ownsNodes>
+        requires(listOwnsNodes)
+    void cleanup() {
         deleteAll();
     }
 
-    template <bool c = ownsNodes>
-    typename std::enable_if<!c, void>::type cleanup() {
+    template <bool listOwnsNodes = ownsNodes>
+        requires(!listOwnsNodes)
+    void cleanup() {
         ;
     }
 
-    template <bool c = threadSafe>
-    typename std::enable_if<c, void>::type compareExchangeHead(NodeObjectType *&expected, NodeObjectType *desired) {
+    template <bool listIsThreadSafe = threadSafe>
+        requires(listIsThreadSafe)
+    void compareExchangeHead(NodeObjectType *&expected, NodeObjectType *desired) {
         while (!NEO::MultiThreadHelpers::atomicCompareExchangeWeakSpin(head, expected, desired)) {
             ;
         }

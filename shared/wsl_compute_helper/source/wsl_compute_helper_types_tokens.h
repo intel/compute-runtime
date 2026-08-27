@@ -187,7 +187,8 @@ static_assert(std::is_standard_layout_v<TokenPointer>, "");
 static_assert(sizeof(TokenPointer) == sizeof(TokenQword), "");
 
 template <typename T>
-inline std::enable_if_t<false == std::is_pointer_v<T>, T> readTokValue(const TokenHeader &token) {
+    requires(false == std::is_pointer_v<T>)
+inline T readTokValue(const TokenHeader &token) {
     T ret = {};
     switch (token.valueDwordCount) {
     default:
@@ -206,7 +207,8 @@ inline std::enable_if_t<false == std::is_pointer_v<T>, T> readTokValue(const Tok
     return ret;
 }
 template <typename T>
-inline std::enable_if_t<std::is_pointer_v<T>, T> readTokValue(const TokenHeader &token) {
+    requires(std::is_pointer_v<T>)
+inline T readTokValue(const TokenHeader &token) {
     T ret = {};
     switch (token.valueDwordCount) {
     default:

@@ -101,7 +101,8 @@ struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory
     };
 
     template <typename FamilyType, bool parseCommands>
-    typename std::enable_if<false == parseCommands, void>::type enqueueKernel(Kernel *inputKernel = nullptr) {
+        requires(false == parseCommands)
+    void enqueueKernel(Kernel *inputKernel = nullptr) {
         cl_uint workDim = 1;
         size_t globalWorkOffset[3] = {0, 0, 0};
 
@@ -131,7 +132,8 @@ struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory
     }
 
     template <typename FamilyType, bool parseCommands>
-    typename std::enable_if<parseCommands, void>::type enqueueKernel(Kernel *inputKernel = nullptr) {
+        requires(parseCommands)
+    void enqueueKernel(Kernel *inputKernel = nullptr) {
         enqueueKernel<FamilyType, false>(inputKernel);
 
         this->template parseCommands<FamilyType>(*pCmdQ);

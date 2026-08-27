@@ -257,8 +257,8 @@ class SVMAllocsManager {
 
     void setUnifiedAllocationProperties(GraphicsAllocation *allocation, const SvmAllocationProperties &svmProperties);
 
-    template <typename T,
-              std::enable_if_t<std::is_same_v<T, void> || std::is_same_v<T, const void>, int> = 0>
+    template <typename T>
+        requires(std::is_same_v<T, void> || std::is_same_v<T, const void>)
     SvmAllocationData *getSVMAlloc(T *ptr) {
         ContainerReadLockType lock{};
 
