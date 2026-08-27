@@ -111,7 +111,7 @@ bool ProductHelperHw<gfxProduct>::isSharingWith3dOrMediaAllowed() const {
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
+uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
     auto adjustedMaxThreadsPerThreadGroup = maxThreadsPerThreadGroup;
     if (grfCount == 512) {
         adjustedMaxThreadsPerThreadGroup = 32u;

@@ -206,7 +206,7 @@ CRITEST_F(CriProductHelper, givenGrfCount512WhenCallAdjustMaxThreadsPerThreadGro
     uint32_t expectedMaxThreadsPerThreadGroup = 32u;
     std::array<uint32_t, 2> values = {32, 16};
     for (auto simt : values) {
-        EXPECT_EQ(expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, simt, 512));
+        EXPECT_EQ(expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(*defaultHwInfo, threadsPerThreadGroup, simt, 512));
     }
 }
 
@@ -230,7 +230,7 @@ CRITEST_F(CriProductHelper, givenGrfCount160Or192WhenCallAdjustMaxThreadsPerThre
                                                      {16u, 256u, threadsPerThreadGroup},
                                                      {32u, 256u, threadsPerThreadGroup}}};
     for (const auto &testCase : testCases) {
-        EXPECT_EQ(testCase.expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, testCase.simt, testCase.grfCount));
+        EXPECT_EQ(testCase.expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(*defaultHwInfo, threadsPerThreadGroup, testCase.simt, testCase.grfCount));
     }
 }
 

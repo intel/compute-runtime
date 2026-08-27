@@ -27,7 +27,7 @@ HWTEST2_F(GfxCoreHelperXe3AndLaterTests, givenVariousValuesAndXe3AndLaterPlatfor
                                                                    {160, 6},
                                                                    {192, 5},
                                                                    {256, 4},
-                                                                   {512, 1}}};
+                                                                   {512, 2}}};
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
@@ -49,7 +49,7 @@ HWTEST2_F(GfxCoreHelperXe3AndLaterTests, givenVariousValuesAndXe3AndLaterPlatfor
                                                                    {160, 6},
                                                                    {192, 5},
                                                                    {256, 4},
-                                                                   {512, 1}}};
+                                                                   {512, 2}}};
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {

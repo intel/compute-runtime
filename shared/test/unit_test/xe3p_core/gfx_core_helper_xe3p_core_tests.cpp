@@ -1040,7 +1040,7 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenGrfCount512WhenHeaplessModeDisab
 
     // adjust is not done
     for (auto simt : values) {
-        EXPECT_EQ(threadsPerThreadGroup, productHelper.adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, simt, 512));
+        EXPECT_EQ(threadsPerThreadGroup, productHelper.adjustMaxThreadsPerThreadGroup(*defaultHwInfo, threadsPerThreadGroup, simt, 512));
     }
 }
 

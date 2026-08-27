@@ -143,6 +143,30 @@ NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCac
     EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
 }
 
+NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCallingAdjustMaxThreadsPerThreadGroupThenCorrectValueIsReturned) {
+    uint32_t simt = 32;
+    uint32_t maxThreadsPerThreadGroup = 64;
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.ipVersion.value = AOT::NVL_P_B0;
+
+    EXPECT_EQ(16u, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 448));
+    EXPECT_EQ(24u, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 320));
+    EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 256));
+}
+
+NVLPTEST_F(NvlProductHelper, givenNvlPA0WhenCallingAdjustMaxThreadsPerThreadGroupThenValueIsNotAdjusted) {
+    uint32_t simt = 32;
+    uint32_t maxThreadsPerThreadGroup = 64;
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.ipVersion.value = AOT::NVL_P_A0;
+
+    EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 448));
+    EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 320));
+    EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 256));
+}
+
 NVLPTEST_F(NvlProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
     EXPECT_EQ(RTASDeviceFormat::version3, productHelper->getSupportedRtasFormat());
 }
