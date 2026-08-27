@@ -16,6 +16,15 @@ template <typename GfxFamily>
 concept GfxFamilyWithSBA = requires() {
     typename GfxFamily::STATE_BASE_ADDRESS;
 };
+
+template <typename GfxFamily>
+inline bool isStateBaseAddressProgrammingEnabled() {
+    if constexpr (requires { GfxFamily::isStateBaseAddressProgrammingEnabled(); }) {
+        return GfxFamily::isStateBaseAddressProgrammingEnabled();
+    }
+    return true;
+}
+
 template <typename GfxFamily>
 struct StateBaseAddressTypeHelper;
 

@@ -372,7 +372,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForHeaplessPrologue(Device 
 
     size_t size = 0u;
     size += getCmdSizeForPrologue();
-    size += StateBaseAddressHelper<GfxFamily>::getSbaCmdSize();
+    if (isStateBaseAddressProgrammingEnabled<GfxFamily>()) {
+        size += StateBaseAddressHelper<GfxFamily>::getSbaCmdSize();
+    }
     size += EncodeComputeMode<GfxFamily>::getSizeForComputeMode();
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
