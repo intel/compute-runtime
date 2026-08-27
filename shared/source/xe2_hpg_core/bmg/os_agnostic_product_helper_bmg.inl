@@ -49,6 +49,12 @@ void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize)
 }
 
 template <>
+uint32_t ProductHelperHw<gfxProduct>::getDefaultMidthreadPreemptionDelayTimer() const {
+    // MTP_TIMER_VAL_150 - give threads about to exit 150 us to retire instead of saving their state
+    return 3u;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::checkBcsForDirectSubmissionStop() const {
     return true;
 }

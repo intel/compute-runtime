@@ -219,12 +219,15 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
+    // set unconditionally from the product default, so it is present in every expected mask2 below
+    const uint32_t midthreadPreemptionDelayTimerMask = (rootDeviceEnvironment.getHelper<ProductHelper>().getDefaultMidthreadPreemptionDelayTimer() != 0u) ? 0b111u : 0u;
+
     StateComputeModeProperties properties;
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, rootDeviceEnvironment);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMask1());
-    EXPECT_EQ(0u, pScm->getMask2());
+    EXPECT_EQ(midthreadPreemptionDelayTimerMask, pScm->getMask2());
     EXPECT_FALSE(pScm->getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
     EXPECT_FALSE(pScm->getLargeGrfMode());
@@ -236,7 +239,7 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMask1());
-    EXPECT_EQ(0u, pScm->getMask2());
+    EXPECT_EQ(midthreadPreemptionDelayTimerMask, pScm->getMask2());
     EXPECT_FALSE(pScm->getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
     EXPECT_FALSE(pScm->getLargeGrfMode());
@@ -249,7 +252,7 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     auto expectedMask = FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask | FamilyType::stateComputeModeLargeGrfModeMask;
     EXPECT_EQ(expectedMask, pScm->getMask1());
-    EXPECT_EQ(FamilyType::stateComputeModeMemoryAllocationForScratchAndMidthreadPreemptionBuffersMask, pScm->getMask2());
+    EXPECT_EQ(FamilyType::stateComputeModeMemoryAllocationForScratchAndMidthreadPreemptionBuffersMask | midthreadPreemptionDelayTimerMask, pScm->getMask2());
     EXPECT_TRUE(pScm->getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, pScm->getEuThreadSchedulingMode());
     EXPECT_TRUE(pScm->getLargeGrfMode());

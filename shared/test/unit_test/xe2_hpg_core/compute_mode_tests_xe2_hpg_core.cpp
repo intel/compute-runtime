@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_base.h"
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -27,6 +28,19 @@ XE2_HPG_CORETEST_F(ThreadArbitrationXe2HpgCore, givenBmgWhenCallingGetDefaultThr
 
 using ComputeModeRequirementsXe2HpgCore = ComputeModeRequirements;
 
+template <typename FamilyType>
+void applyProductDefaultMidthreadPreemptionDelayTimer(typename FamilyType::STATE_COMPUTE_MODE &scmCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename FamilyType::STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_DELAY_TIMER;
+
+    const auto defaultTimer = rootDeviceEnvironment.getHelper<ProductHelper>().getDefaultMidthreadPreemptionDelayTimer();
+    if (defaultTimer == 0u) {
+        return;
+    }
+
+    scmCmd.setMidthreadPreemptionDelayTimer(static_cast<MIDTHREAD_PREEMPTION_DELAY_TIMER>(defaultTimer));
+    scmCmd.setMask2(scmCmd.getMask2() | 0b111u);
+}
+
 XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenNewRequiredThreadArbitrationPolicyWhenComputeModeIsProgrammedThenStateComputeIsProgrammedAgain) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
@@ -41,6 +55,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenNewRequiredThreadArbi
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     expectedScmCmd.setEuThreadSchedulingMode(expectedEuThreadSchedulingMode);
+    applyProductDefaultMidthreadPreemptionDelayTimer<FamilyType>(expectedScmCmd, device->getRootDeviceEnvironment());
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
@@ -211,6 +226,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
     expectedScmCmd.setLargeGrfMode(true);
     expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
+    applyProductDefaultMidthreadPreemptionDelayTimer<FamilyType>(expectedScmCmd, device->getRootDeviceEnvironment());
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, true, 256u);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
@@ -229,6 +245,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
     expectedScmCmd.setLargeGrfMode(false);
     expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
+    applyProductDefaultMidthreadPreemptionDelayTimer<FamilyType>(expectedScmCmd, device->getRootDeviceEnvironment());
     scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
@@ -245,6 +262,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
     expectedScmCmd.setLargeGrfMode(false);
     expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
+    applyProductDefaultMidthreadPreemptionDelayTimer<FamilyType>(expectedScmCmd, device->getRootDeviceEnvironment());
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, true, 127u);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
@@ -264,6 +282,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(true);
+    applyProductDefaultMidthreadPreemptionDelayTimer<FamilyType>(expectedScmCmd, device->getRootDeviceEnvironment());
     auto expectedBitsMask = FamilyType::stateComputeModeLargeGrfModeMask;
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, 256u);

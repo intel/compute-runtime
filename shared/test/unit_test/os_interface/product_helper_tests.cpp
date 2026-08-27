@@ -1354,6 +1354,10 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingPreferredWorkgroupCount
     EXPECT_EQ(0u, productHelper->getPreferredWorkgroupCountPerSubslice());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingDefaultMidthreadPreemptionDelayTimerThenZeroReturned) {
+    EXPECT_EQ(0u, productHelper->getDefaultMidthreadPreemptionDelayTimer());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }

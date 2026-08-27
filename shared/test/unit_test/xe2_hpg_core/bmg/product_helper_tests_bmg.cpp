@@ -39,6 +39,14 @@ BMGTEST_F(BmgProductHelper, givenBmgProductHelperWhenIsInitBuiltinAsyncSupported
     EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }
 
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenGettingDefaultMidthreadPreemptionDelayTimerThen150UsEncodingIsReturned) {
+    using STATE_COMPUTE_MODE = typename BMG::STATE_COMPUTE_MODE;
+    using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_DELAY_TIMER;
+
+    EXPECT_EQ(static_cast<uint32_t>(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150),
+              productHelper->getDefaultMidthreadPreemptionDelayTimer());
+}
+
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
     EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }

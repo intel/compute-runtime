@@ -146,20 +146,26 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32
 }
 
 template <typename StateComputeModeType>
-void appendMidthreadPreemptionDelayTimerOverride(StateComputeModeType &stateComputeMode, uint32_t &maskBits2) {
+void appendMidthreadPreemptionDelayTimer(StateComputeModeType &stateComputeMode, uint32_t &maskBits2, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename StateComputeModeType::MIDTHREAD_PREEMPTION_DELAY_TIMER;
 
     // STATE_COMPUTE_MODE DWORD 2, bits [2:0] - the field mask is also its highest encoding
     constexpr uint32_t midthreadPreemptionDelayTimerMask = 0b111u;
 
+    uint32_t timer = rootDeviceEnvironment.getHelper<ProductHelper>().getDefaultMidthreadPreemptionDelayTimer();
+
     const int32_t requestedTimer = debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.get();
-    if ((requestedTimer < 0) || (requestedTimer > static_cast<int32_t>(midthreadPreemptionDelayTimerMask))) {
+    if ((requestedTimer >= 0) && (requestedTimer <= static_cast<int32_t>(midthreadPreemptionDelayTimerMask))) {
+        timer = static_cast<uint32_t>(requestedTimer);
+    }
+
+    if (timer == 0) {
         return;
     }
 
-    DEBUG_BREAK_IF(requestedTimer > MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150);
+    DEBUG_BREAK_IF(timer > MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150);
 
-    stateComputeMode.setMidthreadPreemptionDelayTimer(static_cast<MIDTHREAD_PREEMPTION_DELAY_TIMER>(requestedTimer));
+    stateComputeMode.setMidthreadPreemptionDelayTimer(static_cast<MIDTHREAD_PREEMPTION_DELAY_TIMER>(timer));
     maskBits2 |= midthreadPreemptionDelayTimerMask;
 }
 

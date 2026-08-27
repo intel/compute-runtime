@@ -10,9 +10,11 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -145,13 +147,18 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenDebugFlagWhenProgrammingState
         return *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
     };
 
-    for (auto outsideField : {-1, -2, 8}) {
-        // not representable in the 3-bit field - neither the field nor its mask bits are touched
+    debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.set(-1);
+    auto &unsetFlagCmd = programStateComputeMode();
+    const auto productDefaultTimer = unsetFlagCmd.getMidthreadPreemptionDelayTimer();
+    const auto productDefaultMaskBits = unsetFlagCmd.getMask2() & midthreadPreemptionDelayTimerMask;
+
+    for (auto outsideField : {-2, 8}) {
+        // not representable in the 3-bit field - the product default is left in place
         debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.set(outsideField);
 
         auto &stateComputeModeCmd = programStateComputeMode();
-        EXPECT_EQ(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
-        EXPECT_EQ(0u, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
+        EXPECT_EQ(productDefaultTimer, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
+        EXPECT_EQ(productDefaultMaskBits, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
     }
 
     const std::array<MIDTHREAD_PREEMPTION_DELAY_TIMER, 4> expectedTimers = {
@@ -163,8 +170,79 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenDebugFlagWhenProgrammingState
     for (uint32_t flagValue = 0; flagValue < expectedTimers.size(); flagValue++) {
         debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.set(static_cast<int32_t>(flagValue));
 
+        // the immediate encoding is the hardware default, so it is selected by leaving the field alone
+        const uint32_t expectedMaskBits = (flagValue == 0) ? 0u : midthreadPreemptionDelayTimerMask;
+
         auto &stateComputeModeCmd = programStateComputeMode();
         EXPECT_EQ(expectedTimers[flagValue], stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
+        EXPECT_EQ(expectedMaskBits, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
+    }
+}
+
+struct ProductHelperWithMidthreadPreemptionDelayTimer : public NEO::ProductHelperHw<IGFX_UNKNOWN> {
+    uint32_t getDefaultMidthreadPreemptionDelayTimer() const override {
+        return defaultMidthreadPreemptionDelayTimer;
+    }
+
+    uint32_t defaultMidthreadPreemptionDelayTimer = 0u;
+};
+
+HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenProductHelperDefaultWhenProgrammingStateComputeModeThenMidthreadPreemptionDelayTimerIsProgrammed, IsAtLeastXe2HpgCore) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_DELAY_TIMER;
+
+    constexpr uint32_t midthreadPreemptionDelayTimerMask = 0b111u;
+
+    DebugManagerStateRestore restore;
+
+    alignas(STATE_COMPUTE_MODE) uint8_t buffer[sizeof(STATE_COMPUTE_MODE)]{};
+    auto &rootDeviceEnvironment = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
+    RAIIProductHelperFactory<ProductHelperWithMidthreadPreemptionDelayTimer> raii{rootDeviceEnvironment};
+
+    auto programStateComputeMode = [&]() -> STATE_COMPUTE_MODE & {
+        LinearStream linearStream(buffer, sizeof(buffer));
+
+        StreamProperties streamProperties{};
+        streamProperties.initSupport(rootDeviceEnvironment);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
+
+        return *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
+    };
+
+    {
+        // no product default - neither the field nor its mask bits are touched
+        raii.mockProductHelper->defaultMidthreadPreemptionDelayTimer = 0u;
+
+        auto &stateComputeModeCmd = programStateComputeMode();
+        EXPECT_EQ(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
+        EXPECT_EQ(0u, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
+    }
+
+    {
+        raii.mockProductHelper->defaultMidthreadPreemptionDelayTimer = MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150;
+
+        auto &stateComputeModeCmd = programStateComputeMode();
+        EXPECT_EQ(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
+        EXPECT_EQ(midthreadPreemptionDelayTimerMask, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
+    }
+
+    {
+        // the debug key overrides the product default, down to disabling the timer again
+        debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.set(0);
+
+        auto &stateComputeModeCmd = programStateComputeMode();
+        EXPECT_EQ(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
+        EXPECT_EQ(0u, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
+    }
+
+    {
+        // ... and up, over a product default that leaves it disabled
+        raii.mockProductHelper->defaultMidthreadPreemptionDelayTimer = 0u;
+        debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.set(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_100);
+
+        auto &stateComputeModeCmd = programStateComputeMode();
+        EXPECT_EQ(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_100, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
         EXPECT_EQ(midthreadPreemptionDelayTimerMask, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
     }
 }
