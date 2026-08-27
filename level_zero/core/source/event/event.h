@@ -446,6 +446,18 @@ struct Event : _ze_event_handle_t {
 
     virtual bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) = 0;
 
+    static bool isBeingUsedInActiveGraphRecording(const Event *event);
+
+    bool getIsSignalledAsGraphInternalEvent() const {
+        return isSignalledAsGraphInternalEvent;
+    }
+
+    void setIsSignalledAsGraphInternalEvent(bool signalledFromGraph) {
+        isSignalledAsGraphInternalEvent = signalledFromGraph &&
+                                          isCounterBasedExplicitlyEnabled() &&
+                                          !isExternalEvent();
+    }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
@@ -534,6 +546,7 @@ struct Event : _ze_event_handle_t {
     bool heapfullCbEventWithProfiling = false;
     bool externalEvent = false;
     bool isDualCopyOffloadEvent = false;
+    bool isSignalledAsGraphInternalEvent = false;
 };
 
 struct EventPool : _ze_event_pool_handle_t {

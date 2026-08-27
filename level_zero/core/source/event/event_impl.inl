@@ -931,8 +931,12 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout, int64_t timeS
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
-    if (this->getRecordedSignalFrom() != nullptr) {
+    if (Event::isBeingUsedInActiveGraphRecording(this)) {
         return ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED;
+    }
+
+    if (getIsSignalledAsGraphInternalEvent()) {
+        return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
     }
 
     std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};

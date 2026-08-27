@@ -4051,5 +4051,33 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(0, memcmp(&templateSemWait, semWaitCmd, sizeof(MI_SEMAPHORE_WAIT)));
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenGraphInstantiationTargetWhenSwitchingCounterBasedEventThenRestrictionIsTracked) {
+    auto *event = createTestEvent(true, true, false, false, false);
+    ASSERT_TRUE(event->isCounterBasedExplicitlyEnabled());
+    ASSERT_FALSE(event->isExternalEvent());
+    ASSERT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+
+    mutableCommandList->getBase()->setIsGraphInstantiationTarget(true);
+    mutableCommandList->switchCounterBasedEvents(0, 0, event);
+    EXPECT_TRUE(event->getIsSignalledAsGraphInternalEvent());
+
+    mutableCommandList->getBase()->setIsGraphInstantiationTarget(false);
+    mutableCommandList->switchCounterBasedEvents(0, 0, event);
+    EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenGraphInstantiationTargetWhenSwitchingExternalCounterBasedEventThenRestrictionIsNotApplied) {
+    auto *event = createTestEvent(true, true, false, false, true);
+    ASSERT_TRUE(event->isExternalEvent());
+
+    mutableCommandList->getBase()->setIsGraphInstantiationTarget(true);
+    mutableCommandList->switchCounterBasedEvents(0, 0, event);
+    EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+}
+
 } // namespace ult
 } // namespace L0

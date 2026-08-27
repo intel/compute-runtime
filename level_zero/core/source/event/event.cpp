@@ -1115,6 +1115,7 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
 void Event::unsetInOrderExecInfo() {
     resetInOrderTimestampNode(nullptr, 0);
     inOrderExecHelper.unsetInOrderExecInfo();
+    isSignalledAsGraphInternalEvent = false;
 }
 
 void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
@@ -1285,6 +1286,10 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+bool Event::isBeingUsedInActiveGraphRecording(const Event *event) {
+    return nullptr != event->getRecordedSignalFrom();
 }
 
 NEO::InOrderExecEventHelper &Event::getInOrderExecEventHelper() { return inOrderExecHelper; }

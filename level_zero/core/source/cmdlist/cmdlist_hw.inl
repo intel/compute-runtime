@@ -185,6 +185,7 @@ void CommandListCoreFamily<gfxCoreFamily>::assignInOrderExecInfoToEvent(Event *e
     if (!event->isCounterBasedExplicitlyEnabled() && !event->getInOrderExecEventHelper().getEventData()) {
         event->getInOrderExecEventHelper().initializeLocalTempStorage();
     }
+    event->setIsSignalledAsGraphInternalEvent(getIsGraphInstantiationTarget());
     event->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
 }
 

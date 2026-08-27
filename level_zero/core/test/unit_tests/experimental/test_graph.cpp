@@ -2098,6 +2098,151 @@ TEST_F(GraphTestInstantiationTest, givenImmediateOnlyCbEventRecordedIntoGraphWhe
     event->destroy();
 }
 
+struct GraphInternalEventFixture : public GraphFixture {
+    void setUp() {
+        GraphFixture::setUp();
+
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+        ze_command_queue_desc_t queueDesc = {
+            .stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
+            .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER};
+        inOrderCmdList.reset(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        inOrderCmdList->setOrdinal(0);
+
+        module = std::make_unique<Mock<Module>>(device, nullptr);
+        kernel = std::make_unique<Mock<KernelImp>>();
+        kernel->module = module.get();
+    }
+
+    void tearDown() {
+        inOrderCmdList.reset();
+        GraphFixture::tearDown();
+    }
+
+    ze_result_t appendKernelSignalling(ze_event_handle_t eventHandle) {
+        ze_group_count_t groupCount = {1, 1, 1};
+        return zeCommandListAppendLaunchKernel(inOrderCmdList->toHandle(), kernel->toHandle(), &groupCount, eventHandle, 0, nullptr);
+    }
+
+    void captureKernelSignalling(ze_graph_handle_t &graphHandle, ze_event_handle_t eventHandle) {
+        auto cmdListHandle = inOrderCmdList->toHandle();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(eventHandle));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(cmdListHandle, &graphHandle, nullptr));
+    }
+
+    std::unique_ptr<L0::CommandList> inOrderCmdList;
+    std::unique_ptr<Mock<Module>> module;
+    std::unique_ptr<Mock<KernelImp>> kernel;
+};
+
+using GraphInternalEventTest = Test<GraphInternalEventFixture>;
+
+TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledInGraphWhenInstantiatedThenHostSynchronizeAndQueryStatusReportGraphInternalEvent) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto eventHandle = createCounterBasedEvent(context, device, false);
+    auto *event = L0::Event::fromHandle(eventHandle);
+    ASSERT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+    captureKernelSignalling(graphHandle, eventHandle);
+
+    ExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*(srcGraph.get())));
+
+    EXPECT_TRUE(event->getIsSignalledAsGraphInternalEvent());
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, event->hostSynchronize(0));
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, zeEventQueryStatus(eventHandle));
+
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, event->queryStatus(0));
+
+    event->unsetInOrderExecInfo();
+    EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, event->hostSynchronize(0));
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, zeEventQueryStatus(eventHandle));
+
+    srcGraph.reset();
+    event->destroy();
+}
+
+TEST_F(GraphInternalEventTest, givenExternalCbEventSignalledInGraphWhenInstantiatedThenRestrictionIsNotApplied) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto eventHandle = createCounterBasedEvent(context, device, true);
+    auto *event = L0::Event::fromHandle(eventHandle);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+    captureKernelSignalling(graphHandle, eventHandle);
+
+    ExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*(srcGraph.get())));
+
+    EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, event->hostSynchronize(0));
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, zeEventQueryStatus(eventHandle));
+
+    srcGraph.reset();
+    event->destroy();
+}
+
+TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledInGraphWhenReSignalledOutsideAfterInstantiateThenRestrictionIsLifted) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto eventHandle = createCounterBasedEvent(context, device, false);
+    auto *event = L0::Event::fromHandle(eventHandle);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+    captureKernelSignalling(graphHandle, eventHandle);
+
+    ExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*(srcGraph.get())));
+    ASSERT_TRUE(event->getIsSignalledAsGraphInternalEvent());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(eventHandle));
+
+    EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, event->hostSynchronize(0));
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, zeEventQueryStatus(eventHandle));
+
+    srcGraph.reset();
+    event->destroy();
+}
+
+TEST_F(GraphInternalEventTest, givenRegularEventSignalledInGraphWhenInstantiatedThenRestrictionIsNotApplied) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_event_pool_desc_t poolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 1};
+    ze_event_pool_handle_t hPool = nullptr;
+    auto devHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &poolDesc, 1, &devHandle, &hPool));
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
+    ze_event_handle_t eventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(hPool, &eventDesc, &eventHandle));
+    auto *event = L0::Event::fromHandle(eventHandle);
+    ASSERT_FALSE(event->isCounterBasedExplicitlyEnabled());
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+    captureKernelSignalling(graphHandle, eventHandle);
+
+    ExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*(srcGraph.get())));
+
+    EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, event->hostSynchronize(0));
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, zeEventQueryStatus(eventHandle));
+
+    srcGraph.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(hPool));
+}
+
 TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInstantiateToGraphThenRecordExternalCbEvent) {
     GraphsCleanupGuard graphCleanup;
 
@@ -4043,17 +4188,6 @@ TEST_F(GraphTestCaptureRestrictions, GivenNonEmptyGraphWhenBeginCaptureIntoGraph
     L0::zeGraphDestroyExp(graphHandle);
 }
 
-static ze_event_handle_t createCounterBasedEvent(L0::Context *context, L0::Device *device, bool graphExternal) {
-    ze_event_handle_t eventHandle = nullptr;
-    zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
-    if (graphExternal) {
-        eventDesc.flags |= static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
-    }
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
-    return eventHandle;
-}
-
 TEST_F(GraphTestCaptureRestrictions, GivenRecordedEventWhenWaitedOnByNotCapturableCommandListThenCommandListTypeErrorIsReturned) {
     GraphsCleanupGuard graphCleanup;
 
@@ -4196,6 +4330,23 @@ TEST_F(GraphTestCaptureRestrictions, GivenEventSignalledByCapturingCmdlistWhenEv
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(hEvent));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(hPool));
+}
+
+TEST_F(GraphTestCaptureRestrictions, GivenEventSignalledByCapturingCmdlistWhenEventQueryStatusCalledThenGraphCaptureUnsupportedReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto eventHandle = createCounterBasedEvent(context, device, false);
+    auto *event = L0::Event::fromHandle(eventHandle);
+
+    event->setRecordedSignalFrom(immCmdList);
+    EXPECT_TRUE(L0::Event::isBeingUsedInActiveGraphRecording(event));
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED, zeEventQueryStatus(eventHandle));
+
+    event->setRecordedSignalFrom(nullptr);
+    EXPECT_FALSE(L0::Event::isBeingUsedInActiveGraphRecording(event));
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED, zeEventQueryStatus(eventHandle));
+
+    event->destroy();
 }
 
 TEST(GraphTestZeCommandListGetGraphExp, GivenInvalidParametersThenReturnsAppropriateErrorCode) {

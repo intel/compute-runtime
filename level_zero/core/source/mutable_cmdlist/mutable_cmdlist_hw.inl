@@ -567,6 +567,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::reset() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent) {
+    newEvent->setIsSignalledAsGraphInternalEvent(this->getIsGraphInstantiationTarget());
     newEvent->updateInOrderExecState(CommandList::inOrderExecInfo, inOrderExecBaseSignalValue, inOrderAllocationOffset);
 }
 

@@ -9,13 +9,16 @@
 
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/experimental/source/graph/graph.h"
+#include "level_zero/ze_api.h"
 
 using namespace NEO;
 
@@ -28,6 +31,18 @@ struct GraphsCleanupGuard {
         processUsesGraphs.store(false);
     }
 };
+
+inline ze_event_handle_t createCounterBasedEvent(L0::Context *context, L0::Device *device, bool graphExternal) {
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {
+        .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
+        .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE};
+    if (graphExternal) {
+        eventDesc.flags |= static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    return eventHandle;
+}
 
 struct MockGraphCmdListWithContext : Mock<CommandList> {
     using WhiteBox<::L0::CommandList>::cmdListType;
