@@ -3796,8 +3796,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach wait events to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(event, 0, nullptr, waitEventParams);
-    otherCmdlist->appendBarrier(newEvent, 0, nullptr, waitEventParams);
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
+    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams);
     otherCmdlist->close();
 
     // assign them counters
@@ -3922,8 +3922,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach wait events to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(event, 0, nullptr, waitEventParams);
-    otherCmdlist->appendBarrier(newEvent, 0, nullptr, waitEventParams);
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
+    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams);
     otherCmdlist->close();
 
     // assign them counters
@@ -4077,6 +4077,331 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(true);
     mutableCommandList->switchCounterBasedEvents(0, 0, event);
     EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenUnassignedCbEventWhenAppendingKernelWithUnassignedEventAndMutatingIntoAssignedThenCommandIsNoopedAndAfterMutationRestored) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    MI_SEMAPHORE_WAIT noopSemWait;
+    memset(&noopSemWait, 0, sizeof(MI_SEMAPHORE_WAIT));
+
+    MI_LOAD_REGISTER_IMM noopLri;
+    memset(&noopLri, 0, sizeof(MI_LOAD_REGISTER_IMM));
+
+    auto event = createTestEvent(true, false, false, false, false);
+    auto eventHandle = event->toHandle();
+    auto newEvent = createTestEvent(true, false, false, false, false);
+    auto newEventHandle = newEvent->toHandle();
+
+    auto otherCmdlist = createMutableCmdList();
+    // attach new wait event to other command list
+    L0::CmdListWaitEventParameters waitEventParams = {};
+    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams);
+    otherCmdlist->close();
+
+    // mutation point
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event 1 as wait event
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+
+    EXPECT_TRUE(waitEventVar->getDesc().eventValue.noopState);
+
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+    // sem wait is nooped
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    MI_SEMAPHORE_WAIT *semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+    EXPECT_EQ(0, memcmp(&noopSemWait, semWaitCmd, sizeof(MI_SEMAPHORE_WAIT)));
+
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+    MI_LOAD_REGISTER_IMM *lriHighCmd = nullptr;
+    if (this->lriRequired) {
+        ASSERT_EQ(2u, waitEventVar->getLoadRegImmList().size());
+        auto mutableLri = waitEventVar->getLoadRegImmList()[0];
+        auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+        lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+        EXPECT_EQ(0, memcmp(&noopLri, lriCmd, sizeof(MI_LOAD_REGISTER_IMM)));
+
+        auto mutableLriHigh = waitEventVar->getLoadRegImmList()[1];
+        auto mockMutableLriHigh = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLriHigh);
+        lriHighCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLriHigh->loadRegImm);
+        EXPECT_EQ(0, memcmp(&noopLri, lriHighCmd, sizeof(MI_LOAD_REGISTER_IMM)));
+    }
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_FALSE(waitEventVar->getDesc().eventValue.noopState);
+
+    semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(semWaitCmd);
+    ASSERT_NE(nullptr, semWaitCmd);
+
+    auto waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+
+    if (this->lriRequired) {
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(lriCmd);
+        ASSERT_NE(nullptr, lriCmd);
+
+        lriHighCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(lriHighCmd);
+        ASSERT_NE(nullptr, lriHighCmd);
+    }
+
+    // mutate back into noop state
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(waitEventVar->getDesc().eventValue.noopState);
+
+    EXPECT_EQ(0, memcmp(&noopSemWait, semWaitCmd, sizeof(MI_SEMAPHORE_WAIT)));
+    if (this->lriRequired) {
+        EXPECT_EQ(0, memcmp(&noopLri, lriCmd, sizeof(MI_LOAD_REGISTER_IMM)));
+        EXPECT_EQ(0, memcmp(&noopLri, lriHighCmd, sizeof(MI_LOAD_REGISTER_IMM)));
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenAssignedCbEventWhenAppendingKernelWithAssignedEventAndMutatingIntoUnassignedThenCommandIsProgramedAndAfterMutationNooped) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    MI_SEMAPHORE_WAIT noopSemWait;
+    memset(&noopSemWait, 0, sizeof(MI_SEMAPHORE_WAIT));
+
+    MI_LOAD_REGISTER_IMM noopLri;
+    memset(&noopLri, 0, sizeof(MI_LOAD_REGISTER_IMM));
+
+    auto event = createTestEvent(true, false, false, false, false);
+    auto eventHandle = event->toHandle();
+    auto newEvent = createTestEvent(true, false, false, false, false);
+    auto newEventHandle = newEvent->toHandle();
+
+    auto otherCmdlist = createMutableCmdList();
+    // attach appending wait event to other command list
+    L0::CmdListWaitEventParameters waitEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
+    otherCmdlist->close();
+
+    // mutation point
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event 1 as wait event
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+
+    EXPECT_FALSE(waitEventVar->getDesc().eventValue.noopState);
+
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+    // sem wait is nooped
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    MI_SEMAPHORE_WAIT *semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+    ASSERT_NE(nullptr, semWaitCmd);
+
+    auto waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+    MI_LOAD_REGISTER_IMM *lriHighCmd = nullptr;
+    if (this->lriRequired) {
+        ASSERT_EQ(2u, waitEventVar->getLoadRegImmList().size());
+        auto mutableLri = waitEventVar->getLoadRegImmList()[0];
+        auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+        ASSERT_NE(nullptr, lriCmd);
+
+        auto mutableLriHigh = waitEventVar->getLoadRegImmList()[1];
+        auto mockMutableLriHigh = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLriHigh);
+        lriHighCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(mockMutableLriHigh->loadRegImm);
+        ASSERT_NE(nullptr, lriHighCmd);
+    }
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(waitEventVar->getDesc().eventValue.noopState);
+
+    EXPECT_EQ(0, memcmp(&noopSemWait, semWaitCmd, sizeof(MI_SEMAPHORE_WAIT)));
+    if (this->lriRequired) {
+        EXPECT_EQ(0, memcmp(&noopLri, lriCmd, sizeof(MI_LOAD_REGISTER_IMM)));
+        EXPECT_EQ(0, memcmp(&noopLri, lriHighCmd, sizeof(MI_LOAD_REGISTER_IMM)));
+    }
+
+    // mutate back into noop state
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_FALSE(waitEventVar->getDesc().eventValue.noopState);
+
+    semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(semWaitCmd);
+    ASSERT_NE(nullptr, semWaitCmd);
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+
+    if (this->lriRequired) {
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(lriCmd);
+        ASSERT_NE(nullptr, lriCmd);
+        lriHighCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(lriHighCmd);
+        ASSERT_NE(nullptr, lriHighCmd);
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenUnassignedExternalCbEventAndAppendingKernelWithUnassignedEventWhenAssigningExternalAndMutationRefreshThenCommandIsNoopedAndAfterMutationRestored) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    MI_SEMAPHORE_WAIT noopSemWait;
+    memset(&noopSemWait, 0, sizeof(MI_SEMAPHORE_WAIT));
+
+    MI_LOAD_REGISTER_IMM noopLri;
+    memset(&noopLri, 0, sizeof(MI_LOAD_REGISTER_IMM));
+
+    auto event = createTestEvent(true, false, false, false, true);
+    auto eventHandle = event->toHandle();
+
+    // mutation point
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event 1 as wait event
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+
+    EXPECT_TRUE(waitEventVar->getDesc().eventValue.noopState);
+    EXPECT_TRUE(waitEventVar->getDesc().eventValue.patchPreambleNoopState);
+
+    ASSERT_EQ(2u, waitEventVar->getSemWaitList().size());
+    MI_SEMAPHORE_WAIT *semWaitCmdPatchPreamble = nullptr;
+    MI_SEMAPHORE_WAIT *semWaitCmdEvent = nullptr;
+    {
+        auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+        auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+        semWaitCmdPatchPreamble = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+        EXPECT_EQ(0, memcmp(&noopSemWait, semWaitCmdPatchPreamble, sizeof(MI_SEMAPHORE_WAIT)));
+    }
+    {
+        auto mutableSemWait = waitEventVar->getSemWaitList()[1];
+        auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+        semWaitCmdEvent = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+        EXPECT_EQ(0, memcmp(&noopSemWait, semWaitCmdEvent, sizeof(MI_SEMAPHORE_WAIT)));
+    }
+
+    MI_LOAD_REGISTER_IMM *lriCmdPatchPreamble = nullptr;
+    MI_LOAD_REGISTER_IMM *lriHighCmdPatchPreamble = nullptr;
+
+    MI_LOAD_REGISTER_IMM *lriCmdEvent = nullptr;
+    MI_LOAD_REGISTER_IMM *lriHighCmdEvent = nullptr;
+
+    if (this->lriRequired) {
+        ASSERT_EQ(4u, waitEventVar->getLoadRegImmList().size());
+        {
+            auto mutableLri = waitEventVar->getLoadRegImmList()[0];
+            auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+            lriCmdPatchPreamble = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+            EXPECT_EQ(0, memcmp(&noopLri, lriCmdPatchPreamble, sizeof(MI_LOAD_REGISTER_IMM)));
+        }
+        {
+            auto mutableLri = waitEventVar->getLoadRegImmList()[1];
+            auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+            lriHighCmdPatchPreamble = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+            EXPECT_EQ(0, memcmp(&noopLri, lriHighCmdPatchPreamble, sizeof(MI_LOAD_REGISTER_IMM)));
+        }
+        {
+            auto mutableLri = waitEventVar->getLoadRegImmList()[2];
+            auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+            lriCmdEvent = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+            EXPECT_EQ(0, memcmp(&noopLri, lriCmdEvent, sizeof(MI_LOAD_REGISTER_IMM)));
+        }
+        {
+            auto mutableLri = waitEventVar->getLoadRegImmList()[2];
+            auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+            lriHighCmdEvent = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+            EXPECT_EQ(0, memcmp(&noopLri, lriHighCmdEvent, sizeof(MI_LOAD_REGISTER_IMM)));
+        }
+    }
+
+    auto otherCmdlist = createMutableCmdList();
+    // attach new wait event to other command list
+    L0::CmdListWaitEventParameters waitEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
+    otherCmdlist->close();
+
+    uint64_t patchPreambleCounter = 4;
+    uint64_t patchPreambleDeviceGpuAddress = 0xCD000;
+    MockGraphicsAllocation patchPreambleDeviceAllocation(nullptr, patchPreambleDeviceGpuAddress, sizeof(uint64_t));
+    event->getInOrderExecEventHelper().assignPatchPreambleData(patchPreambleCounter, nullptr, 0, nullptr, patchPreambleDeviceGpuAddress, &patchPreambleDeviceAllocation);
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_FALSE(waitEventVar->getDesc().eventValue.noopState);
+    EXPECT_FALSE(waitEventVar->getDesc().eventValue.patchPreambleNoopState);
+
+    semWaitCmdPatchPreamble = genCmdCast<MI_SEMAPHORE_WAIT *>(semWaitCmdPatchPreamble);
+    EXPECT_EQ(patchPreambleDeviceGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdPatchPreamble));
+
+    semWaitCmdEvent = genCmdCast<MI_SEMAPHORE_WAIT *>(semWaitCmdEvent);
+    ASSERT_NE(nullptr, semWaitCmdEvent);
+
+    auto waitAddressEvent = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    EXPECT_EQ(waitAddressEvent, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdEvent));
+
+    if (this->lriRequired) {
+        lriCmdPatchPreamble = genCmdCast<MI_LOAD_REGISTER_IMM *>(lriCmdPatchPreamble);
+        ASSERT_NE(nullptr, lriCmdPatchPreamble);
+
+        lriHighCmdPatchPreamble = genCmdCast<MI_LOAD_REGISTER_IMM *>(lriHighCmdPatchPreamble);
+        ASSERT_NE(nullptr, lriHighCmdPatchPreamble);
+
+        lriCmdEvent = genCmdCast<MI_LOAD_REGISTER_IMM *>(lriCmdEvent);
+        ASSERT_NE(nullptr, lriCmdEvent);
+
+        lriHighCmdEvent = genCmdCast<MI_LOAD_REGISTER_IMM *>(lriHighCmdEvent);
+        ASSERT_NE(nullptr, lriHighCmdEvent);
+    }
 }
 
 } // namespace ult

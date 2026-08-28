@@ -3608,12 +3608,13 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
     uint64_t devicePatchPreambleCounterGpuAddress = eventInOrderHelper.getPatchPreambleDeviceGpuAddress();
 
     const uint32_t immWriteOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
-    const uint32_t devicePartitionCount = eventInOrderHelper.getEventData()->devicePartitions;
+    auto devicePartitionCount = eventInOrderHelper.getEventData()->devicePartitions == 0 ? static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().count()) : eventInOrderHelper.getEventData()->devicePartitions;
 
     NEO::EncodeCaptureCommandData cmdCaptureData = {};
     if (outListCommands != nullptr) {
         cmdCaptureData.makeCommandView = outListCommands->makeCommandView;
     }
+    cmdCaptureData.noopSpace = noopDispatch;
 
     if (!skipAddingWaitEventsToResidency) {
         commandContainer.addToResidencyContainer(devicePatchPreambleCounterAlloc);
@@ -3625,12 +3626,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
             constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
 
             NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), firstRegister, getLowPart(counter), true, copyOnlyWait, &cmdCaptureData);
-            if (noopDispatch) {
-                memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
-                if (cmdCaptureData.commandView) {
-                    memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
-                }
-            }
             if (outListCommands != nullptr) {
                 outListCommands->emplace_back(PatchExternalCbWaitEventPreambleCounterLoadRegisterImm{
                     .gpuDestination = cmdCaptureData.gpuAddress,
@@ -3641,12 +3636,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
             }
 
             NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), secondRegister, getHighPart(counter), true, copyOnlyWait, &cmdCaptureData);
-            if (noopDispatch) {
-                memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
-                if (cmdCaptureData.commandView) {
-                    memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
-                }
-            }
             if (outListCommands != nullptr) {
                 outListCommands->emplace_back(PatchExternalCbWaitEventPreambleCounterLoadRegisterImm{
                     .gpuDestination = cmdCaptureData.gpuAddress,
@@ -3659,12 +3648,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
 
         NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), devicePatchPreambleCounterGpuAddress, counter, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
                                                                    false, isQwordInOrderCounter(), qwordIndirect, switchOnUnsuccessful, useSemaphore64bCmd, &cmdCaptureData);
-        if (noopDispatch) {
-            memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
-            if (cmdCaptureData.commandView) {
-                memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
-            }
-        }
         if (outListCommands != nullptr) {
             outListCommands->emplace_back(PatchExternalCbWaitEventPreambleCounterSemaphoreWait{
                 .gpuDestination = cmdCaptureData.gpuAddress,
@@ -3725,6 +3708,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                 if (outListCommands != nullptr) {
                     cmdCaptureData.makeCommandView = outListCommands->makeCommandView;
                 }
+                cmdCaptureData.noopSpace = noopDispatch;
 
                 if (qwordIndirect) {
                     indirectMode = true;
@@ -3733,12 +3717,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                     constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
 
                     NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), firstRegister, getLowPart(waitValue), true, copyOnlyWait, &cmdCaptureData);
-                    if (noopDispatch) {
-                        memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
-                        if (cmdCaptureData.commandView) {
-                            memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
-                        }
-                    }
                     if (outListCommands != nullptr) {
                         outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{
                             .gpuDestination = cmdCaptureData.gpuAddress,
@@ -3749,12 +3727,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                     }
 
                     NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(*commandContainer.getCommandStream(), secondRegister, getHighPart(waitValue), true, copyOnlyWait, &cmdCaptureData);
-                    if (noopDispatch) {
-                        memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
-                        if (cmdCaptureData.commandView) {
-                            memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
-                        }
-                    }
                     if (outListCommands != nullptr) {
                         outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{
                             .gpuDestination = cmdCaptureData.gpuAddress,
@@ -3768,13 +3740,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                 auto switchOnUnsuccessful = !implicitDependency && this->isHighPriorityImmediateCmdList();
                 NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
                                                                            false, isQwordInOrderCounter(), indirectMode, switchOnUnsuccessful, useSemaphore64bCmd, &cmdCaptureData);
-                if (noopDispatch) {
-                    memset(cmdCaptureData.cpuBuffer, 0, cmdCaptureData.cmdSize);
-                    if (cmdCaptureData.commandView) {
-                        memset(cmdCaptureData.commandView, 0, cmdCaptureData.cmdSize);
-                    }
-                }
-
                 if (outListCommands != nullptr) {
                     outListCommands->emplace_back(PatchCbWaitEventSemaphoreWait{
                         .gpuDestination = cmdCaptureData.gpuAddress,
@@ -3818,11 +3783,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
+        bool noopSkippedData = false;
         if (event->isCounterBased()) {
             if (event->getInOrderExecEventHelper().is2WayIpcSharingEnabled()) {
                 event->refreshImported2WayIpcCbData();
             }
-            if (!event->getInOrderExecEventHelper().isDataAssigned()) {
+            noopSkippedData = !event->getInOrderExecEventHelper().isDataAssigned();
+            if (noopSkippedData && this->allowCbWaitEventsNoopDispatch == false) {
                 continue;
             }
         }
@@ -3838,11 +3805,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
         if (event->isCounterBased() && (this->heaplessModeEnabled || !event->hasInOrderTimestampNode())) {
             auto &inOrderExecHelper = event->getInOrderExecEventHelper();
-            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecHelper.getDeviceCounterAllocation(), inOrderExecHelper.getBaseDeviceAddress(), inOrderExecHelper.getEventData()->devicePartitions,
+            // when data is unassigned, device partition should be inferred from the device
+            auto devicePartitionCount = inOrderExecHelper.getEventData()->devicePartitions == 0 ? static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().count()) : inOrderExecHelper.getEventData()->devicePartitions;
+            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecHelper.getDeviceCounterAllocation(), inOrderExecHelper.getBaseDeviceAddress(), devicePartitionCount,
                                                                                 waitEventParams.outWaitCmds,
                                                                                 event->getInOrderExecBaseSignalValue(), event->getInOrderAllocationOffset(),
                                                                                 waitEventParams.relaxedOrderingAllowed, false, waitEventParams.skipAddingWaitEventsToResidency,
-                                                                                isCbEventBoundToCmdList(event), dualStreamCopyOffload);
+                                                                                isCbEventBoundToCmdList(event) || noopSkippedData, dualStreamCopyOffload);
 
             continue;
         }

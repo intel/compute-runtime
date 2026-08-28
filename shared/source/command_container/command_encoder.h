@@ -59,6 +59,7 @@ struct EncodeCaptureCommandData {
     size_t cmdSize = 0;
 
     bool makeCommandView = false;
+    bool noopSpace = false;
 };
 
 struct EncodePostSyncArgs {
@@ -606,7 +607,9 @@ struct EncodeSemaphore {
     static void *allocateSemaphoreWaitCommand(bool native64bCmd);
     static void deallocateSemaphoreWaitCommand(void *cmdBuffer, bool native64bCmd);
 
-    static size_t getSizeMiSemaphoreWait();
+    static constexpr size_t getSizeMiSemaphoreWait() {
+        return sizeof(MI_SEMAPHORE_WAIT);
+    }
 };
 
 template <typename GfxFamily>

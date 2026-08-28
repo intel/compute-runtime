@@ -209,6 +209,8 @@ struct Xe3pCoreFamily : public Xe3pCore {
     static constexpr auto getPostSyncType() {
         return POSTSYNC_DATA_2{};
     }
+
+    static_assert(sizeof(MI_SEMAPHORE_WAIT) == sizeof(MI_SEMAPHORE_WAIT_LEGACY), "MI_SEMAPHORE_WAIT_64/MI_SEMAPHORE_WAIT size mismatch");
 };
 
 enum class MemoryCompressionState;

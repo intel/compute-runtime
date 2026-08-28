@@ -374,16 +374,18 @@ inline void EncodeSetMMIO<Family>::encodeREG(CommandContainer &container, uint32
 template <typename Family>
 inline void EncodeSetMMIO<Family>::encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap, bool isBcs, EncodeCaptureCommandData *captureData) {
     bool makeCommandView = false;
+    bool noopSpace = false;
     MI_LOAD_REGISTER_IMM *programedLriCommand = nullptr;
     auto lriCommand = cmdStream.getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
     if (captureData != nullptr) {
         captureData->cpuBuffer = lriCommand;
         captureData->cmdSize = sizeIMM;
         if (captureData->makeCommandView) {
-            captureData->gpuAddress = cmdStream.getCurrentGpuAddressPosition() - captureData->cmdSize;
+            captureData->gpuAddress = cmdStream.getCurrentGpuAddressPosition() - sizeIMM;
             captureData->commandView = EncodeSetMMIO<Family>::allocateLoadRegisterImmCommand();
         }
         makeCommandView = captureData->makeCommandView;
+        noopSpace = captureData->noopSpace;
     }
 
     if (makeCommandView) {
@@ -391,13 +393,17 @@ inline void EncodeSetMMIO<Family>::encodeIMM(LinearStream &cmdStream, uint32_t o
     } else {
         programedLriCommand = lriCommand;
     }
-    LriHelper<Family>::program(programedLriCommand,
-                               offset,
-                               data,
-                               remap,
-                               isBcs);
+    if (noopSpace) {
+        memset(programedLriCommand, 0, sizeof(MI_LOAD_REGISTER_IMM));
+    } else {
+        LriHelper<Family>::program(programedLriCommand,
+                                   offset,
+                                   data,
+                                   remap,
+                                   isBcs);
+    }
     if (makeCommandView) {
-        *lriCommand = *programedLriCommand;
+        memcpy(lriCommand, programedLriCommand, sizeof(MI_LOAD_REGISTER_IMM));
     }
 }
 
@@ -908,16 +914,18 @@ void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
                                                         bool native64bCmd,
                                                         EncodeCaptureCommandData *outSemWaitCmd) {
     bool makeCommandView = false;
+    bool noopSpace = false;
     MI_SEMAPHORE_WAIT *programedSemaphoreCommand = nullptr;
     auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
     if (outSemWaitCmd != nullptr) {
         outSemWaitCmd->cpuBuffer = semaphoreCommand;
         outSemWaitCmd->cmdSize = getSizeMiSemaphoreWait();
         if (outSemWaitCmd->makeCommandView) {
-            outSemWaitCmd->gpuAddress = commandStream.getCurrentGpuAddressPosition() - outSemWaitCmd->cmdSize;
+            outSemWaitCmd->gpuAddress = commandStream.getCurrentGpuAddressPosition() - getSizeMiSemaphoreWait();
             outSemWaitCmd->commandView = EncodeSemaphore<Family>::allocateSemaphoreWaitCommand(native64bCmd);
         }
         makeCommandView = outSemWaitCmd->makeCommandView;
+        noopSpace = outSemWaitCmd->noopSpace;
     }
 
     if (makeCommandView) {
@@ -925,9 +933,13 @@ void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
     } else {
         programedSemaphoreCommand = semaphoreCommand;
     }
-    programMiSemaphoreWait(programedSemaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful, native64bCmd);
+    if (noopSpace) {
+        memset(programedSemaphoreCommand, 0, getSizeMiSemaphoreWait());
+    } else {
+        programMiSemaphoreWait(programedSemaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful, native64bCmd);
+    }
     if (makeCommandView) {
-        *semaphoreCommand = *programedSemaphoreCommand;
+        memcpy(semaphoreCommand, programedSemaphoreCommand, getSizeMiSemaphoreWait());
     }
 }
 

@@ -1103,7 +1103,12 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
                 mutableWaitEventDesc.waitEventIndex = i;
 
                 if (CommandList::isInOrderExecutionEnabled() && event->isCounterBased()) {
-                    mutableWaitEventDesc.waitEventPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
+                    auto &inOrderExecHelper = event->getInOrderExecEventHelper();
+                    auto devicePartitionCount = inOrderExecHelper.getEventData()->devicePartitions == 0
+                                                    ? static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count())
+                                                    : inOrderExecHelper.getEventData()->devicePartitions;
+
+                    mutableWaitEventDesc.waitEventPackets = devicePartitionCount;
                     mutableEventParams.omitWaitEventResidency = true;
                     auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
                     addToResidencyContainer(getDeviceCounterAllocForResidency(deviceCounterAlloc));
@@ -1146,7 +1151,7 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::processWaitEventVariabl
         auto &variableLoadRegImmCmdList = mutableWaitEvent.eventVariable->getLoadRegImmList();
 
         if (mutableWaitEvent.event->isExternalEvent()) {
-            for (uint32_t packet = 0; packet < mutableWaitEvent.event->getInOrderExecEventHelper().getEventData()->devicePartitions; packet++) {
+            for (uint32_t packet = 0; packet < mutableWaitEvent.waitEventPackets; packet++) {
                 captureExternalCounterBasedWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList, variableLoadRegImmCmdList);
             }
         }

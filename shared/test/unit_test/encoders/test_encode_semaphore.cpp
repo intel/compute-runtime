@@ -154,6 +154,45 @@ HWTEST_F(CommandEncodeSemaphore, GivenCommandCaptureProvidedWhenCommandViewSelec
     EncodeSemaphore<FamilyType>::deallocateSemaphoreWaitCommand(output.commandView, HasSemaphore64bCmd<FamilyType>);
 }
 
+HWTEST_F(CommandEncodeSemaphore, GivenCommandCaptureProvidedWhenNoopSpaceSelectedThenCmdBufferIsNoopedInStreamAndCommandView) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    constexpr size_t bufferSize = 128;
+    alignas(4) uint8_t buffer[bufferSize];
+
+    alignas(4) uint8_t noopSpace[sizeof(MI_SEMAPHORE_WAIT)];
+    memset(noopSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
+
+    LinearStream stream(buffer, bufferSize);
+
+    constexpr uint64_t gpuBase = 0x1A0000;
+    stream.setGpuBase(gpuBase);
+
+    COMPARE_OPERATION compareMode = COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD;
+
+    EncodeCaptureCommandData output{};
+    output.makeCommandView = true;
+    output.noopSpace = true;
+
+    void *cmd = stream.getSpace(0);
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(stream,
+                                                           0xFF00FF000u,
+                                                           5u,
+                                                           compareMode, false, false, false, false, HasSemaphore64bCmd<FamilyType>, &output);
+
+    EXPECT_EQ(cmd, output.cpuBuffer);
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), stream.getUsed());
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), output.cmdSize);
+    EXPECT_EQ(gpuBase, output.gpuAddress);
+    ASSERT_NE(nullptr, output.commandView);
+
+    EXPECT_EQ(0, memcmp(noopSpace, output.commandView, output.cmdSize));
+    EXPECT_EQ(0, memcmp(noopSpace, output.cpuBuffer, output.cmdSize));
+
+    EncodeSemaphore<FamilyType>::deallocateSemaphoreWaitCommand(output.commandView, HasSemaphore64bCmd<FamilyType>);
+}
+
 HWTEST2_F(CommandEncodeSemaphore, GivenDifferentOptionsToAllocateViewForSemaphoreThenAllocateCorrectCommandType, IsAtLeastXe3pCore) {
     auto semaphore64 = EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(true);
     EXPECT_NE(nullptr, semaphore64);

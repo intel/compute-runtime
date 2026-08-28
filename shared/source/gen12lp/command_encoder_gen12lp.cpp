@@ -827,11 +827,6 @@ void EncodeSurfaceState<Family>::setAdditionalCacheSettings(R_SURFACE_STATE *sur
 }
 
 template <typename Family>
-size_t EncodeSemaphore<Family>::getSizeMiSemaphoreWait() {
-    return sizeof(MI_SEMAPHORE_WAIT);
-}
-
-template <typename Family>
 void *EncodeSemaphore<Family>::allocateSemaphoreWaitCommand(bool native64bCmd) {
     return new typename Family::MI_SEMAPHORE_WAIT;
 }

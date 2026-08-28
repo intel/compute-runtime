@@ -167,7 +167,7 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
         this->desc.eventValue.cbEventDeviceCounterAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
 
         this->desc.eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
-        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(event);
+        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(event) || !event->getInOrderExecEventHelper().isDataAssigned();
         this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
         this->desc.eventValue.isExternalFlag = event->isExternalEvent();
         if (this->desc.eventValue.isExternalFlag) {
@@ -740,17 +740,17 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
         newEventAllocation = newEvent->getAllocation(device);
         if (newEvent->isCounterBased()) {
             newCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(newEvent);
-            if (newCbEventBoundToCmdList) {
+            if (newCbEventBoundToCmdList || !newInOrderEventHelper->isDataAssigned()) {
                 newNooped = true;
             } else {
                 auto deviceCounterAlloc = newInOrderEventHelper->getDeviceCounterAllocation();
                 newInOrderAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
-                if (this->desc.eventValue.isExternalFlag) {
-                    newPatchPreambleCounterAllocation = newInOrderEventHelper->getPatchPreambleDeviceAllocation();
-                    newPatchPreambleCounterValue = newInOrderEventHelper->getPatchPreambleCounter();
-                    newPatchPreambleCounterGpuAddress = newInOrderEventHelper->getPatchPreambleDeviceGpuAddress();
-                    newPatchPreambleNooped = newInOrderEventHelper->getPatchPreambleCounter() == 0;
-                }
+            }
+            if (this->desc.eventValue.isExternalFlag) {
+                newPatchPreambleCounterAllocation = newInOrderEventHelper->getPatchPreambleDeviceAllocation();
+                newPatchPreambleCounterValue = newInOrderEventHelper->getPatchPreambleCounter();
+                newPatchPreambleCounterGpuAddress = newInOrderEventHelper->getPatchPreambleDeviceGpuAddress();
+                newPatchPreambleNooped = newInOrderEventHelper->getPatchPreambleCounter() == 0;
             }
         }
     }
