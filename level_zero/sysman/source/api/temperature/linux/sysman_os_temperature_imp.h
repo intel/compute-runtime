@@ -13,6 +13,7 @@
 namespace L0 {
 namespace Sysman {
 
+class FsAccessInterface;
 class LinuxSysmanImp;
 class SysFsAccessInterface;
 class SysmanKmdInterface;
@@ -42,6 +43,7 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     ze_bool_t isSubdevice = 0;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
+    FsAccessInterface *pFsAccess = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
     std::string intelGraphicsHwmonDir = {};
     std::string temperatureEmergencyFile = {};

@@ -348,14 +348,14 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenCallingIsDevi
 class SysmanKmdInterfaceDriverLoadedFixtureI915Upstream : public SysmanDeviceFixture {
   protected:
     MockSysmanKmdInterfaceUpstream *pMockSysmanKmdInterface = nullptr;
-    MockFdoSysFsAccessInterface *pMockSysFsAccess = nullptr;
-    MockFdoFsAccessInterface *pMockFsAccess = nullptr;
+    MockSysFsAccessInterface *pMockSysFsAccess = nullptr;
+    MockFsAccessInterface *pMockFsAccess = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         pMockSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getSysmanProductHelper());
-        pMockSysFsAccess = new MockFdoSysFsAccessInterface();
-        pMockFsAccess = new MockFdoFsAccessInterface();
+        pMockSysFsAccess = new MockSysFsAccessInterface();
+        pMockFsAccess = new MockFsAccessInterface();
         pMockSysmanKmdInterface->pSysfsAccess.reset(pMockSysFsAccess);
         pMockSysmanKmdInterface->pFsAccess.reset(pMockFsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pMockSysmanKmdInterface);

@@ -15,7 +15,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-struct MockFdoFsAccessInterface : public L0::Sysman::FsAccessInterface {
+struct MockFsAccessInterface : public L0::Sysman::FsAccessInterface {
     ze_result_t readResult = ZE_RESULT_SUCCESS;
     std::string mockFdoValue = "enabled";
     ze_result_t readSymLinkResult = ZE_RESULT_SUCCESS;
@@ -56,13 +56,31 @@ struct MockFdoFsAccessInterface : public L0::Sysman::FsAccessInterface {
         return ZE_RESULT_SUCCESS;
     }
 
-    MockFdoFsAccessInterface() = default;
-    ~MockFdoFsAccessInterface() override = default;
+    MockFsAccessInterface() = default;
+    ~MockFsAccessInterface() override = default;
 };
 
-struct MockFdoSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
-    MockFdoSysFsAccessInterface() = default;
-    ~MockFdoSysFsAccessInterface() override = default;
+struct MockSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
+    ze_result_t realPathResult = ZE_RESULT_SUCCESS;
+    std::string mockRealPathValue = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0";
+
+    ze_result_t getRealPath(const std::string &path, std::string &val) override {
+        if (realPathResult != ZE_RESULT_SUCCESS) {
+            return realPathResult;
+        }
+        if (path == "device" || path == "device/") {
+            val = mockRealPathValue;
+            return ZE_RESULT_SUCCESS;
+        }
+        if (path == "device/config") {
+            val = mockRealPathValue + "/config";
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    MockSysFsAccessInterface() = default;
+    ~MockSysFsAccessInterface() override = default;
 };
 
 } // namespace ult

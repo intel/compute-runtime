@@ -499,14 +499,14 @@ TEST_F(SysmanFixtureDeviceXe, GivenVfsEnabledAndPmuInterfaceOpenFailsWhenCalling
 class SysmanKmdInterfaceFdoFixtureXe : public SysmanDeviceFixture {
   protected:
     MockSysmanKmdInterfaceXe *pMockSysmanKmdInterface = nullptr;
-    MockFdoSysFsAccessInterface *pMockSysFsAccess = nullptr;
-    MockFdoFsAccessInterface *pMockFsAccess = nullptr;
+    MockSysFsAccessInterface *pMockSysFsAccess = nullptr;
+    MockFsAccessInterface *pMockFsAccess = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         pMockSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
-        pMockSysFsAccess = new MockFdoSysFsAccessInterface();
-        pMockFsAccess = new MockFdoFsAccessInterface();
+        pMockSysFsAccess = new MockSysFsAccessInterface();
+        pMockFsAccess = new MockFsAccessInterface();
         pMockSysmanKmdInterface->pSysfsAccess.reset(pMockSysFsAccess);
         pMockSysmanKmdInterface->pFsAccess.reset(pMockFsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pMockSysmanKmdInterface);

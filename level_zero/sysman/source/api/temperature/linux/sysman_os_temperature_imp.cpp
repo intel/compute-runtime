@@ -44,9 +44,9 @@ ze_result_t LinuxTemperatureImp::getMaxTemperature(double &temperature) {
     }
 
     int32_t maxTemperature = 0;
-    auto result = pSysfsAccess->read(temperatureEmergencyFile, maxTemperature);
+    auto result = pFsAccess->read(temperatureEmergencyFile, maxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, temperatureEmergencyFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, temperatureEmergencyFile.c_str(), result);
         return result;
     }
 
@@ -126,16 +126,20 @@ void LinuxTemperatureImp::init() {
     if (temperatureEmergencyFileName.empty()) {
         return;
     }
+    if (pSysfsAccess->getDevicePciPath().empty()) {
+        return;
+    }
     std::vector<std::string> listOfAllHwmonDirs = {};
-    const std::string hwmonDir("device/hwmon");
-    if (ZE_RESULT_SUCCESS != pSysfsAccess->scanDirEntries(hwmonDir, listOfAllHwmonDirs)) {
+    const std::string hwmonDir = pSysfsAccess->getDevicePciPath() + "/hwmon";
+    if (ZE_RESULT_SUCCESS != pFsAccess->listDirectory(hwmonDir, listOfAllHwmonDirs)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list directory %s \n", NEO_FUNCTION_NAME, hwmonDir.c_str());
         return;
     }
 
     for (const auto &tempHwmonDirEntry : listOfAllHwmonDirs) {
         const std::string hwmonNameFile = hwmonDir + "/" + tempHwmonDirEntry + "/name";
         std::string name;
-        if (ZE_RESULT_SUCCESS != pSysfsAccess->read(hwmonNameFile, name)) {
+        if (ZE_RESULT_SUCCESS != pFsAccess->read(hwmonNameFile, name)) {
             continue;
         }
         if (isIntelGraphicsHwmonDir(name)) {
@@ -145,11 +149,12 @@ void LinuxTemperatureImp::init() {
     }
 
     if (intelGraphicsHwmonDir.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): hwmon directory not found\n", NEO_FUNCTION_NAME);
         return;
     }
 
     temperatureEmergencyFile = intelGraphicsHwmonDir + "/" + temperatureEmergencyFileName;
-    temperatureEmergencyFileExists = pSysfsAccess->fileExists(temperatureEmergencyFile);
+    temperatureEmergencyFileExists = pFsAccess->fileExists(temperatureEmergencyFile);
 }
 
 void OsTemperature::getSupportedSensors(OsSysman *pOsSysman, std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) {
@@ -163,6 +168,7 @@ LinuxTemperatureImp::LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdev
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
+    pFsAccess = pSysmanKmdInterface->getFsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     init();
 }

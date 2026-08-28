@@ -637,8 +637,12 @@ std::string SysFsAccessInterface::getDevicePciBdf() {
 }
 
 std::string SysFsAccessInterface::getDevicePciPath() {
+    const std::string bdf = getDevicePciBdf();
+    if (bdf.empty()) {
+        return "";
+    }
     const std::string basePciDevicePath = "/sys/bus/pci/devices/";
-    return basePciDevicePath + getDevicePciBdf();
+    return basePciDevicePath + bdf;
 }
 
 void SysFsAccessInterface::clearFdCache() {

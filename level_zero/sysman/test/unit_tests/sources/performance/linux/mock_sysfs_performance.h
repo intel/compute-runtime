@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,10 +25,10 @@ class PublicLinuxPerformanceImp : public L0::Sysman::LinuxPerformanceImp {
     using L0::Sysman::LinuxPerformanceImp::pSysmanKmdInterface;
 };
 
-class MockSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
+class MockPerformanceSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
   public:
-    MockSysFsAccessInterface() = default;
-    ~MockSysFsAccessInterface() override = default;
+    MockPerformanceSysFsAccessInterface() = default;
+    ~MockPerformanceSysFsAccessInterface() override = default;
 };
 
 } // namespace ult

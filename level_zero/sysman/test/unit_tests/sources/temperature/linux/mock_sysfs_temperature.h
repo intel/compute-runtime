@@ -74,13 +74,33 @@ const std::string telem5TelemFileName("/sys/class/intel_pmt/telem5/telem");
 const std::string telem6OffsetFileName("/sys/class/intel_pmt/telem6/offset");
 const std::string telem6GuidFileName("/sys/class/intel_pmt/telem6/guid");
 const std::string telem6TelemFileName("/sys/class/intel_pmt/telem6/telem");
-const std::string mockTemperatureHwmonDir("device/hwmon");
-const std::string mockTemperatureHwmonNameFile0("device/hwmon/hwmon0/name");
-const std::string mockTemperatureHwmonNameFile1("device/hwmon/hwmon1/name");
-const std::string mockTemperatureHwmonTempFile0("device/hwmon/hwmon0/temp2_emergency");
+const std::string mockTemperatureDevicePciBdf("0000:3a:00.0");
+const std::string mockTemperatureDeviceRealPath("/sys/devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/" + mockTemperatureDevicePciBdf);
+const std::string mockTemperatureHwmonDir("/sys/bus/pci/devices/" + mockTemperatureDevicePciBdf + "/hwmon");
+const std::string mockTemperatureHwmonNameFile0(mockTemperatureHwmonDir + "/hwmon0/name");
+const std::string mockTemperatureHwmonNameFile1(mockTemperatureHwmonDir + "/hwmon1/name");
+const std::string mockTemperatureHwmonTempFile0(mockTemperatureHwmonDir + "/hwmon0/temp2_emergency");
 
 class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
   public:
+    ze_result_t realPathResult = ZE_RESULT_SUCCESS;
+    std::string mockRealPathValue = mockTemperatureDeviceRealPath;
+
+    ze_result_t getRealPath(const std::string &path, std::string &val) override {
+        if (realPathResult != ZE_RESULT_SUCCESS) {
+            return realPathResult;
+        }
+        if (path == "device" || path == "device/") {
+            val = mockRealPathValue;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+};
+
+struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
+    MockTemperatureFsAccess() = default;
+
     ze_result_t scanResult = ZE_RESULT_SUCCESS;
     std::vector<std::string> directoryEntries = {"hwmon0"};
     ze_result_t hwmonNameReadResult0 = ZE_RESULT_SUCCESS;
@@ -90,6 +110,7 @@ class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     std::string hwmonName1 = "dummy";
     int32_t temp2EmergencyValue = 125000;
     bool temp2EmergencyExists = true;
+    std::string listDirectoryPathRequested;
 
     ze_result_t read(const std::string file, std::string &val) override {
         if (file == mockTemperatureHwmonNameFile0) {
@@ -117,7 +138,8 @@ class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t scanDirEntries(const std::string path, std::vector<std::string> &listOfEntries) override {
+    ze_result_t listDirectory(const std::string path, std::vector<std::string> &listOfEntries) override {
+        listDirectoryPathRequested = path;
         if (scanResult != ZE_RESULT_SUCCESS) {
             return scanResult;
         }
@@ -134,10 +156,6 @@ class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         }
         return false;
     }
-};
-
-struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
-    MockTemperatureFsAccess() = default;
 };
 
 struct MockTemperatureProcfsAccess : public L0::Sysman::ProcFsAccessInterface {

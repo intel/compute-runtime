@@ -199,7 +199,7 @@ HWTEST2_F(ZesPerformanceFixtureI915, GivenMediaDomainTypeWhenGettingPerfHandlesT
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
 
     auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(pLinuxSysmanImp->getSysmanProductHelper());
-    auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
+    auto pSysFsAccess = std::make_unique<MockPerformanceSysFsAccessInterface>();
 
     PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_MEDIA);
     pLinuxPerformanceImp->pSysmanKmdInterface = pSysmanKmdInterface.get();
@@ -213,7 +213,7 @@ TEST_F(ZesPerformanceFixtureI915, GivenComputeDomainTypeWhenGettingPerfHandlesTh
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
 
     auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(pLinuxSysmanImp->getSysmanProductHelper());
-    auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
+    auto pSysFsAccess = std::make_unique<MockPerformanceSysFsAccessInterface>();
 
     PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_COMPUTE);
     pLinuxPerformanceImp->pSysmanKmdInterface = pSysmanKmdInterface.get();
@@ -324,7 +324,7 @@ HWTEST2_F(ZesPerformanceFixtureXe, GivenPerfFactorDomainsWhenGettingPerfHandlesT
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
 
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
-    auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
+    auto pSysFsAccess = std::make_unique<MockPerformanceSysFsAccessInterface>();
 
     std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysFsAccess.get());
@@ -360,7 +360,7 @@ TEST_F(ZesPerformanceFixtureXe, GivenPerfFactorDomainsWhenGettingPerfHandlesThen
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
-    auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
+    auto pSysFsAccess = std::make_unique<MockPerformanceSysFsAccessInterface>();
 
     std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysFsAccess.get());
