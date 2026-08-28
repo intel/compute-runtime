@@ -1574,10 +1574,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
 }
 
 void DebugSession::updateGrfRegisterSetProperties(EuThread::ThreadId thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
-    if (pRegisterSetProperties == nullptr) {
-        return;
-    }
-
+    // The only caller returns early when there are no properties to update.
     auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     auto regsetType = l0GfxCoreHelper.getRegsetTypeForLargeGrfDetection();
     const auto regSize = std::max(getRegisterSize(regsetType), 64u);
@@ -1605,9 +1602,17 @@ ze_result_t DebugSession::getThreadRegisterSetProperties(ze_device_thread_t thre
         return ret;
     }
 
+    if (pRegisterSetProperties == nullptr) {
+        return ret;
+    }
+
     auto sipExternalLib = this->connectedDevice->getNEODevice()->getSipExternalLibInterface();
     if (sipExternalLib) {
-        getRegisterAccessProperties(&threadId, pCount, pRegisterSetProperties);
+        if (!getRegisterAccessProperties(&threadId, pCount, pRegisterSetProperties)) {
+            // Reporting a partially updated set would silently mix device level and thread level counts.
+            PRINT_DEBUGGER_ERROR_LOG("%s: Failed to get thread register access properties\n", NEO_FUNCTION_NAME);
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
     } else {
         updateGrfRegisterSetProperties(threadId, pCount, pRegisterSetProperties);
     }

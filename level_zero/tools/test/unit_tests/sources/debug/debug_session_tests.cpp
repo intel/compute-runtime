@@ -5944,6 +5944,13 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenStoppedThreadAndSipExternalLibWhe
     auto singleThread = ze_device_thread_t{static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
     auto ret = session->getThreadRegisterSetProperties(singleThread, &count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    // Querying the number of regsets does not need SIP
+    EXPECT_FALSE(session->registerAccessPropertiesCalled);
+
+    count = 1;
+    zet_debug_regset_properties_t regsetProps{};
+    ret = session->getThreadRegisterSetProperties(singleThread, &count, &regsetProps);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // With SIP external lib present, getRegisterAccessProperties should be invoked on session (mock sets flag)
     EXPECT_TRUE(session->registerAccessPropertiesCalled);
     rootEnv.sipExternalLib.reset(originalSipLib);
