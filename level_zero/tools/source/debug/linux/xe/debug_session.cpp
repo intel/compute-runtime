@@ -351,15 +351,6 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
 
         if (event->flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitDestroy)) {
             clientHandleClosed = clientEvent.clientHandle;
-
-            if (clientHandle == clientHandleClosed) {
-                zet_debug_event_t debugEvent = {};
-                debugEvent.type = ZET_DEBUG_EVENT_TYPE_DETACHED;
-                debugEvent.info.detached.reason = ZET_DEBUG_DETACH_REASON_HOST_EXIT;
-                PRINT_DEBUGGER_INFO_LOG("Debugger detached\n", "");
-                pushApiEvent(debugEvent);
-                detached = true;
-            }
         }
 
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_OPEN client.handle = %llu\n",
