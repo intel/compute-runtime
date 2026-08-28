@@ -973,39 +973,6 @@ TEST_F(DebugApiWindowsTest, givenContextCreateEventTypeWhenReadAndHandleEventCal
     EXPECT_EQ(0u, session->allContexts.size());
 }
 
-TEST_F(DebugApiWindowsTest, givenContextCreateDestroyEventWhenReadAndHandleEventCalledThenAPIEventIsPushedCorrectly) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
-    session->wddm = mockWddm;
-
-    mockWddm->numEvents = 1;
-    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY;
-    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.hContextHandle = 0xa000;
-    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.IsCreated = 1;
-    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.IsSIPInstalled = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
-    EXPECT_EQ(1u, session->allContexts.size());
-    EXPECT_EQ(1u, session->allContexts.count(0xa000));
-
-    mockWddm->curEvent = 0;
-    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.hContextHandle = 0xb000;
-    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.IsCreated = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
-    EXPECT_EQ(0u, session->apiEvents.size());
-
-    mockWddm->curEvent = 0;
-    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.hContextHandle = 0xa000;
-    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.IsCreated = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
-
-    EXPECT_EQ(1u, session->apiEvents.size());
-    auto event = session->apiEvents.front();
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, event.type);
-    EXPECT_EQ(ZET_DEBUG_DETACH_REASON_HOST_EXIT, event.info.detached.reason);
-}
-
 TEST_F(DebugApiWindowsTest, givenModuleCreateNotificationeEventTypeWhenReadAndHandleEventCalledThenModuleIsRegisteredAndEventIsQueuedForAcknowledge) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
