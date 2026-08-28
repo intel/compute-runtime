@@ -330,9 +330,13 @@ ze_result_t DebugSessionLinux::resumeImp(const std::vector<EuThread::ThreadId> &
     size_t bitmaskSize;
 
     // SIP transactions resume a thread that stays in the stopped state, so EuThread::resumeThread()
-    // is never reached for them.
+    // is never reached for them. A tile session forwards resumeImp() to the root session, whose
+    // allThreads is empty when tile attach is enabled, so threads missing here are expected.
     for (const auto &threadId : threads) {
-        allThreads.at(threadId)->setStateSaveAreaCoherent(false);
+        auto thread = allThreads.find(threadId);
+        if (thread != allThreads.end()) {
+            thread->second->setStateSaveAreaCoherent(false);
+        }
     }
 
     auto result = threadControl(threads, deviceIndex, ThreadControlCmd::resume, bitmask, bitmaskSize);

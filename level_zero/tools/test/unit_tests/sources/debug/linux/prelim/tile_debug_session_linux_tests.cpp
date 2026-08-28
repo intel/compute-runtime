@@ -649,6 +649,44 @@ TEST_F(TileAttachTest, givenExecutingThreadWhenInterruptingAndResumingThenCallsA
     }
 }
 
+TEST_F(TileAttachTest, givenRootSessionWithoutEuThreadsWhenResumingThroughTileSessionThenThreadControlIsSentForTile) {
+    // deubg attach both tiles
+    rootSession->tileSessions[0].second = true;
+    rootSession->tileSessions[1].second = true;
+
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(rootSession->stateSaveAreaHeader, version, l0Device);
+
+    // With tile attach enabled the root session never calls createEuThreads(), so the tile sessions
+    // own the EuThread objects and the root allThreads stays empty. The mock constructor creates
+    // them unconditionally, so drop them here to match the product configuration.
+    rootSession->allThreads.clear();
+
+    ze_device_thread_t apiThread = {0, 0, 0, 0};
+    tileSessions[0]->ensureThreadStopped(apiThread, 4);
+    tileSessions[0]->writeResumeResult = 1;
+
+    const auto threadControlCallCount = rootSession->threadControlCallCount;
+
+    auto result = zetDebugResume(tileSessions[0]->toHandle(), apiThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(threadControlCallCount + 1, rootSession->threadControlCallCount);
+    ASSERT_EQ(1u, rootSession->resumedDevices.size());
+    EXPECT_EQ(0u, rootSession->resumedDevices[0]);
+}
+
+TEST_F(TileAttachTest, givenThreadKnownToSessionWhenResumeImpIsCalledThenStateSaveAreaCoherencyIsCleared) {
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    ASSERT_NE(rootSession->allThreads.end(), rootSession->allThreads.find(threadId));
+
+    rootSession->allThreads[threadId]->setStateSaveAreaCoherent(true);
+
+    rootSession->resumeImp(std::vector<EuThread::ThreadId>{threadId}, 0);
+
+    EXPECT_FALSE(rootSession->allThreads[threadId]->isStateSaveAreaCoherent());
+}
+
 TEST_F(TileAttachTest, givenTwoInterruptsSentWhenCheckingTriggerEventsThenTriggerEventsIsSetForTiles) {
     // deubg attach both tiles
     rootSession->tileSessions[0].second = true;
