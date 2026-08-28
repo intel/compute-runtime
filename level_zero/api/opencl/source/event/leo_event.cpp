@@ -26,7 +26,6 @@
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/driver_experimental/zex_event.h"
 
 namespace NEO {
 namespace LEO {
@@ -66,13 +65,13 @@ Event::Event(cl_command_type commandType, NEO::LEO::CommandQueue *commandQueue) 
         auto deviceHandle = l0CmdList->getDevice();
         auto contextHandle = l0CmdList->getCmdListContext();
 
-        zex_counter_based_event_desc_t eventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, nullptr, ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE};
+        ze_event_counter_based_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, nullptr, ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE};
         if (profiling) {
-            eventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+            eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
         }
 
         ze_event_handle_t hSignalEvent{};
-        L0::zexCounterBasedEventCreate2(contextHandle, deviceHandle, &eventDesc, &hSignalEvent);
+        zeEventCounterBasedCreate(contextHandle, deviceHandle, &eventDesc, &hSignalEvent);
         this->eventHandle = hSignalEvent;
     }
 
