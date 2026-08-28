@@ -14,7 +14,6 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
-#include "level_zero/driver_experimental/zex_api.h"
 
 #include <map>
 #include <vector>
@@ -109,14 +108,14 @@ HWTEST_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError) {
     auto nonTsEvent = createEvents<FamilyType>(1, false);
     auto tsEvent = createEvents<FamilyType>(1, true);
 
-    ze_ipc_event_counter_based_handle_t zexIpcData = {};
+    ze_ipc_event_counter_based_handle_t cbIpcHandle = {};
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &cbIpcHandle));
 
     enableEventSharing(*events[0]);
     enableEventSharing(*events[1]);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &cbIpcHandle));
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
@@ -127,60 +126,60 @@ HWTEST_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError) {
     auto mockMemoryManager = static_cast<NEO::MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     EXPECT_EQ(events[0]->getInOrderExecEventHelper().isHostStorageDuplicated() ? 3u : 2u, mockMemoryManager->registerIpcExportedAllocationCalled);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &cbIpcHandle));
 
     EXPECT_EQ(events[0]->getInOrderExecEventHelper().isHostStorageDuplicated() ? 6u : 4u, mockMemoryManager->registerIpcExportedAllocationCalled);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[1]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[1]->toHandle(), &cbIpcHandle));
 
     auto &inOrderExecHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
     inOrderExecHelper.fromExternalMemory = true;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &cbIpcHandle));
 
     inOrderExecHelper.fromExternalMemory = false;
 
     events[0]->makeCounterBasedImplicitlyDisabled(nonTsEvent->getAllocation());
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &cbIpcHandle));
 }
 
 HWTEST_F(InOrderIpcTests, givenCbEventWhenCreatingFromApiThenOpenIpcHandle) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
     ze_event_handle_t ipcEvent = nullptr;
     ze_event_handle_t nonIpcEvent = nullptr;
     ze_event_handle_t timestampIpcEvent = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &nonIpcEvent));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &nonIpcEvent));
 
-    counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_IPC;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &ipcEvent));
+    counterBasedDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_IPC;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &ipcEvent));
 
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IPC | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &timestampIpcEvent));
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_IPC | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &timestampIpcEvent));
 
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IPC | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &timestampIpcEvent));
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_IPC | ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &timestampIpcEvent));
 
-    ze_ipc_event_counter_based_handle_t zexIpcData = {};
+    ze_ipc_event_counter_based_handle_t cbIpcHandle = {};
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nonIpcEvent, 0, nullptr, launchParams);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, ipcEvent, 0, nullptr, launchParams);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(nonIpcEvent, &zexIpcData));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(ipcEvent, &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(nonIpcEvent, &cbIpcHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(ipcEvent, &cbIpcHandle));
 
     zeEventDestroy(ipcEvent);
     zeEventDestroy(nonIpcEvent);
 }
 
 HWTEST_F(InOrderIpcTests, givenCounterBasedEventWhenCreatingThenSharableTagNodeIsUsedOnlyForIpcEvents) {
-    zex_counter_based_event_desc_t desc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    desc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
     ze_event_handle_t nonIpcHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &desc, &nonIpcHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &nonIpcHandle));
 
     auto nonIpcEvent = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(nonIpcHandle));
     auto &nonIpcSharableHelper = static_cast<WhiteboxSharableEventDataHelper &>(static_cast<WhiteboxInOrderExecEventHelper &>(nonIpcEvent->inOrderExecHelper).sharableEventDataHelper);
@@ -188,9 +187,9 @@ HWTEST_F(InOrderIpcTests, givenCounterBasedEventWhenCreatingThenSharableTagNodeI
     EXPECT_EQ(nullptr, nonIpcSharableHelper.allocation);
     EXPECT_NE(nullptr, nonIpcSharableHelper.eventDataPtr);
 
-    desc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IPC;
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_IPC;
     ze_event_handle_t ipcHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &desc, &ipcHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &ipcHandle));
 
     auto ipcEvent = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(ipcHandle));
     auto &ipcSharableHelper = static_cast<WhiteboxSharableEventDataHelper &>(static_cast<WhiteboxInOrderExecEventHelper &>(ipcEvent->inOrderExecHelper).sharableEventDataHelper);
@@ -606,7 +605,7 @@ HWTEST_F(InOrderIpcTests, givenOpaqueIpcHandleWhenOpeningThenImportCommunication
     IpcCounterBasedEventData ipcData = {};
     ipcData.communicationAllocHandle = communicationHandle;
     ipcData.processId = exporterProcessId;
-    ipcData.counterBasedFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IPC;
+    ipcData.counterBasedFlags = ZE_EVENT_COUNTER_BASED_FLAG_IPC;
     ipcData.signalScopeFlags = ZE_EVENT_SCOPE_FLAG_HOST;
     ipcData.waitScopeFlags = ZE_EVENT_SCOPE_FLAG_HOST;
 
@@ -661,21 +660,21 @@ HWTEST_F(InOrderIpcTests, givenInvalidInternalHandleWhenOpenCalledThenReturnErro
     auto deviceAlloc = static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getDeviceCounterAllocation());
     deviceAlloc->internalHandle = NEO::MockMemoryManager::invalidSharedHandle;
 
-    ze_ipc_event_counter_based_handle_t zexIpcData = {};
+    ze_ipc_event_counter_based_handle_t cbIpcHandle = {};
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &cbIpcHandle));
 
     ze_event_handle_t newEvent = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zexIpcData, &newEvent));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, zeEventCounterBasedOpenIpcHandle(context->toHandle(), cbIpcHandle, &newEvent));
 
     if (events[0]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
         deviceAlloc->internalHandle = 1;
         static_cast<MemoryAllocation *>(events[0]->getInOrderExecEventHelper().getHostCounterAllocation())->internalHandle = NEO::MockMemoryManager::invalidSharedHandle;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &cbIpcHandle));
 
-        EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zexIpcData, &newEvent));
+        EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, zeEventCounterBasedOpenIpcHandle(context->toHandle(), cbIpcHandle, &newEvent));
     }
 }
 
@@ -690,13 +689,13 @@ HWTEST_F(InOrderIpcTests, givenTbxModeWhenOpenIsCalledThenSetAllocationParams) {
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     enableEventSharing(*events[0]);
 
-    ze_ipc_event_counter_based_handle_t zexIpcData = {};
+    ze_ipc_event_counter_based_handle_t cbIpcHandle = {};
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &cbIpcHandle));
 
     ze_event_handle_t newEvent = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zexIpcData, &newEvent));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), cbIpcHandle, &newEvent));
 
     auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
 
@@ -813,19 +812,19 @@ HWTEST_F(InOrderIpcTests, givenIncorrectParamsWhenUsingIpcApisThenReturnError) {
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     enableEventSharing(*events[0]);
 
-    ze_ipc_event_counter_based_handle_t zexIpcData = {};
+    ze_ipc_event_counter_based_handle_t cbIpcHandle = {};
 
     ze_event_handle_t nullEvent = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(nullEvent, &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(nullEvent, &cbIpcHandle));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), nullptr));
 
     events[0]->makeCounterBasedInitiallyDisabled(pool->getAllocation());
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &cbIpcHandle));
 
     ze_context_handle_t nullContext = nullptr;
     ze_event_handle_t newEvent = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedOpenIpcHandle(nullContext, zexIpcData, &newEvent));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zexIpcData, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedOpenIpcHandle(nullContext, cbIpcHandle, &newEvent));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedOpenIpcHandle(context->toHandle(), cbIpcHandle, nullptr));
 }
 
 HWTEST_F(InOrderIpcTests, givenIpcHandleWhenOpenedThen2WayIpcSharingIsEnabledAndImportDataIsStored) {
@@ -1619,11 +1618,11 @@ using InOrderCmdListTests = InOrderCmdListFixture;
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             InOrderCmdListTests,
             givenExternalEventWithNoPatchPreambleDataWhenAppendWaitOnPatchPreambleThenNoCommandIsDispatched) {
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
 
     ze_event_handle_t handle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
     auto eventObj = Event::fromHandle(handle);
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
@@ -1648,11 +1647,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     uint8_t noopedSpace[sizeof(MI_SEMAPHORE_WAIT) + 2 * sizeof(MI_LOAD_REGISTER_IMM)] = {};
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
 
     ze_event_handle_t handle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
     auto eventObj = Event::fromHandle(handle);
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
@@ -1684,11 +1683,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
 
     ze_event_handle_t handle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
     auto eventObj = Event::fromHandle(handle);
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);

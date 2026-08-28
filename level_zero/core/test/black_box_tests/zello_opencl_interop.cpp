@@ -15,10 +15,6 @@
 #include <cstring>
 #include <string>
 
-namespace Test {
-decltype(&zexCounterBasedEventCreate2) zexCounterBasedEventCreate2Func = nullptr;
-} // namespace Test
-
 std::tuple<cl_platform_id, cl_device_id, cl_context> initOCL(ze_context_handle_t context) {
     cl_uint numPlatforms{};
     clGetPlatformIDs(0, nullptr, &numPlatforms);
@@ -173,15 +169,12 @@ std::tuple<ze_module_handle_t, ze_kernel_handle_t> createL0ImageKernel(ze_contex
 }
 
 ze_event_handle_t createCbEvent(ze_driver_handle_t driverHandle, ze_device_handle_t device, ze_context_handle_t context) {
-    if (Test::zexCounterBasedEventCreate2Func == nullptr) {
-        zeDriverGetExtensionFunctionAddress(driverHandle, "zexCounterBasedEventCreate2", reinterpret_cast<void **>(&Test::zexCounterBasedEventCreate2Func));
-    }
     ze_event_handle_t e{};
-    zex_counter_based_event_desc_t desc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    desc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
-    desc.waitScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
-    desc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
-    Test::zexCounterBasedEventCreate2Func(context, device, &desc, &e);
+    ze_event_counter_based_desc_t desc{ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    desc.wait = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
+    zeEventCounterBasedCreate(context, device, &desc, &e);
     return e;
 }
 

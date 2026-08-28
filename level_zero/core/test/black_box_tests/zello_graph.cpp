@@ -679,10 +679,10 @@ bool testExternalGraphCbEvents(ze_context_handle_t &context,
 
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventCb = nullptr;
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
-    counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
+    counterBasedDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+    counterBasedDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
@@ -777,24 +777,24 @@ bool testExternalWaitCbEventsImmediate(ze_context_handle_t &context,
 
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventInput = nullptr, eventOutput = nullptr, eventSynchronization = nullptr;
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+    counterBasedDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
-                                                     1, &eventSynchronization, counterBasedDesc.signalScope, 0u);
+                                                     1, &eventSynchronization, counterBasedDesc.signal, 0u);
 
-    counterBasedDesc.signalScope = 0;
-    counterBasedDesc.flags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+    counterBasedDesc.signal = 0;
+    counterBasedDesc.flags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
-                                                     1, &eventInput, counterBasedDesc.signalScope, 0u);
+                                                     1, &eventInput, counterBasedDesc.signal, 0u);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
-                                                     1, &eventOutput, counterBasedDesc.signalScope, 0u);
+                                                     1, &eventOutput, counterBasedDesc.signal, 0u);
 
     ze_kernel_handle_t kernelAddConstant = testKernels["add_constant"];
 
@@ -922,25 +922,25 @@ bool testExternalWaitCbEventsGraphs(ze_context_handle_t &context,
 
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventInput = nullptr, eventOutput = nullptr, eventSynchronization = nullptr;
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    zex_counter_based_event_exp_flags_t commonFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
-    counterBasedDesc.flags = commonFlags | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    ze_event_counter_based_flags_t commonFlags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL);
+    counterBasedDesc.flags = commonFlags | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+    counterBasedDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
-                                                     1, &eventSynchronization, counterBasedDesc.signalScope, 0u);
+                                                     1, &eventSynchronization, counterBasedDesc.signal, 0u);
 
-    counterBasedDesc.signalScope = 0;
+    counterBasedDesc.signal = 0;
     counterBasedDesc.flags = commonFlags;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
-                                                     1, &eventInput, counterBasedDesc.signalScope, 0u);
+                                                     1, &eventInput, counterBasedDesc.signal, 0u);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
-                                                     1, &eventOutput, counterBasedDesc.signalScope, 0u);
+                                                     1, &eventOutput, counterBasedDesc.signal, 0u);
 
     ze_kernel_handle_t kernelMulConstant = testKernels["mul_constant_output"];
 
@@ -1098,20 +1098,20 @@ bool testEmptyExternalWaitCbEvents(ze_context_handle_t &context,
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventInput = nullptr, eventOutput = nullptr;
 
-    constexpr zex_counter_based_event_exp_flags_t commonFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    constexpr ze_event_counter_based_flags_t commonFlags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL);
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
     counterBasedDesc.flags = commonFlags;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
-                                                     1, &eventInput, counterBasedDesc.signalScope, 0u);
+                                                     1, &eventInput, counterBasedDesc.signal, 0u);
 
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
-    counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+    counterBasedDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    counterBasedDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
-                                                     1, &eventOutput, counterBasedDesc.signalScope, 0u);
+                                                     1, &eventOutput, counterBasedDesc.signal, 0u);
 
     ze_kernel_handle_t kernelAddConstant = testKernels["add_constant"];
 
@@ -1219,10 +1219,10 @@ bool testExternalGraphCbEventsMultiExecution(ze_context_handle_t &context,
 
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventCb = nullptr;
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
-    counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
+    counterBasedDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+    counterBasedDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
@@ -1329,8 +1329,8 @@ bool testMultipleLevelGraph(LevelZeroBlackBoxTests::VisitExtension::VisitApi *vi
 
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventCb = nullptr;
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
@@ -1503,8 +1503,8 @@ bool testMultipleForkJoinsGraph(ze_context_handle_t &context,
 
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventCbArray[2] = {nullptr, nullptr};
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,

@@ -211,7 +211,7 @@ enum class KernelType { copy,
 
 void setEventPoolEventFlags(EventOptions eventOptions,
                             ze_event_pool_flags_t &eventPoolFlag,
-                            zex_counter_based_event_desc_t *counterBasedDesc,
+                            ze_event_counter_based_desc_t *counterBasedDesc,
                             ze_event_scope_flags_t &signalScope);
 
 void createEventPoolAndEvents(ExecEnv &execEnv,

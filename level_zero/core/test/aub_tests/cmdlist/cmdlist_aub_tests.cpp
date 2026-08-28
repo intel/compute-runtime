@@ -24,7 +24,6 @@
 #include "level_zero/core/test/aub_tests/fixtures/multicontext_l0_aub_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
-#include "level_zero/driver_experimental/zex_api.h"
 
 extern std::optional<uint32_t> blitterMaskOverride;
 
@@ -346,20 +345,20 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
         void *devAddress = nullptr;
         context->allocDeviceMem(rootDevice->toHandle(), &deviceDesc, sizeof(uint64_t), 4096u, &devAddress);
         ze_event_handle_t outEvent = nullptr;
-        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {
-            .stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES,
+        ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {
+            .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC,
             .deviceAddress = reinterpret_cast<uint64_t *>(devAddress),
             .incrementValue = incValue,
             .completionValue = completionValue,
         };
 
-        zex_counter_based_event_desc_t counterBasedDesc = {
-            .stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
+        ze_event_counter_based_desc_t counterBasedDesc = {
+            .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
             .pNext = &externalStorageAllocProperties,
-            .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE,
+            .flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE,
         };
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context.get(), rootDevice, &counterBasedDesc, &outEvent));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context.get(), rootDevice, &counterBasedDesc, &outEvent));
 
         return DestroyableZeUniquePtr<Event>(Event::fromHandle(outEvent));
     }

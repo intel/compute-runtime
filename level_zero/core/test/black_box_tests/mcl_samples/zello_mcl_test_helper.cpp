@@ -92,10 +92,6 @@ ExecEnv::ExecEnv() {
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendMIMath", reinterpret_cast<void **>(&zexCommandListAppendMIMathFunc)));
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendStoreRegVariable", reinterpret_cast<void **>(&zexCommandListAppendStoreRegVariableFunc)));
 
-    if (cbEventsExtension) {
-        LevelZeroBlackBoxTests::loadCounterBasedEventCreateFunction(driverHandle);
-    }
-
     if (!this->mutationCapabilities.kernelArguments) {
         mclBuildOption.append(mcl4GbBuildOption);
     }
@@ -368,7 +364,7 @@ bool isMclCapabilitySupported(ze_mutable_command_list_exp_properties_t &mclPrope
 
 void setEventPoolEventFlags(EventOptions eventOptions,
                             ze_event_pool_flags_t &eventPoolFlag,
-                            zex_counter_based_event_desc_t *counterBasedDesc,
+                            ze_event_counter_based_desc_t *counterBasedDesc,
                             ze_event_scope_flags_t &signalScope) {
     eventPoolFlag = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     signalScope = 0;
@@ -381,11 +377,11 @@ void setEventPoolEventFlags(EventOptions eventOptions,
     }
 
     if (counterBasedDesc && isCbEvent(eventOptions)) {
-        counterBasedDesc->flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+        counterBasedDesc->flags |= ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
         if (isTimestampEvent(eventOptions)) {
-            counterBasedDesc->flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+            counterBasedDesc->flags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
         }
-        counterBasedDesc->signalScope = signalScope;
+        counterBasedDesc->signal = signalScope;
     }
 }
 
@@ -396,8 +392,8 @@ void createEventPoolAndEvents(ExecEnv &execEnv,
                               EventOptions eventOptions) {
     ze_event_pool_flags_t eventPoolFlag = 0;
     ze_event_scope_flags_t signalScope = 0;
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
     bool cbEventsCreate = isCbEvent(eventOptions);
 
     setEventPoolEventFlags(eventOptions, eventPoolFlag, &counterBasedDesc, signalScope);

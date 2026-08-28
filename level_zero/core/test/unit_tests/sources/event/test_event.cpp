@@ -5619,7 +5619,7 @@ HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingHostVisibleStanda
     neoDevice->getUltCommandStreamReceiver<FamilyType>().isWaitUserFenceNotEqualSupportedValue = true;
 
     ze_event_handle_t handle = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &defaultZexIntelCounterBasedEventDesc, &handle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &defaultIntelCounterBasedEventDesc, &handle));
 
     auto event = zeUniquePtr(whiteboxCast(Event::fromHandle(handle)));
     ASSERT_NE(nullptr, event);
@@ -5636,11 +5636,11 @@ HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingDeviceScopeStanda
 
     neoDevice->getUltCommandStreamReceiver<FamilyType>().isWaitUserFenceNotEqualSupportedValue = true;
 
-    zex_counter_based_event_desc_t deviceScopeDesc = defaultZexIntelCounterBasedEventDesc;
-    deviceScopeDesc.signalScope = 0;
+    ze_event_counter_based_desc_t deviceScopeDesc = defaultIntelCounterBasedEventDesc;
+    deviceScopeDesc.signal = 0;
 
     ze_event_handle_t handle = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &deviceScopeDesc, &handle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &deviceScopeDesc, &handle));
 
     auto event = zeUniquePtr(whiteboxCast(Event::fromHandle(handle)));
     ASSERT_NE(nullptr, event);
@@ -5737,10 +5737,18 @@ HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandle
     *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
-    ze_event_desc_t eventDesc = {};
     ze_event_handle_t handle = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
+    ze_event_counter_based_external_sync_allocation_desc_t externalSync = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC};
+    externalSync.deviceAddress = gpuAddress;
+    externalSync.hostAddress = hostAddress;
+    externalSync.completionValue = counterValue;
+
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+    counterBasedDesc.pNext = &externalSync;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
 
     auto eventObj = Event::fromHandle(handle);
 
@@ -7126,10 +7134,10 @@ HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndC
     context->freeMem(devicePtr);
 }
 
-TEST_F(EventTests, givenDefaultDescriptorWhenCreatingCbEvent2ThenEventWithNoProfilingAndSignalScopeHostAndDeviceScopeWaitIsCreated) {
+TEST_F(EventTests, givenDefaultDescriptorWhenCreatingCounterBasedEventThenEventWithNoProfilingAndSignalScopeHostAndDeviceScopeWaitIsCreated) {
     ze_event_handle_t handle = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &defaultZexIntelCounterBasedEventDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &defaultIntelCounterBasedEventDesc, &handle));
 
     auto eventObj = Event::fromHandle(handle);
     EXPECT_TRUE(eventObj->isCounterBasedExplicitlyEnabled());
@@ -7137,11 +7145,11 @@ TEST_F(EventTests, givenDefaultDescriptorWhenCreatingCbEvent2ThenEventWithNoProf
     EXPECT_FALSE(eventObj->isEventTimestampFlagSet());
     EXPECT_TRUE(eventObj->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
     EXPECT_TRUE(eventObj->isWaitScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
-    EXPECT_EQ(static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE), eventObj->getCounterBasedFlags());
+    EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE), eventObj->getCounterBasedFlags());
     zeEventDestroy(handle);
 }
 
-TEST_F(EventTests, givenNullDescriptorWhenCreatingCbEvent2ThenEventWithNoProfilingAndSignalScopeHostAndDeviceScopeWaitIsCreated) {
+TEST_F(EventTests, givenNullDescriptorWhenCreatingDeprecatedCbEvent2ThenEventWithNoProfilingAndSignalScopeHostAndDeviceScopeWaitIsCreated) {
     ze_event_handle_t handle = nullptr;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, nullptr, &handle));
@@ -7156,12 +7164,12 @@ TEST_F(EventTests, givenNullDescriptorWhenCreatingCbEvent2ThenEventWithNoProfili
     zeEventDestroy(handle);
 }
 
-TEST_F(EventTests, givenDescriptorWithExternalFlagWhenCreatingCbEvent2ThenEventWithExternalFlagIsCreated) {
+TEST_F(EventTests, givenDescriptorWithExternalFlagWhenCreatingCounterBasedEventThenEventWithExternalFlagIsCreated) {
     ze_event_handle_t handle = nullptr;
-    zex_counter_based_event_desc_t desc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    desc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+    ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &desc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
 
     auto eventObj = Event::fromHandle(handle);
     EXPECT_TRUE(eventObj->isCounterBasedExplicitlyEnabled());
@@ -7224,7 +7232,7 @@ TEST_F(EventTests, givenCounterBasedEventCreatedWithAdditionalFlagsWhenQueryingC
 TEST_F(EventTests, givenCounterBasedEventCreatedWithTimestampAndExternalFlagsWhenQueryingCounterBasedFlagsThenAllCreationFlagsAreReturned) {
     ze_event_handle_t handle = nullptr;
     ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
-    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+    desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &desc, &handle));
 
@@ -7248,7 +7256,7 @@ TEST_F(EventTests, givenNoImmediateFlagsWhenCreatingCounterBasedEventThenImmedia
 }
 
 TEST_F(EventTests, givenUndefinedFlagWhenCreatingCounterBasedEventThenReturnInvalidEnumeration) {
-    constexpr uint32_t firstUndefinedFlag = ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL << 1;
+    constexpr uint32_t firstUndefinedFlag = ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL << 1;
 
     ze_event_handle_t handle = nullptr;
     ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
@@ -7278,7 +7286,7 @@ TEST_F(EventTests, givenInvalidExtensionArgumentWhenCreatingEventThenDoNotAbortA
     ze_result_t returnValue;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
 
-    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES};
+    ze_event_counter_based_external_sync_allocation_desc_t externalSyncAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC};
     ze_event_desc_t eventDesc = {};
     eventDesc.pNext = &externalSyncAllocProperties;
 
@@ -7286,7 +7294,7 @@ TEST_F(EventTests, givenInvalidExtensionArgumentWhenCreatingEventThenDoNotAbortA
     EXPECT_EQ(event0, nullptr);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
-    zex_counter_based_event_external_sync_alloc_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
+    ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
     eventDesc.pNext = &externalStorageAllocProperties;
 
     auto event1 = Event::create<uint32_t>(eventPool.get(), &eventDesc, device, returnValue);
@@ -7324,17 +7332,17 @@ TEST_F(EventTests, givenCompletionValueExceedingMaxValueWhenCreatingCbEventWithE
 
     uint64_t counter = 0;
 
-    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES};
+    ze_event_counter_based_external_sync_allocation_desc_t externalSyncAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC};
     externalSyncAllocProperties.deviceAddress = &counter;
     externalSyncAllocProperties.hostAddress = &counter;
     externalSyncAllocProperties.completionValue = maxValue + 1;
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
     counterBasedDesc.pNext = &externalSyncAllocProperties;
 
     ze_event_handle_t handle = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
     EXPECT_EQ(nullptr, handle);
 }
 
@@ -7348,21 +7356,21 @@ TEST_F(EventTests, givenCompletionValueExceedingMaxValueWhenCreatingCbEventWithE
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, sizeof(uint64_t), 4096u, &deviceAlloc));
 
-    zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
+    ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
     externalStorageAllocProperties.deviceAddress = reinterpret_cast<uint64_t *>(deviceAlloc);
     externalStorageAllocProperties.incrementValue = 1;
     externalStorageAllocProperties.completionValue = maxValue + 1;
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
     counterBasedDesc.pNext = &externalStorageAllocProperties;
 
     ze_event_handle_t handle = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
     EXPECT_EQ(nullptr, handle);
 
     externalStorageAllocProperties.completionValue = maxValue;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
     ASSERT_NE(nullptr, handle);
     zeEventDestroy(handle);
 

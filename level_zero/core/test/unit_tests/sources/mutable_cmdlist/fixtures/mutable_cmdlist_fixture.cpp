@@ -19,7 +19,6 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
-#include "level_zero/driver_experimental/zex_event.h"
 
 namespace L0 {
 namespace ult {
@@ -187,8 +186,8 @@ NEO::GraphicsAllocation *MutableCommandListFixtureInit::getUsmAllocation(void *u
 Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool externalMemory, bool externalFlag) {
     Event *event = nullptr;
     if (cbEvent) {
-        zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
+        ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
         if (externalMemory) {
             void *externalStorage = nullptr;
             ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -203,18 +202,18 @@ Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalS
             counterBasedDesc.pNext = &externalStorageAllocProperties;
         }
 
-        counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+        counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
         if (timestamp) {
-            counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+            counterBasedDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
         }
         if (externalFlag) {
-            counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+            counterBasedDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
         }
         if (signalScope) {
-            counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+            counterBasedDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
         }
         ze_event_handle_t eventHandle = nullptr;
-        ze_result_t ret = L0::zexCounterBasedEventCreate2(this->context, this->device, &counterBasedDesc, &eventHandle);
+        ze_result_t ret = zeEventCounterBasedCreate(this->context, this->device, &counterBasedDesc, &eventHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
         if (eventHandle) {
             this->eventHandles.push_back(eventHandle);

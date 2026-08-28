@@ -17,8 +17,6 @@
 #endif
 
 namespace LevelZeroBlackBoxTests {
-decltype(&zexCounterBasedEventCreate2) zexCounterBasedEventCreate2Func = nullptr;
-
 struct LoadedDriverExtensions {
     std::vector<ze_driver_extension_properties_t> extensions;
     bool loaded = false;
@@ -408,7 +406,7 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_event_pool_handle_t &eventPool,
                               ze_event_pool_flags_t poolFlag,
                               bool counterEvents,
-                              const zex_counter_based_event_desc_t *counterBasedDesc,
+                              const ze_event_counter_based_desc_t *counterBasedDesc,
                               uint32_t poolSize,
                               ze_event_handle_t *events,
                               ze_event_scope_flags_t signalScope,
@@ -420,14 +418,12 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
 
     if (!counterEvents) {
         SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
-    } else {
-        loadCounterBasedEventCreateFunction(testDriverHandle);
     }
 
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     for (uint32_t i = 0; i < poolSize; i++) {
         if (counterEvents) {
-            SUCCESS_OR_TERMINATE(zexCounterBasedEventCreate2Func(context, device, counterBasedDesc, events + i));
+            SUCCESS_OR_TERMINATE(zeEventCounterBasedCreate(context, device, counterBasedDesc, events + i));
         } else {
             eventDesc.index = i;
             eventDesc.signal = signalScope;
@@ -448,12 +444,6 @@ bool counterBasedEventsExtensionPresent(ze_driver_handle_t &driverHandle) {
     extensionsToCheck.push_back(cbEventsExtension);
 
     return LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionsToCheck);
-}
-
-void loadCounterBasedEventCreateFunction(ze_driver_handle_t &driverHandle) {
-    if (zexCounterBasedEventCreate2Func == nullptr) {
-        SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexCounterBasedEventCreate2", reinterpret_cast<void **>(&zexCounterBasedEventCreate2Func)));
-    }
 }
 
 std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, uint32_t &subDevCount) {

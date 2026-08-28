@@ -3885,14 +3885,26 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventWhenCallingAppendThe
     *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
-    ze_event_desc_t eventDesc = {};
     ze_event_handle_t eHandle1 = nullptr;
     ze_event_handle_t eHandle2 = nullptr;
     ze_event_handle_t eHandle3 = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle1));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle2));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle3));
+    auto createCbEvent = [&](ze_event_handle_t &outHandle) {
+        ze_event_counter_based_external_sync_allocation_desc_t externalSync = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC};
+        externalSync.deviceAddress = gpuAddress;
+        externalSync.hostAddress = hostAddress;
+        externalSync.completionValue = counterValue + 1;
+
+        ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+        desc.pNext = &externalSync;
+
+        return zeEventCounterBasedCreate(context, device, &desc, &outHandle);
+    };
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createCbEvent(eHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createCbEvent(eHandle2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createCbEvent(eHandle3));
 
     constexpr size_t size = 128 * sizeof(uint32_t);
     auto data = allocHostMem(size);
@@ -3917,12 +3929,24 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCa
     *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
-    ze_event_desc_t eventDesc = {};
     ze_event_handle_t eHandle1 = nullptr;
     ze_event_handle_t eHandle2 = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle1));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle2));
+    auto createCbEvent = [&](ze_event_handle_t &outHandle) {
+        ze_event_counter_based_external_sync_allocation_desc_t externalSync = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC};
+        externalSync.deviceAddress = gpuAddress;
+        externalSync.hostAddress = hostAddress;
+        externalSync.completionValue = counterValue + 1;
+
+        ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+        desc.pNext = &externalSync;
+
+        return zeEventCounterBasedCreate(context, device, &desc, &outHandle);
+    };
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createCbEvent(eHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createCbEvent(eHandle2));
 
     const size_t ptrBaseSize = 128;
     const size_t offset = 1;
@@ -3968,12 +3992,24 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWh
     *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
-    ze_event_desc_t eventDesc = {};
     ze_event_handle_t eHandle1 = nullptr;
     ze_event_handle_t eHandle2 = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle1));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle2));
+    auto createCbEvent = [&](ze_event_handle_t &outHandle) {
+        ze_event_counter_based_external_sync_allocation_desc_t externalSync = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC};
+        externalSync.deviceAddress = gpuAddress;
+        externalSync.hostAddress = hostAddress;
+        externalSync.completionValue = counterValue + 1;
+
+        ze_event_counter_based_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        desc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+        desc.pNext = &externalSync;
+
+        return zeEventCounterBasedCreate(context, device, &desc, &outHandle);
+    };
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createCbEvent(eHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createCbEvent(eHandle2));
 
     constexpr size_t size = 128 * sizeof(uint32_t);
     auto data = allocHostMem(size);
@@ -4944,12 +4980,12 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithR
 HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadAndBcsDispatchAndCounterBasedTimestampHostVisibleSignalWhenCallingSynchronizeOnCbEventThenFlushDcIfSupported, IsAtLeastXeCore) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+    counterBasedDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
 
     ze_event_handle_t handle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
 
     auto srcAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
     auto dstAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));

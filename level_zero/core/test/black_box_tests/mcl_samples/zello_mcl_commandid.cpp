@@ -1516,20 +1516,20 @@ bool testSignalExternalIncrementCbEvent(MclTests::ExecEnv *execEnv, ze_module_ha
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, externalDeviceBuffer1, &zero, sizeof(uint64_t), sizeof(uint64_t), nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, externalDeviceBuffer2, &zero, sizeof(uint64_t), sizeof(uint64_t), nullptr, 0, nullptr));
 
-    zex_counter_based_event_external_storage_properties_t firstExternalStorageProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
+    ze_event_counter_based_external_aggregate_storage_desc_t firstExternalStorageProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
     firstExternalStorageProperties.deviceAddress = counterValueBuffer1;
     firstExternalStorageProperties.incrementValue = incrementValue;
     firstExternalStorageProperties.completionValue = counterValue;
-    zex_counter_based_event_desc_t firstEventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    firstEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+    ze_event_counter_based_desc_t firstEventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    firstEventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
     firstEventDesc.pNext = &firstExternalStorageProperties;
 
-    zex_counter_based_event_external_storage_properties_t secondExternalStorageProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
+    ze_event_counter_based_external_aggregate_storage_desc_t secondExternalStorageProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
     secondExternalStorageProperties.deviceAddress = counterValueBuffer2;
     secondExternalStorageProperties.incrementValue = incrementValue;
     secondExternalStorageProperties.completionValue = counterValue;
-    zex_counter_based_event_desc_t secondEventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    secondEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+    ze_event_counter_based_desc_t secondEventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    secondEventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
     secondEventDesc.pNext = &secondExternalStorageProperties;
 
     void *srcBuffer = nullptr;
@@ -1545,8 +1545,8 @@ bool testSignalExternalIncrementCbEvent(MclTests::ExecEnv *execEnv, ze_module_ha
 
     ze_event_handle_t firstExternalEvent = nullptr;
     ze_event_handle_t secondExternalEvent = nullptr;
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::zexCounterBasedEventCreate2Func(execEnv->context, execEnv->device, &firstEventDesc, &firstExternalEvent));
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::zexCounterBasedEventCreate2Func(execEnv->context, execEnv->device, &secondEventDesc, &secondExternalEvent));
+    SUCCESS_OR_TERMINATE(zeEventCounterBasedCreate(execEnv->context, execEnv->device, &firstEventDesc, &firstExternalEvent));
+    SUCCESS_OR_TERMINATE(zeEventCounterBasedCreate(execEnv->context, execEnv->device, &secondEventDesc, &secondExternalEvent));
 
     uint32_t groupSize[3] = {32, 1, 1};
 
@@ -1770,24 +1770,24 @@ bool testExternalMemoryCbWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_
     ze_event_handle_t firstExternalEvent = nullptr;
     ze_event_handle_t secondExternalEvent = nullptr;
 
-    zex_counter_based_event_external_sync_alloc_properties_t firstExternalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES};
+    ze_event_counter_based_external_sync_allocation_desc_t firstExternalSyncAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC};
     firstExternalSyncAllocProperties.completionValue = firstEventCompletionValue;
     firstExternalSyncAllocProperties.deviceAddress = firstExternalEventDeviceMemoryPtr;
     firstExternalSyncAllocProperties.hostAddress = firstExternalEventHostMemoryPtr;
-    zex_counter_based_event_desc_t firstEventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    firstEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+    ze_event_counter_based_desc_t firstEventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    firstEventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
     firstEventDesc.pNext = &firstExternalSyncAllocProperties;
 
-    zex_counter_based_event_external_sync_alloc_properties_t secondExternalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES};
+    ze_event_counter_based_external_sync_allocation_desc_t secondExternalSyncAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC};
     secondExternalSyncAllocProperties.completionValue = secondEventCompletionValue;
     secondExternalSyncAllocProperties.deviceAddress = secondExternalEventDeviceMemoryPtr;
     secondExternalSyncAllocProperties.hostAddress = secondExternalEventHostMemoryPtr;
-    zex_counter_based_event_desc_t secondEventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    secondEventDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+    ze_event_counter_based_desc_t secondEventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    secondEventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
     secondEventDesc.pNext = &secondExternalSyncAllocProperties;
 
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::zexCounterBasedEventCreate2Func(execEnv->context, execEnv->device, &firstEventDesc, &firstExternalEvent));
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::zexCounterBasedEventCreate2Func(execEnv->context, execEnv->device, &secondEventDesc, &secondExternalEvent));
+    SUCCESS_OR_TERMINATE(zeEventCounterBasedCreate(execEnv->context, execEnv->device, &firstEventDesc, &firstExternalEvent));
+    SUCCESS_OR_TERMINATE(zeEventCounterBasedCreate(execEnv->context, execEnv->device, &secondEventDesc, &secondExternalEvent));
 
     ze_command_list_handle_t baseCmdListExecList[] = {cmdList1, dstCmdList};
     ze_command_list_handle_t mutableCmdListExecList[] = {cmdList2, dstCmdList};
