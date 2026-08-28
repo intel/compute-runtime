@@ -295,15 +295,27 @@ struct Line {
 static_assert(sizeof(Line) == 12, "");
 
 template <typename T, typename It>
-inline bool reserveBasedOnEstimates(T &container, It beg, It end, It pos) {
-    if ((container.size() < container.capacity()) || (pos == beg)) {
+inline bool reserveBasedOnEstimates(T &container, It beg, It end, It pos, size_t minFreeSlots) {
+    if ((container.size() + minFreeSlots <= container.capacity()) || (pos == beg)) {
         return false;
     }
     DEBUG_BREAK_IF((beg > end) || (pos < beg));
     auto normalizedPosInv = float(end - beg) / float(pos - beg);
     auto estimatedTotalElements = static_cast<size_t>(container.size() * normalizedPosInv);
+    if (estimatedTotalElements < container.size() + minFreeSlots) {
+        // Extrapolation may round down below the requested headroom.
+        estimatedTotalElements = container.capacity() * 2U;
+        if (estimatedTotalElements < container.size() + minFreeSlots) {
+            estimatedTotalElements = container.size() + minFreeSlots;
+        }
+    }
     container.reserve(estimatedTotalElements);
     return true;
+}
+
+template <typename T, typename It>
+inline bool reserveBasedOnEstimates(T &container, It beg, It end, It pos) {
+    return reserveBasedOnEstimates(container, beg, end, pos, 1U);
 }
 
 using TokensCache = StackVec<Token, 2048>;
