@@ -579,8 +579,7 @@ bool CompilerCache::writeStatsToFile(const std::string &statsPath, const CacheSt
                                              FILE_ATTRIBUTE_NORMAL,
                                              NULL);
     if (handle == INVALID_HANDLE_VALUE) {
-        auto lastError = SysCalls::getLastError();
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), lastError);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
         return false;
     }
 

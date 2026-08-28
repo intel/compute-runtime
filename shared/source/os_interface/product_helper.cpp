@@ -56,7 +56,7 @@ void ProductHelper::applyLimitGrfSupported(SupportedNumGrfs &grfs) const {
     DEBUG_BREAK_IF(grfs.empty());
     const auto limit = static_cast<uint32_t>(debugManager.flags.LimitNumGrfsSupported.get());
     if (limit < grfs.back()) {
-        const auto it = std::find_if(grfs.begin(), grfs.end(), [limit](uint32_t numGrfs) { return numGrfs > limit; });
+        const auto it = std::find_if(grfs.begin(), grfs.end(), [=](uint32_t numGrfs) { return numGrfs > limit; });
         grfs.resize(static_cast<size_t>(it - grfs.begin()));
         DEBUG_BREAK_IF(grfs.empty());
     }

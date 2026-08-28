@@ -1373,6 +1373,8 @@ bool CommandQueue::isWaitForTimestampsEnabled() const {
     case 4:
         enabled = true;
         break;
+    default:
+        break;
     }
 
     return enabled;

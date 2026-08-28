@@ -465,12 +465,13 @@ void Gmm::applyMemoryFlags(const StorageInfo &storageInfo) {
 }
 
 void Gmm::applyDebugOverrides() {
-    auto *resourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(this->resourceParamsData.data());
     if (-1 != debugManager.flags.OverrideGmmResourceUsageField.get()) {
+        auto *resourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(this->resourceParamsData.data());
         resourceParams->Usage = static_cast<GMM_RESOURCE_USAGE_TYPE>(debugManager.flags.OverrideGmmResourceUsageField.get());
     }
 
     if (true == (debugManager.flags.ForceAllResourcesUncached.get())) {
+        auto *resourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(this->resourceParamsData.data());
         resourceParams->Usage = GMM_RESOURCE_USAGE_SURFACE_UNCACHED;
     }
 }

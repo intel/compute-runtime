@@ -17,7 +17,7 @@ namespace L0 {
 
 void ExternalSemaphoreImp::semaphoreWait(const ExternalSemaphoreOperationData &operationData) {
     for (auto [semaphore, value] : operationData.semaphores) {
-        bool result = semaphore->neoExternalSemaphore->enqueueWait(&value);
+        [[maybe_unused]] bool result = semaphore->neoExternalSemaphore->enqueueWait(&value);
         PRINT_STRING(NEO::debugManager.flags.PrintExternalSemaphoreOperationResults.get(), stdout,
                      "ExternalSemaphoreImp::semaphoreWait semaphore=%p value=%llu result=%d\n",
                      static_cast<void *>(semaphore),
@@ -28,7 +28,7 @@ void ExternalSemaphoreImp::semaphoreWait(const ExternalSemaphoreOperationData &o
 
 void ExternalSemaphoreImp::semaphoreSignal(const ExternalSemaphoreOperationData &operationData) {
     for (auto [semaphore, value] : operationData.semaphores) {
-        bool result = semaphore->neoExternalSemaphore->enqueueSignal(&value);
+        [[maybe_unused]] bool result = semaphore->neoExternalSemaphore->enqueueSignal(&value);
         PRINT_STRING(NEO::debugManager.flags.PrintExternalSemaphoreOperationResults.get(), stdout,
                      "ExternalSemaphoreImp::semaphoreSignal semaphore=%p value=%llu result=%d\n",
                      static_cast<void *>(semaphore),

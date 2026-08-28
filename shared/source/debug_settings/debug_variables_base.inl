@@ -5,6 +5,15 @@
  *
  */
 
+#if !defined(DECLARE_RUNTIME_DEBUG_VARIABLE)
+#define DECLARE_RUNTIME_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define NEO_UNDEF_DECLARE_RUNTIME_DEBUG_VARIABLE
+#endif
+
+// Use DECLARE_RUNTIME_DEBUG_VARIABLE for debug variables
+// that must remain mutable in driver code.
+
 /*SIMULATION FLAGS*/
 DECLARE_DEBUG_VARIABLE(std::string, TbxServer, std::string("127.0.0.1"), "TCP-IP address of TBX server")
 DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, std::string("unk"), "Specify product for use in AUB/TBX")
@@ -16,7 +25,7 @@ DECLARE_DEBUG_VARIABLE(std::string, AUBDumpCaptureFileName, std::string("unk"), 
 DECLARE_DEBUG_VARIABLE(std::string, AUBDumpCaptureDirPath, std::string("unk"), "Path to the directory where the AUB fill will be saved")
 DECLARE_DEBUG_VARIABLE(std::string, AUBDumpFilterKernelName, std::string("unk"), "Name of kernel to AUB capture")
 DECLARE_DEBUG_VARIABLE(std::string, AUBDumpToggleFileName, std::string("unk"), "Name of file to save AUB in toggle mode")
-DECLARE_DEBUG_VARIABLE(std::string, OverrideGdiPath, std::string("unk"), "When different value than \"unk\", will override default path to gdi library.")
+DECLARE_RUNTIME_DEBUG_VARIABLE(std::string, OverrideGdiPath, std::string("unk"), "When different value than \"unk\", will override default path to gdi library.")
 DECLARE_DEBUG_VARIABLE(std::string, AubDumpAddMmioRegistersList, std::string("unk"), "Semicolon separated sequence of additional MMIO registers offset;values pairs i.e. 0x111;0x123;0x222;0x456")
 DECLARE_DEBUG_VARIABLE(int64_t, AUBDumpAllocations, 0, "0: default, >0: (bitmask) dump given allocation types to AUB")
 DECLARE_DEBUG_VARIABLE(int32_t, BlitterEnableMaskOverride, 0, "Specify bitmask with BCS engines available on the device, for use in AUB/TBX mode")
@@ -469,7 +478,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DeferCmdQBcsInitialization, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, PreferInternalBcsEngine, -1, "-1: default, 0:disabled, 1: enabled. When enabled use internal BCS engine for internal transfers, when disabled use regular engine")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsCopy, -1, "-1: default, 0:disabled, 1: enabled. When enqueues copy to main copy engine then split between even linked copy engines")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsCopyHostptr, -1, "-1: default, 0:disabled, 1: enabled. Enable split for hostptr allocations")
-DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsSize, -1, "-1: default, >=0: Size in KB to apply BCS split from")
+DECLARE_RUNTIME_DEBUG_VARIABLE(int32_t, SplitBcsSize, -1, "-1: default, >=0: Size in KB to apply BCS split from")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMask, 0, "0: default, >0: bitmask: indicates bcs engines for split")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMaskH2D, 0, "0: default, >0: bitmask: indicates bcs engines for H2D split")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMaskD2H, 0, "0: default, >0: bitmask: indicates bcs engines for D2H split")
@@ -528,16 +537,16 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphorePlacement, -1, "-1: do 
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferAddressing, -1, "-1: do not override, 0: not use 48bit, 1: use 48bit")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphoreAddressing, -1, "-1: do not override, 0: not use 48bit, 1: use 48bit")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDrmContext, -1, "Create special drm context: -1: default, when new residency model available, 0: disable, 1: enable")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideBlitterSupport, -1, "Overrides default blitter support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")
+DECLARE_RUNTIME_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideBlitterSupport, -1, "Overrides default blitter support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideRenderSupport, -1, "Overrides default render support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideComputeSupport, -1, "Overrides default compute support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionNewResourceTlbFlush, -1, "-1: driver default - flush when new resource is bound, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDetectGpuHang, -1, "-1: default, 0: disable gpu hang detection after raising ulls semaphore, 1: enable gpu hang detection after raising ulls semaphore")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionFlatRingBuffer, -1, "-1: default, 0: disable, 1: enable, Copies task command buffer directly into ring, implemented for immediate command lists only")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmissionController, -1, "Enable direct submission terminating after given timeout, -1: default, 0: disabled, 1: enabled")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerTimeout, -1, "Set direct submission controller timeout, -1: default 5000 us, >=0: timeout in us")
+DECLARE_RUNTIME_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerTimeout, -1, "Set direct submission controller timeout, -1: default 5000 us, >=0: timeout in us")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerBcsTimeoutDivisor, -1, "If >=1, divide controller timeout to stop BCS only engines faster than others")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerMaxTimeout, -1, "Set direct submission controller max timeout - timeout will increase up to given value, -1: default 5000 us, >=0: max timeout in us")
+DECLARE_RUNTIME_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerMaxTimeout, -1, "Set direct submission controller max timeout - timeout will increase up to given value, -1: default 5000 us, >=0: max timeout in us")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionForceLocalMemoryStorageMode, -1, "Force local memory storage for command/ring/semaphore buffer, -1: default - for all engines, 0: disabled, 1: for multiOsContextCapable engine, 2: for all engines")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableRingSwitchTagUpdateWa, -1, "-1: default, 0 - disable, 1 - enable. If enabled, completionFences wont be updated if ring is not running.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionPCIBarrier, -1, "Use PCI barrier for data synchronization before semaphore unblock -1: default, 0 - disable, 1 - enable.")
@@ -585,7 +594,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideWddmContextPowerHint, -1, "Override Wddm
 DECLARE_DEBUG_VARIABLE(bool, DisableKmdSubmissionForTimestamps, false, "Do not use KMD when querying GPU timestamps, calculate it on CPU side instead.")
 DECLARE_DEBUG_VARIABLE(int64_t, VmBindWaitUserFenceTimeout, -1, "-1: default, >0: time in ns for wait function timeout")
 
-DECLARE_DEBUG_VARIABLE(int32_t, ForceRunAloneContext, -1, "Control creation of run-alone HW context, -1:default, 0:disable, 1:enable")
+DECLARE_RUNTIME_DEBUG_VARIABLE(int32_t, ForceRunAloneContext, -1, "Control creation of run-alone HW context, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AddClGlSharing, -1, "Add cl-gl extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBOMmapCreate, -1, "Create BOs using mmap, -1:default, 0:disable(GEM_USERPTR), 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableGemCloseWorker, -1, "Use asynchronous gem object closing, -1:default, 0:disable, 1:enable")
@@ -726,7 +735,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, NodeOrdinalOverrideForCCS, -1, "-1: default do n
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideThreadArbitrationPolicy, -1, "-1 (don't override) or any valid config (0: Age Based, 1: Round Robin)")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampPacket, -1, "-1: default, 0: disable, 1:enable. Write Timestamp Packet for each set of gpu walkers")
 DECLARE_DEBUG_VARIABLE(int32_t, AllocateSharedAllocationsWithCpuAndGpuStorage, -1, "When enabled driver creates cpu & gpu storage for shared unified memory allocations. (-1 - devices default mode, 0 - disable, 1 - enable)")
-DECLARE_DEBUG_VARIABLE(int32_t, UseKmdMigration, -1, "-1: devices default mode, 0: disable - pagefault handling by UMD using handler for SIGSEGV, 1: enable - pagefault handling by KMD, GEM objects migrated by KMD upon access)")
+DECLARE_RUNTIME_DEBUG_VARIABLE(int32_t, UseKmdMigration, -1, "-1: devices default mode, 0: disable - pagefault handling by UMD using handler for SIGSEGV, 1: enable - pagefault handling by KMD, GEM objects migrated by KMD upon access)")
 DECLARE_DEBUG_VARIABLE(int32_t, CreateKmdMigratedSharedAllocationWithMultipleBOs, -1, "-1: default, 0: disable - create kmd-migrated shared allocation with single BO, 1: enable - create kmd-migrated shared allocation with multiple BOs)")
 DECLARE_DEBUG_VARIABLE(int32_t, UseKmdMigrationForBuffers, -1, "-1: default mode of kmd migration for buffers (disable), 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSemaphoreDelayBetweenWaits, -1, "Specifies the minimum number of microseconds allowed for command streamer to wait before re-fetching the data. 0 - poll interval will be equal to the memory latency of the read completion")
@@ -781,3 +790,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceDummyBlitWa, -1, "-1: default, 0: disabled,
 DECLARE_DEBUG_VARIABLE(bool, VfBarResourceAllocationWa, true, "Enables/disables WA for resizing VF BAR to 2GB on Warm Reset.")
 DECLARE_DEBUG_VARIABLE(bool, DoNotUseProductConfigForValidationWa, false, "Forces a workaround with legacy device binary validation usage (skip checking PRODUCT_CONFIG even if passed");
 DECLARE_DEBUG_VARIABLE(int64_t, ForceTotalWMTPDataSize, -1, "<=0: disabled, >0: size in bytes of total WMTP Data Size")
+
+#if defined(NEO_UNDEF_DECLARE_RUNTIME_DEBUG_VARIABLE)
+#undef NEO_UNDEF_DECLARE_RUNTIME_DEBUG_VARIABLE
+#undef DECLARE_RUNTIME_DEBUG_VARIABLE
+#endif

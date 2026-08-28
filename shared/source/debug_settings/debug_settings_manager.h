@@ -129,7 +129,51 @@ struct DebugVarBase {
     DVarsScopeMask scopeMask = compatibilityMask;
 };
 
-struct DebugVariables {                                 // NOLINT(clang-analyzer-optin.performance.Padding)
+// Represents immutable debug defaults as compile-time values,
+// allowing release builds to eliminate disabled code paths.
+template <typename T, auto defaultValueProvider, DVarsScopeMask scopeMask = compatibilityMask>
+struct CompileTimeDebugVariable {
+    static constexpr T get() {
+        return defaultValueProvider();
+    }
+
+    static const T &getRef() {
+        static const T value = defaultValueProvider();
+        return value;
+    }
+
+    static constexpr DebugVarPrefix getPrefixType() {
+        return DebugVarPrefix::none;
+    }
+
+    static constexpr DVarsScopeMask getScopeMask() {
+        return scopeMask;
+    }
+
+    template <typename UserType>
+    static constexpr UserType getIfNotDefault(UserType userValue) {
+        return userValue;
+    }
+
+    template <typename UserType>
+    static constexpr void assignIfNotDefault(UserType &) {
+    }
+
+    void setIfDefault(T) = delete;
+};
+
+template <bool useCompileTimeVariables, typename T, auto defaultValueProvider, DVarsScopeMask scopeMask = compatibilityMask>
+struct DebugVariableSelector : DebugVarBase<T> {
+    using DebugVarBase<T>::DebugVarBase;
+
+    DebugVariableSelector() : DebugVarBase<T>(defaultValueProvider(), scopeMask) {}
+};
+
+template <typename T, auto defaultValueProvider, DVarsScopeMask scopeMask>
+struct DebugVariableSelector<true, T, defaultValueProvider, scopeMask> : CompileTimeDebugVariable<T, defaultValueProvider, scopeMask> {};
+
+template <bool useCompileTimeVariablesEnabled>
+struct DebugVariablesT {                                // NOLINT(clang-analyzer-optin.performance.Padding)
     struct DEBUGGER_LOG_BITMASK {                       // NOLINT(readability-identifier-naming)
         constexpr static int32_t LOG_INFO{1};           // NOLINT(readability-identifier-naming)
         constexpr static int32_t LOG_ERROR{1 << 1};     // NOLINT(readability-identifier-naming)
@@ -140,7 +184,20 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
         constexpr static int32_t DUMP_TO_FILE{1 << 16}; // NOLINT(readability-identifier-naming)
     };
 
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    static constexpr bool useCompileTimeVariables = useCompileTimeVariablesEnabled;
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                       \
+    static constexpr dataType variableName##DefaultValueProvider() {                                    \
+        return defaultValue;                                                                            \
+    }                                                                                                   \
+    DebugVariableSelector<useCompileTimeVariablesEnabled, dataType, variableName##DefaultValueProvider> \
+        variableName;
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, scope, description)                       \
+    static constexpr dataType variableName##DefaultValueProvider() {                                           \
+        return defaultValue;                                                                                   \
+    }                                                                                                          \
+    DebugVariableSelector<useCompileTimeVariablesEnabled, dataType, variableName##DefaultValueProvider, scope> \
+        variableName;
+#define DECLARE_RUNTIME_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVarBase<dataType> variableName{defaultValue};
 #define S_NONE getDebugVarScopeMaskFor(DebugVarPrefix::none)
 #define S_NEO getDebugVarScopeMaskFor(DebugVarPrefix::neo)
@@ -148,11 +205,10 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 #define S_L0 getDebugVarScopeMaskFor(DebugVarPrefix::neoL0)
 #define S_RT (S_NEO | S_OCL | S_L0 | S_NONE)
 #define S_OCLOC getDebugVarScopeMaskFor(DebugVarPrefix::neoOcloc)
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, scope, description) \
-    DebugVarBase<dataType> variableName{defaultValue, scope};
 #define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
-#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) \
+    DebugVarBase<dataType> variableName{defaultValue};
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
 #undef DECLARE_RELEASE_VARIABLE_OPT
@@ -165,8 +221,15 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 #undef S_NONE
 #undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_SCOPED_V
+#undef DECLARE_RUNTIME_DEBUG_VARIABLE
 #undef DECLARE_DEBUG_VARIABLE
 };
+
+#if defined(NEO_USE_CONSTEXPR_DEBUG_VARIABLES)
+struct DebugVariables : DebugVariablesT<true> {};
+#else
+struct DebugVariables : DebugVariablesT<false> {};
+#endif
 
 template <DebugFunctionalityLevel debugLevel>
 class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {

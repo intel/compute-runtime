@@ -36,6 +36,54 @@ namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 } // namespace NEO
 
+template <typename VariableT, typename ValueT>
+concept PubliclyMutableDebugVariable = requires(VariableT &variable, ValueT value) {
+    variable.set(value);
+};
+
+TEST(DebugVariables, givenCompileTimeVariablesWhenCheckingTheirClassificationThenOnlyRuntimeAndReleaseVariablesAreMutable) {
+    NEO::DebugVariablesT<true> debugVariables;
+
+    static_assert(debugVariables.useCompileTimeVariables);
+
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    static_assert(!PubliclyMutableDebugVariable<decltype(debugVariables.variableName), dataType>);
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, scope, description) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RUNTIME_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    static_assert(PubliclyMutableDebugVariable<decltype(debugVariables.variableName), dataType>);
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#include "debug_variables.inl"
+#undef DECLARE_DEBUG_VARIABLE_OPT
+#undef DECLARE_RUNTIME_DEBUG_VARIABLE
+#undef DECLARE_DEBUG_SCOPED_V
+#undef DECLARE_DEBUG_VARIABLE
+
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) \
+    static_assert(PubliclyMutableDebugVariable<decltype(debugVariables.variableName), dataType>);
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
+    DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
+#include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
+
+    using CompileTimeVariable = decltype(debugVariables.EnableSWTags);
+    static_assert(!CompileTimeVariable::get());
+
+    EXPECT_FALSE(debugVariables.EnableSWTags.getRef());
+
+    EXPECT_EQ("unk", debugVariables.OverrideGdiPath.get());
+    debugVariables.OverrideGdiPath.set("test_gdi");
+    EXPECT_EQ("test_gdi", debugVariables.OverrideGdiPath.get());
+
+    EXPECT_EQ(-1, debugVariables.L2ClosNumCacheWays.get());
+
+    EXPECT_EQ(-1, debugVariables.EnableLEO.get());
+    debugVariables.EnableLEO.set(1);
+    EXPECT_EQ(1, debugVariables.EnableLEO.get());
+}
+
 TEST(DebugSettingsManager, WhenDebugManagerIsCreatedThenInjectFcnIsNull) {
     FullyEnabledTestDebugManager debugManager;
 

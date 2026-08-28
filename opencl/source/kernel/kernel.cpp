@@ -1607,7 +1607,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         if (isValidOffset(argAsPtr.stateless)) {
             auto patchLocation = ptrOffset(crossThreadData, argAsPtr.stateless);
-            uint64_t addressToPatch = buffer->setArgStateless(patchLocation, argAsPtr.pointerSize, rootDeviceIndex, !this->isBuiltIn);
+            [[maybe_unused]] uint64_t addressToPatch = buffer->setArgStateless(patchLocation, argAsPtr.pointerSize, rootDeviceIndex, !this->isBuiltIn);
 
             if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
                 PatchInfoData patchInfoData(addressToPatch - buffer->getOffset(), static_cast<uint64_t>(buffer->getOffset()),

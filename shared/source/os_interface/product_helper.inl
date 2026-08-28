@@ -339,6 +339,8 @@ LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getLocalMemoryAccessMode(cons
     case LocalMemoryAccessMode::cpuAccessAllowed:
     case LocalMemoryAccessMode::cpuAccessDisallowed:
         return static_cast<LocalMemoryAccessMode>(debugManager.flags.ForceLocalMemoryAccessMode.get());
+    default:
+        break;
     }
     return getDefaultLocalMemoryAccessMode(hwInfo);
 }

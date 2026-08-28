@@ -113,9 +113,11 @@ void DebugSettingsManager<debugLevel>::getStringWithFlags(std::string &allFlags,
     if constexpr (enabled) {                                                                   \
         DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)              \
     }
+#if !defined(NEO_USE_CONSTEXPR_DEBUG_VARIABLES)
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
+#endif
 #undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                               \
@@ -170,9 +172,11 @@ void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
         DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)              \
     }
 
+#if !defined(NEO_USE_CONSTEXPR_DEBUG_VARIABLES)
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
+#endif
 #undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                \

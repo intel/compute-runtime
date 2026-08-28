@@ -1393,6 +1393,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
     case 3:
         enabled = true;
         break;
+    default:
+        break;
     }
 
     return enabled;

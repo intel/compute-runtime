@@ -14,6 +14,7 @@
 namespace NEO {
 
 CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
+    constexpr uint8_t powerHintValueMask = 0x7fu;
     auto &rootDeviceEnvironment = osContext.getWddm()->getRootDeviceEnvironment();
     CREATECONTEXT_PVTDATA privateData = {};
     privateData.IsProtectedProcess = FALSE;
@@ -42,7 +43,8 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
 
     if (debugManager.flags.OverrideWddmContextPowerHint.get() != -1) {
         privateData.PowerHint.IsValid = 1;
-        privateData.PowerHint.Value = static_cast<uint8_t>(debugManager.flags.OverrideWddmContextPowerHint.get());
+        privateData.PowerHint.Value = static_cast<uint8_t>(
+            static_cast<uint32_t>(debugManager.flags.OverrideWddmContextPowerHint.get()) & powerHintValueMask);
     }
 
     return privateData;
