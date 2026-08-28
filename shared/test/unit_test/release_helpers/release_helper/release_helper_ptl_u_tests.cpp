@@ -28,7 +28,6 @@ TEST_F(ReleaseHelperPtlUTests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_EQ(64u, releaseHelper->getStackSizePerRay());
-        EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
 
@@ -81,14 +80,6 @@ TEST_F(ReleaseHelperPtlUTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
 
 TEST_F(ReleaseHelperPtlUTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
-}
-
-TEST_F(ReleaseHelperPtlUTests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
-    whenShouldQueryPeerAccessCalledThenFalseReturned();
-}
-
-TEST_F(ReleaseHelperPtlUTests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
-    whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
 TEST_F(ReleaseHelperPtlUTests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned) {

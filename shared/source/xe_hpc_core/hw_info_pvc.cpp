@@ -104,11 +104,11 @@ void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 
     PVC::adjustHardwareInfo(hwInfo);
 
+    setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
-    setupCaps(*hwInfo);
     applyDebugOverrides(*hwInfo);
 }
 

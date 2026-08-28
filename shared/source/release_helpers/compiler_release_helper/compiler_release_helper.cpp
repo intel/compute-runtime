@@ -36,7 +36,7 @@ bool CompilerReleaseHelper::isAvailableSemaphore64(const HardwareInfo &hwInfo) c
         return false;
     }
 
-    return this->isAvailableSemaphore64Base();
+    return hwInfo.caps.availableSemaphore64;
 }
 
 } // namespace NEO

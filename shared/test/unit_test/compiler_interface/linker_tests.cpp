@@ -2864,11 +2864,9 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationAndReducedSurfaceStateUnsuppo
     KernelDescriptor kernelDescriptor;
     kernelDescriptors.push_back(&kernelDescriptor);
 
-    MockReleaseHelper mockReleaseHelper;
-    mockReleaseHelper.isReducedSurfaceStateSupportedResult = false;
-
     UltDeviceFactory deviceFactory{1, 0};
-    deviceFactory.rootDevices[0]->mockReleaseHelper = &mockReleaseHelper;
+    auto &hwInfo = *deviceFactory.rootDevices[0]->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.reducedSurfaceStateSupported = false;
 
     std::vector<char> instructionSegment;
     uint32_t initData = 0x77777777;

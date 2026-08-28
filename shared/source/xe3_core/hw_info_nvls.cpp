@@ -90,11 +90,11 @@ void NVLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.EUCount * hwInfo->gtSystemInfo.NumThreadsPerEu;
 
     adjustHardwareInfo(hwInfo);
+    setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
-    setupCaps(*hwInfo);
     applyDebugOverrides(*hwInfo);
 }
 

@@ -47,10 +47,10 @@ TEST(CompilerReleaseHelperSemaphore64Tests, givenFtrHwSemaphore64SetWhenIsAvaila
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrHwSemaphore64 = true;
 
-    compilerReleaseHelper.isAvailableSemaphore64BaseResult = true;
+    hwInfo.caps.availableSemaphore64 = true;
     EXPECT_TRUE(compilerReleaseHelper.isAvailableSemaphore64(hwInfo));
 
-    compilerReleaseHelper.isAvailableSemaphore64BaseResult = false;
+    hwInfo.caps.availableSemaphore64 = false;
     EXPECT_FALSE(compilerReleaseHelper.isAvailableSemaphore64(hwInfo));
 }
 
@@ -58,7 +58,7 @@ TEST(CompilerReleaseHelperSemaphore64Tests, givenNoFtrHwSemaphore64WhenIsAvailab
     MockCompilerReleaseHelper compilerReleaseHelper;
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrHwSemaphore64 = false;
-    compilerReleaseHelper.isAvailableSemaphore64BaseResult = true;
+    hwInfo.caps.availableSemaphore64 = true;
 
     EXPECT_FALSE(compilerReleaseHelper.isAvailableSemaphore64(hwInfo));
 }
@@ -68,7 +68,7 @@ TEST(CompilerReleaseHelperSemaphore64Tests, givenEnable64BitSemaphoreFlagSetWhen
     MockCompilerReleaseHelper compilerReleaseHelper;
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrHwSemaphore64 = true;
-    compilerReleaseHelper.isAvailableSemaphore64BaseResult = true;
+    hwInfo.caps.availableSemaphore64 = true;
 
     debugManager.flags.Enable64BitSemaphore.set(0);
     EXPECT_FALSE(compilerReleaseHelper.isAvailableSemaphore64(hwInfo));
@@ -82,7 +82,7 @@ TEST(CompilerReleaseHelperSemaphore64Tests, givenEnable64BitSemaphoreFlagSetWhen
     MockCompilerReleaseHelper compilerReleaseHelper;
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrHwSemaphore64 = false;
-    compilerReleaseHelper.isAvailableSemaphore64BaseResult = false;
+    hwInfo.caps.availableSemaphore64 = false;
 
     debugManager.flags.Enable64BitSemaphore.set(1);
     EXPECT_TRUE(compilerReleaseHelper.isAvailableSemaphore64(hwInfo));

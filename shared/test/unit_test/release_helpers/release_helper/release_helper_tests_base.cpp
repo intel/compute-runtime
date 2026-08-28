@@ -122,42 +122,6 @@ void ReleaseHelperTestsBase::whenCallingAdjustMaxThreadsPerEuCountThenCorrectVal
     }
 }
 
-void ReleaseHelperTestsBase::whenShouldQueryPeerAccessCalledThenFalseReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->shouldQueryPeerAccess());
-    }
-}
-
-void ReleaseHelperTestsBase::whenShouldQueryPeerAccessCalledThenTrueReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->shouldQueryPeerAccess());
-    }
-}
-
-void ReleaseHelperTestsBase::whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->isSingleDispatchRequiredForMultiCCS());
-    }
-}
-
-void ReleaseHelperTestsBase::whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isSingleDispatchRequiredForMultiCCS());
-    }
-}
-
 void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned() {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableStateCacheInvalidationWa.set(-1);

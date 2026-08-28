@@ -92,11 +92,11 @@ void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
     hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.EUCount * hwInfo->gtSystemInfo.NumThreadsPerEu;
 
+    setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
-    setupCaps(*hwInfo);
     applyDebugOverrides(*hwInfo);
 }
 

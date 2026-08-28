@@ -29,13 +29,17 @@ struct CapsXe2HpgCore {
     static constexpr bool rcsExposureDisabled = true;
 };
 
-struct CapsBmgG21 : CapsXe2HpgCore {
+struct CapsBmg : CapsXe2HpgCore {
     static constexpr bool programAdditionalStallPriorToBarrierWithTimestamp = true;
+    static constexpr bool queryPeerAccess = true;
+    static constexpr bool singleDispatchRequiredForMultiCCS = true;
 };
-struct CapsBmgG31 : CapsXe2HpgCore {
-    static constexpr bool programAdditionalStallPriorToBarrierWithTimestamp = true;
+struct CapsBmgG21 : CapsBmg {};
+struct CapsBmgG31 : CapsBmg {};
+
+struct CapsLnl : CapsXe2HpgCore {
+    static constexpr bool latePreemptionStartSupported = true;
 };
-struct CapsLnl : CapsXe2HpgCore {};
 
 constexpr std::optional<Caps> resolveCapsBmgG21(HardwareIpVersion ipVersion) {
     switch (ipVersion.value) {

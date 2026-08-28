@@ -110,11 +110,11 @@ void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
+    setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
 
-    setupCaps(*hwInfo);
     applyDebugOverrides(*hwInfo);
 }
 

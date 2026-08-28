@@ -34,9 +34,4 @@ bool CompilerReleaseHelperHw<releaseType>::getFtrXe2Compression() const {
     return true;
 }
 
-template <ReleaseType releaseType>
-bool CompilerReleaseHelperHw<releaseType>::isAvailableSemaphore64Base() const {
-    return false;
-}
-
 } // namespace NEO

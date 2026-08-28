@@ -23,11 +23,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(computeSlmValues, uint32_t, {}, (uint32_t slmSize));
     ADDMETHOD_CONST_NOBASE(alignSlmSizePerThreadGroup, uint32_t, {}, (uint32_t slmSize));
     ADDMETHOD_CONST_NOBASE(adjustMaxThreadsPerEuCount, uint32_t, 8u, (uint32_t maxThreadsPerEuCount, uint32_t grfCount));
-    ADDMETHOD_CONST_NOBASE(shouldQueryPeerAccess, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isSingleDispatchRequiredForMultiCCS, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationWaRequired, bool, false, (bool isImmediateCmdList, bool kernelUsesImageOrSampler));
-    ADDMETHOD_CONST_NOBASE(isLatePreemptionStartSupportedHelper, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isReducedSurfaceStateSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getIpVersionForGmm, uint32_t, 0, ());
     ADDMETHOD_CONST_NOBASE(overrideSystemMemoryPatIndexBase, uint64_t, 0, (uint64_t patIndex));
 

@@ -30,10 +30,6 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
     void whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
     void whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
-    void whenShouldQueryPeerAccessCalledThenFalseReturned();
-    void whenShouldQueryPeerAccessCalledThenTrueReturned();
-    void whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
-    void whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenTrueOnlyForImmediateAndImageOrSampler();

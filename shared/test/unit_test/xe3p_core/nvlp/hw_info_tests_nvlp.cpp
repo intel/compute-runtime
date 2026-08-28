@@ -111,7 +111,7 @@ NVLPTEST_F(NvlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
     EXPECT_TRUE(featureTable.flags.ftrE2ECompression);
     EXPECT_EQ(featureTable.flags.ftrXe2Compression, compilerReleaseHelper->getFtrXe2Compression());
-    EXPECT_EQ(featureTable.flags.ftrHwSemaphore64, compilerReleaseHelper->isAvailableSemaphore64Base());
+    EXPECT_EQ(featureTable.flags.ftrHwSemaphore64, hwInfo.caps.availableSemaphore64);
     EXPECT_TRUE(featureTable.flags.ftrXe2PlusTiling);
     EXPECT_TRUE(featureTable.flags.ftrPml5Support);
     EXPECT_TRUE(featureTable.flags.ftrCCSNode);

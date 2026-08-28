@@ -34,6 +34,10 @@ struct CapsNvlP : CapsXe3pCore {
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rayTracingSupported = true;
 };
+struct CapsNvlPA0 : CapsNvlP {};
+struct CapsNvlPB0 : CapsNvlP {
+    static constexpr bool availableSemaphore64 = true;
+};
 
 constexpr std::optional<Caps> resolveCapsCri(HardwareIpVersion ipVersion) {
     switch (ipVersion.value) {
@@ -47,8 +51,9 @@ constexpr std::optional<Caps> resolveCapsCri(HardwareIpVersion ipVersion) {
 constexpr std::optional<Caps> resolveCapsNvlP(HardwareIpVersion ipVersion) {
     switch (ipVersion.value) {
     case AOT::NVL_P_A0:
+        return materializeCaps<CapsNvlPA0>();
     case AOT::NVL_P_B0:
-        return materializeCaps<CapsNvlP>();
+        return materializeCaps<CapsNvlPB0>();
     default:
         return std::nullopt;
     }

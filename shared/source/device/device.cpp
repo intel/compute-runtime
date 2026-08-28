@@ -1506,8 +1506,8 @@ bool Device::canAccessPeer(Device *peerDevice) {
 
 void Device::initializePeerAccessForDevices(const std::vector<NEO::Device *> &devices) {
     for (auto &device : devices) {
-        const auto &releaseHelper = device->getReleaseHelper();
-        if (!releaseHelper.shouldQueryPeerAccess()) {
+        const auto &hwInfo = device->getHardwareInfo();
+        if (!hwInfo.caps.queryPeerAccess) {
             continue;
         }
 

@@ -31,7 +31,6 @@ class CompilerReleaseHelper {
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
     virtual bool getFtrXe2Compression() const = 0;
-    virtual bool isAvailableSemaphore64Base() const = 0;
     void getKernelFp16AtomicCapabilities(uint32_t &fp16Caps) const;
     bool isAvailableSemaphore64(const HardwareInfo &hwInfo) const;
 
@@ -53,7 +52,6 @@ class CompilerReleaseHelperHw : public CompilerReleaseHelper {
     uint32_t getAdditionalFp16Caps() const override;
     uint32_t getAdditionalExtraCaps() const override;
     bool getFtrXe2Compression() const override;
-    bool isAvailableSemaphore64Base() const override;
 };
 
 template <uint32_t architecture>

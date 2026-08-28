@@ -105,11 +105,11 @@ void LNL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.EUCount * hwInfo->gtSystemInfo.NumThreadsPerEu;
 
     LNL::adjustHardwareInfo(hwInfo);
+    setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         LNL::setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
-    setupCaps(*hwInfo);
     applyDebugOverrides(*hwInfo);
 }
 void LnlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {

@@ -30,9 +30,7 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
 
     // Reflect the release's semaphore64 availability explicitly so a device derives deviceInfo.semaphore64bCmdSupport
     // per its real default rather than defaulting the whole gen to the legacy command.
-    if (compilerReleaseHelper) {
-        hwInfoForTests.featureTable.flags.ftrHwSemaphore64 = compilerReleaseHelper->isAvailableSemaphore64Base();
-    }
+    hwInfoForTests.featureTable.flags.ftrHwSemaphore64 = hwInfoForTests.caps.availableSemaphore64;
 
     GT_SYSTEM_INFO &gtSystemInfo = hwInfoForTests.gtSystemInfo;
 

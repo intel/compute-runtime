@@ -15,6 +15,7 @@
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/implicit_args_helper.h"
@@ -482,8 +483,7 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 pImplicitArgsRelocationAddresses[static_cast<uint32_t>(segId)].push_back(std::pair<void *, RelocationInfo::Type>(relocAddress, relocation.type));
             } else if (relocation.symbolName == surfaceStateSizeRelocationSymbolName) {
                 UNRECOVERABLE_IF(!pDevice);
-                [[maybe_unused]] const auto &releaseHelper = pDevice->getReleaseHelper();
-                DEBUG_BREAK_IF(!(releaseHelper.isReducedSurfaceStateSupported()));
+                DEBUG_BREAK_IF(!pDevice->getHardwareInfo().caps.reducedSurfaceStateSupported);
                 const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
                 auto patchSize = relocation.type == RelocationInfo::Type::address ? 8 : 4;
                 patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);
@@ -759,7 +759,7 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
         } else if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == surfaceStateSizeRelocationSymbolName) {
             auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
                                           static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
-            DEBUG_BREAK_IF(!(releaseHelper.isReducedSurfaceStateSupported()));
+            DEBUG_BREAK_IF(!pDevice->getHardwareInfo().caps.reducedSurfaceStateSupported);
             const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
             auto patchSize = outUnresolvedExternals[vecIndex].unresolvedRelocation.type == RelocationInfo::Type::address ? 8 : 4;
             patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);

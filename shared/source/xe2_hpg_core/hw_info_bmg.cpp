@@ -107,11 +107,11 @@ void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.EUCount * hwInfo->gtSystemInfo.NumThreadsPerEu;
 
     BMG::adjustHardwareInfo(hwInfo);
+    setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         BMG::setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
-    setupCaps(*hwInfo);
     applyDebugOverrides(*hwInfo);
 }
 

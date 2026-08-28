@@ -3200,17 +3200,9 @@ TEST(DevicePeerAccessInitializationTest, givenDeviceListWhenInitializePeerAccess
     UltDeviceFactory deviceFactory{3, 0};
     std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1], deviceFactory.rootDevices[2]};
 
-    auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
-    releaseHelper0->shouldQueryPeerAccessResult = false;
-    rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
-
-    auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
-    releaseHelper1->shouldQueryPeerAccessResult = true;
-    rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
-
-    auto releaseHelper2 = std::make_unique<MockReleaseHelper>();
-    releaseHelper2->shouldQueryPeerAccessResult = true;
-    rootDevices[2]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper2);
+    rootDevices[0]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = false;
+    rootDevices[1]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
+    rootDevices[2]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
 
     uint32_t queryCalled = 0;
     auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
@@ -3234,13 +3226,8 @@ TEST(DevicePeerAccessInitializationTest, givenSubDevicesWhenInitializePeerAccess
     UltDeviceFactory deviceFactory{1, 2};
     std::vector<NEO::Device *> subDevices = {deviceFactory.subDevices[0], deviceFactory.subDevices[1]};
 
-    auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
-    releaseHelper0->shouldQueryPeerAccessResult = true;
-    subDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
-
-    auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
-    releaseHelper1->shouldQueryPeerAccessResult = true;
-    subDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+    subDevices[0]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
+    subDevices[1]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
 
     uint32_t queryCalled = 0;
     auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
@@ -3260,13 +3247,8 @@ TEST(DevicePeerAccessInitializationTest, givenDevicesWithPeerAccessCachedWhenIni
     UltDeviceFactory deviceFactory{2, 0};
     std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
 
-    auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
-    releaseHelper0->shouldQueryPeerAccessResult = true;
-    rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
-
-    auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
-    releaseHelper1->shouldQueryPeerAccessResult = true;
-    rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+    rootDevices[0]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
+    rootDevices[1]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
 
     rootDevices[0]->updatePeerAccessCache(rootDevices[1], true);
 
@@ -3290,13 +3272,8 @@ TEST(DevicePeerAccessInitializationTest, givenDevicesWhenInitializePeerAccessFor
         UltDeviceFactory deviceFactory{2, 0};
         std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
 
-        auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
-        releaseHelper0->shouldQueryPeerAccessResult = true;
-        rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
-
-        auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
-        releaseHelper1->shouldQueryPeerAccessResult = true;
-        rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+        rootDevices[0]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
+        rootDevices[1]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
 
         uint32_t queryCalled = 0;
         auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
@@ -3321,13 +3298,8 @@ TEST(DevicePeerAccessInitializationTest, givenDevicesWhenInitializePeerAccessFor
         UltDeviceFactory deviceFactory{2, 0};
         std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
 
-        auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
-        releaseHelper0->shouldQueryPeerAccessResult = true;
-        rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
-
-        auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
-        releaseHelper1->shouldQueryPeerAccessResult = true;
-        rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+        rootDevices[0]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
+        rootDevices[1]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
 
         uint32_t queryCalled = 0;
         auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
@@ -3352,13 +3324,8 @@ TEST(DevicePeerAccessInitializationTest, givenDevicesThatDontRequirePeerAccessQu
     UltDeviceFactory deviceFactory{2, 0};
     std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
 
-    auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
-    releaseHelper0->shouldQueryPeerAccessResult = false;
-    rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
-
-    auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
-    releaseHelper1->shouldQueryPeerAccessResult = false;
-    rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+    rootDevices[0]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = false;
+    rootDevices[1]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = false;
 
     uint32_t queryCalled = 0;
     auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
@@ -3381,21 +3348,10 @@ TEST(DevicePeerAccessInitializationTest, givenMemoryAllocationWhenInitializePeer
     UltDeviceFactory deviceFactory{4, 0};
     std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1], deviceFactory.rootDevices[2], deviceFactory.rootDevices[3]};
 
-    auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
-    releaseHelper0->shouldQueryPeerAccessResult = true;
-    rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
-
-    auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
-    releaseHelper1->shouldQueryPeerAccessResult = true;
-    rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
-
-    auto releaseHelper2 = std::make_unique<MockReleaseHelper>();
-    releaseHelper2->shouldQueryPeerAccessResult = true;
-    rootDevices[2]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper2);
-
-    auto releaseHelper3 = std::make_unique<MockReleaseHelper>();
-    releaseHelper3->shouldQueryPeerAccessResult = true;
-    rootDevices[3]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper3);
+    rootDevices[0]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
+    rootDevices[1]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
+    rootDevices[2]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
+    rootDevices[3]->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.queryPeerAccess = true;
 
     auto memoryManager = static_cast<MockMemoryManager *>(rootDevices[0]->getMemoryManager());
 

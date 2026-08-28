@@ -97,11 +97,11 @@ void CRI::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     hwInfo->featureTable.flags.ftrHeaplessMode = true;
 
     adjustHardwareInfo(hwInfo);
+    setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
     }
 
-    setupCaps(*hwInfo);
     applyDebugOverrides(*hwInfo);
 }
 

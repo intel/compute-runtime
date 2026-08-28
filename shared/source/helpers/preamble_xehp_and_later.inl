@@ -10,10 +10,10 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble_base.inl"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -65,7 +65,9 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
         cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
 
         cmd.setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
-        auto singleSliceDispatchCcsMode = streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1 || (rootDeviceEnvironment.getNumberOfCcs() > 1 && rootDeviceEnvironment.getReleaseHelper().isSingleDispatchRequiredForMultiCCS());
+
+        const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+        auto singleSliceDispatchCcsMode = streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1 || (rootDeviceEnvironment.getNumberOfCcs() > 1 && hwInfo.caps.singleDispatchRequiredForMultiCCS);
 
         PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(&cmd, singleSliceDispatchCcsMode);
 

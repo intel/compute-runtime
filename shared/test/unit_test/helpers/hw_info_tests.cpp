@@ -23,6 +23,8 @@ TEST(HwInfoTest, whenSettingDefaultFeatureTableAndWorkaroundTableThenProperField
     WorkaroundTable expectedWorkaroundTable{};
     MockCompilerReleaseHelper mockCompilerReleaseHelper;
 
+    hwInfo.caps.availableSemaphore64 = true;
+
     expectedFeatureTable.flags.ftrAstcHdr2D = true;
     expectedFeatureTable.flags.ftrAstcLdr2D = true;
     expectedFeatureTable.flags.ftrCCSNode = true;
@@ -31,6 +33,7 @@ TEST(HwInfoTest, whenSettingDefaultFeatureTableAndWorkaroundTableThenProperField
     expectedFeatureTable.flags.ftrBlitterRing = true;
     expectedFeatureTable.flags.ftrGpGpuMidBatchPreempt = true;
     expectedFeatureTable.flags.ftrGpGpuThreadGroupLevelPreempt = true;
+    expectedFeatureTable.flags.ftrHwSemaphore64 = true;
     expectedFeatureTable.flags.ftrIA32eGfxPTEs = true;
     expectedFeatureTable.flags.ftrL3IACoherency = true;
     expectedFeatureTable.flags.ftrLinearCCS = true;

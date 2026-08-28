@@ -67,31 +67,11 @@ uint32_t ReleaseHelperHw<releaseType>::adjustMaxThreadsPerEuCount(uint32_t maxTh
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::shouldQueryPeerAccess() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isSingleDispatchRequiredForMultiCCS() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
     auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
     if (enableStateCacheInvalidationWa != -1) {
         return enableStateCacheInvalidationWa;
     }
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isLatePreemptionStartSupportedHelper() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isReducedSurfaceStateSupported() const {
     return false;
 }
 

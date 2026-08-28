@@ -27,6 +27,5 @@ TEST_F(CompilerReleaseHelperBmgG31Tests, whenGettingCapabilitiesThenCorrectPrope
         EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalFp16Caps());
         EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalExtraCaps());
         EXPECT_TRUE(compilerReleaseHelper->getFtrXe2Compression());
-        EXPECT_FALSE(compilerReleaseHelper->isAvailableSemaphore64Base());
     }
 }
