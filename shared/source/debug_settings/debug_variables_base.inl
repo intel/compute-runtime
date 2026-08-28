@@ -103,6 +103,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableDdiHandlesExtension, true, "Enable L0 Driver 
 DECLARE_DEBUG_VARIABLE(bool, BlockingEventRelease, false, "Makes clReleaseEvent blocking")
 DECLARE_DEBUG_VARIABLE(bool, PrintImgInfo, false, "Prints image info after creation")
 DECLARE_DEBUG_VARIABLE(bool, Disable2WayCoherencyOverride, false, "Disable 2-way coherency override for misaligned user ptr allocations")
+DECLARE_DEBUG_VARIABLE(bool, ValidateUserptrPatIndex, false, "Log MAP_USERPTR parameters and check if its PAT index is supported")
 DECLARE_DEBUG_VARIABLE(bool, SkipHpBcsInitialization, false, "do not initialize High Priority only BCS engine")
 DECLARE_DEBUG_VARIABLE(bool, PrintZeInfoInAub, true, "When enabled print ZeInfo in AUB")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")

@@ -32,6 +32,11 @@ using namespace NEO;
 
 using CriProductHelper = ProductHelperTest;
 
+CRITEST_F(CriProductHelper, givenCriWhenValidatingUserptrPatIndexThenValidationIsNotRestricted) {
+    EXPECT_TRUE(productHelper->isPatIndexValidForUserptr(0));
+    EXPECT_TRUE(productHelper->isPatIndexValidForUserptr(31));
+}
+
 CRITEST_F(CriProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Cri, productHelper->getAubStreamProductFamily());
 }

@@ -31,6 +31,7 @@
 #include "shared/source/os_interface/linux/xe/xe_log_helper.h"
 #include "shared/source/os_interface/linux/xe/xedrm.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/directory.h"
 
 #include <algorithm>
@@ -1826,6 +1827,20 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP_USERPTR;
             bind.bind.obj = 0;
             bind.bind.obj_offset = userptr;
+            if (debugManager.flags.ValidateUserptrPatIndex.get()) {
+                const auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+                const bool valid = rootDeviceEnvironment.getProductHelper().isPatIndexValidForUserptr(bind.bind.pat_index);
+
+                PRINT_STRING(true, stderr,
+                             "MAP_USERPTR PAT: valid=%s pat=%hu vm=%u userptr=0x%llx gpu=0x%llx size=0x%llx flags=0x%x\n",
+                             valid ? "true" : "false",
+                             bind.bind.pat_index,
+                             bind.vm_id,
+                             bind.bind.obj_offset,
+                             bind.bind.addr,
+                             bind.bind.range,
+                             bind.bind.flags);
+            }
         }
     } else {
         if ((vmBindParams.sharedSystemUsmEnabled) && ((bind.bind.addr + bind.bind.range) <= drm.getSharedSystemAllocAddressRange())) {

@@ -26,9 +26,20 @@
 #include "neo_aot_platforms.h"
 #include "per_product_test_definitions.h"
 
+#include <set>
+
 using namespace NEO;
 
 using NvlProductHelper = ProductHelperTest;
+
+NVLPTEST_F(NvlProductHelper, givenPatIndexWhenValidatingForUserptrThenOnlyTwoWayCoherentAndPat19AreAccepted) {
+    const std::set<uint64_t> validPatIndices = {2, 7, 19, 23, 27, 31};
+
+    for (uint64_t patIndex = 0; patIndex < 32; patIndex++) {
+        const bool expected = validPatIndices.contains(patIndex);
+        EXPECT_EQ(expected, productHelper->isPatIndexValidForUserptr(patIndex));
+    }
+}
 
 NVLPTEST_F(NvlProductHelper, whenGettingPreferredAllocationMethodThenAllocateByKmdIsReturned) {
     for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {

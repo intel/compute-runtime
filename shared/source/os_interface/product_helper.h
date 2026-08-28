@@ -258,6 +258,7 @@ class ProductHelper {
     virtual bool isDeviceToHostCopySignalingFenceRequired() const = 0;
     virtual bool isAvailableExtendedScratch() const = 0;
     virtual std::optional<bool> isCoherentAllocation(uint64_t patIndex) const = 0;
+    virtual bool isPatIndexValidForUserptr(uint64_t patIndex) const = 0;
     virtual bool isStagingBuffersEnabled() const = 0;
     virtual size_t getCpuCopyThreshold(TransferType transferType) const = 0;
     virtual uint32_t getCacheLineSize() const = 0;

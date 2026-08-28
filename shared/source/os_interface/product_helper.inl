@@ -981,6 +981,11 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isPatIndexValidForUserptr(uint64_t patIndex) const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return false;
 }

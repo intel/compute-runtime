@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/xe/mock_drm_xe.h"
 #include "shared/test/common/os_interface/linux/xe/mock_ioctl_helper_xe.h"
 #include "shared/test/common/os_interface/linux/xe/xe_config_fixture.h"
@@ -29,6 +30,14 @@
 using namespace NEO;
 
 using IoctlHelperXeTest = Test<XeConfigFixture>;
+
+struct MockProductHelperForUserptrPatValidation : MockProductHelper {
+    bool isPatIndexValidForUserptr(uint64_t patIndex) const override {
+        return validPatIndex == patIndex;
+    }
+
+    uint64_t validPatIndex = 2u;
+};
 
 TEST_F(IoctlHelperXeTest, givenXeDrmVersionsWhenGettingIoctlHelperThenValidIoctlHelperIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -2548,6 +2557,59 @@ TEST_F(IoctlHelperXeTest, whenCallingVmBindThenPatIndexIsSet) {
     ASSERT_EQ(1u, drm->vmBindInputs.size());
 
     EXPECT_EQ(drm->vmBindInputs[0].bind.pat_index, expectedPatIndex);
+}
+
+TEST_F(IoctlHelperXeTest, givenUserptrVmBindWhenPatValidationLoggingIsToggledThenEveryPatIsLoggedOnlyWhenEnabled) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.productHelper = std::make_unique<MockProductHelperForUserptrPatValidation>();
+    auto drm = DrmMockXe::create(rootDeviceEnvironment);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    constexpr uint64_t fenceAddress = 0x4321;
+    constexpr uint64_t fenceValue = 0x789;
+    constexpr uint64_t userptr = 0xabcdef000;
+    constexpr uint64_t gpuAddress = 0x12345000;
+    constexpr uint64_t size = 0x4000;
+    constexpr uint64_t validPatIndex = 2;
+    constexpr uint64_t invalidPatIndex = 3;
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.vmId = 17u;
+    vmBindParams.start = gpuAddress;
+    vmBindParams.length = size;
+    vmBindParams.flags = 0x55u;
+    vmBindParams.patIndex = validPatIndex;
+    vmBindParams.userptr = userptr;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+
+    BindInfo bindInfo{};
+    bindInfo.userptr = userptr;
+    xeIoctlHelper->bindInfo.push_back(bindInfo);
+
+    {
+        StreamCapture capture;
+        capture.captureStderr();
+        EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
+        EXPECT_TRUE(capture.getCapturedStderr().empty());
+    }
+
+    debugManager.flags.ValidateUserptrPatIndex.set(true);
+    StreamCapture capture;
+    capture.captureStderr();
+
+    EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
+    vmBindParams.patIndex = invalidPatIndex;
+    EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
+
+    const auto output = capture.getCapturedStderr();
+    EXPECT_NE(std::string::npos, output.find("MAP_USERPTR PAT: valid=true pat=2")) << output;
+    EXPECT_NE(std::string::npos, output.find("MAP_USERPTR PAT: valid=false pat=3")) << output;
+    EXPECT_NE(std::string::npos, output.find("vm=17 userptr=0xabcdef000 gpu=0x12345000 size=0x4000 flags=0x55")) << output;
 }
 
 TEST_F(IoctlHelperXeTest, whenCallingVmUnbindThenPatIndexIsSetToDefault) {

@@ -10,7 +10,16 @@
 
 #include "aubstream/product_family.h"
 
+#include <algorithm>
+#include <array>
+
 namespace NEO {
+
+template <>
+bool ProductHelperHw<gfxProduct>::isPatIndexValidForUserptr(uint64_t patIndex) const {
+    constexpr std::array<uint64_t, 6> validPatIndices = {2, 7, 19, 23, 27, 31};
+    return std::find(validPatIndices.begin(), validPatIndices.end(), patIndex) != validPatIndices.end();
+}
 
 template <>
 bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
