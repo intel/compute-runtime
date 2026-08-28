@@ -323,9 +323,7 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenStoreEventsForBcsS
     auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
     auto context = Context::fromHandle(cmdList->getCmdListContext());
-    auto markerEventIndex = bcsSplit->events.obtainForRecordedSplit(context);
-
-    auto markerEvent = &bcsSplit->events.getEventResources().marker[markerEventIndex];
+    auto markerEvent = bcsSplit->events.obtainForRecordedSplit(context);
 
     EXPECT_TRUE(markerEvent->reservedForRecordedCmdList);
 
@@ -346,12 +344,10 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWithMultipleEventsWhen
 
     auto context = Context::fromHandle(cmdList->getCmdListContext());
 
-    auto markerEventIndex1 = bcsSplit->events.obtainForRecordedSplit(context);
-    auto markerEvent1 = &bcsSplit->events.getEventResources().marker[markerEventIndex1];
+    auto markerEvent1 = bcsSplit->events.obtainForRecordedSplit(context);
     cmdList->storeEventsForBcsSplit(markerEvent1);
 
-    auto markerEventIndex2 = bcsSplit->events.obtainForRecordedSplit(context);
-    auto markerEvent2 = &bcsSplit->events.getEventResources().marker[markerEventIndex2];
+    auto markerEvent2 = bcsSplit->events.obtainForRecordedSplit(context);
     cmdList->storeEventsForBcsSplit(markerEvent2);
 
     EXPECT_EQ(2u, cmdList->eventsForRecordedBcsSplit.size());
@@ -364,7 +360,7 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWithMultipleEventsWhen
     EXPECT_FALSE(cmdList->subCmdListsForRecordedBcsSplit.empty());
 }
 
-HWTEST2_F(RegularCmdListBcsSplitTests, givenBcsSplitEventsWhenObtainForRecordedSplitCalledMultipleTimesThenDifferentIndicesReturned, IsAtLeastXeHpcCore) {
+HWTEST2_F(RegularCmdListBcsSplitTests, givenBcsSplitEventsWhenObtainForRecordedSplitCalledMultipleTimesThenDifferentPackagesReturned, IsAtLeastXeHpcCore) {
     if (!device->getProductHelper().useAdditionalBlitProperties()) {
         GTEST_SKIP();
     }
@@ -375,17 +371,14 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenBcsSplitEventsWhenObtainForRecordedS
 
     auto context = Context::fromHandle(cmdList->getCmdListContext());
 
-    auto markerEventIndex1 = bcsSplit->events.obtainForRecordedSplit(context);
-    auto markerEvent1 = &bcsSplit->events.getEventResources().marker[markerEventIndex1];
+    auto markerEvent1 = bcsSplit->events.obtainForRecordedSplit(context);
 
-    auto markerEventIndex2 = bcsSplit->events.obtainForRecordedSplit(context);
+    auto markerEvent2 = bcsSplit->events.obtainForRecordedSplit(context);
 
-    EXPECT_NE(markerEventIndex1, markerEventIndex2);
+    EXPECT_NE(markerEvent1, markerEvent2);
 
     cmdList->storeEventsForBcsSplit(markerEvent1);
     EXPECT_EQ(1u, cmdList->eventsForRecordedBcsSplit.size());
-
-    auto markerEvent2 = &bcsSplit->events.getEventResources().marker[markerEventIndex2];
 
     EXPECT_TRUE(markerEvent1->reservedForRecordedCmdList);
     EXPECT_TRUE(markerEvent2->reservedForRecordedCmdList);
@@ -449,8 +442,7 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenDispatchRecordedBc
     auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
     auto ctx = Context::fromHandle(cmdList->getCmdListContext());
-    auto markerEventIndex = bcsSplit->events.obtainForRecordedSplit(ctx);
-    auto markerEvent = &bcsSplit->events.getEventResources().marker[markerEventIndex];
+    auto markerEvent = bcsSplit->events.obtainForRecordedSplit(ctx);
 
     cmdList->storeEventsForBcsSplit(markerEvent);
 
@@ -484,12 +476,12 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWithStoredEventsWhenDe
     }
 
     auto cmdList = createBcsSplitRegularCmdList<FamilyType::gfxCoreFamily>();
+    [[maybe_unused]] auto packageOwnerCmdList = createBcsSplitRegularCmdList<FamilyType::gfxCoreFamily>();
 
     auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
     auto ctx = Context::fromHandle(cmdList->getCmdListContext());
-    auto markerEventIndex = bcsSplit->events.obtainForRecordedSplit(ctx);
-    auto markerEvent = &bcsSplit->events.getEventResources().marker[markerEventIndex];
+    auto markerEvent = bcsSplit->events.obtainForRecordedSplit(ctx);
 
     cmdList->storeEventsForBcsSplit(markerEvent);
 

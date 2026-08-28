@@ -30,33 +30,28 @@ struct CommandQueue;
 struct Device;
 class BcsSplit;
 
-struct ImmediateSplitEvents {
-    Event *markerEvent = nullptr;
-    Event *barrierEvent = nullptr;
-    StackVec<Event *, 16> subcopyEvents;
-};
-
 class BcsSplitEvents {
   public:
     BcsSplitEvents(BcsSplit &bcsSplit) : bcsSplit(bcsSplit) {}
 
     bool isAggregatedEventMode() const { return aggregatedEventsMode; }
     void setAggregatedEventMode(bool mode) { aggregatedEventsMode = mode; }
-    std::optional<size_t> obtainForImmediateSplit(Context *context, size_t maxEventCountInPool);
-    ImmediateSplitEvents captureEventsForImmediateSplit(size_t markerEventIndex, size_t engineCount, bool barrierRequired, bool useSignalEventForSubcopy);
-    size_t obtainForRecordedSplit(Context *context);
+    BcsSplitParams::SplitEventPackage *obtainForImmediateSplit(Context *context, size_t maxEventCountInPool);
+    BcsSplitParams::SplitEventPackage *obtainForRecordedSplit(Context *context);
     void releaseResources();
     std::lock_guard<std::mutex> obtainLock() { return std::lock_guard<std::mutex>(mtx); }
-    void resetAggregatedEventState(size_t index, bool markerCompleted, bool keepRecordedCmdListReservation);
+    void resetAggregatedEventState(BcsSplitParams::SplitEventPackage &package, bool markerCompleted, bool keepRecordedCmdListReservation);
     const BcsSplitParams::EventsResources &getEventResources() const { return eventResources; }
-    void resetAggregatedEventsStateForRecordedSubmission(const std::vector<const BcsSplitParams::MarkerEvent *> &markerEvents, bool keepRecordedCmdListReservation);
+    void resetAggregatedEventsStateForRecordedSubmission(const std::vector<BcsSplitParams::SplitEventPackage *> &packages, bool keepRecordedCmdListReservation);
 
   protected:
-    size_t obtainAggregatedEventsForSplit(Context *context, bool reserveForRecordedCmdList);
-    void resetEventPackage(size_t index);
+    BcsSplitParams::SplitEventPackage *acquireAggregatedPackage(Context *context, bool reserveForRecordedCmdList);
+    BcsSplitParams::SplitEventPackage *tryRecyclePoolPackage();
+    BcsSplitParams::SplitEventPackage &acquireOldestPackageBlocking();
+    void resetPoolPackage(BcsSplitParams::SplitEventPackage &package);
     bool allocatePool(Context *context, size_t maxEventCountInPool, size_t neededEvents);
-    std::optional<size_t> createFromPool(Context *context, size_t maxEventCountInPool);
-    size_t createAggregatedEvent(Context *context);
+    BcsSplitParams::SplitEventPackage *createFromPool(Context *context, size_t maxEventCountInPool);
+    BcsSplitParams::SplitEventPackage *createAggregatedEvents(Context *context);
     uint64_t *getNextAllocationForAggregatedEvent();
 
     BcsSplit &bcsSplit;

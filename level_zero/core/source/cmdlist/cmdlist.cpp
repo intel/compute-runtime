@@ -856,8 +856,8 @@ void CommandList::ensureSubCmdLists(size_t count) {
     }
 }
 
-void CommandList::storeEventsForBcsSplit(const BcsSplitParams::MarkerEvent *markerEvent) {
-    eventsForRecordedBcsSplit.push_back(markerEvent);
+void CommandList::storeEventsForBcsSplit(BcsSplitParams::SplitEventPackage *package) {
+    eventsForRecordedBcsSplit.push_back(package);
 }
 
 void CommandList::destroyRecordedBcsSplitResources() {

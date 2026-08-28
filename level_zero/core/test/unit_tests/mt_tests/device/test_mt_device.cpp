@@ -200,7 +200,7 @@ HWTEST2_F(BcsSplitPoolModeMtTests, givenPoolModeBcsSplitWhenMultipleThreadsAppen
         thread.join();
     }
 
-    EXPECT_FALSE(bcsSplit->events.getEventResources().subcopy.empty());
+    EXPECT_FALSE(bcsSplit->events.getEventResources().packages.empty());
 
     for (size_t i = 0; i < bcsSplit->cmdLists.size(); i++) {
         EXPECT_TRUE(bcsSplit->cmdLists[i]->getCsr(false)->peekTaskCount() > initialTaskCounts[i]);
@@ -260,6 +260,48 @@ HWTEST2_F(AggregatedBcsSplitMtTests, givenAggregatedModeOutOfOrderCopyWithPendin
 
     for (auto &ptr : hostPtrs) {
         context->freeMem(ptr);
+    }
+}
+
+HWTEST2_F(AggregatedBcsSplitMtTests, givenConcurrentRecordedSplitObtainWhenPackagesGrowThenStoredPackagePointersRemainValid, IsAtLeastXeHpcCore) {
+    ASSERT_TRUE(bcsSplit->events.isAggregatedEventMode());
+
+    constexpr uint32_t numThreads = 8;
+    constexpr uint32_t iterationsPerThread = 32;
+
+    std::array<std::thread, numThreads> threads = {};
+    std::array<std::vector<std::pair<BcsSplitParams::SplitEventPackage *, L0::Event *>>, numThreads> obtainedPackages = {};
+    std::atomic_bool started = false;
+
+    auto threadBody = [&](uint32_t threadId) {
+        while (!started.load()) {
+            std::this_thread::yield();
+        }
+
+        for (uint32_t i = 0; i < iterationsPerThread; i++) {
+            auto package = bcsSplit->events.obtainForRecordedSplit(context);
+            obtainedPackages[threadId].emplace_back(package, package->marker);
+        }
+    };
+
+    for (uint32_t i = 0; i < numThreads; ++i) {
+        threads[i] = std::thread(threadBody, i);
+    }
+
+    started = true;
+
+    for (auto &thread : threads) {
+        thread.join();
+    }
+
+    EXPECT_GE(bcsSplit->events.getEventResources().packages.size(), static_cast<size_t>(numThreads * iterationsPerThread));
+
+    for (auto &threadObtainedPackages : obtainedPackages) {
+        for (auto &obtainedPackage : threadObtainedPackages) {
+            ASSERT_NE(nullptr, obtainedPackage.first);
+            EXPECT_EQ(obtainedPackage.second, obtainedPackage.first->marker);
+            EXPECT_TRUE(obtainedPackage.first->reservedForRecordedCmdList);
+        }
     }
 }
 } // namespace ult

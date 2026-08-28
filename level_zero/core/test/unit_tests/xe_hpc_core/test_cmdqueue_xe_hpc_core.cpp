@@ -1602,35 +1602,34 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 0u);
+    auto &bcsSplitEvents = static_cast<Device *>(testL0Device.get())->bcsSplit->events;
+    auto &eventResources = bcsSplitEvents.getEventResources();
+    auto splitContext = Context::fromHandle(commandList0->getCmdListContext());
+    const size_t engineCount = static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size();
 
-    static_cast<Device *>(testL0Device.get())->bcsSplit->events.obtainForImmediateSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+    EXPECT_EQ(eventResources.pools.size(), 0u);
+    EXPECT_EQ(eventResources.packages.size(), 0u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 0u);
 
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 4u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 6u);
+    bcsSplitEvents.obtainForImmediateSplit(splitContext, 12);
 
-    static_cast<Device *>(testL0Device.get())->bcsSplit->events.obtainForImmediateSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+    EXPECT_EQ(eventResources.pools.size(), 1u);
+    EXPECT_EQ(eventResources.packages.size(), 1u);
+    EXPECT_EQ(eventResources.packages.back()->subcopyEvents.size(), engineCount);
+    EXPECT_NE(nullptr, eventResources.packages.back()->barrier);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 6u);
 
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 2u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 8u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 2u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 12u);
+    bcsSplitEvents.obtainForImmediateSplit(splitContext, 12);
 
-    static_cast<Device *>(testL0Device.get())->bcsSplit->events.obtainForImmediateSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+    EXPECT_EQ(eventResources.pools.size(), 1u);
+    EXPECT_EQ(eventResources.packages.size(), 2u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 12u);
 
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 2u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 3u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 12u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 3u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 6u);
+    bcsSplitEvents.obtainForImmediateSplit(splitContext, 12);
+
+    EXPECT_EQ(eventResources.pools.size(), 2u);
+    EXPECT_EQ(eventResources.packages.size(), 3u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 6u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenObtainEventsForSplitThenReuseEventsIfMarkerIsSignaled, IsXeHpcCore) {
@@ -1660,39 +1659,36 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 0u);
+    auto &bcsSplitEvents = static_cast<Device *>(testL0Device.get())->bcsSplit->events;
+    auto &eventResources = bcsSplitEvents.getEventResources();
+    auto splitContext = Context::fromHandle(commandList0->getCmdListContext());
 
-    static_cast<Device *>(testL0Device.get())->bcsSplit->events.obtainForImmediateSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+    EXPECT_EQ(eventResources.pools.size(), 0u);
+    EXPECT_EQ(eventResources.packages.size(), 0u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 0u);
 
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 4u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 6u);
+    auto firstPackage = bcsSplitEvents.obtainForImmediateSplit(splitContext, 12);
 
-    auto ret = static_cast<Device *>(testL0Device.get())->bcsSplit->events.obtainForImmediateSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+    EXPECT_EQ(eventResources.pools.size(), 1u);
+    EXPECT_EQ(eventResources.packages.size(), 1u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 6u);
 
-    EXPECT_EQ(ret, 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 2u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 8u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 2u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 12u);
+    auto secondPackage = bcsSplitEvents.obtainForImmediateSplit(splitContext, 12);
 
-    static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker[1].event->hostSignal(false);
+    EXPECT_EQ(secondPackage, eventResources.packages[1].get());
+    EXPECT_NE(secondPackage, firstPackage);
+    EXPECT_EQ(eventResources.pools.size(), 1u);
+    EXPECT_EQ(eventResources.packages.size(), 2u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 12u);
 
-    ret = static_cast<Device *>(testL0Device.get())->bcsSplit->events.obtainForImmediateSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+    eventResources.packages[1]->marker->hostSignal(false);
 
-    EXPECT_EQ(ret, 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 2u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 8u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 2u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 12u);
+    auto reusedPackage = bcsSplitEvents.obtainForImmediateSplit(splitContext, 12);
+
+    EXPECT_EQ(reusedPackage, secondPackage);
+    EXPECT_EQ(eventResources.pools.size(), 1u);
+    EXPECT_EQ(eventResources.packages.size(), 2u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 12u);
 
     NEO::debugManager.flags.OverrideEventSynchronizeTimeout.set(0);
     NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
@@ -1701,17 +1697,15 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     memoryManager->isMockHostMemoryManager = true;
     memoryManager->forceFailureInPrimaryAllocation = true;
 
-    ret = static_cast<Device *>(testL0Device.get())->bcsSplit->events.obtainForImmediateSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+    auto blockedPackage = bcsSplitEvents.obtainForImmediateSplit(splitContext, 12);
 
-    EXPECT_EQ(ret, 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 1u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 2u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 8u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 2u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 12u);
+    EXPECT_EQ(blockedPackage, firstPackage);
+    EXPECT_EQ(eventResources.pools.size(), 1u);
+    EXPECT_EQ(eventResources.packages.size(), 2u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 12u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenOOMAndObtainEventsForSplitThenNulloptIsReturned, IsXeHpcCore) {
+HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenOOMAndObtainEventsForSplitThenNullptrIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1738,11 +1732,13 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 0u);
+    auto &bcsSplitEvents = static_cast<Device *>(testL0Device.get())->bcsSplit->events;
+    auto &eventResources = bcsSplitEvents.getEventResources();
+    auto splitContext = Context::fromHandle(commandList0->getCmdListContext());
+
+    EXPECT_EQ(eventResources.pools.size(), 0u);
+    EXPECT_EQ(eventResources.packages.size(), 0u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 0u);
 
     NEO::debugManager.flags.OverrideEventSynchronizeTimeout.set(0);
     NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
@@ -1751,14 +1747,12 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     memoryManager->isMockHostMemoryManager = true;
     memoryManager->forceFailureInPrimaryAllocation = true;
 
-    auto ret = static_cast<Device *>(testL0Device.get())->bcsSplit->events.obtainForImmediateSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+    auto package = bcsSplitEvents.obtainForImmediateSplit(splitContext, 12);
 
-    EXPECT_FALSE(ret.has_value());
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().pools.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().marker.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().subcopy.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().barrier.size(), 0u);
-    EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->events.getEventResources().createdFromLatestPool, 0u);
+    EXPECT_EQ(nullptr, package);
+    EXPECT_EQ(eventResources.pools.size(), 0u);
+    EXPECT_EQ(eventResources.packages.size(), 0u);
+    EXPECT_EQ(eventResources.createdFromLatestPool, 0u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingPageFaultCopyThenSuccessIsReturned, IsXeHpcCore) {

@@ -675,7 +675,7 @@ struct CommandList : _ze_command_list_handle_t {
     size_t getInOrderExecHostRequiredSize() const;
     uint64_t getInOrderExecHostGpuAddress() const;
     void enableBcsSplit();
-    void storeEventsForBcsSplit(const BcsSplitParams::MarkerEvent *markerEvent);
+    void storeEventsForBcsSplit(BcsSplitParams::SplitEventPackage *package);
     BcsSplitParams::CmdListsForSplitContainer getRegularCmdListsForSplit(size_t totalTransferSize, size_t perEngineMaxSize, size_t splitQueuesCount);
     void dispatchRecordedBcsSplit();
 
@@ -790,7 +790,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::vector<CleanupCallbackT> cleanupCallbacks;
     std::vector<Event *> mappedTsEventList;
     std::vector<Event *> interruptEvents;
-    std::vector<const BcsSplitParams::MarkerEvent *> eventsForRecordedBcsSplit;
+    std::vector<BcsSplitParams::SplitEventPackage *> eventsForRecordedBcsSplit;
     std::vector<CommandList *> subCmdListsForRecordedBcsSplit;
 
     struct ExternalSemaphoreHostFunctionData {

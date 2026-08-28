@@ -200,72 +200,67 @@ void BcsSplit::dispatchRecordedCmdLists(const std::vector<CommandList *> &record
     }
 }
 
-size_t BcsSplitEvents::obtainAggregatedEventsForSplit(Context *context, bool reserveForRecordedCmdList) {
-    for (size_t i = 0; i < this->eventResources.marker.size(); i++) {
-        if (!this->eventResources.marker[i].reservedForRecordedCmdList && this->eventResources.marker[i].event->queryStatus(0) == ZE_RESULT_SUCCESS) {
-            resetAggregatedEventState(i, false, false);
+BcsSplitParams::SplitEventPackage *BcsSplitEvents::acquireAggregatedPackage(Context *context, bool reserveForRecordedCmdList) {
+    for (auto &package : this->eventResources.packages) {
+        if (!package->reservedForRecordedCmdList && package->marker->queryStatus(0) == ZE_RESULT_SUCCESS) {
+            resetAggregatedEventState(*package, false, false);
             if (reserveForRecordedCmdList) {
-                this->eventResources.marker[i].reservedForRecordedCmdList = true;
+                package->reservedForRecordedCmdList = true;
             }
-            return i;
+            return package.get();
         }
     }
 
-    auto ret = this->createAggregatedEvent(context);
+    auto package = this->createAggregatedEvents(context);
     if (reserveForRecordedCmdList) {
-        this->eventResources.marker[ret].reservedForRecordedCmdList = true;
+        package->reservedForRecordedCmdList = true;
     }
-    return ret;
+    return package;
 }
 
-size_t BcsSplitEvents::obtainForRecordedSplit(Context *context) {
+BcsSplitParams::SplitEventPackage *BcsSplitEvents::obtainForRecordedSplit(Context *context) {
+    UNRECOVERABLE_IF(!this->aggregatedEventsMode);
     auto lock = obtainLock();
-    return obtainAggregatedEventsForSplit(context, true);
+    return acquireAggregatedPackage(context, true);
 }
 
-std::optional<size_t> BcsSplitEvents::obtainForImmediateSplit(Context *context, size_t maxEventCountInPool) {
+BcsSplitParams::SplitEventPackage *BcsSplitEvents::tryRecyclePoolPackage() {
+    for (auto &package : this->eventResources.packages) {
+        if (package->marker->queryStatus(0) == ZE_RESULT_SUCCESS) {
+            this->resetPoolPackage(*package);
+            return package.get();
+        }
+    }
+    return nullptr;
+}
+
+BcsSplitParams::SplitEventPackage &BcsSplitEvents::acquireOldestPackageBlocking() {
+    auto &package = *this->eventResources.packages.front();
+    package.marker->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    this->resetPoolPackage(package);
+    return package;
+}
+
+BcsSplitParams::SplitEventPackage *BcsSplitEvents::obtainForImmediateSplit(Context *context, size_t maxEventCountInPool) {
     auto lock = obtainLock();
 
     if (this->aggregatedEventsMode) {
-        return obtainAggregatedEventsForSplit(context, false);
+        return acquireAggregatedPackage(context, false);
     }
 
-    for (size_t i = 0; i < this->eventResources.marker.size(); i++) {
-        auto ret = this->eventResources.marker[i].event->queryStatus(0);
-        if (ret == ZE_RESULT_SUCCESS) {
-            this->resetEventPackage(i);
-            return i;
-        }
+    if (auto recycledPackage = this->tryRecyclePoolPackage()) {
+        return recycledPackage;
     }
 
-    auto newEventIndex = this->createFromPool(context, maxEventCountInPool);
-    if (newEventIndex.has_value() || this->eventResources.marker.empty()) {
-        return newEventIndex;
+    if (auto newPackage = this->createFromPool(context, maxEventCountInPool)) {
+        return newPackage;
     }
 
-    this->eventResources.marker[0].event->hostSynchronize(std::numeric_limits<uint64_t>::max());
-    this->resetEventPackage(0);
-    return 0;
-}
-
-ImmediateSplitEvents BcsSplitEvents::captureEventsForImmediateSplit(size_t markerEventIndex, size_t engineCount, bool barrierRequired, bool useSignalEventForSubcopy) {
-    auto lock = obtainLock();
-
-    ImmediateSplitEvents capturedEvents;
-    if (barrierRequired) {
-        capturedEvents.barrierEvent = this->eventResources.barrier[markerEventIndex];
+    if (this->eventResources.packages.empty()) {
+        return nullptr;
     }
 
-    if (!useSignalEventForSubcopy) {
-        capturedEvents.markerEvent = this->eventResources.marker[markerEventIndex].event;
-        const auto subcopyEventIndex = markerEventIndex * this->bcsSplit.cmdLists.size();
-        for (size_t i = 0; i < engineCount; i++) {
-            const auto copyEventIndex = this->aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
-            capturedEvents.subcopyEvents.push_back(this->eventResources.subcopy[copyEventIndex]);
-        }
-    }
-
-    return capturedEvents;
+    return &this->acquireOldestPackageBlocking();
 }
 
 uint64_t *BcsSplitEvents::getNextAllocationForAggregatedEvent() {
@@ -291,9 +286,9 @@ uint64_t *BcsSplitEvents::getNextAllocationForAggregatedEvent() {
     return ptrOffset(basePtr, eventResources.currentAggregatedAllocOffset);
 }
 
-size_t BcsSplitEvents::createAggregatedEvent(Context *context) {
+BcsSplitParams::SplitEventPackage *BcsSplitEvents::createAggregatedEvents(Context *context) {
     constexpr int preallocationCount = 8;
-    size_t returnIndex = this->eventResources.subcopy.size();
+    const size_t firstNewPackageIndex = this->eventResources.packages.size();
 
     const auto deviceIncValue = static_cast<uint64_t>(bcsSplit.getDevice().getAggregatedCopyOffloadIncrementValue());
     const auto engineCount = static_cast<uint64_t>(bcsSplit.cmdLists.size());
@@ -320,19 +315,19 @@ size_t BcsSplitEvents::createAggregatedEvent(Context *context) {
         zeEventCounterBasedCreate(context, bcsSplit.getDevice().toHandle(), &counterBasedDesc, &handle);
         UNRECOVERABLE_IF(handle == nullptr);
 
-        this->eventResources.subcopy.push_back(Event::fromHandle(handle));
-
         ze_event_handle_t markerHandle = nullptr;
         zeEventCounterBasedCreate(context, bcsSplit.getDevice().toHandle(), &markerCounterBasedDesc, &markerHandle);
         UNRECOVERABLE_IF(markerHandle == nullptr);
 
-        auto currentIndex = this->eventResources.subcopy.size() - 1;
-        this->eventResources.marker.emplace_back(Event::fromHandle(markerHandle), static_cast<uint32_t>(currentIndex), false);
+        auto package = std::make_unique<BcsSplitParams::SplitEventPackage>();
+        package->marker = Event::fromHandle(markerHandle);
+        package->subcopyEvents.push_back(Event::fromHandle(handle));
+        this->eventResources.packages.push_back(std::move(package));
 
-        resetAggregatedEventState(currentIndex, (i != 0), false);
+        resetAggregatedEventState(*this->eventResources.packages.back(), (i != 0), false);
     }
 
-    return returnIndex;
+    return this->eventResources.packages[firstNewPackageIndex].get();
 }
 
 bool BcsSplitEvents::allocatePool(Context *context, size_t maxEventCountInPool, size_t neededEvents) {
@@ -353,21 +348,23 @@ bool BcsSplitEvents::allocatePool(Context *context, size_t maxEventCountInPool, 
     return true;
 }
 
-std::optional<size_t> BcsSplitEvents::createFromPool(Context *context, size_t maxEventCountInPool) {
+BcsSplitParams::SplitEventPackage *BcsSplitEvents::createFromPool(Context *context, size_t maxEventCountInPool) {
     /* Internal events needed for split:
-     *  - event per subcopy to signal completion of given subcopy (vector of subcopy events),
-     *  - 1 event to signal completion of entire split (vector of marker events),
-     *  - 1 event to handle barrier (vector of barrier events).
+     *  - event per subcopy to signal completion of given subcopy (subcopyEvents of the package),
+     *  - 1 event to signal completion of entire split (marker event),
+     *  - 1 event to handle barrier.
      */
 
     const size_t neededEvents = this->bcsSplit.cmdLists.size() + 2;
 
     if (!allocatePool(context, maxEventCountInPool, neededEvents)) {
-        return std::nullopt;
+        return nullptr;
     }
 
     auto pool = this->eventResources.pools[this->eventResources.pools.size() - 1];
     ze_event_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+
+    auto package = std::make_unique<BcsSplitParams::SplitEventPackage>();
 
     for (size_t i = 0; i < neededEvents; i++) {
         // Marker event is the only one of internal split events that will be read from host, so create it at the end with appended scope flag.
@@ -386,60 +383,59 @@ std::optional<size_t> BcsSplitEvents::createFromPool(Context *context, size_t ma
 
         // Last event, created with host scope flag, is marker event.
         if (markerEvent) {
-            this->eventResources.marker.emplace_back(event, 0, false);
+            package->marker = event;
 
             // One event to handle barrier and others to handle subcopy completion.
         } else if (barrierEvent) {
-            this->eventResources.barrier.push_back(event);
+            package->barrier = event;
         } else {
-            this->eventResources.subcopy.push_back(event);
+            package->subcopyEvents.push_back(event);
         }
     }
 
-    return this->eventResources.marker.size() - 1;
+    this->eventResources.packages.push_back(std::move(package));
+
+    return this->eventResources.packages.back().get();
 }
 
-void BcsSplitEvents::resetEventPackage(size_t index) {
-    this->eventResources.marker[index].event->reset();
-    this->eventResources.barrier[index]->reset();
-    for (size_t j = 0; j < this->bcsSplit.cmdLists.size(); j++) {
-        this->eventResources.subcopy[index * this->bcsSplit.cmdLists.size() + j]->reset();
+void BcsSplitEvents::resetPoolPackage(BcsSplitParams::SplitEventPackage &package) {
+    package.marker->reset();
+    package.barrier->reset();
+    for (auto subcopyEvent : package.subcopyEvents) {
+        subcopyEvent->reset();
     }
 }
 
-void BcsSplitEvents::resetAggregatedEventsStateForRecordedSubmission(const std::vector<const BcsSplitParams::MarkerEvent *> &markerEvents, bool keepRecordedCmdListReservation) {
+void BcsSplitEvents::resetAggregatedEventsStateForRecordedSubmission(const std::vector<BcsSplitParams::SplitEventPackage *> &packages, bool keepRecordedCmdListReservation) {
     auto lock = obtainLock();
 
-    for (auto &markerEvent : markerEvents) {
-        resetAggregatedEventState(markerEvent->index, false, keepRecordedCmdListReservation);
+    for (auto package : packages) {
+        resetAggregatedEventState(*package, false, keepRecordedCmdListReservation);
     }
 }
 
-void BcsSplitEvents::resetAggregatedEventState(size_t index, bool markerCompleted, bool keepRecordedCmdListReservation) {
-    *this->eventResources.subcopy[index]->getInOrderExecEventHelper().getBaseHostCpuAddress() = 0;
+void BcsSplitEvents::resetAggregatedEventState(BcsSplitParams::SplitEventPackage &package, bool markerCompleted, bool keepRecordedCmdListReservation) {
+    *package.subcopyEvents[0]->getInOrderExecEventHelper().getBaseHostCpuAddress() = 0;
 
-    auto &markerEvent = this->eventResources.marker[index];
-    markerEvent.event->resetCompletionStatus();
+    package.marker->resetCompletionStatus();
     if (!keepRecordedCmdListReservation) {
-        markerEvent.event->unsetInOrderExecInfo();
-        markerEvent.reservedForRecordedCmdList = false;
+        package.marker->unsetInOrderExecInfo();
+        package.reservedForRecordedCmdList = false;
     }
-    markerEvent.event->setReportEmptyCbEventAsReady(markerCompleted);
+    package.marker->setReportEmptyCbEventAsReady(markerCompleted);
 }
 
 void BcsSplitEvents::releaseResources() {
-    for (auto &markerEvent : eventResources.marker) {
-        markerEvent.event->destroy();
+    for (auto &package : eventResources.packages) {
+        package->marker->destroy();
+        for (auto subcopyEvent : package->subcopyEvents) {
+            subcopyEvent->destroy();
+        }
+        if (package->barrier) {
+            package->barrier->destroy();
+        }
     }
-    eventResources.marker.clear();
-    for (auto &subcopyEvent : eventResources.subcopy) {
-        subcopyEvent->destroy();
-    }
-    eventResources.subcopy.clear();
-    for (auto &barrierEvent : eventResources.barrier) {
-        barrierEvent->destroy();
-    }
-    eventResources.barrier.clear();
+    eventResources.packages.clear();
     for (auto &pool : eventResources.pools) {
         pool->destroy();
     }
