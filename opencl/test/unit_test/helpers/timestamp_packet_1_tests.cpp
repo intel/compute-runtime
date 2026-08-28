@@ -12,6 +12,7 @@
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -25,6 +26,7 @@
 #include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/helpers/timestamp_packet_tests.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 
 #include "CL/cl_ext.h"
@@ -1105,10 +1107,115 @@ HWTEST_F(TimestampPacketTests, givenEventWhenReleasingThenCheckQueueResources) {
 
     *tagAddress = csr.heaplessPrologProgrammed ? 3 : 2;
 
+    auto takeOwnershipCallsBefore = cmdQ->takeOwnershipCalls.load();
+    auto downloadAllocationsBefore = csr.downloadAllocationsCalledCount.load();
+
     clReleaseEvent(clEvent);
+
+    EXPECT_EQ(takeOwnershipCallsBefore + 1, cmdQ->takeOwnershipCalls.load());
+    EXPECT_EQ(downloadAllocationsBefore + 2, csr.downloadAllocationsCalledCount.load());
 
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(expectedTimestampPacketNodes, timestampPacketContainer->peekNodes().size());
+
+    cmdQ.reset();
+}
+
+HWTEST_F(TimestampPacketTests, givenIncompleteEventWhenReleasingThenQueueLockIsNotTaken) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(0);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
+
+    cl_event clEvent;
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &clEvent);
+
+    cmdQ->flush();
+
+    auto tagAddress = csr.getTagAddress();
+    *tagAddress = 0;
+
+    auto deferredNodesBefore = deferredTimestampPackets->peekNodes().size();
+    auto takeOwnershipCallsBefore = cmdQ->takeOwnershipCalls.load();
+    auto isCompletedCalledBefore = cmdQ->isCompletedCalled.load();
+    auto downloadAllocationsBefore = csr.downloadAllocationsCalledCount.load();
+
+    clReleaseEvent(clEvent);
+
+    EXPECT_EQ(isCompletedCalledBefore, cmdQ->isCompletedCalled.load());
+    EXPECT_EQ(takeOwnershipCallsBefore, cmdQ->takeOwnershipCalls.load());
+    EXPECT_EQ(deferredNodesBefore, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(downloadAllocationsBefore + 1, csr.downloadAllocationsCalledCount.load());
+
+    *tagAddress = csr.heaplessPrologProgrammed ? 2 : 1;
+    cmdQ.reset();
+}
+
+HWTEST_F(TimestampPacketTests, givenEventAbortedBeforeSubmissionWhenReleasingThenQueueLockIsTaken) {
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    auto takeOwnershipCallsBefore = cmdQ->takeOwnershipCalls.load();
+    auto isCompletedCalledBefore = cmdQ->isCompletedCalled.load();
+
+    {
+        MockEvent<Event> event(cmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
+        event.eventWithoutCommand = false;
+    }
+
+    EXPECT_EQ(takeOwnershipCallsBefore + 1, cmdQ->takeOwnershipCalls.load());
+    EXPECT_EQ(isCompletedCalledBefore + 1, cmdQ->isCompletedCalled.load());
+
+    cmdQ.reset();
+}
+
+HWTEST_F(TimestampPacketTests, givenEventWithIncompleteCopyEngineWhenReleasingThenQueueLockIsNotTaken) {
+    auto &gpgpuCsr = device->getUltCommandStreamReceiver<FamilyType>();
+
+    std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), device->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::Disabled, device->getDeviceBitfield())));
+    auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    bcsCsr->setupContext(*osContext);
+    bcsCsr->initializeTagAllocation();
+    EngineControl bcsEngine(bcsCsr.get(), osContext.get());
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    cmdQ->bcsEngines[0] = &bcsEngine;
+    cmdQ->updateBcsTaskCount(aub_stream::EngineType::ENGINE_BCS, 1);
+
+    // copy-only enqueue: the gpgpu count is the one the queue already had, so only the copy engine is behind
+    *gpgpuCsr.getTagAddress() = 1;
+    *bcsCsr->getTagAddress() = 0;
+
+    auto takeOwnershipCallsBefore = cmdQ->takeOwnershipCalls.load();
+    auto isCompletedCalledBefore = cmdQ->isCompletedCalled.load();
+
+    {
+        MockEvent<Event> event(cmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 1);
+        event.setupBcs(aub_stream::ENGINE_BCS);
+        event.updateCompletionStamp(1, 1, 0, 0);
+    }
+
+    EXPECT_EQ(takeOwnershipCallsBefore, cmdQ->takeOwnershipCalls.load());
+    EXPECT_EQ(isCompletedCalledBefore, cmdQ->isCompletedCalled.load());
+
+    // with the copy engine caught up the same release does take the lock, so the skip above was the BCS tag and not the gpgpu one
+    *bcsCsr->getTagAddress() = 1;
+
+    {
+        MockEvent<Event> event(cmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 1);
+        event.setupBcs(aub_stream::ENGINE_BCS);
+        event.updateCompletionStamp(1, 1, 0, 0);
+    }
+
+    EXPECT_EQ(takeOwnershipCallsBefore + 1, cmdQ->takeOwnershipCalls.load());
+    EXPECT_EQ(isCompletedCalledBefore + 1, cmdQ->isCompletedCalled.load());
 
     cmdQ.reset();
 }

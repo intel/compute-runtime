@@ -28,6 +28,7 @@ struct MockEvent : public BaseEventType {
     using Event::areTimestampsCompleted;
     using Event::calcProfilingData;
     using Event::cmdToSubmit;
+    using Event::eventWithoutCommand;
     using Event::isWaitForTimestampsEnabled;
     using Event::magic;
     using Event::multiRootDeviceTimestampPacketContainer;
