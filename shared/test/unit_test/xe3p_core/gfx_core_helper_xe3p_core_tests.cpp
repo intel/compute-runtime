@@ -729,6 +729,42 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenProgramGlobalFenceAsMiMemFenceC
     EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
 }
 
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenIntegratedDeviceWhenGettingSizeForAcquireAdditionalSynchronizationThenZeroIsReturned) {
+    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+
+    EXPECT_EQ(0u, MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::acquire, rootDeviceEnvironment));
+}
+
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenIntegratedDeviceWhenAddingAcquireAdditionalSynchronizationThenNoCommandIsProgrammed) {
+    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    uint8_t buffer[128] = {};
+    LinearStream commandStream(buffer, 128);
+
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x1000, NEO::FenceType::acquire, rootDeviceEnvironment);
+
+    EXPECT_EQ(0u, commandStream.getUsed());
+}
+
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDiscreteDeviceWhenAddingAcquireAdditionalSynchronizationThenMemoryFenceIsProgrammed) {
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    uint8_t buffer[128] = {};
+    LinearStream commandStream(buffer, 128);
+
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x1000, NEO::FenceType::acquire, rootDeviceEnvironment);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream);
+    EXPECT_EQ(1u, hwParser.cmdList.size());
+    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
+    ASSERT_NE(nullptr, fenceCmd);
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE, fenceCmd->getFenceType());
+}
+
 using ProductHelperTestXe3pCore = Test<DeviceFixture>;
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenXe3pProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
