@@ -581,7 +581,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWai
         UNRECOVERABLE_IF(loadRegImmCmdToPatch == nullptr);
 
         auto loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch->gpuDestination,
-                                                                                   loadRegImmCmdToPatch->commandView,
+                                                                                   std::exchange(loadRegImmCmdToPatch->commandView, nullptr),
                                                                                    loadRegImmCmdToPatch->pDestination,
                                                                                    static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
                                                                                    MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter,
@@ -596,7 +596,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWai
         UNRECOVERABLE_IF(loadRegImmCmdToPatch2 == nullptr);
 
         loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch2->gpuDestination,
-                                                                              loadRegImmCmdToPatch2->commandView,
+                                                                              std::exchange(loadRegImmCmdToPatch2->commandView, nullptr),
                                                                               loadRegImmCmdToPatch2->pDestination,
                                                                               static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
                                                                               MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter,
@@ -612,7 +612,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWai
     UNRECOVERABLE_IF(semaphoreWaitCmdToPatch == nullptr);
 
     auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch->gpuDestination,
-                                                                          semaphoreWaitCmdToPatch->commandView,
+                                                                          std::exchange(semaphoreWaitCmdToPatch->commandView, nullptr),
                                                                           semaphoreWaitCmdToPatch->pDestination,
                                                                           semaphoreWaitCmdToPatch->offset,
                                                                           MutableSemaphoreWait::cbEventWaitPatchPreambleCounter,
@@ -636,7 +636,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
         UNRECOVERABLE_IF(loadRegImmCmdToPatch == nullptr);
 
         auto loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch->gpuDestination,
-                                                                                   loadRegImmCmdToPatch->commandView,
+                                                                                   std::exchange(loadRegImmCmdToPatch->commandView, nullptr),
                                                                                    loadRegImmCmdToPatch->pDestination,
                                                                                    static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
                                                                                    MutableLoadRegisterImm::cbEventWaitLoadCounter,
@@ -651,7 +651,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
         UNRECOVERABLE_IF(loadRegImmCmdToPatch2 == nullptr);
 
         loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch2->gpuDestination,
-                                                                              loadRegImmCmdToPatch2->commandView,
+                                                                              std::exchange(loadRegImmCmdToPatch2->commandView, nullptr),
                                                                               loadRegImmCmdToPatch2->pDestination,
                                                                               static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
                                                                               MutableLoadRegisterImm::cbEventWaitLoadCounter,
@@ -667,7 +667,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
     UNRECOVERABLE_IF(semaphoreWaitCmdToPatch == nullptr);
 
     auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch->gpuDestination,
-                                                                          semaphoreWaitCmdToPatch->commandView,
+                                                                          std::exchange(semaphoreWaitCmdToPatch->commandView, nullptr),
                                                                           semaphoreWaitCmdToPatch->pDestination,
                                                                           semaphoreWaitCmdToPatch->offset,
                                                                           MutableSemaphoreWait::cbEventWait,
@@ -688,7 +688,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureRegularWaitEventCommand
     UNRECOVERABLE_IF(semaphoreWaitCmdToPatch == nullptr);
 
     auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch->gpuDestination,
-                                                                          semaphoreWaitCmdToPatch->commandView,
+                                                                          std::exchange(semaphoreWaitCmdToPatch->commandView, nullptr),
                                                                           semaphoreWaitCmdToPatch->pDestination,
                                                                           semaphoreWaitCmdToPatch->offset,
                                                                           MutableSemaphoreWait::regularEventWait,
@@ -724,7 +724,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedTimestampSi
             variableStoreDataImmList.emplace_back(storeDataImm);
         } else if (auto *semaphoreWaitPatch = std::get_if<PatchCbEventTimestampPostSyncSemaphoreWait>(&cmdToPatch)) {
             auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitPatch->gpuDestination,
-                                                                                  semaphoreWaitPatch->commandView,
+                                                                                  std::exchange(semaphoreWaitPatch->commandView, nullptr),
                                                                                   semaphoreWaitPatch->pDestination,
                                                                                   semaphoreWaitPatch->offset,
                                                                                   MutableSemaphoreWait::cbEventTimestampSyncWait,
@@ -1168,6 +1168,25 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::processWaitEventVariabl
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline void MutableCommandListCoreFamily<gfxCoreFamily>::clearMutableAppendData() {
+    auto deallocateCommandView = [semaphore64bCmdSupported = this->semaphore64bCmdSupported](auto &patchCommand) {
+        using PatchCommandType = std::decay_t<decltype(patchCommand)>;
+        if constexpr (std::is_same_v<PatchCommandType, PatchCbWaitEventLoadRegisterImm> ||
+                      std::is_same_v<PatchCommandType, PatchExternalCbWaitEventPreambleCounterLoadRegisterImm>) {
+            if (patchCommand.commandView != nullptr) {
+                NEO::EncodeSetMMIO<GfxFamily>::deallocateLoadRegisterImmCommand(std::exchange(patchCommand.commandView, nullptr));
+            }
+        } else if constexpr (std::is_same_v<PatchCommandType, PatchCbWaitEventSemaphoreWait> ||
+                             std::is_same_v<PatchCommandType, PatchExternalCbWaitEventPreambleCounterSemaphoreWait> ||
+                             std::is_same_v<PatchCommandType, PatchCbEventTimestampPostSyncSemaphoreWait> ||
+                             std::is_same_v<PatchCommandType, PatchWaitEventSemaphoreWait>) {
+            if (patchCommand.commandView != nullptr) {
+                NEO::EncodeSemaphore<GfxFamily>::deallocateSemaphoreWaitCommand(std::exchange(patchCommand.commandView, nullptr), semaphore64bCmdSupported);
+            }
+        }
+    };
+    for (auto &patchCommand : this->appendCmdsToPatch) {
+        std::visit(deallocateCommandView, patchCommand);
+    }
     this->appendCmdsToPatch.clear();
     this->nextAppendKernelMutable = false;
     this->nextMutationFlags = 0;

@@ -210,6 +210,10 @@ struct CommandToPatchContainer {
         return container.size();
     }
 
+    bool empty() const {
+        return container.empty();
+    }
+
     auto &operator[](size_t index) {
         return container[index];
     }

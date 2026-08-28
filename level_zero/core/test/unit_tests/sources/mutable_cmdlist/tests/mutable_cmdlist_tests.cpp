@@ -4404,5 +4404,99 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     }
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenOwningCommandViewVariantsInAppendCmdsToPatchWhenClearMutableAppendDataThenCommandViewsAreFreedAndContainerCleared) {
+    auto whiteBoxCmdList = static_cast<MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *>(mutableCommandList->base);
+    const bool semaphore64bCmdSupported = whiteBoxCmdList->semaphore64bCmdSupported;
+
+    // Seed appendCmdsToPatch with all six variants that own an allocated commandView,
+    // allocating each view the same way the encode helpers do internally
+    // (allocate*Command <-> deallocate*Command pairs used by clearMutableAppendData()).
+    {
+        PatchCbWaitEventLoadRegisterImm lri{};
+        lri.commandView = NEO::EncodeSetMMIO<FamilyType>::allocateLoadRegisterImmCommand();
+        whiteBoxCmdList->appendCmdsToPatch.push_back(lri);
+
+        PatchExternalCbWaitEventPreambleCounterLoadRegisterImm externalLri{};
+        externalLri.commandView = NEO::EncodeSetMMIO<FamilyType>::allocateLoadRegisterImmCommand();
+        whiteBoxCmdList->appendCmdsToPatch.push_back(externalLri);
+
+        PatchCbWaitEventSemaphoreWait cbEventSemWait{};
+        cbEventSemWait.commandView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(semaphore64bCmdSupported);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(cbEventSemWait);
+
+        PatchExternalCbWaitEventPreambleCounterSemaphoreWait externalSemWait{};
+        externalSemWait.commandView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(semaphore64bCmdSupported);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(externalSemWait);
+
+        PatchWaitEventSemaphoreWait semWait{};
+        semWait.commandView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(semaphore64bCmdSupported);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(semWait);
+
+        PatchCbEventTimestampPostSyncSemaphoreWait timestampSemWait{};
+        timestampSemWait.commandView = NEO::EncodeSemaphore<FamilyType>::allocateSemaphoreWaitCommand(semaphore64bCmdSupported);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(timestampSemWait);
+    }
+
+    // Add a non-owning variant to verify the lambda skips it and does not crash.
+    {
+        PatchCbEventTimestampClearStoreDataImm timestampClearStore{};
+        whiteBoxCmdList->appendCmdsToPatch.push_back(timestampClearStore);
+    }
+
+    ASSERT_EQ(7u, whiteBoxCmdList->appendCmdsToPatch.size());
+
+    whiteBoxCmdList->clearMutableAppendData();
+
+    // clearMutableAppendData() frees every owned commandView and clears the container.
+    // The NEO ULT leak listener validates that all allocated views were actually freed
+    // (a missed if constexpr branch would leak and fail teardown).
+    EXPECT_TRUE(whiteBoxCmdList->appendCmdsToPatch.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenOwningCommandViewVariantsWithNullCommandViewWhenClearMutableAppendDataThenNoDeallocationHappensAndContainerCleared) {
+    auto whiteBoxCmdList = static_cast<MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *>(mutableCommandList->base);
+
+    // Seed appendCmdsToPatch with the owning variant types but leave commandView == nullptr.
+    // clearMutableAppendData() must skip these (guarded by "if commandView != nullptr")
+    // and must not call any deallocator on a null pointer.
+    {
+        PatchCbWaitEventLoadRegisterImm lri{};
+        ASSERT_EQ(nullptr, lri.commandView);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(lri);
+
+        PatchExternalCbWaitEventPreambleCounterLoadRegisterImm externalLri{};
+        ASSERT_EQ(nullptr, externalLri.commandView);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(externalLri);
+
+        PatchCbWaitEventSemaphoreWait cbEventSemWait{};
+        ASSERT_EQ(nullptr, cbEventSemWait.commandView);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(cbEventSemWait);
+
+        PatchExternalCbWaitEventPreambleCounterSemaphoreWait externalSemWait{};
+        ASSERT_EQ(nullptr, externalSemWait.commandView);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(externalSemWait);
+
+        PatchWaitEventSemaphoreWait semWait{};
+        ASSERT_EQ(nullptr, semWait.commandView);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(semWait);
+
+        PatchCbEventTimestampPostSyncSemaphoreWait timestampSemWait{};
+        ASSERT_EQ(nullptr, timestampSemWait.commandView);
+        whiteBoxCmdList->appendCmdsToPatch.push_back(timestampSemWait);
+    }
+
+    ASSERT_EQ(6u, whiteBoxCmdList->appendCmdsToPatch.size());
+
+    // No commandView is allocated, so no deallocator must be invoked. The call must be safe
+    // (no delete of nullptr) and must still clear the container.
+    whiteBoxCmdList->clearMutableAppendData();
+
+    EXPECT_TRUE(whiteBoxCmdList->appendCmdsToPatch.empty());
+}
+
 } // namespace ult
 } // namespace L0
