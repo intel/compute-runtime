@@ -83,8 +83,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory64);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWriteToMemory);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListAppendHostFunction);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendMemoryCopyWithParameters);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendMemoryFillWithParameters);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendCustomOperation);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListSetCleanupCallback);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListVerifyMemory);
