@@ -2206,7 +2206,7 @@ bool DrmMemoryManager::isDeferBackingMemoryPressureReached(uint32_t rootDeviceIn
     const uint64_t projectedLocalMemory = getUsedLocalMemorySize(rootDeviceIndex) + allocationSize;
     const bool pressureReached = (projectedLocalMemory * 100ull) >= (maxLocalMemory * static_cast<uint64_t>(thresholdPercent));
 
-    if (debugManager.flags.PrintDebugMessages.get()) {
+    if (debugManager.flags.PrintDeferBackingLogs.get()) {
         PRINT_STRING(true, stderr, "[DeferBackingPressure] used=%lluMB + req=%lluMB -> proj=%lluMB / max=%lluMB (%llu%%) threshold=%d%% -> deferBacking=%s\n",
                      static_cast<unsigned long long>(getUsedLocalMemorySize(rootDeviceIndex) >> 20),
                      static_cast<unsigned long long>(static_cast<uint64_t>(allocationSize) >> 20),

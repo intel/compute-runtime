@@ -3647,9 +3647,9 @@ TEST_F(DrmMemoryManagerBasic, givenMaxLocalMemoryCachedAtInitWhenCheckedMultiple
     memoryManager.commonCleanup();
 }
 
-TEST_F(DrmMemoryManagerBasic, givenPrintDebugMessagesEnabledWhenCheckingDeferBackingPressureThenDecisionIsPrinted) {
+TEST_F(DrmMemoryManagerBasic, givenPrintDeferBackingLogsEnabledWhenCheckingDeferBackingPressureThenDecisionIsPrinted) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDeferBackingLogs.set(true);
 
     DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
     memoryManager.maxLocalMemory = 1000u;
