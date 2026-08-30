@@ -308,6 +308,20 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         imgInfo.imgDesc.imageRowPitch = lookupTable.imageTilingOverride.rowPitch;
     }
 
+    // Compute qPitch for 3D images placed on top of a buffer as a function of rows.
+    if (this->imageFromBuffer && desc->type == ZE_IMAGE_TYPE_3D) {
+        if (imgInfo.rowPitch == 0 || imgInfo.slicePitch % imgInfo.rowPitch != 0) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        const size_t rowsPerSlice = imgInfo.slicePitch / imgInfo.rowPitch;
+        // Slice pitch rows must be a multiple of SURFACEQPITCH_ALIGN_SIZE.
+        if (rowsPerSlice % RENDER_SURFACE_STATE::SURFACEQPITCH_ALIGN_SIZE != 0) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        imgInfo.qPitch = static_cast<uint32_t>(rowsPerSlice);
+        imgInfo.imgDesc.imageSlicePitch = imgInfo.slicePitch;
+    }
+
     imgInfo.print();
 
     NEO::SurfaceOffsets surfaceOffsets = {imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane};

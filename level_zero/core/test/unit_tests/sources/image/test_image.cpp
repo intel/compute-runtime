@@ -315,6 +315,228 @@ HWTEST2_P(ImageCreateUsmPool, Given2dTypeWithPitchedPtrWhenImageCreatedThenImage
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
+HWTEST2_P(ImageCreateUsmPool, Given2dTypeWithPitchedPtrWhenImageCreatedThenQPitchIsNotProgrammed, ImageSupport) {
+    // A non-array 2D surface has a single slice, so there is no slice distance
+    // to describe and QPitch stays out of the surface state.
+    const size_t width = 256;
+    const size_t height = 64;
+
+    const size_t size = width * height * sizeof(uint32_t) * 2;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto ret = context->allocDeviceMem(device, &deviceDesc, size, 0, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &pitchedDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_32, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  1,
+                                  0,
+                                  0};
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->imageFromBuffer);
+    EXPECT_EQ(0u, imageHW->imgInfo.qPitch);
+    EXPECT_EQ(0u, imageHW->surfaceState.getSurfaceQPitch());
+
+    imageHW.reset(nullptr);
+
+    ret = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrWhenImageCreatedThenQPitchDescribesTheSlicePitch, ImageSupport) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    // A 3D surface reaches its slices through QPitch rather than a byte slice
+    // pitch, so the rows per slice have to end up in the surface state.
+    const size_t width = 256;
+    const size_t height = 64; // whole number of QPitch-aligned rows
+    const size_t depth = 8;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    const size_t size = width * height * depth * sizeof(uint32_t) * 2;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto ret = context->allocDeviceMem(device, &deviceDesc, size, 0, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr;
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &pitchedDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_3D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_32, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->imageFromBuffer);
+    ASSERT_NE(0u, imageHW->imgInfo.rowPitch);
+    EXPECT_EQ(imageHW->imgInfo.rowPitch * height, imageHW->imgInfo.slicePitch);
+
+    const uint32_t expectedQPitch = static_cast<uint32_t>(imageHW->imgInfo.slicePitch / imageHW->imgInfo.rowPitch);
+    EXPECT_EQ(expectedQPitch, imageHW->imgInfo.qPitch);
+    EXPECT_EQ(0u, expectedQPitch % RENDER_SURFACE_STATE::SURFACEQPITCH_ALIGN_SIZE);
+    EXPECT_EQ(expectedQPitch, imageHW->surfaceState.getSurfaceQPitch());
+
+    imageHW.reset(nullptr);
+
+    ret = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrAndCustomPitchesWhenImageCreatedThenQPitchDescribesTheCustomSlicePitch, ImageSupport) {
+    const size_t width = 256;
+    const size_t height = 64;
+    const size_t depth = 8;
+    const size_t customRowPitch = 2048; // wider than the tight row
+    const size_t rowsPerSlice = 68;     // taller than the image, still QPitch aligned
+    const size_t customSlicePitch = customRowPitch * rowsPerSlice;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    const size_t size = customSlicePitch * depth;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto ret = context->allocDeviceMem(device, &deviceDesc, size, 0, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ze_custom_pitch_exp_desc_t customPitchDesc = {};
+    customPitchDesc.stype = ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC;
+    customPitchDesc.rowPitch = customRowPitch;
+    customPitchDesc.slicePitch = customSlicePitch;
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.pNext = &customPitchDesc;
+    pitchedDesc.ptr = ptr;
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &pitchedDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_3D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_32, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->imageFromBuffer);
+    EXPECT_EQ(customRowPitch, imageHW->imgInfo.rowPitch);
+    EXPECT_EQ(customSlicePitch, imageHW->imgInfo.slicePitch);
+    EXPECT_EQ(rowsPerSlice, imageHW->imgInfo.qPitch);
+    EXPECT_EQ(rowsPerSlice, imageHW->surfaceState.getSurfaceQPitch());
+
+    imageHW.reset(nullptr);
+
+    ret = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrAndIndescribableSlicePitchWhenImageCreatedThenErrorIsReturned, ImageSupport) {
+    const size_t width = 256;
+    const size_t height = 64;
+    const size_t depth = 8;
+    const size_t customRowPitch = 2048;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    const size_t size = customRowPitch * (height + 4) * depth;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto ret = context->allocDeviceMem(device, &deviceDesc, size, 0, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    // QPitch is programmed in units of SURFACEQPITCH_ALIGN_SIZE rows and drops
+    // the remainder, so neither of these slice pitches can be described.
+    const size_t indescribableSlicePitches[] = {
+        customRowPitch * 19,   // whole rows, but not a multiple of the alignment
+        customRowPitch * 4 + 1 // not a whole number of rows at all
+    };
+
+    for (const size_t slicePitch : indescribableSlicePitches) {
+        ze_custom_pitch_exp_desc_t customPitchDesc = {};
+        customPitchDesc.stype = ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC;
+        customPitchDesc.rowPitch = customRowPitch;
+        customPitchDesc.slicePitch = slicePitch;
+
+        ze_image_pitched_exp_desc_t pitchedDesc = {};
+        pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+        pitchedDesc.pNext = &customPitchDesc;
+        pitchedDesc.ptr = ptr;
+
+        ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+        bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+        bindlessExtDesc.pNext = &pitchedDesc;
+        bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+        ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                      &bindlessExtDesc,
+                                      ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                      ZE_IMAGE_TYPE_3D,
+                                      {ZE_IMAGE_FORMAT_LAYOUT_32, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                       ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                       ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                      width,
+                                      height,
+                                      depth,
+                                      0,
+                                      0};
+        auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, imageHW->initialize(device, &srcImgDesc))
+            << "slicePitch=" << slicePitch;
+    }
+
+    ret = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
 HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedImageThenNullPtrImageIsReturned) {
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
