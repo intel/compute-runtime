@@ -197,7 +197,6 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheck
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_TRUE(pSysmanKmdInterface->isDefaultFrequencyAvailable());
     EXPECT_TRUE(pSysmanKmdInterface->isBoostFrequencyAvailable());
-    EXPECT_TRUE(pSysmanKmdInterface->isTdpFrequencyAvailable());
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheckingPhysicalMemorySizeThenUnsupportedErrorIsReturned) {

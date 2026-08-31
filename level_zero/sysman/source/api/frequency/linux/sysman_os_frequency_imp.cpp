@@ -300,24 +300,19 @@ ze_result_t LinuxFrequencyImp::getTdp(double &tdp) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     double freqVal = 0;
 
-    if (pSysmanKmdInterface->isTdpFrequencyAvailable()) {
-        result = pSysfsAccess->read(tdpFreqFile, freqVal);
-        if (ZE_RESULT_SUCCESS != result) {
-            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, tdpFreqFile.c_str(), result);
-            return result;
+    ze_result_t result = pSysfsAccess->read(tdpFreqFile, freqVal);
+    if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        tdp = freqVal;
-    } else {
-        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, tdpFreqFile.c_str(), result);
+        return result;
     }
-    return result;
+    tdp = freqVal;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxFrequencyImp::getActual(double &actual) {
@@ -445,6 +440,7 @@ void LinuxFrequencyImp::init() {
     efficientFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameEfficientFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
     maxValFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMaxValueFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
     minValFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMinValueFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
+    tdpFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameTdpFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
     canControl = pSysmanProductHelper->isFrequencySetRangeSupported();
 
     if (pSysmanKmdInterface->isDefaultFrequencyAvailable()) {
@@ -454,10 +450,6 @@ void LinuxFrequencyImp::init() {
 
     if (pSysmanKmdInterface->isBoostFrequencyAvailable()) {
         boostFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameBoostFrequency, subdeviceId, baseDirectoryExists);
-    }
-
-    if (pSysmanKmdInterface->isTdpFrequencyAvailable()) {
-        tdpFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameTdpFrequency, subdeviceId, baseDirectoryExists);
     }
 }
 

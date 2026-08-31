@@ -234,7 +234,6 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckin
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_TRUE(pSysmanKmdInterface->isDefaultFrequencyAvailable());
     EXPECT_TRUE(pSysmanKmdInterface->isBoostFrequencyAvailable());
-    EXPECT_TRUE(pSysmanKmdInterface->isTdpFrequencyAvailable());
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEngineClassStringForComputeThenValidStringIsReturned) {
