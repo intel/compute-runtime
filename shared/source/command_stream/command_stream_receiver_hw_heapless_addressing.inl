@@ -119,6 +119,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     this->latestSentTaskCount = taskCount + 1;
 
     auto estimatedSize = getRequiredCmdStreamHeaplessSizeAligned(dispatchFlags, device);
+
+    bool stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
+    if (stateCacheFlushRequired) {
+        estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+    }
+
     auto &commandStreamCSR = this->getCS(estimatedSize);
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
@@ -136,6 +142,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
 
     if (isPerQueuePrologueEnabled()) {
         programEnginePrologue(commandStreamCSR);
+    }
+
+    if (stateCacheFlushRequired) {
+        device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
+        MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStreamCSR, device.getRootDeviceEnvironment());
     }
 
     const bool useSemaphore64bCmd = device.getDeviceInfo().semaphore64bCmdSupport;
