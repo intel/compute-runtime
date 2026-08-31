@@ -6,6 +6,7 @@
 
 set_property(GLOBAL APPEND PROPERTY LEO_TEST_SOURCES
              ${CMAKE_CURRENT_SOURCE_DIR}/test_base_object.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_memory_properties_helpers.cpp
              ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_to_l0_handles.cpp
              ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_validators.cpp
              ${CMAKE_CURRENT_SOURCE_DIR}/test_convert_color.cpp

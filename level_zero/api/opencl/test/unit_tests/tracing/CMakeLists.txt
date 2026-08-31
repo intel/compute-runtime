@@ -5,6 +5,5 @@
 #
 
 set_property(GLOBAL APPEND PROPERTY LEO_TEST_SOURCES
-             ${CMAKE_CURRENT_SOURCE_DIR}/test_sampler.cpp
-             ${CMAKE_CURRENT_SOURCE_DIR}/test_sampler_info.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}/test_leo_tracing_api.cpp
 )

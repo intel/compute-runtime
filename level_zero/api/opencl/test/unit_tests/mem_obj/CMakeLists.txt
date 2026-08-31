@@ -12,4 +12,5 @@ set_property(GLOBAL APPEND PROPERTY LEO_TEST_SOURCES
              ${CMAKE_CURRENT_SOURCE_DIR}/test_mem_obj_helper.cpp
              ${CMAKE_CURRENT_SOURCE_DIR}/test_mem_obj_info.cpp
              ${CMAKE_CURRENT_SOURCE_DIR}/test_mem_obj_properties.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}/test_sub_buffer.cpp
 )

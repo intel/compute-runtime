@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/mem_obj/leo_map_operations_handler.h"
@@ -177,6 +178,248 @@ TEST(MapOperationsHandlerTests, givenWriteMappingWhenAddedThenFindReturnsNotRead
     MapInfo outInfo;
     handler.find(ptr, outInfo);
     EXPECT_FALSE(outInfo.readOnly);
+}
+
+TEST(MapOperationsHandlerTests, givenCombinedReadWriteFlagsWhenAddedThenMappingIsNotReadOnly) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x11000);
+    cl_map_flags flags = CL_MAP_READ | CL_MAP_WRITE;
+    MemObjSizeArray size = {16, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 16, flags, size, offset);
+
+    MapInfo outInfo;
+    ASSERT_TRUE(handler.find(ptr, outInfo));
+    EXPECT_FALSE(outInfo.readOnly);
+}
+
+TEST(MapOperationsHandlerTests, givenWriteInvalidateRegionFlagWhenAddedThenMappingIsNotReadOnly) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x12000);
+    cl_map_flags flags = CL_MAP_WRITE_INVALIDATE_REGION;
+    MemObjSizeArray size = {16, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 16, flags, size, offset);
+
+    MapInfo outInfo;
+    ASSERT_TRUE(handler.find(ptr, outInfo));
+    EXPECT_FALSE(outInfo.readOnly);
+}
+
+TEST(MapOperationsHandlerTests, givenMipLevelWhenAddedThenFindReturnsIt) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x13000);
+    cl_map_flags flags = CL_MAP_WRITE;
+    MemObjSizeArray size = {16, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 16, flags, size, offset, 3u);
+
+    MapInfo outInfo;
+    ASSERT_TRUE(handler.find(ptr, outInfo));
+    EXPECT_EQ(3u, outInfo.mipLevel);
+}
+
+TEST(MapOperationsHandlerTests, givenNoMipLevelWhenAddedThenFindReturnsZero) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x14000);
+    cl_map_flags flags = CL_MAP_WRITE;
+    MemObjSizeArray size = {16, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 16, flags, size, offset);
+
+    MapInfo outInfo;
+    ASSERT_TRUE(handler.find(ptr, outInfo));
+    EXPECT_EQ(0u, outInfo.mipLevel);
+}
+
+TEST(MapOperationsHandlerTests, givenWriteMappingWhenAddingAnOverlappingReadOnlyMappingThenItIsAccepted) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x15000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    cl_map_flags readFlags = CL_MAP_READ;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, writeFlags, size, offset);
+
+    EXPECT_TRUE(handler.add(ptrOffset(ptr, 16u), 16, readFlags, size, offset));
+    EXPECT_EQ(2u, handler.size());
+}
+
+TEST(MapOperationsHandlerTests, givenReadOnlyMappingWhenAddingAnOverlappingWriteMappingThenItIsRejected) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x16000);
+    cl_map_flags readFlags = CL_MAP_READ;
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, readFlags, size, offset);
+
+    EXPECT_FALSE(handler.add(ptrOffset(ptr, 16u), 16, writeFlags, size, offset));
+    EXPECT_EQ(1u, handler.size());
+}
+
+TEST(MapOperationsHandlerTests, givenSeveralReadOnlyMappingsOnTheSameRangeWhenAddedThenAllAreAccepted) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x17000);
+    cl_map_flags readFlags = CL_MAP_READ;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+
+    EXPECT_TRUE(handler.add(ptr, 64, readFlags, size, offset));
+    EXPECT_TRUE(handler.add(ptr, 64, readFlags, size, offset));
+    EXPECT_TRUE(handler.add(ptr, 64, readFlags, size, offset));
+    EXPECT_EQ(3u, handler.size());
+}
+
+TEST(MapOperationsHandlerTests, givenDuplicatedReadOnlyMappingWhenRemovedOnceThenOneInstanceIsLeft) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x18000);
+    cl_map_flags readFlags = CL_MAP_READ;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, readFlags, size, offset);
+    handler.add(ptr, 64, readFlags, size, offset);
+
+    handler.remove(ptr);
+
+    EXPECT_EQ(1u, handler.size());
+    MapInfo outInfo;
+    EXPECT_TRUE(handler.find(ptr, outInfo));
+}
+
+TEST(MapOperationsHandlerTests, givenWriteMappingWhenAddingAFullyContainedWriteMappingThenItIsRejected) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x19000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, writeFlags, size, offset);
+
+    EXPECT_FALSE(handler.add(ptrOffset(ptr, 16u), 16, writeFlags, size, offset));
+}
+
+TEST(MapOperationsHandlerTests, givenWriteMappingWhenAddingAnEnclosingWriteMappingThenItIsRejected) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x1A000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {16, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptrOffset(ptr, 16u), 16, writeFlags, size, offset);
+
+    EXPECT_FALSE(handler.add(ptr, 64, writeFlags, size, offset));
+}
+
+TEST(MapOperationsHandlerTests, givenWriteMappingWhenAddingTheExactSameRangeAgainThenItIsRejected) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x1B000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, writeFlags, size, offset);
+
+    EXPECT_FALSE(handler.add(ptr, 64, writeFlags, size, offset));
+    EXPECT_EQ(1u, handler.size());
+}
+
+TEST(MapOperationsHandlerTests, givenZeroLengthWriteMappingInsideAnExistingRangeWhenAddedThenItIsRejected) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x1C000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, writeFlags, size, offset);
+
+    MemObjSizeArray emptySize = {0, 0, 0};
+    EXPECT_FALSE(handler.add(ptrOffset(ptr, 16u), 0, writeFlags, emptySize, offset));
+    EXPECT_EQ(1u, handler.size());
+}
+
+TEST(MapOperationsHandlerTests, givenZeroLengthWriteMappingAtTheStartOfAnExistingRangeWhenAddedThenItIsAccepted) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x1D000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(ptr, 64, writeFlags, size, offset);
+
+    MemObjSizeArray emptySize = {0, 0, 0};
+    EXPECT_TRUE(handler.add(ptr, 0, writeFlags, emptySize, offset));
+    EXPECT_EQ(2u, handler.size());
+}
+
+TEST(MapOperationsHandlerTests, givenThreeMappingsWhenRemovingTheMiddleOneThenTheOthersRemainFindable) {
+    MapOperationsHandler handler;
+    void *first = reinterpret_cast<void *>(0x20000);
+    void *second = reinterpret_cast<void *>(0x21000);
+    void *third = reinterpret_cast<void *>(0x22000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {16, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(first, 16, writeFlags, size, offset);
+    handler.add(second, 16, writeFlags, size, offset);
+    handler.add(third, 16, writeFlags, size, offset);
+
+    handler.remove(second);
+
+    EXPECT_EQ(2u, handler.size());
+    MapInfo outInfo;
+    EXPECT_TRUE(handler.find(first, outInfo));
+    EXPECT_FALSE(handler.find(second, outInfo));
+    EXPECT_TRUE(handler.find(third, outInfo));
+}
+
+TEST(MapOperationsHandlerTests, givenThreeMappingsWhenRemovingTheLastOneThenTheOthersRemainFindable) {
+    MapOperationsHandler handler;
+    void *first = reinterpret_cast<void *>(0x23000);
+    void *second = reinterpret_cast<void *>(0x24000);
+    void *third = reinterpret_cast<void *>(0x25000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {16, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    handler.add(first, 16, writeFlags, size, offset);
+    handler.add(second, 16, writeFlags, size, offset);
+    handler.add(third, 16, writeFlags, size, offset);
+
+    handler.remove(third);
+
+    EXPECT_EQ(2u, handler.size());
+    MapInfo outInfo;
+    EXPECT_TRUE(handler.find(first, outInfo));
+    EXPECT_TRUE(handler.find(second, outInfo));
+    EXPECT_FALSE(handler.find(third, outInfo));
+}
+
+TEST(MapOperationsHandlerTests, givenAllMappingsRemovedWhenAddingAPreviouslyOverlappingRangeThenItIsAccepted) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x26000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {64, 1, 1};
+    MemObjOffsetArray offset = {0, 0, 0};
+    ASSERT_TRUE(handler.add(ptr, 64, writeFlags, size, offset));
+    ASSERT_FALSE(handler.add(ptr, 64, writeFlags, size, offset));
+
+    handler.remove(ptr);
+
+    EXPECT_TRUE(handler.add(ptr, 64, writeFlags, size, offset));
+    EXPECT_EQ(1u, handler.size());
+}
+
+TEST(MapOperationsHandlerTests, givenMappingWhenRemovedThenItsDataIsNoLongerReturnedByFind) {
+    MapOperationsHandler handler;
+    void *ptr = reinterpret_cast<void *>(0x27000);
+    cl_map_flags writeFlags = CL_MAP_WRITE;
+    MemObjSizeArray size = {32, 4, 2};
+    MemObjOffsetArray offset = {8, 2, 1};
+    handler.add(ptr, 32, writeFlags, size, offset, 2u);
+
+    MapInfo outInfo;
+    ASSERT_TRUE(handler.find(ptr, outInfo));
+    EXPECT_EQ(size, outInfo.size);
+    EXPECT_EQ(offset, outInfo.offset);
+    EXPECT_EQ(2u, outInfo.mipLevel);
+
+    handler.remove(ptr);
+    EXPECT_FALSE(handler.find(ptr, outInfo));
 }
 
 } // namespace ult
