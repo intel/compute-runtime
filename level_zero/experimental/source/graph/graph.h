@@ -427,6 +427,7 @@ struct Graph : _ze_graph_handle_t {
     void setCaptureTargetRecursively(bool attach);
     void setRecordedSignalsRecursively(bool attach);
     void unregisterSignallingEvents();
+    void markSignallingEventsAsGraphInternal();
 
     RecordedApiCommands recordedApiCommands;
     CaptureTargetDesc captureTargetDesc;
@@ -466,6 +467,7 @@ void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&
 void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Graph &captureTarget, ze_event_handle_t event);
 
 bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList);
+bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList);
 bool usesForkEvents(std::span<ze_event_handle_t> events);
 bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events);
 bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent);
@@ -477,6 +479,10 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     }
 
     if (false == areGraphsEnabled()) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    if (isGraphInstantiationTarget(srcCmdList)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
