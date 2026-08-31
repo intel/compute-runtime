@@ -322,7 +322,6 @@ void Graph::stopCapturing() {
     if (nullptr == this->captureSrc) {
         return;
     }
-    this->markSignallingEventsAsGraphInternal();
     this->unregisterSignallingEvents();
     this->captureSrc->releaseGraphCaptureTarget();
     this->captureSrc = nullptr;
@@ -424,12 +423,6 @@ void Graph::registerSignallingEventFromPreviousCommand(L0::Event &ev) {
 void Graph::unregisterSignallingEvents() {
     for (auto ev : this->recordedSignals) {
         ev.first->setRecordedSignalFrom(nullptr);
-    }
-}
-
-void Graph::markSignallingEventsAsGraphInternal() {
-    for (auto &signal : this->recordedSignals) {
-        signal.first->setIsSignalledAsGraphInternalEvent(true);
     }
 }
 
@@ -1589,10 +1582,6 @@ bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList) {
     return srcCmdList.isImmediateType() && (false == srcCmdList.isInSynchronousMode());
 }
 
-bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList) {
-    return srcCmdList.getIsGraphInstantiationTarget();
-}
-
 bool usesForkEvents(std::span<ze_event_handle_t> events) {
     for (const auto &event : events) {
         if (L0::Event::fromHandle(event)->getRecordedSignalFrom()) {
@@ -1603,9 +1592,8 @@ bool usesForkEvents(std::span<ze_event_handle_t> events) {
 }
 
 bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent) {
-    for (const auto &hEvent : waitEvents) {
-        const auto *event = L0::Event::fromHandle(hEvent);
-        if (event->isCapturedGraphInternalEvent() || event->getIsSignalledAsGraphInternalEvent()) {
+    for (const auto &event : waitEvents) {
+        if (L0::Event::fromHandle(event)->isCapturedGraphInternalEvent()) {
             return true;
         }
     }
