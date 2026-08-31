@@ -77,16 +77,6 @@ CRITEST_F(CriProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmTh
     EXPECT_TRUE(productHelper->useSharedSystemUsm());
 }
 
-CRITEST_F(CriProductHelperLinux, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isDeferBackingEnabled());
-}
-
-CRITEST_F(CriProductHelperLinux, givenProductHelperWhenIsDeferBackingEnabledCalledWithDebugFlagSetToZeroThenReturnFalse) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferBacking.set(0);
-    EXPECT_FALSE(productHelper->isDeferBackingEnabled());
-}
-
 using CriHwInfoLinux = ::testing::Test;
 
 CRITEST_F(CriHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {

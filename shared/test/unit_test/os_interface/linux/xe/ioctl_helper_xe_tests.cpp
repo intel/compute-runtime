@@ -4224,6 +4224,19 @@ TEST_F(IoctlHelperXeTest, givenEnableDeferBackingSetToZeroWhenIsDeferBackingSupp
     EXPECT_FALSE(xeIoctlHelper->isDeferBackingSupported());
 }
 
+TEST_F(IoctlHelperXeTest, WhenGettingDeferBackingSupportThenValueIsReturnedBasedOnDeviceType) {
+
+    for (bool isIntegratedGpu : {true, false}) {
+        auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = isIntegratedGpu;
+        auto drm = DrmMockXe::create(rootDeviceEnvironment);
+        auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+        xeIoctlHelper->initialize();
+        EXPECT_EQ(!isIntegratedGpu, xeIoctlHelper->isDeferBackingSupported());
+    }
+}
+
 TEST_F(IoctlHelperXeTest, givenDeferBackingSupportedAndThresholdDisabledWhenIsDeferBackingEnabledForSizeIsCalledThenReturnsTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(1);

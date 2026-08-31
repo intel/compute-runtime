@@ -472,16 +472,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfVmBindDecompressionPro
     EXPECT_FALSE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isDeferBackingEnabled());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithDebugFlagSetToOneThenReturnTrue) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferBacking.set(1);
-    EXPECT_TRUE(productHelper->isDeferBackingEnabled());
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsSupportedThenReturnFalse, IsAtMostXeHpgCore) {
     EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
 }

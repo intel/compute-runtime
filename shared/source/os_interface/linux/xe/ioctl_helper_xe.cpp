@@ -2104,8 +2104,10 @@ bool IoctlHelperXe::isDeferBackingEnabledForSize(size_t allocationSize) const {
 
 bool IoctlHelperXe::isDeferBackingSupported() const {
     std::call_once(checkDeferBackingOnce, [this]() {
-        const auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-        deferBackingSupported = productHelper.isDeferBackingEnabled();
+        deferBackingSupported = !drm.getHardwareInfo()->capabilityTable.isIntegratedDevice;
+        if (debugManager.flags.EnableDeferBacking.get() != -1) {
+            deferBackingSupported = debugManager.flags.EnableDeferBacking.get();
+        }
 
         if (deferBackingSupported) {
             const auto csrType = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(),

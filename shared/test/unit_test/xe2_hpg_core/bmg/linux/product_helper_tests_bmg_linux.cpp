@@ -167,13 +167,3 @@ BMGTEST_F(BmgProductHelperLinux, givenPublicSkuDeviceIdWhenGetDeviceMemoryMaxBan
     pInHwInfo.platform.usDeviceID = 0xE223;
     EXPECT_EQ(608000000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
 }
-
-BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isDeferBackingEnabled());
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenIsDeferBackingEnabledCalledWithDebugFlagSetToZeroThenReturnFalse) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferBacking.set(0);
-    EXPECT_FALSE(productHelper->isDeferBackingEnabled());
-}

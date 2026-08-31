@@ -417,14 +417,6 @@ bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isDeferBackingEnabled() const {
-    if (debugManager.flags.EnableDeferBacking.get() != -1) {
-        return debugManager.flags.EnableDeferBacking.get();
-    }
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDisableScratchPagesRequiredForDebugger() const {
     return true;
 }
