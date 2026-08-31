@@ -2814,9 +2814,8 @@ TEST_F(DeviceTests, givenDebuggerRequestedByUserWhenDeviceWithSubDevicesCreatedT
 TEST(DeviceWithoutAILTest, givenNoAILWhenCreateDeviceThenDeviceIsCreated) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.EnableAIL.set(false);
-    MockCompilerReleaseHelper mockCompilerReleaseHelper;
     auto hwInfo = *defaultHwInfo;
-    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo, mockCompilerReleaseHelper);
+    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
     EXPECT_NE(nullptr, device.get());

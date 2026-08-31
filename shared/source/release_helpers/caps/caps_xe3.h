@@ -22,6 +22,7 @@ struct CapsXe3Core {
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool matrixMultiplyAccumulateSupported = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rcsExposureDisabled = true;
@@ -30,20 +31,35 @@ struct CapsXe3Core {
 struct CapsPtlH : CapsXe3Core {
     static constexpr bool rayTracingSupported = true;
 };
+struct CapsPtlHA0 : CapsPtlH {};
+struct CapsPtlHB0 : CapsPtlH {
+    static constexpr bool ftrXe2Compression = true;
+};
+
 struct CapsPtlU : CapsXe3Core {
+    static constexpr bool ftrXe2Compression = true;
     static constexpr bool rayTracingSupported = true;
 };
-struct CapsWcl : CapsXe3Core {};
-struct CapsNvlS : CapsXe3Core {};
+
+struct CapsWcl : CapsXe3Core {
+    static constexpr bool ftrXe2Compression = true;
+};
+
+struct CapsNvlS : CapsXe3Core {
+    static constexpr bool ftrXe2Compression = true;
+};
+
 struct CapsNvlU : CapsXe3Core {
+    static constexpr bool ftrXe2Compression = true;
     static constexpr bool rayTracingSupported = true;
 };
 
 constexpr std::optional<Caps> resolveCapsPtlH(HardwareIpVersion ipVersion) {
     switch (ipVersion.value) {
     case AOT::PTL_H_A0:
+        return materializeCaps<CapsPtlHA0>();
     case AOT::PTL_H_B0:
-        return materializeCaps<CapsPtlH>();
+        return materializeCaps<CapsPtlHB0>();
     default:
         return std::nullopt;
     }

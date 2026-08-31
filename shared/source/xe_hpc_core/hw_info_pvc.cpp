@@ -80,8 +80,8 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     .l0DebuggerSupported = true,
 };
 
-void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
+void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrLocalMemory = true;
@@ -106,7 +106,7 @@ void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 
     setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
+        setupFeatureAndWorkaroundTable(hwInfo);
     }
 
     applyDebugOverrides(*hwInfo);

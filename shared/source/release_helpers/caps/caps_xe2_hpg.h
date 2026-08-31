@@ -23,6 +23,7 @@ struct CapsXe2HpgCore {
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool matrixMultiplyAccumulateSupported = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rayTracingSupported = true;
@@ -30,6 +31,7 @@ struct CapsXe2HpgCore {
 };
 
 struct CapsBmg : CapsXe2HpgCore {
+    static constexpr bool ftrXe2Compression = true;
     static constexpr bool programAdditionalStallPriorToBarrierWithTimestamp = true;
     static constexpr bool queryPeerAccess = true;
     static constexpr bool singleDispatchRequiredForMultiCCS = true;

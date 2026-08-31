@@ -50,9 +50,12 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsPvc.directSubmissionLightSupported);
     EXPECT_TRUE(capsPvc.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsPvc.dummyBlitWaRequired);
+    EXPECT_FALSE(capsPvc.forceEmuInt32DivRemSPRequired);
+    EXPECT_FALSE(capsPvc.ftrXe2Compression);
     EXPECT_FALSE(capsPvc.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsPvc.latePreemptionStartSupported);
     EXPECT_TRUE(capsPvc.localOnlyAllowed);
+    EXPECT_TRUE(capsPvc.matrixMultiplyAccumulateSupported);
     EXPECT_TRUE(capsPvc.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsPvc.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPvc.pipeControlPriorToPipelineSelectWaRequired);
@@ -81,9 +84,12 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsPvcVg.directSubmissionLightSupported);
     EXPECT_FALSE(capsPvcVg.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsPvcVg.dummyBlitWaRequired);
+    EXPECT_FALSE(capsPvcVg.forceEmuInt32DivRemSPRequired);
+    EXPECT_FALSE(capsPvcVg.ftrXe2Compression);
     EXPECT_FALSE(capsPvcVg.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsPvcVg.latePreemptionStartSupported);
     EXPECT_TRUE(capsPvcVg.localOnlyAllowed);
+    EXPECT_FALSE(capsPvcVg.matrixMultiplyAccumulateSupported);
     EXPECT_TRUE(capsPvcVg.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsPvcVg.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPvcVg.pipeControlPriorToPipelineSelectWaRequired);

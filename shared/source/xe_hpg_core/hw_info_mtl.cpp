@@ -70,8 +70,8 @@ const RuntimeCapabilityTable MTL::capabilityTable{
 WorkaroundTable MTL::workaroundTable = {};
 FeatureTable MTL::featureTable = {};
 
-void MTL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
+void MTL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
     FeatureTable *featureTable = &hwInfo->featureTable;
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
@@ -89,7 +89,7 @@ void MTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 
     setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
+        setupFeatureAndWorkaroundTable(hwInfo);
     }
 
     applyDebugOverrides(*hwInfo);
@@ -107,7 +107,7 @@ void MtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     MTL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 
     if (setupFeatureTableAndWorkaroundTable) {
-        MTL::setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
+        MTL::setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
 

@@ -68,8 +68,8 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     .l0DebuggerSupported = true,
 };
 
-void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
+void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrFlatPhysCCS = true;
@@ -107,7 +107,7 @@ void LNL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     LNL::adjustHardwareInfo(hwInfo);
     setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        LNL::setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
+        LNL::setupFeatureAndWorkaroundTable(hwInfo);
     }
 
     applyDebugOverrides(*hwInfo);

@@ -55,9 +55,12 @@ TEST(CapsXeHpgTest, givenDg2G10ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsDg2G10.directSubmissionLightSupported);
     EXPECT_TRUE(capsDg2G10.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsDg2G10.dummyBlitWaRequired);
+    EXPECT_FALSE(capsDg2G10.forceEmuInt32DivRemSPRequired);
+    EXPECT_FALSE(capsDg2G10.ftrXe2Compression);
     EXPECT_TRUE(capsDg2G10.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsDg2G10.latePreemptionStartSupported);
     EXPECT_TRUE(capsDg2G10.localOnlyAllowed);
+    EXPECT_TRUE(capsDg2G10.matrixMultiplyAccumulateSupported);
     EXPECT_TRUE(capsDg2G10.numRtStacksPerDssFixedValue);
     EXPECT_TRUE(capsDg2G10.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsDg2G10.pipeControlPriorToPipelineSelectWaRequired);
@@ -86,9 +89,12 @@ TEST(CapsXeHpgTest, givenDg2G11ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsDg2G11.directSubmissionLightSupported);
     EXPECT_TRUE(capsDg2G11.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsDg2G11.dummyBlitWaRequired);
+    EXPECT_FALSE(capsDg2G11.forceEmuInt32DivRemSPRequired);
+    EXPECT_FALSE(capsDg2G11.ftrXe2Compression);
     EXPECT_TRUE(capsDg2G11.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsDg2G11.latePreemptionStartSupported);
     EXPECT_TRUE(capsDg2G11.localOnlyAllowed);
+    EXPECT_TRUE(capsDg2G11.matrixMultiplyAccumulateSupported);
     EXPECT_TRUE(capsDg2G11.numRtStacksPerDssFixedValue);
     EXPECT_TRUE(capsDg2G11.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsDg2G11.pipeControlPriorToPipelineSelectWaRequired);
@@ -117,9 +123,12 @@ TEST(CapsXeHpgTest, givenDg2G12ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsDg2G12.directSubmissionLightSupported);
     EXPECT_TRUE(capsDg2G12.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsDg2G12.dummyBlitWaRequired);
+    EXPECT_FALSE(capsDg2G12.forceEmuInt32DivRemSPRequired);
+    EXPECT_FALSE(capsDg2G12.ftrXe2Compression);
     EXPECT_TRUE(capsDg2G12.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsDg2G12.latePreemptionStartSupported);
     EXPECT_TRUE(capsDg2G12.localOnlyAllowed);
+    EXPECT_TRUE(capsDg2G12.matrixMultiplyAccumulateSupported);
     EXPECT_TRUE(capsDg2G12.numRtStacksPerDssFixedValue);
     EXPECT_TRUE(capsDg2G12.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsDg2G12.pipeControlPriorToPipelineSelectWaRequired);

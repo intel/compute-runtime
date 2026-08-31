@@ -92,7 +92,7 @@ void ClDevice::initializeCaps() {
     const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
-    deviceExtensions.append(compilerProductHelper.getDeviceExtensions(hwInfo, compilerReleaseHelper));
+    deviceExtensions.append(compilerProductHelper.getDeviceExtensions(hwInfo));
 
     driverVersion = NEO_OCL_DRIVER_VERSION;
 

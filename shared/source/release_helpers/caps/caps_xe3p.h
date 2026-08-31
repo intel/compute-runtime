@@ -23,6 +23,7 @@ struct CapsXe3pCore {
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool matrixMultiplyAccumulateSupported = true;
     static constexpr bool postImageWriteFlushRequired = true;
     static constexpr bool rcsExposureDisabled = true;
 };
@@ -31,6 +32,7 @@ struct CapsCri : CapsXe3pCore {
     static constexpr bool deviceConfigStringXeCuSegmentIncluded = true;
 };
 struct CapsNvlP : CapsXe3pCore {
+    static constexpr bool ftrXe2Compression = true;
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rayTracingSupported = true;
 };

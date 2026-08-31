@@ -134,8 +134,8 @@ class SystemMemFenceBlitter : public MulticontextOclAubFixture,
             GTEST_SKIP();
         }
 
-        const auto &compilerReleaseHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getCompilerReleaseHelper();
-        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, compilerReleaseHelper.getFtrXe2Compression());
+        const auto &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, hwInfo.caps.ftrXe2Compression);
     }
     void TearDown() override {
         MulticontextOclAubFixture::tearDown();
@@ -156,7 +156,8 @@ HWTEST2_F(SystemMemFenceBlitter, givenSystemMemFenceWhenGeneratedAsMiMemFenceCmd
     retVal = clEnqueueMemcpyINTEL(commandQueues[0][0].get(), true, deviceMemAlloc, buffer.data(), bufferSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    if (!tileDevices[0]->getDevice().getRootDeviceEnvironment().getCompilerReleaseHelper().getFtrXe2Compression()) {
+    const auto &hwInfo = tileDevices[0]->getDevice().getHardwareInfo();
+    if (!hwInfo.caps.ftrXe2Compression) {
         expectMemory<FamilyType>(deviceMemAlloc, buffer.data(), bufferSize, 0, 0);
     }
 

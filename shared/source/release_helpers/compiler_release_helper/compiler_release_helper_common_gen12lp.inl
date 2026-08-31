@@ -9,9 +9,4 @@
 
 namespace NEO {
 
-template <>
-bool CompilerReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() const {
-    return false;
-}
-
 } // namespace NEO

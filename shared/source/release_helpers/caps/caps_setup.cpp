@@ -38,7 +38,7 @@ std::optional<Caps> resolveCaps(const HardwareIpVersion &ipVersion) {
 void setupCaps(HardwareInfo &hwInfo) {
     auto caps = resolveCaps(hwInfo.ipVersion);
     UNRECOVERABLE_IF(!caps.has_value());
-    hwInfo.caps = *caps;
+    hwInfo.caps = caps.value();
 }
 
 } // namespace NEO

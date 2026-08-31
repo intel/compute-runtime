@@ -10,7 +10,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_properties.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 namespace NEO {
 
@@ -23,7 +22,7 @@ uint32_t CompilerProductHelper::getHwIpVersion(const HardwareInfo &hwInfo) const
     return getProductConfigFromHwInfo(hwInfo);
 }
 
-std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) const {
+std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions = "cl_khr_byte_addressable_store "
                              "cl_khr_device_uuid "
                              "cl_khr_fp16 "
@@ -122,7 +121,7 @@ std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInf
         extensions += "cl_intel_subgroup_local_block_io ";
     }
 
-    if (compilerReleaseHelper.isMatrixMultiplyAccumulateSupported()) {
+    if (hwInfo.caps.matrixMultiplyAccumulateSupported) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
     }
 

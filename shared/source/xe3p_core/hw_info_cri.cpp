@@ -73,8 +73,8 @@ const RuntimeCapabilityTable CRI::capabilityTable{
     .l0DebuggerSupported = true,
 };
 
-void CRI::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
+void CRI::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrLocalMemory = true;
@@ -99,7 +99,7 @@ void CRI::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     adjustHardwareInfo(hwInfo);
     setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
+        setupFeatureAndWorkaroundTable(hwInfo);
     }
 
     applyDebugOverrides(*hwInfo);

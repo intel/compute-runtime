@@ -43,7 +43,7 @@ class ClGfxCoreHelper : public ApiGfxCoreHelper {
     virtual bool getQueueFamilyName(std::string &name, EngineGroupType type) const = 0;
     virtual bool isSupportedKernelThreadArbitrationPolicy() const = 0;
     virtual std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const = 0;
-    virtual cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowImageCompression(cl_image_format format) const = 0;
     virtual bool isFormatRedescribable(cl_image_format format) const = 0;
     virtual bool isLimitationForPreemptionNeeded() const = 0;
@@ -70,7 +70,7 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
     bool getQueueFamilyName(std::string &name, EngineGroupType type) const override;
     bool isSupportedKernelThreadArbitrationPolicy() const override;
     std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const override;
-    cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
+    cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const override;
     bool allowImageCompression(cl_image_format format) const override;
     bool isFormatRedescribable(cl_image_format format) const override;
     bool isLimitationForPreemptionNeeded() const override;

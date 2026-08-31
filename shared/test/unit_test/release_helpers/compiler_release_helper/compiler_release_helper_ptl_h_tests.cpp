@@ -21,11 +21,7 @@ TEST_F(CompilerReleaseHelperPtlHTests, whenGettingCapabilitiesThenCorrectPropert
         ipVersion.revision = revision;
         compilerReleaseHelper = CompilerReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, compilerReleaseHelper);
-
-        EXPECT_FALSE(compilerReleaseHelper->isForceEmuInt32DivRemSPRequired());
-        EXPECT_TRUE(compilerReleaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalFp16Caps());
         EXPECT_EQ(0u, compilerReleaseHelper->getAdditionalExtraCaps());
-        EXPECT_EQ(revision != 0, compilerReleaseHelper->getFtrXe2Compression());
     }
 }

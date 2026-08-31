@@ -12,12 +12,6 @@
 
 namespace NEO {
 constexpr auto release = ReleaseType::release1271;
-
-template <>
-bool CompilerReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() const {
-    return false;
-}
-
 } // namespace NEO
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper_common_xe_lpg.inl"
 

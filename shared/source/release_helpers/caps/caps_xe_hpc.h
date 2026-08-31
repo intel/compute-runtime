@@ -19,7 +19,6 @@ namespace NEO {
 struct CapsXeHpcCore {
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;
-    static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool dummyBlitWaRequired = true;
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
@@ -27,10 +26,12 @@ struct CapsXeHpcCore {
     static constexpr bool rcsExposureDisabled = true;
 };
 
-struct CapsPvc : CapsXeHpcCore {};
-struct CapsPvcVg : CapsXeHpcCore {
-    static constexpr bool dotProductAccumulateSystolicSupported = false;
+struct CapsPvc : CapsXeHpcCore {
+    static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool matrixMultiplyAccumulateSupported = true;
 };
+
+struct CapsPvcVg : CapsXeHpcCore {};
 
 constexpr std::optional<Caps> resolveCapsPvc(HardwareIpVersion ipVersion) {
     switch (ipVersion.value) {

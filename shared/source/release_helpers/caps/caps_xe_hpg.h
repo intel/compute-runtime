@@ -22,6 +22,7 @@ struct CapsXeHpgCore {
     static constexpr bool dummyBlitWaRequired = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool localOnlyAllowed = true;
+    static constexpr bool matrixMultiplyAccumulateSupported = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = true;
     static constexpr bool postImageWriteFlushRequired = true;

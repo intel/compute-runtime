@@ -11,7 +11,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 #include <algorithm>
 
@@ -156,7 +155,7 @@ void setupDefaultGtSysInfo(HardwareInfo *hwInfo) {
     }
 }
 
-void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
+void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrAstcHdr2D = true;
@@ -177,7 +176,7 @@ void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const Comp
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
 
-    featureTable->flags.ftrXe2Compression = compilerReleaseHelper.getFtrXe2Compression();
+    featureTable->flags.ftrXe2Compression = hwInfo->caps.ftrXe2Compression;
     featureTable->flags.ftrHwSemaphore64 = hwInfo->caps.availableSemaphore64;
 
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;

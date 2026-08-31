@@ -142,7 +142,7 @@ void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::st
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     UNRECOVERABLE_IF(!compilerProductHelper);
     auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *compilerReleaseHelper);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
 
     if (requiresAdditionalExtensions(options)) {
         extensionsList += "cl_khr_3d_image_writes ";

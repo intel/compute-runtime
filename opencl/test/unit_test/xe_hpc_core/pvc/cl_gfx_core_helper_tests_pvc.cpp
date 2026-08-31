@@ -61,10 +61,10 @@ PVCTEST_F(ClGfxCoreHelperTestsPvcXt, givenRelease1261WhenAskingForDeviceFeatures
 
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
-    EXPECT_EQ(static_cast<cl_device_feature_capabilities_intel>(CL_DEVICE_FEATURE_FLAG_DP4A_INTEL), clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(*rootEnv));
+    EXPECT_EQ(static_cast<cl_device_feature_capabilities_intel>(CL_DEVICE_FEATURE_FLAG_DP4A_INTEL), clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(*deviceHwInfo));
 
     auto &compilerHelper = getHelper<CompilerProductHelper>();
-    std::string extensions = compilerHelper.getDeviceExtensions(*deviceHwInfo, *rootEnv->compilerReleaseHelper);
+    std::string extensions = compilerHelper.getDeviceExtensions(*deviceHwInfo);
 
     EXPECT_EQ(std::string::npos, extensions.find("cl_intel_subgroup_matrix_multiply_accumulate"));
     EXPECT_EQ(std::string::npos, extensions.find("cl_intel_subgroup_split_matrix_multiply_accumulate"));

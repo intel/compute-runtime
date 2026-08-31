@@ -70,8 +70,8 @@ const RuntimeCapabilityTable BMG::capabilityTable{
     .l0DebuggerSupported = true,
 };
 
-void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
+void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrLocalMemory = true;
@@ -109,7 +109,7 @@ void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     BMG::adjustHardwareInfo(hwInfo);
     setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        BMG::setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
+        BMG::setupFeatureAndWorkaroundTable(hwInfo);
     }
 
     applyDebugOverrides(*hwInfo);

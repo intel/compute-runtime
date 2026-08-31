@@ -50,6 +50,7 @@ struct CapsMtlHB0 : CapsMtlH {};
 struct CapsArlH : CapsXeLpgCore {
     static constexpr bool adjustWalkOrderAvailable = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool matrixMultiplyAccumulateSupported = true;
     static constexpr bool pipeControlPriorToPipelineSelectWaRequired = true;
 };
 

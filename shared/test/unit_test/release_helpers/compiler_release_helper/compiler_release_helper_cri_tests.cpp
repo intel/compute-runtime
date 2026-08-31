@@ -22,11 +22,7 @@ TEST_F(CompilerReleaseHelperCriTests, whenGettingCapabilitiesThenCorrectProperti
         ipVersion.revision = revision;
         compilerReleaseHelper = CompilerReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, compilerReleaseHelper);
-
-        EXPECT_FALSE(compilerReleaseHelper->isForceEmuInt32DivRemSPRequired());
-        EXPECT_TRUE(compilerReleaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_EQ(FpAtomicExtFlags::addAtomicCaps, compilerReleaseHelper->getAdditionalFp16Caps());
         EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, compilerReleaseHelper->getAdditionalExtraCaps());
-        EXPECT_FALSE(compilerReleaseHelper->getFtrXe2Compression());
     }
 }

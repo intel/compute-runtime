@@ -22,7 +22,9 @@ struct CapsGen12Lp {
 };
 
 struct CapsTgl : CapsGen12Lp {};
-struct CapsRkl : CapsGen12Lp {};
+struct CapsRkl : CapsGen12Lp {
+    static constexpr bool forceEmuInt32DivRemSPRequired = true;
+};
 struct CapsAdlS : CapsGen12Lp {};
 struct CapsAdlP : CapsGen12Lp {};
 struct CapsAdlN : CapsGen12Lp {};

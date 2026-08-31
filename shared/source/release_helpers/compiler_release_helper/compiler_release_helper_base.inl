@@ -10,16 +10,6 @@
 namespace NEO {
 
 template <ReleaseType releaseType>
-bool CompilerReleaseHelperHw<releaseType>::isForceEmuInt32DivRemSPRequired() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool CompilerReleaseHelperHw<releaseType>::isMatrixMultiplyAccumulateSupported() const {
-    return true;
-}
-
-template <ReleaseType releaseType>
 uint32_t CompilerReleaseHelperHw<releaseType>::getAdditionalFp16Caps() const {
     return 0u;
 }
@@ -27,11 +17,6 @@ uint32_t CompilerReleaseHelperHw<releaseType>::getAdditionalFp16Caps() const {
 template <ReleaseType releaseType>
 uint32_t CompilerReleaseHelperHw<releaseType>::getAdditionalExtraCaps() const {
     return 0u;
-}
-
-template <ReleaseType releaseType>
-bool CompilerReleaseHelperHw<releaseType>::getFtrXe2Compression() const {
-    return true;
 }
 
 } // namespace NEO

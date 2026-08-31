@@ -21,9 +21,12 @@ struct Caps {
     bool directSubmissionLightSupported = false;
     bool dotProductAccumulateSystolicSupported = false;
     bool dummyBlitWaRequired = false;
+    bool forceEmuInt32DivRemSPRequired = false;
+    bool ftrXe2Compression = false;
     bool globalBindlessAllocatorEnabled = false;
     bool latePreemptionStartSupported = false;
     bool localOnlyAllowed = false;
+    bool matrixMultiplyAccumulateSupported = false;
     bool numRtStacksPerDssFixedValue = false;
     bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = false;
     bool pipeControlPriorToPipelineSelectWaRequired = false;

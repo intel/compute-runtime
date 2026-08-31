@@ -26,9 +26,12 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(directSubmissionLightSupported)                            \
     NEO_COPY_CAP_FUNC(dotProductAccumulateSystolicSupported)                     \
     NEO_COPY_CAP_FUNC(dummyBlitWaRequired)                                       \
+    NEO_COPY_CAP_FUNC(forceEmuInt32DivRemSPRequired)                             \
+    NEO_COPY_CAP_FUNC(ftrXe2Compression)                                         \
     NEO_COPY_CAP_FUNC(globalBindlessAllocatorEnabled)                            \
     NEO_COPY_CAP_FUNC(latePreemptionStartSupported)                              \
     NEO_COPY_CAP_FUNC(localOnlyAllowed)                                          \
+    NEO_COPY_CAP_FUNC(matrixMultiplyAccumulateSupported)                         \
     NEO_COPY_CAP_FUNC(numRtStacksPerDssFixedValue)                               \
     NEO_COPY_CAP_FUNC(pipeControlPriorToNonPipelinedStateCommandsBaseWARequired) \
     NEO_COPY_CAP_FUNC(pipeControlPriorToPipelineSelectWaRequired)                \

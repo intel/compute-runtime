@@ -46,7 +46,7 @@ TEST(HwInfoTest, whenSettingDefaultFeatureTableAndWorkaroundTableThenProperField
 
     expectedWorkaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 
-    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo, mockCompilerReleaseHelper);
+    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo);
 
     EXPECT_EQ(expectedFeatureTable.asHash(), hwInfo.featureTable.asHash());
     EXPECT_EQ(expectedWorkaroundTable.asHash(), hwInfo.workaroundTable.asHash());

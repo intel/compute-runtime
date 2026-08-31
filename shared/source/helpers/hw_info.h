@@ -90,7 +90,7 @@ void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfo
 bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 void setupDefaultGtSysInfo(HardwareInfo *hwInfo);
-void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper);
+void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo);
 uint32_t getNumSubSlicesPerSlice(const HardwareInfo &hwInfo);
 void applyDebugOverrides(HardwareInfo &hwInfo);
 

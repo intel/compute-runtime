@@ -68,8 +68,8 @@ const RuntimeCapabilityTable ARL::capabilityTable{
 WorkaroundTable ARL::workaroundTable = {};
 FeatureTable ARL::featureTable = {};
 
-void ARL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
+void ARL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
     FeatureTable *featureTable = &hwInfo->featureTable;
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
@@ -87,7 +87,7 @@ void ARL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 
     setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
+        setupFeatureAndWorkaroundTable(hwInfo);
     }
 
     applyDebugOverrides(*hwInfo);
@@ -105,7 +105,7 @@ void ArlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     ARL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 
     if (setupFeatureTableAndWorkaroundTable) {
-        ARL::setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
+        ARL::setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
 

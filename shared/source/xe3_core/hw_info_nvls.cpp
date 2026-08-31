@@ -69,8 +69,8 @@ const RuntimeCapabilityTable NVLS::capabilityTable{
     .l0DebuggerSupported = true,
 };
 
-void NVLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, compilerReleaseHelper);
+void NVLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrE2ECompression = true;
@@ -92,7 +92,7 @@ void NVLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     adjustHardwareInfo(hwInfo);
     setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo, *compilerReleaseHelper);
+        setupFeatureAndWorkaroundTable(hwInfo);
     }
 
     applyDebugOverrides(*hwInfo);

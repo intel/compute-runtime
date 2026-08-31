@@ -12,12 +12,6 @@
 
 namespace NEO {
 constexpr auto release = ReleaseType::release1201;
-
-template <>
-bool CompilerReleaseHelperHw<release>::isForceEmuInt32DivRemSPRequired() const {
-    return true;
-}
-
 } // namespace NEO
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper_common_gen12lp.inl"
 

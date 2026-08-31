@@ -69,6 +69,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     const void *src = nullptr;
     std::array<uint8_t, CL_UUID_SIZE_KHR> uuid;
     std::array<uint8_t, CL_LUID_SIZE_KHR> luid;
+    const auto &hwInfo = getHardwareInfo();
 
     // clang-format off
     // please keep alphabetical order
@@ -255,10 +256,10 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = deviceInfo.supportedThreadArbitrationPolicies.size() * sizeof(cl_uint);
         break;
     case CL_DEVICE_IP_VERSION_INTEL: {
-        uint32_t hwIpVersion = getHardwareInfo().ipVersionOverrideExposedToTheApplication.value;
+        uint32_t hwIpVersion = hwInfo.ipVersionOverrideExposedToTheApplication.value;
         if (0 == hwIpVersion) {
             auto &compilerProductHelper = device.getCompilerProductHelper();
-            hwIpVersion = compilerProductHelper.getHwIpVersion(getHardwareInfo());
+            hwIpVersion = compilerProductHelper.getHwIpVersion(hwInfo);
         }
         param.uint = static_cast<cl_version>(hwIpVersion);
         src = &param.uint;
@@ -266,28 +267,28 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     }
     case CL_DEVICE_ID_INTEL:
-        param.uint = getHardwareInfo().platform.usDeviceID;
+        param.uint = hwInfo.platform.usDeviceID;
         src = &param.uint;
         retSize = srcSize = sizeof(cl_uint);
         break;
     case CL_DEVICE_NUM_SLICES_INTEL:
-        param.uint = static_cast<cl_uint>(getHardwareInfo().gtSystemInfo.SliceCount * std::max(device.getNumGenericSubDevices(), 1u));
+        param.uint = static_cast<cl_uint>(hwInfo.gtSystemInfo.SliceCount * std::max(device.getNumGenericSubDevices(), 1u));
         src = &param.uint;
         retSize = srcSize = sizeof(cl_uint);
         break;
     case CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL: {
-        param.uint = static_cast<cl_uint>(getNumSubSlicesPerSlice(getHardwareInfo()));
+        param.uint = static_cast<cl_uint>(getNumSubSlicesPerSlice(hwInfo));
         src = &param.uint;
         retSize = srcSize = sizeof(cl_uint);
         break;
     }
     case CL_DEVICE_NUM_EUS_PER_SUB_SLICE_INTEL:
-        param.uint = getHardwareInfo().gtSystemInfo.MaxEuPerSubSlice;
+        param.uint = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
         src = &param.uint;
         retSize = srcSize = sizeof(cl_uint);
         break;
     case CL_DEVICE_NUM_THREADS_PER_EU_INTEL: {
-        const auto &gtSysInfo = getHardwareInfo().gtSystemInfo;
+        const auto &gtSysInfo = hwInfo.gtSystemInfo;
         param.uint = gtSysInfo.ThreadCount / gtSysInfo.EUCount;
         src = &param.uint;
         retSize = srcSize = sizeof(cl_uint);
@@ -295,7 +296,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     }
     case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
         auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-        param.bitfield = clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(this->getRootDeviceEnvironment());
+        param.bitfield = clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(hwInfo);
         src = &param.bitfield;
         retSize = srcSize = sizeof(cl_device_feature_capabilities_intel);
         break;

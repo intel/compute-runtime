@@ -69,7 +69,7 @@ class CompilerProductHelper {
     virtual uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getDefaultHwIpVersion() const = 0;
     virtual uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const = 0;
-    std::string getDeviceExtensions(const HardwareInfo &hwInfo, const CompilerReleaseHelper &compilerReleaseHelper) const;
+    std::string getDeviceExtensions(const HardwareInfo &hwInfo) const;
     StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(OclCVersion max) const;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
     virtual bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const = 0;

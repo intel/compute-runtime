@@ -60,7 +60,7 @@ NVLSTEST_F(NvlsHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_TRUE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
     EXPECT_TRUE(featureTable.flags.ftrE2ECompression);
-    EXPECT_EQ(featureTable.flags.ftrXe2Compression, compilerReleaseHelper->getFtrXe2Compression());
+    EXPECT_EQ(featureTable.flags.ftrXe2Compression, hwInfo.caps.ftrXe2Compression);
     EXPECT_TRUE(featureTable.flags.ftrXe2PlusTiling);
     EXPECT_TRUE(featureTable.flags.ftrPml5Support);
     EXPECT_TRUE(featureTable.flags.ftrCCSNode);
