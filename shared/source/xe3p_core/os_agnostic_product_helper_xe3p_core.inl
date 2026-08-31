@@ -132,9 +132,4 @@ bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
     return false;
 }
 
-template <>
-RTASDeviceFormat ProductHelperHw<gfxProduct>::getSupportedRtasFormat() const {
-    return RTASDeviceFormat::version2;
-}
-
 } // namespace NEO
