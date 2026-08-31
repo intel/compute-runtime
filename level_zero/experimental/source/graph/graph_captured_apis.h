@@ -72,7 +72,9 @@ struct Event;
     RR_CAPTURED_API(zeCommandListAppendImageCopyToMemoryExt)          \
     RR_CAPTURED_API(zeCommandListAppendImageCopyFromMemoryExt)        \
     RR_CAPTURED_API(zeCommandListAppendMemoryCopyWithParameters)      \
+    RR_CAPTURED_API(zexCommandListAppendMemoryCopyWithParameters)     \
     RR_CAPTURED_API(zeCommandListAppendMemoryFillWithParameters)      \
+    RR_CAPTURED_API(zexCommandListAppendMemoryFillWithParameters)     \
     RR_CAPTURED_API(zeCommandListAppendHostFunction)                  \
     RR_CAPTURED_API(zetCommandListAppendMetricStreamerMarker)         \
     RR_CAPTURED_API(zetCommandListAppendMetricQueryBegin)             \
@@ -1383,7 +1385,68 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopyWithParameters> {
 };
 
 template <>
+struct Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        void *dstptr;
+        const void *srcptr;
+        size_t size;
+        const void *pNext;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+        ze_event_handle_t hSignalEvent;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&) = default;
+        IndirectArgs &operator=(IndirectArgs &&) = default;
+        ~IndirectArgs();
+        void *pNext;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
 struct Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        void *ptr;
+        const void *pattern;
+        size_t patternSize;
+        size_t size;
+        const void *pNext;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&) = default;
+        IndirectArgs &operator=(IndirectArgs &&) = default;
+        ~IndirectArgs();
+
+        StackVec<uint8_t, 16> pattern;
+        void *pNext;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters> {
     static constexpr bool isSupported = true;
 
     struct ApiArgs {

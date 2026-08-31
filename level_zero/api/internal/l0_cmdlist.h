@@ -47,6 +47,29 @@ zeCommandListAppendHostFunction(
     ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL
+zexCommandListAppendMemoryCopyWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    const void *pNext,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents,
+    ze_event_handle_t hSignalEvent);
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMemoryFillWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *ptr,
+    const void *pattern,
+    size_t patternSize,
+    size_t size,
+    const void *pNext,
+    ze_event_handle_t hEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents);
+
+ze_result_t ZE_APICALL
 zexCommandListAppendCustomOperation(
     ze_command_list_handle_t hCommandList,
     const void *pNext,

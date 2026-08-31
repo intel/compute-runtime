@@ -1165,8 +1165,8 @@ DEFINE_APIARGS_FIELDS(zeCommandListAppendSignalExternalSemaphoreExt, "hCommandLi
 DEFINE_APIARGS_FIELDS(zeCommandListAppendWaitExternalSemaphoreExt, "hCommandList", "numSemaphores", "phSemaphores", "phSemaphores[0]", "waitParams", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyToMemoryExt, "hCommandList", "dstptr", "hSrcImage", "pSrcRegion", "destRowPitch", "destSlicePitch", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyFromMemoryExt, "hCommandList", "hDstImage", "srcptr", "pDstRegion", "srcRowPitch", "srcSlicePitch", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
-DEFINE_APIARGS_FIELDS(zeCommandListAppendMemoryCopyWithParameters, "hCommandList", "dstptr", "srcptr", "size", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
-DEFINE_APIARGS_FIELDS(zeCommandListAppendMemoryFillWithParameters, "hCommandList", "ptr", "pattern", "patternSize", "size", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zexCommandListAppendMemoryCopyWithParameters, "hCommandList", "dstptr", "srcptr", "size", "pNext", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]", "hSignalEvent");
+DEFINE_APIARGS_FIELDS(zexCommandListAppendMemoryFillWithParameters, "hCommandList", "ptr", "pattern", "patternSize", "size", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendHostFunction, "hCommandList", "pHostFunction", "pUserData", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zetCommandListAppendMetricStreamerMarker, "hCommandList", "hMetricStreamer", "value");
 DEFINE_APIARGS_FIELDS(zetCommandListAppendMetricQueryBegin, "hCommandList", "hMetricQuery");
@@ -1673,21 +1673,21 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithArgumentsWhenCooperativeExten
 }
 
 TEST_F(ExtractParametersTest, GivenMemoryCopyWithParametersWhenNoExtensionsProvidedThenReportsNullptr) {
-    Closure<CaptureApi::zeCommandListAppendMemoryCopyWithParameters>::ApiArgs args{nullptr};
+    Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>::ApiArgs args{nullptr};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
     args.hSignalEvent = dummyEvents[0];
 
-    expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemoryCopyWithParameters>(args);
+    expectAllApiArgsPresent<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(args);
 }
 
 TEST_F(ExtractParametersTest, GivenMemoryFillWithParametersWhenNoExtensionsProvidedThenReportsNullptr) {
-    Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters>::ApiArgs args{nullptr};
+    Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::ApiArgs args{nullptr};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
     args.hSignalEvent = dummyEvents[0];
 
-    expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemoryFillWithParameters>(args);
+    expectAllApiArgsPresent<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(args);
 }
 
 class ExtractKernelParametersTestFixture : public ModuleImmutableDataFixture, public ExtractParametersTestFixture {

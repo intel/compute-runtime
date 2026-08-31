@@ -1140,6 +1140,39 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
 }
 
 template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(
+    const Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("dstptr", formatPointer(closure.apiArgs.dstptr));
+    params.emplace_back("srcptr", formatPointer(closure.apiArgs.srcptr));
+    params.emplace_back("size", std::to_string(closure.apiArgs.size));
+
+    addMemoryTransferExtensionParameters(params, closure.indirectArgs.pNext);
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(
+    const Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("ptr", formatPointer(closure.apiArgs.ptr));
+    params.emplace_back("pattern", formatPointer(closure.indirectArgs.pattern.data()));
+    params.emplace_back("patternSize", std::to_string(closure.indirectArgs.pattern.size()));
+    params.emplace_back("size", std::to_string(closure.apiArgs.size));
+
+    addMemoryTransferExtensionParameters(params, closure.indirectArgs.pNext);
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
+template <>
 std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendHostFunction>(
     const Closure<CaptureApi::zeCommandListAppendHostFunction> &closure, const ClosureExternalStorage &storage) {
 

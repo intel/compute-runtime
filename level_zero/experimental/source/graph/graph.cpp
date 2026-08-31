@@ -887,6 +887,24 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyWithParameters>::in
     return result;
 }
 
+Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
+    this->pNext = nullptr;
+
+    externalStorage.lastResult = CommandList::cloneAppendMemoryCopyExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
+}
+
+Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>::IndirectArgs::~IndirectArgs() {
+    CommandList::freeClonedAppendMemoryCopyExtensions(this->pNext);
+}
+
+ze_result_t Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const {
+    auto eventParams = getEffectiveEventParams<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(apiArgs, indirectArgs, externalStorage, enforcedEvents);
+    handleExternalCbWaitEvents(eventParams.numWaitEvents, eventParams.phWaitEvents, cbEventContext, executionTarget);
+    auto result = L0::zexCommandListAppendMemoryCopyWithParameters(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), apiArgs.dstptr, apiArgs.srcptr, apiArgs.size, indirectArgs.pNext, eventParams.numWaitEvents, eventParams.phWaitEvents, eventParams.hSignalEvent);
+    handleExternalCbEvent(L0::Event::fromHandle(eventParams.hSignalEvent), cbEventContext);
+    return result;
+}
+
 Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
     pattern.resize(apiArgs.patternSize);
     memcpy_s(pattern.data(), pattern.size(), apiArgs.pattern, apiArgs.patternSize);
@@ -904,6 +922,27 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters>::in
     auto eventParams = getEffectiveEventParams<CaptureApi::zeCommandListAppendMemoryFillWithParameters>(apiArgs, indirectArgs, externalStorage, enforcedEvents);
     handleExternalCbWaitEvents(eventParams.numWaitEvents, eventParams.phWaitEvents, cbEventContext, executionTarget);
     auto result = zeCommandListAppendMemoryFillWithParameters(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), apiArgs.ptr, getOptionalData(indirectArgs.pattern), apiArgs.patternSize, apiArgs.size, indirectArgs.pNext, eventParams.hSignalEvent, eventParams.numWaitEvents, eventParams.phWaitEvents);
+    handleExternalCbEvent(L0::Event::fromHandle(eventParams.hSignalEvent), cbEventContext);
+    return result;
+}
+
+Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
+    pattern.resize(apiArgs.patternSize);
+    memcpy_s(pattern.data(), pattern.size(), apiArgs.pattern, apiArgs.patternSize);
+
+    this->pNext = nullptr;
+
+    externalStorage.lastResult = CommandList::cloneAppendMemoryCopyExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
+}
+
+Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::IndirectArgs::~IndirectArgs() {
+    CommandList::freeClonedAppendMemoryCopyExtensions(this->pNext);
+}
+
+ze_result_t Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const {
+    auto eventParams = getEffectiveEventParams<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(apiArgs, indirectArgs, externalStorage, enforcedEvents);
+    handleExternalCbWaitEvents(eventParams.numWaitEvents, eventParams.phWaitEvents, cbEventContext, executionTarget);
+    auto result = L0::zexCommandListAppendMemoryFillWithParameters(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), apiArgs.ptr, getOptionalData(indirectArgs.pattern), apiArgs.patternSize, apiArgs.size, indirectArgs.pNext, eventParams.hSignalEvent, eventParams.numWaitEvents, eventParams.phWaitEvents);
     handleExternalCbEvent(L0::Event::fromHandle(eventParams.hSignalEvent), cbEventContext);
     return result;
 }
@@ -1156,9 +1195,23 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyWithParameters>::in
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
+ze_result_t Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
+    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, const void *, uint32_t, ze_event_handle_t *, ze_event_handle_t, void *)>(visitorCallback);
+    auto waitEventsList = getClosureWaitEventsList<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(apiArgs, indirectArgs, externalStorage);
+    return cb(apiArgs.hCommandList, apiArgs.dstptr, apiArgs.srcptr, apiArgs.size, indirectArgs.pNext,
+              static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), apiArgs.hSignalEvent, userData);
+}
+
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
     auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, size_t, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendMemoryFillWithParameters>(apiArgs, indirectArgs, externalStorage);
+    return cb(apiArgs.hCommandList, apiArgs.ptr, getOptionalData(indirectArgs.pattern), apiArgs.patternSize, apiArgs.size, indirectArgs.pNext,
+              apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
+}
+
+ze_result_t Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
+    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, size_t, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto waitEventsList = getClosureWaitEventsList<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.ptr, getOptionalData(indirectArgs.pattern), apiArgs.patternSize, apiArgs.size, indirectArgs.pNext,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
