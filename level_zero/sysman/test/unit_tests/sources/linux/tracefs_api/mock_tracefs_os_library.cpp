@@ -10,6 +10,7 @@
 #include "gtest/gtest.h"
 
 #include <cstring>
+#include <string_view>
 
 namespace L0 {
 namespace Sysman {
@@ -72,6 +73,14 @@ int mockTraceFsInstanceFileOpen(struct tracefs_instance *instance, const char *f
 }
 
 char *mockTraceFsInstanceFileRead(struct tracefs_instance *instance, const char *file, int *psize) {
+    // The per-CPU 'stats' files are not modelled here: a caller counting dropped records reads one
+    // per CPU of whichever buffer it collects from, so neither the instance nor the file name is
+    // fixed. Reporting them as unreadable leaves that caller on its best effort path.
+    constexpr std::string_view perCpuPrefix = "per_cpu/";
+    if (file != nullptr && std::string_view(file).compare(0, perCpuPrefix.size(), perCpuPrefix) == 0) {
+        return nullptr;
+    }
+
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, instance);
     EXPECT_STREQ(MockTraceFsOsLibrary::mockFileName, file);
     if (psize != nullptr) {

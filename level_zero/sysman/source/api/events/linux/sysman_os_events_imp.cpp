@@ -18,6 +18,8 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 
@@ -463,31 +465,32 @@ static bool isCperEventRegistered(zes_event_type_flags_t driverRegisteredEvents)
 void LinuxEventsUtil::updateCperPollSource(zes_event_type_flags_t driverRegisteredEvents, std::vector<PollDescriptor> &pollSources, bool &cperRegistered) {
     cperRegistered = isCperEventRegistered(driverRegisteredEvents);
 
-    auto tracefsSource = pollSources.end();
-    for (auto it = pollSources.begin(); it != pollSources.end(); it++) {
-        if (it->type == PollSourceType::tracefs) {
-            tracefsSource = it;
-            break;
-        }
-    }
+    std::vector<int> cperTracePipeFds = cperRegistered ? pLinuxSysmanDriverImp->getCperTracePipeFds() : std::vector<int>{};
 
-    int cperTracePipeFd = cperRegistered ? pLinuxSysmanDriverImp->getCperTracePipeFd() : -1;
-    if (cperTracePipeFd < 0) {
-        if (tracefsSource != pollSources.end()) {
-            pollSources.erase(tracefsSource);
-        } else if (cperRegistered) {
+    // Applications may create and delete collection instances between listen calls, so the tracefs
+    // poll sources are reconciled against the current descriptor set on every call.
+    auto isStale = [&cperTracePipeFds](const PollDescriptor &source) {
+        return source.type == PollSourceType::tracefs &&
+               std::find(cperTracePipeFds.begin(), cperTracePipeFds.end(), source.pfd.fd) == cperTracePipeFds.end();
+    };
+    pollSources.erase(std::remove_if(pollSources.begin(), pollSources.end(), isStale), pollSources.end());
+
+    if (cperTracePipeFds.empty()) {
+        if (cperRegistered) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                          "%s", "Info log collection is not enabled, CPER event will not be reported\n");
         }
         return;
     }
 
-    if (tracefsSource == pollSources.end()) {
-        pollSources.push_back({{cperTracePipeFd, POLLIN, 0}, PollSourceType::tracefs});
-        return;
+    for (auto fd : cperTracePipeFds) {
+        auto alreadyPolled = std::any_of(pollSources.begin(), pollSources.end(), [fd](const PollDescriptor &source) {
+            return source.type == PollSourceType::tracefs && source.pfd.fd == fd;
+        });
+        if (!alreadyPolled) {
+            pollSources.push_back({{fd, POLLIN, 0}, PollSourceType::tracefs});
+        }
     }
-
-    tracefsSource->pfd.fd = cperTracePipeFd;
 }
 
 bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout, zes_event_type_flags_t *pDriverEvents) {

@@ -23,6 +23,8 @@
 #include "level_zero/sysman/source/shared/linux/sysman_sys_calls_wrapper.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 
@@ -256,19 +258,55 @@ LinuxSysmanDriverImp::~LinuxSysmanDriverImp() {
     }
 
     if (nullptr != pInfoLogHandleContext) {
-        if (cperTracePipeFd >= 0) {
-            pInfoLogHandleContext->disableInfoLogCollection();
-        }
+        // Tearing the instances down closes and unregisters their trace_pipe descriptors.
+        pInfoLogHandleContext->destroyAllInstances();
 
         delete pInfoLogHandleContext;
         pInfoLogHandleContext = nullptr;
     }
 
-    if (cperTracePipeFd >= 0) {
-        int errorNum = 0;
-        SysmanSysCallsWrapper::close(cperTracePipeFd, errorNum);
-        cperTracePipeFd = -1;
+    clearCperTracePipeFds();
+}
+
+// The info log collection instances own their trace_pipe descriptors; the driver only keeps a
+// registry of them so that the events path can poll every open stream.
+void LinuxSysmanDriverImp::registerCperTracePipeFd(int fd) {
+    if (fd < 0) {
+        return;
     }
+    std::lock_guard<std::mutex> lock(cperFdsMutex);
+    if (std::find(cperTracePipeFds.begin(), cperTracePipeFds.end(), fd) == cperTracePipeFds.end()) {
+        cperTracePipeFds.push_back(fd);
+    }
+}
+
+void LinuxSysmanDriverImp::unregisterCperTracePipeFd(int fd) {
+    std::lock_guard<std::mutex> lock(cperFdsMutex);
+    auto it = std::find(cperTracePipeFds.begin(), cperTracePipeFds.end(), fd);
+    if (it != cperTracePipeFds.end()) {
+        cperTracePipeFds.erase(it);
+    }
+}
+
+std::vector<int> LinuxSysmanDriverImp::getCperTracePipeFds() const {
+    std::lock_guard<std::mutex> lock(cperFdsMutex);
+    return cperTracePipeFds;
+}
+
+int LinuxSysmanDriverImp::getCperTracePipeFd() const {
+    std::lock_guard<std::mutex> lock(cperFdsMutex);
+    return cperTracePipeFds.empty() ? -1 : cperTracePipeFds.front();
+}
+
+// Closes any descriptor still registered after the owning instances are gone, which can only
+// happen if an instance leaked its registration.
+void LinuxSysmanDriverImp::clearCperTracePipeFds() {
+    std::lock_guard<std::mutex> lock(cperFdsMutex);
+    for (auto fd : cperTracePipeFds) {
+        int errorNum = 0;
+        SysmanSysCallsWrapper::close(fd, errorNum);
+    }
+    cperTracePipeFds.clear();
 }
 
 OsSysmanDriver *OsSysmanDriver::create() {

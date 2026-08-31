@@ -15,6 +15,8 @@ if(UNIX)
   if(LIBTRACEFS_FOUND)
     target_sources(${L0_STATIC_LIB_NAME}
                    PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_info_log_instance_imp.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_info_log_instance_libtracefs_imp.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_info_log_libtracefs_imp.cpp
     )
   else()

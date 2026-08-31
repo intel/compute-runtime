@@ -89,5 +89,7 @@ typedef struct _ze_device_readonly_memory_ext_properties_t {
 #define ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP static_cast<zes_structure_type_ext_t>(0x0004000D)
 #define ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP static_cast<zes_structure_type_ext_t>(0x0004000E)
 #define ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_METADATA_EXP static_cast<zes_structure_type_ext_t>(0x0004000F)
+#define ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC static_cast<zes_structure_type_ext_t>(0x00040010)
+#define ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP static_cast<zes_structure_type_ext_t>(0x00040011)
 
 #endif

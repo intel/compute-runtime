@@ -68,6 +68,13 @@ int SysmanSysCallsWrapper::dup(int oldfd, int &errorNum) {
     return result;
 }
 
+int SysmanSysCallsWrapper::flock(int fd, int operation, int &errorNum) {
+    errno = 0;
+    int result = NEO::SysCalls::flock(fd, operation);
+    errorNum = errno;
+    return result;
+}
+
 int SysmanSysCallsWrapper::access(const char *pathname, int mode, int &errorNum) {
     errno = 0;
     int result = NEO::SysCalls::access(pathname, mode);

@@ -17,17 +17,18 @@ namespace L0 {
 namespace Sysman {
 
 struct OsSysman;
+class InfoLogInstance;
 
 class InfoLog {
   public:
     virtual ~InfoLog() = default;
 
     virtual ze_result_t infoLogGetProperties(zes_intel_info_log_properties_exp_t *pProperties) = 0;
-    virtual ze_result_t infoLogRead(uint32_t *pSize, uint8_t *pBuffer) = 0;
-    virtual ze_result_t infoLogEnable(zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor) = 0;
-    virtual ze_result_t infoLogDisable() = 0;
-    virtual ze_result_t infoLogReadWithMetaData(uint32_t *pSize, uint8_t *pBuffer,
-                                                uint32_t *pEventCount, zes_intel_info_log_metadata_exp *pDescriptors) = 0;
+    virtual ze_result_t infoLogCreateInstance(const char *pInstanceName,
+                                              zes_intel_info_log_instance_exp_desc_t *pDesc,
+                                              zes_intel_info_log_instance_handle_t *phInfoLogInstance) = 0;
+    virtual ze_result_t destroyInstance(InfoLogInstance *pInstance) = 0;
+    virtual void destroyAllInstances() = 0;
 
     static InfoLog *fromHandle(zes_intel_info_log_handle_t handle) {
         return reinterpret_cast<InfoLog *>(handle);
@@ -44,7 +45,7 @@ struct InfoLogHandleContext {
 
     void init();
     ze_result_t infoLogGet(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs);
-    void disableInfoLogCollection();
+    void destroyAllInstances();
     void releaseInfoLogHandles();
 
     std::vector<std::unique_ptr<InfoLog>> handleList = {};

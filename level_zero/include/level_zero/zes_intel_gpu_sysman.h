@@ -523,14 +523,19 @@ ze_result_t ZE_APICALL zesIntelDeviceSetHealthExp(
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Driver info logs extension Version(s)
 typedef enum _zes_intel_driver_info_logs_exp_version_t {
-    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                          ///< version 1.0
-    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                          ///< version 1.0, no longer implemented
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0 = ZE_MAKE_VERSION(2, 0),                          ///< version 2.0, collection instances. Not backward compatible with version 1.0.
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0, ///< latest known version
     ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zes_intel_driver_info_logs_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Handle to an info log instance
 typedef struct _zes_intel_info_log_handle_t *zes_intel_info_log_handle_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Handle to an info log collection instance
+typedef struct _zes_intel_info_log_instance_handle_t *zes_intel_info_log_instance_handle_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Get handles for Info Logs
@@ -579,16 +584,20 @@ typedef enum _zes_intel_info_log_format_exp_t {
 } zes_intel_info_log_format_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Descriptor passed to zesIntelInfoLogEnableExp
-typedef struct _zes_intel_info_log_enable_descriptor_exp {
-    const char *instanceName;        ///< [in][optional] named tracefs instance; nullptr = use global trace buffer
-    uint32_t *pBufferSizeInKb;       ///< [in,out][optional] pointer to the per-CPU trace buffer size in kilobytes. On input,
-                                     ///< requested size, applied to every per-CPU buffer; on output, actual per-CPU size set
-                                     ///< (rounded to closest supported size). nullptr = use default size.
-    uint32_t *pPercentFullThreshold; ///< [in,out][optional] pointer to percentage (0-100) of buffer full to generate wakeup event.
-                                     ///< On input, requested threshold; on output, actual threshold set (rounded to closest supported).
-                                     ///< nullptr = use default threshold.
-} zes_intel_info_log_enable_descriptor_exp;
+/// @brief Info log record types
+///
+/// @details
+///     - The numeric values do not express an order of severity and must not be compared for magnitude.
+///     - A value the application does not recognize must be treated as
+///       ::ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN.
+typedef enum _zes_intel_info_log_record_type_exp_t {
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN = 0,           ///< The type of the record could not be determined.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_INFORMATIONAL = 1,     ///< The record does not report an error.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_CORRECTED = 2,   ///< The error was corrected by the device.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_RECOVERABLE = 3, ///< The error was not corrected and is not fatal.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_FATAL = 4,       ///< The error was not corrected and is fatal.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_FORCE_UINT32 = 0x7fffffff
+} zes_intel_info_log_record_type_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Info log properties structure
@@ -597,11 +606,64 @@ typedef struct _zes_intel_info_log_properties_exp_t {
     void *pNext;                                   ///< [in,out][optional] pointer to extension-specific structure
     zes_intel_info_log_type_exp_t infoLogType;     ///< [out] Type of the info log
     zes_intel_info_log_format_exp_t infoLogFormat; ///< [out] Format of the info log.
-    uint32_t maxSize;                              ///< [out] Maximum size of the info log in kilobytes. This is the maximum size
-                                                   ///< of the buffer that can be allocated to read the info log. The application should not
-                                                   ///< allocate a buffer larger than this size.
-    ze_bool_t isInstancedCollectionSupported;      ///< [out] true if named tracefs instances are available
+    ze_bool_t isNamedInstancedCollectionSupported; ///< [out] true if this info log supports named collection instances, i.e.
+                                                   ///< ::zesIntelInfoLogCreateInstanceExp accepts a non-null pInstanceName.
+    ze_bool_t isPeekSupported;                     ///< [out] true if records can be read without being consumed, i.e.
+                                                   ///< ::zesIntelInfoLogInstancePeekWithMetadataExp is supported
 } zes_intel_info_log_properties_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Info log collection instance descriptor
+///
+/// @details
+///     - Each member is optional. A nullptr member means "use the driver default".
+///     - On input a non-null member points to the requested value; on output the driver updates the
+///       pointed to value with the value which was actually applied, which may be rounded.
+typedef struct _zes_intel_info_log_instance_exp_desc_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC
+    void *pNext;                    ///< [in,out][optional] pointer to extension-specific structure
+    uint32_t *pBufferSize;          ///< [in,out][optional] pointer to the total size, in kilobytes, of the collection
+                                    ///< buffer of the instance, aggregated across all of its per-CPU buffers. On input
+                                    ///< the requested total size, which the driver splits evenly across the per-CPU
+                                    ///< buffers; zero keeps the current size. On output the total size which was
+                                    ///< actually applied, which may be rounded up, or zero if it could not be
+                                    ///< determined.
+} zes_intel_info_log_instance_exp_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Status of a read from an info log collection instance
+typedef struct _zes_intel_info_log_read_status_exp_t {
+    zes_structure_type_ext_t stype;      ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP
+    void *pNext;                         ///< [in,out][optional] pointer to extension-specific structure
+    uint32_t droppedRecordCount;         ///< [out] Number of records dropped because the collection buffer overflowed, since
+                                         ///< the previous read or peek on this instance. Reported as 0 when
+                                         ///< isDroppedRecordCountValid is false.
+    ze_bool_t isDroppedRecordCountValid; ///< [out] true when the driver could read every dropped record counter of this
+                                         ///< instance, so droppedRecordCount is the complete count for the interval. false when
+                                         ///< the driver could not determine the count: records may still have been dropped, and
+                                         ///< a count the driver could not report is reported by a later call which can read the
+                                         ///< counters.
+    ze_bool_t hasDataToRead;             ///< [out] true when the collection instance holds records this call did not return,
+                                         ///< for example because timeout elapsed or because pBuffer or pDescriptors was too
+                                         ///< small. This value is a hint, and is only meaningful when the call returned
+                                         ///< ::ZE_RESULT_SUCCESS; a failed call reports the reason through its return value.
+} zes_intel_info_log_read_status_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Per-record metadata returned when reading or peeking info log records
+typedef struct _zes_intel_info_log_metadata_exp {
+    zes_structure_type_ext_t stype;                  ///< [in] must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_METADATA_EXP
+    void *pNext;                                     ///< [in,out][optional]
+    zes_pci_address_t address;                       ///< [out] Device BDF (domain:bus:device.function)
+    zes_uuid_t uuid;                                 ///< [out] Device UUID (fru_id from trace event)
+    uint64_t timestamp;                              ///< [out] Event timestamp in nanoseconds. The reference point is implementation
+                                                     ///< specific and only consistent across records of the same info log.
+    uint32_t lengthOfData;                           ///< [out] CPER record byte length
+    uint32_t offset;                                 ///< [out] Byte offset of this record in pBuffer
+    zes_intel_info_log_record_type_exp_t recordType; ///< [out] Type of the information reported by the record, derived from the
+                                                     ///< severity it was reported with. ::ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN
+                                                     ///< means the severity was not known.
+} zes_intel_info_log_metadata_exp;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Get Info Log Properties
@@ -627,112 +689,137 @@ ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Read Info Log
+/// @brief Create a collection instance for an info log
 ///
 /// @details
-///     - This function reads the info log content for the supplied info log handle.
-///     - If `*pSize` is non-zero, the API reads the info log into `pBuffer`.
-///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///     - Creating a collection instance starts the collection of records into a buffer owned by
+///       that instance. Collection continues until the instance is deleted with
+///       ::zesIntelInfoLogInstanceDeleteExp.
+///     - A named collection instance collects into a buffer which is not shared with other
+///       collection instances, and requires
+///       zes_intel_info_log_properties_exp_t.isNamedInstancedCollectionSupported.
+///     - A given name may only be collected from by one collection instance at a time, across all
+///       processes: while one instance holds a name, creating another instance with that name
+///       returns ::ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE. The name is released when the owning
+///       instance is deleted, or when the process owning it exits.
+///     - A named buffer which already exists but is not held by any collection instance, for
+///       example one provisioned outside of this driver, is collected from rather than rejected, and
+///       is left in place when the collection instance is deleted.
+///     - When pInstanceName is nullptr the records are collected from the default buffer, which may
+///       be shared with other consumers and may carry data from other sources.
+///     - The application must not call this function from simultaneous threads.
+///     - The application must pass a valid hInfoLog, a non-null pDesc whose stype is
+///       ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC, and a non-null phInfoLogInstance.
+///       The behaviour is undefined otherwise.
 ///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_DEVICE_LOST
 ///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + `nullptr != pInstanceName` and named collection instances are not supported
+///     - ::ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE
+///         + a collection instance with the same name already exists, in this or in another process
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///         + the caller may not claim the named buffer
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + the named buffer could not be located
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///         + the collection instance could not be created or configured
+ze_result_t ZE_APICALL zesIntelInfoLogCreateInstanceExp(
+    zes_intel_info_log_handle_t hInfoLog,                   ///< [in] handle of the info log
+    const char *pInstanceName,                              ///< [in][optional] name of the collection instance to create.
+                                                            ///< nullptr uses the default buffer of the info log.
+    zes_intel_info_log_instance_exp_desc_t *pDesc,          ///< [in,out] descriptor of the collection instance to create
+    zes_intel_info_log_instance_handle_t *phInfoLogInstance ///< [out] handle of the collection instance which was created
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Read collected info log records and their metadata
+///
+/// @details
+///     - A call in which `*pSize` is zero or `*pRecordCount` is zero on input is a query call. A
+///       query call reports the total size in bytes of the record data and the total number of
+///       records found, writes to neither pBuffer nor pDescriptors, and consumes nothing. pBuffer
+///       and pDescriptors may be nullptr on a query call.
+///     - Records are consumed as they are returned, a record returned by one call is not returned
+///       again.
+///     - `timeout` bounds the search of the data held by the collection instance. This driver never
+///       waits for records to arrive: it stops as soon as the data currently held by the instance
+///       has been searched, even when the timeout has not elapsed.
+///     - The application must initialize the stype member of every pDescriptors element and of
+///       pReadStatus.
+///     - The application must not call this function from simultaneous threads, and must not call it
+///       simultaneously with ::zesIntelInfoLogInstancePeekWithMetadataExp on the same handle.
+///     - The application must pass a valid hInfoLogInstance, a non-null pSize and a non-null
+///       pRecordCount, and must pass a non-null pBuffer and pDescriptors whenever `*pSize` and
+///       `*pRecordCount` are both non-zero. The behaviour is undefined otherwise.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///         + a record which did not fit in the remaining space of pBuffer is not consumed and is
+///           returned by the next call.
+///           zes_intel_info_log_read_status_exp_t.hasDataToRead reports that records remain.
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
 ///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
 ///     - ::ZE_RESULT_ERROR_UNKNOWN
-///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
-///         + `*pSize` is less than required to hold the info log data.
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hInfoLog`
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `nullptr == pSize`
-ze_result_t ZE_APICALL zesIntelInfoLogReadExp(
-    zes_intel_info_log_handle_t hInfoLog, ///< [in] handle of the info log
-    uint32_t *pSize,                      ///< [in,out] size of info log data in bytes. The application should set this value < zes_intel_info_log_properties_exp_t.maxSize
-                                          ///< The API returns the size of info log data in bytes which can be <= zes_intel_info_log_properties_exp_t.maxSize
-    uint8_t *pBuffer                      ///< [in,out][optional][range(0, *pSize)] buffer to hold info log data.
+///         + the collection data could not be read
+ze_result_t ZE_APICALL zesIntelInfoLogInstanceReadWithMetadataExp(
+    zes_intel_info_log_instance_handle_t hInfoLogInstance, ///< [in] handle of the info log collection instance
+    uint64_t timeout,                                      ///< [in] maximum time, in milliseconds, spent searching for records.
+                                                           ///< 0 returns immediately without searching, UINT64_MAX searches all
+                                                           ///< the data held by the instance.
+    uint32_t *pSize,                                       ///< [in,out] on input, size of pBuffer in bytes. On output, bytes written,
+                                                           ///< or total bytes found on a query call.
+    uint8_t *pBuffer,                                      ///< [in,out][optional][range(0, *pSize)] destination for the record data
+    uint32_t *pRecordCount,                                ///< [in,out] on input, number of elements in pDescriptors. On output,
+                                                           ///< records written, or total records found on a query call.
+    zes_intel_info_log_metadata_exp *pDescriptors,         ///< [in,out][optional][range(0, *pRecordCount)] per-record metadata
+    zes_intel_info_log_read_status_exp_t *pReadStatus      ///< [in,out][optional] status of this call
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Enable info log collection
+/// @brief Read collected info log records and their metadata without consuming them
 ///
 /// @details
-///     - Enables the xe_error_cper tracepoint, optionally in a named tracefs instance.
-///     - Pass enableDescriptor.instanceName == nullptr to use the global trace buffer.
-///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///     - Equivalent to ::zesIntelInfoLogInstanceReadWithMetadataExp except that the records
+///       returned are not consumed and remain available to subsequent calls to either function.
+///     - Only supported when zes_intel_info_log_properties_exp_t.isPeekSupported is true.
+///     - A record which a previous read left partially buffered is not visible to this function.
+///     - The same argument requirements as ::zesIntelInfoLogInstanceReadWithMetadataExp apply.
 ///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_UNINITIALIZED
 ///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
-///         + instanceName is non-null but named tracefs instances are unavailable
+///         + peek is not supported for this info log
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
 ///     - ::ZE_RESULT_ERROR_UNKNOWN
-///         + named instance could not be created, or enable/trace-on failed
-///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
-///         + already enabled with a conflicting instance configuration
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hInfoLog`
-ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(
-    zes_intel_info_log_handle_t hInfoLog,                       ///< [in] handle of the info log
-    zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor ///< [in,out] pointer to enable descriptor
+ze_result_t ZE_APICALL zesIntelInfoLogInstancePeekWithMetadataExp(
+    zes_intel_info_log_instance_handle_t hInfoLogInstance, ///< [in] handle of the info log collection instance
+    uint64_t timeout,                                      ///< [in] maximum time, in milliseconds, spent searching for records
+    uint32_t *pSize,                                       ///< [in,out] size of pBuffer in bytes in, bytes found out
+    uint8_t *pBuffer,                                      ///< [in,out][optional][range(0, *pSize)] destination for the record data
+    uint32_t *pRecordCount,                                ///< [in,out] elements in pDescriptors in, records found out
+    zes_intel_info_log_metadata_exp *pDescriptors,         ///< [in,out][optional][range(0, *pRecordCount)] per-record metadata
+    zes_intel_info_log_read_status_exp_t *pReadStatus      ///< [in,out][optional] status of this call
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Disable info log collection
+/// @brief Delete a collection instance of an info log
 ///
 /// @details
-///     - Disables the xe_error_cper tracepoint and cleans up any named tracefs instance
-///       created by a prior zesIntelInfoLogEnableExp call.
-///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///     - Stops collection into the instance and releases the resources it allocated.
+///     - The application must ensure that no other function is using the handle when calling this
+///       function, must not call it from simultaneous threads with the same handle, and must not
+///       call it twice with the same handle. The behaviour is undefined otherwise.
 ///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_UNINITIALIZED
 ///     - ::ZE_RESULT_ERROR_UNKNOWN
-///         + event disable or trace-off failed
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hInfoLog`
-ze_result_t ZE_APICALL zesIntelInfoLogDisableExp(
-    zes_intel_info_log_handle_t hInfoLog ///< [in] handle of the info log
-);
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Per-record metadata returned by zesIntelInfoLogReadWithMetadataExp
-typedef struct _zes_intel_info_log_metadata_exp {
-    zes_structure_type_ext_t stype; ///< [in] must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_METADATA_EXP
-    void *pNext;                    ///< [in,out][optional]
-    zes_pci_address_t address;      ///< [out] Device BDF (domain:bus:device.function)
-    zes_uuid_t uuid;                ///< [out] Device UUID (platform_id from trace event)
-    uint64_t timestamp;             ///< [out] Event timestamp in microseconds since boot
-    uint32_t lengthOfData;          ///< [out] CPER record byte length
-    uint32_t offset;                ///< [out] Byte offset of this record in pBuffer
-} zes_intel_info_log_metadata_exp;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Read info log data with per-record metadata
-///
-/// @details
-///     - First call (pBuffer==nullptr or pDescriptors==nullptr): non-consuming, returns
-///       the number of available records and total byte size via trace snapshot.
-///     - Second call (pBuffer!=nullptr and pDescriptors!=nullptr): consumes from
-///       trace_pipe, fills binary CPER data and per-record metadata descriptors.
-///     - This API is NOT thread-safe.
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_WARNING_DROPPED_DATA
-///         + a record arrived that was larger than the remaining buffer
-///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
-///         + `nullptr == pSize` or `nullptr == pEventCount`
-///     - ::ZE_RESULT_ERROR_UNKNOWN
-///         + trace file could not be read
-ze_result_t ZE_APICALL zesIntelInfoLogReadWithMetadataExp(
-    zes_intel_info_log_handle_t hInfoLog,         ///< [in] handle of the info log
-    uint32_t *pSize,                              ///< [in,out] buffer size hint in bytes / bytes written out
-    uint8_t *pBuffer,                             ///< [in,out][optional] destination for CPER binary data
-    uint32_t *pEventCount,                        ///< [in,out] descriptor array capacity in / records written out
-    zes_intel_info_log_metadata_exp *pDescriptors ///< [in,out][optional] per-record metadata
+///         + the collection instance could not be fully torn down
+ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(
+    zes_intel_info_log_instance_handle_t hInfoLogInstance ///< [in][release] handle of the collection instance to delete
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -794,14 +881,15 @@ typedef enum _zes_intel_driver_event_exp_version_t {
 ///     - Calling this function while another thread is blocked in a listen call updates
 ///       that call, so an event registered after a listen has started can still be
 ///       reported by it.
-///     - ::ZES_INTEL_CPER_DATA_AVAILABLE requires info log collection to have been
-///       enabled with ::zesIntelInfoLogEnableExp *before* the listen call is made.
-///       The data itself is left in place and must be retrieved with
-///       ::zesIntelInfoLogReadExp.
+///     - ::ZES_INTEL_CPER_DATA_AVAILABLE requires at least one info log collection
+///       instance to have been created with ::zesIntelInfoLogCreateInstanceExp *before*
+///       the listen call is made. It is reported when any live collection instance has
+///       data pending. The data itself is left in place and must be retrieved with
+///       ::zesIntelInfoLogInstanceReadWithMetadataExp.
 ///     - The application may call this function from simultaneous threads. However,
 ///       listening for ::ZES_INTEL_CPER_DATA_AVAILABLE must be serialized with
-///       ::zesIntelInfoLogEnableExp and ::zesIntelInfoLogReadExp on a single thread,
-///       as all three operate on the same underlying trace buffer reader.
+///       ::zesIntelInfoLogInstanceReadWithMetadataExp on a single thread, as both
+///       operate on the same underlying trace buffer reader.
 ///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
@@ -840,9 +928,10 @@ ze_result_t ZE_APICALL zesIntelDriverEventRegisterExp(
 ///       them. A driver scoped event which occurs without any device scoped event therefore
 ///       returns `*pNumDeviceEvents` set to 0 and `*pDriverEvents` set to the events which
 ///       occurred, so an application must check both values.
-///     - ::ZES_INTEL_CPER_DATA_AVAILABLE requires info log collection to have been enabled
-///       with ::zesIntelInfoLogEnableExp *before* this call is made. The data itself is
-///       left in place and must be retrieved with ::zesIntelInfoLogReadExp.
+///     - ::ZES_INTEL_CPER_DATA_AVAILABLE requires at least one info log collection instance to
+///       have been created with ::zesIntelInfoLogCreateInstanceExp *before* this call is made.
+///       The data itself is left in place and must be retrieved with
+///       ::zesIntelInfoLogInstanceReadWithMetadataExp.
 ///     - The application should not call this function from simultaneous threads with the
 ///       same driver handle.
 ///

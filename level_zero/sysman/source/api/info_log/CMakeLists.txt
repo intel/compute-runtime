@@ -11,7 +11,11 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/sysman_info_log.h
                ${CMAKE_CURRENT_SOURCE_DIR}/sysman_info_log_imp.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/sysman_info_log_imp.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_info_log_instance.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_info_log_instance_imp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_info_log_instance_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_info_log.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_info_log_instance.h
 )
 
 add_subdirectories()

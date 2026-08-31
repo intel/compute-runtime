@@ -12,6 +12,9 @@
 #include "level_zero/sysman/source/driver/os_sysman_driver.h"
 #include "level_zero/sysman/source/shared/linux/udev/udev_lib.h"
 
+#include <mutex>
+#include <vector>
+
 namespace NEO {
 class HwDeviceId;
 }
@@ -45,15 +48,19 @@ class LinuxSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovabl
     static DrmNlApi *createDrmNlApi();
     static void destroyDrmNlApi(DrmNlApi *pDrmNl);
 
-    MOCKABLE_VIRTUAL int getCperTracePipeFd() const { return cperTracePipeFd; }
-    void setCperTracePipeFd(int fd) { cperTracePipeFd = fd; }
+    void registerCperTracePipeFd(int fd);
+    void unregisterCperTracePipeFd(int fd);
+    MOCKABLE_VIRTUAL std::vector<int> getCperTracePipeFds() const;
+    MOCKABLE_VIRTUAL int getCperTracePipeFd() const;
+    void clearCperTracePipeFds();
 
   protected:
     L0::Sysman::UdevLib *pUdevLib = nullptr;
     DrmNlApi *pDrmNl = nullptr;
     L0::Sysman::LinuxEventsUtil *pLinuxEventsUtil = nullptr;
     InfoLogHandleContext *pInfoLogHandleContext = nullptr;
-    int cperTracePipeFd = -1;
+    std::vector<int> cperTracePipeFds;
+    mutable std::mutex cperFdsMutex;
 
   private:
     int32_t findDeviceIndexByPciUuid(SysmanDriverHandleImp *driverHandle, const std::string &pciUuid);

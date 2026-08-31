@@ -16,9 +16,9 @@ InfoLogHandleContext::InfoLogHandleContext() {
     supportedFormats = OsInfoLog::getSupportedInfoLogFormats();
 }
 
-void InfoLogHandleContext::disableInfoLogCollection() {
+void InfoLogHandleContext::destroyAllInstances() {
     for (auto &pInfoLog : handleList) {
-        pInfoLog->infoLogDisable();
+        pInfoLog->destroyAllInstances();
     }
 }
 
@@ -27,6 +27,7 @@ void InfoLogHandleContext::releaseInfoLogHandles() {
 }
 
 InfoLogHandleContext::~InfoLogHandleContext() {
+    destroyAllInstances();
     releaseInfoLogHandles();
 }
 

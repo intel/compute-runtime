@@ -7,7 +7,9 @@
 
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_imp.h"
+#include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_instance_imp.h"
 #include "level_zero/sysman/source/api/info_log/sysman_info_log_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/info_log/linux/mock_sysman_info_log.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
@@ -19,6 +21,11 @@ namespace Sysman {
 namespace ult {
 
 static constexpr uint32_t handleCount = 1u;
+static constexpr uint32_t maxRecordsPerRead = 64u;
+static constexpr uint64_t noTimeout = UINT64_MAX;
+// An hour, in the milliseconds getCurrentTimeInMs() reports. Long enough that the collection deadline
+// is never reached within a test, while staying well clear of a uint64 overflow when added to 'now'.
+static constexpr uint64_t largeTimeoutMs = 60ULL * 60ULL * 1000ULL;
 
 class SysmanInfoLogFixture : public ::testing::Test {
   protected:
@@ -53,11 +60,11 @@ class SysmanInfoLogFixture : public ::testing::Test {
 
     void TearDown() override {
         if (driverHandle) {
-            // The mocked trace_pipe descriptor is not a real one, so drop it before the
-            // driver destructor tries to close it.
             auto *pLinuxSysmanDriverImp = getLinuxSysmanDriverImp();
             if (pLinuxSysmanDriverImp != nullptr) {
-                pLinuxSysmanDriverImp->setCperTracePipeFd(-1);
+                for (auto fd : pLinuxSysmanDriverImp->getCperTracePipeFds()) {
+                    pLinuxSysmanDriverImp->unregisterCperTracePipeFd(fd);
+                }
             }
             delete driverHandle;
             driverHandle = nullptr;
@@ -72,9 +79,31 @@ class SysmanInfoLogFixture : public ::testing::Test {
         return handles;
     }
 
-    void enableInfoLogCollection(zes_intel_info_log_handle_t hInfoLog) {
-        zes_intel_info_log_enable_descriptor_exp enableDescriptor = {};
-        ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(hInfoLog, &enableDescriptor));
+    static zes_intel_info_log_instance_exp_desc_t makeInstanceDesc(uint32_t *pBufferSize = nullptr) {
+        zes_intel_info_log_instance_exp_desc_t desc = {};
+        desc.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC;
+        desc.pBufferSize = pBufferSize;
+        return desc;
+    }
+
+    zes_intel_info_log_instance_handle_t createInfoLogInstance(zes_intel_info_log_handle_t hInfoLog, const char *pInstanceName = nullptr) {
+        auto desc = makeInstanceDesc();
+        zes_intel_info_log_instance_handle_t hInstance = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(hInfoLog, pInstanceName, &desc, &hInstance));
+        EXPECT_NE(nullptr, hInstance);
+        return hInstance;
+    }
+
+    ze_result_t readInfoLogData(zes_intel_info_log_instance_handle_t hInstance, uint32_t *pSize, uint8_t *pBuffer) {
+        uint32_t recordCount = maxRecordsPerRead;
+        std::vector<zes_intel_info_log_metadata_exp> descriptors(recordCount);
+        return zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, pSize, pBuffer, &recordCount, descriptors.data(), nullptr);
+    }
+
+    ze_result_t peekInfoLogData(zes_intel_info_log_instance_handle_t hInstance, uint32_t *pSize, uint8_t *pBuffer) {
+        uint32_t recordCount = maxRecordsPerRead;
+        std::vector<zes_intel_info_log_metadata_exp> descriptors(recordCount);
+        return zesIntelInfoLogInstancePeekWithMetadataExp(hInstance, noTimeout, pSize, pBuffer, &recordCount, descriptors.data(), nullptr);
     }
 
     L0::Sysman::LinuxSysmanDriverImp *getLinuxSysmanDriverImp() {
@@ -85,6 +114,11 @@ class SysmanInfoLogFixture : public ::testing::Test {
     int getCperTracePipeFd() {
         auto *pLinuxSysmanDriverImp = getLinuxSysmanDriverImp();
         return (pLinuxSysmanDriverImp != nullptr) ? pLinuxSysmanDriverImp->getCperTracePipeFd() : -1;
+    }
+
+    size_t getCperTracePipeFdCount() {
+        auto *pLinuxSysmanDriverImp = getLinuxSysmanDriverImp();
+        return (pLinuxSysmanDriverImp != nullptr) ? pLinuxSysmanDriverImp->getCperTracePipeFds().size() : 0u;
     }
 
     static NEO::OsLibrary *mockLoadFunc(const NEO::OsLibraryCreateProperties &) {
@@ -121,23 +155,6 @@ TEST_F(SysmanInfoLogFixture, GivenValidDriverHandleWhenEnumeratingInfoLogsThenSu
     EXPECT_EQ(1u, count);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenDriverWhenEnumeratingInfoLogsThenHandleCreationSucceeds) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        return mockApi;
-    });
-    uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
-    ASSERT_EQ(1u, count);
-
-    std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, handles.data()));
-
-    auto hInfoLog = handles[0];
-    EXPECT_NE(nullptr, hInfoLog);
-}
-
 TEST_F(SysmanInfoLogFixture, GivenRequestedInfoLogCountGreaterThanOneWhenEnumeratingInfoLogsThenOneHandleCountIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
@@ -170,22 +187,8 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingGetPropertiesApiT
 
     EXPECT_EQ(ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE, properties.infoLogType);
     EXPECT_EQ(ZES_INTEL_INFO_LOG_FORMAT_CPER, properties.infoLogFormat);
-    EXPECT_EQ(static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize), properties.maxSize);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTraceFsBufferSizeReturnsNegativeOneWhenGettingPropertiesThenMaxSizeIsZero) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<PublicTraceFsApi>();
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogGetPropertiesExp(infoLogHandles[0], &properties));
-
-    EXPECT_EQ(0u, properties.maxSize);
+    EXPECT_TRUE(properties.isPeekSupported);
+    EXPECT_TRUE(properties.isNamedInstancedCollectionSupported);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenEnumeratingInfoLogsThenErrorIsReturned) {
@@ -199,47 +202,38 @@ TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenEnumeratingInfoLogsThenE
     pSysmanDriverHandleImp->pOsSysmanDriver = originalOsSysmanDriver;
 }
 
-TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenEnablingInfoLogSuccessfullyThenSuccessIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCreatingInstanceSuccessfullyThenSuccessIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
         return mockApi;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_NE(nullptr, hInstance);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenDisablingInfoLogSuccessfullyThenSuccessIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenValidInfoLogInstanceWhenDeletingItThenSuccessIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
         return mockApi;
     });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsEventEnableFailsThenErrorIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        mockApi->eventEnableReturnValue = -1;
-        return mockApi;
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsTraceOnFailsThenErrorIsReturned) {
@@ -254,8 +248,9 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsTraceOnFailsThenE
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsEventDisableFailsThenErrorIsReturned) {
@@ -270,9 +265,10 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsEventDisableFails
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsTraceOffFailsThenErrorIsReturned) {
@@ -288,71 +284,29 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsTraceOffFailsThen
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
-TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenReadingValidCperDataThenSuccessAndDataIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenBufferSizeIsZeroThenTotalsAreQueried) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(mockCperLen, size);
-
-    // Verify first bytes of CPER record
-    for (uint32_t i = 0; i < expectedCper1Bytes.size(); i++) {
-        EXPECT_EQ(expectedCper1Bytes[i], buffer[i]);
-    }
-}
-
-TEST_F(SysmanInfoLogFixture, GivenFirstTraceFsPathFailsWhenReadingInfoLogThenFallsBackToSecondPathAndSucceeds) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>(false, true);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(mockCperLen, size);
-
-    for (uint32_t i = 0; i < expectedCper1Bytes.size(); i++) {
-        EXPECT_EQ(expectedCper1Bytes[i], buffer[i]);
-    }
-}
-
-TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenBufferSizeIsZeroThenErrorIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
 
     uint32_t zeroSize = 0;
     std::vector<uint8_t> buffer(1);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogReadExp(infoLogHandles[0], &zeroSize, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &zeroSize, buffer.data()));
+    EXPECT_EQ(mockCperLen, zeroSize);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenReadingMultipleCperDataThenSuccessAndAllDataIsReturned) {
@@ -362,17 +316,23 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenReadingMultipleCperDataT
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Total size is 3 * 532 = 1596 bytes
     uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(mockCperLen * 3u, size);
 
     // Verify first CPER record bytes
@@ -403,17 +363,23 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenBufferCanFitOnlyOneCperT
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Allocate buffer that can fit only 1 CPER (532 bytes) but not 2 (1064 bytes)
     uint32_t size = 600u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
 
     // Only 1 CPER (532 bytes) fits in 600-byte buffer
     EXPECT_EQ(mockCperLen, size);
@@ -434,16 +400,18 @@ TEST_F(SysmanInfoLogFixture, GivenCorruptedOddLengthCperRawWhenReadingInfoLogThe
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
 }
 
@@ -454,16 +422,18 @@ TEST_F(SysmanInfoLogFixture, GivenInvalidHexCharacterInCperRawWhenReadingInfoLog
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
 }
 
@@ -471,18 +441,21 @@ TEST_F(SysmanInfoLogFixture, GivenMissingCperLenFieldWhenReadingInfoLogThenZeroB
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockMissingFieldCperEvent);
     });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
 }
 
@@ -493,38 +466,18 @@ TEST_F(SysmanInfoLogFixture, GivenCompactHexCperRawWithNoSpacesWhenReadingInfoLo
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(2u, size);
-    EXPECT_EQ(0xAB, buffer[0]);
-    EXPECT_EQ(0xCD, buffer[1]);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenSpacedHexCperRawWhenReadingInfoLogThenDataIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSpacedHexCperEvent);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(2u, size);
     EXPECT_EQ(0xAB, buffer[0]);
     EXPECT_EQ(0xCD, buffer[1]);
@@ -537,16 +490,18 @@ TEST_F(SysmanInfoLogFixture, GivenCperRawWithMultipleSpacedBytesAndTrailingField
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(4u, size);
     EXPECT_EQ(0xAB, buffer[0]);
     EXPECT_EQ(0xCD, buffer[1]);
@@ -561,16 +516,18 @@ TEST_F(SysmanInfoLogFixture, GivenTraceOutputWithNonCperLineWhenReadingInfoLogTh
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(2u, size);
     EXPECT_EQ(0xAB, buffer[0]);
     EXPECT_EQ(0xCD, buffer[1]);
@@ -580,85 +537,21 @@ TEST_F(SysmanInfoLogFixture, GivenCperEventWithZeroLengthWhenReadingInfoLogThenR
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockCperEventWithZeroLen);
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenReadingInfoLogThenSizeIsZeroAndErrorIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSingleCperEventData, true);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedWhenReadingInfoLogThenNotAvailableIsReturnedAndSizeIsZero) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSingleCperEventData);
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    uint32_t size = 1024u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTracePipeReturnsZeroLenCperWhenReadingInfoLogThenCperLenIsZeroAndSizeIsZero) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSingleCperEventData, false, &mockCperEventWithZeroLen);
-    });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenReadFromTracePipeReturnsErrorWhenReadingInfoLogThenBytesReadIsNegativeAndSizeIsZero) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSingleCperEventData);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsReadError);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
 }
 
@@ -669,16 +562,18 @@ TEST_F(SysmanInfoLogFixture, GivenCperRawWithEmptyValueWhenReadingInfoLogThenWhi
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
 }
 
@@ -689,16 +584,18 @@ TEST_F(SysmanInfoLogFixture, GivenCperLenFieldEmptyAtEndOfLineWhenReadingInfoLog
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
 }
 
@@ -709,131 +606,80 @@ TEST_F(SysmanInfoLogFixture, GivenCperRawByteCountMismatchesLenFieldWhenReadingI
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenNullBufferWhenReadingInfoLogThenPBufferIsNullAndErrorIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    uint32_t size = 1024u;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogReadExp(infoLogHandles[0], &size, nullptr));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenNullSizePointerWhenReadingInfoLogThenPSizeIsNullAndErrorIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    std::vector<uint8_t> buffer(1024u);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogReadExp(infoLogHandles[0], nullptr, buffer.data()));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTraceFileReadReturnsNullWhenReadingInfoLogThenTraceDataIsNullAndErrorIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenTraceFileReadReturnsNullWhenPeekingInfoLogThenTraceDataIsNullAndErrorIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(MockTraceFsApiWithBadCperData::emptyStr, false, nullptr, true);
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, peekInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenReadReturnsEagainWhenReadingInfoLogThenReadStopsAndZeroBytesAreReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockCompactHexCperEvent);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsReadWithInitialEagain);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTracePipeReturnsLargerCperThanTracePredictedWhenReadingInfoLogThenWarningDroppedDataIsReturnedWithNoData) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSmallCperTraceEvent, false, &mockLargerCperTracePipeEvent);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    // Buffer is 3 bytes: fits the 2-byte record seen in 'trace', but not the 4-byte record in 'trace_pipe'
-    uint32_t size = 3u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTracePipeDeliversExtraLargerRecordAfterFittingRecordsWhenReadingInfoLogThenWarningDroppedDataIsReturnedWithPartialData) {
+TEST_F(SysmanInfoLogFixture, GivenTracePipeDeliversExtraLargerRecordAfterFittingRecordsWhenReadingInfoLogThenTheFittingRecordsAreReturnedFirst) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockTwoSmallCperTraceEvents, false, &mockTwoSmallPlusOneLargerCperTracePipeEvents);
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Buffer fits 3x 2-byte records (6 bytes) but not 2x 2-byte + 1x 4-byte (8 bytes)
     uint32_t size = 7u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    std::vector<uint8_t> buffer(16u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     // First 2 records (4 bytes) were written before the 3rd record overflowed
     EXPECT_EQ(4u, size);
     EXPECT_EQ(0xAB, buffer[0]);
     EXPECT_EQ(0xCD, buffer[1]);
     EXPECT_EQ(0xEF, buffer[2]);
     EXPECT_EQ(0x01, buffer[3]);
+
+    size = 16u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
+    EXPECT_EQ(4u, size);
+    EXPECT_EQ(0x11, buffer[0]);
+    EXPECT_EQ(0x22, buffer[1]);
+    EXPECT_EQ(0x33, buffer[2]);
+    EXPECT_EQ(0x44, buffer[3]);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenGlobalInstanceWhenEnablingInfoLogThenSuccessIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenGlobalInstanceWhenAccessChecksFailThenSuccessIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
@@ -844,76 +690,14 @@ TEST_F(SysmanInfoLogFixture, GivenGlobalInstanceWhenEnablingInfoLogThenSuccessIs
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenGlobalInstanceWhenInstancedCollectionUnavailableThenSuccessIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    // Fail access checks after handle creation so instanced collection appears unavailable,
-    // but global enable should still succeed since instanceName == nullptr skips the check.
+    // Global enable takes no access based decision, so it still succeeds when access() fails.
     VariableBackup<bool> failAccessBackup(&NEO::SysCalls::failAccess, true);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
-TEST_F(SysmanInfoLogFixture, GivenAlreadyEnabledGlobalWhenReEnablingWithGlobalThenSuccessIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenInstancedCollectionAvailableThenSuccessIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenAlreadyEnabledNamedInstanceWhenReEnablingWithSameNameThenSuccessIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenGlobalWithTracingAlreadyOnWhenEnablingThenSuccessIsReturnedAndTraceOnIsSkipped) {
+TEST_F(SysmanInfoLogFixture, GivenGlobalWithTracingAlreadyOnWhenCreatingInstanceThenSuccessIsReturnedAndTraceOnIsSkipped) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
@@ -926,11 +710,12 @@ TEST_F(SysmanInfoLogFixture, GivenGlobalWithTracingAlreadyOnWhenEnablingThenSucc
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
-TEST_F(SysmanInfoLogFixture, GivenGlobalWithEventAlreadyEnabledWhenEnablingThenSuccessIsReturnedAndEventEnableIsSkipped) {
+TEST_F(SysmanInfoLogFixture, GivenGlobalWithEventAlreadyEnabledWhenCreatingInstanceThenSuccessIsReturnedAndEventEnableIsSkipped) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
@@ -943,43 +728,12 @@ TEST_F(SysmanInfoLogFixture, GivenGlobalWithEventAlreadyEnabledWhenEnablingThenS
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInstancedCollectionAvailableWhenGettingPropertiesThenIsInstancedCollectionSupportedIsTrue) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        return mockApi;
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogGetPropertiesExp(infoLogHandles[0], &properties));
-    EXPECT_TRUE(properties.isInstancedCollectionSupported);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenGlobalInstanceWhenDisablingAfterEnableThenSuccessIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenEventAlreadyEnabledWhenDisablingThenEventDisableIsSkippedAndSuccessIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenEventAlreadyEnabledWhenDeletingInstanceThenEventDisableIsSkippedAndSuccessIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
@@ -992,12 +746,13 @@ TEST_F(SysmanInfoLogFixture, GivenEventAlreadyEnabledWhenDisablingThenEventDisab
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
-TEST_F(SysmanInfoLogFixture, GivenTracingAlreadyOnWhenDisablingThenTraceOffIsSkippedAndSuccessIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenTracingAlreadyOnWhenDeletingInstanceThenTraceOffIsSkippedAndSuccessIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
@@ -1010,64 +765,54 @@ TEST_F(SysmanInfoLogFixture, GivenTracingAlreadyOnWhenDisablingThenTraceOffIsSki
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenNullPSizeWhenReadingWithMetaDataThenInvalidArgumentIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    uint32_t eventCount = 1;
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], nullptr, nullptr, &eventCount, descriptors.data()));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenNullPEventCountWhenReadingWithMetaDataThenInvalidArgumentIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    uint32_t size = 1024;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, nullptr, nullptr, nullptr));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNullBufferWhenQueryingWithMetaDataThenSizeAndCountAreReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, nullptr, &eventCount, nullptr));
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
     EXPECT_EQ(mockCperLen, size);
     EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_TRUE(readStatus.hasDataToRead);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNullBufferAndMultipleEventsWhenQueryingWithMetaDataThenCorrectCountIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>(true);
     });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, nullptr, &eventCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
     EXPECT_EQ(3u * mockCperLen, size);
     EXPECT_EQ(3u, eventCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidBufferWhenReadingWithMetaDataThenDataAndMetaDataAreReturned) {
@@ -1086,14 +831,15 @@ TEST_F(SysmanInfoLogFixture, GivenValidBufferWhenReadingWithMetaDataThenDataAndM
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = mockCperLen;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(mockCperLen, size);
     EXPECT_EQ(1u, eventCount);
 
@@ -1112,222 +858,15 @@ TEST_F(SysmanInfoLogFixture, GivenValidBufferWhenReadingWithMetaDataThenDataAndM
     EXPECT_EQ(0u, descriptors[0].address.device);
     EXPECT_EQ(0u, descriptors[0].address.function);
 
-    // UUID: platform_id=e5af4690-4190-2451-8614-92550d9e9da6
-    static const uint8_t expectedUuid[16] = {0xe5, 0xaf, 0x46, 0x90, 0x41, 0x90, 0x24, 0x51,
+    // UUID: fru_id=fbaf4690-4190-2451-8614-92550d9e9da6
+    static const uint8_t expectedUuid[16] = {0xfb, 0xaf, 0x46, 0x90, 0x41, 0x90, 0x24, 0x51,
                                              0x86, 0x14, 0x92, 0x55, 0x0d, 0x9e, 0x9d, 0xa6};
     for (int i = 0; i < 16; i++) {
         EXPECT_EQ(expectedUuid[i], descriptors[0].uuid.id[i]) << "UUID mismatch at byte " << i;
     }
 
-    // Timestamp: 5058.247549 -> 5058*1_000_000 + 247549 = 5058247549
-    EXPECT_EQ(5058247549ULL, descriptors[0].timestamp);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenValidBufferWhenReadingMultipleEventsWithMetaDataThenAllDataAndMetaDataAreReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>(true);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 3u * mockCperLen;
-    uint32_t eventCount = 3;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(3);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(3u * mockCperLen, size);
-    EXPECT_EQ(3u, eventCount);
-
-    // Verify record offsets
-    EXPECT_EQ(0u, descriptors[0].offset);
-    EXPECT_EQ(mockCperLen, descriptors[1].offset);
-    EXPECT_EQ(2u * mockCperLen, descriptors[2].offset);
-
-    // Verify CPER data for each record using distinguishing byte at cperRecordIdOffset
-    EXPECT_EQ(expectedCper1Bytes[cperRecordIdOffset], buffer[descriptors[0].offset + cperRecordIdOffset]);
-    EXPECT_EQ(expectedCper2Bytes[cperRecordIdOffset], buffer[descriptors[1].offset + cperRecordIdOffset]);
-    EXPECT_EQ(expectedCper3Bytes[cperRecordIdOffset], buffer[descriptors[2].offset + cperRecordIdOffset]);
-
-    // Verify timestamps are distinct and in order
-    EXPECT_LT(descriptors[0].timestamp, descriptors[1].timestamp);
-    EXPECT_LT(descriptors[1].timestamp, descriptors[2].timestamp);
-    // event1: 5058.247549, event2: 5058.582145, event3: 5058.941472
-    EXPECT_EQ(5058247549ULL, descriptors[0].timestamp);
-    EXPECT_EQ(5058582145ULL, descriptors[1].timestamp);
-    EXPECT_EQ(5058941472ULL, descriptors[2].timestamp);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenRealWorldEventWhenReadingWithMetaDataThenAllFieldsAreCorrectlyParsed) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>(false, false, mockRealSampleEvent);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = mockCperLen;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(mockCperLen, size);
-    EXPECT_EQ(1u, eventCount);
-
-    // CPER data: full 532-byte payload from the real event
-    ASSERT_EQ(expectedRealSampleCperBytes.size(), static_cast<size_t>(size));
-    for (uint32_t i = 0; i < size; i++) {
-        EXPECT_EQ(expectedRealSampleCperBytes[i], buffer[i]) << "CPER byte mismatch at offset " << i;
-    }
-
-    // offset and length
-    EXPECT_EQ(0u, descriptors[0].offset);
-    EXPECT_EQ(mockCperLen, descriptors[0].lengthOfData);
-
-    // BDF: dev=0000:03:00.0 -> domain=0, bus=0x03, device=0, function=0
-    EXPECT_EQ(0u, descriptors[0].address.domain);
-    EXPECT_EQ(0x03u, descriptors[0].address.bus);
-    EXPECT_EQ(0u, descriptors[0].address.device);
-    EXPECT_EQ(0u, descriptors[0].address.function);
-
-    // UUID: platform_id=e5af4690-4190-2451-8614-92550d9e9da6
-    static const uint8_t expectedUuid[16] = {0xe5, 0xaf, 0x46, 0x90, 0x41, 0x90, 0x24, 0x51,
-                                             0x86, 0x14, 0x92, 0x55, 0x0d, 0x9e, 0x9d, 0xa6};
-    for (int i = 0; i < 16; i++) {
-        EXPECT_EQ(expectedUuid[i], descriptors[0].uuid.id[i]) << "UUID byte mismatch at index " << i;
-    }
-
-    // Timestamp: 2750.484567 -> 2750*1_000_000 + 484567 = 2750484567
-    EXPECT_EQ(2750484567ULL, descriptors[0].timestamp);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWithMultipleBDFsAndPlatformIDsWhenReadingWithMetaDataThenAllEventsAreCorrectlyParsed) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>(false, false, mockSampleCperLogData);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    // Query mode: get count and size
-    uint32_t querySize = 0;
-    uint32_t queryEventCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &querySize, nullptr, &queryEventCount, nullptr));
-    EXPECT_EQ(8u, queryEventCount) << "Should have 8 xe_error_cper events (write_msr events filtered out)";
-    EXPECT_EQ(8u * mockCperLen, querySize) << "Total size should be 8 * 532";
-
-    // Extract mode: read all events
-    uint32_t size = querySize;
-    uint32_t eventCount = queryEventCount;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(8u * mockCperLen, size);
-    EXPECT_EQ(8u, eventCount);
-
-    // Verify offsets are sequential
-    for (uint32_t i = 0; i < eventCount; i++) {
-        EXPECT_EQ(i * mockCperLen, descriptors[i].offset) << "Offset mismatch for event " << i;
-        EXPECT_EQ(mockCperLen, descriptors[i].lengthOfData) << "Length mismatch for event " << i;
-    }
-
-    // Verify timestamps are in ascending order
-    for (uint32_t i = 1; i < eventCount; i++) {
-        EXPECT_LT(descriptors[i - 1].timestamp, descriptors[i].timestamp) << "Timestamps should be ascending";
-    }
-
-    // Verify specific event details for each of the 8 events
-    // Event 0: dev=0000:03:00.0, timestamp=2750.484567, platform_id=15af4690-4190-2451-8614-92550d9e9da6
-    EXPECT_EQ(0u, descriptors[0].address.domain);
-    EXPECT_EQ(0x03u, descriptors[0].address.bus);
-    EXPECT_EQ(0u, descriptors[0].address.device);
-    EXPECT_EQ(0u, descriptors[0].address.function);
-    EXPECT_EQ(2750484567ULL, descriptors[0].timestamp);
-    EXPECT_EQ(0x15, descriptors[0].uuid.id[0]); // platform_id starts with 15
-
-    // Event 1: dev=0000:04:00.0, timestamp=2750.507923, platform_id=25af4690...
-    EXPECT_EQ(0x04u, descriptors[1].address.bus);
-    EXPECT_EQ(2750507923ULL, descriptors[1].timestamp);
-    EXPECT_EQ(0x25, descriptors[1].uuid.id[0]); // platform_id starts with 25
-
-    // Event 2: dev=0000:05:00.0, timestamp=2750.555466, platform_id=35af4690...
-    EXPECT_EQ(0x05u, descriptors[2].address.bus);
-    EXPECT_EQ(2750555466ULL, descriptors[2].timestamp);
-    EXPECT_EQ(0x35, descriptors[2].uuid.id[0]); // platform_id starts with 35
-
-    // Event 3: dev=0000:04:00.0, timestamp=2750.576952, platform_id=45af4690...
-    EXPECT_EQ(0x04u, descriptors[3].address.bus);
-    EXPECT_EQ(2750576952ULL, descriptors[3].timestamp);
-    EXPECT_EQ(0x45, descriptors[3].uuid.id[0]); // platform_id starts with 45
-
-    // Event 4: dev=0000:03:00.0, timestamp=2750.594695, platform_id=55af4690...
-    EXPECT_EQ(0x03u, descriptors[4].address.bus);
-    EXPECT_EQ(2750594695ULL, descriptors[4].timestamp);
-    EXPECT_EQ(0x55, descriptors[4].uuid.id[0]); // platform_id starts with 55
-
-    // Event 5: dev=0000:05:00.0, timestamp=2750.616417, platform_id=65af4690...
-    EXPECT_EQ(0x05u, descriptors[5].address.bus);
-    EXPECT_EQ(2750616417ULL, descriptors[5].timestamp);
-    EXPECT_EQ(0x65, descriptors[5].uuid.id[0]); // platform_id starts with 65
-
-    // Event 6: dev=0000:07:00.0, timestamp=2750.634843, platform_id=75af4690...
-    EXPECT_EQ(0x07u, descriptors[6].address.bus);
-    EXPECT_EQ(2750634843ULL, descriptors[6].timestamp);
-    EXPECT_EQ(0x75, descriptors[6].uuid.id[0]); // platform_id starts with 75
-
-    // Event 7: dev=0000:08:00.0, timestamp=2750.657681, platform_id=85af4690...
-    EXPECT_EQ(0x08u, descriptors[7].address.bus);
-    EXPECT_EQ(2750657681ULL, descriptors[7].timestamp);
-    EXPECT_EQ(0x85, descriptors[7].uuid.id[0]); // platform_id starts with 85
-
-    // Verify CPER data starts with "CPER" signature for all events
-    for (uint32_t i = 0; i < eventCount; i++) {
-        uint32_t offset = descriptors[i].offset;
-        EXPECT_EQ(0x43, buffer[offset + 0]) << "CPER signature byte 0 mismatch for event " << i; // 'C'
-        EXPECT_EQ(0x50, buffer[offset + 1]) << "CPER signature byte 1 mismatch for event " << i; // 'P'
-        EXPECT_EQ(0x45, buffer[offset + 2]) << "CPER signature byte 2 mismatch for event " << i; // 'E'
-        EXPECT_EQ(0x52, buffer[offset + 3]) << "CPER signature byte 3 mismatch for event " << i; // 'R'
-    }
-
-    // Verify distinguishing bytes (at offset 96 in CPER data) are sequential 0x01-0x08
-    for (uint32_t i = 0; i < eventCount; i++) {
-        EXPECT_EQ(i + 1, buffer[descriptors[i].offset + cperRecordIdOffset])
-            << "Distinguishing byte mismatch for event " << i;
-    }
+    // Timestamp: 5058.247549 -> 5058*1_000_000_000 + 247549*1000 = 5058247549000 ns
+    EXPECT_EQ(5058247549000ULL, descriptors[0].timestamp);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTimesThenAllEventsAreCorrectlyReadInChunks) {
@@ -1346,13 +885,14 @@ TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTi
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Query mode: get total count and size
     uint32_t querySize = 0;
     uint32_t queryEventCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &querySize, nullptr, &queryEventCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &querySize, nullptr, &queryEventCount, nullptr, nullptr));
     EXPECT_EQ(8u, queryEventCount) << "Should have 8 xe_error_cper events total";
     EXPECT_EQ(8u * mockCperLen, querySize) << "Total size should be 8 * 532";
 
@@ -1362,22 +902,22 @@ TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTi
     std::vector<uint8_t> buffer1(read1Size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors1(read1EventCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &read1Size, buffer1.data(), &read1EventCount, descriptors1.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &read1Size, buffer1.data(), &read1EventCount, descriptors1.data(), nullptr));
     EXPECT_EQ(3u, read1EventCount);
     EXPECT_EQ(3u * mockCperLen, read1Size);
 
     // Verify first 3 events
     EXPECT_EQ(0x03u, descriptors1[0].address.bus); // Event 0: dev=0000:03:00.0
-    EXPECT_EQ(0x15, descriptors1[0].uuid.id[0]);   // platform_id starts with 15
-    EXPECT_EQ(2750484567ULL, descriptors1[0].timestamp);
+    EXPECT_EQ(0xf1, descriptors1[0].uuid.id[0]);   // fru_id starts with f1
+    EXPECT_EQ(2750484567000ULL, descriptors1[0].timestamp);
 
     EXPECT_EQ(0x04u, descriptors1[1].address.bus); // Event 1: dev=0000:04:00.0
-    EXPECT_EQ(0x25, descriptors1[1].uuid.id[0]);   // platform_id starts with 25
-    EXPECT_EQ(2750507923ULL, descriptors1[1].timestamp);
+    EXPECT_EQ(0xf2, descriptors1[1].uuid.id[0]);   // fru_id starts with f2
+    EXPECT_EQ(2750507923000ULL, descriptors1[1].timestamp);
 
     EXPECT_EQ(0x05u, descriptors1[2].address.bus); // Event 2: dev=0000:05:00.0
-    EXPECT_EQ(0x35, descriptors1[2].uuid.id[0]);   // platform_id starts with 35
-    EXPECT_EQ(2750555466ULL, descriptors1[2].timestamp);
+    EXPECT_EQ(0xf3, descriptors1[2].uuid.id[0]);   // fru_id starts with f3
+    EXPECT_EQ(2750555466000ULL, descriptors1[2].timestamp);
 
     // Second read: request 1 event
     uint32_t read2EventCount = 1;
@@ -1385,14 +925,14 @@ TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTi
     std::vector<uint8_t> buffer2(read2Size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors2(read2EventCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &read2Size, buffer2.data(), &read2EventCount, descriptors2.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &read2Size, buffer2.data(), &read2EventCount, descriptors2.data(), nullptr));
     EXPECT_EQ(1u, read2EventCount);
     EXPECT_EQ(1u * mockCperLen, read2Size);
 
     // Verify event 3
     EXPECT_EQ(0x04u, descriptors2[0].address.bus); // Event 3: dev=0000:04:00.0
-    EXPECT_EQ(0x45, descriptors2[0].uuid.id[0]);   // platform_id starts with 45
-    EXPECT_EQ(2750576952ULL, descriptors2[0].timestamp);
+    EXPECT_EQ(0xf4, descriptors2[0].uuid.id[0]);   // fru_id starts with f4
+    EXPECT_EQ(2750576952000ULL, descriptors2[0].timestamp);
 
     // Third read: request 4 events
     uint32_t read3EventCount = 4;
@@ -1400,32 +940,32 @@ TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTi
     std::vector<uint8_t> buffer3(read3Size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors3(read3EventCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &read3Size, buffer3.data(), &read3EventCount, descriptors3.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &read3Size, buffer3.data(), &read3EventCount, descriptors3.data(), nullptr));
     EXPECT_EQ(4u, read3EventCount);
     EXPECT_EQ(4u * mockCperLen, read3Size);
 
     // Verify events 4-7
     EXPECT_EQ(0x03u, descriptors3[0].address.bus); // Event 4: dev=0000:03:00.0
-    EXPECT_EQ(0x55, descriptors3[0].uuid.id[0]);   // platform_id starts with 55
-    EXPECT_EQ(2750594695ULL, descriptors3[0].timestamp);
+    EXPECT_EQ(0xf5, descriptors3[0].uuid.id[0]);   // fru_id starts with f5
+    EXPECT_EQ(2750594695000ULL, descriptors3[0].timestamp);
 
     EXPECT_EQ(0x05u, descriptors3[1].address.bus); // Event 5: dev=0000:05:00.0
-    EXPECT_EQ(0x65, descriptors3[1].uuid.id[0]);   // platform_id starts with 65
-    EXPECT_EQ(2750616417ULL, descriptors3[1].timestamp);
+    EXPECT_EQ(0xf6, descriptors3[1].uuid.id[0]);   // fru_id starts with f6
+    EXPECT_EQ(2750616417000ULL, descriptors3[1].timestamp);
 
     EXPECT_EQ(0x07u, descriptors3[2].address.bus); // Event 6: dev=0000:07:00.0
-    EXPECT_EQ(0x75, descriptors3[2].uuid.id[0]);   // platform_id starts with 75
-    EXPECT_EQ(2750634843ULL, descriptors3[2].timestamp);
+    EXPECT_EQ(0xf7, descriptors3[2].uuid.id[0]);   // fru_id starts with f7
+    EXPECT_EQ(2750634843000ULL, descriptors3[2].timestamp);
 
     EXPECT_EQ(0x08u, descriptors3[3].address.bus); // Event 7: dev=0000:08:00.0
-    EXPECT_EQ(0x85, descriptors3[3].uuid.id[0]);   // platform_id starts with 85
-    EXPECT_EQ(2750657681ULL, descriptors3[3].timestamp);
+    EXPECT_EQ(0xf8, descriptors3[3].uuid.id[0]);   // fru_id starts with f8
+    EXPECT_EQ(2750657681000ULL, descriptors3[3].timestamp);
 
     // Fourth read: request remaining events (should be 0 since we've read all 8)
     uint32_t read4EventCount = 10; // Request more than available
     uint32_t read4Size = read4EventCount * mockCperLen;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &read4Size, nullptr, &read4EventCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &read4Size, nullptr, &read4EventCount, nullptr, nullptr));
     EXPECT_EQ(0u, read4EventCount) << "No more events should be available after reading all 8";
     EXPECT_EQ(0u, read4Size) << "Size should be 0 when no events are available";
 
@@ -1479,8 +1019,9 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenNonBlockingReadReportsEagai
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Deliver one record in two installments, the way a non-blocking trace_pipe hands over a line the
     // kernel has not finished writing. The split point is mid-line, so the first half carries no
@@ -1500,7 +1041,7 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenNonBlockingReadReportsEagai
 
     // Only the front half is queued, so nothing may be reported yet. Parsing it here would fail the
     // cper_len check and discard the prefix, which cannot be re-read from the pipe.
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount) << "A line cut short by EAGAIN must not be reported as a record";
     EXPECT_EQ(0u, size);
 
@@ -1509,7 +1050,7 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenNonBlockingReadReportsEagai
 
     size = mockCperLen;
     eventCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount) << "The split record must be recovered once the rest of the line arrives";
     EXPECT_EQ(mockCperLen, size);
 
@@ -1537,8 +1078,9 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenTracePipeReadFailsThenErrno
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Same mid-line split as the EAGAIN case, but the read fails for a reason that will not clear up.
     const size_t splitPos = mockCperEvent1.size() / 2;
@@ -1554,7 +1096,7 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenTracePipeReadFailsThenErrno
     std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
 
     // A broken stream must surface the errno rather than pass as a successful empty read.
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 
@@ -1565,46 +1107,19 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenTracePipeReadFailsThenErrno
 
     size = mockCperLen;
     eventCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount) << "A discarded prefix must not corrupt the next complete record";
     EXPECT_EQ(mockCperLen, size);
 }
 
 namespace {
 struct CorruptDataFactories {
-    static std::unique_ptr<TraceFsApi> makeEventWithoutMarker() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("xe_error_cper:");
-        if (pos != std::string::npos) {
-            data.replace(pos, 14, "some_other_evt");
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data + mockCperEvent2);
-    }
-
     static std::unique_ptr<TraceFsApi> makeTruncatedEvent() {
         std::string data = mockCperEvent1;
         if (!data.empty() && data.back() == '\n') {
             data.pop_back();
         }
         return std::make_unique<MockTraceFsApiWithData>(false, false, data);
-    }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithoutCperLen() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("cper_len=532");
-        if (pos != std::string::npos) {
-            data.erase(pos, 12);
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data + mockCperEvent2);
-    }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithZeroCperLen() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("cper_len=532");
-        if (pos != std::string::npos) {
-            data.replace(pos, 12, "cper_len=0");
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data + mockCperEvent2);
     }
 
     static std::unique_ptr<TraceFsApi> makeEventWithoutCperRaw() {
@@ -1619,72 +1134,6 @@ struct CorruptDataFactories {
         return std::make_unique<MockTraceFsApiWithData>(false, false, data + mockCperEvent2);
     }
 
-    static std::unique_ptr<TraceFsApi> makeEventWithEmptyCperRaw() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("cper_raw=");
-        if (pos != std::string::npos) {
-            size_t dataStart = pos + 9;
-            size_t endPos = data.find('\n', dataStart);
-            if (endPos != std::string::npos) {
-                data.erase(dataStart, endPos - dataStart);
-            }
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data + mockCperEvent2);
-    }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithInvalidHex() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("cper_raw=");
-        if (pos != std::string::npos) {
-            data.replace(pos + 9, 11, "XY ZZ QQ ");
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data + mockCperEvent2);
-    }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithOddHexLength() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("cper_raw=");
-        if (pos != std::string::npos) {
-            size_t dataStart = pos + 9;
-            // Remove a hex digit (not a space) to create odd length
-            // Position 9 is the second hex digit '2' in "43 50 45 52..."
-            data.erase(dataStart + 9, 1);
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data + mockCperEvent2);
-    }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithSizeMismatch() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("cper_len=532");
-        if (pos != std::string::npos) {
-            data.replace(pos, 12, "cper_len=100");
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data + mockCperEvent2);
-    }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithoutTimestamp() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find(": xe_error_cper:");
-        if (pos != std::string::npos && pos > 0) {
-            data[pos] = ' ';
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data);
-    }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithBadTimestamp() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find(": xe_error_cper:");
-        if (pos != std::string::npos && pos > 15) {
-            for (size_t i = pos - 1; i > pos - 15 && i > 0; --i) {
-                if (data[i] == '.') {
-                    data.erase(i, 1);
-                    break;
-                }
-            }
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data);
-    }
-
     static std::unique_ptr<TraceFsApi> makeEventWithoutDev() {
         std::string data = mockCperEvent1;
         size_t pos = data.find("dev=0000:13:00.0");
@@ -1693,67 +1142,9 @@ struct CorruptDataFactories {
         }
         return std::make_unique<MockTraceFsApiWithData>(false, false, data);
     }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithBadBDF() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("dev=0000:13:00.0");
-        if (pos != std::string::npos) {
-            data.replace(pos, 16, "dev=invalid_bdf");
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data);
-    }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithoutPlatformId() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("platform_id=");
-        if (pos != std::string::npos) {
-            size_t endPos = data.find(' ', pos);
-            if (endPos != std::string::npos) {
-                data.erase(pos, endPos - pos + 1);
-            }
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data);
-    }
-
-    static std::unique_ptr<TraceFsApi> makeEventWithBadUUID() {
-        std::string data = mockCperEvent1;
-        size_t pos = data.find("platform_id=");
-        if (pos != std::string::npos) {
-            data.replace(pos + 12, 36, "invalid-uuid-format-here");
-        }
-        return std::make_unique<MockTraceFsApiWithData>(false, false, data);
-    }
 };
 } // anonymous namespace
 
-// Case #1: Missing "xe_error_cper:" marker - Non-CPER line should be skipped
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledMissingMarkerThenRecordSkipped) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithoutMarker);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 2000;
-    uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount); // Only event2 extracted (event1 skipped)
-    EXPECT_EQ(mockCperLen, size);
-}
-
-// Case #2: Truncated line (no newline at EOF)
 TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledTruncatedLineWithoutNewlineThenProcessed) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeTruncatedEvent);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
@@ -1767,8 +1158,9 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledTruncatedLineWi
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
@@ -1776,98 +1168,10 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledTruncatedLineWi
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
     // Should still process the incomplete line
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(mockCperLen, size);
 }
-//
-// Case #3: Line exceeds kTraceLineBufferSize (now 8192 bytes) - tests accumulation
-// mockCperEvent1 is ~2819 characters, fits in new 8192-byte buffer (single read)
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledLongLineExceedsBufferThenAccumulated) {
-    // This test verifies that lines are properly read with the 8192-byte buffer
-    // mockCperEvent1 has 532-byte CPER = 1064 hex chars + metadata 2819 chars total
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount);
-    EXPECT_EQ(mockCperLen, size);
-
-    // Verify data integrity - accumulated line produced correct CPER bytes
-    for (uint32_t i = 0; i < std::min<uint32_t>(static_cast<uint32_t>(expectedCper1Bytes.size()), size); i++) {
-        EXPECT_EQ(expectedCper1Bytes[i], buffer[i]) << "Mismatch at byte " << i;
-    }
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledMissingCperLenThenRecordSkipped) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithoutCperLen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 2000;
-    uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount); // Only event2 extracted
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledCperLenZeroThenRecordSkipped) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithZeroCperLen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 2000;
-    uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount); // Only event2 extracted
-}
-
 TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledMissingCperRawThenRecordSkipped) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithoutCperRaw);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
@@ -1881,170 +1185,17 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledMissingCperRawT
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 2000;
     uint32_t eventCount = 10;
     std::vector<uint8_t> buffer(size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount); // Only event2 extracted
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledCperRawEmptyThenRecordSkipped) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithEmptyCperRaw);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 2000;
-    uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount); // Only event2 extracted
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledInvalidHexCharsThenRecordSkipped) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithInvalidHex);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 2000;
-    uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount); // Only event2 extracted
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleOddHexLengthThenRecordSkipped) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithOddHexLength);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 2000;
-    uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount); // Only event2 extracted
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleSizeMismatchThenRecordSkipped) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithSizeMismatch);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 2000;
-    uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount); // Only event2 extracted
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleMissingTimestampThenZeroTimestampIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithoutTimestamp);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    // Graceful: Record still processed with timestamp=0
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount);
-    EXPECT_EQ(0u, descriptors[0].timestamp); // Zero timestamp due to parse failure
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleBadTimestampFormatThenZeroTimestamp) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithBadTimestamp);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    // Graceful: Record still processed with timestamp=0
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount);
-    EXPECT_EQ(0u, descriptors[0].timestamp);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenInfologHandleMissingDevFieldThenZeroBDF) {
@@ -2060,8 +1211,9 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleMissingDevFieldThenZeroBDF) {
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
@@ -2069,7 +1221,7 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleMissingDevFieldThenZeroBDF) {
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
     // Graceful: Record still processed with zero BDF
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(0u, descriptors[0].address.domain);
     EXPECT_EQ(0u, descriptors[0].address.bus);
@@ -2077,103 +1229,7 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleMissingDevFieldThenZeroBDF) {
     EXPECT_EQ(0u, descriptors[0].address.function);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleBadBDFFormatThenZeroBDF) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithBadBDF);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    // Graceful: Record still processed with zero BDF
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount);
-    EXPECT_EQ(0u, descriptors[0].address.domain);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleMissingPlatformIdThenZeroUUID) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithoutPlatformId);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    // Graceful: Record still processed with zero UUID
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount);
-    // Verify UUID is all zeros
-    bool allZeros = true;
-    for (int i = 0; i < 16; i++) {
-        if (descriptors[0].uuid.id[i] != 0) {
-            allZeros = false;
-            break;
-        }
-    }
-    EXPECT_TRUE(allZeros);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleBadUUIDFormatThenZeroUUID) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, CorruptDataFactories::makeEventWithBadUUID);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    // Graceful: Record still processed with zero UUID
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount);
-    bool allZeros = true;
-    for (int i = 0; i < 16; i++) {
-        if (descriptors[0].uuid.id[i] != 0) {
-            allZeros = false;
-            break;
-        }
-    }
-    EXPECT_TRUE(allZeros);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleBufferTooSmallForOneRecordThenWarningDropped) {
+TEST_F(SysmanInfoLogFixture, GivenInfologHandleBufferTooSmallForOneRecordThenNothingIsReturnedAndDataStaysAvailable) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -2188,44 +1244,27 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleBufferTooSmallForOneRecordThenWar
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 100; // Too small for 532-byte record
     uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(100);
+    std::vector<uint8_t> buffer(mockCperLen);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
 
-    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
     EXPECT_EQ(0u, eventCount); // No records fit
     EXPECT_EQ(0u, size);
-}
+    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_TRUE(readStatus.hasDataToRead);
 
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleBufferFillsMidProcessThenWarningDropped) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>(true); // 3 events available
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 600; // Fits 1 record (532 bytes), not 2
-    uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-
-    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount); // Only 1 record fit
+    size = mockCperLen;
+    eventCount = 10;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(mockCperLen, size);
 }
 
@@ -2239,38 +1278,16 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleNullBufferInExtractModeThenQueryM
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 0;
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
     // pBuffer=NULL, pDescriptors!=NULL triggers query mode
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, nullptr, &eventCount, descriptors.data()));
-    EXPECT_EQ(mockCperLen, size);
-    EXPECT_EQ(1u, eventCount);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfologHandleNullDescriptorsInExtractModeThenQueryMode) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 0;
-    std::vector<uint8_t> buffer(size);
-
-    // pBuffer!=NULL, pDescriptors=NULL triggers query mode
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(mockCperLen, size);
     EXPECT_EQ(1u, eventCount);
 }
@@ -2300,8 +1317,9 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleFgetsReturnsNullThenPartialResult
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 2000;
     uint32_t eventCount = 10;
@@ -2309,7 +1327,7 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleFgetsReturnsNullThenPartialResult
     std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
 
     // Graceful: Returns whatever was extracted before fgets failed
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     // Should have partial data (exact count depends on when fgets failed during line read)
     EXPECT_LE(eventCount, 3u);
 }
@@ -2333,15 +1351,16 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleFdopenFailsThenErrorReturned) {
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 10;
     std::vector<uint8_t> buffer(size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 }
@@ -2363,65 +1382,18 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleDupFailsThenErrorReturned) {
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 10;
     std::vector<uint8_t> buffer(size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenEventDisabledWhenCheckingEventStateThenReturnsFalse) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        mockApi->mockEventAlreadyEnabled = false; // Event disabled - will return nullptr
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    // Attempt to enable - will fail because event is already disabled (pre-existing)
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTracingOffWhenCheckingTracingStateThenReturnsFalse) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        mockApi->mockTracingAlreadyOn = false; // Tracing off - will return nullptr
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenNegativeBufferSizeWhenGettingPropertiesThenSetsZeroMaxSize) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
-        mockApi->failGetBufferSize = true;
-        return mockApi;
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_properties_exp_t properties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogGetPropertiesExp(infoLogHandles[0], &properties));
-    EXPECT_EQ(0u, properties.maxSize); // Should be 0 when bufferSize <= 0
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTimestampWithoutDotWhenParsingThenReturnsZero) {
@@ -2437,15 +1409,16 @@ TEST_F(SysmanInfoLogFixture, GivenTimestampWithoutDotWhenParsingThenReturnsZero)
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(0ULL, descriptors[0].timestamp); // Should be 0 when parsing fails
 }
@@ -2461,117 +1434,111 @@ TEST_F(SysmanInfoLogFixture, GivenNullEntryPointsWhenCallingTraceFsApiFunctionsT
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     // Try to enable - will fail due to null entry points
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_NE(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_NE(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
-TEST_F(SysmanInfoLogFixture, GivenAlreadyEnabledWithSameGlobalConfigWhenCallingInfoLogEnableAgainThenSuccessIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenGlobalInstanceWhenCreatingASecondGlobalInstanceThenBothAreIndependent) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
         return mockApi;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    // Enable with global instance (instanceName = nullptr)
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
-    // Try to enable again with same global configuration
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    zes_intel_info_log_instance_handle_t hInstance2 = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance2));
+    EXPECT_NE(hInstance, hInstance2);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance2));
 }
 
-TEST_F(SysmanInfoLogFixture, GivenAlreadyEnabledWithGlobalConfigWhenCallingInfoLogEnableWithNamedInstanceThenInvalidArgumentIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenValidBufferSizeWhenCreatingInstanceThenRequestIsSplitAcrossPerCpuBuffersAndAppliedTotalIsReported) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
         return mockApi;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    MockPerCpuDirBackup perCpuDirBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    // Enable with global instance
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    uint32_t bufferSize = 1024u;
+    const size_t expectedPerCpuBufferSize = bufferSize / MockPerCpuDir::mockPerCpuBufferCount;
 
-    // Try to enable with named instance - should fail with conflicting configuration
-    const char *instanceName = "conflict_instance";
-    zes_intel_info_log_enable_descriptor_exp desc2 = {instanceName, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc2));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenBufferSizeConfigurationWhenCallingInfoLogEnableThenBufferSizeIsSet) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    constexpr uint32_t requestedSizeKb = 256u;
-    uint32_t bufferSizeKb = requestedSizeKb;
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, &bufferSizeKb, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    // libtracefs takes the size in kilobytes, so the request must reach it unscaled, and cpu -1
-    // applies it to every per-CPU buffer.
+    auto desc = makeInstanceDesc(&bufferSize);
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferSizeCallCount);
-    EXPECT_EQ(static_cast<size_t>(requestedSizeKb), PublicTraceFsApi::lastSetBufferSize);
+    EXPECT_EQ(expectedPerCpuBufferSize, PublicTraceFsApi::lastSetBufferSize);
     EXPECT_EQ(-1, PublicTraceFsApi::lastSetBufferSizeCpu);
-    EXPECT_EQ(static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize), bufferSizeKb); // Set to the actual size
+    EXPECT_NE(std::string::npos, MockPerCpuDir::openedPath.find("/per_cpu"));
+    EXPECT_EQ(1u, MockPerCpuDir::closedirCallCount);
+    EXPECT_EQ(static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize), bufferSize);
+    EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+
+    EXPECT_EQ(2u, PublicTraceFsApi::setBufferSizeCallCount);
+    EXPECT_EQ(static_cast<size_t>(MockTraceFsOsLibrary::mockBufferSize), PublicTraceFsApi::lastSetBufferSize);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenValidBufferPercentThresholdWhenCallingInfoLogEnableThenSuccessIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenZeroBufferSizeWhenCreatingInstanceThenBufferIsLeftAtItsCurrentSizeAndThatSizeIsReported) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
         return mockApi;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    MockPerCpuDirBackup perCpuDirBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    // Set mock expectations for global instance with 75% threshold
-    uint32_t percentThreshold = 75; // Valid: 0-100
-    MockTraceFsOsLibrary::mockBufferPercent = percentThreshold;
+    uint32_t bufferSize = 0u;
+    auto desc = makeInstanceDesc(&bufferSize);
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
+    // Nothing was resized, and the size the buffer already had is what the descriptor reports back.
+    EXPECT_EQ(static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize), bufferSize);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, &percentThreshold};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_LE(percentThreshold, 100u);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenNotEnabledWhenCallingInfoLogDisableThenSuccessIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenPerCpuDirectoryCannotBeScannedWhenCreatingInstanceWithABufferSizeThenErrorIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
         return mockApi;
     });
+    MockPerCpuDirBackup perCpuDirBackup(true);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    // Call disable without enabling first
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    uint32_t bufferSize = 1024u;
+    auto desc = makeInstanceDesc(&bufferSize);
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(nullptr, hInstance);
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInstanceCreationFailsWhenCallingInfoLogEnableThenErrorIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenTraceFsInstanceCreationFailsWhenCreatingInstanceThenErrorIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
@@ -2583,26 +1550,71 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceCreationFailsWhenCallingInfoLogEnableT
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     const char *instanceName = "test_instance";
-    zes_intel_info_log_enable_descriptor_exp desc = {instanceName, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedWhenCallingInfoLogReadWithMetaDataThenErrorIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    ASSERT_EQ(-1, instance.getTracePipeFd());
 
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    // Don't call enable, so trace_pipe won't be opened
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, instance.readWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(0u, size);
+    EXPECT_EQ(0u, eventCount);
+}
 
-    // Should fail because trace_pipe is not opened
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedWhenCallingInfoLogPeekWithMetaDataThenRecordsAreStillReturned) {
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    ASSERT_EQ(-1, instance.getTracePipeFd());
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(mockCperLen, size);
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_EQ(ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_RECOVERABLE, descriptors[0].recordType);
+
+    uint32_t secondSize = 1024;
+    uint32_t secondCount = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &secondSize, buffer.data(), &secondCount, descriptors.data(), nullptr));
+    EXPECT_EQ(mockCperLen, secondSize);
+    EXPECT_EQ(1u, secondCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenCperEventsWithDifferentSeveritiesWhenPeekingWithMetadataThenRecordTypeReflectsTheSeverity) {
+    const std::vector<std::pair<const std::string *, zes_intel_info_log_record_type_exp_t>> severityToRecordType = {
+        {&mockCperEventWithRecoverableSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_RECOVERABLE},
+        {&mockCperEventWithFatalSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_FATAL},
+        {&mockCperEventWithCorrectedSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_CORRECTED},
+        {&mockCperEventWithInformationalSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_INFORMATIONAL},
+        {&mockCperEventWithUnrecognizedSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN},
+        {&mockCperEventWithNonNumericSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN},
+        {&mockSmallCperTraceEvent, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN}};
+
+    for (const auto &[traceData, expectedRecordType] : severityToRecordType) {
+        MockTraceFsApiWithData traceFsApi(false, false, *traceData);
+        LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+        uint32_t size = 1024;
+        uint32_t eventCount = 1;
+        std::vector<uint8_t> buffer(size);
+        std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+        ASSERT_EQ(1u, eventCount);
+        EXPECT_EQ(expectedRecordType, descriptors[0].recordType);
+    }
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTimestampWithoutColonSeparatorWhenParsingThenTimestampIsZero) {
@@ -2618,71 +1630,18 @@ TEST_F(SysmanInfoLogFixture, GivenTimestampWithoutColonSeparatorWhenParsingThenT
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(0ULL, descriptors[0].timestamp); // Should be 0 when xe_error_cper marker not found
-}
-
-TEST_F(SysmanInfoLogFixture, GivenMissingCperLenFieldWhenParsingThenFieldNotFoundPathIsExecuted) {
-    // Line with xe_error_cper but missing cper_len field
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithConfigurableBehavior>(mockCperEventWithoutCperLenField);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    // Should succeed but extract 0 events due to missing field
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(0u, eventCount);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenBdfWithoutColonSeparatorWhenParsingThenParseBdfFailsGracefully) {
-    // dev field without colon separators
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithConfigurableBehavior>(mockCperEventWithoutBdfColons);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount);
-    // BDF parsing failed, but event should still be extracted
 }
 
 TEST_F(SysmanInfoLogFixture, GivenBdfWithInvalidFormatWhenParsingThenParseBdfFailsGracefully) {
@@ -2699,48 +1658,23 @@ TEST_F(SysmanInfoLogFixture, GivenBdfWithInvalidFormatWhenParsingThenParseBdfFai
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenUuidWithInvalidLengthWhenParsingThenParseUuidFailsGracefully) {
-    // platform_id field with invalid length (too short)
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithConfigurableBehavior>(mockCperEventWithShortPlatformId);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenUuidWithInvalidFormatWhenParsingThenParseUuidFailsGracefully) {
-    // platform_id field with invalid hex characters
+    // fru_id field with invalid hex characters
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithConfigurableBehavior>(mockCperEventWithNonHexPlatformId);
+        return std::make_unique<MockTraceFsApiWithConfigurableBehavior>(mockCperEventWithNonHexFruId);
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
@@ -2751,15 +1685,16 @@ TEST_F(SysmanInfoLogFixture, GivenUuidWithInvalidFormatWhenParsingThenParseUuidF
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
 }
 
@@ -2777,8 +1712,9 @@ TEST_F(SysmanInfoLogFixture, GivenNonCperLineWhenParsingThenProcessCperLineSkips
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
@@ -2786,62 +1722,8 @@ TEST_F(SysmanInfoLogFixture, GivenNonCperLineWhenParsingThenProcessCperLineSkips
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
     // Should succeed but extract 0 events because line is not a CPER line
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenCperRawWithInvalidHexWhenParsingThenValidationFails) {
-    // cper_raw field with non-hex characters (ZZZZ)
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithConfigurableBehavior>(mockCperEventWithNonHexCperRaw);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    // Should succeed but extract 0 events due to CPER validation error
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(0u, eventCount);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenBufferTooSmallWhenExtractingCperThenBufferFullPathIsExecuted) {
-    // Use single CPER event but very small buffer
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 10; // Very small buffer - not enough for 532 byte CPER
-    uint32_t eventCount = 10;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-
-    // Should return WARNING_DROPPED_DATA with 0 events extracted due to buffer too small
-    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(0u, eventCount); // Buffer full, cannot add CPER
 }
 
 TEST_F(SysmanInfoLogFixture, GivenCperLenZeroWhenCountingRecordsThenSkipsRecord) {
@@ -2858,18 +1740,19 @@ TEST_F(SysmanInfoLogFixture, GivenCperLenZeroWhenCountingRecordsThenSkipsRecord)
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
     // Query mode (pBuffer is null) - will call countCperRecordsAndSize
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, nullptr, &eventCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
     EXPECT_EQ(0u, eventCount); // Should be 0 because cper_len=0 is skipped
     EXPECT_EQ(0u, size);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInstanceGetFileReturnsNullWhenEnablingNamedInstanceThenErrorIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenInstanceGetFileReturnsNullWhenCreatingNamedInstanceThenErrorIsReturned) {
     // Mock that returns nullptr for traceFsInstanceGetFile
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
@@ -2881,9 +1764,10 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceGetFileReturnsNullWhenEnablingNamedIns
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     const char *instanceName = "test_instance";
-    zes_intel_info_log_enable_descriptor_exp desc = {instanceName, nullptr, nullptr};
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
     // Should fail because traceFsInstanceGetFile returns nullptr
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedForNamedInstanceWhenReadingThenErrorIsReturned) {
@@ -2892,9 +1776,13 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedForNamedInstanceWhenReadingT
         return std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
     });
 
-    // Mock open to always fail
+    // Mock open of the trace_pipe to always fail. Opening the instance directory, which is how a named
+    // instance claims ownership of the tracefs instance, still has to work for the read to be reached.
     auto mockOpenFail = [](const char *pathname, int flags) -> int {
-        return -1;
+        if (pathname && std::string(pathname).find("trace_pipe") != std::string::npos) {
+            return -1;
+        }
+        return MockTraceFsApiWithData::mockSysCallsOpen(pathname, flags);
     };
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, mockOpenFail);
 
@@ -2902,44 +1790,10 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedForNamedInstanceWhenReadingT
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     const char *instanceName = "test_instance";
-    zes_intel_info_log_enable_descriptor_exp desc = {instanceName, nullptr, nullptr};
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
     // Enable will fail because open fails
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTracePipeClosedForInstancedCollectionWhenExtractingThenErrorIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<MockTraceFsApiWithData>();
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    const char *instanceName = "test_instance";
-    zes_intel_info_log_enable_descriptor_exp desc = {instanceName, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    // Now disable to close the trace_pipe
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-
-    // Now try to enable again with the instance name
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-
-    // Extract mode should work since we re-enabled
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTraceFsInstanceFileReadReturnsNullInQueryModeThenErrorIsReturned) {
@@ -2954,85 +1808,16 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsInstanceFileReadReturnsNullInQueryModeT
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
     // Query mode - will fail because trace file read returns nullptr
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, nullptr, &eventCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenEnabledNamedInstanceWhenGettingPropertiesThenBufferSizeIsQueriedFromActiveInstance) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<MockTraceFsApiWithData>();
-        mockApi->useDistinctBufferSizePerTarget = true;
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    EXPECT_EQ(1u, MockTraceFsApiWithData::bufferSizeQueryCount);
-    EXPECT_EQ(nullptr, MockTraceFsApiWithData::queriedBufferSizeInstance);
-
-    auto *pInfoLogImp = static_cast<InfoLogImp *>(InfoLog::fromHandle(infoLogHandles[0]));
-
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(1u, MockTraceFsApiWithData::bufferSizeQueryCount);
-
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->pOsInfoLog->getProperties(&properties));
-    EXPECT_EQ(2u, MockTraceFsApiWithData::bufferSizeQueryCount);
-    EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, MockTraceFsApiWithData::queriedBufferSizeInstance);
-    EXPECT_EQ(static_cast<uint32_t>(MockTraceFsApiWithData::mockNamedInstanceBufferSize), properties.maxSize);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->pOsInfoLog->getProperties(&properties));
-    EXPECT_EQ(3u, MockTraceFsApiWithData::bufferSizeQueryCount);
-    EXPECT_EQ(nullptr, MockTraceFsApiWithData::queriedBufferSizeInstance);
-    EXPECT_EQ(static_cast<uint32_t>(MockTraceFsApiWithData::mockGlobalBufferSize), properties.maxSize);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInstancesDirectoryNotWritableWhenGettingPropertiesThenIsInstancedCollectionSupportedIsFalse) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<PublicTraceFsApi>();
-        mockApi->loadEntryPointsFromBase();
-        return mockApi;
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    VariableBackup<bool> failAccessBackup(&NEO::SysCalls::failAccess, true);
-
-    auto *pInfoLogImp = static_cast<InfoLogImp *>(InfoLog::fromHandle(infoLogHandles[0]));
-
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->pOsInfoLog->getProperties(&properties));
-    EXPECT_FALSE(properties.isInstancedCollectionSupported);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInstancesDirectoryNotWritableWhenEnablingNamedInstanceThenUnsupportedFeatureIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<MockTraceFsApiWithData>();
-        return mockApi;
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    VariableBackup<bool> failAccessBackup(&NEO::SysCalls::failAccess, true);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
-    EXPECT_EQ(0u, MockTraceFsApiWithData::instanceFreeCallCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNamedInstanceNotPreExistingWhenEventEnableFailsThenInstanceIsDestroyedAndFreed) {
@@ -3046,8 +1831,9 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceNotPreExistingWhenEventEnableFail
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
 }
@@ -3062,41 +1848,120 @@ TEST_F(SysmanInfoLogFixture, GivenPreExistingNamedInstanceWhenEventEnableFailsTh
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenOverlongLineFollowedByValidEventWhenReadingWithMetaDataThenLineIsSkippedAndNextEventIsExtracted) {
+TEST_F(SysmanInfoLogFixture, GivenPreExistingNamedInstanceOwnedByAnotherCollectionInstanceWhenCreatingInstanceThenHandleObjectInUseIsReturnedAndInstanceIsNotDestroyed) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithConfigurableBehavior>(mockOverlongLineFollowedByCperEvent);
+        return std::make_unique<MockTraceFsApiWithData>();
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    // The advisory lock on the instance directory is held elsewhere, which is what identifies the
+    // instance as one this API is already collecting from.
+    VariableBackup<int> flockRetValBackup(&NEO::SysCalls::flockRetVal, -1);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    EXPECT_EQ(nullptr, hInstance);
 
-    uint32_t size = 1024;
-    uint32_t eventCount = 1;
-    std::vector<uint8_t> buffer(size, 0);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    // The owner is still collecting from it, so it is released without being destroyed, and the
+    // descriptor opened to attempt the claim is not leaked.
+    EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
+    EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
+    EXPECT_EQ(1, MockTraceFsApiWithData::instanceDirOpenCallCount);
+    EXPECT_EQ(1, MockTraceFsApiWithData::instanceDirCloseCallCount);
+}
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
-    EXPECT_EQ(1u, eventCount);
-    EXPECT_EQ(2u, size);
-    EXPECT_EQ(0xABu, buffer[0]);
-    EXPECT_EQ(0xCDu, buffer[1]);
-    EXPECT_EQ(2u, descriptors[0].lengthOfData);
-    EXPECT_EQ(5058247549ULL, descriptors[0].timestamp);
+TEST_F(SysmanInfoLogFixture, GivenPreExistingNamedInstanceNotOwnedByAnyCollectionInstanceWhenCreatingInstanceThenItIsReusedAndLeftInPlaceOnDelete) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    // The instance pre-exists but nothing holds its lock, so it was provisioned outside of this API
+    // and is collected from rather than refused.
+    auto hInstance = createInfoLogInstance(infoLogHandles[0], "my_instance");
+    EXPECT_EQ(1, MockTraceFsApiWithData::instanceDirOpenCallCount);
+    EXPECT_EQ(0, MockTraceFsApiWithData::instanceDirCloseCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
+    EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
+    // Deleting the collection instance releases the lock, which is what closing the directory does.
+    EXPECT_EQ(1, MockTraceFsApiWithData::instanceDirCloseCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInstanceDirectoryCannotBeOpenedWhenCreatingNamedInstanceThenErrnoIsReportedAndInstanceIsNotDestroyed) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<MockTraceFsApiWithData>();
+        MockTraceFsApiWithData::simulateInstanceDirOpenFailure = true;
+        return mockApi;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    // The mock reports EACCES, which is what the caller is told about.
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    EXPECT_EQ(nullptr, hInstance);
+    EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
+    EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
+    EXPECT_EQ(0, MockTraceFsApiWithData::instanceDirCloseCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNoTracefsInstancesDirectoryWhenCreatingNamedInstanceThenNotAvailableIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutInstancesDir);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    EXPECT_EQ(nullptr, hInstance);
+    EXPECT_EQ(0, MockTraceFsApiWithData::instanceDirOpenCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenUnnamedInstanceWhenCreatingInstanceThenNoOwnershipOfATracefsInstanceIsClaimed) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<int> flockCalledBackup(&NEO::SysCalls::flockCalled, 0);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    // Collection from the global tracefs buffer creates no tracefs instance, so there is nothing to
+    // own and no other consumer to exclude.
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+    EXPECT_EQ(0, MockTraceFsApiWithData::instanceDirOpenCallCount);
+    EXPECT_EQ(0, NEO::SysCalls::flockCalled);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(0, MockTraceFsApiWithData::instanceDirCloseCallCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenOverlongLineAtEndOfTraceDataWhenReadingWithMetaDataThenNoEventIsExtracted) {
@@ -3113,20 +1978,21 @@ TEST_F(SysmanInfoLogFixture, GivenOverlongLineAtEndOfTraceDataWhenReadingWithMet
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenIncompleteFinalLineNotFittingInBufferWhenReadingWithMetaDataThenDroppedDataWarningIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenIncompleteFinalLineNotFittingInBufferWhenReadingWithMetaDataThenTheRecordIsHeldBack) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithConfigurableBehavior>(mockCperEventWithoutTrailingNewline);
     });
@@ -3140,17 +2006,21 @@ TEST_F(SysmanInfoLogFixture, GivenIncompleteFinalLineNotFittingInBufferWhenReadi
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 2;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
 
-    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
+    EXPECT_TRUE(readStatus.hasDataToRead);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenSetvbufFailsWhenReadingWithMetaDataThenErrorIsReturned) {
@@ -3167,15 +2037,16 @@ TEST_F(SysmanInfoLogFixture, GivenSetvbufFailsWhenReadingWithMetaDataThenErrorIs
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = mockCperLen;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 }
@@ -3191,19 +2062,20 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenTraceFileReadFailsInQueryMode
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, nullptr, &eventCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
     EXPECT_EQ(1u, MockTraceFsApiWithConfigurableBehavior::traceReadCallCount);
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, MockTraceFsApiWithConfigurableBehavior::traceReadInstance);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenReadingInfoLogThenTraceFileIsReadFromThatInstance) {
+TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenPeekingInfoLogThenTraceFileIsReadFromThatInstance) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
         mockApi->failTraceFileRead = true;
@@ -3214,12 +2086,13 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenReadingInfoLogThenTraceFileIs
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, peekInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
     EXPECT_EQ(1u, MockTraceFsApiWithConfigurableBehavior::traceReadCallCount);
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, MockTraceFsApiWithConfigurableBehavior::traceReadInstance);
@@ -3239,17 +2112,18 @@ TEST_F(SysmanInfoLogFixture, GivenTimestampWithShortFractionalPartWhenReadingWit
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
-    EXPECT_EQ(5058240000ULL, descriptors[0].timestamp);
+    EXPECT_EQ(5058240000000ULL, descriptors[0].timestamp);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNoSpaceBeforeTimestampWhenReadingWithMetaDataThenTimestampIsZero) {
@@ -3266,21 +2140,22 @@ TEST_F(SysmanInfoLogFixture, GivenNoSpaceBeforeTimestampWhenReadingWithMetaDataT
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(2u, size);
     EXPECT_EQ(0ULL, descriptors[0].timestamp);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenNewlyCreatedNamedInstanceWhenDisablingInfoLogThenInstanceIsDestroyedAndFreed) {
+TEST_F(SysmanInfoLogFixture, GivenNewlyCreatedNamedInstanceWhenDeletingInstanceThenInstanceIsDestroyedAndFreed) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -3291,12 +2166,13 @@ TEST_F(SysmanInfoLogFixture, GivenNewlyCreatedNamedInstanceWhenDisablingInfoLogT
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(0u, MockTraceFsApiWithData::instanceFreeCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
 }
@@ -3312,124 +2188,84 @@ TEST_F(SysmanInfoLogFixture, GivenEventAlreadyEnabledWhenTraceOnFailsThenEventIs
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(0, MockTraceFsApiWithData::eventDisableCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenSetBufferPercentFailsWhenEnablingNamedInstanceThenErrorIsReturnedAndInstanceIsCleanedUp) {
+TEST_F(SysmanInfoLogFixture, GivenSetBufferSizeFailsWhenCreatingNamedInstanceThenErrorIsReturnedAndInstanceIsCleanedUp) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
-        mockApi->failSetBufferPercent = true;
+        mockApi->setBufferSizeReturnValue = -1;
         return mockApi;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    MockPerCpuDirBackup perCpuDirBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    uint32_t percentFullThreshold = 75u;
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, &percentFullThreshold};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    uint32_t bufferSize = 1024u;
+    auto desc = makeInstanceDesc(&bufferSize);
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
+    EXPECT_EQ(1u, PublicTraceFsApi::setBufferSizeCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenSetBufferSizeFailsWhenEnablingNamedInstanceThenErrorIsReturnedAndInstanceIsCleanedUp) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
-        mockApi->failSetBufferSize = true;
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    uint32_t bufferSizeInKb = 256u;
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", &bufferSizeInKb, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(1u, MockTraceFsApiWithData::instanceDestroyCallCount);
-    EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenRequestedBufferSizeWhenEnablingInfoLogThenActualPerCpuSizeIsReportedBack) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
-        mockApi->reportDistinctPerCpuAndTotalBufferSize = true;
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    uint32_t bufferSizeInKb = 256u;
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, &bufferSizeInKb, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
-    // The read back size describes one per-CPU buffer, not the sum across all CPUs.
-    EXPECT_EQ(static_cast<uint32_t>(MockTraceFsApiWithConfigurableBehavior::mockPerCpuBufferSizeKb), bufferSizeInKb);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenGetBufferSizeFailsWhenEnablingInfoLogThenReportedBufferSizeIsZero) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
-        mockApi->failGetBufferSize = true;
-        return mockApi;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    uint32_t bufferSizeInKb = 256u;
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, &bufferSizeInKb, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(0u, bufferSizeInKb); // Should be 0 rather than a wrapped around -1
-}
-
-TEST_F(SysmanInfoLogFixture, GivenBufferFullDropsAnOversizedRecordWhenReadingAgainThenTheFollowingRecordIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenBufferFullHoldsBackAnOversizedRecordWhenReadingAgainThenItIsReturnedAheadOfTheFollowingRecord) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockSmallCperTraceEvent, false, &mockLargerThenSmallCperTracePipeEvents);
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
+    MockBadCperStdioBackup stdioBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
 
     uint32_t size = 2u;
     std::vector<uint8_t> buffer(1024u);
-    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
 
     size = 1024u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(2u, size);
-    EXPECT_EQ(0x12, buffer[0]);
-    EXPECT_EQ(0x34, buffer[1]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
+    EXPECT_EQ(6u, size);
+    EXPECT_EQ(0xAB, buffer[0]);
+    EXPECT_EQ(0xCD, buffer[1]);
+    EXPECT_EQ(0xEF, buffer[2]);
+    EXPECT_EQ(0x01, buffer[3]);
+    EXPECT_EQ(0x12, buffer[4]);
+    EXPECT_EQ(0x34, buffer[5]);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenFirstTraceFsPathFailsWhenEnablingInfoLogThenFallsBackToSecondPathAndReadSucceeds) {
+TEST_F(SysmanInfoLogFixture, GivenFirstTraceFsPathFailsWhenCreatingInstanceThenFallsBackToSecondPathAndReadSucceeds) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>(false, true);
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
 
     EXPECT_EQ(2, MockTraceFsApiWithData::openCallCount);
 
     uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(mockCperLen, size);
 
     for (uint32_t i = 0; i < expectedCper1Bytes.size(); i++) {
@@ -3437,7 +2273,7 @@ TEST_F(SysmanInfoLogFixture, GivenFirstTraceFsPathFailsWhenEnablingInfoLogThenFa
     }
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionAlreadyEnabledWhenEnablingAgainThenDescriptorIsReusedAndNotLeaked) {
+TEST_F(SysmanInfoLogFixture, GivenInstanceCreatedWhenCreatingASecondInstanceThenEachOneOpensAndClosesItsOwnTracePipe) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -3448,53 +2284,50 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionAlreadyEnabledWhenEnablingAga
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    enableInfoLogCollection(infoLogHandles[0]);
+    auto hFirstInstance = createInfoLogInstance(infoLogHandles[0]);
     ASSERT_EQ(1, MockTraceFsApiWithData::openCallCount);
+    ASSERT_EQ(1u, getCperTracePipeFdCount());
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
+    auto hSecondInstance = createInfoLogInstance(infoLogHandles[0]);
+    EXPECT_EQ(2, MockTraceFsApiWithData::openCallCount);
+    EXPECT_EQ(1u, getCperTracePipeFdCount());
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hFirstInstance));
+    EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hSecondInstance));
+    EXPECT_EQ(2, MockTraceFsApiWithData::closeCallCount);
+    EXPECT_EQ(0u, getCperTracePipeFdCount());
+    EXPECT_EQ(-1, getCperTracePipeFd());
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionDisabledAfterEnableWhenReadingInfoLogThenNotAvailableIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenInstanceWithoutAnOpenTracePipeWhenReadingWithMetaDataThenNotAvailableIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
-    ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+    auto nonCperFormat = static_cast<zes_intel_info_log_format_exp_t>(ZES_INTEL_INFO_LOG_FORMAT_CPER + 1);
+    LinuxInfoLogImp infoLogImp(nonCperFormat);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
-    EXPECT_EQ(-1, getCperTracePipeFd());
+    auto desc = makeInstanceDesc();
+    std::unique_ptr<OsInfoLogInstance> pOsInfoLogInstance;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, infoLogImp.createInstance(nullptr, &desc, pOsInfoLogInstance));
+    ASSERT_NE(nullptr, pOsInfoLogInstance.get());
+    ASSERT_EQ(-1, pOsInfoLogInstance->getTracePipeFd());
 
     uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
+    uint32_t recordCount = maxRecordsPerRead;
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(recordCount);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE,
+              pOsInfoLogInstance->readWithMetadata(noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(0u, size);
+    EXPECT_EQ(0u, recordCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionEnabledThenTraceFsWakeWatermarkIsLoweredToZero) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
-
-    EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
-    EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenEnablingAndDisablingInfoLogThenWakeWatermarkIsProgrammedOnThatInstance) {
+TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenCreatingAndDeletingItThenWakeWatermarkIsProgrammedOnThatInstance) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -3505,43 +2338,70 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenEnablingAndDisablingInfoLogTh
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, nullptr};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, PublicTraceFsApi::lastSetBufferPercentInstance);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, PublicTraceFsApi::lastSetBufferPercentInstance);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWithExplicitThresholdWhenEnablingInfoLogThenWakeWatermarkIsNotForcedToZero) {
+TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWithABufferSizeWhenCreatingInstanceThenItsOwnPerCpuDirectoryIsScannedAndWakeWatermarkIsStillForcedToZero) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
+        return std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    MockPerCpuDirBackup perCpuDirBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    uint32_t percentFullThreshold = 60u;
-    zes_intel_info_log_enable_descriptor_exp desc = {"my_instance", nullptr, &percentFullThreshold};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    uint32_t bufferSize = 1002u;
+    auto desc = makeInstanceDesc(&bufferSize);
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
 
-    // The caller supplied a fill level, so it is honoured verbatim and nothing is saved for restore.
+    EXPECT_EQ(std::string(MockTraceFsOsLibrary::mockTraceDir) + "/per_cpu", MockPerCpuDir::openedPath);
+    EXPECT_EQ(1u, PublicTraceFsApi::setBufferSizeCallCount);
+    EXPECT_EQ(251u, PublicTraceFsApi::lastSetBufferSize);
+    EXPECT_EQ(-1, PublicTraceFsApi::lastSetBufferSizeCpu);
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
-    EXPECT_EQ(60, PublicTraceFsApi::lastSetBufferPercent);
-    EXPECT_EQ(static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferPercent), percentFullThreshold);
+    EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
+    EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, PublicTraceFsApi::lastSetBufferPercentInstance);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionEnabledWhenDisablingThenPreviousTraceFsWakeWatermarkIsRestored) {
+TEST_F(SysmanInfoLogFixture, GivenNamedInstancePerCpuPathIsUnavailableWhenCreatingInstanceWithABufferSizeThenErrorIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
+        mockApi->failGetFile = true;
+        return mockApi;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    MockPerCpuDirBackup perCpuDirBackup;
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    uint32_t bufferSize = 1024u;
+    auto desc = makeInstanceDesc(&bufferSize);
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    EXPECT_TRUE(MockPerCpuDir::openedPath.empty());
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInstanceCreatedWhenDeletingInstanceThenPreviousTraceFsWakeWatermarkIsRestored) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -3550,33 +2410,16 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionEnabledWhenDisablingThenPrevi
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+    ASSERT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
     ASSERT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionNeverEnabledWhenDisablingThenSuccessIsReturnedAndCloseIsNotCalled) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    ASSERT_EQ(-1, getCperTracePipeFd());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(0, MockTraceFsApiWithData::closeCallCount);
-    EXPECT_EQ(-1, getCperTracePipeFd());
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionNeverEnabledWhenDriverIsDestroyedThenTraceFsStateIsLeftUntouched) {
+TEST_F(SysmanInfoLogFixture, GivenNoInstanceCreatedWhenDriverIsDestroyedThenTraceFsStateIsLeftUntouched) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -3596,37 +2439,7 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionNeverEnabledWhenDriverIsDestr
     EXPECT_EQ(0, MockTraceFsApiWithData::closeCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionNotEnabledAndNoFittingRecordsInTraceWhenReadingInfoLogThenNotAvailableIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockCperEventWithZeroLen);
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    ASSERT_EQ(-1, getCperTracePipeFd());
-
-    uint32_t size = 1024u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionNotEnabledWhenReadingInfoLogThenNotAvailableIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    ASSERT_EQ(-1, getCperTracePipeFd());
-
-    uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionStillEnabledWhenDriverIsDestroyedThenCollectionIsDisabledAndTraceFsStateIsRestored) {
+TEST_F(SysmanInfoLogFixture, GivenInstanceStillAliveWhenDriverIsDestroyedThenCollectionIsStoppedAndTraceFsStateIsRestored) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -3635,7 +2448,7 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionStillEnabledWhenDriverIsDestr
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
+    createInfoLogInstance(infoLogHandles[0]);
     ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
     ASSERT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
     ASSERT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
@@ -3652,26 +2465,7 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionStillEnabledWhenDriverIsDestr
     EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenInfoLogCollectionStillEnabledWhenDriverIsDestroyedThenTracePipeDescriptorIsClosed) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
-    ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
-    ASSERT_EQ(0, MockTraceFsApiWithData::closeCallCount);
-
-    delete driverHandle;
-    driverHandle = nullptr;
-
-    EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenInfoLogFormatIsNotCperWhenEnablingInfoLogThenTracingIsTurnedOnWithoutOpeningTracePipe) {
+TEST_F(SysmanInfoLogFixture, GivenInfoLogFormatIsNotCperWhenCreatingInstanceThenTracingIsTurnedOnWithoutOpeningTracePipe) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -3680,137 +2474,18 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogFormatIsNotCperWhenEnablingInfoLogThenT
     auto nonCperFormat = static_cast<zes_intel_info_log_format_exp_t>(ZES_INTEL_INFO_LOG_FORMAT_CPER + 1);
     LinuxInfoLogImp infoLogImp(nonCperFormat);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, infoLogImp.infoLogEnable(&desc));
-    EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
+    auto desc = makeInstanceDesc();
+    std::unique_ptr<OsInfoLogInstance> pOsInfoLogInstance;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, infoLogImp.createInstance(nullptr, &desc, pOsInfoLogInstance));
+    EXPECT_NE(nullptr, pOsInfoLogInstance.get());
+
+    EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
+    EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
     EXPECT_EQ(0, MockTraceFsApiWithData::openCallCount);
     EXPECT_EQ(-1, getCperTracePipeFd());
 }
 
-TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenDisablingInfoLogThenCloseIsSkippedAndSuccessIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
-    ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
-
-    auto *pSysmanDriverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle);
-    auto *originalOsSysmanDriver = pSysmanDriverHandleImp->pOsSysmanDriver;
-    pSysmanDriverHandleImp->pOsSysmanDriver = nullptr;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(0, MockTraceFsApiWithData::closeCallCount);
-    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
-
-    pSysmanDriverHandleImp->pOsSysmanDriver = originalOsSysmanDriver;
-    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
-}
-
-TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenEnablingInfoLogThenUninitializedIsReturnedAndTraceFsStateIsRolledBack) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    auto *pSysmanDriverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle);
-    auto *originalOsSysmanDriver = pSysmanDriverHandleImp->pOsSysmanDriver;
-    pSysmanDriverHandleImp->pOsSysmanDriver = nullptr;
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(0, MockTraceFsApiWithData::openCallCount);
-
-    EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
-    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
-
-    pSysmanDriverHandleImp->pOsSysmanDriver = originalOsSysmanDriver;
-    EXPECT_EQ(-1, getCperTracePipeFd());
-}
-
-TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenReadingInfoLogThenNotAvailableIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    enableInfoLogCollection(infoLogHandles[0]);
-    ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
-
-    auto *pSysmanDriverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle);
-    auto *originalOsSysmanDriver = pSysmanDriverHandleImp->pOsSysmanDriver;
-    pSysmanDriverHandleImp->pOsSysmanDriver = nullptr;
-
-    uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-
-    pSysmanDriverHandleImp->pOsSysmanDriver = originalOsSysmanDriver;
-    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
-}
-
-TEST_F(SysmanInfoLogFixture, GivenReadFailsMidLineWithHardErrorWhenReadingAgainThenTheTruncatedPrefixIsDiscarded) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSmallCperTraceEvent, false, &mockLargerThenSmallCperTracePipeEvents);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsReadWithHardErrorMidCperRaw);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
-
-    uint32_t size = 1024u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-
-    size = 1024u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(2u, size);
-    EXPECT_EQ(0x12, buffer[0]);
-    EXPECT_EQ(0x34, buffer[1]);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenReadStopsMidLineOnEagainWhenReadingAgainThenTheRecordIsCompletedAcrossCalls) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSpacedHexCperEvent);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithBadCperData::mockSysCallsClose);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithBadCperData::mockSysCallsReadWithEagainMidLine);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
-
-    uint32_t size = 1024u;
-    std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
-
-    size = 1024u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(2u, size);
-    EXPECT_EQ(0xAB, buffer[0]);
-    EXPECT_EQ(0xCD, buffer[1]);
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkAlreadyZeroWhenEnablingInfoLogThenItIsNotRewritten) {
+TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkAlreadyZeroWhenCreatingInstanceThenItIsNotRewritten) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<MockTraceFsApiWithData>();
         mockApi->getBufferPercentReturnValue = 0;
@@ -3821,15 +2496,15 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkAlreadyZeroWhenEnablingInf
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
 
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeProgrammedWhenEnablingInfoLogThenCollectionStillSucceeds) {
+TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeProgrammedWhenCreatingInstanceThenCollectionStillSucceeds) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<MockTraceFsApiWithData>();
         mockApi->setBufferPercentReturnValue = -1;
@@ -3841,16 +2516,17 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeProgrammedWhenEnab
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeReadWhenEnablingInfoLogThenItIsNotOverridden) {
+TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeReadWhenCreatingInstanceThenItIsNotOverridden) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<MockTraceFsApiWithData>();
         mockApi->getBufferPercentReturnValue = -1;
@@ -3861,15 +2537,15 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeReadWhenEnablingIn
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
 
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkRestoreFailsWhenDisablingThenSavedValueIsKeptAndWrittenBackByALaterDisable) {
+TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkRestoreFailsWhenDeletingInstanceThenDeleteStillSucceeds) {
     VariableBackup<decltype(PublicTraceFsApi::failSetBufferPercentOnCall)> failRestoreBackup(&PublicTraceFsApi::failSetBufferPercentOnCall, 2u);
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
@@ -3879,23 +2555,16 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkRestoreFailsWhenDisablingT
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
     ASSERT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
     ASSERT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(3u, PublicTraceFsApi::setBufferPercentCallCount);
-    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(3u, PublicTraceFsApi::setBufferPercentCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenEnablingInfoLogThenErrorIsReturnedAndNoDescriptorIsStored) {
+TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenCreatingInstanceThenErrorIsReturnedAndTraceFsStateIsRolledBack) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockSingleCperEventData, true);
     });
@@ -3904,39 +2573,30 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenEnablingInfoLogThenError
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(-1, getCperTracePipeFd());
-}
-
-TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenEnablingInfoLogThenTraceFsWakeWatermarkIsRestored) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithBadCperData>(mockSingleCperEventData, true);
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithBadCperData::mockSysCallsOpen);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenReadingInfoLogThenNotAvailableIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenReadingInfoLogThenTheInstanceStillServesItsRecords) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    enableInfoLogCollection(infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
     ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
     ASSERT_NE(nullptr, L0::Sysman::globalSysmanDriver);
 
@@ -3945,13 +2605,13 @@ TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenReadingInfoLogThenNo
 
     uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
     std::vector<uint8_t> buffer(size);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadExp(infoLogHandles[0], &size, buffer.data()));
-    EXPECT_EQ(0u, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
+    EXPECT_EQ(mockCperLen, size);
 
     size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
     uint32_t eventCount = 1;
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, size);
     EXPECT_EQ(0u, eventCount);
 
@@ -3959,7 +2619,7 @@ TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenReadingInfoLogThenNo
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
 }
 
-TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenEnablingInfoLogThenUninitializedIsReturnedAndTraceFsStateIsRolledBack) {
+TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenCreatingInstanceThenUninitializedIsReturnedAndTraceFsStateIsRolledBack) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -3973,11 +2633,11 @@ TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenEnablingInfoLogThenU
     auto *originalGlobalSysmanDriver = L0::Sysman::globalSysmanDriver;
     L0::Sysman::globalSysmanDriver = nullptr;
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(0, MockTraceFsApiWithData::openCallCount);
 
-    // The failed enable unwinds through infoLogDisable(), which also has to tolerate the missing driver.
     EXPECT_EQ(0, MockTraceFsApiWithData::closeCallCount);
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
@@ -3986,7 +2646,7 @@ TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenEnablingInfoLogThenU
     EXPECT_EQ(-1, getCperTracePipeFd());
 }
 
-TEST_F(SysmanInfoLogFixture, GivenTracePipeAlreadyOpenedByDriverWhenEnablingInfoLogThenExistingDescriptorIsReused) {
+TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenDeletingInstanceThenDescriptorIsStillClosedAndSuccessIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -3995,45 +2655,22 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeAlreadyOpenedByDriverWhenEnablingInfo
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
-
-    // Another consumer of the driver already owns a trace_pipe descriptor.
-    getLinuxSysmanDriverImp()->setCperTracePipeFd(MockTraceFsApiWithData::mockTracePipeFd);
-
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(0, MockTraceFsApiWithData::openCallCount);
-    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
-    EXPECT_EQ(-1, getCperTracePipeFd());
-}
-
-TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenDisablingInfoLogThenCloseIsSkippedAndSuccessIsReturned) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    enableInfoLogCollection(infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
     ASSERT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
     ASSERT_NE(nullptr, L0::Sysman::globalSysmanDriver);
 
     auto *originalGlobalSysmanDriver = L0::Sysman::globalSysmanDriver;
     L0::Sysman::globalSysmanDriver = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-    EXPECT_EQ(0, MockTraceFsApiWithData::closeCallCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
 
     L0::Sysman::globalSysmanDriver = originalGlobalSysmanDriver;
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
 }
 
-TEST_F(SysmanInfoLogFixture, GivenTracepointEnableStateReadsAsZeroWhenEnablingInfoLogThenTracepointIsEnabledAgain) {
+TEST_F(SysmanInfoLogFixture, GivenTracepointEnableStateReadsAsZeroWhenCreatingInstanceThenTracepointIsEnabledAgain) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
         mockApi->eventEnableStateContent = "0";
@@ -4046,12 +2683,13 @@ TEST_F(SysmanInfoLogFixture, GivenTracepointEnableStateReadsAsZeroWhenEnablingIn
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     // The tracepoint reads back as present but off, so enabling it is attempted and the failure surfaces.
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(-1, getCperTracePipeFd());
 }
 
-TEST_F(SysmanInfoLogFixture, GivenTracingOnStateReadsAsZeroWhenEnablingInfoLogThenTracingIsTurnedOnAndBackOffOnDisable) {
+TEST_F(SysmanInfoLogFixture, GivenTracingOnStateReadsAsZeroWhenCreatingInstanceThenTracingIsTurnedOnAndBackOffOnDelete) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
         // 'tracing_on' is present and reads back as off, so the state check compares its content
@@ -4066,17 +2704,18 @@ TEST_F(SysmanInfoLogFixture, GivenTracingOnStateReadsAsZeroWhenEnablingInfoLogTh
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     // Tracing is reported as off, so enabling has to turn it on.
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(1u, MockTraceFsApiWithConfigurableBehavior::traceOnCallCount);
     EXPECT_EQ(0, MockTraceFsApiWithData::traceOffCallCount);
 
     // Tracing was not already on before enabling, so disabling has to turn it back off.
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
     EXPECT_EQ(1, MockTraceFsApiWithData::traceOffCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenAlreadyEnabledWithNamedInstanceWhenCallingInfoLogEnableWithGlobalConfigThenInvalidArgumentIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenCreatingAnotherInstanceWithTheSameNameThenObjectInUseIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -4087,19 +2726,25 @@ TEST_F(SysmanInfoLogFixture, GivenAlreadyEnabledWithNamedInstanceWhenCallingInfo
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     const char *instanceName = "named_instance";
-    zes_intel_info_log_enable_descriptor_exp desc = {instanceName, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &desc, &hInstance));
     EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
 
-    // Requesting the global buffer while a named instance is active is a conflicting configuration.
-    zes_intel_info_log_enable_descriptor_exp globalDesc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogEnableExp(infoLogHandles[0], &globalDesc));
+    auto secondDesc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hSecondInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &secondDesc, &hSecondInstance));
+    EXPECT_EQ(nullptr, hSecondInstance);
     EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &secondDesc, &hSecondInstance));
+    EXPECT_EQ(2, MockTraceFsApiWithData::openCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hSecondInstance));
 }
 
-TEST_F(SysmanInfoLogFixture, GivenAlreadyEnabledWithNamedInstanceWhenCallingInfoLogEnableWithDifferentInstanceThenInvalidArgumentIsReturned) {
+TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenCreatingADifferentNamedInstanceThenBothAreIndependent) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
@@ -4110,40 +2755,20 @@ TEST_F(SysmanInfoLogFixture, GivenAlreadyEnabledWithNamedInstanceWhenCallingInfo
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     const char *firstInstanceName = "instance_a";
-    zes_intel_info_log_enable_descriptor_exp firstDesc = {firstInstanceName, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &firstDesc));
+    auto firstDesc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hFirstInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], firstInstanceName, &firstDesc, &hFirstInstance));
     EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
 
-    // A different named instance conflicts with the active one.
     const char *secondInstanceName = "instance_b";
-    zes_intel_info_log_enable_descriptor_exp secondDesc = {secondInstanceName, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogEnableExp(infoLogHandles[0], &secondDesc));
-    EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
+    auto secondDesc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hSecondInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], secondInstanceName, &secondDesc, &hSecondInstance));
+    EXPECT_NE(hFirstInstance, hSecondInstance);
+    EXPECT_EQ(2, MockTraceFsApiWithData::openCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
-}
-
-TEST_F(SysmanInfoLogFixture, GivenZeroBufferSizeInDescriptorWhenEnablingInfoLogThenBufferSizeIsLeftUntouched) {
-    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
-        return std::make_unique<MockTraceFsApiWithData>();
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
-
-    auto infoLogHandles = getInfoLogHandles(handleCount);
-    ASSERT_NE(nullptr, infoLogHandles[0]);
-    auto bufferSizeQueryCountBeforeEnable = MockTraceFsApiWithData::bufferSizeQueryCount;
-
-    // A provided-but-zero buffer size means "keep the current tracefs buffer size".
-    uint32_t bufferSizeKb = 0;
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, &bufferSizeKb, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
-    EXPECT_EQ(0u, bufferSizeKb);
-    EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
-    EXPECT_EQ(bufferSizeQueryCountBeforeEnable, MockTraceFsApiWithData::bufferSizeQueryCount);
-    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDisableExp(infoLogHandles[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hFirstInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hSecondInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenEmptyLineReadFromTracePipeWhenReadingWithMetaDataThenFollowingEventIsStillExtracted) {
@@ -4160,8 +2785,9 @@ TEST_F(SysmanInfoLogFixture, GivenEmptyLineReadFromTracePipeWhenReadingWithMetaD
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
@@ -4169,13 +2795,13 @@ TEST_F(SysmanInfoLogFixture, GivenEmptyLineReadFromTracePipeWhenReadingWithMetaD
     std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
 
     // The first read hands out a zero length line, which must not be mistaken for a complete record.
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(2u, size);
     EXPECT_EQ(0xABu, buffer[0]);
     EXPECT_EQ(0xCDu, buffer[1]);
     EXPECT_EQ(2u, descriptors[0].lengthOfData);
-    EXPECT_EQ(5058247549ULL, descriptors[0].timestamp);
+    EXPECT_EQ(5058247549000ULL, descriptors[0].timestamp);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenEmptyLineWhileResynchronizingAfterOverlongLineWhenReadingWithMetaDataThenNextEventIsExtracted) {
@@ -4192,8 +2818,9 @@ TEST_F(SysmanInfoLogFixture, GivenEmptyLineWhileResynchronizingAfterOverlongLine
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_enable_descriptor_exp desc = {nullptr, nullptr, nullptr};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogEnableExp(infoLogHandles[0], &desc));
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
@@ -4202,7 +2829,7 @@ TEST_F(SysmanInfoLogFixture, GivenEmptyLineWhileResynchronizingAfterOverlongLine
 
     // The overlong line is abandoned on the third read, so the injected empty line lands inside the
     // resynchronization loop, where it must not be treated as the end of the discarded record.
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogReadWithMetadataExp(infoLogHandles[0], &size, buffer.data(), &eventCount, descriptors.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(4u, MockTraceFsApiWithConfigurableBehavior::emptyLineOnFgetsCall);
     EXPECT_GT(MockTraceFsApiWithConfigurableBehavior::fgetsCallCount, 4u);
     EXPECT_EQ(1u, eventCount);
@@ -4210,7 +2837,618 @@ TEST_F(SysmanInfoLogFixture, GivenEmptyLineWhileResynchronizingAfterOverlongLine
     EXPECT_EQ(0xABu, buffer[0]);
     EXPECT_EQ(0xCDu, buffer[1]);
     EXPECT_EQ(2u, descriptors[0].lengthOfData);
-    EXPECT_EQ(5058247549ULL, descriptors[0].timestamp);
+    EXPECT_EQ(5058247549000ULL, descriptors[0].timestamp);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsReportLostRecordsWhenPeekingWithMetaDataThenTheirSumIsReportedAsDropped) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(3, 0), MockPerCpuStats::makeBlob(0, 5),
+                                             MockPerCpuStats::makeBlob(2, 4, 100), MockPerCpuStats::makeBlob(0, 0)});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(1u, eventCount);
+
+    // 'overrun' and 'dropped events' are summed across the per-CPU buffers, while 'commit overrun'
+    // counts records lost to nested writes rather than to an overflow and is left out.
+    EXPECT_EQ(14u, readStatus.droppedRecordCount);
+    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+
+    ASSERT_EQ(static_cast<size_t>(MockPerCpuDir::mockPerCpuBufferCount), MockPerCpuStats::filesRead.size());
+    EXPECT_EQ("per_cpu/cpu0/stats", MockPerCpuStats::filesRead[0]);
+    EXPECT_EQ("per_cpu/cpu3/stats", MockPerCpuStats::filesRead[3]);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenAlreadyReportedDropsWhenPeekingAgainThenOnlyTheNewOnesAreReported) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(7, 0), MockPerCpuStats::makeBlob(0, 0),
+                                             MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(7u, readStatus.droppedRecordCount);
+    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+
+    // Two more records lost since that peek: the kernel counters are cumulative, so only the
+    // difference is reported.
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(9, 0);
+
+    size = 1024;
+    eventCount = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(2u, readStatus.droppedRecordCount);
+    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+
+    // The number of per-CPU buffers cannot change while the instance is alive, so it is scanned once.
+    EXPECT_EQ(1u, MockPerCpuDir::closedirCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsCountersRestartedWhenPeekingAgainThenNoDropsAreReported) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(12, 0), MockPerCpuStats::makeBlob(0, 0),
+                                             MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(12u, readStatus.droppedRecordCount);
+
+    // Resizing a buffer, or clearing it through tracefs, restarts the kernel counters. The reported
+    // total has to follow them back down instead of underflowing into a huge count.
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(1, 0);
+
+    size = 1024;
+    eventCount = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenSomePerCpuStatsFilesCannotBeReadWhenPeekingWithMetaDataThenTheCountIsReportedAsInvalid) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({"", MockPerCpuStats::makeBlob(6, 0), "", MockPerCpuStats::makeBlob(0, 1)});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+
+    // The 7 records the readable buffers report are not the number of records lost, because the two
+    // buffers which could not be read may have lost any number of them. Reporting the sum would tell
+    // the caller a wrong count, so no count is reported and the read is still not failed over it.
+    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+
+    // The readable buffers are still visited, so a later read can report the loss once all of the
+    // counters can be read.
+    EXPECT_EQ(static_cast<size_t>(MockPerCpuDir::mockPerCpuBufferCount), MockPerCpuStats::filesRead.size());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsBecomeReadableAgainWhenPeekingAgainThenTheLossOfBothIntervalsIsReported) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({"", MockPerCpuStats::makeBlob(0, 0),
+                                             MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+
+    // A read which reports no count leaves the baseline where it was, so the loss it could not report
+    // is reported in full by the first read which can read all of the counters again.
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(5, 0);
+
+    size = 1024;
+    eventCount = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(5u, readStatus.droppedRecordCount);
+    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenPerCpuDirectoryCannotBeScannedWhenPeekingWithMetaDataThenNoDropsAreReported) {
+    MockPerCpuDirBackup perCpuDirBackup(true);
+    MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(9, 9)});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+
+    // Without the number of per-CPU buffers there is nothing to read the counters from, so no count
+    // is reported rather than 0 being reported as if nothing had been lost.
+    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+    EXPECT_TRUE(MockPerCpuStats::filesRead.empty());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenUnparsableDropCounterWhenPeekingWithMetaDataThenTheCountIsReportedAsInvalid) {
+    std::string malformedStats = "entries 12\n";        // no separator at all
+    malformedStats += "overrun: not-a-number\n";        // drop counter that cannot be parsed
+    malformedStats += "commit overrun: 5\n";            // 'overrun' only as a suffix of the field name
+    malformedStats += "oldest event ts: 5058.247549\n"; // field carrying a separator of its own
+    malformedStats += "dropped events: 8 unexpected\n"; // trailing text after the count
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({malformedStats, MockPerCpuStats::makeBlob(0, 0),
+                                             MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+
+    // 'dropped events' parses as 8 and the trailing text is ignored, but 'overrun' carries a value
+    // which cannot be read at all, so 8 is not the number of records this buffer lost and no count is
+    // reported for the interval.
+    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsWithoutDropCountersWhenPeekingWithMetaDataThenTheCountIsReportedAsInvalid) {
+    // A stats layout carrying none of the counters this driver sums, which is what an older or a newer
+    // kernel could report. Nothing was parsed, so nothing is known about the records lost, and 0 is
+    // not reported as if the counters had said none were.
+    std::string statsWithoutDropCounters = "entries: 12\n";
+    statsWithoutDropCounters += "commit overrun: 5\n";
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({statsWithoutDropCounters, statsWithoutDropCounters,
+                                             statsWithoutDropCounters, statsWithoutDropCounters});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenMoreDropsThanFitInTheReportedCountWhenPeekingWithMetaDataThenTheCountIsClamped) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(UINT32_MAX, 1), MockPerCpuStats::makeBlob(UINT32_MAX, 1),
+                                             MockPerCpuStats::makeBlob(UINT32_MAX, 1), MockPerCpuStats::makeBlob(UINT32_MAX, 1)});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+
+    // The counters are 64 bit wide, the reported count is not.
+    EXPECT_EQ(UINT32_MAX, readStatus.droppedRecordCount);
+    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenRecordsLostBeforeCollectionStartsWhenReadingWithMetaDataThenOnlyLaterLossesAreReported) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(40, 0), MockPerCpuStats::makeBlob(0, 0),
+                                             MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+
+    // Three records lost after collection started. The 40 the shared buffer had already lost by then
+    // are not this instance's to report, so the counters are baselined when collection starts.
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(43, 0);
+
+    uint32_t size = 0;
+    uint32_t eventCount = 0;
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
+    EXPECT_EQ(3u, readStatus.droppedRecordCount);
+    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenLastFieldValueEndsWithTrailingSpaceWhenPeekingWithMetaDataThenFieldScanStopsAtEndOfLine) {
+    // The snapshot path is used on purpose: getline() strips the trailing newline, so the value's
+    // trailing space becomes the last character of the line and the field scan runs off the end of
+    // the line instead of stopping at a field separator.
+    MockTraceFsApiWithData traceFsApi(false, false, mockCperEventWithTrailingSpaceValue);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(2u, size);
+    EXPECT_EQ(0xABu, buffer[0]);
+    EXPECT_EQ(0xCDu, buffer[1]);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenBufferTooSmallForFirstRecordWhenPeekingWithMetaDataThenSizeLimitStopsExtractionWithNothingReturned) {
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    // The single record is larger than the buffer, so nothing is copied and the read stops on the
+    // size limit rather than draining the snapshot.
+    uint32_t size = 8;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(0u, eventCount);
+    EXPECT_EQ(0u, size);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenMoreRecordsRequestedThanAvailableWhenPeekingWithMetaDataThenSnapshotIsReportedDrained) {
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    // Room for two records but only one in the snapshot, so the second getline() drains it. A drained
+    // stop reports no more data available.
+    uint32_t size = 1024;
+    uint32_t eventCount = 2;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    zes_intel_info_log_read_status_exp_t readStatus = {};
+    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(mockCperLen, size);
+    EXPECT_FALSE(readStatus.hasDataToRead);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenZeroTimeoutWhenPeekingWithMetaDataThenTheDeadlineStopsExtractionWhileAFiniteTimeoutStillReads) {
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 2;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+
+    // A zero timeout puts the deadline in the past, so the very first loop iteration stops before any
+    // record is read.
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(0u, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(0u, eventCount);
+    EXPECT_EQ(0u, size);
+
+    // A generous but finite timeout never fires within the test. The snapshot is non-consuming, so the
+    // same record is still there to be read out.
+    size = 1024;
+    eventCount = 2;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(largeTimeoutMs, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(mockCperLen, size);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenZeroTimeoutWhenReadingWithMetaDataThenTheDeadlineStopsBeforeConsumingTracePipeWhileAFiniteTimeoutStillReads) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+
+    uint32_t size = mockCperLen;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+
+    // A zero timeout puts the deadline in the past, so extraction stops on the first loop iteration,
+    // before a single line is pulled from trace_pipe.
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, 0u, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(0u, eventCount);
+    EXPECT_EQ(0u, size);
+
+    // A generous but finite timeout never fires within the test, so the buffered record is read out.
+    size = mockCperLen;
+    eventCount = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, largeTimeoutMs, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(mockCperLen, size);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenBufferSizeReadBackFailsAfterSizingWhenApplyingBufferConfigurationThenAppliedTotalIsReportedAsZero) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockTraceFsApiWithConfigurableBehavior traceFsApi;
+    // The set succeeds but every buffer-size query reports -1, so the applied total cannot be read back.
+    traceFsApi.failGetBufferSize = true;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t bufferSize = 4096u;
+    auto desc = makeInstanceDesc(&bufferSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.applyBufferConfiguration(&desc));
+
+    // A failed read-back is reported as 0 rather than the raw -1, which would reach the caller as
+    // 0xffffffff.
+    EXPECT_EQ(0u, bufferSize);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenZeroBufferSizeWhenApplyingBufferConfigurationThenTheCurrentTotalIsReportedWithoutResizing) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockTraceFsApiWithConfigurableBehavior traceFsApi;
+    // cpu -1 reports the total across the per-CPU buffers while a single cpu reports just its own, so
+    // the value which comes back tells the two queries apart.
+    traceFsApi.reportDistinctPerCpuAndTotalBufferSize = true;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t bufferSize = 0u;
+    auto desc = makeInstanceDesc(&bufferSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.applyBufferConfiguration(&desc));
+
+    // The buffer keeps the size it already had, and that total is what is reported back, so a caller
+    // can read the size without changing it.
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
+    EXPECT_EQ(static_cast<uint32_t>(MockTraceFsApiWithConfigurableBehavior::mockTotalBufferSizeKb), bufferSize);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenZeroBufferSizeAndBufferSizeCannotBeReadWhenApplyingBufferConfigurationThenSizeIsReportedAsZero) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockTraceFsApiWithConfigurableBehavior traceFsApi;
+    // Every buffer-size query reports -1, so the size the buffer already has cannot be determined.
+    traceFsApi.failGetBufferSize = true;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t bufferSize = 0u;
+    auto desc = makeInstanceDesc(&bufferSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.applyBufferConfiguration(&desc));
+
+    // Still nothing is resized, and the unknown size is reported as 0 rather than the raw -1.
+    EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
+    EXPECT_EQ(0u, bufferSize);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenBufferSizeRestoreFailsWhenTearingDownInstanceThenTheOverrideIsLeftInPlace) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockTraceFsApiWithConfigurableBehavior traceFsApi;
+    traceFsApi.reportDistinctPerCpuAndTotalBufferSize = true;
+    // The sizing set (the first) succeeds; the restore set (the second, issued on teardown) fails.
+    traceFsApi.failSetBufferSizeOnCall = 2;
+    {
+        LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+        uint32_t bufferSize = 4096u;
+        auto desc = makeInstanceDesc(&bufferSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, instance.applyBufferConfiguration(&desc));
+        EXPECT_EQ(1u, PublicTraceFsApi::setBufferSizeCallCount);
+    }
+    // Teardown attempts the restore set. It fails, so the size stays overridden, but nothing throws
+    // and the destructor completes.
+    EXPECT_EQ(2u, PublicTraceFsApi::setBufferSizeCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenTracePipeCannotBeOpenedWhenStartingCollectionWithPreExistingTraceStateThenTheStateIsLeftUntouched) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, [](const char *, int) -> int {
+        errno = ENOENT;
+        return -1;
+    });
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockTraceFsApiWithData traceFsApi;
+    // The tracepoint was already enabled and tracing already on before this instance started.
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, true, true);
+
+    MockTraceFsApiWithData::traceOffCallCount = 0;
+    MockTraceFsApiWithData::eventDisableCallCount = 0;
+    EXPECT_NE(ZE_RESULT_SUCCESS, instance.startCollection());
+
+    // The failed startup must not tear down trace state it did not set up, so neither the tracepoint
+    // nor tracing is turned off.
+    EXPECT_EQ(0, MockTraceFsApiWithData::traceOffCallCount);
+    EXPECT_EQ(0, MockTraceFsApiWithData::eventDisableCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenPropertyCaptureFailedAtInitWhenGettingPropertiesThenTheCaptureErrorIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
+    pMockOsInfoLog->getPropertiesResult = ZE_RESULT_ERROR_UNKNOWN;
+    infoLog.pOsInfoLog = std::move(pMockOsInfoLog);
+    infoLog.init();
+
+    // A failed capture at init is remembered and reported to every property query.
+    zes_intel_info_log_properties_exp_t properties = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, infoLog.infoLogGetProperties(&properties));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenPropertyCaptureFailedAtInitWhenCreatingInstanceThenTheCaptureErrorIsReturnedAndTheBackendIsNotAsked) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
+    pMockOsInfoLog->getPropertiesResult = ZE_RESULT_ERROR_UNKNOWN;
+    auto *pRawMockOsInfoLog = pMockOsInfoLog.get();
+    infoLog.pOsInfoLog = std::move(pMockOsInfoLog);
+    infoLog.init();
+
+    // Without captured properties there is nothing to create a collection instance from, so the
+    // capture error is reported instead of the properties being read as if they were valid.
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, infoLog.infoLogCreateInstance(nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, infoLog.infoLogCreateInstance("named", &desc, &hInstance));
+    EXPECT_EQ(nullptr, hInstance);
+    EXPECT_EQ(0u, pRawMockOsInfoLog->createInstanceCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNamedCollectionUnsupportedWhenCreatingNamedInstanceThenUnsupportedFeatureIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
+    pMockOsInfoLog->isNamedInstancedCollectionSupported = false;
+    infoLog.pOsInfoLog = std::move(pMockOsInfoLog);
+    infoLog.init();
+
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, infoLog.infoLogCreateInstance("named", &desc, &hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInstanceNotOwnedByThisInfoLogWhenDestroyingItThenInvalidNullHandleIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    // An instance this InfoLog never handed out is not in its bookkeeping.
+    InfoLogInstanceImp strayInstance(&infoLog, nullptr, std::make_unique<MockOsInfoLogInstance>());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, infoLog.destroyInstance(&strayInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInstanceAlreadyTornDownWhenTearingDownAgainThenTheBackendIsToldOnlyOnce) {
+    auto pMockOsInstance = std::make_unique<MockOsInfoLogInstance>();
+    auto *pRawMockOsInstance = pMockOsInstance.get();
+    InfoLogInstanceImp instance(nullptr, nullptr, std::move(pMockOsInstance));
+
+    // The second teardown is a no-op: the backend is only torn down on the first call.
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.teardown());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.teardown());
+    EXPECT_EQ(1u, pRawMockOsInstance->teardownCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenSysmanInitFromCoreWhenCallingInfoLogEntryPointsThenUnsupportedFeatureIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+
+    // Sysman was brought up from core rather than as a standalone init, so every experimental
+    // info-log entry point is refused up front on the init state alone.
+    VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
+
+    uint32_t count = handleCount;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+
+    zes_intel_info_log_properties_exp_t properties = {};
+    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogGetPropertiesExp(infoLogHandles[0], &properties));
+
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hNewInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hNewInstance));
+    EXPECT_EQ(nullptr, hNewInstance);
+
+    uint32_t size = mockCperLen;
+    uint32_t recordCount = 1;
+    std::vector<uint8_t> buffer(size);
+    zes_intel_info_log_metadata_exp descriptor = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
+              zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
+              zesIntelInfoLogInstancePeekWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogInstanceDeleteExp(hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNeitherInitFlagSetWhenCallingInfoLogEntryPointsThenUninitializedIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+
+    // Neither init path ran, so the entry points report the driver as uninitialized on the state alone.
+    VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, false);
+    VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
+
+    uint32_t count = handleCount;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+
+    zes_intel_info_log_properties_exp_t properties = {};
+    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogGetPropertiesExp(infoLogHandles[0], &properties));
+
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hNewInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hNewInstance));
+    EXPECT_EQ(nullptr, hNewInstance);
+
+    uint32_t size = mockCperLen;
+    uint32_t recordCount = 1;
+    std::vector<uint8_t> buffer(size);
+    zes_intel_info_log_metadata_exp descriptor = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED,
+              zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED,
+              zesIntelInfoLogInstancePeekWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
 } // namespace ult

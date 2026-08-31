@@ -159,13 +159,16 @@ TEST_F(SysmanDriverHandleTest,
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogGetPropertiesExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogReadExp", &funPtr);
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogCreateInstanceExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogEnableExp", &funPtr);
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogInstanceReadWithMetadataExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDisableExp", &funPtr);
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogInstancePeekWithMetadataExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogInstanceDeleteExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverEventRegisterExp", &funPtr);

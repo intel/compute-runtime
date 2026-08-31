@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/api/info_log/sysman_info_log.h"
+#include "level_zero/sysman/source/api/info_log/sysman_info_log_instance.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
@@ -105,44 +106,52 @@ ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(zes_intel_info_log_handle
     }
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogReadExp(zes_intel_info_log_handle_t hInfoLog, uint32_t *pSize, uint8_t *pBuffer) {
+ze_result_t ZE_APICALL zesIntelInfoLogCreateInstanceExp(zes_intel_info_log_handle_t hInfoLog,
+                                                        const char *pInstanceName,
+                                                        zes_intel_info_log_instance_exp_desc_t *pDesc,
+                                                        zes_intel_info_log_instance_handle_t *phInfoLogInstance) {
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogRead(pSize, pBuffer);
+        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogCreateInstance(pInstanceName, pDesc, phInfoLogInstance);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(zes_intel_info_log_handle_t hInfoLog, zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor) {
+ze_result_t ZE_APICALL zesIntelInfoLogInstanceReadWithMetadataExp(zes_intel_info_log_instance_handle_t hInfoLogInstance,
+                                                                  uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
+                                                                  uint32_t *pRecordCount,
+                                                                  zes_intel_info_log_metadata_exp *pDescriptors,
+                                                                  zes_intel_info_log_read_status_exp_t *pReadStatus) {
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogEnable(pEnableDescriptor);
+        return L0::Sysman::InfoLogInstance::fromHandle(hInfoLogInstance)->readWithMetadata(timeout, pSize, pBuffer, pRecordCount, pDescriptors, pReadStatus);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogDisableExp(zes_intel_info_log_handle_t hInfoLog) {
+ze_result_t ZE_APICALL zesIntelInfoLogInstancePeekWithMetadataExp(zes_intel_info_log_instance_handle_t hInfoLogInstance,
+                                                                  uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
+                                                                  uint32_t *pRecordCount,
+                                                                  zes_intel_info_log_metadata_exp *pDescriptors,
+                                                                  zes_intel_info_log_read_status_exp_t *pReadStatus) {
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogDisable();
+        return L0::Sysman::InfoLogInstance::fromHandle(hInfoLogInstance)->peekWithMetadata(timeout, pSize, pBuffer, pRecordCount, pDescriptors, pReadStatus);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogReadWithMetadataExp(zes_intel_info_log_handle_t hInfoLog,
-                                                          uint32_t *pSize, uint8_t *pBuffer,
-                                                          uint32_t *pEventCount,
-                                                          zes_intel_info_log_metadata_exp *pDescriptors) {
+ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(zes_intel_info_log_instance_handle_t hInfoLogInstance) {
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogReadWithMetaData(pSize, pBuffer, pEventCount, pDescriptors);
+        return L0::Sysman::InfoLogInstance::fromHandle(hInfoLogInstance)->destroy();
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -188,23 +197,31 @@ ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(zes_intel_info_log_handle
     return L0::zesIntelInfoLogGetPropertiesExp(hInfoLog, pInfoLogProperties);
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogReadExp(zes_intel_info_log_handle_t hInfoLog, uint32_t *pSize, uint8_t *pBuffer) {
-    return L0::zesIntelInfoLogReadExp(hInfoLog, pSize, pBuffer);
+ze_result_t ZE_APICALL zesIntelInfoLogCreateInstanceExp(zes_intel_info_log_handle_t hInfoLog,
+                                                        const char *pInstanceName,
+                                                        zes_intel_info_log_instance_exp_desc_t *pDesc,
+                                                        zes_intel_info_log_instance_handle_t *phInfoLogInstance) {
+    return L0::zesIntelInfoLogCreateInstanceExp(hInfoLog, pInstanceName, pDesc, phInfoLogInstance);
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(zes_intel_info_log_handle_t hInfoLog, zes_intel_info_log_enable_descriptor_exp *pEnableDescriptor) {
-    return L0::zesIntelInfoLogEnableExp(hInfoLog, pEnableDescriptor);
+ze_result_t ZE_APICALL zesIntelInfoLogInstanceReadWithMetadataExp(zes_intel_info_log_instance_handle_t hInfoLogInstance,
+                                                                  uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
+                                                                  uint32_t *pRecordCount,
+                                                                  zes_intel_info_log_metadata_exp *pDescriptors,
+                                                                  zes_intel_info_log_read_status_exp_t *pReadStatus) {
+    return L0::zesIntelInfoLogInstanceReadWithMetadataExp(hInfoLogInstance, timeout, pSize, pBuffer, pRecordCount, pDescriptors, pReadStatus);
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogDisableExp(zes_intel_info_log_handle_t hInfoLog) {
-    return L0::zesIntelInfoLogDisableExp(hInfoLog);
+ze_result_t ZE_APICALL zesIntelInfoLogInstancePeekWithMetadataExp(zes_intel_info_log_instance_handle_t hInfoLogInstance,
+                                                                  uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
+                                                                  uint32_t *pRecordCount,
+                                                                  zes_intel_info_log_metadata_exp *pDescriptors,
+                                                                  zes_intel_info_log_read_status_exp_t *pReadStatus) {
+    return L0::zesIntelInfoLogInstancePeekWithMetadataExp(hInfoLogInstance, timeout, pSize, pBuffer, pRecordCount, pDescriptors, pReadStatus);
 }
 
-ze_result_t ZE_APICALL zesIntelInfoLogReadWithMetadataExp(zes_intel_info_log_handle_t hInfoLog,
-                                                          uint32_t *pSize, uint8_t *pBuffer,
-                                                          uint32_t *pEventCount,
-                                                          zes_intel_info_log_metadata_exp *pDescriptors) {
-    return L0::zesIntelInfoLogReadWithMetadataExp(hInfoLog, pSize, pBuffer, pEventCount, pDescriptors);
+ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(zes_intel_info_log_instance_handle_t hInfoLogInstance) {
+    return L0::zesIntelInfoLogInstanceDeleteExp(hInfoLogInstance);
 }
 
 } // extern "C"

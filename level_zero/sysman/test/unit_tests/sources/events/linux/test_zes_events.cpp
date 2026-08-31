@@ -193,6 +193,39 @@ TEST_F(SysmanEventsFixture, GivenDeviceHandleWhichCannotBeResolvedToASysmanDevic
     EXPECT_EQ(0u, pDeviceEvents[0]);
 }
 
+TEST_F(SysmanEventsFixture, GivenLiveAndStaleTracePipeDescriptorsWhenUpdatingCperPollSourcesThenStaleSourcesAreDroppedAndOnlyTheMissingOnesAreAdded) {
+    constexpr int mockLiveTracePipeFd = 21;
+    constexpr int mockUnpolledTracePipeFd = 22;
+    constexpr int mockStaleTracePipeFd = 23;
+
+    PublicLinuxSysmanDriverImp driverImp = {};
+    driverImp.registerCperTracePipeFd(mockLiveTracePipeFd);
+    driverImp.registerCperTracePipeFd(mockUnpolledTracePipeFd);
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+
+    // A source that is not a trace pipe at all, a trace pipe the driver still knows about, and a trace
+    // pipe whose collection instance has been deleted since the previous listen call.
+    std::vector<PollDescriptor> pollSources = {
+        {{mockReadPipeFd, POLLIN, 0}, PollSourceType::pipe},
+        {{mockLiveTracePipeFd, POLLIN, 0}, PollSourceType::tracefs},
+        {{mockStaleTracePipeFd, POLLIN, 0}, PollSourceType::tracefs}};
+
+    bool cperRegistered = false;
+    eventsUtil->updateCperPollSource(ZES_INTEL_CPER_DATA_AVAILABLE, pollSources, cperRegistered);
+
+    EXPECT_TRUE(cperRegistered);
+    ASSERT_EQ(3u, pollSources.size());
+    // Sources that are not trace pipes are left alone.
+    EXPECT_EQ(mockReadPipeFd, pollSources[0].pfd.fd);
+    EXPECT_EQ(PollSourceType::pipe, pollSources[0].type);
+    // The still registered trace pipe keeps its existing source rather than being dropped and added again.
+    EXPECT_EQ(mockLiveTracePipeFd, pollSources[1].pfd.fd);
+    EXPECT_EQ(PollSourceType::tracefs, pollSources[1].type);
+    // Only the registered trace pipe that was not being polled yet is appended, and the stale one is gone.
+    EXPECT_EQ(mockUnpolledTracePipeFd, pollSources[2].pfd.fd);
+    EXPECT_EQ(PollSourceType::tracefs, pollSources[2].type);
+}
+
 TEST_F(SysmanEventsFixture, GivenEventsUtilFailsWhenListeningForEventsThroughOsSysmanDriverThenErrorIsPropagatedAndSurvivabilityHandlingIsSkipped) {
     PublicLinuxSysmanDriverImp driverImp = {};
 

@@ -11,9 +11,11 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/core/source/driver/driver.h"
+#include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_driver.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_drm.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
 #include "gtest/gtest.h"
@@ -514,6 +516,64 @@ TEST(SysmanDriverDeferredDiscovery, GivenDeferredInitWithoutDevicesWhenDiscovery
     L0::Sysman::globalSysmanDriver = nullptr;
     L0::Sysman::globalSysmanDriverHandle = nullptr;
     L0::Sysman::driverCount = 0;
+}
+
+// Answers nothing; it exists only so that a driver can be given a udev library handle whose release
+// by the driver destructor can be observed.
+class SysmanDriverUdevLibMock : public L0::Sysman::UdevLib {
+  public:
+    SysmanDriverUdevLibMock(uint32_t *pDestructorCallCount) : pDestructorCallCount(pDestructorCallCount) {}
+    ~SysmanDriverUdevLibMock() override {
+        (*pDestructorCallCount)++;
+    }
+    int registerEventsFromSubsystemAndGetFd(std::vector<std::string> &subsystemList) override { return -1; }
+    dev_t getEventGenerationSourceDevice(void *dev) override { return 0; }
+    const char *getEventType(void *dev) override { return nullptr; }
+    const char *getEventPropertyValue(void *dev, const char *key) override { return nullptr; }
+    void *allocateDeviceToReceiveData() override { return nullptr; }
+    void dropDeviceReference(void *dev) override {}
+
+    uint32_t *pDestructorCallCount = nullptr;
+};
+
+TEST(LinuxSysmanDriverImpCleanup, GivenUdevLibraryHandleIsHeldWhenDestroyingTheDriverThenTheHandleIsReleased) {
+    uint32_t udevLibDestructorCallCount = 0;
+    {
+        PublicLinuxSysmanDriverImp driverImp;
+        driverImp.pUdevLib = new SysmanDriverUdevLibMock(&udevLibDestructorCallCount);
+        // A handle that is already held is handed back as it is, so the driver keeps owning this one.
+        EXPECT_EQ(driverImp.pUdevLib, driverImp.getUdevLibHandle());
+        EXPECT_EQ(0u, udevLibDestructorCallCount);
+    }
+    EXPECT_EQ(1u, udevLibDestructorCallCount);
+}
+
+TEST(LinuxSysmanDriverImpCleanup, GivenEventsUtilIsAlreadyReleasedWhenDestroyingTheDriverThenTheRemainingCleanupStillRuns) {
+    static int closedFd = 0;
+    closedFd = 0;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        closedFd = fileDescriptor;
+        return 0;
+    });
+
+    constexpr int mockRegisteredFd = 7;
+    {
+        PublicLinuxSysmanDriverImp driverImp;
+        ASSERT_NE(nullptr, driverImp.pLinuxEventsUtil);
+        delete driverImp.pLinuxEventsUtil;
+        driverImp.pLinuxEventsUtil = nullptr;
+        driverImp.registerCperTracePipeFd(mockRegisteredFd);
+    }
+    // The registered descriptor is closed by the last step of the destructor, so seeing it closed proves
+    // the destructor ran to the end instead of releasing the already released events utility again.
+    EXPECT_EQ(mockRegisteredFd, closedFd);
+}
+
+TEST(LinuxSysmanDriverImpCleanup, GivenNegativeDescriptorWhenRegisteringACperTracePipeFdThenItIsNotAddedToTheRegistry) {
+    PublicLinuxSysmanDriverImp driverImp;
+    driverImp.registerCperTracePipeFd(-1);
+    EXPECT_TRUE(driverImp.getCperTracePipeFds().empty());
+    EXPECT_EQ(-1, driverImp.getCperTracePipeFd());
 }
 
 } // namespace ult
