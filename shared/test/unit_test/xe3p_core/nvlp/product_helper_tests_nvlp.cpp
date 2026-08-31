@@ -144,5 +144,5 @@ NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCac
 }
 
 NVLPTEST_F(NvlProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
-    EXPECT_EQ(RTASDeviceFormat::version2, productHelper->getSupportedRtasFormat());
+    EXPECT_EQ(RTASDeviceFormat::version3, productHelper->getSupportedRtasFormat());
 }

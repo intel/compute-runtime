@@ -274,5 +274,5 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnC
 }
 
 CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
-    EXPECT_EQ(RTASDeviceFormat::version2, productHelper->getSupportedRtasFormat());
+    EXPECT_EQ(RTASDeviceFormat::invalid, productHelper->getSupportedRtasFormat());
 }

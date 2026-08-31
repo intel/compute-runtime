@@ -16,6 +16,9 @@ enum class RTASDeviceFormat : uint32_t {
     invalid = 0,
     version1 = 1,
     version2 = 2,
+    version3 = 3,
+    version4 = 4,
+    version5 = 5,
 };
 
 } // namespace NEO
