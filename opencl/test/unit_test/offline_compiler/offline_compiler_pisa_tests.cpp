@@ -7,6 +7,7 @@
 
 #include "shared/offline_compiler/source/offline_compiler.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 
 #include "opencl/test/unit_test/offline_compiler/environment.h"
@@ -59,7 +60,14 @@ TEST(OclocPisa, GivenEmptyPisaInputWhenBuildingThenSuccessIsReturned) {
     igcDebugVars.forceSuccessWithEmptyOutput = true;
     setIgcDebugVars(igcDebugVars);
 
+    StreamCapture capture;
+    capture.captureStdout();
+
     const auto buildResult = mockOfflineCompiler.build();
+
+    std::string output = capture.getCapturedStdout();
+    EXPECT_STREQ("Compilation from IR - skipping loading of FCL\n", output.c_str());
+
     setIgcDebugVars(gEnvironment->igcDebugVars);
 
     EXPECT_EQ(OCLOC_SUCCESS, buildResult);

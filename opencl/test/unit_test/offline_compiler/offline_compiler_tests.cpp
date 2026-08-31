@@ -3120,7 +3120,14 @@ TEST_F(OfflineCompilerTests, givenIgcBuildLogWhenBuildingSourceCodeThenEveryNonE
     igcDebugVars.buildLogToReturn = "warning: first line\n\nwarning: second line";
     NEO::setIgcDebugVars(igcDebugVars);
 
+    StreamCapture capture;
+    capture.captureStdout();
+
     const auto buildResult = mockOfflineCompiler.build();
+
+    std::string output = capture.getCapturedStdout();
+    EXPECT_STREQ("Compilation from IR - skipping loading of FCL\n", output.c_str());
+
     NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
 
     EXPECT_EQ(CL_SUCCESS, buildResult);
