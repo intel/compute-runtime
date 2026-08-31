@@ -255,6 +255,15 @@ void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args) {
 }
 
 template <class GfxFamily>
+typename GfxFamily::RESOURCE_BARRIER::SIGNAL_STAGE getStallingBarrierSignalStage()
+    requires(UsesResourceBarrier<GfxFamily>)
+{
+    using RESOURCE_BARRIER = typename GfxFamily::RESOURCE_BARRIER;
+
+    return RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU;
+}
+
+template <class GfxFamily>
 void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args)
     requires(UsesResourceBarrier<GfxFamily>)
 {
@@ -263,7 +272,7 @@ void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args)
     auto resourceBarrier = GfxFamily::cmdInitResourceBarrier;
     resourceBarrier.setBarrierType(RESOURCE_BARRIER::BARRIER_TYPE::BARRIER_TYPE_IMMEDIATE);
     resourceBarrier.setWaitStage(RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_TOP);
-    resourceBarrier.setSignalStage(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
+    resourceBarrier.setSignalStage(getStallingBarrierSignalStage<GfxFamily>());
     auto invalidateL1Cache = args.isL1InvalidateRequired;
     auto flushL1Cache = args.isL1FlushRequired;
     auto l1FlushMode = debugManager.flags.ResourceBarrierL1FlushMode.get();

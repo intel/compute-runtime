@@ -74,7 +74,6 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
         }
         EXPECT_EQ(resourceBarrierCmd->getBarrierType(), RESOURCE_BARRIER::BARRIER_TYPE::BARRIER_TYPE_IMMEDIATE);
         EXPECT_EQ(resourceBarrierCmd->getWaitStage(), RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_TOP);
-        EXPECT_EQ(resourceBarrierCmd->getSignalStage(), RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
         return true;
     }
 

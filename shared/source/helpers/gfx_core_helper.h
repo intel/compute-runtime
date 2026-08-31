@@ -547,4 +547,8 @@ template <class GfxFamily>
 void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args)
     requires(UsesResourceBarrier<GfxFamily>);
 
+template <class GfxFamily>
+typename GfxFamily::RESOURCE_BARRIER::SIGNAL_STAGE getStallingBarrierSignalStage()
+    requires(UsesResourceBarrier<GfxFamily>);
+
 } // namespace NEO

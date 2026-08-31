@@ -961,6 +961,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenXe3WhenSetStallOnlyBarrierThenRes
     EXPECT_TRUE(hwParser.isStallingBarrier<FamilyType>(itor));
     auto resourceBarrier = genCmdCast<RESOURCE_BARRIER *>(*itor);
     EXPECT_NE(nullptr, resourceBarrier);
+    EXPECT_EQ(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU, resourceBarrier->getSignalStage());
     EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
     EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
 }
