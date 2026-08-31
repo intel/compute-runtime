@@ -4700,11 +4700,13 @@ class ZexMemFreeRegisterCallbackExtTests : public Test<DeviceFixture> {
         Test<DeviceFixture>::SetUp();
         testCallbackExecuted = false;
         testCallbackUserData = nullptr;
+        invocationCounter = 0u;
     }
 
     void TearDown() override {
         testCallbackExecuted = false;
         testCallbackUserData = nullptr;
+        invocationCounter = 0u;
         Test<DeviceFixture>::TearDown();
     }
 
@@ -4714,13 +4716,56 @@ class ZexMemFreeRegisterCallbackExtTests : public Test<DeviceFixture> {
         testCallbackUserData = pUserData;
     }
 
+    // Order is stamped per tracker instead of logged into a container: the leak listener
+    // compares allocation counts per test, so a static container growing during a test
+    // would be reported as a leak.
+    struct CallbackTracker {
+        uint32_t invocations = 0u;
+        uint32_t invocationOrder = 0u;
+    };
+
+    static void trackingCallback(void *pUserData) {
+        auto tracker = reinterpret_cast<CallbackTracker *>(pUserData);
+        tracker->invocations++;
+        tracker->invocationOrder = ++invocationCounter;
+    }
+
+    zex_memory_free_callback_ext_desc_t makeCallbackDesc(CallbackTracker &tracker) {
+        zex_memory_free_callback_ext_desc_t callbackDesc = {};
+        callbackDesc.stype = ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC;
+        callbackDesc.pfnCallback = trackingCallback;
+        callbackDesc.pUserData = &tracker;
+        return callbackDesc;
+    }
+
+    NEO::UsmMemAllocPool *getPoolOwningPtr(const void *ptr) {
+        auto svmData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+        return svmData ? context->getUsmPoolOwningPtr(ptr, svmData) : nullptr;
+    }
+
+    void *allocHostMem(size_t size) {
+        void *ptr = nullptr;
+        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, 0u, &ptr));
+        return ptr;
+    }
+
+    void *allocDeviceMem(size_t size) {
+        void *ptr = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr));
+        return ptr;
+    }
+
     static bool testCallbackExecuted;
     static void *testCallbackUserData;
+    static uint32_t invocationCounter;
 };
 
 // Static member definitions
 bool ZexMemFreeRegisterCallbackExtTests::testCallbackExecuted = false;
 void *ZexMemFreeRegisterCallbackExtTests::testCallbackUserData = nullptr;
+uint32_t ZexMemFreeRegisterCallbackExtTests::invocationCounter = 0u;
 
 TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithValidParametersThenSuccessIsReturned) {
     ze_context_handle_t hContext;
@@ -4938,6 +4983,171 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
 
     res = zeContextDestroy(hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+struct ZexMemFreeRegisterCallbackExtNotPooledTests : public ZexMemFreeRegisterCallbackExtTests {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+
+        ZexMemFreeRegisterCallbackExtTests::SetUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(ZexMemFreeRegisterCallbackExtNotPooledTests, givenTwoCallbacksRegisteredWhenMemoryIsFreedThenBothAreInvoked) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker firstTracker{};
+    CallbackTracker secondTracker{};
+    auto firstCallbackDesc = makeCallbackDesc(firstTracker);
+    auto secondCallbackDesc = makeCallbackDesc(secondTracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &firstCallbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &secondCallbackDesc, ptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, firstTracker.invocations);
+    EXPECT_EQ(1u, secondTracker.invocations);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtNotPooledTests, givenMultipleCallbacksRegisteredWhenMemoryIsFreedThenTheyAreInvokedInRegistrationOrder) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker firstTracker{};
+    CallbackTracker secondTracker{};
+    CallbackTracker thirdTracker{};
+    auto firstCallbackDesc = makeCallbackDesc(firstTracker);
+    auto secondCallbackDesc = makeCallbackDesc(secondTracker);
+    auto thirdCallbackDesc = makeCallbackDesc(thirdTracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &firstCallbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &secondCallbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &thirdCallbackDesc, ptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, firstTracker.invocationOrder);
+    EXPECT_EQ(2u, secondTracker.invocationOrder);
+    EXPECT_EQ(3u, thirdTracker.invocationOrder);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtNotPooledTests, givenSameCallbackRegisteredTwiceWhenMemoryIsFreedThenItIsInvokedTwice) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker tracker{};
+    auto callbackDesc = makeCallbackDesc(tracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(2u, tracker.invocations);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtNotPooledTests, givenCallbacksRegisteredWhenFreedWithDeferPolicyThenTheyAreInvoked) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker firstTracker{};
+    CallbackTracker secondTracker{};
+    auto firstCallbackDesc = makeCallbackDesc(firstTracker);
+    auto secondCallbackDesc = makeCallbackDesc(secondTracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &firstCallbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &secondCallbackDesc, ptr));
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, ptr));
+
+    EXPECT_EQ(1u, firstTracker.invocations);
+    EXPECT_EQ(1u, secondTracker.invocations);
+}
+
+struct ZexMemFreeRegisterCallbackExtReuseTests : public ZexMemFreeRegisterCallbackExtNotPooledTests {
+    void SetUp() override {
+        // forces the host reuse cache on regardless of product helper, with a 16GB budget
+        NEO::debugManager.flags.ExperimentalEnableHostAllocationCache.set(100);
+
+        ZexMemFreeRegisterCallbackExtNotPooledTests::SetUp();
+    }
+};
+
+TEST_F(ZexMemFreeRegisterCallbackExtReuseTests, givenAllocationFreedAndAddressReusedWhenFreeingAgainThenNoCallbackIsInvoked) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker tracker{};
+    auto callbackDesc = makeCallbackDesc(tracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, tracker.invocations);
+
+    // Same size, flags and alignment, so the reuse cache returns the very allocation just
+    // freed, reusing its SvmAllocationData. The callback list must not ride along.
+    auto reusedPtr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, reusedPtr);
+    ASSERT_EQ(ptr, reusedPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(reusedPtr));
+    EXPECT_EQ(1u, tracker.invocations);
+}
+
+struct ZexMemFreeRegisterCallbackExtPooledTests : public ZexMemFreeRegisterCallbackExtTests {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+
+        ZexMemFreeRegisterCallbackExtTests::SetUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenPointerInsidePoolRangeThatIsNotAllocatedWhenCallingFreeMemThenCallbacksAreNotInvoked) {
+    // ptr keeps the pool alive, so freedPtr stays inside pool address space after being freed
+    auto ptr = allocDeviceMem(4096u);
+    auto freedPtr = allocDeviceMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_NE(nullptr, freedPtr);
+    auto usmPool = getPoolOwningPtr(ptr);
+    ASSERT_NE(nullptr, usmPool);
+
+    // freedPtr has to be freed before the callback is registered: pooled chunks share one
+    // SvmAllocationData, so freeing any live chunk would drain the list and leave nothing
+    // for the invalid free below to expose.
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freedPtr));
+    ASSERT_FALSE(usmPool->isPooledAllocation(freedPtr));
+
+    CallbackTracker tracker{};
+    auto callbackDesc = makeCallbackDesc(tracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->freeMem(freedPtr));
+    EXPECT_EQ(0u, tracker.invocations);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, tracker.invocations);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenPooledAllocationWithCallbackWhenFreedWithDeferPolicyThenItIsInvoked) {
+    auto ptr = allocDeviceMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_NE(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker tracker{};
+    auto callbackDesc = makeCallbackDesc(tracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, ptr));
+
+    EXPECT_EQ(1u, tracker.invocations);
 }
 
 TEST_F(ContextTest, whenSettingVirtualMemAccessAttributeWithChangedFlagsAndMappedAllocationsThenUnmapAndRemapIsCalled) {

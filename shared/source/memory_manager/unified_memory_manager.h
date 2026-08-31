@@ -29,6 +29,7 @@
 #include <shared_mutex>
 #include <thread>
 #include <type_traits>
+#include <vector>
 
 namespace NEO {
 class CommandStreamReceiver;
@@ -63,6 +64,11 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
         this->mappedPhysicalOffset = svmAllocData.mappedPhysicalOffset;
     }
     SvmAllocationData(SvmAllocationData &&other) noexcept = delete;
+    // Spelled out instead of using zex_mem_free_callback_fn_t, to keep shared free of L0 types.
+    struct MemFreeCallback {
+        void (*function)(void *userData);
+        void *userData;
+    };
     GraphicsAllocation *cpuAllocation = nullptr;
     MultiGraphicsAllocation gpuAllocations;
     VirtualMemoryReservation *virtualReservationData = nullptr;
@@ -73,7 +79,9 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     Device *device = nullptr;
     bool isImportedAllocation = false;
     bool isExternalMemmapAllocation = false;
-    void *memFreeCallbackDescriptor = nullptr;
+    // Guarded by SVMAllocsManager::getMemFreeCallbacksMutex(): pooled chunks share one
+    // SvmAllocationData, so registrations for different chunks reach the same vector.
+    std::vector<MemFreeCallback> memFreeCallbacks;
     void setAllocId(uint32_t id) {
         allocId = id;
     }
@@ -310,6 +318,7 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL AtomicAccessMode getSharedSystemAtomicAccess(Device &device, const void *ptr, const size_t size);
     std::unique_lock<std::mutex> obtainOwnership();
     ContainerReadLockTypeRAIIHelper obtainReadContainerLock();
+    std::mutex &getMemFreeCallbacksMutex() noexcept { return memFreeCallbacksMtx; }
 
     std::map<CommandStreamReceiver *, InternalAllocationsTracker> indirectAllocationsResidency;
 
@@ -365,6 +374,7 @@ class SVMAllocsManager {
     MemoryManager *memoryManager;
     ContainerMutexType mtx;
     std::mutex mtxForIndirectAccess;
+    std::mutex memFreeCallbacksMtx;
     std::unique_ptr<SvmAllocationCache> usmDeviceAllocationsCache;
     std::unique_ptr<SvmAllocationCache> usmHostAllocationsCache;
     std::unique_ptr<SvmAllocationCache> usmSharedAllocationsCache;

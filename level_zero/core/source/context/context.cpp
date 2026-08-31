@@ -546,6 +546,20 @@ bool Context::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData
     return false;
 }
 
+void Context::invokeMemFreeCallbacks(NEO::SvmAllocationData &svmData) {
+    std::vector<NEO::SvmAllocationData::MemFreeCallback> callbacks;
+    {
+        std::lock_guard<std::mutex> lock(this->driverHandle->svmAllocsManager->getMemFreeCallbacksMutex());
+        callbacks = std::exchange(svmData.memFreeCallbacks, {});
+    }
+    // Callbacks run outside the lock, so one that registers again does not deadlock. A callback
+    // must not free the memory being freed: the list is already empty, so the recursive free
+    // would run to completion and the outer free would then free the allocation a second time.
+    for (const auto &callback : callbacks) {
+        callback.function(callback.userData);
+    }
+}
+
 ze_result_t Context::freeMem(const void *ptr) {
     return this->freeMem(ptr, false);
 }
@@ -554,13 +568,6 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
     auto allocation = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    if (allocation->memFreeCallbackDescriptor) {
-        zex_memory_free_callback_ext_desc_t *memFreeCallbackDesc = reinterpret_cast<zex_memory_free_callback_ext_desc_t *>(allocation->memFreeCallbackDescriptor);
-        memFreeCallbackDesc->pfnCallback(memFreeCallbackDesc->pUserData);
-        delete memFreeCallbackDesc;
-        allocation->memFreeCallbackDescriptor = nullptr;
     }
 
     uint64_t addressForIpc = reinterpret_cast<uint64_t>(ptr);
@@ -573,6 +580,8 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
             addressForIpc = usmPool->getPoolAddress();
         }
     }
+
+    this->invokeMemFreeCallbacks(*allocation);
 
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lockIPC = this->driverHandle->lockIPCHandleMap();
@@ -631,6 +640,11 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
+        // Required, not just for parity with freeMem: the usm reuse cache hands this
+        // SvmAllocationData to the next allocation, so a list left behind here would fire
+        // for an unrelated pointer.
+        this->invokeMemFreeCallbacks(*allocation);
+
         if (this->tryFreeViaPooling(ptr, allocation, usmPool, NEO::FreePolicyType::defer)) {
             return ZE_RESULT_SUCCESS;
         }
@@ -649,8 +663,14 @@ ze_result_t Context::registerMemoryFreeCallback(zex_memory_free_callback_ext_des
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    zex_memory_free_callback_ext_desc_t *callbackDesc = new zex_memory_free_callback_ext_desc_t(*pfnCallbackDesc);
-    allocation->memFreeCallbackDescriptor = callbackDesc;
+    auto *usmPool = getUsmPoolOwningPtr(ptr, allocation);
+    std::lock_guard<std::mutex> lock(this->driverHandle->svmAllocsManager->getMemFreeCallbacksMutex());
+    if (usmPool) {
+        // pooled chunks share one SvmAllocationData, so a list would fire callbacks of
+        // still-live chunks; keep only the newest until per-chunk storage exists
+        allocation->memFreeCallbacks.clear();
+    }
+    allocation->memFreeCallbacks.push_back({pfnCallbackDesc->pfnCallback, pfnCallbackDesc->pUserData});
 
     return ZE_RESULT_SUCCESS;
 }
