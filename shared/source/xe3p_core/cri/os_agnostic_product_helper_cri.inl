@@ -175,4 +175,12 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
     return threshold;
 }
 
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const {
+    if (debugManager.flags.LimitIsaPrefetchSize.get() != -1) {
+        return std::min(isaSize, static_cast<uint32_t>(debugManager.flags.LimitIsaPrefetchSize.get()));
+    }
+    return isaSize;
+}
+
 } // namespace NEO

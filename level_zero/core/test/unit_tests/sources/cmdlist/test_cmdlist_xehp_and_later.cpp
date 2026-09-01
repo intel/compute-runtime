@@ -3037,7 +3037,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThe
             }
             itor++;
         }
-        EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), prefetchedSize); // limited to 1kb
+        EXPECT_EQ(device->getProductHelper().getIsaPrefetchSize(defaultIsaSize), prefetchedSize); // limited to product default
     }
 
     NEO::debugManager.flags.LimitIsaPrefetchSize.set(2 * MemoryConstants::kiloByte);

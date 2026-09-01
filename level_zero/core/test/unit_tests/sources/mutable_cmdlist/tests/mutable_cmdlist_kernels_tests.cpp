@@ -595,9 +595,10 @@ HWTEST2_F(MutableCommandListKernelTest,
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize() - expectedIohPrefetchSize,
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
 
-    auto maxIsaSize = std::min(mutation.kernelGroup->getMaxIsaSize(), static_cast<uint32_t>(MemoryConstants::kiloByte));
+    auto &productHelper = this->device->getProductHelper();
+    auto maxIsaSize = productHelper.getIsaPrefetchSize(mutation.kernelGroup->getMaxIsaSize());
 
-    uint32_t expectedIsaPrefetchSize = std::min(kernel->getImmutableData()->getIsaSize(), static_cast<uint32_t>(MemoryConstants::kiloByte));
+    uint32_t expectedIsaPrefetchSize = productHelper.getIsaPrefetchSize(kernel->getImmutableData()->getIsaSize());
     size_t expectedIsaPrefetchPadding =
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(maxIsaSize - expectedIsaPrefetchSize,
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
