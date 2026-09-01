@@ -127,6 +127,10 @@ template <typename CommandType>
 void EncodePostSync<Family>::encodeL3Flush(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <typename Family>
+template <typename CommandType>
+void EncodePostSync<Family>::encodeL3FlushForPostSync(CommandType &cmd, const EncodePostSyncArgs &args, PostSyncFlushMask postSyncFlushMask) {}
+
+template <typename Family>
 void EncodeSurfaceState<Family>::setAdditionalCacheSettings(R_SURFACE_STATE *surfaceState) {
 }
 } // namespace NEO

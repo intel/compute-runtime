@@ -310,6 +310,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                                                                          payloadMappings.implicitArgs.scratchPointerAddress.offset,
                                                                          launchParams.cmdWalkerBuffer,
                                                                          this->hasStageCommitVariables);
+    walkerPtr->setPostSyncFlushMask(launchParams.postSyncFlushMask);
     mutableWalkerCmds.emplace_back(std::move(walkerPtr));
     this->appendKernelMutableComputeWalker = (*mutableWalkerCmds.rbegin()).get();
     retVal = this->parseDispatchedKernel(kernel, appendKernelMutableComputeWalker, mutableCmdlistAppendLaunchParams.extraPayloadSpaceForKernelGroup,
@@ -941,6 +942,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
                                                                          payloadMappings.implicitArgs.scratchPointerAddress.offset,
                                                                          launchParams.cmdWalkerBuffer,
                                                                          this->hasStageCommitVariables);
+    walkerPtr->setPostSyncFlushMask(this->appendKernelMutableComputeWalker->getPostSyncFlushMask());
     mutableWalkerCmds.emplace_back(std::move(walkerPtr));
     auto viewKernelMutableComputeWalker = (*mutableWalkerCmds.rbegin()).get();
     retVal = this->parseDispatchedKernel(viewKernel,

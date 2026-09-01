@@ -118,14 +118,31 @@ bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool co
 template <typename Family>
 template <typename CommandType>
 void EncodePostSync<Family>::encodeL3Flush(CommandType &cmd, const EncodePostSyncArgs &args) {
+    auto postSyncFlushMask = makePostSyncFlushMask(1u);
+    if (args.isRegularEvent()) {
+        UNRECOVERABLE_IF(args.eventPacketsCount > maxPostSyncOperations);
+        postSyncFlushMask = makePostSyncFlushMask(args.eventPacketsCount);
+    }
+
+    encodeL3FlushForPostSync(cmd, args, postSyncFlushMask);
+}
+
+template <typename Family>
+template <typename CommandType>
+void EncodePostSync<Family>::encodeL3FlushForPostSync(CommandType &cmd, const EncodePostSyncArgs &args, PostSyncFlushMask postSyncFlushMask) {
 
     using POSTSYNC_DATA_TYPE = decltype(Family::template getPostSyncType<CommandType>());
     if constexpr (std::is_same_v<POSTSYNC_DATA_TYPE, typename Family::POSTSYNC_DATA_2>) {
-        bool l2Flush = args.dcFlushEnable && args.isFlushL3ForExternalAllocationRequired;
-        bool l2TransientFlush = args.dcFlushEnable && args.isFlushL3ForHostUsmRequired;
+        const bool l2Flush = args.dcFlushEnable && args.isFlushL3ForExternalAllocationRequired;
+        const bool l2TransientFlush = args.dcFlushEnable && args.isFlushL3ForHostUsmRequired;
+        postSyncFlushMask = getPostSyncFlushMask(args, postSyncFlushMask);
 
-        cmd.getPostSync().setL2Flush(l2Flush);
-        cmd.getPostSync().setL2TransientFlush(l2TransientFlush);
+        for (uint32_t postSyncId = 0; postSyncId < maxPostSyncOperations; postSyncId++) {
+            const bool isFlush = isPostSyncFlush(postSyncFlushMask, postSyncId);
+            auto &postSync = getPostSync(cmd, postSyncId);
+            postSync.setL2Flush(isFlush && l2Flush);
+            postSync.setL2TransientFlush(isFlush && l2TransientFlush);
+        }
     }
 }
 
@@ -149,40 +166,58 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
     const uint64_t data = args.inOrderCounterValue;
 
     uint32_t postSyncId = 0;
+    PostSyncFlushMask postSyncFlushMask = 0;
     const bool deviceInterrupt = (args.interruptEvent && !args.inOrderExecInfo->isHostStorageDuplicated());
 
+    auto setPostSyncDataAndTrackFlush = [&](auto operation, uint64_t gpuVa, uint64_t immediateData, uint32_t atomicOpcode, bool interrupt, bool hostVisible) {
+        auto currentPostSyncId = postSyncId++;
+        setPostSyncData(getPostSync(cmd, currentPostSyncId), operation, gpuVa, immediateData, atomicOpcode, mocs, interrupt, requiresSystemMemoryFence);
+        if (args.isHostScopeSignalEvent && hostVisible) {
+            setPostSyncFlush(postSyncFlushMask, currentPostSyncId);
+        }
+    };
+
     if (args.inOrderExecInfo->isAtomicDeviceSignalling()) {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, deviceGpuVa, args.inOrderAtomicSignallingValue,
-                        static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), mocs, deviceInterrupt, requiresSystemMemoryFence);
+        setPostSyncDataAndTrackFlush(POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, deviceGpuVa, args.inOrderAtomicSignallingValue,
+                                     static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), deviceInterrupt,
+                                     !args.inOrderExecInfo->isHostStorageDuplicated());
     } else {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, deviceGpuVa, data, 0, mocs, deviceInterrupt, requiresSystemMemoryFence);
+        setPostSyncDataAndTrackFlush(POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, deviceGpuVa, data, 0, deviceInterrupt,
+                                     !args.inOrderExecInfo->isHostStorageDuplicated());
     }
 
     if (args.inOrderExecInfo->isHostStorageDuplicated()) {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getBaseHostGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
+        setPostSyncDataAndTrackFlush(POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getBaseHostGpuAddress(), data, 0, args.interruptEvent, true);
     }
 
     if (args.inOrderExecInfo->getInterruptFence()) {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getInterruptFence()->getGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
+        // host synchronization may observe this fence independently of the host counter
+        setPostSyncDataAndTrackFlush(POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getInterruptFence()->getGpuAddress(), data, 0, args.interruptEvent, true);
     }
 
     if (args.eventAddress) {
         for (auto i = 0u; i < args.eventPacketsCount; ++i) {
             auto packetAddress = args.eventAddress + i * args.eventPacketSize;
             auto operationType = args.isTimestampEvent ? POSTSYNC_DATA_TYPE::OPERATION_WRITE_TIMESTAMP : POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA;
-            setPostSyncData(getPostSync(cmd, postSyncId++), operationType, packetAddress, args.postSyncImmValue, 0, mocs, false, requiresSystemMemoryFence);
+            setPostSyncDataAndTrackFlush(operationType, packetAddress, args.postSyncImmValue, 0, false, true);
         }
     }
 
     if (args.inOrderIncrementValue > 0) {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, args.inOrderIncrementGpuAddress, args.inOrderIncrementValue,
-                        static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), mocs, false, requiresSystemMemoryFence);
+        setPostSyncDataAndTrackFlush(POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, args.inOrderIncrementGpuAddress, args.inOrderIncrementValue,
+                                     static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), false, args.isInOrderIncrementHostVisible);
     }
 
-    UNRECOVERABLE_IF(postSyncId > 4);
+    UNRECOVERABLE_IF(postSyncId > maxPostSyncOperations);
+
+    postSyncFlushMask = getPostSyncFlushMask(args, postSyncFlushMask);
+
+    if (args.outPostSyncFlushMask) {
+        *args.outPostSyncFlushMask = postSyncFlushMask;
+    }
 
     setCommandLevelInterrupt(cmd, args.interruptEvent);
-    encodeL3Flush(cmd, args);
+    encodeL3FlushForPostSync(cmd, args, postSyncFlushMask);
 }
 
 template <typename Family>

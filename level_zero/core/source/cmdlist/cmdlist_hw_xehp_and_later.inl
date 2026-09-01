@@ -59,6 +59,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions, Event *event,
                                                                                CmdListKernelLaunchParams &launchParams) {
 
+    launchParams.postSyncFlushMask = 0u;
     launchParams.inOrderNonWalkerSignalingRequired = isInOrderNonWalkerSignalingRequired(event);
 
     if (NEO::debugManager.flags.ForcePipeControlPriorToWalker.get()) {
@@ -299,6 +300,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     uint64_t inOrderAtomicSignallingValue = 1;
     uint64_t inOrderIncrementValue = 0;
     uint64_t inOrderIncrementGpuAddress = 0;
+    bool isInOrderIncrementHostVisible = false;
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
 
     const bool multipleCsrClients = this->isImmediateType() && (this->getCsr(false)->getNumClients() >= 2u);
@@ -332,6 +334,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     if (event->getInOrderIncrementValue(this->partitionCount) > 0) {
                         inOrderIncrementGpuAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress();
                         inOrderIncrementValue = event->getInOrderIncrementValue(this->partitionCount);
+                        isInOrderIncrementHostVisible = !event->getInOrderExecEventHelper().isHostStorageDuplicated();
                     }
                 }
             }
@@ -384,8 +387,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .isFlushL3ForExternalAllocationRequired = isFlushL3ForExternalAllocationRequired,
             .isFlushL3ForHostUsmRequired = isFlushL3ForHostUsmRequired,
             .isHostScopeSignalEvent = isHostSignalScopeEvent,
+            .isInOrderIncrementHostVisible = isInOrderIncrementHostVisible,
             .isTimestampEvent = isTimestampEvent,
             .isUsingSystemAllocation = isKernelUsingSystemAllocation,
+            .outPostSyncFlushMask = &launchParams.postSyncFlushMask,
         },
         .preemptionMode = kernelPreemptionMode,
         .requiredPartitionDim = launchParams.requiredPartitionDim,

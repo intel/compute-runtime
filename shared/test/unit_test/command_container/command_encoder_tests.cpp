@@ -913,7 +913,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenCall
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenCallingEncodeL3FlushThenNothingHappen) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenCallingL3FlushFunctionsThenNothingHappen) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment executionEnvironment{};
     DefaultWalkerType walkerCmd{};
@@ -925,6 +925,9 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenCall
 
     args = {.isFlushL3ForHostUsmRequired = true};
     EncodePostSync<FamilyType>::template encodeL3Flush<DefaultWalkerType>(walkerCmd, args);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
+
+    EncodePostSync<FamilyType>::template encodeL3FlushForPostSync<DefaultWalkerType>(walkerCmd, args, 1u);
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
 }
 

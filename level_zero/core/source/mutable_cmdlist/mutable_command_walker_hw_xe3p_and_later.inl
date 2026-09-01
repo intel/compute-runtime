@@ -170,7 +170,7 @@ void MutableComputeWalkerHw<GfxFamily>::setPostSyncAddress(GpuAddress postSyncAd
     auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
 
     // <GPU, CPU> pointers
-    const std::array<PostSyncPair, 4> postSyncTable = {{
+    const std::array<PostSyncPair, NEO::EncodePostSync<GfxFamily>::maxPostSyncOperations> postSyncTable = {{
         {&walkerCmd->getPostSyncOpn3(), &cpuBufferWalker->getPostSyncOpn3()},
         {&walkerCmd->getPostSyncOpn2(), &cpuBufferWalker->getPostSyncOpn2()},
         {&walkerCmd->getPostSyncOpn1(), &cpuBufferWalker->getPostSyncOpn1()},
@@ -264,6 +264,7 @@ void MutableComputeWalkerHw<GfxFamily>::copyWalkerDataToHostBuffer(MutableComput
     memcpy_s(&walkerCmdHostBuffer->getPostSyncOpn1(), sizeof(PostSyncData), &sourceWalkerCmdHostBuffer->getPostSyncOpn1(), sizeof(PostSyncData));
     memcpy_s(&walkerCmdHostBuffer->getPostSyncOpn2(), sizeof(PostSyncData), &sourceWalkerCmdHostBuffer->getPostSyncOpn2(), sizeof(PostSyncData));
     memcpy_s(&walkerCmdHostBuffer->getPostSyncOpn3(), sizeof(PostSyncData), &sourceWalkerCmdHostBuffer->getPostSyncOpn3(), sizeof(PostSyncData));
+    this->setPostSyncFlushMask(sourceWalker->getPostSyncFlushMask());
 
     auto indirectAddressSource = ptrOffset(sourceWalkerCmdHostBuffer->getInlineDataPointer(), sourceWalker->getIndirectOffset());
     auto indirectAddressThis = ptrOffset(walkerCmdHostBuffer->getInlineDataPointer(), this->indirectOffset);
@@ -375,12 +376,23 @@ void MutableComputeWalkerHw<GfxFamily>::updateL3FlushAfterWalker(uint32_t system
         }
     }
 
-    cpuBufferWalker->getPostSync().setL2Flush(l2Flush);
-    cpuBufferWalker->getPostSync().setL2TransientFlush(l2TransientFlush);
-
-    // update cmdbuffer
     auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
-    walkerCmd->getPostSync().getRawData(0) = cpuBufferWalker->getPostSync().getRawData(0);
+    using PostSyncData = typename GfxFamily::POSTSYNC_DATA_2;
+    using PostSyncPair = std::pair<PostSyncData *, PostSyncData *>;
+    const std::array<PostSyncPair, NEO::EncodePostSync<GfxFamily>::maxPostSyncOperations> postSyncTable = {{
+        {&cpuBufferWalker->getPostSync(), &walkerCmd->getPostSync()},
+        {&cpuBufferWalker->getPostSyncOpn1(), &walkerCmd->getPostSyncOpn1()},
+        {&cpuBufferWalker->getPostSyncOpn2(), &walkerCmd->getPostSyncOpn2()},
+        {&cpuBufferWalker->getPostSyncOpn3(), &walkerCmd->getPostSyncOpn3()},
+    }};
+
+    for (uint32_t postSyncId = 0; postSyncId < postSyncTable.size(); postSyncId++) {
+        const bool isFlush = NEO::EncodePostSync<GfxFamily>::isPostSyncFlush(this->postSyncFlushMask, postSyncId);
+        auto [cpuPostSync, gpuPostSync] = postSyncTable[postSyncId];
+        cpuPostSync->setL2Flush(isFlush && l2Flush);
+        cpuPostSync->setL2TransientFlush(isFlush && l2TransientFlush);
+        gpuPostSync->getRawData(0) = cpuPostSync->getRawData(0);
+    }
 }
 
 } // namespace L0::MCL

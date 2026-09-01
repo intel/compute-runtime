@@ -11,6 +11,9 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debugger/debugger.h"
+#include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/state_base_address_helper.h"
@@ -80,8 +83,10 @@ struct EncodePostSyncArgs {
     bool isFlushL3ForExternalAllocationRequired = false;
     bool isFlushL3ForHostUsmRequired = false;
     bool isHostScopeSignalEvent = false;
+    bool isInOrderIncrementHostVisible = false;
     bool isTimestampEvent = false;
     bool isUsingSystemAllocation = false;
+    PostSyncFlushMask *outPostSyncFlushMask = nullptr;
 
     bool requiresSystemMemoryFence() const;
 
@@ -92,11 +97,43 @@ struct EncodePostSyncArgs {
 
 template <typename GfxFamily>
 struct EncodePostSync {
+    static constexpr uint32_t maxPostSyncOperations = 4;
+
+    static constexpr PostSyncFlushMask makePostSyncFlushMask(uint32_t postSyncOperationsCount) {
+        DEBUG_BREAK_IF(postSyncOperationsCount > maxPostSyncOperations);
+        return static_cast<PostSyncFlushMask>(maxNBitValue(postSyncOperationsCount));
+    }
+
+    static constexpr void setPostSyncFlush(PostSyncFlushMask &mask, uint32_t postSyncId) {
+        DEBUG_BREAK_IF(postSyncId >= maxPostSyncOperations);
+        mask = static_cast<PostSyncFlushMask>(setBits(mask, true, shiftLeftBy(postSyncId)));
+    }
+
+    static constexpr bool isPostSyncFlush(PostSyncFlushMask mask, uint32_t postSyncId) {
+        DEBUG_BREAK_IF(postSyncId >= maxPostSyncOperations);
+        return isBitSet(mask, postSyncId);
+    }
+
+    static bool isL2FlushRequired(const EncodePostSyncArgs &args) {
+        return args.dcFlushEnable &&
+               (args.isFlushL3ForExternalAllocationRequired || args.isFlushL3ForHostUsmRequired);
+    }
+
+    static PostSyncFlushMask getPostSyncFlushMask(const EncodePostSyncArgs &args, PostSyncFlushMask postSyncFlushMask) {
+        if (isL2FlushRequired(args) && postSyncFlushMask == 0) {
+            return makePostSyncFlushMask(1u);
+        }
+        return postSyncFlushMask;
+    }
+
     static constexpr size_t timestampDestinationAddressAlignment = 16;
     static constexpr size_t immWriteDestinationAddressAlignment = 8;
 
     template <typename CommandType>
     static void encodeL3Flush(CommandType &cmd, const EncodePostSyncArgs &args);
+
+    template <typename CommandType>
+    static void encodeL3FlushForPostSync(CommandType &cmd, const EncodePostSyncArgs &args, PostSyncFlushMask postSyncFlushMask);
 
     template <typename CommandType>
     static void setupPostSyncForRegularEvent(CommandType &cmd, const EncodePostSyncArgs &args);

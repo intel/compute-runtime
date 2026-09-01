@@ -21,6 +21,8 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
+#include <limits>
+
 using namespace NEO;
 
 using CommandEncodeStatesTestXe3pAndLater = Test<CommandEncodeStatesFixture>;
@@ -336,6 +338,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndArgsWithL3F
             auto &postSyncArgs = dispatchArgs.postSyncArgs;
             postSyncArgs.device = pDevice;
             postSyncArgs.dcFlushEnable = true;
+            postSyncArgs.isHostScopeSignalEvent = true;
             postSyncArgs.isFlushL3ForExternalAllocationRequired = flushL3ForExternalAllocation;
             postSyncArgs.isFlushL3ForHostUsmRequired = flushL3ForHostUsm;
 
@@ -345,6 +348,55 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndArgsWithL3F
             EXPECT_EQ(flushL3ForHostUsm, walkerCmd->getPostSync().getL2TransientFlush());
         }
     }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenFlushRequiredAndExplicitFlushMaskWhenEncodingL3FlushForPostSyncThenFallbackIsUsedOnlyForEmptyMask, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    EncodePostSyncArgs postSyncArgs = {
+        .dcFlushEnable = true,
+        .isFlushL3ForExternalAllocationRequired = true,
+        .isFlushL3ForHostUsmRequired = true};
+
+    WalkerType walkerWithEmptyMask = FamilyType::template getInitGpuWalker<WalkerType>();
+    EncodePostSync<FamilyType>::template encodeL3FlushForPostSync<WalkerType>(walkerWithEmptyMask, postSyncArgs, 0u);
+
+    EXPECT_TRUE(walkerWithEmptyMask.getPostSync().getL2Flush());
+    EXPECT_TRUE(walkerWithEmptyMask.getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walkerWithEmptyMask.getPostSyncOpn1().getL2Flush());
+    EXPECT_FALSE(walkerWithEmptyMask.getPostSyncOpn1().getL2TransientFlush());
+
+    constexpr auto secondPostSyncMask = static_cast<PostSyncFlushMask>(1u << 1);
+    WalkerType walkerWithExplicitMask = FamilyType::template getInitGpuWalker<WalkerType>();
+    EncodePostSync<FamilyType>::template encodeL3FlushForPostSync<WalkerType>(walkerWithExplicitMask, postSyncArgs, secondPostSyncMask);
+
+    EXPECT_FALSE(walkerWithExplicitMask.getPostSync().getL2Flush());
+    EXPECT_FALSE(walkerWithExplicitMask.getPostSync().getL2TransientFlush());
+    EXPECT_TRUE(walkerWithExplicitMask.getPostSyncOpn1().getL2Flush());
+    EXPECT_TRUE(walkerWithExplicitMask.getPostSyncOpn1().getL2TransientFlush());
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenRegularEventAndFlushMaskOutputWhenSettingPostSyncThenOnlyHostScopePacketsAreMarked, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    constexpr uint32_t eventPacketsCount = 2u;
+    PostSyncFlushMask postSyncFlushMask = 0u;
+    EncodePostSyncArgs postSyncArgs = {
+        .eventPacketSize = 64u,
+        .eventPacketsCount = eventPacketsCount,
+        .eventAddress = 0x123400,
+        .device = pDevice,
+        .outPostSyncFlushMask = &postSyncFlushMask};
+
+    WalkerType walkerWithoutHostScope = FamilyType::template getInitGpuWalker<WalkerType>();
+    postSyncFlushMask = std::numeric_limits<PostSyncFlushMask>::max();
+    EncodePostSync<FamilyType>::template setupPostSyncForRegularEvent<WalkerType>(walkerWithoutHostScope, postSyncArgs);
+    EXPECT_EQ(0u, postSyncFlushMask);
+
+    WalkerType walkerWithHostScope = FamilyType::template getInitGpuWalker<WalkerType>();
+    postSyncArgs.isHostScopeSignalEvent = true;
+    EncodePostSync<FamilyType>::template setupPostSyncForRegularEvent<WalkerType>(walkerWithHostScope, postSyncArgs);
+    EXPECT_EQ(EncodePostSync<FamilyType>::makePostSyncFlushMask(eventPacketsCount), postSyncFlushMask);
 }
 
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenL2FlushRequiredWhenCallingSetupPostSyncForInOrderExecThenPostSyncDataIsSetCorrectly, IsAtLeastXe3pCore) {
@@ -359,6 +411,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenL2FlushRequiredWhenCallingSe
 
     dispatchArgs.postSyncArgs.inOrderExecInfo = inOrderExecInfo.get();
     auto &postSyncArgs = dispatchArgs.postSyncArgs;
+    postSyncArgs.isHostScopeSignalEvent = true;
 
     for (bool dcFlushEnable : {true, false}) {
         for (bool flushL3ForExternalAllocation : {true, false}) {
@@ -375,6 +428,152 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenL2FlushRequiredWhenCallingSe
                 EXPECT_EQ(flushL3ForHostUsm && dcFlushEnable, postSyncData.getL2TransientFlush());
             }
         }
+    }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDuplicatedHostStorageAndL2FlushRequiredWhenCallingSetupPostSyncForInOrderExecThenFlushIsProgrammedOnHostPostSync, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    WalkerType walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> hostTagAllocator(0, pDevice->getMemoryManager());
+    InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), *pDevice, 1, false);
+
+    auto &postSyncArgs = dispatchArgs.postSyncArgs;
+    postSyncArgs.inOrderExecInfo = &inOrderExecInfo;
+    postSyncArgs.isHostScopeSignalEvent = true;
+    postSyncArgs.dcFlushEnable = true;
+    postSyncArgs.isFlushL3ForExternalAllocationRequired = true;
+    postSyncArgs.isFlushL3ForHostUsmRequired = true;
+
+    EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<WalkerType>(walkerCmd, postSyncArgs);
+
+    auto &devicePostSync = walkerCmd.getPostSync();
+    auto &hostPostSync = walkerCmd.getPostSyncOpn1();
+    EXPECT_EQ(inOrderExecInfo.getBaseDeviceAddress(), devicePostSync.getDestinationAddress());
+    EXPECT_EQ(inOrderExecInfo.getBaseHostGpuAddress(), hostPostSync.getDestinationAddress());
+    EXPECT_FALSE(devicePostSync.getL2Flush());
+    EXPECT_FALSE(devicePostSync.getL2TransientFlush());
+    EXPECT_TRUE(hostPostSync.getL2Flush());
+    EXPECT_TRUE(hostPostSync.getL2TransientFlush());
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDuplicatedHostStorageAndHostScopeEventWhenL2FlushIsRequiredThenFlushIsProgrammedOnEveryHostVisiblePostSync, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    WalkerType walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> hostTagAllocator(0, pDevice->getMemoryManager());
+    InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), *pDevice, 1, false);
+
+    constexpr uint64_t eventAddress = 0x123400;
+    auto &postSyncArgs = dispatchArgs.postSyncArgs;
+    postSyncArgs.inOrderExecInfo = &inOrderExecInfo;
+    postSyncArgs.eventAddress = eventAddress;
+    postSyncArgs.eventPacketsCount = 1;
+    postSyncArgs.eventPacketSize = 64;
+    postSyncArgs.isHostScopeSignalEvent = true;
+    postSyncArgs.dcFlushEnable = true;
+    postSyncArgs.isFlushL3ForExternalAllocationRequired = true;
+    postSyncArgs.isFlushL3ForHostUsmRequired = true;
+
+    EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<WalkerType>(walkerCmd, postSyncArgs);
+
+    auto &devicePostSync = walkerCmd.getPostSync();
+    auto &hostCounterPostSync = walkerCmd.getPostSyncOpn1();
+    auto &eventPostSync = walkerCmd.getPostSyncOpn2();
+    EXPECT_EQ(inOrderExecInfo.getBaseDeviceAddress(), devicePostSync.getDestinationAddress());
+    EXPECT_EQ(inOrderExecInfo.getBaseHostGpuAddress(), hostCounterPostSync.getDestinationAddress());
+    EXPECT_EQ(eventAddress, eventPostSync.getDestinationAddress());
+    EXPECT_FALSE(devicePostSync.getL2Flush());
+    EXPECT_FALSE(devicePostSync.getL2TransientFlush());
+    EXPECT_TRUE(hostCounterPostSync.getL2Flush());
+    EXPECT_TRUE(hostCounterPostSync.getL2TransientFlush());
+    EXPECT_TRUE(eventPostSync.getL2Flush());
+    EXPECT_TRUE(eventPostSync.getL2TransientFlush());
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDuplicatedHostStorageAndAggregatedExternalCounterWhenL2FlushIsRequiredThenFlushIsProgrammedOnHostVisiblePostSyncs, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> hostTagAllocator(0, pDevice->getMemoryManager());
+    InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), *pDevice, 1, false);
+
+    constexpr uint64_t aggregatedCounterAddress = 0x234500;
+    auto &postSyncArgs = dispatchArgs.postSyncArgs;
+    postSyncArgs.inOrderExecInfo = &inOrderExecInfo;
+    postSyncArgs.inOrderIncrementGpuAddress = aggregatedCounterAddress;
+    postSyncArgs.inOrderIncrementValue = 1;
+    postSyncArgs.isHostScopeSignalEvent = true;
+    postSyncArgs.dcFlushEnable = true;
+    postSyncArgs.isFlushL3ForExternalAllocationRequired = true;
+    postSyncArgs.isFlushL3ForHostUsmRequired = true;
+
+    for (bool isInOrderIncrementHostVisible : {false, true}) {
+        WalkerType walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+        postSyncArgs.isInOrderIncrementHostVisible = isInOrderIncrementHostVisible;
+
+        EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<WalkerType>(walkerCmd, postSyncArgs);
+
+        auto &devicePostSync = walkerCmd.getPostSync();
+        auto &hostCounterPostSync = walkerCmd.getPostSyncOpn1();
+        auto &aggregatedCounterPostSync = walkerCmd.getPostSyncOpn2();
+        EXPECT_EQ(inOrderExecInfo.getBaseDeviceAddress(), devicePostSync.getDestinationAddress());
+        EXPECT_EQ(inOrderExecInfo.getBaseHostGpuAddress(), hostCounterPostSync.getDestinationAddress());
+        EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, aggregatedCounterPostSync.getOperation());
+        EXPECT_EQ(aggregatedCounterAddress, aggregatedCounterPostSync.getDestinationAddress());
+        EXPECT_FALSE(devicePostSync.getL2Flush());
+        EXPECT_FALSE(devicePostSync.getL2TransientFlush());
+        EXPECT_TRUE(hostCounterPostSync.getL2Flush());
+        EXPECT_TRUE(hostCounterPostSync.getL2TransientFlush());
+        EXPECT_EQ(isInOrderIncrementHostVisible, aggregatedCounterPostSync.getL2Flush());
+        EXPECT_EQ(isInOrderIncrementHostVisible, aggregatedCounterPostSync.getL2TransientFlush());
+    }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenL2FlushInputsAndNoTrackedFlushWhenSettingInOrderPostSyncThenFirstPostSyncHasFlushProgrammed, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    WalkerType walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> hostTagAllocator(0, pDevice->getMemoryManager());
+    InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), *pDevice, 1, false);
+
+    PostSyncFlushMask postSyncFlushMask = 0u;
+    auto &postSyncArgs = dispatchArgs.postSyncArgs;
+    postSyncArgs.inOrderExecInfo = &inOrderExecInfo;
+    postSyncArgs.eventAddress = 0x345600;
+    postSyncArgs.eventPacketsCount = 1;
+    postSyncArgs.eventPacketSize = 64;
+    postSyncArgs.isHostScopeSignalEvent = false;
+    postSyncArgs.dcFlushEnable = true;
+    postSyncArgs.isFlushL3ForExternalAllocationRequired = true;
+    postSyncArgs.isFlushL3ForHostUsmRequired = true;
+    postSyncArgs.outPostSyncFlushMask = &postSyncFlushMask;
+
+    EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<WalkerType>(walkerCmd, postSyncArgs);
+
+    EXPECT_EQ(EncodePostSync<FamilyType>::makePostSyncFlushMask(1u), postSyncFlushMask);
+    EXPECT_TRUE(walkerCmd.getPostSync().getL2Flush());
+    EXPECT_TRUE(walkerCmd.getPostSync().getL2TransientFlush());
+
+    for (auto *postSync : {&walkerCmd.getPostSyncOpn1(), &walkerCmd.getPostSyncOpn2(), &walkerCmd.getPostSyncOpn3()}) {
+        EXPECT_FALSE(postSync->getL2Flush());
+        EXPECT_FALSE(postSync->getL2TransientFlush());
     }
 }
 

@@ -80,6 +80,14 @@ struct MutableComputeWalker {
         return scratchOffset;
     }
 
+    void setPostSyncFlushMask(NEO::PostSyncFlushMask mask) {
+        postSyncFlushMask = mask;
+    }
+
+    NEO::PostSyncFlushMask getPostSyncFlushMask() const {
+        return postSyncFlushMask;
+    }
+
     virtual void copyWalkerDataToHostBuffer(MutableComputeWalker *sourceWalker) = 0;
     virtual void updateWalkerScratchPatchAddress(GpuAddress scratchPatchAddress) = 0;
     virtual void saveCpuBufferIntoGpuBuffer(bool useDispatchPart, bool useInlinePostSyncPart) = 0;
@@ -88,6 +96,7 @@ struct MutableComputeWalker {
     void *walker;
     uint16_t indirectOffset;
     uint16_t scratchOffset;
+    NEO::PostSyncFlushMask postSyncFlushMask = 0u;
     bool stageCommitMode = false;
 };
 

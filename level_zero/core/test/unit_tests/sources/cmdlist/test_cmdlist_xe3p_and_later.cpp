@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/mem_lifetime.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -433,6 +434,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
     offset = cmdStream->getUsed();
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
+    EXPECT_EQ(nullptr, immCmdList->inOrderExecInfo->getInterruptFence());
 
     {
         GenCmdList commands;
@@ -478,6 +480,172 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
 
         EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn3().getOperation());
     }
+}
+
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularHostEventAndDuplicatedCounterStorageWhenDispatchingWalkerThenProgramOnlyDeviceHostAndEventPostSyncs, IsAtLeastXe3pCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CompactL3FlushEventPacket.set(0);
+    debugManager.flags.EnableWalkerPostSyncSkip.set(0);
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+    debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush | NEO::FlushCachesBitmask::l2TransientFlush));
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
+    ASSERT_FALSE(events[0]->isCounterBased());
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    if (!immCmdList->dcFlushSupport) {
+        GTEST_SKIP();
+    }
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams));
+    EXPECT_EQ(nullptr, immCmdList->inOrderExecInfo->getInterruptFence());
+
+    GenCmdList commands;
+    ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+    auto walkerItor = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(commands.end(), walkerItor);
+    auto walker = genCmdCast<DefaultWalkerType *>(*walkerItor);
+
+    auto &devicePostSync = walker->getPostSync();
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), devicePostSync.getDestinationAddress());
+    EXPECT_FALSE(devicePostSync.getL2Flush());
+    EXPECT_FALSE(devicePostSync.getL2TransientFlush());
+
+    auto &hostPostSync = walker->getPostSyncOpn1();
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, hostPostSync.getOperation());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseHostGpuAddress(), hostPostSync.getDestinationAddress());
+    EXPECT_TRUE(hostPostSync.getL2Flush());
+    EXPECT_TRUE(hostPostSync.getL2TransientFlush());
+
+    auto &eventPostSync = walker->getPostSyncOpn2();
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, eventPostSync.getOperation());
+    EXPECT_EQ(events[0]->getPacketAddress(device), eventPostSync.getDestinationAddress());
+    EXPECT_TRUE(eventPostSync.getL2Flush());
+    EXPECT_TRUE(eventPostSync.getL2TransientFlush());
+
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walker->getPostSyncOpn3().getOperation());
+}
+
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenCounterBasedInterruptEventAndDuplicatedCounterStorageWhenDispatchingWalkerThenProgramOnlyDeviceHostAndInterruptFencePostSyncs, IsAtLeastXe3pCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CompactL3FlushEventPacket.set(0);
+    debugManager.flags.EnableWalkerPostSyncSkip.set(0);
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+    debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush | NEO::FlushCachesBitmask::l2TransientFlush));
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->enableInterruptMode();
+    events[0]->enableKmdWaitMode();
+    ASSERT_TRUE(events[0]->isCounterBased());
+    ASSERT_FALSE(events[0]->isEventTimestampFlagSet());
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->shouldAllocateUserFenceReturnSuccess = true;
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    if (!immCmdList->dcFlushSupport) {
+        GTEST_SKIP();
+    }
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams));
+    ASSERT_NE(nullptr, immCmdList->inOrderExecInfo->getInterruptFence());
+
+    GenCmdList commands;
+    ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+    auto walkerItor = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(commands.end(), walkerItor);
+    auto walker = genCmdCast<DefaultWalkerType *>(*walkerItor);
+
+    auto &devicePostSync = walker->getPostSync();
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), devicePostSync.getDestinationAddress());
+    EXPECT_FALSE(devicePostSync.getL2Flush());
+    EXPECT_FALSE(devicePostSync.getL2TransientFlush());
+
+    auto &hostPostSync = walker->getPostSyncOpn1();
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, hostPostSync.getOperation());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseHostGpuAddress(), hostPostSync.getDestinationAddress());
+    EXPECT_TRUE(hostPostSync.getL2Flush());
+    EXPECT_TRUE(hostPostSync.getL2TransientFlush());
+
+    auto &interruptFencePostSync = walker->getPostSyncOpn2();
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, interruptFencePostSync.getOperation());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getInterruptFence()->getGpuAddress(), interruptFencePostSync.getDestinationAddress());
+    EXPECT_TRUE(interruptFencePostSync.getL2Flush());
+    EXPECT_TRUE(interruptFencePostSync.getL2TransientFlush());
+
+    // A non-timestamp counter-based event is represented by the in-order counters and interrupt fence.
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walker->getPostSyncOpn3().getOperation());
+}
+
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenCounterBasedTimestampInterruptEventAndDuplicatedCounterStorageWhenDispatchingWalkerThenProgramAllPostSyncs, IsAtLeastXe3pCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CompactL3FlushEventPacket.set(0);
+    debugManager.flags.EnableWalkerPostSyncSkip.set(0);
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+    debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush | NEO::FlushCachesBitmask::l2TransientFlush));
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->enableInterruptMode();
+    events[0]->enableKmdWaitMode();
+    ASSERT_TRUE(events[0]->isCounterBased());
+    ASSERT_TRUE(events[0]->isEventTimestampFlagSet());
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->shouldAllocateUserFenceReturnSuccess = true;
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    if (!immCmdList->dcFlushSupport) {
+        GTEST_SKIP();
+    }
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams));
+    ASSERT_NE(nullptr, immCmdList->inOrderExecInfo->getInterruptFence());
+
+    GenCmdList commands;
+    ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+    auto walkerItor = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(commands.end(), walkerItor);
+    auto walker = genCmdCast<DefaultWalkerType *>(*walkerItor);
+
+    auto &devicePostSync = walker->getPostSync();
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), devicePostSync.getDestinationAddress());
+    EXPECT_FALSE(devicePostSync.getL2Flush());
+    EXPECT_FALSE(devicePostSync.getL2TransientFlush());
+
+    auto &hostPostSync = walker->getPostSyncOpn1();
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, hostPostSync.getOperation());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseHostGpuAddress(), hostPostSync.getDestinationAddress());
+    EXPECT_TRUE(hostPostSync.getL2Flush());
+    EXPECT_TRUE(hostPostSync.getL2TransientFlush());
+
+    auto &interruptFencePostSync = walker->getPostSyncOpn2();
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, interruptFencePostSync.getOperation());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getInterruptFence()->getGpuAddress(), interruptFencePostSync.getDestinationAddress());
+    EXPECT_TRUE(interruptFencePostSync.getL2Flush());
+    EXPECT_TRUE(interruptFencePostSync.getL2TransientFlush());
+
+    // A timestamp counter-based event additionally needs its timestamp completion write.
+    auto &eventPostSync = walker->getPostSyncOpn3();
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_TIMESTAMP, eventPostSync.getOperation());
+    EXPECT_EQ(events[0]->getPacketAddress(device), eventPostSync.getDestinationAddress());
+    EXPECT_TRUE(eventPostSync.getL2Flush());
+    EXPECT_TRUE(eventPostSync.getL2TransientFlush());
 }
 
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventWhenDispatchingWalkerThenSetCorrectPostSyncFields, IsAtLeastXe3pCore) {

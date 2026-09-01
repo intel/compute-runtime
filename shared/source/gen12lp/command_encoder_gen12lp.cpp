@@ -626,6 +626,10 @@ void EncodePostSync<Family>::encodeL3Flush(CommandType &cmd, const EncodePostSyn
 
 template <typename Family>
 template <typename CommandType>
+void EncodePostSync<Family>::encodeL3FlushForPostSync(CommandType &cmd, const EncodePostSyncArgs &args, PostSyncFlushMask postSyncFlushMask) {}
+
+template <typename Family>
+template <typename CommandType>
 void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <typename Family>
