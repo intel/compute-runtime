@@ -98,7 +98,11 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::free(Device *device, Graphic
             const auto &handles = wddmAllocation.getHandles();
             size_t handleCount = wddmAllocation.getNumGmms();
             for (uint32_t i = 0; i < handleCount; i++) {
-                residentAllocations->removeResource(handles[i]);
+                if (gfxAllocation.isSharedPhysicalMemoryMapping()) {
+                    residentAllocations->removeResourceReference(handles[i]);
+                } else {
+                    residentAllocations->removeResource(handles[i]);
+                }
             }
         }
     }

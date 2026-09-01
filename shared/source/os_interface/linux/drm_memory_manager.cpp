@@ -277,10 +277,8 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
             eraseSharedBoHandleWrapper(boHandle, rootDeviceIndex);
         }
 
-        if (lock) {
-            lock.unlock();
-        }
-
+        // Deleting the BO drops its handle ownership, so it stays under the lock taken for the
+        // close decision; otherwise two last owners could each see the other and skip the close.
         delete bo;
     }
     return r;
@@ -819,33 +817,34 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const Allocatio
     return nullptr;
 }
 
-bool DrmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
+bool DrmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
     bool result = true;
 
-    DrmAllocation *drmAllocation = reinterpret_cast<DrmAllocation *>(physicalAllocation);
-    const bool vmBindAvailable = getDrm(rootDeviceIndex).isVmBindAvailable();
-    auto bufferObjects = drmAllocation->getBOs();
-    for (auto bufferObject : bufferObjects) {
+    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
+    if (mappedAllocation == nullptr) {
+        return false;
+    }
+    auto drmMappedAllocation = static_cast<DrmAllocation *>(mappedAllocation);
+
+    // freeGraphicsMemory below already unbinds every BO, but returns void; this loop is kept only to
+    // surface a vm_unbind failure to the caller (result -> ZE_RESULT_ERROR_UNKNOWN from zeVirtualMemUnmap).
+    for (auto bufferObject : drmMappedAllocation->getBOs()) {
         if (bufferObject) {
             for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
                 if (bufferObject->unbind(osContext, drmIterator) != 0) {
                     result = false;
                 }
             }
-            auto address = bufferObject->peekAddress();
-            uint64_t offset = address - gpuRange;
-            if (!vmBindAvailable) {
-                // The physical offset was folded into the placement on map, so add it
-                // back to recover the BO's original (pre-map) base address.
-                offset += bufferObject->getPhysicalMemoryOffset();
-            }
-            bufferObject->setAddress(offset);
-            bufferObject->setVirtualMappingSize(0u);
-            bufferObject->setPhysicalMemoryOffset(0u);
         }
     }
-    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
-    physicalAllocation->setReservedAddressRange(nullptr, 0u);
+
+    multiGraphicsAllocation.removeAllocation(mappedAllocation->getRootDeviceIndex());
+    auto backingAllocation = mappedAllocation->getMappedPhysicalAllocation();
+    freeGraphicsMemory(mappedAllocation);
+    const auto release = unregisterPhysicalMemoryMapping(backingAllocation);
+    if (release.physicalAllocationToRelease) {
+        freeGraphicsMemory(release.physicalAllocationToRelease);
+    }
     return result;
 }
 
@@ -901,55 +900,87 @@ bool DrmMemoryManager::reserveExactCpuAddress(uint64_t requiredStartAddress, siz
     return this->mmapFixedNoReplaceFunction(address, size) == address;
 }
 
-bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
-    DrmAllocation *drmAllocation = reinterpret_cast<DrmAllocation *>(physicalAllocation);
-    const bool vmBindAvailable = getDrm(drmAllocation->getRootDeviceIndex()).isVmBindAvailable();
-    auto bufferObjects = drmAllocation->getBOs();
+bool DrmMemoryManager::supportsPhysicalDeviceMemoryMultiMapping(uint32_t rootDeviceIndex) const {
+    return getDrm(rootDeviceIndex).isVmBindAvailable();
+}
+
+bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
+    auto drmPhysicalAllocation = static_cast<DrmAllocation *>(physicalAllocation);
+    const auto rootDeviceIndex = drmPhysicalAllocation->getRootDeviceIndex();
+    auto &drm = getDrm(rootDeviceIndex);
+    const bool vmBindAvailable = drm.isVmBindAvailable();
+    const auto &physicalBufferObjects = drmPhysicalAllocation->getBOs();
 
     size_t boCount = 0u;
-    for (auto bufferObject : bufferObjects) {
+    for (auto bufferObject : physicalBufferObjects) {
         if (bufferObject) {
             boCount++;
         }
     }
-    // A multi-tile/multi-storage allocation is chunked across several BOs, each sized to
-    // its own chunk (peekSize()). These chunk BOs are not bound with a per-bind offset, so
-    // a non-zero physical offset cannot be honored - reject it explicitly rather than
-    // silently mapping each chunk at offset 0. (Mirrors the WDDM multiStorage handling.)
+    // Chunked BOs are each bound at their own peekSize() with no per-bind offset, so a non-zero
+    // physical offset cannot be honored on that path.
     const bool multiBo = boCount > 1u;
     if (multiBo && offset != 0u) {
         DEBUG_BREAK_IF(true);
         return false;
     }
 
-    for (auto bufferObject : bufferObjects) {
-        if (bufferObject) {
-            // Each device BO holds a single active mapping; remapping without an
-            // intervening unMap would clobber peekAddress() and the bind params.
-            DEBUG_BREAK_IF(bufferObject->getVirtualMappingSize() != 0u);
-            auto boCurrentAddress = bufferObject->peekAddress();
+    // The BOs are only placed at the reserved VA here; binding is left to makeResident in
+    // Context::mapVirtualMem, as a bind issued here would cover a single OS context / vmHandleId only.
+    BufferObjects mappingBufferObjects{};
+    {
+        // unreference() takes mtx as well when erasing a shared handle wrapper, and an unmap of a
+        // sibling mapping may run concurrently with this map.
+        std::lock_guard lock{mtx};
+        for (auto physicalBo : physicalBufferObjects) {
+            if (physicalBo == nullptr) {
+                mappingBufferObjects.push_back(nullptr);
+                continue;
+            }
+            auto boHandleWrapper = tryToGetBoHandleWrapperWithSharedOwnership(physicalBo->peekHandle(), rootDeviceIndex);
+            auto bo = new BufferObject(rootDeviceIndex, &drm, physicalBo->peekPatIndex(), std::move(boHandleWrapper), physicalBo->peekSize(), maxOsContextCount);
+            bo->markAsSharedBoHandle();
+
+            auto boCurrentAddress = physicalBo->peekAddress();
             if (!multiBo) {
-                // Single-BO allocation: the whole buffer maps as one bind, so the physical
-                // offset/length apply directly. For the multi-BO chunked path these stay at
-                // their defaults so each chunk binds at its own peekSize() with no offset.
-                bufferObject->setPhysicalMemoryOffset(offset);
-                bufferObject->setVirtualMappingSize(bufferSize);
+                bo->setPhysicalMemoryOffset(offset);
+                bo->setVirtualMappingSize(bufferSize);
             }
             if (vmBindAvailable) {
-                // VM bind carries the physical offset/length to the kernel via the
-                // vm_bind ioctl, so the BO is placed exactly at the reserved range.
-                bufferObject->setAddress(gpuRange + boCurrentAddress);
+                bo->setAddress(gpuRange + boCurrentAddress);
             } else {
-                // The legacy execbuffer residency path maps the whole BO at a single
-                // GPU VA and has no per-bind offset, so fold the physical offset into
-                // the placement: byte `offset` of the BO then resolves to gpuRange.
-                bufferObject->setAddress(gpuRange + boCurrentAddress - offset);
+                // Softpin has no per-bind offset, so the placement is biased instead: byte `offset` of
+                // the BO then resolves to gpuRange.
+                bo->setAddress(gpuRange + boCurrentAddress - offset);
             }
-            bufferObject->resetBindInfo();
+            bo->resetBindInfo();
+            mappingBufferObjects.push_back(bo);
         }
     }
-    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, gpuRange);
-    physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
+
+    auto canonizedGpuAddress = getGmmHelper(rootDeviceIndex)->canonize(gpuRange);
+    auto drmAllocation = new DrmAllocation(rootDeviceIndex, physicalAllocation->getNumGmms(), physicalAllocation->getAllocationType(), mappingBufferObjects,
+                                           nullptr, canonizedGpuAddress, bufferSize, physicalAllocation->getMemoryPool());
+    drmAllocation->storageInfo = drmPhysicalAllocation->storageInfo;
+    drmAllocation->setNumHandles(drmPhysicalAllocation->getNumHandles());
+    drmAllocation->setSharedPhysicalMemoryMapping(true);
+    for (uint32_t handleId = 0; handleId < physicalAllocation->getNumGmms(); handleId++) {
+        drmAllocation->setGmm(physicalAllocation->getGmm(handleId), handleId);
+    }
+    // gpuRange is owned by the caller's virtual-memory reservation, so it is deliberately not
+    // tracked as a reserved address range here.
+
+    multiGraphicsAllocation.addAllocation(drmAllocation);
+
+    // Balances the unregisterAllocation that freeGraphicsMemory performs on unmap.
+    const auto registerStatus = drmAllocation->isAllocatedInLocalMemoryPool() ? registerLocalMemAlloc(drmAllocation, rootDeviceIndex) : registerSysMemAlloc(drmAllocation);
+    if (registerStatus != AllocationStatus::Success) {
+        multiGraphicsAllocation.removeAllocation(drmAllocation->getRootDeviceIndex());
+        freeGraphicsMemory(drmAllocation);
+        return false;
+    }
+    registerPhysicalMemoryMapping(*physicalAllocation, *drmAllocation);
+
     return true;
 }
 
@@ -993,7 +1024,10 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
     }
 
     int physicalBoHandle = physicalBo->peekHandle();
-    auto physicalBoHandleWrapper = tryToGetBoHandleWrapperWithSharedOwnership(physicalBoHandle, physicalAllocation->getRootDeviceIndex());
+    auto physicalBoHandleWrapper = [&] {
+        std::lock_guard lock{mtx};
+        return tryToGetBoHandleWrapperWithSharedOwnership(physicalBoHandle, physicalAllocation->getRootDeviceIndex());
+    }();
 
     auto memoryPool = MemoryPool::system4KBPages;
     auto patIndex = drm.getPatIndex(nullptr, AllocationType::bufferHostMemory, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
@@ -1092,12 +1126,20 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const Allocat
     allocation->setDefaultGmm(gmm.release());
 
     bo.release();
+    // Shared ownership lets each virtual-address mapping hold its own BufferObject over this handle
+    // without the first one to be released closing it.
+    {
+        std::lock_guard lock{mtx};
+        registerSharedBoHandleAllocation(allocation);
+    }
     status = AllocationStatus::Success;
     return allocation;
 }
 
 GraphicsAllocation *DrmMemoryManager::createPhysicalGraphicsMemoryFromSharedHandle(const OsHandleData &osHandleData,
                                                                                    const AllocationProperties &properties) {
+    std::lock_guard lock{mtx};
+
     PrimeHandle openFd{};
     openFd.fileDescriptor = osHandleData.handle;
 
@@ -1126,7 +1168,8 @@ GraphicsAllocation *DrmMemoryManager::createPhysicalGraphicsMemoryFromSharedHand
 
     auto patIndex = drm.getPatIndex(gmm.get(), properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
 
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(properties.rootDeviceIndex, &drm, patIndex, static_cast<int>(openFd.handle), size, maxOsContextCount));
+    auto boHandleWrapper = tryToGetBoHandleWrapperWithSharedOwnership(static_cast<int>(openFd.handle), properties.rootDeviceIndex);
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount));
 
     if (!isDeviceAllocation) {
         uint64_t offset = 0;
@@ -1142,6 +1185,7 @@ GraphicsAllocation *DrmMemoryManager::createPhysicalGraphicsMemoryFromSharedHand
 
     allocation->setDefaultGmm(gmm.release());
     bo.release();
+    registerSharedBoHandleAllocation(allocation);
 
     return allocation;
 }
@@ -2132,8 +2176,10 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         ioctlHelper->munmapFunction(*this, drmAlloc->getMmapPtr(), drmAlloc->getMmapSize());
     }
 
-    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        delete gfxAllocation->getGmm(handleId);
+    if (!gfxAllocation->isSharedPhysicalMemoryMapping()) {
+        for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+            delete gfxAllocation->getGmm(handleId);
+        }
     }
 
     if (gfxAllocation->fragmentsStorage.fragmentCount) {
@@ -2776,7 +2822,9 @@ AllocationStatus DrmMemoryManager::registerSysMemAlloc(GraphicsAllocation *alloc
     if (!makeAllocationResident(allocation)) {
         return AllocationStatus::Error;
     }
-    this->sysMemAllocsSize += allocation->getUnderlyingBufferSize();
+    if (!allocation->isSharedPhysicalMemoryMapping()) {
+        this->sysMemAllocsSize += allocation->getUnderlyingBufferSize();
+    }
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->sysMemAllocs.push_back(allocation);
     return AllocationStatus::Success;
@@ -2807,7 +2855,7 @@ AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *all
     if (!makeAllocationResident(allocation)) {
         return AllocationStatus::Error;
     }
-    if (!static_cast<DrmAllocation *>(allocation)->isLocalMemoryReserved()) {
+    if (!static_cast<DrmAllocation *>(allocation)->isLocalMemoryReserved() && !allocation->isSharedPhysicalMemoryMapping()) {
         this->localMemAllocsSize[rootDeviceIndex] += allocation->getUnderlyingBufferSize();
     }
     this->deferBackedLocalMemAllocsSize += getDeferBackedSize(allocation);
@@ -2817,12 +2865,14 @@ AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *all
 }
 
 void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
-    if (allocation->isAllocatedInLocalMemoryPool()) {
-        DEBUG_BREAK_IF(allocation->getUnderlyingBufferSize() > localMemAllocsSize[allocation->getRootDeviceIndex()]);
-        localMemAllocsSize[allocation->getRootDeviceIndex()] -= allocation->getUnderlyingBufferSize();
-    } else if (MemoryPool::memoryNull != allocation->getMemoryPool()) {
-        DEBUG_BREAK_IF(allocation->getUnderlyingBufferSize() > sysMemAllocsSize);
-        sysMemAllocsSize -= allocation->getUnderlyingBufferSize();
+    if (!allocation->isSharedPhysicalMemoryMapping()) {
+        if (allocation->isAllocatedInLocalMemoryPool()) {
+            DEBUG_BREAK_IF(allocation->getUnderlyingBufferSize() > localMemAllocsSize[allocation->getRootDeviceIndex()]);
+            localMemAllocsSize[allocation->getRootDeviceIndex()] -= allocation->getUnderlyingBufferSize();
+        } else if (MemoryPool::memoryNull != allocation->getMemoryPool()) {
+            DEBUG_BREAK_IF(allocation->getUnderlyingBufferSize() > sysMemAllocsSize);
+            sysMemAllocsSize -= allocation->getUnderlyingBufferSize();
+        }
     }
     std::lock_guard<std::mutex> lock(this->allocMutex);
     std::erase(sysMemAllocs, allocation);
@@ -3173,6 +3223,13 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const Al
         return nullptr;
     }
 
+    // Shared ownership lets each virtual-address mapping hold its own BufferObjects over these
+    // handles without the first one to be released closing them.
+    {
+        std::lock_guard lock{mtx};
+        registerSharedBoHandleAllocation(drmAllocation);
+    }
+
     status = AllocationStatus::Success;
     return allocation.release();
 }
@@ -3202,7 +3259,10 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalHostMemory(const Allocatio
     allocation->setMmapPtr(nullptr);
     allocation->setMmapSize(0u);
 
-    registerSharedBoHandleAllocation(allocation.get());
+    {
+        std::lock_guard lock{mtx};
+        registerSharedBoHandleAllocation(allocation.get());
+    }
 
     bo.release();
     allocation->setDefaultGmm(gmm.release());

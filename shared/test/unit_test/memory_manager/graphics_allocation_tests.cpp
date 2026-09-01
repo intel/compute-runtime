@@ -51,6 +51,18 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSettingSimulationInitial
     EXPECT_FALSE(graphicsAllocation.isSimulationInitialUploadDone());
 }
 
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSettingSharedPhysicalMemoryMappingThenStateIsUpdated) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    EXPECT_FALSE(graphicsAllocation.isSharedPhysicalMemoryMapping());
+
+    graphicsAllocation.setSharedPhysicalMemoryMapping(true);
+    EXPECT_TRUE(graphicsAllocation.isSharedPhysicalMemoryMapping());
+
+    graphicsAllocation.setSharedPhysicalMemoryMapping(false);
+    EXPECT_FALSE(graphicsAllocation.isSharedPhysicalMemoryMapping());
+}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationGetDefaultHandleAddressAndHandleSize) {
     MockGraphicsAllocation graphicsAllocation;
     EXPECT_EQ(0lu, graphicsAllocation.getHandleAddressBase(0));

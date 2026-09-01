@@ -544,12 +544,12 @@ bool MockMemoryManager::allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex)
     }
 }
 
-bool MockMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
+bool MockMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
     passedMapPhysicalDeviceMemoryOffset = offset;
     if (failMapPhysicalToVirtualMemory) {
         return false;
     }
-    return OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(physicalAllocation, gpuRange, bufferSize, memoryflags, offset);
+    return OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, memoryflags, offset);
 }
 
 bool MockMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) {
@@ -560,9 +560,9 @@ bool MockMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCo
     return OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset, keepReservationPlaceholder);
 }
 
-bool MockMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
+bool MockMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
     // Need to call actual unMapPhysicalDeviceMemoryFromVirtualMemory to ensure the virtual memory is unmapped.
-    bool retVal = OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(physicalAllocation, gpuRange, bufferSize, osContext, rootDeviceIndex);
+    bool retVal = OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, osContext, rootDeviceIndex);
     if (failUnMapPhysicalToVirtualMemory) { // Return false if unmapping is supposed to fail.
         return false;
     }

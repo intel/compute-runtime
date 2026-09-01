@@ -25,6 +25,7 @@
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_allocation.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/os_context.h"
@@ -446,9 +447,30 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uin
     }
 }
 
-bool OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
-    physicalAllocation->setGpuPtr(0u);
-    physicalAllocation->setReservedAddressRange(nullptr, 0u);
+bool OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
+    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
+    if (mappedAllocation == nullptr) {
+        return false;
+    }
+
+    multiGraphicsAllocation.removeAllocation(mappedAllocation->getRootDeviceIndex());
+
+    // The mapping borrows the physical backing storage and GMMs, so it is not released through
+    // freeGraphicsMemory; only the residency and download tracking it was given are dropped.
+    auto &memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[mappedAllocation->getRootDeviceIndex()]->memoryOperationsInterface;
+    if (memoryOperationsInterface) {
+        memoryOperationsInterface->free(nullptr, *mappedAllocation);
+    }
+    removeAllocationFromDownloadAllocationsInCsr(mappedAllocation);
+
+    auto backingAllocation = mappedAllocation->getMappedPhysicalAllocation();
+    delete mappedAllocation;
+
+    const auto release = unregisterPhysicalMemoryMapping(backingAllocation);
+    if (release.physicalAllocationToRelease) {
+        freeGraphicsMemory(release.physicalAllocationToRelease);
+    }
+
     return true;
 }
 
@@ -460,13 +482,29 @@ bool OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGrap
     return true;
 }
 
-bool OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
+bool OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
     // offset is intentionally not modeled here. The allocation must keep gpuAddress == gpuRange
     // (SVM tracking indexes by getGpuAddress(), matching the DRM/WDDM backends where the offset
     // lives in the kernel binding, not on the GraphicsAllocation). The os-agnostic/AUB backend has
     // no kernel binding to carry it, so the real offset semantics are exercised on DRM/WDDM only.
-    physicalAllocation->setGpuPtr(gpuRange);
-    physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
+    auto mappedAllocation = new GraphicsAllocation(physicalAllocation->getRootDeviceIndex(),
+                                                   physicalAllocation->getNumGmms(),
+                                                   physicalAllocation->getAllocationType(),
+                                                   physicalAllocation->getUnderlyingBuffer(),
+                                                   bufferSize,
+                                                   physicalAllocation->peekSharedHandle(),
+                                                   physicalAllocation->getMemoryPool(),
+                                                   maxOsContextCount,
+                                                   gpuRange);
+    mappedAllocation->setGpuPtr(gpuRange);
+    mappedAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
+    mappedAllocation->storageInfo = physicalAllocation->storageInfo;
+    for (uint32_t handleId = 0; handleId < physicalAllocation->getNumGmms(); handleId++) {
+        mappedAllocation->setGmm(physicalAllocation->getGmm(handleId), handleId);
+    }
+    registerPhysicalMemoryMapping(*physicalAllocation, *mappedAllocation);
+    multiGraphicsAllocation.addAllocation(mappedAllocation);
+
     return true;
 }
 

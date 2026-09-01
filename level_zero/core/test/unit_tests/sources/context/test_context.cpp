@@ -39,6 +39,8 @@
 
 #include "gtest/gtest.h"
 
+#include <set>
+
 namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamily;
@@ -46,6 +48,60 @@ struct CommandListCoreFamily;
 namespace ult {
 
 using MultiDeviceContextTests = Test<MultiDeviceWithFabricFixture>;
+
+TEST_F(MultiDeviceContextTests, givenIpcHandleTrackedOnGpuAllocationOfOtherRootDeviceWhenUnmappingPhysicalHostMemoryThenTrackingIsReleased) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_device_handle_t contextDevices[] = {driverHandle->devices[1]->toHandle(), driverHandle->devices[0]->toHandle()};
+    ze_result_t res = driverHandle->createContext(&desc, 2u, contextDevices, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    Context *contextImp = Context::fromHandle(hContext);
+
+    auto physicalMemoryDevice = driverHandle->devices[1];
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(physicalMemoryDevice, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(nullptr, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_HOST, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(physicalMemoryDevice, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    auto exportedAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    ASSERT_NE(reinterpret_cast<NEO::GraphicsAllocation *>(mem)->getRootDeviceIndex(), exportedAllocation->getRootDeviceIndex());
+
+    constexpr uint64_t handleKey = 0x1234u;
+    auto handleTracking = new L0::IpcHandleTracking();
+    handleTracking->alloc = exportedAllocation;
+    handleTracking->refcnt = 1;
+    handleTracking->ptr = castToUint64(ptr);
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        driverHandle->getIPCHandleMap()[handleKey] = handleTracking;
+    }
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        EXPECT_EQ(driverHandle->getIPCHandleMap().end(), driverHandle->getIPCHandleMap().find(handleKey));
+    }
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
 
 TEST_F(MultiDeviceContextTests,
        whenCreatingContextWithZeroNumDevicesThenAllDevicesAreAssociatedWithTheContext) {
@@ -611,10 +667,10 @@ TEST_F(MultiDeviceContextTests,
         size_t outSize = 0;
         res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &outAccess, &outSize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        EXPECT_EQ(pagesize * 2, outSize);
+        EXPECT_EQ(pagesize, outSize);
         res = contextImp->getVirtualMemAccessAttribute(offsetAddr, pagesize, &outAccess, &outSize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        EXPECT_EQ(pagesize * 2, outSize);
+        EXPECT_EQ(pagesize, outSize);
 
         res = contextImp->unMapVirtualMem(ptr, pagesize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -2169,7 +2225,7 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalDeviceMemoryThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, givenBindlessSlotAllocatedWhenUnMappingPhysicalDeviceMemoryThenSlotIsReleasedToReusePoolAndAllocationHasNoSlot) {
+TEST_F(ContextTest, givenBindlessSlotAllocatedWhenUnMappingPhysicalDeviceMemoryThenSlotIsReleasedToReusePoolAndRemapTakesFreshSlot) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -2201,7 +2257,13 @@ TEST_F(ContextTest, givenBindlessSlotAllocatedWhenUnMappingPhysicalDeviceMemoryT
     res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto allocation = reinterpret_cast<NEO::GraphicsAllocation *>(mem);
+    auto getMappingAllocation = [&]() -> NEO::GraphicsAllocation * {
+        auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+        return allocData == nullptr ? nullptr : allocData->gpuAllocations.getGraphicsAllocation(neoDevice->getRootDeviceIndex());
+    };
+
+    auto allocation = getMappingAllocation();
+    ASSERT_NE(nullptr, allocation);
     EXPECT_TRUE(driverHandle->getMemoryManager()->allocateBindlessSlot(allocation));
     EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
     const auto slotOffsetBeforeUnmap = allocation->getBindlessInfo().surfaceStateOffset;
@@ -2213,18 +2275,19 @@ TEST_F(ContextTest, givenBindlessSlotAllocatedWhenUnMappingPhysicalDeviceMemoryT
     res = contextImp->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
-
     const auto pooledSlotsAfter = bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size() +
                                   bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size();
     EXPECT_EQ(pooledSlotsBefore + 1u, pooledSlotsAfter);
+    EXPECT_EQ(nullptr, getMappingAllocation());
 
     res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_TRUE(driverHandle->getMemoryManager()->allocateBindlessSlot(allocation));
-    EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
-    EXPECT_NE(slotOffsetBeforeUnmap, allocation->getBindlessInfo().surfaceStateOffset);
+    auto remappedAllocation = getMappingAllocation();
+    ASSERT_NE(nullptr, remappedAllocation);
+    EXPECT_TRUE(driverHandle->getMemoryManager()->allocateBindlessSlot(remappedAllocation));
+    EXPECT_NE(std::numeric_limits<uint64_t>::max(), remappedAllocation->getBindlessOffset());
+    EXPECT_NE(slotOffsetBeforeUnmap, remappedAllocation->getBindlessInfo().surfaceStateOffset);
 
     res = contextImp->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -2268,13 +2331,15 @@ TEST_F(ContextTest, givenNoBindlessHeapsHelperWhenUnMappingPhysicalDeviceMemoryT
     res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto allocation = reinterpret_cast<NEO::GraphicsAllocation *>(mem);
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    auto allocation = allocData->gpuAllocations.getGraphicsAllocation(neoDevice->getRootDeviceIndex());
+    ASSERT_NE(nullptr, allocation);
     allocation->setBindlessInfo({allocation, 0u, nullptr, 0u});
     EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
 
     res = contextImp->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
 
     res = contextImp->destroyPhysicalMem(mem);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -2286,7 +2351,70 @@ TEST_F(ContextTest, givenNoBindlessHeapsHelperWhenUnMappingPhysicalDeviceMemoryT
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenMappingSamePhysicalMemoryToMoreThanOneVirtualAddressThenInvalidArgumentIsReturned) {
+class IpcExportableMappedAllocation : public NEO::MockGraphicsAllocation {
+  public:
+    using NEO::MockGraphicsAllocation::MockGraphicsAllocation;
+
+    int createInternalHandle(NEO::MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
+        handle = getGpuAddress();
+        return 0;
+    }
+};
+
+class MultiMappingDeviceMemoryManagerMock : public MockMemoryManager {
+  public:
+    MultiMappingDeviceMemoryManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, executionEnvironment) {}
+
+    void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override {
+        closeInternalHandleCalled++;
+        if (releasedMappedAllocations.count(graphicsAllocation) != 0u) {
+            closeInternalHandleOnReleasedMappingCalled++;
+        }
+    }
+
+    bool mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override {
+        if (failMapVirtualMemory) {
+            return false;
+        }
+        auto mappedAllocation = new IpcExportableMappedAllocation(physicalAllocation->getRootDeviceIndex(), nullptr, bufferSize);
+        mappedAllocation->setAllocationType(NEO::AllocationType::buffer);
+        mappedAllocation->setGpuPtr(gpuRange);
+        multiGraphicsAllocation.addAllocation(mappedAllocation);
+        mappedAllocations.push_back(mappedAllocation);
+        releasedMappedAllocations.erase(mappedAllocation);
+        mapCalledCount++;
+        return true;
+    }
+
+    bool unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *mappedAllocationToRemove, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override {
+        auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(mappedAllocationToRemove->getRootDeviceIndex());
+        if (mappedAllocation == nullptr) {
+            return false;
+        }
+        multiGraphicsAllocation.removeAllocation(mappedAllocation->getRootDeviceIndex());
+        auto it = std::find(mappedAllocations.begin(), mappedAllocations.end(), mappedAllocation);
+        if (it != mappedAllocations.end()) {
+            mappedAllocations.erase(it);
+        }
+        releasedMappedAllocations.insert(mappedAllocation);
+        delete mappedAllocation;
+        unMapCalledCount++;
+        unMapReservationRootDeviceIndex = rootDeviceIndex;
+        return !failUnMapVirtualMemory;
+    }
+
+    bool failMapVirtualMemory = false;
+    bool failUnMapVirtualMemory = false;
+    uint32_t mapCalledCount = 0;
+    uint32_t unMapCalledCount = 0;
+    uint32_t unMapReservationRootDeviceIndex = std::numeric_limits<uint32_t>::max();
+    uint32_t closeInternalHandleCalled = 0;
+    uint32_t closeInternalHandleOnReleasedMappingCalled = 0;
+    std::vector<NEO::GraphicsAllocation *> mappedAllocations;
+    std::set<const NEO::GraphicsAllocation *> releasedMappedAllocations;
+};
+
+TEST_F(ContextTest, whenMappingSamePhysicalDeviceMemoryToMoreThanOneVirtualAddressThenBothMappingsSucceedAndCoexist) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -2297,6 +2425,10 @@ TEST_F(ContextTest, whenMappingSamePhysicalMemoryToMoreThanOneVirtualAddressThen
         std::make_unique<NEO::MockMemoryOperations>();
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -2323,12 +2455,86 @@ TEST_F(ContextTest, whenMappingSamePhysicalMemoryToMoreThanOneVirtualAddressThen
 
     size_t offset2 = pagesize;
     res = contextImp->mapVirtualMem(secondPtr, pagesize, mem, offset2, access);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(2u, multiMappingMemoryManager->mapCalledCount);
+    ASSERT_EQ(2u, multiMappingMemoryManager->mappedAllocations.size());
+    EXPECT_NE(multiMappingMemoryManager->mappedAllocations[0], multiMappingMemoryManager->mappedAllocations[1]);
+
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    EXPECT_NE(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_NE(nullptr, svmManager->getSVMAlloc(secondPtr));
 
     res = contextImp->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    res = contextImp->mapVirtualMem(secondPtr, pagesize, mem, offset2, access);
+    res = contextImp->unMapVirtualMem(secondPtr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(2u, multiMappingMemoryManager->unMapCalledCount);
+    EXPECT_EQ(0u, multiMappingMemoryManager->mappedAllocations.size());
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenMappingSamePhysicalDeviceMemoryToMoreThanOneVirtualAddressWithoutMultiMappingSupportThenSecondMapReturnsUnsupportedAndSingleMappingStillAllowed) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    multiMappingMemoryManager->mockSupportsPhysicalDeviceMemoryMultiMapping = false;
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *secondPtr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize * 2};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(secondPtr, pagesize, mem, pagesize, access);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+
+    EXPECT_EQ(1u, multiMappingMemoryManager->mapCalledCount);
+    ASSERT_EQ(1u, multiMappingMemoryManager->mappedAllocations.size());
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(secondPtr, pagesize, mem, pagesize, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(2u, multiMappingMemoryManager->mapCalledCount);
 
     res = contextImp->unMapVirtualMem(secondPtr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -2339,8 +2545,400 @@ TEST_F(ContextTest, whenMappingSamePhysicalMemoryToMoreThanOneVirtualAddressThen
     res = contextImp->freeVirtualMem(ptr, pagesize * 2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
+    driverHandle->setMemoryManager(originalMemoryManager);
+
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenMappingPhysicalDeviceMemoryToVirtualMemoryThenSvmAllocationTracksDedicatedMappedAllocationDistinctFromPhysical) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto physicalIt = multiMappingMemoryManager->getPhysicalMemoryAllocationMap().find(static_cast<void *>(mem));
+    ASSERT_NE(multiMappingMemoryManager->getPhysicalMemoryAllocationMap().end(), physicalIt);
+    auto physicalAllocation = physicalIt->second->allocation;
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    size_t offset = 0;
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto svmData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    auto mappedAllocation = svmData->gpuAllocations.getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
+    ASSERT_NE(nullptr, mappedAllocation);
+    EXPECT_NE(physicalAllocation, mappedAllocation);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), mappedAllocation->getGpuAddress());
+    ASSERT_EQ(1u, multiMappingMemoryManager->mappedAllocations.size());
+    EXPECT_EQ(multiMappingMemoryManager->mappedAllocations[0], mappedAllocation);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(nullptr, driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr));
+    EXPECT_EQ(0u, multiMappingMemoryManager->mappedAllocations.size());
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenFreeingVirtualMemoryWithStillMappedAllocationsThenMappingsAreCleanedUpAndSuccessIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    size_t offset = 0;
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_EQ(1u, multiMappingMemoryManager->mappedAllocations.size());
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, multiMappingMemoryManager->unMapCalledCount);
+    EXPECT_EQ(0u, multiMappingMemoryManager->mappedAllocations.size());
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenFreeingVirtualMemoryWithStillMappedAllocationsAndCleanupUnmapFailsThenErrorIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    size_t offset = 0;
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_EQ(1u, multiMappingMemoryManager->mappedAllocations.size());
+
+    multiMappingMemoryManager->failUnMapVirtualMemory = true;
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_NE(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, multiMappingMemoryManager->unMapCalledCount);
+    EXPECT_EQ(0u, multiMappingMemoryManager->mappedAllocations.size());
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenReservationOnOtherRootDeviceWhenMakingMappingResidentFailsThenMappingIsUnmappedWithReservationRootDeviceIndex) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto mockMemoryOperations = new NEO::MockMemoryOperations();
+    mockMemoryOperations->makeResidentResult = NEO::MemoryOperationsStatus::outOfMemory;
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(mockMemoryOperations);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(nullptr, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto reservation = multiMappingMemoryManager->getVirtualMemoryReservationMap()[ptr];
+    ASSERT_NE(nullptr, reservation);
+    const auto originalReservationRootDeviceIndex = reservation->rootDeviceIndex;
+    const uint32_t reservationRootDeviceIndex = 1u;
+    ASSERT_NE(device->getRootDeviceIndex(), reservationRootDeviceIndex);
+    reservation->rootDeviceIndex = reservationRootDeviceIndex;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_NE(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, multiMappingMemoryManager->unMapCalledCount);
+    EXPECT_EQ(reservationRootDeviceIndex, multiMappingMemoryManager->unMapReservationRootDeviceIndex);
+    EXPECT_TRUE(multiMappingMemoryManager->mappedAllocations.empty());
+
+    reservation->rootDeviceIndex = originalReservationRootDeviceIndex;
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+struct UnMapTrackingContext : public L0::Context {
+    using L0::Context::Context;
+
+    ze_result_t unMapVirtualMem(const void *ptr, size_t size) override {
+        publicUnMapCalledCount++;
+        return L0::Context::unMapVirtualMem(ptr, size);
+    }
+
+    uint32_t publicUnMapCalledCount = 0;
+};
+
+TEST_F(ContextTest, whenFreeingVirtualMemoryWithStillMappedAllocationsThenPublicUnMapVirtualMemIsNotReenteredAndMappingsAreCleanedUpUnderLock) {
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    UnMapTrackingContext contextImp(driverHandle.get());
+    for (auto inputDevice : driverHandle->devices) {
+        auto neoDevice = inputDevice->getNEODevice();
+        contextImp.getDevices().emplace(neoDevice->getRootDeviceIndex(), inputDevice->toHandle());
+        contextImp.rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
+        contextImp.deviceBitfields.emplace(neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+        contextImp.addDeviceHandle(inputDevice->toHandle());
+    }
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    ze_result_t res = contextImp.queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp.reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp.createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    size_t offset = 0;
+    res = contextImp.mapVirtualMem(ptr, pagesize, mem, offset, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_EQ(1u, multiMappingMemoryManager->mappedAllocations.size());
+
+    res = contextImp.freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, contextImp.publicUnMapCalledCount);
+    EXPECT_EQ(1u, multiMappingMemoryManager->unMapCalledCount);
+    EXPECT_EQ(0u, multiMappingMemoryManager->mappedAllocations.size());
+    EXPECT_EQ(0u, driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().count(ptr));
+
+    res = contextImp.destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+}
+
+TEST_F(ContextTest, whenFreeingVirtualMemoryAfterPhysicalMemoryDestroyedThenMappingsAreCleanedUp) {
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    UnMapTrackingContext contextImp(driverHandle.get());
+    for (auto inputDevice : driverHandle->devices) {
+        auto neoDevice = inputDevice->getNEODevice();
+        contextImp.getDevices().emplace(neoDevice->getRootDeviceIndex(), inputDevice->toHandle());
+        contextImp.rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
+        contextImp.deviceBitfields.emplace(neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+        contextImp.addDeviceHandle(inputDevice->toHandle());
+    }
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    ze_result_t res = contextImp.queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp.reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp.createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    res = contextImp.mapVirtualMem(ptr, pagesize, mem, 0, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_EQ(1u, multiMappingMemoryManager->mappedAllocations.size());
+
+    res = contextImp.destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, multiMappingMemoryManager->getPhysicalMemoryAllocationMap().count(static_cast<void *>(mem)));
+
+    res = contextImp.freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, contextImp.publicUnMapCalledCount);
+    EXPECT_EQ(1u, multiMappingMemoryManager->unMapCalledCount);
+    EXPECT_EQ(0u, multiMappingMemoryManager->mappedAllocations.size());
+    EXPECT_EQ(0u, driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().count(ptr));
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+}
+
+TEST_F(ContextTest, whenFreeingVirtualMemoryHoldingMultipleMappingsThenAllMappingsAreCleanedUpAtomicallyWithoutReenteringPublicUnMap) {
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    UnMapTrackingContext contextImp(driverHandle.get());
+    for (auto inputDevice : driverHandle->devices) {
+        auto neoDevice = inputDevice->getNEODevice();
+        contextImp.getDevices().emplace(neoDevice->getRootDeviceIndex(), inputDevice->toHandle());
+        contextImp.rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
+        contextImp.deviceBitfields.emplace(neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+        contextImp.addDeviceHandle(inputDevice->toHandle());
+    }
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    ze_result_t res = contextImp.queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp.reserveVirtualMem(pStart, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize * 2};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp.createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    res = contextImp.mapVirtualMem(ptr, pagesize, mem, 0, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp.mapVirtualMem(secondPtr, pagesize, mem, pagesize, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_EQ(2u, multiMappingMemoryManager->mappedAllocations.size());
+
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    EXPECT_NE(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_NE(nullptr, svmManager->getSVMAlloc(secondPtr));
+
+    res = contextImp.freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, contextImp.publicUnMapCalledCount);
+    EXPECT_EQ(2u, multiMappingMemoryManager->unMapCalledCount);
+    EXPECT_EQ(0u, multiMappingMemoryManager->mappedAllocations.size());
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(secondPtr));
+    EXPECT_EQ(0u, driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().count(ptr));
+
+    res = contextImp.destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
 }
 
 TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalDeviceMemoryThenMakeResidentIsCalledWithForcePagingFenceTrue) {
@@ -2380,15 +2978,14 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalDeviceMemoryThe
         ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
 
     for (auto accessFlags : memoryAccessFlags) {
-        EXPECT_FALSE(mockMemoryInterface->makeResidentForcePagingFenceValue);
+        auto makeResidentCountBefore = mockMemoryInterface->makeResidentCalledCount.load();
         res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, accessFlags);
-        EXPECT_TRUE(mockMemoryInterface->makeResidentForcePagingFenceValue);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(makeResidentCountBefore + 1, mockMemoryInterface->makeResidentCalledCount.load());
+        EXPECT_TRUE(mockMemoryInterface->makeResidentForcePagingFenceValue);
 
         res = contextImp->unMapVirtualMem(ptr, pagesize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-        mockMemoryInterface->makeResidentForcePagingFenceValue = false;
     }
 
     res = contextImp->destroyPhysicalMem(mem);
@@ -2396,6 +2993,334 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalDeviceMemoryThe
 
     res = contextImp->freeVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalDeviceMemoryThenMakeResidentIsCalledOnMappedAllocationNotPhysical) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    NEO::MockMemoryOperations *mockMemoryInterface = static_cast<NEO::MockMemoryOperations *>(
+        device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
+    mockMemoryInterface->captureGfxAllocationsForMakeResident = true;
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto physicalAllocation = reinterpret_cast<NEO::GraphicsAllocation *>(mem);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(1, mockMemoryInterface->makeResidentCalledCount.load());
+    ASSERT_EQ(1u, mockMemoryInterface->gfxAllocationsForMakeResident.size());
+    EXPECT_NE(physicalAllocation, mockMemoryInterface->gfxAllocationsForMakeResident[0]);
+    EXPECT_EQ(multiMappingMemoryManager->mappedAllocations[0], mockMemoryInterface->gfxAllocationsForMakeResident[0]);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenMappingPhysicalDeviceMemoryOnNonVmBindPlatformThenMakeResidentIsCalledOnMappedAllocationForSingleMapping) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    NEO::MockMemoryOperations *mockMemoryInterface = static_cast<NEO::MockMemoryOperations *>(
+        device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
+    mockMemoryInterface->captureGfxAllocationsForMakeResident = true;
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    multiMappingMemoryManager->mockSupportsPhysicalDeviceMemoryMultiMapping = false;
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto physicalAllocation = reinterpret_cast<NEO::GraphicsAllocation *>(mem);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1, mockMemoryInterface->makeResidentCalledCount.load());
+    ASSERT_EQ(1u, mockMemoryInterface->gfxAllocationsForMakeResident.size());
+    EXPECT_NE(physicalAllocation, mockMemoryInterface->gfxAllocationsForMakeResident[0]);
+    EXPECT_EQ(multiMappingMemoryManager->mappedAllocations[0], mockMemoryInterface->gfxAllocationsForMakeResident[0]);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenIpcHandleExportedFromMappedVirtualMemoryWhenUnmappingBeforePutThenHandleIsClosedOnceWhileMappingIsAlive) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+    contextImp->settings.enableIpcHandleSharingByDefault = true;
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(nullptr, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    res = contextImp->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    const uint64_t handleKey = reinterpret_cast<IpcMemoryData *>(ipcHandle.data)->handle;
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, multiMappingMemoryManager->closeInternalHandleCalled);
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        EXPECT_EQ(driverHandle->getIPCHandleMap().end(), driverHandle->getIPCHandleMap().find(handleKey));
+    }
+
+    res = contextImp->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, multiMappingMemoryManager->closeInternalHandleCalled);
+    EXPECT_EQ(0u, multiMappingMemoryManager->closeInternalHandleOnReleasedMappingCalled);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenRangeIpcHandleExportedFromMappedVirtualMemoryWhenUnmappingBeforeFreeingReservationThenChunkHandlesAreClosedOnceWhileMappingsAreAlive) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+    if (contextImp->getMaxIpcRangeHandleCount() == 0u) {
+        contextImp->destroy();
+        GTEST_SKIP();
+    }
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    contextImp->settings.enableIpcHandleSharingByDefault = true;
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    contextImp->settings.handleType = IpcHandleType::fdHandle;
+
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(nullptr, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *secondPagePtr = ptrOffset(ptr, pagesize);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(secondPagePtr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_ipc_phys_mem_handle_range_ext_desc_t rangeDesc = {};
+    rangeDesc.stype = ZE_STRUCTURE_TYPE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_DESC;
+    rangeDesc.size = pagesize * 2;
+    ze_ipc_mem_handle_t rangeHandle = {};
+    res = contextImp->getIpcMemHandle(ptr, &rangeDesc, &rangeHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(2u, multiMappingMemoryManager->closeInternalHandleCalled);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(3u, multiMappingMemoryManager->closeInternalHandleCalled);
+    EXPECT_EQ(0u, multiMappingMemoryManager->closeInternalHandleOnReleasedMappingCalled);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenRangeIpcHandleWhoseMappingsWereUnmappedWhenPuttingItAfterHandleValueIsReusedThenNewExportIsKept) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+    if (contextImp->getMaxIpcRangeHandleCount() == 0u) {
+        contextImp->destroy();
+        GTEST_SKIP();
+    }
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    auto multiMappingMemoryManager = std::make_unique<MultiMappingDeviceMemoryManagerMock>(*device->getNEODevice()->getExecutionEnvironment());
+    driverHandle->setMemoryManager(multiMappingMemoryManager.get());
+
+    contextImp->settings.enableIpcHandleSharingByDefault = true;
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    contextImp->settings.handleType = IpcHandleType::fdHandle;
+
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(nullptr, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_ipc_phys_mem_handle_range_ext_desc_t rangeDesc = {};
+    rangeDesc.stype = ZE_STRUCTURE_TYPE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_DESC;
+    rangeDesc.size = pagesize;
+    ze_ipc_mem_handle_t rangeHandle = {};
+    res = contextImp->getIpcMemHandle(ptr, &rangeDesc, &rangeHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    res = contextImp->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    const uint64_t reusedHandleKey = castToUint64(ptr);
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        EXPECT_NE(driverHandle->getIPCHandleMap().end(), driverHandle->getIPCHandleMap().find(reusedHandleKey));
+    }
+
+    res = contextImp->putIpcMemHandle(rangeHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        auto ipcHandleIterator = driverHandle->getIPCHandleMap().find(reusedHandleKey);
+        ASSERT_NE(driverHandle->getIPCHandleMap().end(), ipcHandleIterator);
+        EXPECT_EQ(1u, ipcHandleIterator->second->refcnt);
+    }
+
+    res = contextImp->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, multiMappingMemoryManager->closeInternalHandleOnReleasedMappingCalled);
+
+    driverHandle->setMemoryManager(originalMemoryManager);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -2690,12 +3615,13 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
     GraphicsAllocation *allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
-    bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return false; };
+    bool unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return false; };
     bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override { return false; };
-    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override {
+    bool mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override {
         if (failMapVirtualMemory) {
             return false;
         } else {
+            multiGraphicsAllocation.addAllocation(physicalAllocation);
             return true;
         }
     };
@@ -2783,26 +3709,27 @@ struct FoldPrefixMemoryManagerMock : public NEO::MockMemoryManager {
         passedKeepReservationPlaceholder = keepReservationPlaceholder;
         return NEO::MockMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset, keepReservationPlaceholder);
     }
-    bool mapPhysicalDeviceMemoryToVirtualMemory(NEO::GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const NEO::MemoryFlags *memoryflags, size_t offset) override {
-        if (detachReservationOnDeviceMap) {
-            auto &reservationMap = getVirtualMemoryReservationMap();
-            auto it = reservationMap.find(reinterpret_cast<void *>(gpuRange));
-            detachedReservation = *it;
-            reservationMap.erase(it);
-            return false;
-        }
+    bool mapPhysicalDeviceMemoryToVirtualMemory(NEO::MultiGraphicsAllocation &multiGraphicsAllocation, NEO::GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const NEO::MemoryFlags *memoryflags, size_t offset) override {
         lastDeviceMapFlags = *memoryflags;
         if (deviceMapFailuresLeft > 0u) {
             deviceMapFailuresLeft--;
             return false;
         }
-        return NEO::MockMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(physicalAllocation, gpuRange, bufferSize, memoryflags, offset);
+        return NEO::MockMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, memoryflags, offset);
+    }
+    bool updatePhysicalDeviceMemoryMappingAccess(NEO::GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t bufferSize, const NEO::MemoryFlags *memoryFlags, size_t offset, uint32_t rootDeviceIndex) override {
+        updatedMappingAllocations.push_back(&mappedAllocation);
+        lastDeviceMapFlags = *memoryFlags;
+        if (deviceMapFailuresLeft > 0u) {
+            deviceMapFailuresLeft--;
+            return false;
+        }
+        return true;
     }
     bool foldRequired = false;
+    std::vector<NEO::GraphicsAllocation *> updatedMappingAllocations;
     uint32_t deviceMapFailuresLeft = 0u;
     NEO::MemoryFlags lastDeviceMapFlags{};
-    bool detachReservationOnDeviceMap = false;
-    std::pair<void *, NEO::VirtualMemoryReservation *> detachedReservation{nullptr, nullptr};
     bool passedKeepReservationPlaceholder = false;
     bool failReserveExactCpuAddress = false;
     uint32_t reserveExactCalls = 0u;
@@ -2910,28 +3837,6 @@ TEST_F(ContextFoldPrefixTest, givenSvmAndNonSvmReservationWhenMappingHostPhysica
     tearDownMock(reservedPtr);
 }
 
-TEST_F(ContextFoldPrefixTest, givenDeviceBackedRangeAndUnmapFailingWhenSettingAccessAttributeThenErrorIsReturnedAndAttributeIsRestored) {
-    setUpMock(false);
-    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
-    ze_physical_mem_handle_t devicePhysicalMem = {};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->createPhysicalMem(device, &descMem, &devicePhysicalMem));
-    ASSERT_EQ(ZE_RESULT_SUCCESS,
-              contextImp->mapVirtualMem(reservedPtr, pagesize, devicePhysicalMem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
-
-    memoryManagerMock->appliesVirtualMemoryAccessFlagsResult = true;
-    memoryManagerMock->failUnMapPhysicalToVirtualMemory = true;
-    EXPECT_NE(ZE_RESULT_SUCCESS, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
-    memoryManagerMock->failUnMapPhysicalToVirtualMemory = false;
-
-    ze_memory_access_attribute_t access = ZE_MEMORY_ACCESS_ATTRIBUTE_NONE;
-    size_t outSize = 0u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, contextImp->getVirtualMemAccessAttribute(reservedPtr, pagesize, &access, &outSize));
-    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, access);
-
-    contextImp->destroyPhysicalMem(devicePhysicalMem);
-    tearDownMock();
-}
-
 TEST_F(ContextFoldPrefixTest, givenDeviceBackedRangeAndRemapFailingWhenSettingAccessAttributeThenErrorIsReturnedAndRangeIsMappedWithPreviousAccess) {
     setUpMock(false);
     ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
@@ -2987,31 +3892,38 @@ TEST_F(ContextFoldPrefixTest, givenDeviceBackedRangeAndRemapAndRollbackFailingWh
     tearDownMock();
 }
 
-TEST_F(ContextFoldPrefixTest, givenDeviceBackedRangeAndMakeResidentFailingWhenSettingAccessAttributeThenErrorIsReturnedAndRangeIsMappedWithPreviousAccess) {
+TEST_F(ContextFoldPrefixTest, givenDeviceBackedRangeWhenSettingAccessAttributeThenMappingAllocationIsUpdatedInPlaceWithoutBeingMadeResidentAgain) {
     setUpMock(false);
     ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
     ze_physical_mem_handle_t devicePhysicalMem = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->createPhysicalMem(device, &descMem, &devicePhysicalMem));
     ASSERT_EQ(ZE_RESULT_SUCCESS,
               contextImp->mapVirtualMem(reservedPtr, pagesize, devicePhysicalMem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(reservedPtr);
+    ASSERT_NE(nullptr, allocData);
+    auto mappedAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    ASSERT_NE(nullptr, mappedAllocation);
 
     auto memoryOperations = static_cast<NEO::MockMemoryOperations *>(
         device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
+    const auto makeResidentCallsBefore = memoryOperations->makeResidentCalledCount.load();
     memoryManagerMock->appliesVirtualMemoryAccessFlagsResult = true;
-    memoryOperations->makeResidentResult = NEO::MemoryOperationsStatus::outOfMemory;
-    EXPECT_NE(ZE_RESULT_SUCCESS, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
-    memoryOperations->makeResidentResult = NEO::MemoryOperationsStatus::success;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
 
-    auto reservation = getReservation();
-    ASSERT_NE(nullptr, reservation);
-    EXPECT_EQ(1u, reservation->mappedAllocations.size());
-    EXPECT_TRUE(memoryManagerMock->lastDeviceMapFlags.readWrite);
-    EXPECT_FALSE(memoryManagerMock->lastDeviceMapFlags.readOnly);
+    ASSERT_EQ(1u, memoryManagerMock->updatedMappingAllocations.size());
+    EXPECT_EQ(mappedAllocation, memoryManagerMock->updatedMappingAllocations[0]);
+    EXPECT_TRUE(memoryManagerMock->lastDeviceMapFlags.readOnly);
+    EXPECT_FALSE(memoryManagerMock->lastDeviceMapFlags.readWrite);
+    EXPECT_EQ(makeResidentCallsBefore, memoryOperations->makeResidentCalledCount.load());
+
+    allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(reservedPtr);
+    ASSERT_NE(nullptr, allocData);
+    EXPECT_EQ(mappedAllocation, allocData->gpuAllocations.getDefaultGraphicsAllocation());
 
     ze_memory_access_attribute_t access = ZE_MEMORY_ACCESS_ATTRIBUTE_NONE;
     size_t outSize = 0u;
     EXPECT_EQ(ZE_RESULT_SUCCESS, contextImp->getVirtualMemAccessAttribute(reservedPtr, pagesize, &access, &outSize));
-    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, access);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY, access);
 
     contextImp->unMapVirtualMem(reservedPtr, pagesize);
     contextImp->destroyPhysicalMem(devicePhysicalMem);
@@ -3041,31 +3953,6 @@ TEST_F(ContextFoldPrefixTest, givenDeviceBackedRangeAndAccessFlagsNotAppliedByMa
     EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY, access);
 
     contextImp->unMapVirtualMem(reservedPtr, pagesize);
-    contextImp->destroyPhysicalMem(devicePhysicalMem);
-    tearDownMock();
-}
-
-TEST_F(ContextFoldPrefixTest, givenDeviceBackedRangeAndReservationRemovedDuringFailedRemapWhenSettingAccessAttributeThenErrorIsReturnedAndRemovedReservationIsNotModified) {
-    setUpMock(false);
-    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
-    ze_physical_mem_handle_t devicePhysicalMem = {};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->createPhysicalMem(device, &descMem, &devicePhysicalMem));
-    ASSERT_EQ(ZE_RESULT_SUCCESS,
-              contextImp->mapVirtualMem(reservedPtr, pagesize, devicePhysicalMem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
-
-    memoryManagerMock->appliesVirtualMemoryAccessFlagsResult = true;
-    memoryManagerMock->detachReservationOnDeviceMap = true;
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
-    memoryManagerMock->detachReservationOnDeviceMap = false;
-
-    auto detached = memoryManagerMock->detachedReservation;
-    ASSERT_EQ(reservedPtr, detached.first);
-    ASSERT_NE(nullptr, detached.second);
-    EXPECT_EQ(nullptr, getReservation());
-    EXPECT_TRUE(detached.second->flags.readOnly);
-    EXPECT_FALSE(detached.second->flags.readWrite);
-
-    memoryManagerMock->getVirtualMemoryReservationMap().insert(detached);
     contextImp->destroyPhysicalMem(devicePhysicalMem);
     tearDownMock();
 }
@@ -3508,7 +4395,7 @@ TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryThenMappingIsSucces
         size_t outSize = 0;
         res = contextImp->getVirtualMemAccessAttribute(offsetAddr, pagesize, &outAccess, &outSize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        EXPECT_EQ(pagesize * 2, outSize);
+        EXPECT_EQ(pagesize, outSize);
 
         res = contextImp->unMapVirtualMem(offsetAddr, pagesize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3520,6 +4407,336 @@ TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryThenMappingIsSucces
     res = contextImp->freeVirtualMem(ptr, pagesize * 2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenMultipleMappingsInOneReservationWhenSettingAccessAttributeOnOneThenSiblingMappingIsUnchanged) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_handle_t secondHalfMem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &secondHalfMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *offsetAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(offsetAddr, pagesize, secondHalfMem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t outAccess = {};
+    size_t outSize = 0;
+    res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->getVirtualMemAccessAttribute(offsetAddr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->unMapVirtualMem(offsetAddr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(secondHalfMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenRangeWithUnchangedMappingAndUnmappedGapWhenSettingAccessAttributeThenGapReportsNewAttribute) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(nullptr, pagesize * 3, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    void *gapPtr = ptrOffset(ptr, pagesize);
+    void *siblingPtr = ptrOffset(ptr, pagesize * 2);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_handle_t siblingMem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &siblingMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(siblingPtr, pagesize, siblingMem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t outAccess = {};
+    size_t outSize = 0;
+    res = contextImp->getVirtualMemAccessAttribute(gapPtr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, outAccess);
+
+    res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize * 2, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->getVirtualMemAccessAttribute(gapPtr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->getVirtualMemAccessAttribute(siblingPtr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->unMapVirtualMem(siblingPtr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(siblingMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize * 3);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenAddressInsideMappingWhenGettingAccessAttributeThenContainingMappingIsReported) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 4, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t firstDescMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize * 2};
+    ze_physical_mem_handle_t firstMem = {};
+    res = contextImp->createPhysicalMem(device, &firstDescMem, &firstMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_desc_t secondDescMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t secondMem = {};
+    res = contextImp->createPhysicalMem(device, &secondDescMem, &secondMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *thirdPageAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize * 2);
+    void *fourthPageAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize * 3);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize * 2, firstMem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(fourthPageAddr, pagesize, secondMem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *secondPageAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+    ze_memory_access_attribute_t outAccess = {};
+    size_t outSize = 0;
+    res = contextImp->getVirtualMemAccessAttribute(secondPageAddr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, outAccess);
+    EXPECT_EQ(pagesize * 2, outSize);
+
+    res = contextImp->getVirtualMemAccessAttribute(fourthPageAddr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->getVirtualMemAccessAttribute(thirdPageAddr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->unMapVirtualMem(fourthPageAddr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(firstMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(secondMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize * 4);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenMultipleMappingsInOneReservationWhenSettingAccessAttributeOverWholeSpanThenEachMappingIsRebound) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_handle_t secondHalfMem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &secondHalfMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *offsetAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->mapVirtualMem(offsetAddr, pagesize, secondHalfMem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize * 2, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t outAccess = {};
+    size_t outSize = 0;
+    res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->getVirtualMemAccessAttribute(offsetAddr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY, outAccess);
+    EXPECT_EQ(pagesize, outSize);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->unMapVirtualMem(offsetAddr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(secondHalfMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenMappingLargerThanRequestedSizeWhenSettingAccessAttributeThenInvalidArgumentIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize * 2};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize * 2, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    ze_memory_access_attribute_t outAccess = {};
+    size_t outSize = 0;
+    res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize * 2, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, outAccess);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3578,10 +4795,10 @@ TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryWithMultiplePhysica
         size_t outSize = 0;
         res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &outAccess, &outSize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        EXPECT_EQ(pagesize * 2, outSize);
+        EXPECT_EQ(pagesize, outSize);
         res = contextImp->getVirtualMemAccessAttribute(offsetAddr, pagesize, &outAccess, &outSize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        EXPECT_EQ(pagesize * 2, outSize);
+        EXPECT_EQ(pagesize, outSize);
 
         res = contextImp->unMapVirtualMem(ptr, pagesize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -6148,7 +7365,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenPooledAllocationWithCallba
     EXPECT_EQ(1u, tracker.invocations);
 }
 
-TEST_F(ContextTest, whenSettingVirtualMemAccessAttributeWithChangedFlagsAndMappedAllocationsThenUnmapAndRemapIsCalled) {
+TEST_F(ContextTest, whenSettingVirtualMemAccessAttributeWithChangedFlagsAndMappedAllocationsThenAttributeIsAppliedToMapping) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
@@ -6179,7 +7396,6 @@ TEST_F(ContextTest, whenSettingVirtualMemAccessAttributeWithChangedFlagsAndMappe
 
     static_cast<NEO::MockMemoryManager *>(driverHandle->getMemoryManager())->appliesVirtualMemoryAccessFlagsResult = true;
 
-    // Change access attribute to trigger unmap/remap logic
     ze_memory_access_attribute_t newAccess = {ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY};
     res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize, newAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -6191,6 +7407,8 @@ TEST_F(ContextTest, whenSettingVirtualMemAccessAttributeWithChangedFlagsAndMappe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(outAccess, newAccess);
 
+    EXPECT_NE(nullptr, driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr));
+
     res = contextImp->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = contextImp->destroyPhysicalMem(mem);
@@ -6201,7 +7419,7 @@ TEST_F(ContextTest, whenSettingVirtualMemAccessAttributeWithChangedFlagsAndMappe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeThenUnmapAndMapAreCalled) {
+TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeThenMappingIsUpdatedInPlace) {
     auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
     ctx->createPhysicalMemCallBase = true;
     ctx->queryVirtualMemPageSizeCallBase = true;
@@ -6237,8 +7455,8 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeThenUnmapAn
     res = ctx->setVirtualMemAccessAttribute(ptr, pagesize, newAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_EQ(ctx->mapVirtualMemCalled, 2u);
-    EXPECT_EQ(ctx->unMapVirtualMemCalled, 1u);
+    EXPECT_EQ(ctx->mapVirtualMemCalled, 1u);
+    EXPECT_EQ(ctx->unMapVirtualMemCalled, 0u);
 
     res = ctx->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -6248,7 +7466,7 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeThenUnmapAn
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToNoneThenUnmapAndMapAreCalled) {
+TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToNoneThenMappingIsUpdatedInPlace) {
     auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
     ctx->createPhysicalMemCallBase = true;
     ctx->queryVirtualMemPageSizeCallBase = true;
@@ -6284,8 +7502,8 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToNoneThenU
     res = ctx->setVirtualMemAccessAttribute(ptr, pagesize, newAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_EQ(ctx->mapVirtualMemCalled, 2u);
-    EXPECT_EQ(ctx->unMapVirtualMemCalled, 1u);
+    EXPECT_EQ(ctx->mapVirtualMemCalled, 1u);
+    EXPECT_EQ(ctx->unMapVirtualMemCalled, 0u);
 
     res = ctx->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -6295,7 +7513,7 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToNoneThenU
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToReadWriteThenUnmapAndMapAreCalled) {
+TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToReadWriteThenMappingIsUpdatedInPlace) {
     auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
     ctx->createPhysicalMemCallBase = true;
     ctx->queryVirtualMemPageSizeCallBase = true;
@@ -6338,8 +7556,8 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToReadWrite
     res = ctx->setVirtualMemAccessAttribute(ptr, pagesize, newAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_EQ(ctx->mapVirtualMemCalled, 2u);
-    EXPECT_EQ(ctx->unMapVirtualMemCalled, 1u);
+    EXPECT_EQ(ctx->mapVirtualMemCalled, 1u);
+    EXPECT_EQ(ctx->unMapVirtualMemCalled, 0u);
 
     res = ctx->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -6347,58 +7565,6 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToReadWrite
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = ctx->freeVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-struct ReservationDetachingOnUnmapContext : public Mock<Context> {
-    using Mock<Context>::Mock;
-    ze_result_t unMapVirtualMem(const void *ptr, size_t size) override {
-        auto memoryManager = driverHandle->getMemoryManager();
-        auto lock = memoryManager->lockVirtualMemoryReservationMap();
-        auto &reservationMap = memoryManager->getVirtualMemoryReservationMap();
-        auto it = reservationMap.find(const_cast<void *>(ptr));
-        detachedReservation = *it;
-        reservationMap.erase(it);
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    std::pair<void *, NEO::VirtualMemoryReservation *> detachedReservation{nullptr, nullptr};
-};
-
-TEST_F(ContextTest, givenUnmapFailingAndReservationRemovedWhenChangingVirtualMemAccessAttributeThenErrorIsReturnedAndRemovedReservationIsNotModified) {
-    auto ctx = std::make_unique<ReservationDetachingOnUnmapContext>(driverHandle.get());
-    ctx->createPhysicalMemCallBase = true;
-    ctx->queryVirtualMemPageSizeCallBase = true;
-    ctx->reserveVirtualMemCallBase = true;
-    ctx->queryVirtualMemPageSizeWithStartAddressCallBase = true;
-    ctx->mapVirtualMemCallBase = true;
-    ctx->setVirtualMemAccessAttributeCallBase = true;
-    ctx->destroyPhysicalMemCallBase = true;
-    ctx->freeVirtualMemCallBase = true;
-    static_cast<NEO::MockMemoryManager *>(driverHandle->getMemoryManager())->appliesVirtualMemoryAccessFlagsResult = true;
-
-    void *ptr = nullptr;
-    size_t pagesize = 0u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ctx->queryVirtualMemPageSize(device, 4096u, &pagesize));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ctx->reserveVirtualMem(nullptr, pagesize, &ptr));
-
-    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
-    ze_physical_mem_handle_t mem = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ctx->createPhysicalMem(device, &descMem, &mem));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ctx->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ctx->setVirtualMemAccessAttribute(ptr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
-
-    auto detached = ctx->detachedReservation;
-    ASSERT_EQ(ptr, detached.first);
-    ASSERT_NE(nullptr, detached.second);
-    auto &reservationMap = driverHandle->getMemoryManager()->getVirtualMemoryReservationMap();
-    EXPECT_EQ(reservationMap.end(), reservationMap.find(ptr));
-    EXPECT_TRUE(detached.second->flags.readOnly);
-    EXPECT_FALSE(detached.second->flags.readWrite);
-
-    reservationMap.insert(detached);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ctx->Context::unMapVirtualMem(ptr, pagesize));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ctx->destroyPhysicalMem(mem));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ctx->freeVirtualMem(ptr, pagesize));
 }
 
 TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndNoMappedAllocationsThenUnmapAndMapAreNotCalled) {
@@ -6521,6 +7687,102 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndPtrNotIn
     res = ctx->destroyPhysicalMem(mem);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = ctx->freeVirtualMem(reservationBase, pageSize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenMappingStartingBeforeRequestedRangeWhenSettingAccessAttributeThenInvalidArgumentIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize * 2};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize * 2, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *offsetAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+
+    res = contextImp->setVirtualMemAccessAttribute(offsetAddr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    ze_memory_access_attribute_t outAccess = {};
+    size_t outSize = 0;
+    res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize * 2, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, outAccess);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenInvalidAccessAttributeAndMappedAllocationWhenSettingVirtualMemAccessAttributeThenInvalidEnumerationIsReturned) {
+    auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
+    ctx->queryVirtualMemPageSizeCallBase = true;
+    ctx->reserveVirtualMemCallBase = true;
+    ctx->createPhysicalMemCallBase = true;
+    ctx->mapVirtualMemCallBase = true;
+    ctx->setVirtualMemAccessAttributeCallBase = true;
+    ctx->unMapVirtualMemCallBase = true;
+    ctx->destroyPhysicalMemCallBase = true;
+    ctx->freeVirtualMemCallBase = true;
+    ctx->queryVirtualMemPageSizeWithStartAddressCallBase = true;
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pageSize = 0u;
+
+    ze_result_t res = ctx->queryVirtualMemPageSize(device, size, &pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = ctx->reserveVirtualMem(pStart, pageSize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pageSize};
+    ze_physical_mem_handle_t mem = {};
+    res = ctx->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = ctx->mapVirtualMem(ptr, pageSize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto invalidAccess = static_cast<ze_memory_access_attribute_t>(ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY + 1);
+    res = ctx->setVirtualMemAccessAttribute(ptr, pageSize, invalidAccess);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, res);
+
+    EXPECT_EQ(ctx->mapVirtualMemCalled, 1u);
+    EXPECT_EQ(ctx->unMapVirtualMemCalled, 0u);
+
+    res = ctx->unMapVirtualMem(ptr, pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = ctx->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = ctx->freeVirtualMem(ptr, pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
@@ -8578,26 +9840,35 @@ TEST_F(ContextTest, givenTwoContiguousReservationsWithMappingEachWhenUnmapFullSp
     physAllocA->allocation->setGpuPtr(reservABase);
     physAllocB->allocation->setGpuPtr(reservBBase);
 
+    auto *mappedAllocA = new NEO::MockGraphicsAllocation(0u, 1u, NEO::AllocationType::buffer, reinterpret_cast<void *>(reservABase), reservABase,
+                                                         0llu, pagesize, NEO::MemoryPool::system4KBPages, NEO::MemoryManager::maxOsContextCount);
+    mappedAllocA->setReservedAddressRange(reinterpret_cast<void *>(reservABase), pagesize);
+    auto *mappedAllocB = new NEO::MockGraphicsAllocation(0u, 1u, NEO::AllocationType::buffer, reinterpret_cast<void *>(reservBBase), reservBBase,
+                                                         0llu, pagesize, NEO::MemoryPool::system4KBPages, NEO::MemoryManager::maxOsContextCount);
+    mappedAllocB->setReservedAddressRange(reinterpret_cast<void *>(reservBBase), pagesize);
+
     auto *rangeA = new NEO::MemoryMappedRange{};
     rangeA->ptr = reinterpret_cast<void *>(reservABase);
     rangeA->size = pagesize;
     rangeA->mappedAllocation = *physAllocA;
+    rangeA->mappedAllocation.allocation = mappedAllocA;
 
     auto *rangeB = new NEO::MemoryMappedRange{};
     rangeB->ptr = reinterpret_cast<void *>(reservBBase);
     rangeB->size = pagesize;
     rangeB->mappedAllocation = *physAllocB;
+    rangeB->mappedAllocation.allocation = mappedAllocB;
 
     NEO::SVMAllocsManager *svmAllocsManager = driverHandle->getSvmAllocsManager();
 
     NEO::SvmAllocationData svmDataA(0u);
-    svmDataA.gpuAllocations.addAllocation(physAllocA->allocation);
+    svmDataA.gpuAllocations.addAllocation(mappedAllocA);
     svmDataA.size = pagesize;
     svmDataA.setAllocId(0xA001u);
     svmAllocsManager->insertSVMAlloc(svmDataA);
 
     NEO::SvmAllocationData svmDataB(0u);
-    svmDataB.gpuAllocations.addAllocation(physAllocB->allocation);
+    svmDataB.gpuAllocations.addAllocation(mappedAllocB);
     svmDataB.size = pagesize;
     svmDataB.setAllocId(0xB001u);
     svmAllocsManager->insertSVMAlloc(svmDataB);
@@ -8689,15 +9960,20 @@ TEST_F(ContextTest, givenPrecedingNonOverlappingReservationWhenUnmapThenContaini
 
     physAllocTarget->allocation->setGpuPtr(targetBase);
 
+    auto *mappedAllocTarget = new NEO::MockGraphicsAllocation(0u, 1u, NEO::AllocationType::buffer, reinterpret_cast<void *>(targetBase), targetBase,
+                                                              0llu, pagesize, NEO::MemoryPool::system4KBPages, NEO::MemoryManager::maxOsContextCount);
+    mappedAllocTarget->setReservedAddressRange(reinterpret_cast<void *>(targetBase), pagesize);
+
     auto *rangeTarget = new NEO::MemoryMappedRange{};
     rangeTarget->ptr = reinterpret_cast<void *>(targetBase);
     rangeTarget->size = pagesize;
     rangeTarget->mappedAllocation = *physAllocTarget;
+    rangeTarget->mappedAllocation.allocation = mappedAllocTarget;
 
     NEO::SVMAllocsManager *svmAllocsManager = driverHandle->getSvmAllocsManager();
 
     NEO::SvmAllocationData svmDataTarget(0u);
-    svmDataTarget.gpuAllocations.addAllocation(physAllocTarget->allocation);
+    svmDataTarget.gpuAllocations.addAllocation(mappedAllocTarget);
     svmDataTarget.size = pagesize;
     svmDataTarget.setAllocId(0xC001u);
     svmAllocsManager->insertSVMAlloc(svmDataTarget);

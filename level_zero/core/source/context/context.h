@@ -375,6 +375,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
         this->numDevices = static_cast<uint32_t>(this->deviceHandles.size());
     }
     NEO::VirtualMemoryReservation *findSupportedVirtualReservation(const void *ptr, size_t size);
+    bool unMapPhysicalMemoryMappingsLocked(NEO::VirtualMemoryReservation *virtualMemoryReservation, uint64_t rangeStart, uint64_t rangeEnd);
     ze_result_t checkMemSizeLimit(Device *inDevice, size_t size, bool relaxedSizeAllowed, void **ptr);
 
     uint32_t getNumDevices() const {
@@ -423,6 +424,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, NEO::FreePolicyType policy);
     void markAllocationIpcExported(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData);
     void releaseIpcHandle(const void *ptr, const NEO::SvmAllocationData &allocData, NEO::UsmMemAllocPool *usmPool);
+    void releaseIpcHandlesOfAllocation(const NEO::GraphicsAllocation *allocation);
     void invokeMemFreeCallbacks(const void *ptr, NEO::SvmAllocationData &svmData, NEO::UsmMemAllocPool *usmPool);
     void eraseSharedMakeResidentAllocations(const NEO::SvmAllocationData &svmData);
 
