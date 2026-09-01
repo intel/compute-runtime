@@ -18,7 +18,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::updateScratchAddress(size_t sc
 
     auto scratchPatchAddress = this->getCurrentScratchPatchAddress(scratchAddressPatchIndex);
     auto newScratchOffset = newWalker.getScratchOffset();
-    if (isDefined(newScratchOffset) && (newScratchOffset >= newWalker.getInlineDataSize())) {
+    if (isDefined(newScratchOffset) && (newScratchOffset >= newKernelIndirectData->getInlineDataSize())) {
         newKernelIndirectData->setAddress(newScratchOffset, scratchPatchAddress, sizeof(uint64_t));
     } else {
         newWalker.updateWalkerScratchPatchAddress(scratchPatchAddress);
@@ -46,7 +46,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListScratchPatchComma
     auto oldScratchOffset = oldWalker.getScratchOffset();
     if (newScratchOffset != oldScratchOffset) {
         // scratch offset has changed: update scratch patch command with current scratch offset
-        const auto inlineDataSize = newWalker.getInlineDataSize();
+        const auto inlineDataSize = newKernelIndirectData->getInlineDataSize();
         const bool scratchInCrossThreadData = isDefined(newScratchOffset) && (newScratchOffset >= inlineDataSize);
 
         size_t patchSize = isDefined(newScratchOffset) ? sizeof(uint64_t) : undefined<size_t>;

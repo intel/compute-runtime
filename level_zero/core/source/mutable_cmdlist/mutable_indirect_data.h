@@ -46,6 +46,9 @@ class MutableIndirectData {
     size_t getCrossThreadDataSize() const {
         return crossThreadData.size();
     }
+    size_t getInlineDataSize() const {
+        return inlineData.size();
+    }
     const Offsets &getIndirectDataOffsets() const {
         return *offsets;
     }

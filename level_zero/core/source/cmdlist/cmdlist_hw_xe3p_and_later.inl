@@ -25,7 +25,8 @@ void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddress(CommandsToPatc
         auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
 
         constexpr auto inlineDataSize = GfxFamily::DefaultWalkerType::getInlineDataSize();
-        if (NEO::isValidOffset(scratchPointerAddress.offset) && (static_cast<uint32_t>(scratchPointerAddress.offset) >= inlineDataSize)) {
+        const uint32_t effectiveInlineDataSize = kernelDescriptor.kernelAttributes.flags.passInlineData ? inlineDataSize : 0u;
+        if (NEO::isValidOffset(scratchPointerAddress.offset) && (static_cast<uint32_t>(scratchPointerAddress.offset) >= effectiveInlineDataSize)) {
             addPatchScratchAddressInCrossThreadData(commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, kernelNeedsImplicitArgs);
         } else {
             addPatchScratchAddressInInlineData(commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, kernelNeedsImplicitArgs);
@@ -70,6 +71,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInCrossThreadData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsImplicitArgs) {
     auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
     constexpr auto inlineDataSize = GfxFamily::DefaultWalkerType::getInlineDataSize();
+    const uint32_t effectiveInlineDataSize = kernelDescriptor.kernelAttributes.flags.passInlineData ? inlineDataSize : 0u;
 
     launchParams.scratchAddressPatchIndex = commandsToPatch.size();
     commandsToPatch.push_back(PatchComputeWalkerInlineDataScratch{});
@@ -80,7 +82,7 @@ void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInCrossThreadDa
     scratchCrossThreadData.pDestination = dispatchKernelArgs.outCrossThreadDataPtr;
     scratchCrossThreadData.gpuAddress = dispatchKernelArgs.outCrossThreadDataGpuVa;
     scratchCrossThreadData.scratchAddressAfterPatch = 0;
-    scratchCrossThreadData.offset = static_cast<uint32_t>(scratchPointerAddress.offset) - inlineDataSize;
+    scratchCrossThreadData.offset = static_cast<uint32_t>(scratchPointerAddress.offset) - effectiveInlineDataSize;
     scratchCrossThreadData.patchSize = scratchPointerAddress.pointerSize;
     this->activeScratchPatchElements++;
 

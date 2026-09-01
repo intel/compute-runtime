@@ -84,7 +84,9 @@ HWTEST2_F(MutableCommandListKernelTest,
           givenKernelsWithScratchWhenKernelIsMutatedThenScratchPointerUpdated, IsAtLeastXe3pCore) {
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x100;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
     mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = 0x200;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
 
     constexpr uint64_t scratchAddress1 = 0x1248000;
     constexpr uint64_t scratchAddress2 = 0x248A000;
@@ -220,10 +222,65 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingBetweenIn
     }
 }
 
+HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWithInlineDataDisabledWhenMutatingThenScratchIsPatchedIntoCrossThreadData, IsAtLeastXe3pCore) {
+    const uint64_t scratchOffset1 = 8u;
+    const uint64_t scratchOffset2 = 16u;
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 0;
+    auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress.offset = static_cast<uint16_t>(scratchOffset1);
+
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 0;
+    auto &scratchPointerAddress2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    scratchPointerAddress2.pointerSize = sizeof(uint64_t);
+    scratchPointerAddress2.offset = static_cast<uint16_t>(scratchOffset2);
+
+    ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernels[0], this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    uint64_t mockScratchPatchAddress = 0xABCD0000;
+    overridePatchedScratchAddress(mockScratchPatchAddress);
+
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    auto scratchPatchIndex = mutation.kernelGroup->getScratchAddressPatchIndex();
+    auto walkerCpu = mutation.kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+
+    auto newKernelIndirectData = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->varDispatch->getIndirectData();
+    ASSERT_EQ(0u, newKernelIndirectData->getInlineDataSize());
+    auto crossThreadCpu = newKernelIndirectData->getCrossThreadDataBaseAddress();
+
+    auto cmdsToPatch = mutableCommandList->getBase()->getCommandsToPatch();
+    auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
+
+    EXPECT_NE(walkerCpu, patch.pDestination);
+    EXPECT_EQ(crossThreadCpu, patch.pDestination);
+    EXPECT_EQ(static_cast<size_t>(scratchOffset2), patch.offset);
+
+    uint64_t expectedScratchAddress = mockScratchPatchAddress;
+    auto ssh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::surfaceState);
+    if (ssh != nullptr) {
+        expectedScratchAddress += ssh->getGpuBase();
+    }
+    auto programmedScratch = reinterpret_cast<uint64_t *>(ptrOffset(patch.pDestination, patch.offset));
+    EXPECT_EQ(expectedScratchAddress, *programmedScratch);
+}
+
 HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWhenAppendLaunchKernelIsDoneThenScratchPatchAndScratchPatchIndexAreValid, IsAtLeastXe3pCore) {
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
 
     ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId));
@@ -281,6 +338,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
     ASSERT_EQ(0u, mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
 
     mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
     auto &scratchPointerAddress2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
     scratchPointerAddress2.offset = expectedScratchOffset;
     scratchPointerAddress2.pointerSize = expectedScratchPtrSize;
@@ -407,11 +465,13 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWhenMutatingWithSameSc
     const uint64_t scratchOffset = 8u;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
     auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
     scratchPointerAddress.pointerSize = sizeof(uint64_t);
     scratchPointerAddress.offset = scratchOffset;
 
     mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
     auto &scratchPointerAddress2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
     scratchPointerAddress2.pointerSize = sizeof(uint64_t);
     scratchPointerAddress2.offset = scratchOffset;
@@ -459,6 +519,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenTwoAppendsWhenMutatingFromNoScratch
     ASSERT_EQ(0u, mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
 
     mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
     auto &scratchPointerAddress2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
     scratchPointerAddress2.offset = expectedScratchOffset;
     scratchPointerAddress2.pointerSize = expectedScratchPtrSize;
@@ -515,11 +576,13 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingWithDiffe
     const uint64_t scratchOffset2 = 16u;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
     auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
     scratchPointerAddress.pointerSize = sizeof(uint64_t);
     scratchPointerAddress.offset = scratchOffset1;
 
     mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
     auto &scratchPointerAddress2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
     scratchPointerAddress2.pointerSize = sizeof(uint64_t);
     scratchPointerAddress2.offset = scratchOffset2;
