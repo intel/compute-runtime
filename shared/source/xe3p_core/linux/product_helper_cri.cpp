@@ -63,5 +63,10 @@ bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
+    return false;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO
