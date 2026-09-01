@@ -13,6 +13,7 @@
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 
 #include "cl_api_tests.h"
+#include "spirv/unified1/spirv.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -277,6 +278,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_subgroup_shuffle ",
         "cl_khr_subgroup_shuffle_relative ",
         "cl_khr_subgroup_clustered_reduce ",
+        "cl_khr_subgroup_rotate ",
         "cl_intel_device_attribute_query ",
         "cl_khr_suggested_local_work_size ",
         "cl_intel_split_work_group_barrier "};
@@ -335,6 +337,11 @@ TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvExtensionsReturnsSpirvExtensions)
     for (auto extension : spirvExtensions) {
         EXPECT_EQ(0, std::strncmp(extension, "SPV_", 4));
     }
+
+    const auto subgroupRotateIt = std::find_if(spirvExtensions.begin(), spirvExtensions.end(), [](const char *extension) {
+        return std::strcmp(extension, "SPV_KHR_subgroup_rotate") == 0;
+    });
+    EXPECT_NE(spirvExtensions.end(), subgroupRotateIt);
 }
 
 TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvExtendedInstructionSetsReturnsSpirvExtendedInstructionSets) {
@@ -397,6 +404,10 @@ TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvCapabilitiesReturnsSpirvCapabilit
         }
     }
     EXPECT_TRUE(found);
+
+    const auto subgroupRotateIt = std::find(spirvCapabilities.begin(), spirvCapabilities.end(),
+                                            static_cast<cl_uint>(spv::CapabilityGroupNonUniformRotateKHR));
+    EXPECT_NE(spirvCapabilities.end(), subgroupRotateIt);
 }
 
 TEST_F(clGetDeviceInfoTests, GivenMockedIgcYamlWhenQueryingSpirvInfoThroughApiThenIgcSourcedExtensionsAndCapabilitiesAreReturned) {

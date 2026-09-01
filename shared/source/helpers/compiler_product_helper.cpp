@@ -52,6 +52,7 @@ std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInf
                              "cl_khr_subgroup_shuffle "
                              "cl_khr_subgroup_shuffle_relative "
                              "cl_khr_subgroup_clustered_reduce "
+                             "cl_khr_subgroup_rotate "
                              "cl_intel_device_attribute_query "
                              "cl_khr_expect_assume "
                              "cl_khr_extended_bit_ops "

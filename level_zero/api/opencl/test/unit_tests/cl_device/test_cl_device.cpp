@@ -61,6 +61,34 @@ TEST_F(ClDeviceTests, givenRootDeviceWhenGetPlatformHostTimerResolutionThenRetur
     EXPECT_GE(devices[0]->getPlatformHostTimerResolution(), 0.0);
 }
 
+TEST_F(ClDeviceTests, givenSubgroupRotateSupportWhenQueryingDeviceInfoThenInteropDriverReportsOpenClAndSpirvSupport) {
+    auto &devices = platform->getDevices();
+    ASSERT_FALSE(devices.empty());
+    auto *clDevice = devices[0].get();
+
+    size_t deviceExtensionsSize = 0;
+    EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_EXTENSIONS, 0, nullptr, &deviceExtensionsSize));
+    std::vector<char> deviceExtensions(deviceExtensionsSize);
+    EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_EXTENSIONS, deviceExtensionsSize, deviceExtensions.data(), nullptr));
+    EXPECT_NE(std::string::npos, std::string(deviceExtensions.data()).find("cl_khr_subgroup_rotate"));
+
+    size_t spirvExtensionsSize = 0;
+    EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, 0, nullptr, &spirvExtensionsSize));
+    std::vector<const char *> spirvExtensions(spirvExtensionsSize / sizeof(const char *));
+    EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, spirvExtensionsSize, spirvExtensions.data(), nullptr));
+    EXPECT_TRUE(std::any_of(spirvExtensions.begin(), spirvExtensions.end(), [](const char *extension) {
+        return std::string("SPV_KHR_subgroup_rotate") == extension;
+    }));
+
+    size_t spirvCapabilitiesSize = 0;
+    EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_SPIRV_CAPABILITIES_KHR, 0, nullptr, &spirvCapabilitiesSize));
+    std::vector<cl_uint> spirvCapabilities(spirvCapabilitiesSize / sizeof(cl_uint));
+    EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_SPIRV_CAPABILITIES_KHR, spirvCapabilitiesSize, spirvCapabilities.data(), nullptr));
+    EXPECT_NE(spirvCapabilities.end(),
+              std::find(spirvCapabilities.begin(), spirvCapabilities.end(),
+                        static_cast<cl_uint>(spv::CapabilityGroupNonUniformRotateKHR)));
+}
+
 TEST_F(ClDeviceTests, GivenIgcProvidesSpirvYamlWhenQueryingSpirvInfoThenInteropDriverReportsIgcData) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSpirvQueriesFromIgc.set(1);
