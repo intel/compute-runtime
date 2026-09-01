@@ -1926,6 +1926,123 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalDeviceMemoryThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, givenBindlessSlotAllocatedWhenUnMappingPhysicalDeviceMemoryThenSlotIsReleasedToReusePoolAndAllocationHasNoSlot) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto neoDevice = device->getNEODevice();
+    auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    auto bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+    rootDeviceEnvironment.bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(nullptr, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto allocation = reinterpret_cast<NEO::GraphicsAllocation *>(mem);
+    EXPECT_TRUE(driverHandle->getMemoryManager()->allocateBindlessSlot(allocation));
+    EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+    const auto slotOffsetBeforeUnmap = allocation->getBindlessInfo().surfaceStateOffset;
+
+    const auto releasePoolIndex = bindlessHeapsHelperPtr->releasePoolIndex;
+    const auto pooledSlotsBefore = bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size() +
+                                   bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size();
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+
+    const auto pooledSlotsAfter = bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size() +
+                                  bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size();
+    EXPECT_EQ(pooledSlotsBefore + 1u, pooledSlotsAfter);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_TRUE(driverHandle->getMemoryManager()->allocateBindlessSlot(allocation));
+    EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+    EXPECT_NE(slotOffsetBeforeUnmap, allocation->getBindlessInfo().surfaceStateOffset);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenNoBindlessHeapsHelperWhenUnMappingPhysicalDeviceMemoryThenSuccessIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto neoDevice = device->getNEODevice();
+    auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+    rootDeviceEnvironment.bindlessHeapsHelper.reset();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(nullptr, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto allocation = reinterpret_cast<NEO::GraphicsAllocation *>(mem);
+    allocation->setBindlessInfo({allocation, 0u, nullptr, 0u});
+    EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 TEST_F(ContextTest, whenMappingSamePhysicalMemoryToMoreThanOneVirtualAddressThenInvalidArgumentIsReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};

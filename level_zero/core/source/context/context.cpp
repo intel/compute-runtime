@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -2065,23 +2066,29 @@ ze_result_t Context::unMapVirtualMem(const void *ptr, size_t size) {
                 ++it;
                 continue;
             }
-
             NEO::PhysicalMemoryAllocation *physicalAllocation = &alloc.second->mappedAllocation;
+            auto allocation = physicalAllocation->allocation;
             NEO::SvmAllocationData *allocData = svmAllocsManager->getSVMAlloc(
-                reinterpret_cast<void *>(physicalAllocation->allocation->getGpuAddress()));
+                reinterpret_cast<void *>(allocation->getGpuAddress()));
             DEBUG_BREAK_IF(allocData == nullptr);
 
             bool retVal = false;
-            if (physicalAllocation->allocation->getAllocationType() == NEO::AllocationType::buffer) {
+            if (allocation->getAllocationType() == NEO::AllocationType::buffer) {
                 svmAllocsManager->removeSVMAlloc(*allocData);
+                if (allocation->getBindlessOffset() != std::numeric_limits<uint64_t>::max()) {
+                    if (auto bindlessHeapsHelper = physicalAllocation->device->getBindlessHeapsHelper(); bindlessHeapsHelper != nullptr) {
+                        bindlessHeapsHelper->releaseSSToReusePool(allocation->getBindlessInfo());
+                    }
+                    allocation->setBindlessInfo({});
+                }
                 NEO::OsContext *osContext = &physicalAllocation->device->getDefaultEngine().commandStreamReceiver->getOsContext();
                 retVal = memManager->unMapPhysicalDeviceMemoryFromVirtualMemory(
-                    physicalAllocation->allocation, mappingVa, mappingSize, osContext, virtualMemoryReservation->rootDeviceIndex);
+                    allocation, mappingVa, mappingSize, osContext, virtualMemoryReservation->rootDeviceIndex);
             } else {
                 NEO::MultiGraphicsAllocation gpuAllocations = allocData->gpuAllocations;
                 svmAllocsManager->removeSVMAlloc(*allocData);
                 retVal = memManager->unMapPhysicalHostMemoryFromVirtualMemory(
-                    gpuAllocations, physicalAllocation->allocation, mappingVa, mappingSize);
+                    gpuAllocations, allocation, mappingVa, mappingSize);
             }
 
             if (!retVal) {
