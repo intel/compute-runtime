@@ -29,6 +29,7 @@
 #endif // defined(_WIN32) || defined(_WIN64)
 #include <cstring>
 #include <mutex>
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 
@@ -136,7 +137,9 @@ void usage() {
                  "\n  -t,   --temperature                                                                             selectively run temperature black box test"
                  "\n  -o,   --power                                                                                   selectively run power black box test"
                  "\n        [--setlimit --sustained/--peak/--instantaneous/--burst/--global-limit <deviceNo limit>]   optionally set required power limit for particular device"
-                 "\n  -m,   --memory                                                                                  selectively run memory black box test"
+                 "\n  -m,   --memory                                                                                  selectively run memory black box test, which calculates memory bandwidth from the read/write counters over repeated samples"
+                 "\n        [--iterations <count>]                                                                    optionally override the number of bandwidth samples, default is 5"
+                 "\n        [--interval <milliseconds>]                                                               optionally override the bandwidth sampling interval, default is 1000"
                  "\n  -g,   --global                                                                                  selectively run device/global operations black box test"
                  "\n  -R,   --ras                                                                                     selectively run ras black box test"
                  "\n  -E,   --event                                                                                   set and listen to events black box test"
@@ -1569,7 +1572,125 @@ std::string getMemoryLocation(zes_mem_loc_t memLocation) {
     }
 }
 
-void testSysmanMemory(ze_device_handle_t &device) {
+constexpr int bandwidthPrecision = 2;
+constexpr int percentPrecision = 4;
+
+std::string formatBandwidthValue(double value, int precision = bandwidthPrecision) {
+    std::ostringstream stream;
+    stream << std::fixed << std::setprecision(precision) << value;
+    return stream.str();
+}
+
+// Bandwidth is calculated here from two snapshots, as described by the zes_mem_bandwidth_t spec:
+// bw = 10^6 * ((s2.readCounter - s1.readCounter) + (s2.writeCounter - s1.writeCounter))
+//      / (s2.maxBandwidth * (s2.timestamp - s1.timestamp))
+void printMemoryBandwidthSamples(const zes_mem_handle_t &handle, uint32_t iterations, uint32_t intervalMs) {
+    constexpr double microSecondsPerSecond = 1000000.0;
+    constexpr double bytesPerMegaByte = 1024.0 * 1024.0;
+
+    zes_mem_bandwidth_t previousSample = {};
+    ze_result_t result = zesMemoryGetBandwidth(handle, &previousSample);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << getErrorString(result) << " returned by zesMemoryGetBandwidth, skipping bandwidth calculation for this memory module" << std::endl;
+        return;
+    }
+
+    const uint64_t maxBandwidth = previousSample.maxBandwidth;
+    const bool maxBandwidthKnown = (maxBandwidth != 0);
+
+    std::cout << " --- Memory bandwidth over " << iterations << " samples, " << intervalMs << " ms apart --- " << std::endl;
+    std::cout << "note: no workload is submitted by this test, run one alongside it for the numbers below to be meaningful" << std::endl;
+    if (maxBandwidthKnown) {
+        std::cout << "maxBandwidth = " << formatBandwidthValue(maxBandwidth / bytesPerMegaByte) << " MB/sec" << std::endl;
+    } else {
+        std::cout << "maxBandwidth = not available" << std::endl;
+    }
+
+    uint32_t validSamples = 0;
+    uint32_t decreasingCounterSamples = 0;
+    double sumTotalBytesPerSec = 0.0;
+
+    for (uint32_t sample = 0; sample < iterations; sample++) {
+        const uint32_t sampleNumber = sample + 1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(intervalMs));
+
+        zes_mem_bandwidth_t currentSample = {};
+        result = zesMemoryGetBandwidth(handle, &currentSample);
+        if (result != ZE_RESULT_SUCCESS) {
+            std::cout << getErrorString(result) << " returned by zesMemoryGetBandwidth, abandoning bandwidth calculation for this memory module" << std::endl;
+            return;
+        }
+
+        uint64_t deltaTime = currentSample.timestamp - previousSample.timestamp;
+        if (deltaTime == 0) {
+            std::cout << "sample " << sampleNumber << "/" << iterations << " skipped: timestamp delta is zero" << std::endl;
+            previousSample = currentSample;
+            continue;
+        }
+
+        // These counters normally only ever go up, so a smaller reading than the previous one means the
+        // hardware counter has been reset or has wrapped around. The subtractions below are unsigned, so
+        // such a sample would produce a huge bogus delta instead of a negative one, and is skipped.
+        // Note that the counters the API reports are the sum of many per channel hardware counters, so
+        // one of those wrapping usually leaves the sum still increasing and cannot be caught here
+        if (currentSample.readCounter < previousSample.readCounter ||
+            currentSample.writeCounter < previousSample.writeCounter) {
+            decreasingCounterSamples++;
+            std::cout << "sample " << sampleNumber << "/" << iterations << " skipped: counters rolled over or were reset" << std::endl;
+            previousSample = currentSample;
+            continue;
+        }
+
+        uint64_t readDelta = currentSample.readCounter - previousSample.readCounter;
+        uint64_t writeDelta = currentSample.writeCounter - previousSample.writeCounter;
+
+        double readBytesPerSec = static_cast<double>(readDelta) * microSecondsPerSecond / deltaTime;
+        double writeBytesPerSec = static_cast<double>(writeDelta) * microSecondsPerSecond / deltaTime;
+        double totalBytesPerSec = readBytesPerSec + writeBytesPerSec;
+
+        double percentOfMax = 0.0;
+        if (maxBandwidthKnown) {
+            percentOfMax = 100.0 * totalBytesPerSec / maxBandwidth;
+        }
+
+        std::cout << "sample " << sampleNumber << "/" << iterations
+                  << "   read = " << formatBandwidthValue(readBytesPerSec / bytesPerMegaByte) << " MB/sec"
+                  << "   write = " << formatBandwidthValue(writeBytesPerSec / bytesPerMegaByte) << " MB/sec"
+                  << "   total = " << formatBandwidthValue(totalBytesPerSec / bytesPerMegaByte) << " MB/sec";
+        if (maxBandwidthKnown) {
+            std::cout << "   (" << formatBandwidthValue(percentOfMax, percentPrecision) << " % of max)";
+        }
+        std::cout << std::endl;
+
+        if (verbose) {
+            std::cout << "         readCounter = " << currentSample.readCounter
+                      << ", writeCounter = " << currentSample.writeCounter
+                      << ", timestamp = " << currentSample.timestamp
+                      << ", deltaTime = " << deltaTime << " us" << std::endl;
+        }
+
+        if (maxBandwidthKnown && (percentOfMax > 100.0)) {
+            std::cout << "         WARNING: computed bandwidth exceeds reported maxBandwidth" << std::endl;
+        }
+
+        sumTotalBytesPerSec += totalBytesPerSec;
+        validSamples++;
+
+        previousSample = currentSample;
+    }
+
+    std::cout << "summary: " << validSamples << " samples, " << decreasingCounterSamples << " samples skipped after a counter rollover or reset" << std::endl;
+    if (validSamples != 0) {
+        const double averageBytesPerSec = sumTotalBytesPerSec / validSamples;
+        std::cout << "         average total bandwidth = " << formatBandwidthValue(averageBytesPerSec / bytesPerMegaByte) << " MB/sec";
+        if (maxBandwidthKnown) {
+            std::cout << " (" << formatBandwidthValue(100.0 * averageBytesPerSec / maxBandwidth, percentPrecision) << " % of max)";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void testSysmanMemory(ze_device_handle_t &device, uint32_t bandwidthIterations, uint32_t bandwidthIntervalMs) {
     std::cout << std::endl
               << " ----  Memory tests ---- " << std::endl;
     uint32_t count = 0;
@@ -1584,7 +1705,6 @@ void testSysmanMemory(ze_device_handle_t &device) {
     for (const auto &handle : handles) {
         zes_mem_properties_t memoryProperties = {};
         zes_mem_state_t memoryState = {};
-        zes_mem_bandwidth_t memoryBandwidth = {};
         zes_memory_vendor_info_ext_properties_t memoryVendorId = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
         memoryProperties.pNext = &memoryVendorId;
 
@@ -1619,13 +1739,7 @@ void testSysmanMemory(ze_device_handle_t &device) {
             std::cout << "The free memory in bytes = " << memoryState.free << std::endl;
         }
 
-        VALIDATECALL(zesMemoryGetBandwidth(handle, &memoryBandwidth));
-        if (verbose) {
-            std::cout << "Memory Read Counter = " << memoryBandwidth.readCounter << std::endl;
-            std::cout << "Memory Write Counter = " << memoryBandwidth.writeCounter << std::endl;
-            std::cout << "Memory Maximum Bandwidth = " << memoryBandwidth.maxBandwidth << std::endl;
-            std::cout << "Memory Timestamp = " << memoryBandwidth.timestamp << std::endl;
-        }
+        printMemoryBandwidthSamples(handle, bandwidthIterations, bandwidthIntervalMs);
     }
 }
 
@@ -2461,6 +2575,10 @@ void testSysmanDriverRescan(zes_driver_handle_t driver, std::vector<ze_device_ha
     uint32_t powerDeviceIndex = 0;
     uint32_t performanceDeviceIndex = 0;
     bool pFactorIsSet = true;
+    // A single short bandwidth sample is enough here, the intent is only to confirm the memory
+    // telemetry still responds on the original handles, not to measure bandwidth
+    constexpr uint32_t rescanBandwidthIterations = 1;
+    constexpr uint32_t rescanBandwidthIntervalMs = 100;
     std::for_each(devices.begin(), devices.end(), [&](auto device) {
         testSysmanPci(device, emptyBuf, pciDeviceIndex);
         testSysmanFrequency(device);
@@ -2469,7 +2587,7 @@ void testSysmanDriverRescan(zes_driver_handle_t driver, std::vector<ze_device_ha
         testSysmanScheduler(device);
         testSysmanTemperature(device);
         testSysmanPower(device, emptyBuf, powerDeviceIndex);
-        testSysmanMemory(device);
+        testSysmanMemory(device, rescanBandwidthIterations, rescanBandwidthIntervalMs);
         testSysmanRas(device);
         testSysmanRasExp(device);
         testSysmanFan(device, "");
@@ -3457,8 +3575,45 @@ int main(int argc, char *argv[]) {
         });
     }
     if (isParamEnabled(argc, argv, "-m", "--memory", &optind)) {
+        constexpr uint32_t defaultMemoryBandwidthIterations = 5;
+        constexpr uint32_t defaultMemoryBandwidthIntervalMs = 1000;
+        uint32_t bandwidthIterations = defaultMemoryBandwidthIterations;
+        uint32_t bandwidthIntervalMs = defaultMemoryBandwidthIntervalMs;
+
+        optind = optind + 1;
+        while (optind < argc) {
+            std::string memoryOption = argv[optind];
+            if (memoryOption != "--iterations" && memoryOption != "--interval") {
+                break;
+            }
+            if (optind + 1 >= argc) {
+                std::cout << "Missing value for " << memoryOption << " option" << std::endl;
+                usage();
+                exit(0);
+            }
+            const std::string optionArgument = argv[optind + 1];
+            uint64_t optionValue = 0;
+            // The maximum is the range of the value being filled in below, not a policy limit: without it
+            // "4294967296" would truncate to 0 on the cast below and slip past the check that follows
+            if (!parseUnsignedArgument(memoryOption, optionArgument, std::numeric_limits<uint32_t>::max(), optionValue)) {
+                usage();
+                exit(0);
+            }
+            if (optionValue == 0) {
+                std::cout << "Invalid " << memoryOption << " value '" << optionArgument << "': must be greater than 0" << std::endl;
+                usage();
+                exit(0);
+            }
+            if (memoryOption == "--iterations") {
+                bandwidthIterations = static_cast<uint32_t>(optionValue);
+            } else {
+                bandwidthIntervalMs = static_cast<uint32_t>(optionValue);
+            }
+            optind = optind + 2;
+        }
+
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
-            testSysmanMemory(device);
+            testSysmanMemory(device, bandwidthIterations, bandwidthIntervalMs);
         });
     }
     if (isParamEnabled(argc, argv, "-R", "--ras", &optind)) {
