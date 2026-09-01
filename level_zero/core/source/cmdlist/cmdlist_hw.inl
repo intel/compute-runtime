@@ -1550,6 +1550,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
 
+    if (this->device->toHandle() != hDevice) {
+        ze_bool_t p2pEnable = false;
+        (this->device)->canAccessPeer(hDevice, &p2pEnable);
+        if (!p2pEnable) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Multi-device appendMemAdvise fails due to lack of P2P link\n");
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
+
     this->memAdviseOperations.emplace_back(hDevice, ptr, size, advice);
 
     return ZE_RESULT_SUCCESS;
