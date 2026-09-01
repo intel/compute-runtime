@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include <string_view>
+
 extern Environment *gEnvironment;
 
 namespace NEO {
@@ -39,7 +41,7 @@ TEST(OclocPisa, GivenPisaInputArgumentWhenParsingCommandLineThenSetsInputAndInte
     EXPECT_EQ(NEO::pisaCodeType, mockOfflineCompiler.intermediateRepresentation);
 }
 
-TEST(OclocPisa, GivenEmptyPisaInputWhenBuildingThenSuccessIsReturned) {
+TEST(OclocPisa, GivenEmptyPisaInputWhenBuildingThenInvalidFileIsReturned) {
     constexpr uint8_t emptyPisaStorage = 0;
     Source emptyPisa{&emptyPisaStorage, 0, "empty.pisa"};
     const std::vector<std::string> argv = {
@@ -53,6 +55,34 @@ TEST(OclocPisa, GivenEmptyPisaInputWhenBuildingThenSuccessIsReturned) {
 
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.uniqueHelper->inputs.push_back(emptyPisa);
+
+    ASSERT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.initialize(argv.size(), argv));
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    const auto buildResult = mockOfflineCompiler.build();
+
+    std::string output = capture.getCapturedStdout();
+    EXPECT_STREQ("Error: Input file empty.pisa is empty.\n", output.c_str());
+
+    EXPECT_EQ(OCLOC_INVALID_FILE, buildResult);
+}
+
+TEST(OclocPisa, GivenHeaderOnlyPisaInputWhenBuildingThenSuccessIsReturned) {
+    constexpr std::string_view headerOnlyPisa = ".version 1.0;\n.target 100c;\n";
+    Source pisaInput{reinterpret_cast<const uint8_t *>(headerOnlyPisa.data()), headerOnlyPisa.size(), "header_only.pisa"};
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "compile",
+        "-file",
+        pisaInput.name,
+        "-pisa_input",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.uniqueHelper->inputs.push_back(pisaInput);
 
     ASSERT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.initialize(argv.size(), argv));
 
@@ -71,6 +101,8 @@ TEST(OclocPisa, GivenEmptyPisaInputWhenBuildingThenSuccessIsReturned) {
     setIgcDebugVars(gEnvironment->igcDebugVars);
 
     EXPECT_EQ(OCLOC_SUCCESS, buildResult);
+    EXPECT_EQ(headerOnlyPisa.size(), mockOfflineCompiler.irBinarySize);
+    EXPECT_EQ(headerOnlyPisa, std::string_view(mockOfflineCompiler.irBinary, mockOfflineCompiler.irBinarySize));
 }
 
 TEST(OclocPisa, GivenEmptyNonPisaInputWhenBuildingThenInvalidFileIsReturned) {
@@ -88,7 +120,16 @@ TEST(OclocPisa, GivenEmptyNonPisaInputWhenBuildingThenInvalidFileIsReturned) {
     mockOfflineCompiler.uniqueHelper->inputs.push_back(emptyInput);
 
     ASSERT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.initialize(argv.size(), argv));
-    EXPECT_EQ(OCLOC_INVALID_FILE, mockOfflineCompiler.build());
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    const auto buildResult = mockOfflineCompiler.build();
+
+    std::string output = capture.getCapturedStdout();
+    EXPECT_STREQ("Error: Input file empty.cl is empty.\n", output.c_str());
+
+    EXPECT_EQ(OCLOC_INVALID_FILE, buildResult);
 }
 
 TEST(OclocPisa, GivenEmitPisaArgumentWhenParsingCommandLineThenSetsIntermediateRepresentationAndOnlyIr) {
