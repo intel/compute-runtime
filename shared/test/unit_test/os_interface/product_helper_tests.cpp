@@ -400,21 +400,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsSkippingStatefulInformation
     EXPECT_FALSE(productHelper->isSkippingStatefulInformationRequired(kernelDescriptor));
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isAdditionalMediaSamplerProgrammingRequired());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfInitialFlagsProgrammingIsRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isInitialFlagsProgrammingRequired());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfReturnedCmdSizeForMediaSamplerAdjustmentIsRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isReturnedCmdSizeForMediaSamplerAdjustmentRequired());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlWAIsRequiredThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->pipeControlWARequired(pInHwInfo));
@@ -1161,10 +1146,6 @@ HWTEST_F(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreference
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
         EXPECT_FALSE(preferredAllocationMethod.has_value());
     }
-}
-
-HWTEST_F(ProductHelperTest, whenAskingForLocalDispatchSizeThenReturnEmpty) {
-    EXPECT_EQ(0u, productHelper->getSupportedLocalDispatchSizes(pInHwInfo).size());
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSupportThenFalseReturned) {

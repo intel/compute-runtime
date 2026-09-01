@@ -127,9 +127,6 @@ class ProductHelper {
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const = 0;
     virtual uint32_t canShareMemoryWithoutNTHandle() const = 0;
-    virtual bool isAdditionalMediaSamplerProgrammingRequired() const = 0;
-    virtual bool isInitialFlagsProgrammingRequired() const = 0;
-    virtual bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const = 0;
     virtual bool pipeControlWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const = 0;
@@ -252,9 +249,7 @@ class ProductHelper {
     virtual bool isNewCoherencyModelSupported() const = 0;
     virtual bool isResourceUncachedForCS(AllocationType allocationType) const = 0;
     virtual bool deferMOCSToPatIndex(bool isWddmOnLinux) const = 0;
-    virtual const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxLocalSubRegionSize(const HardwareInfo &hwInfo) const = 0;
-    virtual bool localDispatchSizeQuerySupported() const = 0;
     virtual bool supportReadOnlyAllocations() const = 0;
     virtual bool isDeviceToHostCopySignalingFenceRequired() const = 0;
     virtual bool isAvailableExtendedScratch() const = 0;

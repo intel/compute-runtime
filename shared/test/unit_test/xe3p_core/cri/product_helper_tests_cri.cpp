@@ -121,14 +121,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAdjustingEnginesGroupThenChang
     }
 }
 
-CRITEST_F(CriProductHelper, givenSmallRegionCountWhenAskingForLocalDispatchSizeThenReturnEmpty) {
-    pInHwInfo.featureTable.regionCount = 1;
-
-    const auto quantumSizes = productHelper->getSupportedLocalDispatchSizes(pInHwInfo);
-
-    EXPECT_EQ(0u, quantumSizes.size());
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenIsImplicitScalingSupportedThenExpectFalse) {
     EXPECT_TRUE(productHelper->isImplicitScalingSupported(*defaultHwInfo));
 }

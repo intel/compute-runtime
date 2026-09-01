@@ -347,21 +347,6 @@ LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getLocalMemoryAccessMode(cons
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isInitialFlagsProgrammingRequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
@@ -897,11 +882,6 @@ bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::localDispatchSizeQuerySupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDeviceToHostCopySignalingFenceRequired() const {
     return false;
 }
@@ -1027,11 +1007,6 @@ bool ProductHelperHw<gfxProduct>::isSvmHeapReservationSupported() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForQueues() const {
     return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const {
-    return {};
 }
 
 template <PRODUCT_FAMILY gfxProduct>

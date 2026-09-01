@@ -59,9 +59,6 @@ class ProductHelperHw : public ProductHelper {
     bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
     void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const override;
     uint32_t canShareMemoryWithoutNTHandle() const override;
-    bool isAdditionalMediaSamplerProgrammingRequired() const override;
-    bool isInitialFlagsProgrammingRequired() const override;
-    bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const override;
     bool pipeControlWARequired(const HardwareInfo &hwInfo) const override;
     bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const override;
     bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const override;
@@ -184,9 +181,7 @@ class ProductHelperHw : public ProductHelper {
     bool isResourceUncachedForCS(AllocationType allocationType) const override;
     bool deferMOCSToPatIndex(bool isWddmOnLinux) const override;
     bool supportReadOnlyAllocations() const override;
-    const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxLocalSubRegionSize(const HardwareInfo &hwInfo) const override;
-    bool localDispatchSizeQuerySupported() const override;
     bool isDeviceToHostCopySignalingFenceRequired() const override;
     bool isAvailableExtendedScratch() const override;
     std::optional<bool> isCoherentAllocation(uint64_t patIndex) const override;

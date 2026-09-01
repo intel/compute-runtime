@@ -215,21 +215,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isCopyBufferRectSplitSupported() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isAdditionalMediaSamplerProgrammingRequired() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isInitialFlagsProgrammingRequired() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
