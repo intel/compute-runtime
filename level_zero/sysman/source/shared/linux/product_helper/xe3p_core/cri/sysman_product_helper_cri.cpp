@@ -35,6 +35,7 @@ constexpr static uint32_t busWidthPerMsuInBits = 64;
 constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
+constexpr static uint32_t maxGpuBoardTemperatureSensorCount = 2;
 constexpr static uint32_t temperatureNotAvailable = 0xFFFFFFFF;
 const std::string throttleReasonPath = "freq0/throttle/";
 
@@ -740,51 +741,33 @@ void SysmanProductHelperHw<gfxProduct>::getSupportedSensors(std::map<zes_temp_se
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GLOBAL] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_MEMORY] = 1;
-    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 1;
-    supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU_BOARD] = 1;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = maxVrTemperatureSensorCount;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU_BOARD] = maxGpuBoardTemperatureSensorCount;
     supportedSensorTypeMap[ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP] = 1;
 }
 
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
-    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<std::string, uint64_t> keyOffsetMap;
-    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+static ze_result_t readVoltageRegulatorTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                                   double *pTemperature, uint32_t sensorIndex) {
+    std::string key = "VR_TEMPERATURE_" + std::to_string(sensorIndex);
 
-    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    uint32_t rawVrTemperature = 0;
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, rawVrTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
 
-    double maxVrTemperature = 0.0;
-
-    // Read all VR temperature sensors (0-3) and return the maximum
-    for (uint32_t i = 0; i < maxVrTemperatureSensorCount; i++) {
-        std::string key = "VR_TEMPERATURE_" + std::to_string(i);
-
-        uint32_t rawVrTemperature = 0;
-        ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, rawVrTemperature);
-        if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
-            return result;
-        }
-
-        if (rawVrTemperature == temperatureNotAvailable) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): VR temperature is not available for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-
-        double vrTemperature = static_cast<double>(std::bit_cast<float>(rawVrTemperature));
-        maxVrTemperature = (i == 0) ? vrTemperature : std::max(maxVrTemperature, vrTemperature);
+    if (rawVrTemperature == temperatureNotAvailable) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): VR temperature is not available for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    *pTemperature = maxVrTemperature;
+    *pTemperature = static_cast<double>(std::bit_cast<float>(rawVrTemperature));
     return ZE_RESULT_SUCCESS;
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
@@ -795,28 +778,44 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSy
         return result;
     }
 
+    return readVoltageRegulatorTemperature(keyOffsetMap, keyTelemInfoMap, pTemperature, sensorIndex);
+}
+
+static ze_result_t readGpuBoardTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                           double *pTemperature, uint32_t sensorIndex) {
     std::string key = "AMB_TEMPERATURE";
 
     uint64_t ambientTemperatureContainer = 0;
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, ambientTemperatureContainer);
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, ambientTemperatureContainer);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read ambient temperature value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
 
-    uint32_t rawAmbientTemperature1 = static_cast<uint32_t>(ambientTemperatureContainer & 0xFFFFFFFF);
-    uint32_t rawAmbientTemperature2 = static_cast<uint32_t>(ambientTemperatureContainer >> 32);
+    uint32_t rawAmbientTemperature = static_cast<uint32_t>((ambientTemperatureContainer >> (32 * sensorIndex)) & 0xFFFFFFFF);
 
-    if (rawAmbientTemperature1 == temperatureNotAvailable || rawAmbientTemperature2 == temperatureNotAvailable) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Ambient temperature is not available for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    if (rawAmbientTemperature == temperatureNotAvailable) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Ambient temperature is not available for sensor index %u of key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, sensorIndex, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    double ambientTemperature1 = static_cast<double>(std::bit_cast<float>(rawAmbientTemperature1));
-    double ambientTemperature2 = static_cast<double>(std::bit_cast<float>(rawAmbientTemperature2));
-
-    *pTemperature = std::max(ambientTemperature1, ambientTemperature2);
+    *pTemperature = static_cast<double>(std::bit_cast<float>(rawAmbientTemperature));
     return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    return readGpuBoardTemperature(keyOffsetMap, keyTelemInfoMap, pTemperature, sensorIndex);
 }
 
 template <>
@@ -897,23 +896,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp 
     return ZE_RESULT_SUCCESS;
 }
 
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
-
-    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<std::string, uint64_t> keyOffsetMap;
-    std::unordered_map<std::string, std::string> keyTelemInfoMap;
-
-    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
-        return result;
-    }
-
+static ze_result_t readGpuMaxTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                         double *pTemperature) {
     uint32_t rawGpuMaxTemperature = 0;
     uint64_t telemOffset = 0;
     std::string key("SOC_TOPDIE_TEMPERATURE");
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, rawGpuMaxTemperature);
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, rawGpuMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
@@ -927,6 +915,22 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     *pTemperature = static_cast<double>(std::bit_cast<float>(rawGpuMaxTemperature));
 
     return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    return readGpuMaxTemperature(keyOffsetMap, keyTelemInfoMap, pTemperature);
 }
 
 template <>
@@ -1021,6 +1025,22 @@ static ze_result_t getMemoryMaxBandwidth(const std::map<std::string, uint64_t> &
     return ZE_RESULT_SUCCESS;
 }
 
+static ze_result_t readMemoryMaxTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                            double *pTemperature) {
+    uint64_t telemOffset = 0;
+    uint32_t memoryMaxTemperature = 0;
+    std::string key("VRAM_TEMPERATURE");
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryMaxTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
+        return result;
+    }
+    memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
+    *pTemperature = static_cast<double>(memoryMaxTemperature);
+
+    return ZE_RESULT_SUCCESS;
+}
+
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
 
@@ -1034,18 +1054,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
         return result;
     }
 
-    uint64_t telemOffset = 0;
-    uint32_t memoryMaxTemperature = 0;
-    std::string key("VRAM_TEMPERATURE");
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryMaxTemperature);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
-        return result;
-    }
-    memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
-    *pTemperature = static_cast<double>(memoryMaxTemperature);
-
-    return ZE_RESULT_SUCCESS;
+    return readMemoryMaxTemperature(keyOffsetMap, keyTelemInfoMap, pTemperature);
 }
 
 template <>
@@ -1078,28 +1087,47 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    // All sensors are read from the same set of telemetry nodes, hence the key offsets are looked up only once.
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
     double gpuMaxTemperature = 0;
-    ze_result_t result = this->getGpuMaxTemperature(pLinuxSysmanImp, &gpuMaxTemperature, subdeviceId);
+    result = readGpuMaxTemperature(keyOffsetMap, keyTelemInfoMap, &gpuMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
     double memoryMaxTemperature = 0;
-    result = this->getMemoryMaxTemperature(pLinuxSysmanImp, &memoryMaxTemperature, subdeviceId);
+    result = readMemoryMaxTemperature(keyOffsetMap, keyTelemInfoMap, &memoryMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
     double vrMaxTemperature = 0;
-    result = this->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &vrMaxTemperature, subdeviceId);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
+    for (uint32_t sensorIndex = 0; sensorIndex < maxVrTemperatureSensorCount; sensorIndex++) {
+        double vrTemperature = 0;
+        result = readVoltageRegulatorTemperature(keyOffsetMap, keyTelemInfoMap, &vrTemperature, sensorIndex);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+        vrMaxTemperature = (sensorIndex == 0) ? vrTemperature : std::max(vrMaxTemperature, vrTemperature);
     }
 
     double gpuBoardMaxTemperature = 0;
-    result = this->getGpuBoardMaxTemperature(pLinuxSysmanImp, &gpuBoardMaxTemperature, subdeviceId);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
+    for (uint32_t sensorIndex = 0; sensorIndex < maxGpuBoardTemperatureSensorCount; sensorIndex++) {
+        double gpuBoardTemperature = 0;
+        result = readGpuBoardTemperature(keyOffsetMap, keyTelemInfoMap, &gpuBoardTemperature, sensorIndex);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+        gpuBoardMaxTemperature = (sensorIndex == 0) ? gpuBoardTemperature : std::max(gpuBoardMaxTemperature, gpuBoardTemperature);
     }
 
     *pTemperature = std::max({gpuMaxTemperature, memoryMaxTemperature, vrMaxTemperature, gpuBoardMaxTemperature});

@@ -27,7 +27,7 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     bool isTempModuleSupported() override;
     void reInit() override;
     void setSensorType(zes_temp_sensors_t sensorType);
-    LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
+    LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, uint32_t sensorIndex);
     LinuxTemperatureImp() = default;
     ~LinuxTemperatureImp() override = default;
 
@@ -40,6 +40,7 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     bool isIntelGraphicsHwmonDir(const std::string &name);
     void init();
     uint32_t subdeviceId = 0;
+    uint32_t sensorIndex = 0;
     ze_bool_t isSubdevice = 0;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;

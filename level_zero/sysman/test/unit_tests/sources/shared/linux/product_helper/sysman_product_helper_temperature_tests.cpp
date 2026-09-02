@@ -1145,7 +1145,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     }
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndgetVoltageRegulatorMaxTemperatureFailsThenFailureIsReturned, IsBmgOrCri) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndgetVoltageRegulatorTemperatureFailsThenFailureIsReturned, IsBmgOrCri) {
     static uint32_t rawGpuMaxTemperature = toSocTemperatureFormat(10.0f);
     static uint32_t memoryMaxTemperature = 20;
 
@@ -1210,7 +1210,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndgetGpuBoardMaxTemperatureFailsThenFailureIsReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenGettingGlobalMaxTemperatureAndgetGpuBoardTemperatureFailsThenFailureIsReturned, IsCRI) {
     VariableBackup<int> mockErrno(&errno);
     static uint32_t rawGpuMaxTemperature = toSocTemperatureFormat(10.0f);
     static uint32_t memoryMaxTemperature = 20;
@@ -1361,9 +1361,9 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    // CRI: 1 Global + 1 GPU + 1 Memory + 1 VR + 1 GPU Board + 1 Composite = 6 handles
-    // BMG: 1 Global + 1 GPU + 1 Memory + 1 VR = 4 handles
-    uint32_t expectedCount = (defaultHwInfo->platform.eProductFamily == IGFX_CRI) ? 6u : 4u;
+    // CRI: 1 Global + 1 GPU + 1 Memory + 4 VR + 2 GPU Board + 1 Composite = 10 handles
+    // BMG: 1 Global + 1 GPU + 1 Memory + 4 VR = 7 handles
+    uint32_t expectedCount = (defaultHwInfo->platform.eProductFamily == IGFX_CRI) ? 10u : 7u;
     EXPECT_EQ(count, expectedCount);
 
     uint32_t testcount = count + 1;
@@ -1373,6 +1373,11 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
 
     std::vector<zes_temp_handle_t> handles(count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, handles.data()));
+
+    // Handles of the same sensor type are not distinguishable through the properties, hence the
+    // reported values are collected and compared against the expected set of values.
+    std::vector<double> vrTemperatures = {};
+    std::vector<double> gpuBoardTemperatures = {};
 
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -1396,24 +1401,30 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
             }
         } else if (properties.type == ZES_TEMP_SENSORS_VOLTAGE_REGULATOR) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-            if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
-                EXPECT_EQ(temperature, 35.0);
-            } else {
-                // BMG: All VR temperatures are raw values read directly from 32-bit registers
-                double vr0Converted = static_cast<double>(vrTemperatureBmg[0]); // 45
-                double vr1Converted = static_cast<double>(vrTemperatureBmg[1]); // 25
-                double vr2Converted = static_cast<double>(vrTemperatureBmg[2]); // 30
-                double vr3Converted = static_cast<double>(vrTemperatureBmg[3]); // 35
-                double expectedVrTemp = std::max({vr0Converted, vr1Converted, vr2Converted, vr3Converted});
-                EXPECT_EQ(temperature, expectedVrTemp);
-            }
+            vrTemperatures.push_back(temperature);
         } else if (properties.type == ZES_TEMP_SENSORS_GPU_BOARD) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-            EXPECT_EQ(temperature, 40.0);
+            gpuBoardTemperatures.push_back(temperature);
         } else if (properties.type == ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
             EXPECT_EQ(temperature, static_cast<double>(compositeTemperature));
         }
+    }
+
+    // Each voltage regulator sensor reports its own value
+    std::vector<double> expectedVrTemperatures = {};
+    if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+        expectedVrTemperatures = {15.0, 25.0, 30.0, 35.0};
+    } else {
+        expectedVrTemperatures = {45.0, 25.0, 30.0, 35.0};
+    }
+    EXPECT_EQ(vrTemperatures, expectedVrTemperatures);
+
+    if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+        std::vector<double> expectedGpuBoardTemperatures = {40.0, 30.0};
+        EXPECT_EQ(gpuBoardTemperatures, expectedGpuBoardTemperatures);
+    } else {
+        EXPECT_TRUE(gpuBoardTemperatures.empty());
     }
 }
 
@@ -1470,7 +1481,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingGlobalMaxTemperatureThenFailureIsReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingGlobalMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
@@ -1482,7 +1493,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -1490,7 +1501,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -1509,7 +1520,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -1528,7 +1539,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -1548,7 +1559,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -1568,7 +1579,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -1589,7 +1600,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -1610,7 +1621,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -1662,20 +1673,15 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
-    double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    // Each voltage regulator sensor is queried individually and reports its own value
+    // BMG: All VR temperatures are raw values read directly from 32-bit registers
+    std::vector<double> expectedTemperatures = (defaultHwInfo->platform.eProductFamily == IGFX_CRI) ? std::vector<double>{45.5, 50.0, 55.0, 60.25} : std::vector<double>{45.0, 50.0, 55.0, 60.0};
 
-    if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
-        EXPECT_EQ(60.25, temperature);
-    } else {
-        // BMG: All VR temperatures are raw values read directly from 32-bit registers
-        double vr0Converted = static_cast<double>(mockVrTemperatureBmg[0]); // 45
-        double vr1Converted = static_cast<double>(mockVrTemperatureBmg[1]); // 50
-        double vr2Converted = static_cast<double>(mockVrTemperatureBmg[2]); // 55
-        double vr3Converted = static_cast<double>(mockVrTemperatureBmg[3]); // 60
-        double expectedTemp = std::max({vr0Converted, vr1Converted, vr2Converted, vr3Converted});
-        EXPECT_EQ(expectedTemp, temperature);
+    for (uint32_t sensorIndex = 0; sensorIndex < expectedTemperatures.size(); sensorIndex++) {
+        double temperature = 0;
+        ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, sensorIndex);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(expectedTemperatures[sensorIndex], temperature);
     }
 }
 
@@ -1703,13 +1709,19 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
+    // Each ambient sensor packed in the container is queried individually
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(40.5, temperature);
+
+    temperature = 0;
+    result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 1u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(50.25, temperature);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndOneAmbientSensorIsNotAvailableWhenGettingGpuBoardTemperatureThenNotAvailableErrorIsReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndOneAmbientSensorIsNotAvailableWhenGettingGpuBoardTemperatureThenNotAvailableErrorIsReturnedOnlyForThatSensor, IsCRI) {
     // Sensor 1: 42.75 degree celsius, Sensor 2: not available
     static uint64_t mockAmbientTempContainer = packAmbientTemperatures(toIeee754(42.75f), 0xFFFFFFFF);
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
@@ -1733,8 +1745,13 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
+    // The available sensor still reports its value, only the unavailable one returns an error
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(42.75, temperature);
+
+    result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 1u);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
@@ -1762,12 +1779,14 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
-    double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    for (uint32_t sensorIndex = 0; sensorIndex < 2u; sensorIndex++) {
+        double temperature = 0;
+        ze_result_t result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, sensorIndex);
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    }
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndSomeVRSensorsAreNotAvailableWhenGettingVRTemperatureThenNotAvailableErrorIsReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndSomeVRSensorsAreNotAvailableWhenGettingVRTemperatureThenNotAvailableErrorIsReturnedOnlyForThoseSensors, IsCRI) {
     // VR 0 and VR 3 report 0xFFFFFFFF, VR 1: 52.5 degree celsius, VR 2: 47 degree celsius
     static uint32_t mockVrTemperature[4] = {0xFFFFFFFF, toIeee754(52.5f), toIeee754(47.0f), 0xFFFFFFFF};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
@@ -1800,9 +1819,16 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
+    // Sensors reporting a valid value are unaffected by the unavailable ones
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 3u));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 1u));
+    EXPECT_EQ(52.5, temperature);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 2u));
+    EXPECT_EQ(47.0, temperature);
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndAllVRSensorsAreNotAvailableWhenGettingVRTemperatureThenNotAvailableErrorIsReturned, IsCRI) {
@@ -1838,9 +1864,11 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
-    double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    for (uint32_t sensorIndex = 0; sensorIndex < 4u; sensorIndex++) {
+        double temperature = 0;
+        ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, sensorIndex);
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    }
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndVRSensorReportsInfinityWhenGettingVRTemperatureThenInfinityIsReturned, IsCRI) {
@@ -1875,10 +1903,15 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAn
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
+    // VR 2 reports positive infinity, the value is reported as is for that sensor
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 2u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(std::numeric_limits<double>::infinity(), temperature);
+
+    result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 1u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(-5.0, temperature);
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenReadingVRTemperatureFailsThenErrorIsReturned, IsCRI) {
@@ -1905,7 +1938,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
@@ -1943,8 +1976,13 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 3u);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    // The sensors that could be read are unaffected
+    result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(45.0, temperature);
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenReadingGpuBoardTemperatureFailsThenErrorIsReturned, IsCRI) {
@@ -1971,14 +2009,14 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZesGetTemperatureStateIsCalledForVRThenValidTemperatureValueIsReturned, IsCRI) {
     VariableBackup<int> mockErrno(&errno);
     static uint32_t vrTemperature[4] = {toIeee754(45.0f), toIeee754(48.0f), toIeee754(43.0f), toIeee754(50.5f)};
-    static uint32_t validTemperatureHandleCount = 6u;
+    static uint32_t validTemperatureHandleCount = 10u;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -2025,6 +2063,8 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     std::vector<zes_temp_handle_t> handles(count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, handles.data()));
 
+    // Each voltage regulator sensor is exposed as a separate handle reporting its own value
+    std::vector<double> expectedVrTemperatures = {45.0, 48.0, 43.0, 50.5};
     uint32_t vrCount = 0;
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -2034,21 +2074,21 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
 
         if (properties.type == ZES_TEMP_SENSORS_VOLTAGE_REGULATOR) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+            ASSERT_LT(vrCount, expectedVrTemperatures.size());
+            EXPECT_EQ(temperature, expectedVrTemperatures[vrCount]);
             vrCount++;
-            // max(VR0=45, VR1=48, VR2=43, VR3=50.5) = 50.5 degree celsius
-            EXPECT_EQ(temperature, 50.5);
         } else if (properties.type == ZES_TEMP_SENSORS_GLOBAL || properties.type == ZES_TEMP_SENSORS_GPU) {
             EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
         }
     }
-    EXPECT_EQ(vrCount, 1u);
+    EXPECT_EQ(vrCount, 4u);
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZesGetTemperatureStateIsCalledForGpuBoardThenValidTemperatureValueIsReturned, IsCRI) {
     VariableBackup<int> mockErrno(&errno);
     // Sensor 1: 46 degree celsius, Sensor 2: 55 degree celsius
     static uint64_t ambientTempContainer = packAmbientTemperatures(toIeee754(46.0f), toIeee754(55.0f));
-    static uint32_t validTemperatureHandleCount = 6u;
+    static uint32_t validTemperatureHandleCount = 10u;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -2086,6 +2126,8 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     std::vector<zes_temp_handle_t> handles(count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, handles.data()));
 
+    // Each ambient sensor is exposed as a separate handle reporting its own value
+    std::vector<double> expectedGpuBoardTemperatures = {46.0, 55.0};
     uint32_t gpuBoardCount = 0;
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -2095,20 +2137,21 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
 
         if (properties.type == ZES_TEMP_SENSORS_GPU_BOARD) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+            ASSERT_LT(gpuBoardCount, expectedGpuBoardTemperatures.size());
+            EXPECT_EQ(temperature, expectedGpuBoardTemperatures[gpuBoardCount]);
             gpuBoardCount++;
-            EXPECT_EQ(temperature, 55.0); // max(46, 55)
         } else if (properties.type == ZES_TEMP_SENSORS_GLOBAL || properties.type == ZES_TEMP_SENSORS_GPU) {
             EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
         }
     }
-    EXPECT_EQ(gpuBoardCount, 1u);
+    EXPECT_EQ(gpuBoardCount, 2u);
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenReadingVRTemperatureOnAnUnsupportedPlatformThenErrorIsReturned, IsAtMostBMG) {
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -2116,7 +2159,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
+    ze_result_t result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, &temperature, subdeviceId, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -2295,7 +2338,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     VariableBackup<int> mockErrno(&errno);
     static float compositeTemperature = 70.25f;
     static uint32_t compositeTemperatureRaw = std::bit_cast<uint32_t>(compositeTemperature);
-    static uint32_t validTemperatureHandleCount = 6u;
+    static uint32_t validTemperatureHandleCount = 10u;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);

@@ -68,10 +68,10 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
         result = pSysmanProductHelper->getMemoryMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     case ZES_TEMP_SENSORS_VOLTAGE_REGULATOR:
-        result = pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
+        result = pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, pTemperature, subdeviceId, sensorIndex);
         break;
     case ZES_TEMP_SENSORS_GPU_BOARD:
-        result = pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
+        result = pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, pTemperature, subdeviceId, sensorIndex);
         break;
     case ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP:
         result = pSysmanProductHelper->getCompositeTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
@@ -164,7 +164,7 @@ void OsTemperature::getSupportedSensors(OsSysman *pOsSysman, std::map<zes_temp_s
 }
 
 LinuxTemperatureImp::LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice,
-                                         uint32_t subdeviceId) : subdeviceId(subdeviceId), isSubdevice(onSubdevice) {
+                                         uint32_t subdeviceId, uint32_t sensorIndex) : subdeviceId(subdeviceId), sensorIndex(sensorIndex), isSubdevice(onSubdevice) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
@@ -173,8 +173,8 @@ LinuxTemperatureImp::LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdev
     init();
 }
 
-std::unique_ptr<OsTemperature> OsTemperature::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t sensorType) {
-    std::unique_ptr<LinuxTemperatureImp> pLinuxTemperatureImp = std::make_unique<LinuxTemperatureImp>(pOsSysman, onSubdevice, subdeviceId);
+std::unique_ptr<OsTemperature> OsTemperature::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t sensorType, uint32_t sensorIndex) {
+    std::unique_ptr<LinuxTemperatureImp> pLinuxTemperatureImp = std::make_unique<LinuxTemperatureImp>(pOsSysman, onSubdevice, subdeviceId, sensorIndex);
     pLinuxTemperatureImp->setSensorType(sensorType);
     return pLinuxTemperatureImp;
 }

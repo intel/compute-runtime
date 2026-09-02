@@ -25,7 +25,7 @@ class TemperatureImp : public Temperature, NEO::NonCopyableAndNonMovableClass {
     void reInit() override;
 
     TemperatureImp() = default;
-    TemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t type);
+    TemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t type, uint32_t sensorIndex);
     ~TemperatureImp() override;
 
     std::unique_ptr<OsTemperature> pOsTemperature = nullptr;

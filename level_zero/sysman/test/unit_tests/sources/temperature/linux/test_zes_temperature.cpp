@@ -306,7 +306,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
 TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonTemp2EmergencyFileWhenGettingPropertiesThenMaxTemperatureIsReadFromSysfs) {
     setUpHwmonKmdInterfaceXe();
 
-    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
 
     zes_temp_properties_t properties = {};
@@ -320,7 +320,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonTemp2EmergencyFileWhenGettingPr
 TEST_F(SysmanDeviceTemperatureFixture, GivenSubdeviceHandleWhenGettingPropertiesThenSubdeviceMetadataAndMaxTemperatureAreReturned) {
     setUpHwmonKmdInterfaceXe();
 
-    PublicLinuxTemperatureImp temperatureImp(pOsSysman, true, 1u);
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, true, 1u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
 
     zes_temp_properties_t properties = {};
@@ -335,7 +335,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonScanFailureWhenGettingPropertie
     setUpHwmonKmdInterfaceXe();
     pFsAccess->scanResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
-    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
 
     zes_temp_properties_t properties = {};
@@ -350,7 +350,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonNameReadFailureAndNoMatchingHwm
     pFsAccess->hwmonNameReadResult1 = ZE_RESULT_SUCCESS;
     pFsAccess->hwmonName1 = "not_xe";
 
-    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
 
     zes_temp_properties_t properties = {};
@@ -362,7 +362,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenTemp2EmergencyNodeMissingWhenGetting
     setUpHwmonKmdInterfaceXe();
     pFsAccess->temp2EmergencyExists = false;
 
-    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
 
     zes_temp_properties_t properties = {};
@@ -374,7 +374,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenTemp2EmergencyReadFailureWhenGetting
     setUpHwmonKmdInterfaceXe();
     pFsAccess->temp2EmergencyReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
-    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
 
     zes_temp_properties_t properties = {};
@@ -386,7 +386,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenDevicePciBdfIsUnresolvableWhenGettin
     setUpHwmonKmdInterfaceXe();
     pSysfsAccess->realPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
-    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
 
     zes_temp_properties_t properties = {};
@@ -398,7 +398,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenDevicePciBdfIsUnresolvableWhenGettin
 TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonDirectoryIsSearchedWhenInitializingThenAbsolutePciDevicePathIsUsed) {
     setUpHwmonKmdInterfaceXe();
 
-    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u);
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
 
     EXPECT_EQ(0u, pFsAccess->listDirectoryPathRequested.find("/sys/bus/pci/devices/"));
@@ -494,7 +494,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupporte
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
 
-    auto pPublicLinuxTemperatureImp = std::make_unique<L0::Sysman::LinuxTemperatureImp>(pOsSysman, onSubdevice, subdeviceId);
+    auto pPublicLinuxTemperatureImp = std::make_unique<L0::Sysman::LinuxTemperatureImp>(pOsSysman, onSubdevice, subdeviceId, 0u);
     pPublicLinuxTemperatureImp->setSensorType(ZES_TEMP_SENSORS_MEMORY_MIN);
     double temperature;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPublicLinuxTemperatureImp->getSensorTemperature(&temperature));
@@ -505,7 +505,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempSensor
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
 
-    auto pPublicLinuxTemperatureImp = std::make_unique<L0::Sysman::LinuxTemperatureImp>(pOsSysman, onSubdevice, subdeviceId);
+    auto pPublicLinuxTemperatureImp = std::make_unique<L0::Sysman::LinuxTemperatureImp>(pOsSysman, onSubdevice, subdeviceId, 0u);
     pPublicLinuxTemperatureImp->setSensorType(ZES_TEMP_SENSORS_MEMORY_MIN);
     EXPECT_EQ(false, pPublicLinuxTemperatureImp->isTempModuleSupported());
 }
