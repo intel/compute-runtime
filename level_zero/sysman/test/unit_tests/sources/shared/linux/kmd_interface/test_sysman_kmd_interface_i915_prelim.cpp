@@ -230,6 +230,32 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndIsNotInt
     EXPECT_EQ(0u, pSysmanKmdInterface->getEventType());
 }
 
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenDifferentErrnoValuesWhenCheckingErrorNumberThenProperErrorIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+
+    errno = EPERM;
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+
+    errno = EACCES;
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+
+    errno = ENOENT;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+
+    errno = EBUSY;
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenFileHandleErrnoWhenCheckingErrorNumberThenDependencyUnavailableIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+
+    errno = EMFILE;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+
+    errno = ENFILE;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+}
+
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfFrequencyFilesThenTrueValueIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_TRUE(pSysmanKmdInterface->isDefaultFrequencyAvailable());

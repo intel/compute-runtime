@@ -393,6 +393,38 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpFo
     }
 }
 
+TEST_F(SysmanRasExpFixture, GivenPmuRasUtilWhenPmuReadFailsWithPermissionErrorThenInsufficientPermissionsIsReturnedForStateExp2) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    pPmuInterface->mockPmuReadResult = true;
+    pPmuInterface->mockErrorNumber = EPERM;
+    pPmuInterface->mockPerfEvent = false;
+
+    VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    PmuRasUtil rasUtil(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, false, 0);
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_ras_state_exp2_t state = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, rasUtil.rasGetStateExp2(1u, &category, &state));
+}
+
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpForGtInterfaceAndPerfEventOpenCallFailsThenVerifyAPICallFails, IsGtRasSupportedProduct) {
     pPmuInterface->mockPmuReadResult = false;
     VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
@@ -796,6 +828,37 @@ TEST_F(SysmanRasExpFixture, GivenRasUtilAsNoneWhenCallingRasGetStateExp2ThenUnsu
     zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
     zes_ras_state_exp2_t state = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasGetStateExp2(1u, &category, &state));
+}
+
+TEST_F(SysmanRasExpFixture, GivenPmuRasUtilWhenPerfEventOpenFailsWithPermissionErrorThenInsufficientPermissionsIsReturnedForStateExp2) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    pPmuInterface->mockPerfEvent = true;
+    pPmuInterface->mockErrorNumber = EPERM;
+
+    VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    PmuRasUtil rasUtil(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, false, 0);
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_ras_state_exp2_t state = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, rasUtil.rasGetStateExp2(1u, &category, &state));
 }
 
 struct SysmanRasExpMultiDeviceFixture : public SysmanMultiDeviceFixture {

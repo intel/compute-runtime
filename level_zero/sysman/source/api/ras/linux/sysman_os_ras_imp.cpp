@@ -77,6 +77,9 @@ ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) 
         zes_ras_state_t localState = {};
         ze_result_t localResult = rasSource->osRasGetState(localState, clear);
         if (localResult != ZE_RESULT_SUCCESS) {
+            if ((result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) && (localResult == ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS)) {
+                result = localResult;
+            }
             continue;
         }
         for (uint32_t i = 0; i < maxRasErrorCategoryCount; i++) {
@@ -108,6 +111,9 @@ ze_result_t LinuxRasImp::osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t 
         uint32_t numCategoriesRequested = std::min(remainingCategories, numCategoriesBySources[rasSourceIdx]);
         ze_result_t localResult = rasSource->osRasGetStateExp(numCategoriesRequested, &pState[numCategoriesAssigned]);
         if (localResult != ZE_RESULT_SUCCESS) {
+            if ((result == ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE) && (localResult == ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS)) {
+                result = localResult;
+            }
             continue;
         }
         remainingCategories -= numCategoriesRequested;
@@ -209,6 +215,9 @@ ze_result_t LinuxRasImp::osRasGetStateExp2(const uint32_t categoryCount, const z
         }
         ze_result_t localResult = rasSource->osRasGetStateExp2(categoryCount, pCategories, sourceStates.data());
         if (localResult != ZE_RESULT_SUCCESS) {
+            if ((result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) && (localResult == ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS)) {
+                result = localResult;
+            }
             continue;
         }
         for (uint32_t i = 0; i < categoryCount; i++) {

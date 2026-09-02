@@ -18,6 +18,7 @@
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 namespace L0 {
 namespace Sysman {
@@ -228,7 +229,7 @@ ze_result_t SysmanKmdInterface::checkErrorNumberAndReturnStatus() {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", NEO_FUNCTION_NAME);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return LinuxSysmanImp::getResult(errno);
 }
 
 void SysmanKmdInterface::updateSysmanDeviceDirName(std::string &dirName) {

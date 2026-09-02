@@ -124,12 +124,14 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
     auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
     if (hwDeviceId.getFileDescriptor() < 0) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not get Device Id Fd and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        engineDataInitStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return engineDataInitStatus;
     }
 
     if (pDrm->sysmanQueryEngineInfo() == false) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        engineDataInitStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return engineDataInitStatus;
     }
 
     vfGetInstancesFromEngineInfo(pDrm);
@@ -141,24 +143,27 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
         if (result != ZE_RESULT_SUCCESS) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the busy config and total ticks config and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             cleanup();
-            return result;
+            engineDataInitStatus = result;
+            return engineDataInitStatus;
         }
 
         uint64_t busyTicksConfig = configPair.first;
         int64_t busyTicksFd = pPmuInterface->pmuInterfaceOpen(busyTicksConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
         if (busyTicksFd < 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+            engineDataInitStatus = pSysmanKmdInterface->checkErrorNumberAndReturnStatus();
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle and returning error:0x%x \n", NEO_FUNCTION_NAME, engineDataInitStatus);
             cleanup();
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            return engineDataInitStatus;
         }
 
         uint64_t totalTicksConfig = configPair.second;
         int64_t totalTicksFd = pPmuInterface->pmuInterfaceOpen(totalTicksConfig, static_cast<int32_t>(busyTicksFd), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
         if (totalTicksFd < 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Ticks Handle and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+            engineDataInitStatus = pSysmanKmdInterface->checkErrorNumberAndReturnStatus();
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Ticks Handle and returning error:0x%x \n", NEO_FUNCTION_NAME, engineDataInitStatus);
             NEO::SysCalls::close(static_cast<int>(busyTicksFd));
             cleanup();
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            return engineDataInitStatus;
         }
 
         EngineUtilsData pEngineUtilsData;
@@ -167,7 +172,8 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
         pEngineUtilsData.totalTicksFd = totalTicksFd;
         pEngineUtils.push_back(pEngineUtilsData);
     }
-    return ZE_RESULT_SUCCESS;
+    engineDataInitStatus = ZE_RESULT_SUCCESS;
+    return engineDataInitStatus;
 }
 
 ze_result_t LinuxVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) {
@@ -179,6 +185,10 @@ ze_result_t LinuxVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_e
     std::call_once(initEngineDataOnce, [this]() {
         this->vfEngineDataInit();
     });
+
+    if (engineDataInitStatus != ZE_RESULT_SUCCESS) {
+        return engineDataInitStatus;
+    }
 
     uint32_t engineCount = static_cast<uint32_t>(pEngineUtils.size());
     if (engineCount == 0) {

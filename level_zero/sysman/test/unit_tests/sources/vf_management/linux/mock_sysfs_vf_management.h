@@ -40,7 +40,7 @@ struct MockVfPmuInterfaceImp : public MockPmuInterfaceImpForSysman {
 
     bool mockPmuReadFail = false;
     bool mockPerfEventOpenReadFail = false;
-    int32_t mockErrorNumber = -ENOSPC;
+    int32_t mockErrorNumber = ENOSPC;
     int32_t mockPerfEventOpenFailAtCount = 1;
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
@@ -92,11 +92,18 @@ struct MockVfNeoDrm : public NEO::Drm {
     ~MockVfNeoDrm() override = default;
 
     bool mockReadSysmanQueryEngineInfo = true;
+    bool mockEmptyEngineInfo = false;
 
     bool sysmanQueryEngineInfo() override {
 
         if (mockReadSysmanQueryEngineInfo == false) {
             return false;
+        }
+
+        if (mockEmptyEngineInfo) {
+            StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfos{{}};
+            this->engineInfo.reset(new NEO::EngineInfo(this, engineInfos));
+            return true;
         }
 
         std::vector<NEO::EngineCapabilities> i915QueryEngineInfo(numberMockedEngines);

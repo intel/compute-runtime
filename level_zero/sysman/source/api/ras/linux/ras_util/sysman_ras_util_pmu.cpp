@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
@@ -188,13 +189,16 @@ ze_result_t PmuRasUtil::rasGetState(zes_ras_state_t &state, ze_bool_t clear) {
     // Iterate over all the file descriptor values present in vector which is mapped to given ras error category
     // Use the file descriptors to read pmu counters and add all the errors corresponding to the ras error category
     if (groupFd < 0) {
-        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): PMU initialization failed and returning error:0x%x \n", NEO_FUNCTION_NAME, initStatus);
+        return initStatus;
     }
 
     auto numEvents = memberFds.size() + 1;             // Add 1 to include groupFd as well.
     std::vector<std::uint64_t> data(2 + numEvents, 0); // In data[], event count starts from second index, first value gives number of events and second value is for timestamp
     if (pPmuInterface->pmuRead(static_cast<int>(groupFd), data.data(), sizeof(uint64_t) * data.size()) < 0) {
-        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        auto status = pLinuxSysmanImp->getSysmanKmdInterface()->checkErrorNumberAndReturnStatus();
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read the PMU counters and returning error:0x%x \n", NEO_FUNCTION_NAME, status);
+        return status;
     }
     /* The data buffer retrieved after reading pmu counters is parsed to get the error count for each suberror category */
     uint64_t initialIndex = 2; // Initial index in the buffer from which the data be parsed begins
@@ -221,13 +225,16 @@ ze_result_t PmuRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_
     // Iterate over all the file descriptor values present in vector which is mapped to given ras error category
     // Use the file descriptors to read pmu counters and add all the errors corresponding to the ras error category
     if (groupFd < 0) {
-        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): PMU initialization failed and returning error:0x%x \n", NEO_FUNCTION_NAME, initStatus);
+        return initStatus;
     }
 
     auto numEvents = memberFds.size() + 1;             // Add 1 to include groupFd as well.
     std::vector<std::uint64_t> data(2 + numEvents, 0); // In data[], event count starts from second index, first value gives number of events and second value is for timestamp
     if (pPmuInterface->pmuRead(static_cast<int>(groupFd), data.data(), sizeof(uint64_t) * data.size()) < 0) {
-        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        auto status = pLinuxSysmanImp->getSysmanKmdInterface()->checkErrorNumberAndReturnStatus();
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read the PMU counters and returning error:0x%x \n", NEO_FUNCTION_NAME, status);
+        return status;
     }
 
     /* The data buffer retrieved after reading pmu counters is parsed to get the error count for each suberror category */
@@ -251,13 +258,16 @@ ze_result_t PmuRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_
 ze_result_t PmuRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     initRasErrors(false);
     if (groupFd < 0) {
-        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): PMU initialization failed and returning error:0x%x \n", NEO_FUNCTION_NAME, initStatus);
+        return initStatus;
     }
 
     auto numEvents = memberFds.size() + 1;
     std::vector<std::uint64_t> data(2 + numEvents, 0);
     if (pPmuInterface->pmuRead(static_cast<int>(groupFd), data.data(), sizeof(uint64_t) * data.size()) < 0) {
-        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        auto status = pLinuxSysmanImp->getSysmanKmdInterface()->checkErrorNumberAndReturnStatus();
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read the PMU counters and returning error:0x%x \n", NEO_FUNCTION_NAME, status);
+        return status;
     }
 
     // Build a lookup: category -> errorCounter by iterating errorCategoryToEventCount in order
@@ -319,6 +329,11 @@ void PmuRasUtil::initRasErrors(ze_bool_t clear) {
         return;
     }
 
+    // This method is re-entered after closeFds() resets groupFd, so the status from the
+    // previous initialization must not leak into this one.
+    initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    errorCategoryToEventCount.clear();
+
     std::string eventDirectory;
     std::vector<std::string> listOfEvents = {};
     ze_result_t result = readI915EventsDirectory(pLinuxSysmanImp, listOfEvents, &eventDirectory);
@@ -371,11 +386,20 @@ void PmuRasUtil::initRasErrors(ze_bool_t clear) {
             if (groupFd == -1) {
                 groupFd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP); // To get file descriptor of the group leader
                 if (groupFd < 0) {
+                    initStatus = pLinuxSysmanImp->getSysmanKmdInterface()->checkErrorNumberAndReturnStatus();
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open the PMU group leader handle for event %s and returning error:0x%x \n", NEO_FUNCTION_NAME, nameOfError.c_str(), initStatus);
                     return;
                 }
             } else {
                 // The rest of the group members are created with subsequent calls with groupFd being set to the file descriptor of the group leader
-                memberFds.push_back(pPmuInterface->pmuInterfaceOpen(config, static_cast<int>(groupFd), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP));
+                auto memberFd = pPmuInterface->pmuInterfaceOpen(config, static_cast<int>(groupFd), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+                if (memberFd < 0) {
+                    initStatus = pLinuxSysmanImp->getSysmanKmdInterface()->checkErrorNumberAndReturnStatus();
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open the PMU group member handle for event %s and returning error:0x%x \n", NEO_FUNCTION_NAME, nameOfError.c_str(), initStatus);
+                    closeFds();
+                    return;
+                }
+                memberFds.push_back(memberFd);
             }
             eventCount++;
             errorCount += initialErrorVal;
@@ -383,6 +407,10 @@ void PmuRasUtil::initRasErrors(ze_bool_t clear) {
         clearStatus &= ~(1 << rasErrorCatToListOfEvents.first);
         absoluteErrorCount[rasErrorCatToListOfEvents.first] = errorCount;
         errorCategoryToEventCount[rasErrorCatToListOfEvents.first] = eventCount;
+    }
+
+    if (groupFd >= 0) {
+        initStatus = ZE_RESULT_SUCCESS;
     }
 }
 

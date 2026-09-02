@@ -112,6 +112,7 @@ struct MockRasPmuInterfaceImp : public MockPmuInterfaceImpForSysman {
     bool mockPmuReadResult = false;
     bool mockPerfEvent = false;
     bool mockPmuReadTile = false;
+    int32_t mockErrorNumber = ENOSPC;
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
 
@@ -123,6 +124,7 @@ struct MockRasPmuInterfaceImp : public MockPmuInterfaceImpForSysman {
     }
 
     int64_t mockedPerfEventOpenAndFailureReturn(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
+        errno = mockErrorNumber;
         return -1;
     }
 
@@ -213,6 +215,7 @@ struct MockRasPmuInterfaceImp : public MockPmuInterfaceImpForSysman {
     }
 
     int mockedPmuReadAndFailureReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
+        errno = mockErrorNumber;
         return -1;
     }
 

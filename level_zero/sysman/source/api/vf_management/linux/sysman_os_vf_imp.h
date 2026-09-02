@@ -59,6 +59,7 @@ class LinuxVfImp : public OsVf, NEO::NonCopyableAndNonMovableClass {
     std::set<std::pair<zes_engine_group_t, EngineInstanceGtId>> engineGroupInstance = {};
     std::vector<EngineUtilsData> pEngineUtils = {};
     std::once_flag initEngineDataOnce;
+    ze_result_t engineDataInitStatus = ZE_RESULT_SUCCESS;
 };
 
 } // namespace Sysman

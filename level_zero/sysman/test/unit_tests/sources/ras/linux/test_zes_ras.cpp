@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/ras/linux/mock_sysman_ras.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
 
 namespace L0 {
 namespace Sysman {
@@ -17,8 +18,8 @@ constexpr uint32_t mockHandleCount = 2u;
 constexpr uint32_t mockHandleCountForSubDevice = 4u;
 struct SysmanRasFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<MockRasFsAccess> pFsAccess;
-    std::unique_ptr<MockRasSysfsAccess> pSysfsAccess;
+    MockRasFsAccess *pFsAccess = nullptr;
+    MockRasSysfsAccess *pSysfsAccess = nullptr;
     std::unique_ptr<MockRasPmuInterfaceImp> pPmuInterface;
     std::unique_ptr<MockRasFwInterface> pRasFwUtilInterface;
     MockRasNeoDrm *pDrm = nullptr;
@@ -26,18 +27,26 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
     L0::Sysman::SysFsAccessInterface *pSysfsAccessOriginal = nullptr;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
     L0::Sysman::FirmwareUtil *pFwUtilOriginal = nullptr;
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
+    L0::Sysman::SysmanKmdInterface *pSysmanKmdInterfaceOriginal = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
 
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pFsAccess = std::make_unique<MockRasFsAccess>();
-        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        pFsAccess = new MockRasFsAccess();
 
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
-        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        pSysfsAccess = new MockRasSysfsAccess();
+
+        pSysmanKmdInterfaceOriginal = pLinuxSysmanImp->pSysmanKmdInterface.release();
+        pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
+        pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+        pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+        pLinuxSysmanImp->pFsAccess = pLinuxSysmanImp->getSysmanKmdInterface()->getFsAccess();
+        pLinuxSysmanImp->pSysfsAccess = pLinuxSysmanImp->getSysmanKmdInterface()->getSysFsAccess();
 
         pRasFwUtilInterface = std::make_unique<MockRasFwInterface>();
 
@@ -49,6 +58,7 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
 
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+        pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
@@ -62,6 +72,7 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilOriginal;
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterfaceOriginal);
         SysmanDeviceFixture::TearDown();
     }
     std::vector<zes_ras_handle_t> getRasHandles(uint32_t count) {
@@ -407,6 +418,19 @@ HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInt
     }
 }
 
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingZesRasGetStateForGtInterfaceAndPerfEventOpenFailsWithPermissionErrorThenInsufficientPermissionsIsReturned, IsGtRasSupportedProduct) {
+
+    pPmuInterface->mockPerfEvent = true;
+    pPmuInterface->mockErrorNumber = EACCES;
+
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesRasGetState(handle, 0, &state));
+    }
+}
+
 HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndPmuReadFailsAndOtherInterfacesAreAbsentThenFailureIsReturned, IsGtRasSupportedProduct) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -428,6 +452,32 @@ HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInt
         ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+}
+
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingZesRasGetStateForGtInterfaceAndPmuReadFailsWithPermissionErrorThenInsufficientPermissionsIsReturned, IsGtRasSupportedProduct) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    pPmuInterface->mockPmuReadResult = true;
+    pPmuInterface->mockErrorNumber = EACCES;
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesRasGetState(handle, 0, &state));
     }
 }
 
@@ -554,13 +604,13 @@ HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingZesGetRasStateAndFirmw
     pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pFsAccess->mockReadVal = true;
     VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
-    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+    pLinuxSysmanImp->pFsAccess = pFsAccess;
 
     VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
 
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
-    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
 
     auto handles = getRasHandles(mockHandleCount);
     for (const auto &handle : handles) {

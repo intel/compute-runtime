@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ int64_t PmuInterfaceImp::pmuInterfaceOpen(uint64_t config, int group, uint32_t f
 
     attr.type = pSysmanKmdInterface->getEventType();
     if (attr.type == 0) {
+        errno = ENOENT;
         return -ENOENT;
     }
 
@@ -54,6 +55,9 @@ int32_t PmuInterfaceImp::pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) {
     ssize_t len;
     len = this->readFunction(fd, data, sizeOfdata);
     if (len != sizeOfdata) {
+        if (len >= 0) {
+            errno = EIO;
+        }
         return -1;
     }
     return 0;
