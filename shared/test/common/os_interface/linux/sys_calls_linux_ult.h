@@ -74,6 +74,8 @@ extern ssize_t (*sysCallsSendmsg)(int sockfd, const struct msghdr *msg, int flag
 extern ssize_t (*sysCallsRecvmsg)(int sockfd, struct msghdr *msg, int flags);
 extern int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 extern int (*sysCallsDup)(int oldfd);
+extern void *(*sysCallsMmap)(void *addr, size_t size, int prot, int flags, int fd, off_t off);
+extern int (*sysCallsMunmap)(void *addr, size_t size);
 extern pid_t (*sysCallsGetpid)();
 extern int (*sysCallsGetrlimit)(int resource, struct rlimit *rlim);
 extern FILE *(*sysCallsFdopen)(int fd, const char *mode);

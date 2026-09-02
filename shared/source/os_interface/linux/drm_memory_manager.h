@@ -49,6 +49,7 @@ class DrmMemoryManager : public MemoryManager {
     void handleFenceCompletion(GraphicsAllocation *allocation) override;
     GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override;
     GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
+    GraphicsAllocation *createHostAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, const std::vector<uint64_t> &physicalOffsets, bool reuseSharedAllocation) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
     void closeSharedHandle(GraphicsAllocation *gfxAllocation) override;
     void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override;

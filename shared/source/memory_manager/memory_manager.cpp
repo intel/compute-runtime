@@ -1537,7 +1537,8 @@ void *MemoryManager::importFdHandles(Device *neoDevice,
                                      GraphicsAllocation **pAlloc,
                                      SvmAllocationData &mappedPeerAllocData,
                                      bool compressedMemory,
-                                     bool uncachedBias) {
+                                     bool uncachedBias,
+                                     const std::vector<uint64_t> &physicalOffsets) {
     AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                  MemoryConstants::pageSize,
                                                  AllocationType::buffer,
@@ -1545,6 +1546,7 @@ void *MemoryManager::importFdHandles(Device *neoDevice,
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     unifiedMemoryProperties.flags.preferCompressed = compressedMemory;
     unifiedMemoryProperties.flags.uncacheable = uncachedBias;
+    unifiedMemoryProperties.physicalOffsets = physicalOffsets;
     GraphicsAllocation *alloc = this->createGraphicsAllocationFromMultipleSharedHandles(handles,
                                                                                         unifiedMemoryProperties,
                                                                                         false,

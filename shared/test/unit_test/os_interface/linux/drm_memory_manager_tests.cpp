@@ -5184,6 +5184,496 @@ INSTANTIATE_TEST_SUITE_P(HostIpcAllocationFlag,
                          DrmMemoryManagerWithHostIpcAllocationParamTest,
                          ::testing::Values(false, true));
 
+struct DrmMemoryManagerMultipleSharedHandlesTest : public ::testing::Test {
+    void SetUp() override {
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
+        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+        rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+        drm = DrmMockCustom::create(rootDeviceEnvironment).release();
+        rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+        rootDeviceEnvironment.memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
+        rootDeviceEnvironment.initGmm();
+        memoryManager = new TestedDrmMemoryManager(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+        drm->outputHandle = 2u;
+    }
+
+    void installSystemMemoryInfo() {
+        std::vector<MemoryRegion> regionInfo(1);
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        drm->memoryInfo.reset(new MemoryInfo(regionInfo, *drm));
+        drm->memoryInfoQueried = true;
+    }
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMockCustom *drm = nullptr;
+    TestedDrmMemoryManager *memoryManager = nullptr;
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+};
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPhysicalOffsetsAndVmBindWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenEachBufferObjectHonorsItsOffset) {
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    const uint64_t physicalOffset = MemoryConstants::pageSize;
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {physicalOffset, physicalOffset};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+    properties.physicalOffsets = physicalOffsets;
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, gfxAllocation);
+    auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+
+    for (uint32_t i = 0; i < handles.size(); i++) {
+        auto bo = drmAllocation->getBufferObjectToModify(i);
+        ASSERT_NE(nullptr, bo);
+        EXPECT_EQ(physicalOffset, bo->getPhysicalMemoryOffset());
+        EXPECT_EQ(static_cast<size_t>(2 * MemoryConstants::pageSize) - physicalOffset, bo->getVirtualMappingSize());
+    }
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenNullPhysicalOffsetsWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenAllocationIsCreatedWithoutOffsets) {
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u, 12u};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+    EXPECT_TRUE(properties.physicalOffsets.empty());
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, gfxAllocation);
+    EXPECT_EQ(0u, static_cast<DrmAllocation *>(gfxAllocation)->getBufferObjectToModify(0)->getPhysicalMemoryOffset());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenEmptyPhysicalOffsetsVectorWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenAllocationIsCreatedWithoutOffsets) {
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+    properties.physicalOffsets = physicalOffsets;
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, gfxAllocation);
+    EXPECT_EQ(0u, static_cast<DrmAllocation *>(gfxAllocation)->getBufferObjectToModify(0)->getPhysicalMemoryOffset());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenLeadingZeroPhysicalOffsetAndVmBindWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenAnyOffsetAccumulatesAcrossChunks) {
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {0u, MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+    properties.physicalOffsets = physicalOffsets;
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, gfxAllocation);
+    auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+
+    EXPECT_EQ(0u, drmAllocation->getBufferObjectToModify(0)->getPhysicalMemoryOffset());
+    EXPECT_EQ(MemoryConstants::pageSize, drmAllocation->getBufferObjectToModify(1)->getPhysicalMemoryOffset());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPhysicalOffsetsAndNoVmBindAndMultipleHandlesWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    drm->bindAvailable = false;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {MemoryConstants::pageSize, MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+    properties.physicalOffsets = physicalOffsets;
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    EXPECT_EQ(nullptr, gfxAllocation);
+    EXPECT_EQ(0, drm->ioctlCnt.primeFdToHandle);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPhysicalOffsetNotSmallerThanObjectSizeWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+    properties.physicalOffsets = physicalOffsets;
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    EXPECT_EQ(nullptr, gfxAllocation);
+    EXPECT_EQ(1, drm->ioctlCnt.primeFdToHandle);
+    EXPECT_EQ(drm->ioctlCnt.primeFdToHandle.load(), drm->ioctlCnt.gemClose.load());
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenSecondChunkOffsetNotSmallerThanObjectSizeWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenEarlierChunkIsReleased) {
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {0u, 4 * MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+    properties.physicalOffsets = physicalOffsets;
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    EXPECT_EQ(nullptr, gfxAllocation);
+    EXPECT_EQ(2, drm->ioctlCnt.primeFdToHandle);
+    EXPECT_EQ(drm->ioctlCnt.primeFdToHandle.load(), drm->ioctlCnt.gemClose.load());
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenReusedBufferObjectAndSecondHandleFailingWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenReusedObjectIsReleasedWithoutSynchronousDestroy) {
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    std::vector<osHandle> firstHandles = {11u};
+    AllocationProperties firstProperties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+
+    auto firstAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(firstHandles, firstProperties, false, false, true, nullptr);
+    ASSERT_NE(nullptr, firstAllocation);
+    ASSERT_EQ(1u, memoryManager->peekSharedBosSize());
+
+    memoryManager->unreferenceCalled = 0u;
+    memoryManager->unreferenceParamsPassed.clear();
+    drm->failOnSecondPrimeFdToHandle = true;
+
+    std::vector<osHandle> handles = {11u, 12u};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true, nullptr);
+    EXPECT_EQ(nullptr, gfxAllocation);
+    ASSERT_EQ(1u, memoryManager->unreferenceCalled);
+    EXPECT_EQ(static_cast<DrmAllocation *>(firstAllocation)->getBO(), memoryManager->unreferenceParamsPassed[0].bo);
+    EXPECT_FALSE(memoryManager->unreferenceParamsPassed[0].synchronousDestroy);
+    EXPECT_EQ(1u, memoryManager->peekSharedBosSize());
+
+    memoryManager->freeGraphicsMemory(firstAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenImportedAllocationWhenFreeingGraphicsMemoryThenAllocationIsNotUnregistered) {
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, gfxAllocation);
+    gfxAllocation->setIsImported();
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+
+    EXPECT_EQ(0u, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(rootDeviceIndex));
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPhysicalOffsetsAndVmBindWhenCreateHostAllocationFromMultipleSharedHandlesThenAllocationIsCreatedWithPerObjectOffset) {
+    static uint8_t hostRangeBuffer[3 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        return addr ? addr : hostRangeBuffer;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    const uint64_t physicalOffset = MemoryConstants::pageSize;
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {physicalOffset, physicalOffset};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    ASSERT_NE(nullptr, gfxAllocation);
+    auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+    EXPECT_TRUE(drmAllocation->isUsmHostAllocation());
+    auto bo0 = drmAllocation->getBufferObjectToModify(0);
+    ASSERT_NE(nullptr, bo0);
+    EXPECT_EQ(physicalOffset, bo0->getPhysicalMemoryOffset());
+    EXPECT_EQ(static_cast<size_t>(2 * MemoryConstants::pageSize) - static_cast<size_t>(physicalOffset), bo0->getVirtualMappingSize());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenRetrieveMmapOffsetFailingWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    static uint8_t hostRangeBuffer[3 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    drm->failOnMmapOffset = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        return addr ? addr : hostRangeBuffer;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    EXPECT_EQ(nullptr, gfxAllocation);
+    EXPECT_EQ(1, drm->ioctlCnt.primeFdToHandle);
+    EXPECT_EQ(drm->ioctlCnt.primeFdToHandle.load(), drm->ioctlCnt.gemClose.load());
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPhysicalOffsetsAndNoVmBindAndMultipleHandlesWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    drm->bindAvailable = false;
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {MemoryConstants::pageSize, MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    EXPECT_EQ(nullptr, gfxAllocation);
+    EXPECT_EQ(0, drm->ioctlCnt.primeFdToHandle);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenNoMemoryInfoWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    drm->memoryInfo.reset(nullptr);
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    EXPECT_EQ(nullptr, gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenEmptyHandlesWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    std::vector<osHandle> handles = {};
+    std::vector<uint64_t> physicalOffsets = {};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    EXPECT_EQ(nullptr, gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenFewerPhysicalOffsetsThanHandlesWhenCreateHostAllocationFromMultipleSharedHandlesThenRemainingHandlesUseZeroOffset) {
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    ASSERT_NE(nullptr, gfxAllocation);
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenMmapFailingWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        return MAP_FAILED;
+    };
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {0u, 0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    EXPECT_EQ(nullptr, gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenSecondChunkMappingFailsWhenCreateHostAllocationFromMultipleSharedHandlesThenCleanupReleasesFirstChunkWithoutDeadlockAndNullptrIsReturned) {
+    static uint8_t hostRangeBuffer[4 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    static uint32_t mappedChunkCalls = 0u;
+    mappedChunkCalls = 0u;
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        if (addr == nullptr) {
+            return hostRangeBuffer;
+        }
+        if (++mappedChunkCalls == 2u) {
+            return reinterpret_cast<void *>(~reinterpret_cast<uintptr_t>(addr));
+        }
+        return addr;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {0u, 0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    EXPECT_EQ(nullptr, gfxAllocation);
+    EXPECT_EQ(2u, mappedChunkCalls);
+    EXPECT_EQ(2, drm->ioctlCnt.primeFdToHandle);
+    EXPECT_EQ(drm->ioctlCnt.primeFdToHandle.load(), drm->ioctlCnt.gemClose.load());
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPrimeFdToHandleFailingWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    installSystemMemoryInfo();
+    drm->failOnPrimeFdToHandle = true;
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    EXPECT_EQ(nullptr, gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenLseekReturningInvalidSizeWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(-1));
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    EXPECT_EQ(nullptr, gfxAllocation);
+    EXPECT_EQ(0, drm->ioctlCnt.primeFdToHandle);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPhysicalOffsetNotSmallerThanObjectSizeWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(MemoryConstants::pageSize));
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    EXPECT_EQ(nullptr, gfxAllocation);
+    EXPECT_EQ(0, drm->ioctlCnt.primeFdToHandle);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenNoVmBindAndSingleHandleWithOffsetWhenCreateHostAllocationFromMultipleSharedHandlesThenOffsetIsFoldedIntoReportedBase) {
+    static uint8_t hostRangeBuffer[3 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = false;
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        return addr ? addr : hostRangeBuffer;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    const uint64_t physicalOffset = MemoryConstants::pageSize;
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {physicalOffset};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    ASSERT_NE(nullptr, gfxAllocation);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(hostRangeBuffer) + physicalOffset, gfxAllocation->getGpuAddress());
+    auto bo0 = static_cast<DrmAllocation *>(gfxAllocation)->getBufferObjectToModify(0);
+    ASSERT_NE(nullptr, bo0);
+    EXPECT_EQ(0u, bo0->getPhysicalMemoryOffset());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenFewerPhysicalOffsetsThanHandlesWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenTrailingHandlesUseZeroOffset) {
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    const uint64_t physicalOffset = MemoryConstants::pageSize;
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {physicalOffset};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+    properties.physicalOffsets = physicalOffsets;
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, gfxAllocation);
+    auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+    EXPECT_EQ(physicalOffset, drmAllocation->getBufferObjectToModify(0)->getPhysicalMemoryOffset());
+    EXPECT_EQ(0u, drmAllocation->getBufferObjectToModify(1)->getPhysicalMemoryOffset());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPrimeFdToHandleFailingAndDebugMessagesEnabledWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.PrintDebugMessages.set(true);
+    drm->failOnPrimeFdToHandle = true;
+
+    std::vector<osHandle> handles = {11u};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+
+    ::testing::internal::CaptureStderr();
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    ::testing::internal::GetCapturedStderr();
+    EXPECT_EQ(nullptr, gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenNoVmBindAndSingleHandleWithOffsetWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenOffsetIsFoldedIntoReportedBase) {
+    drm->bindAvailable = false;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    const uint64_t physicalOffset = MemoryConstants::pageSize;
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {physicalOffset};
+    AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
+    properties.physicalOffsets = physicalOffsets;
+
+    auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, gfxAllocation);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenNoVmBindAndNoOffsetWhenCreateHostAllocationFromMultipleSharedHandlesThenAllocationIsCreated) {
+    static uint8_t hostRangeBuffer[3 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = false;
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        return addr ? addr : hostRangeBuffer;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    ASSERT_NE(nullptr, gfxAllocation);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenReuseSharedAllocationWhenCreateHostAllocationFromMultipleSharedHandlesThenAllocationIsCreated) {
+    static uint8_t hostRangeBuffer[3 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        return addr ? addr : hostRangeBuffer;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, true);
+    ASSERT_NE(nullptr, gfxAllocation);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
      givenCallToCreateSharedAllocationWithReuseSharedAllocationThenAllocationsSuccedAndAddressesAreTheSame) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
@@ -5231,6 +5721,59 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
     for (size_t i = 1; i < EngineLimits::maxHandleCount - 1; ++i) {
         EXPECT_TRUE(memoryManager.unreferenceParamsPassed[i].synchronousDestroy);
     }
+}
+
+struct DrmMemoryManagerMultipleSharedHandlesFailureInjectionTest : public MemoryManagementFixture, public ::testing::Test {
+    void SetUp() override {
+        MemoryManagementFixture::setUp();
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
+        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+        rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+        drm = DrmMockCustom::create(rootDeviceEnvironment).release();
+        rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+        rootDeviceEnvironment.memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
+        rootDeviceEnvironment.initGmm();
+        memoryManager = new TestedDrmMemoryManager(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+        drm->outputHandle = 2u;
+        std::vector<MemoryRegion> regionInfo(1);
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        drm->memoryInfo.reset(new MemoryInfo(regionInfo, *drm));
+        drm->memoryInfoQueried = true;
+    }
+
+    void TearDown() override {
+        executionEnvironment.reset();
+        MemoryManagementFixture::tearDown();
+    }
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMockCustom *drm = nullptr;
+    TestedDrmMemoryManager *memoryManager = nullptr;
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+};
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesFailureInjectionTest, givenBufferObjectAllocationFailingWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrIsReturned) {
+    static uint8_t hostRangeBuffer[3 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        return addr ? addr : hostRangeBuffer;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {0u};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    InjectedFunction method = [&](size_t failureIndex) {
+        auto allocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+        if (allocation != nullptr) {
+            memoryManager->freeGraphicsMemory(allocation);
+        }
+    };
+    injectFailures(method);
 }
 
 struct MockIoctlHelperPrelimResourceRegistration : public IoctlHelperPrelim20 {
@@ -8708,6 +9251,39 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMultipleRootDevicesWhe
     }
 
     EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize));
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMmapFailsForOffsetWindowWhenMappingPhysicalHostMemoryThenFalseIsReturnedGracefully) {
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 2 * MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.type = AllocationType::bufferHostMemory;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    uint64_t gpuAddress = 0x100000;
+    size_t offset = MemoryConstants::pageSize;
+    size_t mappingSize = MemoryConstants::pageSize;
+
+    auto physicalAllocation = static_cast<DrmAllocation *>(memoryManager->allocatePhysicalHostMemory(allocData, status));
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFunction = [](void *, size_t, int, int, int, off_t) throw()->void * { return MAP_FAILED; };
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
+    MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+
+    memoryManager->mmapFunction = originalMmap;
     mock->isVmBindAvailableCall.callParent = true;
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }

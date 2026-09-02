@@ -23,7 +23,8 @@ enum class InternalIpcMemoryType : uint32_t {
     hostUnifiedMemory = 1,
     deviceVirtualAddress = 2,
     reservedDeviceMemory = 3,
-    reservedHostMemory = 4
+    reservedHostMemory = 4,
+    ipcRangeTransport = 5
 };
 
 enum class TransferType : uint32_t {

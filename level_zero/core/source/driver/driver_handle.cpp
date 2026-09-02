@@ -204,6 +204,8 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
     NEO::OSInterface *osInterface = devices[0]->getOsInterface();
     if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::drm) {
         additionalExtensions.emplace_back(ZE_CACHE_RESERVATION_EXT_NAME, ZE_CACHE_RESERVATION_EXT_VERSION_1_0);
+        // Range IPC is implemented on drm only; wddm has no working transport yet.
+        additionalExtensions.emplace_back(ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_NAME, ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_VERSION_1_0);
     }
 
     ExtensionInjectorHelper::addAdditionalExtensions(additionalExtensions, devices[0]);
@@ -685,9 +687,9 @@ void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
                                                     physicalOffset);
 }
 
-void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
-    const bool uncachedBias = ((flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) != 0) ||
-                              ((flags & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED) != 0);
+void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, const std::vector<uint64_t> &physicalOffsets) {
+    const bool uncachedBias = (flags & (static_cast<ze_ipc_memory_flags_t>(ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) |
+                                        static_cast<ze_ipc_memory_flags_t>(ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED))) != 0;
     return this->getMemoryManager()->importFdHandles(neoDevice,
                                                      this->getSvmAllocsManager(),
                                                      handles,
@@ -695,7 +697,8 @@ void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_
                                                      pAlloc,
                                                      mappedPeerAllocData,
                                                      compressedMemory,
-                                                     uncachedBias);
+                                                     uncachedBias,
+                                                     physicalOffsets);
 }
 
 bool DriverHandle::isRemoteImageNeeded(Image *image, Device *device) {
@@ -792,7 +795,7 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                             NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
         ze_ipc_memory_flags_t flags = {};
         return this->importFdHandles(peerDevice, flags, handles, basePointer, pAlloc,
-                                     mappedPeerAllocData, compressedMemory);
+                                     mappedPeerAllocData, compressedMemory, {});
     };
     deps.decompressP2P = [device, this](NEO::GraphicsAllocation *alloc) {
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();

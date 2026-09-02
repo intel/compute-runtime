@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/debug_helpers.h"
+
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 
@@ -62,5 +64,9 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
                                                                           void *reservedHandleData,
                                                                           NEO::Device *neoDevice) {
     return {handle, true};
+}
+
+void Context::releaseImportedRangeChunkHandles(const std::vector<std::pair<uint64_t, uint64_t>> &importedChunks) {
+    UNRECOVERABLE_IF(!importedChunks.empty());
 }
 } // namespace L0

@@ -277,6 +277,68 @@ TEST_F(DriverExtensionsTest, whenAskingForExtensionsThenReturnCacheReservationEx
     EXPECT_EQ(it, extensionProperties.end());
 }
 
+TEST_F(DriverExtensionsTest, whenAskingForExtensionsThenIpcMemHandleRangeExtIsReturnedForDrmOnly) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(new MockProductHelper);
+
+    auto queryContainsIpcRange = [&]() {
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, nullptr));
+        std::vector<ze_driver_extension_properties_t> extensionProperties(count);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, extensionProperties.data()));
+        return std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) {
+                   return (strcmp(extension.name, ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_NAME) == 0);
+               }) != extensionProperties.end();
+    };
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+    EXPECT_TRUE(queryContainsIpcRange());
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    EXPECT_FALSE(queryContainsIpcRange());
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset();
+    EXPECT_FALSE(queryContainsIpcRange());
+}
+
+TEST_F(DriverExtensionsTest, whenQueryingExtensionCountOnlyThenIpcRangeExtensionIsGatedByDriverModelType) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(new MockProductHelper);
+
+    uint32_t countWithDrm = 0u;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&countWithDrm, nullptr));
+
+    uint32_t countWithWddm = 0u;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&countWithWddm, nullptr));
+
+    uint32_t countWithoutDriverModel = 0u;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&countWithoutDriverModel, nullptr));
+
+    EXPECT_GE(countWithDrm, countWithoutDriverModel);
+    EXPECT_GE(countWithWddm, countWithoutDriverModel);
+}
+
+TEST_F(DriverExtensionsTest, givenDriverModelNeitherDrmNorWddmWhenAskingForExtensionsThenIpcMemHandleRangeExtIsNotReturned) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(new MockProductHelper);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModel>());
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, nullptr));
+    std::vector<ze_driver_extension_properties_t> extensionProperties(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, extensionProperties.data()));
+
+    auto it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) {
+        return (strcmp(extension.name, ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_NAME) == 0);
+    });
+    EXPECT_EQ(it, extensionProperties.end());
+}
+
 TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertiesThenBindlessImageExtensionIsReturned) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseBindlessMode.set(1);

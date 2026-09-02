@@ -954,8 +954,13 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
         return false;
     }
 
-    [[maybe_unused]] auto retPtr = this->mmapFunction(addrToPtr(baseAddress), mappedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
-    DEBUG_BREAK_IF(retPtr != addrToPtr(baseAddress));
+    auto retPtr = this->mmapFunction(addrToPtr(baseAddress), mappedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
+    if (retPtr != addrToPtr(baseAddress)) {
+        // A partial-BO CPU mmap of a non-zero physical offset is rejected on vmBind (xe requires the mmap
+        // to use the exact GEM_MMAP_OFFSET token). Fail gracefully instead of leaving an invalid mapping;
+        // the caller surfaces this as ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY (the documented rejection).
+        return false;
+    }
 
     int physicalBoHandle = physicalBo->peekHandle();
     auto physicalBoHandleWrapper = tryToGetBoHandleWrapperWithSharedOwnership(physicalBoHandle, physicalAllocation->getRootDeviceIndex());
@@ -1436,6 +1441,37 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     const auto memoryPool = MemoryPool::localMemory;
     const auto cachePolicy = properties.flags.uncacheable ? CachePolicy::uncached : CachePolicy::writeBack;
 
+    // Per-handle physical offsets (range IPC import): the usable window of object j is [offset, boSize).
+    // vm_bind carries offset/length so the mapped remainders pack contiguously. Legacy softpin can only
+    // fold the offset into the reported base (as the single-handle path does), which stays contiguous
+    // for a single object; several offset objects would pull unmapped prefixes in, so that is rejected.
+    const auto &physicalOffsets = properties.physicalOffsets;
+    const bool vmBindAvailable = drm.isVmBindAvailable();
+    const bool legacyFold = !vmBindAvailable;
+    auto offsetForHandle = [&physicalOffsets](uint32_t idx) -> uint64_t {
+        return (idx < physicalOffsets.size()) ? physicalOffsets[idx] : 0u;
+    };
+    const uint64_t firstPhysicalOffset = offsetForHandle(0);
+    bool anyPhysicalOffset = false;
+    for (uint32_t idx = 0; idx < handles.size(); idx++) {
+        anyPhysicalOffset = anyPhysicalOffset || (offsetForHandle(idx) != 0);
+    }
+    if (legacyFold && anyPhysicalOffset && handles.size() > 1) {
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "contiguous multi-object range with a non-zero physical offset requires vm_bind\n");
+        return nullptr;
+    }
+
+    size_t totalBoSize = 0;
+    uint32_t handleIndex = 0;
+    // Only the BufferObject closes the GEM handle it was given, so bailing out mid-loop must release
+    // the BOs built so far - and, separately, any handle not yet handed to one.
+    auto releasePartiallyOpenedChunks = [&]() {
+        lock.unlock();
+        for (auto *createdBo : bos) {
+            unreference(createdBo, createdBo && createdBo->peekIsReusableAllocation() ? false : true);
+        }
+        bos.clear();
+    };
     for (auto handle : handles) {
         PrimeHandle openFd = {0, 0, 0};
         openFd.fileDescriptor = handle;
@@ -1446,8 +1482,11 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
             [[maybe_unused]] int err = errno;
             PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
 
+            releasePartiallyOpenedChunks();
             return nullptr;
         }
+
+        const uint64_t physicalOffset = offsetForHandle(handleIndex);
 
         auto boHandle = static_cast<int>(openFd.handle);
         BufferObject *bo = nullptr;
@@ -1455,22 +1494,39 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
             bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
         }
 
+        size_t mappedSize = 0;
         if (bo == nullptr) {
             areBosSharedObjects = false;
 
             size_t size = SysCalls::lseek(handle, 0, SEEK_END);
             UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
-            totalSize += size;
+            if (physicalOffset >= size) {
+                GemClose close{};
+                close.handle = openFd.handle;
+                ioctlHelper->ioctl(DrmIoctl::gemClose, &close);
+                releasePartiallyOpenedChunks();
+                return nullptr;
+            }
+            mappedSize = size - static_cast<size_t>(physicalOffset);
+            totalSize += mappedSize;
+            totalBoSize += size;
 
             auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, cachePolicy, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
             auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle, properties.rootDeviceIndex} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle, properties.rootDeviceIndex);
 
             bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount);
             i++;
+        } else {
+            mappedSize = bo->peekSize();
         }
         bos.push_back(bo);
-        sizes.push_back(bo->peekSize());
+        sizes.push_back(mappedSize);
+        handleIndex++;
     }
+
+    // Consumer sees the packed windows (totalSize); legacy additionally reserves the folded prefix.
+    const size_t reportedSize = totalSize;
+    size_t reserveSize = legacyFold ? totalBoSize : totalSize;
 
     if (mapPointer) {
         gpuRange = reinterpret_cast<uint64_t>(mapPointer);
@@ -1478,7 +1534,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
         auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::heapExtended) > 0);
         auto heapIndex = prefer57bitAddressing ? HeapIndex::heapExtended : HeapIndex::heapStandard2MB;
-        gpuRange = acquireGpuRange(totalSize, properties.rootDeviceIndex, heapIndex);
+        gpuRange = acquireGpuRange(reserveSize, properties.rootDeviceIndex, heapIndex);
     }
 
     if (reuseSharedAllocation) {
@@ -1486,16 +1542,19 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     }
 
     AllocationData allocationData;
-    properties.size = totalSize;
+    properties.size = reportedSize;
     getAllocationData(allocationData, properties, nullptr, createStorageInfoFromProperties(properties));
+
+    // Legacy fold reports the folded base; vm_bind (or no offset) sits at the reserved base.
+    const uint64_t reportedGpuAddress = legacyFold ? (gpuRange + firstPhysicalOffset) : gpuRange;
 
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex,
                                            handles.size(),
                                            properties.allocationType,
                                            bos,
                                            nullptr,
-                                           gpuRange,
-                                           totalSize,
+                                           reportedGpuAddress,
+                                           reportedSize,
                                            memoryPool);
     drmAllocation->storageInfo = allocationData.storageInfo;
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper();
@@ -1518,9 +1577,22 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         drmAllocation->setGmm(gmm, i);
 
         if (areBosSharedObjects == false) {
+            const uint64_t physicalOffset = offsetForHandle(i);
+            const size_t boSize = bo->peekSize();
             bo->setAddress(gpuRange);
-            gpuRange += bo->peekSize();
-            bo->setUnmapSize(sizes[i]);
+            if (legacyFold) {
+                // Whole object softpinned; offset already folded into the reported base.
+                gpuRange += boSize;
+                bo->setUnmapSize(boSize);
+            } else {
+                // Pack by mapped remainder; the offset (if any) is bound by vm_bind (vmBind.offset/length).
+                gpuRange += sizes[i];
+                bo->setUnmapSize(sizes[i]);
+                if (physicalOffset != 0) {
+                    bo->setPhysicalMemoryOffset(physicalOffset);
+                    bo->setVirtualMappingSize(sizes[i]);
+                }
+            }
             pushSharedBufferObject(bo);
         }
         drmAllocation->getBufferObjectToModify(i) = bo;
@@ -1529,6 +1601,155 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     if (!reuseSharedAllocation) {
         registerSharedBoHandleAllocation(drmAllocation);
     }
+
+    return drmAllocation;
+}
+
+GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles,
+                                                                                    AllocationProperties &properties,
+                                                                                    const std::vector<uint64_t> &physicalOffsets,
+                                                                                    bool reuseSharedAllocation) {
+    if (handles.empty()) {
+        return nullptr;
+    }
+
+    auto &drm = this->getDrm(properties.rootDeviceIndex);
+    // Host USM maps through the i915/xe mmap-offset token, which needs memory-info (booMmap) support.
+    if (drm.getMemoryInfo() == nullptr) {
+        return nullptr;
+    }
+    auto ioctlHelper = drm.getIoctlHelper();
+    const uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
+    const auto memoryPool = MemoryPool::system4KBPages;
+    // Legacy folds the offset into the reported base (see device merge); it stays contiguous only for a single object.
+    const bool legacyFold = !drm.isVmBindAvailable();
+
+    std::unique_lock<std::mutex> lock(mtx);
+
+    struct HostChunk {
+        size_t size;
+        size_t mappedSize;
+        uint64_t offset;
+    };
+    // Sizing needs only the dma-buf fds; PRIME_FD_TO_HANDLE is deferred to the BO loop below so that
+    // opening a GEM handle and giving it an owner is one step, and no reject here can leak one.
+    std::vector<HostChunk> chunks;
+    chunks.reserve(handles.size());
+    size_t totalMappedSize = 0;
+    size_t totalBoSize = 0;
+    bool anyOffset = false;
+    for (uint32_t idx = 0; idx < handles.size(); idx++) {
+        size_t size = SysCalls::lseek(handles[idx], 0, SEEK_END);
+        if (size == std::numeric_limits<size_t>::max()) {
+            return nullptr;
+        }
+        const uint64_t offset = (idx < physicalOffsets.size()) ? physicalOffsets[idx] : 0u;
+        if (offset >= size) {
+            return nullptr;
+        }
+        const size_t mappedSize = size - static_cast<size_t>(offset);
+        totalMappedSize += mappedSize;
+        totalBoSize += size;
+        anyOffset = anyOffset || (offset != 0);
+        chunks.push_back({size, mappedSize, offset});
+    }
+
+    if (legacyFold && anyOffset && handles.size() > 1) {
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "contiguous multi-object host range with a non-zero physical offset requires vm_bind\n");
+        return nullptr;
+    }
+
+    const size_t reportedSize = totalMappedSize;
+    const size_t reserveSize = legacyFold ? totalBoSize : totalMappedSize;
+
+    // Reserve one contiguous CPU VA for the whole range; host USM keeps GPU VA == CPU VA.
+    void *cpuBase = this->mmapFunction(nullptr, reserveSize, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (cpuBase == MAP_FAILED) {
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
+        return nullptr;
+    }
+    const uint64_t reportedGpuAddress = legacyFold ? (reinterpret_cast<uint64_t>(cpuBase) + chunks[0].offset) : reinterpret_cast<uint64_t>(cpuBase);
+
+    BufferObjects bos;
+    uint64_t runningAddress = reinterpret_cast<uint64_t>(cpuBase);
+    bool failed = false;
+    // Owns its GEM handle but was never pushed, so it is released with the pushed ones after unlocking.
+    BufferObject *pendingBo = nullptr;
+    for (uint32_t idx = 0; idx < chunks.size(); idx++) {
+        auto &chunk = chunks[idx];
+
+        PrimeHandle openFd{};
+        openFd.fileDescriptor = handles[idx];
+        if (ioctlHelper->ioctl(DrmIoctl::primeFdToHandle, &openFd) != 0) {
+            [[maybe_unused]] int err = errno;
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with errno=%d(%s)\n", err, strerror(err));
+            failed = true;
+            break;
+        }
+        const int boHandle = static_cast<int>(openFd.handle);
+
+        auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
+        auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle, properties.rootDeviceIndex} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle, properties.rootDeviceIndex);
+        auto bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), chunk.size, maxOsContextCount);
+        if (bo == nullptr) {
+            GemClose close{};
+            close.handle = openFd.handle;
+            ioctlHelper->ioctl(DrmIoctl::gemClose, &close);
+            failed = true;
+            break;
+        }
+        bo->setAddress(runningAddress);
+
+        uint64_t mmapOffset = 0;
+        if (!ioctlHelper->retrieveMmapOffsetForBufferObject(*bo, mmapOffsetWb, mmapOffset)) {
+            pendingBo = bo;
+            failed = true;
+            break;
+        }
+
+        // vm_bind maps only the window (mmap token carries the offset); legacy maps the whole object
+        // and relies on the folded reported base.
+        const size_t mapSize = legacyFold ? chunk.size : chunk.mappedSize;
+        const off_t mapFileOffset = legacyFold ? static_cast<off_t>(mmapOffset) : static_cast<off_t>(mmapOffset + chunk.offset);
+        auto retPtr = this->mmapFunction(addrToPtr(runningAddress), mapSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), mapFileOffset);
+        if (retPtr != addrToPtr(runningAddress)) {
+            pendingBo = bo;
+            failed = true;
+            break;
+        }
+        bo->setUnmapSize(mapSize);
+        if (!legacyFold && chunk.offset != 0) {
+            bo->setPhysicalMemoryOffset(chunk.offset);
+            bo->setVirtualMappingSize(chunk.mappedSize);
+        }
+        pushSharedBufferObject(bo);
+        bos.push_back(bo);
+        runningAddress += mapSize;
+    }
+
+    if (failed) {
+        // unreference() re-locks the non-recursive mtx for the already-pushed reusable BOs; release it first.
+        lock.unlock();
+        unreference(pendingBo, true);
+        for (auto *bo : bos) {
+            unreference(bo, true);
+        }
+        this->munmapFunction(cpuBase, reserveSize);
+        return nullptr;
+    }
+
+    auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, bos.size(), AllocationType::bufferHostMemory, bos, addrToPtr(reportedGpuAddress), reportedGpuAddress, reportedSize, memoryPool);
+    drmAllocation->setCpuPtrAndGpuAddress(addrToPtr(reportedGpuAddress), reportedGpuAddress);
+    drmAllocation->setMmapPtr(cpuBase);
+    drmAllocation->setMmapSize(reserveSize);
+    drmAllocation->setReservedAddressRange(cpuBase, reserveSize);
+    drmAllocation->setUsmHostAllocation(true);
+    drmAllocation->setShareableHostMemory(true);
+
+    if (!reuseSharedAllocation) {
+        registerSharedBoHandleAllocation(drmAllocation);
+    }
+    makeAllocationResidentIfNeeded(drmAllocation);
 
     return drmAllocation;
 }
@@ -1806,7 +2027,8 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         return;
     }
     DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(gfxAllocation);
-    if (Sharing::nonSharedResource == gfxAllocation->peekSharedHandle()) {
+    // Imported allocations were never registered, so the accounting decrement would underflow.
+    if (!isImported && !gfxAllocation->getIsImported() && Sharing::nonSharedResource == gfxAllocation->peekSharedHandle()) {
         this->unregisterAllocation(gfxAllocation);
     }
     auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();

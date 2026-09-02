@@ -88,6 +88,8 @@ struct MemoryMappedRange {
     // Physical memory handle (BO) that backs this mapping. Tracked so that a given
     // physical allocation can be guarded against being mapped to more than one VA.
     void *physicalHandle = nullptr;
+    // Offset passed to zeVirtualMemMap; carried per chunk by range IPC export.
+    uint64_t mappedPhysicalOffset = 0;
 };
 
 struct VirtualMemoryReservation {
@@ -175,6 +177,8 @@ class MemoryManager {
     virtual bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) { return true; }
     virtual bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) { return false; }
     virtual GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) = 0;
+    // Host reserved-memory range import: host USM uses CPU mmap and cannot go through the device merge above. Unsupported on non-DRM back-ends.
+    virtual GraphicsAllocation *createHostAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, const std::vector<uint64_t> &physicalOffsets, bool reuseSharedAllocation) { return nullptr; }
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) = 0;
     virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {};
@@ -199,7 +203,8 @@ class MemoryManager {
                                            GraphicsAllocation **pAlloc,
                                            SvmAllocationData &mappedPeerAllocData,
                                            bool compressedMemory,
-                                           bool uncachedBias);
+                                           bool uncachedBias,
+                                           const std::vector<uint64_t> &physicalOffsets);
 
     bool isRemoteResourceNeeded(GraphicsAllocation *alloc, SvmAllocationData *allocData, Device *device);
 

@@ -905,7 +905,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandle *driverHandle = context->getDriverHandle();
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    ipcPtr = driverHandle->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal, false);
+    ipcPtr = driverHandle->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal, false, {});
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 
@@ -956,7 +956,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandle *driverHandle = context->getDriverHandle();
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    ipcPtr = driverHandle->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal, false);
+    ipcPtr = driverHandle->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal, false, {});
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 

@@ -143,6 +143,8 @@ ssize_t (*sysCallsSendmsg)(int sockfd, const struct msghdr *msg, int flags) = nu
 ssize_t (*sysCallsRecvmsg)(int sockfd, struct msghdr *msg, int flags) = nullptr;
 int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval, socklen_t optlen) = nullptr;
 int (*sysCallsDup)(int oldfd) = nullptr;
+void *(*sysCallsMmap)(void *addr, size_t size, int prot, int flags, int fd, off_t off) = nullptr;
+int (*sysCallsMunmap)(void *addr, size_t size) = nullptr;
 int (*sysCallsGetpid)() = nullptr;
 int (*sysCallsGetrlimit)(int resource, struct rlimit *rlim) = nullptr;
 FILE *(*sysCallsFdopen)(int fd, const char *mode) = nullptr;
@@ -390,6 +392,9 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
 
 void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noexcept {
     mmapFuncCalled++;
+    if (sysCallsMmap != nullptr) {
+        return sysCallsMmap(addr, size, prot, flags, fd, off);
+    }
     if (failMmap) {
         return reinterpret_cast<void *>(-1);
     }
@@ -417,6 +422,9 @@ void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noex
 
 int munmap(void *addr, size_t size) noexcept {
     munmapFuncCalled++;
+    if (sysCallsMunmap != nullptr) {
+        return sysCallsMunmap(addr, size);
+    }
     if (failMunmap) {
         return -1;
     }

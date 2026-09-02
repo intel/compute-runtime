@@ -23,9 +23,13 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
+#include <atomic>
 #include <map>
+#include <memory>
 #include <mutex>
+#include <string>
 #include <utility>
+#include <vector>
 
 struct _ze_context_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_CONTEXT> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_context_handle_t>);
@@ -80,6 +84,24 @@ struct IpcOpaqueMemoryData {
 };
 #pragma pack()
 static_assert(sizeof(IpcOpaqueMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
+constexpr uint64_t ipcRangeHandleMagic = 0x4e454f5250434752ull;
+constexpr uint32_t ipcRangeTransportVersion = 2u;
+
+#pragma pack(1)
+// Header written at the start of the range transport host buffer, followed by numHandles
+// per-chunk ze_ipc_mem_handle_t entries. The transport buffer is itself exported/imported
+// through the normal single-allocation opaque IPC path.
+struct IpcRangeTransportHeader {
+    uint64_t magic = 0;
+    uint32_t version = 0;
+    uint32_t numHandles = 0;
+    // Byte offset of the exporter's ptr within the first shared chunk; the importer adds it to the merged base.
+    uint64_t leadingOffset = 0;
+    // Selects the importer's merge path (host vs device).
+    uint8_t rangeIsHost = 0;
+};
+#pragma pack()
 
 constexpr uint64_t ipcOpaqueHashRatio = 0x9e3779b97f4a7c15ull;
 
@@ -214,6 +236,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
                                                   const ze_ipc_mem_handle_t &handle,
                                                   ze_ipc_memory_flags_t flags,
                                                   void **ptr);
+
     MOCKABLE_VIRTUAL ze_result_t getMemAllocProperties(const void *ptr,
                                                        ze_memory_allocation_properties_t *pMemAllocProperties,
                                                        ze_device_handle_t *phDevice);
@@ -367,11 +390,16 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
         bool opaqueHandlesAttempted = false;
     };
 
-    OpaqueHandleImportResult importOpaqueHandleWithFallback(uint64_t handle,
-                                                            unsigned int processId,
-                                                            uint64_t cacheID,
-                                                            void *reservedHandleData,
-                                                            NEO::Device *neoDevice);
+    MOCKABLE_VIRTUAL OpaqueHandleImportResult importOpaqueHandleWithFallback(uint64_t handle,
+                                                                             unsigned int processId,
+                                                                             uint64_t cacheID,
+                                                                             void *reservedHandleData,
+                                                                             NEO::Device *neoDevice);
+    // Releases per-chunk handles already imported by a range open that fails partway through, before the
+    // merged allocation (which would otherwise own them) is created. Each entry is {importHandle, cacheID}.
+    // OS-specific: Linux closes the imported fd and drops its import-cache entry; Windows only drops the
+    // cache entry (importOpaqueHandleWithFallback returns the peer handle unchanged, so there is no fd to close).
+    MOCKABLE_VIRTUAL void releaseImportedRangeChunkHandles(const std::vector<std::pair<uint64_t, uint64_t>> &importedChunks);
     void *importHandleFromReservedHandleData(void *reservedHandleData,
                                              uint64_t cacheID,
                                              NEO::Device *neoDevice,
@@ -382,6 +410,8 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
                                              uint64_t &importHandle,
                                              NEO::GraphicsAllocation *&alloc,
                                              uint64_t physicalOffset = 0);
+    // Max range-IPC chunk handles for this OS ; 0 means unsupported.
+    MOCKABLE_VIRTUAL uint32_t getMaxIpcRangeHandleCount();
 
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, void *pNext, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
@@ -397,6 +427,27 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     size_t getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
     bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, NEO::FreePolicyType policy);
     void invokeMemFreeCallbacks(NEO::SvmAllocationData &svmData);
+
+    ze_result_t getIpcRangeHandle(const void *ptr, const ze_ipc_phys_mem_handle_range_ext_desc_t *desc, ze_ipc_mem_handle_t *pIpcHandle);
+    ze_result_t encodeIpcHandleForRangeAllocation(NEO::GraphicsAllocation *alloc, uint64_t ptrAddress, uint8_t ipcType, uint64_t physicalOffset, void *reservedHandleData, ze_ipc_mem_handle_t &ipcHandle);
+    ze_result_t openIpcRangeHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, ze_ipc_memory_flags_t flags, void **pptr);
+    ze_result_t putIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle);
+    bool releaseIpcRangeTransportForPtr(const void *ptr);
+    bool isIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle) const;
+    uint64_t getIpcHandleKey(const ze_ipc_mem_handle_t &ipcHandle) const;
+    void closeIpcHandleTracking(uint64_t handle);
+    void releaseIpcRangeChunkHandles(const std::vector<uint64_t> &handleKeys);
+    void releaseIpcRangeTransport(const void *transportPtr);
+
+    struct IpcRangeTransportEntry {
+        const void *baseAddress = nullptr;
+        const void *transportPtr = nullptr;
+        uint64_t transportHandleKey = 0;
+        std::vector<uint64_t> handleKeys;
+    };
+    std::vector<IpcRangeTransportEntry> ipcRangeTransports;
+    std::mutex ipcRangeTransportMutex;
+    std::atomic<bool> ipcRangeTransportsPresent{false};
 
     std::map<uint32_t, ze_device_handle_t> devices;
     std::vector<ze_device_handle_t> deviceHandles;

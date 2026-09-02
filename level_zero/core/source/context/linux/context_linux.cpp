@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -28,6 +29,15 @@
 namespace L0 {
 
 constexpr rlim_t maxOpaqueHandlePreallocation = 4096;
+constexpr uint32_t defaultMaxIpcRangeHandleCount = 1024u;
+
+uint32_t Context::getMaxIpcRangeHandleCount() {
+    struct rlimit rlim;
+    if (NEO::SysCalls::getrlimit(RLIMIT_NOFILE, &rlim)) {
+        return defaultMaxIpcRangeHandleCount;
+    }
+    return static_cast<uint32_t>(std::min<rlim_t>(rlim.rlim_cur, std::numeric_limits<uint32_t>::max()));
+}
 
 uint8_t Context::isDrmOpaqueHandleSupported(IpcHandleType *handleType) {
     *handleType = IpcHandleType::fdHandle;
@@ -138,6 +148,13 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
     }
 
     return {importHandle, true, opaqueHandlesAttempted};
+}
+
+void Context::releaseImportedRangeChunkHandles(const std::vector<std::pair<uint64_t, uint64_t>> &importedChunks) {
+    for (const auto &chunk : importedChunks) {
+        NEO::SysCalls::close(static_cast<int>(chunk.first));
+        this->driverHandle->clearCachedImportHandle(chunk.second);
+    }
 }
 
 void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) {

@@ -69,6 +69,7 @@ set(TEST_TARGETS
     zello_ipc_copy_dma_buf
     zello_ipc_copy_dma_buf_p2p
     zello_ipc_reserved_physical_offset
+    zello_ipc_range
     zello_memFree_callback
     zello_multidev
     zello_printf
@@ -101,6 +102,9 @@ foreach(TEST_NAME ${TEST_TARGETS})
       continue()
     endif()
     if(${TEST_NAME} STREQUAL "zello_ipc_reserved_physical_offset")
+      continue()
+    endif()
+    if(${TEST_NAME} STREQUAL "zello_ipc_range")
       continue()
     endif()
     if(${TEST_NAME} STREQUAL "zello_export_import_memory")
