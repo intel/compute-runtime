@@ -9,8 +9,6 @@
 
 #include "shared/source/helpers/string.h"
 
-#include "level_zero/zes_intel_gpu_sysman.h"
-
 #include <map>
 #include <string>
 
@@ -36,8 +34,8 @@ ze_result_t MemoryImp::memoryGetProperties(zes_mem_properties_t *pProperties) {
 
     while (pNext) {
         auto pExtProps = reinterpret_cast<zes_base_properties_t *>(pNext);
-        if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP) {
-            auto pVendorIdProps = reinterpret_cast<zes_intel_memory_vendor_id_exp_properties_t *>(pExtProps);
+        if (pExtProps->stype == ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES) {
+            auto pVendorIdProps = reinterpret_cast<zes_memory_vendor_info_ext_properties_t *>(pExtProps);
             // A vendor ID of 0 indicates that the memory vendor ID could not be determined
             if (pOsMemory->getVendorId(&pVendorIdProps->vendorId) != ZE_RESULT_SUCCESS) {
                 pVendorIdProps->vendorId = 0;
@@ -48,7 +46,7 @@ ze_result_t MemoryImp::memoryGetProperties(zes_mem_properties_t *pProperties) {
             auto vendorNameIterator = memoryVendorIdToNameMap.find(pVendorIdProps->vendorId);
             if (vendorNameIterator != memoryVendorIdToNameMap.end()) {
                 const std::string &vendorName = vendorNameIterator->second;
-                strncpy_s(pVendorIdProps->vendorName, ZES_INTEL_MEMORY_VENDOR_NAME_SIZE, vendorName.c_str(), vendorName.size());
+                strncpy_s(pVendorIdProps->vendorName, ZES_MEMORY_VENDOR_NAME_EXT_SIZE, vendorName.c_str(), vendorName.size());
                 pVendorIdProps->length = static_cast<uint16_t>(vendorName.length());
             }
         }

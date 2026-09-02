@@ -743,7 +743,7 @@ void SysmanProductHelperHw<gfxProduct>::getSupportedSensors(std::map<zes_temp_se
     supportedSensorTypeMap[ZES_TEMP_SENSORS_MEMORY] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = maxVrTemperatureSensorCount;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU_BOARD] = maxGpuBoardTemperatureSensorCount;
-    supportedSensorTypeMap[ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP] = 1;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_COMPOSITE] = 1;
 }
 
 static ze_result_t readVoltageRegulatorTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
@@ -1169,7 +1169,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get physical memory size from KMD interface, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
     }
     pProperties->location = ZES_MEM_LOC_DEVICE;
-    pProperties->type = static_cast<zes_mem_type_t>(ZES_INTEL_MEM_TYPE_LPDDR5X);
+    pProperties->type = ZES_MEM_TYPE_LPDDR5X;
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subDeviceId;
     pProperties->numChannels = memoryMsuCount;

@@ -236,15 +236,15 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesIntelD
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesIntelDeviceGetHealthExpThenUnsupportedFeatureIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDeviceGetHealthStatusExtThenUnsupportedFeatureIsReturned) {
     init(true);
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetHealthExp(pSysmanDevice->toHandle(), &health));
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetHealthStatusExt(pSysmanDevice->toHandle(), &health));
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesIntelDeviceSetHealthExpThenUnsupportedFeatureIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDeviceSetHealthStatusExtThenUnsupportedFeatureIsReturned) {
     init(true);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceSetHealthExp(pSysmanDevice->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceSetHealthStatusExt(pSysmanDevice->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_OK));
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidExtensionStructureWhenCallingZesDeviceGetPropertiesThenProperValuesAndSuccessIsReturned) {

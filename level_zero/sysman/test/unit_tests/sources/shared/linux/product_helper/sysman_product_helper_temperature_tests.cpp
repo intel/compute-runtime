@@ -1405,7 +1405,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
         } else if (properties.type == ZES_TEMP_SENSORS_GPU_BOARD) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
             gpuBoardTemperatures.push_back(temperature);
-        } else if (properties.type == ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP) {
+        } else if (properties.type == ZES_TEMP_SENSORS_COMPOSITE) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
             EXPECT_EQ(temperature, static_cast<double>(compositeTemperature));
         }
@@ -2167,7 +2167,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     std::map<zes_temp_sensors_t, uint32_t> supportedSensorTypeMap;
     pSysmanProductHelper->getSupportedSensors(supportedSensorTypeMap);
-    EXPECT_NE(supportedSensorTypeMap.find(ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP), supportedSensorTypeMap.end());
+    EXPECT_NE(supportedSensorTypeMap.find(ZES_TEMP_SENSORS_COMPOSITE), supportedSensorTypeMap.end());
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingCompositeTemperatureThenFailureIsReturned, IsCRI) {
@@ -2377,7 +2377,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
         zes_temp_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
         double temperature = 0;
-        if (properties.type == ZES_INTEL_TEMP_SENSORS_COMPOSITE_EXP) {
+        if (properties.type == ZES_TEMP_SENSORS_COMPOSITE) {
             ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
             EXPECT_EQ(temperature, static_cast<double>(compositeTemperature));
             compositeCount++;

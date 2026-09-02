@@ -1293,6 +1293,22 @@ ze_result_t ZE_APICALL zesDeviceResetExt(
         [&]() { return L0::Sysman::SysmanDevice::deviceResetExt(hDevice, pProperties); });
 }
 
+ze_result_t ZE_APICALL zesDeviceGetHealthStatusExt(
+    zes_device_handle_t hDevice,
+    zes_device_health_status_ext_t *pHealth) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDevice::getDeviceHealthStatus(hDevice, pHealth); });
+}
+
+ze_result_t ZE_APICALL zesDeviceSetHealthStatusExt(
+    zes_device_handle_t hDevice,
+    zes_device_health_status_ext_t health) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDevice::setDeviceHealthStatus(hDevice, health); });
+}
+
 ze_result_t ZE_APICALL zesEngineGetActivityExt(
     zes_engine_handle_t hEngine,
     uint32_t *pCount,
@@ -2673,6 +2689,22 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceResetExt(
     return L0::zesDeviceResetExt(
         hDevice,
         pProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceGetHealthStatusExt(
+    zes_device_handle_t hDevice,
+    zes_device_health_status_ext_t *pHealth) {
+    return L0::zesDeviceGetHealthStatusExt(
+        hDevice,
+        pHealth);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceSetHealthStatusExt(
+    zes_device_handle_t hDevice,
+    zes_device_health_status_ext_t health) {
+    return L0::zesDeviceSetHealthStatusExt(
+        hDevice,
+        health);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesEngineGetActivityExt(

@@ -387,20 +387,26 @@ ze_result_t SysmanDevice::memoryGetPageOfflineStateExp(zes_device_handle_t hDevi
     return pSysmanDevice->memoryGetPageOfflineStateExp(pageStatus, pCount, pPageOfflineInfo);
 }
 
-ze_result_t SysmanDevice::getDeviceHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t *pHealth) {
+ze_result_t SysmanDevice::getDeviceHealthStatus(zes_device_handle_t hDevice, zes_device_health_status_ext_t *pHealth) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    return pSysmanDevice->getDeviceHealthExp(pHealth);
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
+    return pSysmanDevice->getDeviceHealthStatus(pHealth);
 }
 
-ze_result_t SysmanDevice::setDeviceHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) {
+ze_result_t SysmanDevice::setDeviceHealthStatus(zes_device_handle_t hDevice, zes_device_health_status_ext_t health) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    return pSysmanDevice->setDeviceHealthExp(health, pReason, authTokenLength, pAuthToken);
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
+    return pSysmanDevice->setDeviceHealthStatus(health);
 }
 
 } // namespace Sysman

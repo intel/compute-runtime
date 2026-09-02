@@ -466,6 +466,8 @@ DriverDispatch::DriverDispatch() {
     this->sysmanDevice.pfnEnumOverclockDomains = L0::zesDeviceEnumOverclockDomains;
     this->sysmanDevice.pfnResetExt = L0::zesDeviceResetExt;
     this->sysmanDevice.pfnPciLinkSpeedUpdateExt = L0::zesDevicePciLinkSpeedUpdateExt;
+    this->sysmanDevice.pfnGetHealthStatusExt = L0::zesDeviceGetHealthStatusExt;
+    this->sysmanDevice.pfnSetHealthStatusExt = L0::zesDeviceSetHealthStatusExt;
     this->sysmanDeviceExp.pfnGetSubDevicePropertiesExp = L0::zesDeviceGetSubDevicePropertiesExp;
     this->sysmanDeviceExp.pfnEnumActiveVFExp = L0::zesDeviceEnumActiveVFExp;
     this->sysmanDeviceExp.pfnEnumEnabledVFExp = L0::zesDeviceEnumEnabledVFExp;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,30 @@ TEST(LoaderTest,
 
     ze_result_t result = zesGetDeviceProcAddrTable(version, &pDdiTable);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST(LoaderTest,
+     whenCallingzesGetDeviceProcAddrTableForVersion1_18ThenHealthStatusEntriesArePopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_18;
+    zes_device_dditable_t pDdiTable = {};
+
+    ze_result_t result = zesGetDeviceProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnGetHealthStatusExt);
+    EXPECT_NE(nullptr, pDdiTable.pfnSetHealthStatusExt);
+}
+
+TEST(LoaderTest,
+     whenCallingzesGetDeviceProcAddrTableForVersionOlderThan1_18ThenHealthStatusEntriesAreNotPopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_17;
+    zes_device_dditable_t pDdiTable = {};
+
+    ze_result_t result = zesGetDeviceProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(nullptr, pDdiTable.pfnGetHealthStatusExt);
+    EXPECT_EQ(nullptr, pDdiTable.pfnSetHealthStatusExt);
 }
 
 TEST(LoaderTest,

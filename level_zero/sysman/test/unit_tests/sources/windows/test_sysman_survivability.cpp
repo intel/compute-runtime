@@ -45,6 +45,8 @@ TEST_F(SysmanDeviceFixture, GivenSysmanDeviceHandleWhenCallingSysmanDeviceFuncti
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::fabricPortGetMultiPortThroughput(pSysmanDevice, count, nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::deviceEnumEnabledVF(pSysmanDevice, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::memoryGetPageOfflineStateExp(pSysmanDevice, zes_intel_mem_page_status_exp_t(1), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::getDeviceHealthStatus(pSysmanDevice, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::setDeviceHealthStatus(pSysmanDevice, ZES_DEVICE_HEALTH_STATUS_EXT_OK));
 
     pSysmanDevice->isDeviceInSurvivabilityMode = false;
 }

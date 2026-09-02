@@ -878,7 +878,7 @@ ze_result_t LinuxGlobalOperationsImp::getMaxMemoryOfflinePages(uint32_t *pMaxOff
     return pSysmanProductHelper->getMaxMemoryOfflinePages(pSysfsAccess, pMaxOfflinePages);
 }
 
-ze_result_t LinuxGlobalOperationsImp::getDeviceHealthExp(zes_intel_device_health_status_exp_t *pHealth) {
+ze_result_t LinuxGlobalOperationsImp::getDeviceHealthStatus(zes_device_health_status_ext_t *pHealth) {
     std::string healthStr;
     ze_result_t result = pSysfsAccess->read(gpuHealthSysfsNode, healthStr);
     if (result != ZE_RESULT_SUCCESS) {
@@ -886,36 +886,32 @@ ze_result_t LinuxGlobalOperationsImp::getDeviceHealthExp(zes_intel_device_health
     }
 
     if (healthStr == "ok") {
-        *pHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
+        *pHealth = ZES_DEVICE_HEALTH_STATUS_EXT_OK;
     } else if (healthStr == "warning") {
-        *pHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING;
+        *pHealth = ZES_DEVICE_HEALTH_STATUS_EXT_WARNING;
     } else if (healthStr == "critical") {
-        *pHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL;
+        *pHealth = ZES_DEVICE_HEALTH_STATUS_EXT_CRITICAL;
     } else if (healthStr == "failed") {
-        *pHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED;
+        *pHealth = ZES_DEVICE_HEALTH_STATUS_EXT_FAILED;
     } else {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxGlobalOperationsImp::setDeviceHealthExp(zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) {
-    constexpr size_t maxReasonLength = 256;
-    if (pReason != nullptr && std::strlen(pReason) > maxReasonLength) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
+ze_result_t LinuxGlobalOperationsImp::setDeviceHealthStatus(zes_device_health_status_ext_t health) {
     std::string_view healthStr;
     switch (health) {
-    case ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK:
+    case ZES_DEVICE_HEALTH_STATUS_EXT_OK:
         healthStr = "ok";
         break;
-    case ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING:
+    case ZES_DEVICE_HEALTH_STATUS_EXT_WARNING:
         healthStr = "warning";
         break;
-    case ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL:
+    case ZES_DEVICE_HEALTH_STATUS_EXT_CRITICAL:
         healthStr = "critical";
         break;
-    case ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED:
+    case ZES_DEVICE_HEALTH_STATUS_EXT_FAILED:
         healthStr = "failed";
         break;
     default:

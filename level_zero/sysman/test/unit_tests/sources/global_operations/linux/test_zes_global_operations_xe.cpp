@@ -335,96 +335,95 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenSysfsReadFailsWhenCallingIsDeviceIn
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsOkWhenCallingZesIntelDeviceGetHealthExpThenOkStatusIsReturned) {
+       GivenSysfsReturnsOkWhenCallingZesDeviceGetHealthStatusExtThenOkStatusIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "ok";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
-    EXPECT_EQ(ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, health);
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZES_DEVICE_HEALTH_STATUS_EXT_OK, health);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsWarningWhenCallingZesIntelDeviceGetHealthExpThenWarningStatusIsReturned) {
+       GivenSysfsReturnsWarningWhenCallingZesDeviceGetHealthStatusExtThenWarningStatusIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "warning";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
-    EXPECT_EQ(ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING, health);
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZES_DEVICE_HEALTH_STATUS_EXT_WARNING, health);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsCriticalWhenCallingZesIntelDeviceGetHealthExpThenCriticalStatusIsReturned) {
+       GivenSysfsReturnsCriticalWhenCallingZesDeviceGetHealthStatusExtThenCriticalStatusIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "critical";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
-    EXPECT_EQ(ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL, health);
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZES_DEVICE_HEALTH_STATUS_EXT_CRITICAL, health);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsFailedWhenCallingZesIntelDeviceGetHealthExpThenFailedStatusIsReturned) {
+       GivenSysfsReturnsFailedWhenCallingZesDeviceGetHealthStatusExtThenFailedStatusIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "failed";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
-    EXPECT_EQ(ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED, health);
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZES_DEVICE_HEALTH_STATUS_EXT_FAILED, health);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReadFailsWhenCallingZesIntelDeviceGetHealthExpThenErrorIsReturned) {
+       GivenSysfsReadFailsWhenCallingZesDeviceGetHealthStatusExtThenErrorIsReturned) {
     pSysfsAccess->mockReadError = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsUnknownStringWhenCallingZesIntelDeviceGetHealthExpThenUnknownErrorIsReturned) {
+       GivenSysfsReturnsUnknownStringWhenCallingZesDeviceGetHealthStatusExtThenUnknownErrorIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "unknown_value";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenOkHealthStatusWhenCallingZesIntelDeviceSetHealthExpThenOkIsWrittenToSysfs) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, nullptr, 0, nullptr));
+       GivenOkHealthStatusWhenCallingZesDeviceSetHealthStatusExtThenOkIsWrittenToSysfs) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_OK));
     EXPECT_EQ("ok", pSysfsAccess->mockGpuHealthWrittenVal);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenWarningHealthStatusWhenCallingZesIntelDeviceSetHealthExpThenWarningIsWrittenToSysfs) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING, nullptr, 0, nullptr));
+       GivenWarningHealthStatusWhenCallingZesDeviceSetHealthStatusExtThenWarningIsWrittenToSysfs) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_WARNING));
     EXPECT_EQ("warning", pSysfsAccess->mockGpuHealthWrittenVal);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenCriticalHealthStatusWhenCallingZesIntelDeviceSetHealthExpThenCriticalIsWrittenToSysfs) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL, nullptr, 0, nullptr));
+       GivenCriticalHealthStatusWhenCallingZesDeviceSetHealthStatusExtThenCriticalIsWrittenToSysfs) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_CRITICAL));
     EXPECT_EQ("critical", pSysfsAccess->mockGpuHealthWrittenVal);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenFailedHealthStatusWhenCallingZesIntelDeviceSetHealthExpThenFailedIsWrittenToSysfs) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED, nullptr, 0, nullptr));
+       GivenFailedHealthStatusWhenCallingZesDeviceSetHealthStatusExtThenFailedIsWrittenToSysfs) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_FAILED));
     EXPECT_EQ("failed", pSysfsAccess->mockGpuHealthWrittenVal);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenInvalidHealthEnumWhenCallingZesIntelDeviceSetHealthExpThenInvalidArgumentIsReturned) {
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelDeviceSetHealthExp(device->toHandle(), static_cast<zes_intel_device_health_status_exp_t>(0xFF), nullptr, 0, nullptr));
+       GivenInvalidHealthEnumWhenCallingZesDeviceSetHealthStatusExtThenInvalidArgumentIsReturned) {
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesDeviceSetHealthStatusExt(device->toHandle(), static_cast<zes_device_health_status_ext_t>(0xFF)));
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsWriteFailsWhenCallingZesIntelDeviceSetHealthExpThenErrorIsPropagated) {
+       GivenSysfsWriteFailsWhenCallingZesDeviceSetHealthStatusExtThenErrorIsPropagated) {
     pSysfsAccess->mockWriteError = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_OK));
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenReasonStringExceeds256CharsWhenCallingZesIntelDeviceSetHealthExpThenInvalidArgumentIsReturned) {
-    std::string longReason(257, 'x');
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, longReason.c_str(), 0, nullptr));
-}
+       GivenDeviceInSurvivabilityModeWhenCallingHealthStatusExtApisThenSurvivabilityModeDetectedErrorIsReturned) {
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
 
-TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenValidReasonStringWhenCallingZesIntelDeviceSetHealthExpThenSuccessIsReturned) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, "scheduled maintenance", 0, nullptr));
-    EXPECT_EQ("ok", pSysfsAccess->mockGpuHealthWrittenVal);
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_OK));
+
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
 }
 
 } // namespace ult

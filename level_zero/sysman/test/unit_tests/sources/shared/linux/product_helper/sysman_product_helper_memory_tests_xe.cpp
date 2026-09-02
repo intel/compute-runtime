@@ -806,7 +806,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm, pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
-    EXPECT_EQ(properties.type, static_cast<zes_mem_type_t>(ZES_INTEL_MEM_TYPE_LPDDR5X));
+    EXPECT_EQ(properties.type, ZES_MEM_TYPE_LPDDR5X);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, subDeviceId);
     EXPECT_EQ(properties.numChannels, expectedNumChannels);
@@ -852,7 +852,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenMemoryVendorIdExtensionWhenCalli
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
-        zes_intel_memory_vendor_id_exp_properties_t vendorIdProperties = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP};
+        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
         properties.pNext = &vendorIdProperties;
 
         EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
@@ -872,7 +872,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenMemoryVendorIdExtensionAndNoTele
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
-        zes_intel_memory_vendor_id_exp_properties_t vendorIdProperties = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP};
+        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
         vendorIdProperties.vendorId = mockMemVendorId;
         properties.pNext = &vendorIdProperties;
 
@@ -904,7 +904,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenChainedExtensionsWhenCallingZesM
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
-        zes_intel_memory_vendor_id_exp_properties_t vendorIdProperties = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_VENDOR_ID_PROPERTIES_EXP};
+        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
         zes_base_properties_t unsupportedProperties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
         unsupportedProperties.pNext = &vendorIdProperties;
         properties.pNext = &unsupportedProperties;
