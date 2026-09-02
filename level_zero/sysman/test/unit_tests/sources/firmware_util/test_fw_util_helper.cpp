@@ -100,6 +100,23 @@ static int mockIgscDeviceGetOemSerialNumberFailure(struct igsc_device_handle *ha
     return IGSC_ERROR_DEVICE_NOT_FOUND;
 }
 
+static int mockIgscDeviceGetOemSerialNumberPermissionDenied(struct igsc_device_handle *handle,
+                                                            struct igsc_oem_serial_number *oemSerialNumber) {
+    return IGSC_ERROR_PERMISSION_DENIED;
+}
+
+static int mockMemoryErrorsPermissionDenied(struct igsc_device_handle *handle, struct igsc_gfsp_mem_err *tiles) {
+    return IGSC_ERROR_PERMISSION_DENIED;
+}
+
+static int mockIafPscUpdatePermissionDenied(struct igsc_device_handle *handle,
+                                            const uint8_t *buffer,
+                                            const uint32_t bufferLen,
+                                            igsc_progress_func_t progressFunc,
+                                            void *ctx) {
+    return IGSC_ERROR_PERMISSION_DENIED;
+}
+
 static int mockGetEccAvailable(struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) {
 
     if (std::find(mockSupportedHeciCmds.begin(), mockSupportedHeciCmds.end(), gfspCmd) == mockSupportedHeciCmds.end()) {
@@ -215,14 +232,14 @@ TEST(FwStatusExtTest, GivenIFRWasSetWhenFirmwareUtilChecksIFRThenIFRStatusIsUpda
 TEST(FwStatusExtTest, GivenStatusCallFailsWhenFirmwareUtilChecksIFRThenStatusCallFails) {
 
     VariableBackup<decltype(L0::Sysman::deviceIfrGetStatusExt)> mockDeviceIfrGetStatusExt(&L0::Sysman::deviceIfrGetStatusExt, [](struct igsc_device_handle *handle, uint32_t *supportedTests, uint32_t *hwCapabilities, uint32_t *ifrApplied, uint32_t *prevErrors, uint32_t *pendingReset) -> int {
-        return -1;
+        return IGSC_ERROR_PERMISSION_DENIED;
     });
 
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     bool mockStatus = false;
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
     auto ret = pFwUtilImp->fwIfrApplied(mockStatus);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, ret);
     EXPECT_FALSE(mockStatus);
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
@@ -325,9 +342,9 @@ TEST(FwEccTest, GivenFwEccConfigCallFailsWhenCallingFirmwareUtilSetAndGetEccThen
     uint8_t defaultState = 0;
     uint8_t newState = 0;
     auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState, &defaultState);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
     ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
     delete pFwUtilImp;
@@ -444,6 +461,26 @@ TEST(FwGetMemErrorCountTest, GivenValidFwUtilMethodWhenMemoryErrorCountIsRequest
     uint64_t errorCount = 0;
     auto ret = pFwUtilImp->fwGetMemoryErrorCount(errorType, subDeviceCount, subDeviceId, errorCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemErrorCountTest, GivenPermissionDeniedWhenMemoryErrorCountIsRequestedThenPermissionErrorIsReturned) {
+
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_count_tiles"] = reinterpret_cast<void *>(&mockCountTiles);
+    osLibHandle->funcMap["igsc_gfsp_memory_errors"] = reinterpret_cast<void *>(&mockMemoryErrorsPermissionDenied);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+
+    zes_ras_error_type_t errorType = ZES_RAS_ERROR_TYPE_CORRECTABLE;
+    uint32_t subDeviceCount = 1;
+    uint32_t subDeviceId = 0;
+    uint64_t errorCount = 0;
+    auto ret = pFwUtilImp->fwGetMemoryErrorCount(errorType, subDeviceCount, subDeviceId, errorCount);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, ret);
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
@@ -868,6 +905,45 @@ TEST(LinuxFwEccTest, GivenUnavailableHeciFunctionPointersWhenCallingEccMethodsTh
     delete pFwUtilImp;
 }
 
+TEST(LinuxFwEccTest, GivenPermissionDeniedOnPrimaryEccQueryWhenCallingFwGetEccAvailableThenPermissionErrorIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(+[](struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) -> int {
+        return IGSC_ERROR_PERMISSION_DENIED;
+    });
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+
+    ze_bool_t pAvailable = false;
+    auto ret = pFwUtilImp->fwGetEccAvailable(&pAvailable);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, ret);
+    EXPECT_FALSE(pAvailable);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenPermissionDeniedOnPrimaryEccSetPathWhenCallingFwSetEccConfigThenPermissionErrorIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(+[](struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) -> int {
+        return IGSC_ERROR_PERMISSION_DENIED;
+    });
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+
+    uint8_t currentState = 0;
+    uint8_t pendingState = 0;
+    uint8_t newState = 1;
+    auto ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
 TEST(LinuxFwEccTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetEccConfigSuccessIsReturned) {
     restoreEccMockVars();
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
@@ -1095,6 +1171,27 @@ TEST(FwFlashLateBindingTest, GivenFirmwareUtilImpAndLateBindingIsSupportedWhenCa
     delete pFwUtilImp;
 }
 
+TEST(FwFlashLateBindingTest, GivenFirmwareUtilImpAndLateBindingIsSupportedWhenCallingFlashFirmwareAndPermissionIsDeniedThenPermissionErrorIsReturned) {
+    VariableBackup<decltype(L0::Sysman::deviceUpdateLateBindingConfig)> mockDeviceUpdateLateBindingConfig(&L0::Sysman::deviceUpdateLateBindingConfig, [](struct igsc_device_handle *handle, uint32_t type, uint32_t flags, uint8_t *payload, size_t payloadSize, uint32_t *status) -> int {
+        *status = CSC_LATE_BINDING_STATUS_SUCCESS;
+        return IGSC_ERROR_PERMISSION_DENIED;
+    });
+
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+    memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
+
+    for (auto type : lateBindingFirmwareTypes) {
+        auto ret = pFwUtilImp->flashFirmware(type, (void *)testImage, ZES_STRING_PROPERTY_SIZE);
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, ret);
+    }
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
 TEST(FwFlashLateBindingTest, GivenFirmwareUtilImpAndLateBindingIsSupportedWhenCallingFlashFirmwareAndStatusRetunedIsInvalidThenCallFailsWithProperReturnCode) {
     VariableBackup<decltype(L0::Sysman::deviceUpdateLateBindingConfig)> mockDeviceUpdateLateBindingConfig(&L0::Sysman::deviceUpdateLateBindingConfig, [](struct igsc_device_handle *handle, uint32_t type, uint32_t flags, uint8_t *payload, size_t payloadSize, uint32_t *status) -> int {
         *status = CSC_LATE_BINDING_STATUS_TIMEOUT;
@@ -1169,7 +1266,17 @@ TEST_F(FwGetSerialNumberTestFixture, GivenFirmwareUtilInstanceWhenFwGetSerialNum
     uint16_t serialNumberLen = 0;
 
     auto result = pFwUtilImp->fwGetSerialNumber(serialNumber, serialNumberLen);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
+}
+
+TEST_F(FwGetSerialNumberTestFixture, GivenFirmwareUtilInstanceWhenFwGetSerialNumberIsCalledAndPermissionIsDeniedThenCallReturnsPermissionError) {
+    osLibHandle->funcMap["igsc_device_oem_serial_number"] = reinterpret_cast<void *>(&mockIgscDeviceGetOemSerialNumberPermissionDenied);
+
+    std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> serialNumber = {};
+    uint16_t serialNumberLen = 0;
+
+    auto result = pFwUtilImp->fwGetSerialNumber(serialNumber, serialNumberLen);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
 }
 
 TEST_F(FwGetSerialNumberTestFixture, GivenFirmwareUtilInstanceWhenFwGetSerialNumberIsCalledAndFunctionNotAvailableThenCallReturnsUnsupported) {
@@ -1180,6 +1287,41 @@ TEST_F(FwGetSerialNumberTestFixture, GivenFirmwareUtilInstanceWhenFwGetSerialNum
 
     auto result = pFwUtilImp->fwGetSerialNumber(serialNumber, serialNumberLen);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+TEST(FwRunDiagTest, GivenPermissionDeniedWhenRunningMemoryPprThenPermissionErrorIsReturned) {
+
+    VariableBackup<decltype(L0::Sysman::deviceIfrRunMemPPRTest)> mockdeviceIfrRunMemPPRTest(&L0::Sysman::deviceIfrRunMemPPRTest, [](struct igsc_device_handle *handle, uint32_t *status, uint32_t *pendingReset, uint32_t *errorCode) -> int {
+        return IGSC_ERROR_PERMISSION_DENIED;
+    });
+
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
+    std::string supportedDiagTest = "MEMORY_PPR";
+    zes_diag_result_t pDiagResult = ZES_DIAG_RESULT_ABORT;
+
+    auto ret = pFwUtilImp->fwRunDiagTests(supportedDiagTest, &pDiagResult);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwFlashPscTest, GivenPermissionDeniedWhenFlashingPscFirmwareThenPermissionErrorIsReturned) {
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_iaf_psc_update"] = reinterpret_cast<void *>(&mockIafPscUpdatePermissionDenied);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+
+    uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+    memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+    auto ret = pFwUtilImp->flashFirmware("PSC", (void *)testImage, ZES_STRING_PROPERTY_SIZE);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
 }
 
 } // namespace ult

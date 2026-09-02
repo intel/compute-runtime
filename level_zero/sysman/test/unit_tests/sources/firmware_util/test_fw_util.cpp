@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,20 @@ TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenGetVersionIsCalledForGfxD
 
     std::string firmwareVersion;
     ze_result_t result = pFwUtilImp->getFwVersion(*gfxDataIt, firmwareVersion);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenGetVersionIsCalledForGfxDataTypeAndPermissionIsDeniedThenCallReturnsPermissionError) {
+    VariableBackup<decltype(L0::Sysman::deviceGetFwDataVersion)> mockFirmwareVersionFailure(&L0::Sysman::deviceGetFwDataVersion, [](struct igsc_device_handle *handle, struct igsc_fwdata_version *version) -> int {
+        return IGSC_ERROR_PERMISSION_DENIED;
+    });
+
+    auto gfxDataIt = std::find(fwTypes.begin(), fwTypes.end(), std::string("GFX_DATA"));
+    EXPECT_NE(gfxDataIt, fwTypes.end());
+
+    std::string firmwareVersion;
+    ze_result_t result = pFwUtilImp->getFwVersion(*gfxDataIt, firmwareVersion);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
 }
 
 TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenGetVersionIsCalledForGfxDataTypeThenProperVersionIsReturned) {
@@ -156,7 +169,35 @@ TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenFirmwareFlashIsCalledForG
     uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
     memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
     auto result = pFwUtilImp->flashFirmware(*gfxDataIt, (void *)testImage, ZES_STRING_PROPERTY_SIZE);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenFirmwareFlashIsCalledForGfxDataTypeAndPermissionIsDeniedThenPermissionErrorIsReturned) {
+    VariableBackup<decltype(L0::Sysman::deviceFwDataUpdate)> mockFirmwareFlashFailure(&L0::Sysman::deviceFwDataUpdate, [](struct igsc_device_handle *handle, const uint8_t *buffer, const uint32_t bufferLen, igsc_progress_func_t progressFunc, void *ctx) -> int {
+        return IGSC_ERROR_PERMISSION_DENIED;
+    });
+
+    auto gfxDataIt = std::find(fwTypes.begin(), fwTypes.end(), std::string("GFX_DATA"));
+    EXPECT_NE(gfxDataIt, fwTypes.end());
+
+    uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+    memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+    auto result = pFwUtilImp->flashFirmware(*gfxDataIt, (void *)testImage, ZES_STRING_PROPERTY_SIZE);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+}
+
+TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenFirmwareFlashIsCalledForGfxDataTypeAndNoMemoryIsReportedThenOutOfHostMemoryIsReturned) {
+    VariableBackup<decltype(L0::Sysman::deviceFwDataUpdate)> mockFirmwareFlashFailure(&L0::Sysman::deviceFwDataUpdate, [](struct igsc_device_handle *handle, const uint8_t *buffer, const uint32_t bufferLen, igsc_progress_func_t progressFunc, void *ctx) -> int {
+        return IGSC_ERROR_NOMEM;
+    });
+
+    auto gfxDataIt = std::find(fwTypes.begin(), fwTypes.end(), std::string("GFX_DATA"));
+    EXPECT_NE(gfxDataIt, fwTypes.end());
+
+    uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+    memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+    auto result = pFwUtilImp->flashFirmware(*gfxDataIt, (void *)testImage, ZES_STRING_PROPERTY_SIZE);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY);
 }
 
 TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenFirmwareFlashIsCalledForGfxDataTypeAndIgscCallSucceedsThenFlashingIsSuccessful) {

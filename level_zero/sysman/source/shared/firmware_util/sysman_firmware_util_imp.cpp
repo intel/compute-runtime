@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include <map>
 
@@ -95,11 +96,35 @@ ze_result_t FirmwareUtilImp::getFlashFirmwareProgress(uint32_t *pCompletionPerce
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FirmwareUtilImp::getIgscResult(int igscError) {
+    switch (igscError) {
+    case IGSC_ERROR_PERMISSION_DENIED:
+        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    case IGSC_ERROR_BUSY:
+        return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+    case IGSC_ERROR_NOT_SUPPORTED:
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    case IGSC_ERROR_DEVICE_NOT_FOUND:
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    case IGSC_ERROR_INVALID_PARAMETER:
+    case IGSC_ERROR_BAD_IMAGE:
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    case IGSC_ERROR_BUFFER_TOO_SMALL:
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    case IGSC_ERROR_NOMEM:
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    default:
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+}
+
 ze_result_t FirmwareUtilImp::getFirstDevice(IgscDeviceInfo *info) {
     igsc_device_iterator *iter;
     int ret = deviceIteratorCreate(&iter);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc device iterator create failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
 
     info->name[0] = '\0';
@@ -107,7 +132,9 @@ ze_result_t FirmwareUtilImp::getFirstDevice(IgscDeviceInfo *info) {
         ret = deviceItreatorNext(iter, info);
         if (ret != IGSC_SUCCESS) {
             deviceItreatorDestroy(iter);
-            return ZE_RESULT_ERROR_UNINITIALIZED;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Error@ %s(): igsc device iterator next failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+            return getIgscResult(ret);
         }
         if (info->domain == domain &&
             info->bus == bus &&
@@ -131,7 +158,9 @@ ze_result_t FirmwareUtilImp::fwDeviceInit() {
     }
     ret = deviceInitByDevice(&fwDeviceHandle, fwDevicePath.c_str());
     if (ret != 0) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc device init failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -142,7 +171,9 @@ ze_result_t FirmwareUtilImp::fwGetVersion(std::string &fwVersion) {
     memset(&deviceFwVersion, 0, sizeof(deviceFwVersion));
     int ret = deviceGetFwVersion(&fwDeviceHandle, &deviceFwVersion);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc get fw version failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     fwVersion.append(deviceFwVersion.project);
     fwVersion.append("_");
@@ -158,7 +189,9 @@ ze_result_t FirmwareUtilImp::fwDataGetVersion(std::string &fwDataVersion) {
     memset(&deviceFwDataVersion, 0, sizeof(deviceFwDataVersion));
     int ret = deviceGetFwDataVersion(&fwDeviceHandle, &deviceFwDataVersion);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc get fw data version failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     fwDataVersion.append("Major : ");
     fwDataVersion.append(std::to_string(deviceFwDataVersion.major_version));
@@ -175,7 +208,9 @@ ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
     memset(&opromVersion, 0, sizeof(opromVersion));
     int ret = deviceOpromVersion(&fwDeviceHandle, IGSC_OPROM_CODE, &opromVersion);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc get oprom code version failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     fwVersion.append("OPROM CODE VERSION:");
     for (int i = 0; i < IGSC_OPROM_VER_SIZE; i++) {
@@ -185,7 +220,9 @@ ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
     memset(&opromVersion, 0, sizeof(opromVersion));
     ret = deviceOpromVersion(&fwDeviceHandle, IGSC_OPROM_DATA, &opromVersion);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc get oprom data version failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     fwVersion.append("OPROM DATA VERSION:");
     for (int i = 0; i < IGSC_OPROM_VER_SIZE; i++) {
@@ -198,7 +235,9 @@ ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     int ret = deviceFwUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, this);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc fw update failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -207,7 +246,9 @@ ze_result_t FirmwareUtilImp::fwFlashGfxData(void *pImage, uint32_t size) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     int ret = deviceFwDataUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, this);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc fw data update failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -219,11 +260,15 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
     int retData = 0, retCode = 0;
     int ret = imageOpromInit(&opromImg, static_cast<const uint8_t *>(pImage), size);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc oprom image init failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     ret = imageOpromType(opromImg, &opromImgType);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc oprom image type query failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     if (opromImgType & IGSC_OPROM_DATA) {
         retData = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_DATA, opromImg, firmwareFlashProgressFunc, this);
@@ -232,7 +277,10 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
         retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, firmwareFlashProgressFunc, this);
     }
     if ((retData != IGSC_SUCCESS) && (retCode != IGSC_SUCCESS)) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        int firstErr = (retData != IGSC_SUCCESS) ? retData : retCode;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc oprom update failed (error:0x%x)\n", NEO_FUNCTION_NAME, firstErr);
+        return getIgscResult(firstErr);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -241,10 +289,14 @@ ze_result_t FirmwareUtilImp::fwFlashLateBinding(void *pImage, uint32_t size, con
     const std::lock_guard<std::mutex> lock(this->fwLock);
     uint32_t lateBindingFlashStatus = 0;
     int ret = deviceUpdateLateBindingConfig(&fwDeviceHandle, lateBindingTypeToEnumMap.at(fwType), CSC_LATE_BINDING_FLAGS_IS_PERSISTENT_MASK, static_cast<uint8_t *>(pImage), static_cast<size_t>(size), &lateBindingFlashStatus);
-    if (ret != IGSC_SUCCESS || lateBindingFlashStatus != CSC_LATE_BINDING_STATUS_SUCCESS) {
-        if (ret == IGSC_ERROR_BUSY) {
-            return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
-        }
+    if (ret != IGSC_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc late binding update failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
+    }
+    if (lateBindingFlashStatus != CSC_LATE_BINDING_STATUS_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): late binding flash status not success (status:0x%x)\n", NEO_FUNCTION_NAME, lateBindingFlashStatus);
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return ZE_RESULT_SUCCESS;
