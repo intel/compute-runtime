@@ -29,7 +29,6 @@ template struct NEO::EncodePostSync<Family>;
 template void NEO::EncodePostSync<Family>::adjustTimestampPacket<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodePostSyncArgs &args);
 template void NEO::EncodePostSync<Family>::setupPostSyncForRegularEvent<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodePostSyncArgs &args);
 template void NEO::EncodePostSync<Family>::encodeL3Flush<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodePostSyncArgs &args);
-template void NEO::EncodePostSync<Family>::encodeL3FlushForPostSync<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodePostSyncArgs &args, PostSyncFlushMask postSyncFlushMask);
 template void NEO::EncodePostSync<Family>::setupPostSyncForInOrderExec<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodePostSyncArgs &args);
 
 template struct NEO::EncodeStates<Family>;

@@ -545,8 +545,6 @@ template <typename CommandType>
 void EncodePostSync<Family>::setupPostSyncForRegularEvent(CommandType &cmd, const EncodePostSyncArgs &args) {
     using POSTSYNC_DATA = decltype(Family::template getPostSyncType<CommandType>());
 
-    PostSyncFlushMask postSyncFlushMask = 0;
-
     for (auto i = 0u; i < args.eventPacketsCount; ++i) {
         auto &postSync = getPostSync(cmd, i);
 
@@ -564,18 +562,9 @@ void EncodePostSync<Family>::setupPostSyncForRegularEvent(CommandType &cmd, cons
         }
         uint32_t mocs = getPostSyncMocs(args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
         setPostSyncData(postSync, operationType, gpuVa, immData, 0, mocs, false, false);
-
-        if (args.isHostScopeSignalEvent) {
-            setPostSyncFlush(postSyncFlushMask, i);
-        }
     }
 
-    postSyncFlushMask = getPostSyncFlushMask(args, postSyncFlushMask);
-    if (args.outPostSyncFlushMask) {
-        *args.outPostSyncFlushMask = postSyncFlushMask;
-    }
-
-    encodeL3FlushForPostSync(cmd, args, postSyncFlushMask);
+    encodeL3Flush(cmd, args);
     adjustTimestampPacket(cmd, args);
 }
 

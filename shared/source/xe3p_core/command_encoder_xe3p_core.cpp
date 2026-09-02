@@ -241,8 +241,6 @@ template <typename Family>
 template <typename CommandType>
 inline auto &EncodePostSync<Family>::getPostSync(CommandType &cmd, size_t index) {
 
-    static_assert(maxPostSyncOperations == 4);
-
     switch (index) {
     case 0:
         return cmd.getPostSync();

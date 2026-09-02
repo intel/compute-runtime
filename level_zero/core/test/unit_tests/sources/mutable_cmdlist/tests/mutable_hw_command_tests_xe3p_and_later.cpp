@@ -75,7 +75,6 @@ HWTEST2_F(MutableHwCommandTestXe3p, givenMutableComputeWalkerWhenSettingBindingT
 
 HWTEST2_F(MutableHwCommandTestXe3p, givenTwoMutableComputeWalkersWhenCopyingDataToHostPointerThenDataIsCopied, IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::PorWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b1010u;
 
     auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
 
@@ -95,7 +94,6 @@ HWTEST2_F(MutableHwCommandTestXe3p, givenTwoMutableComputeWalkersWhenCopyingData
     srcWalkerCpuCmd->getPostSyncOpn1().setDestinationAddress(postSyncAddress + 0x100);
     srcWalkerCpuCmd->getPostSyncOpn2().setDestinationAddress(postSyncAddress + 0x200);
     srcWalkerCpuCmd->getPostSyncOpn3().setDestinationAddress(postSyncAddress + 0x300);
-    srcMutableWalker.setPostSyncFlushMask(postSyncFlushMask);
     memcpy(ptrOffset(srcMutableWalker.getHostMemoryInlineDataPointer(), srcWalkerIndirectOffset), &indirectAddress, sizeof(indirectAddress));
 
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
@@ -110,7 +108,6 @@ HWTEST2_F(MutableHwCommandTestXe3p, givenTwoMutableComputeWalkersWhenCopyingData
     EXPECT_EQ(postSyncAddress + 0x100, walkerCpuCmd->getPostSyncOpn1().getDestinationAddress());
     EXPECT_EQ(postSyncAddress + 0x200, walkerCpuCmd->getPostSyncOpn2().getDestinationAddress());
     EXPECT_EQ(postSyncAddress + 0x300, walkerCpuCmd->getPostSyncOpn3().getDestinationAddress());
-    EXPECT_EQ(postSyncFlushMask, mutableWalker->getPostSyncFlushMask());
 }
 
 HWTEST2_F(MutableHwCommandTestXe3p,
@@ -134,7 +131,6 @@ HWTEST2_F(MutableHwCommandTestXe3p,
           givenNonZeroHostAndImportedArgsWhenUpdateL3FlushAfterWalkerThenFlushEnabled,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0001u;
 
     auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
 
@@ -142,7 +138,6 @@ HWTEST2_F(MutableHwCommandTestXe3p,
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
     auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
     auto walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
-    mutableWalker->setPostSyncFlushMask(postSyncFlushMask);
 
     mutableWalker->updateL3FlushAfterWalker(1u, 1u);
 
@@ -156,7 +151,6 @@ HWTEST2_F(MutableHwCommandTestXe3p,
           givenZeroHostAndImportedArgsWhenUpdateL3FlushAfterWalkerThenBothThenFlushDisabled,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0001u;
 
     auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
     walkerTemplate.getPostSync().setL2Flush(true);
@@ -166,7 +160,6 @@ HWTEST2_F(MutableHwCommandTestXe3p,
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
     auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
     auto walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
-    mutableWalker->setPostSyncFlushMask(postSyncFlushMask);
 
     mutableWalker->updateL3FlushAfterWalker(0u, 0u);
 
@@ -177,38 +170,9 @@ HWTEST2_F(MutableHwCommandTestXe3p,
 }
 
 HWTEST2_F(MutableHwCommandTestXe3p,
-          givenPostSyncFlushMaskWhenUpdateL3FlushAfterWalkerThenOnlySelectedPostSyncsAreUpdated,
-          IsAtLeastXe3pCore) {
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b1010u;
-
-    auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
-
-    this->stageCommit = true;
-    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
-    auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
-    auto walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
-    mutableWalker->setPostSyncFlushMask(postSyncFlushMask);
-
-    mutableWalker->updateL3FlushAfterWalker(1u, 1u);
-
-    for (auto *postSync : {&cpuBuffer->getPostSync(), &walkerCmd->getPostSync(),
-                           &cpuBuffer->getPostSyncOpn2(), &walkerCmd->getPostSyncOpn2()}) {
-        EXPECT_FALSE(postSync->getL2TransientFlush());
-        EXPECT_FALSE(postSync->getL2Flush());
-    }
-    for (auto *postSync : {&cpuBuffer->getPostSyncOpn1(), &walkerCmd->getPostSyncOpn1(),
-                           &cpuBuffer->getPostSyncOpn3(), &walkerCmd->getPostSyncOpn3()}) {
-        EXPECT_TRUE(postSync->getL2TransientFlush());
-        EXPECT_TRUE(postSync->getL2Flush());
-    }
-}
-
-HWTEST2_F(MutableHwCommandTestXe3p,
           givenFlushAllCachesDebugFlagWhenUpdateL3FlushAfterWalkerThenFlushesAreCorrect,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0001u;
     DebugManagerStateRestore restorer;
 
     auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
@@ -218,7 +182,6 @@ HWTEST2_F(MutableHwCommandTestXe3p,
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
     auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
     auto walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
-    mutableWalker->setPostSyncFlushMask(postSyncFlushMask);
 
     mutableWalker->updateL3FlushAfterWalker(0u, 0u);
     EXPECT_FALSE(cpuBuffer->getPostSync().getL2TransientFlush());
@@ -229,7 +192,6 @@ HWTEST2_F(MutableHwCommandTestXe3p,
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
     cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
     walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
-    mutableWalker->setPostSyncFlushMask(postSyncFlushMask);
 
     mutableWalker->updateL3FlushAfterWalker(0u, 0u);
     EXPECT_TRUE(cpuBuffer->getPostSync().getL2TransientFlush());

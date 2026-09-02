@@ -19,40 +19,10 @@ namespace ult {
 
 using MutableCommandListPostSyncL3FlushTest = Test<MutableCommandListFixture<true, true>>;
 
-template <typename GfxFamily>
-void expectPostSyncFlushes(typename GfxFamily::DefaultWalkerType *walker,
-                           NEO::PostSyncFlushMask flushMask,
-                           bool l2TransientFlush,
-                           bool l2Flush) {
-    for (uint32_t postSyncId = 0; postSyncId < NEO::EncodePostSync<GfxFamily>::maxPostSyncOperations; postSyncId++) {
-        auto verifyPostSync = [&](auto &postSync) {
-            const bool isFlush = NEO::EncodePostSync<GfxFamily>::isPostSyncFlush(flushMask, postSyncId);
-            EXPECT_EQ(isFlush && l2TransientFlush, postSync.getL2TransientFlush()) << "PostSync" << postSyncId;
-            EXPECT_EQ(isFlush && l2Flush, postSync.getL2Flush()) << "PostSync" << postSyncId;
-        };
-
-        switch (postSyncId) {
-        case 0:
-            verifyPostSync(walker->getPostSync());
-            break;
-        case 1:
-            verifyPostSync(walker->getPostSyncOpn1());
-            break;
-        case 2:
-            verifyPostSync(walker->getPostSyncOpn2());
-            break;
-        case 3:
-            verifyPostSync(walker->getPostSyncOpn3());
-            break;
-        }
-    }
-}
-
 HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
           givenHostVisibleEventAndSystemSharedBufferArgWhenArgIsMutatedThenL2TransientFlushIsUpdated,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0010u;
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DisableSystemPointerKernelArgument.set(0);
@@ -89,7 +59,12 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
 
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
 
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, this->l3FlushAfterPostSyncEnabled, false);
+    if (this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    }
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
     argDesc.commandId = commandId;
@@ -100,29 +75,40 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     argDesc.pArgValue = &systemShared;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, this->l3FlushAfterPostSyncEnabled, false);
+    if (this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    }
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     argDesc.pArgValue = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     argDesc.pArgValue = &systemShared;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, this->l3FlushAfterPostSyncEnabled, false);
+    if (this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    }
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 }
 
 HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
           givenHostVisibleEventWhenLastHostBufferArgMutatedToDeviceThenL2TransientFlushIsCleared,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0010u;
 
     bool signalHostEvent = true;
 
@@ -154,7 +140,13 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
 
     // initial state
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, signalHostEvent && this->l3FlushAfterPostSyncEnabled, false);
+    if (signalHostEvent && this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    }
 
     // mutate arg0 host -> device
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -166,7 +158,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     context->freeMem(hostUsm);
 }
@@ -175,7 +168,6 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
           givenHostVisibleEventWhenDeviceBufferArgMutatedToHostThenL2TransientFlushIsSet,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0010u;
 
     bool signalHostEvent = true;
     auto *event = createTestEvent(true, signalHostEvent, false, false, false);
@@ -208,7 +200,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
 
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     // mutate arg0 device -> host
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -220,8 +213,14 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    // one host alloc after mutation, flush required on the duplicated host counter
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, signalHostEvent && this->l3FlushAfterPostSyncEnabled, false);
+    if (signalHostEvent && this->l3FlushAfterPostSyncEnabled) {
+        // one host alloc after mutation, flush required
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    }
 
     context->freeMem(hostUsm);
 }
@@ -230,7 +229,6 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
           givenTwoHostBufferArgsWhenMutatedToDeviceOneByOneThenL2TransientFlushIsClearedAfterLastHostArg,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0010u;
 
     bool signalHostEvent = true;
     auto *event = createTestEvent(true, signalHostEvent, false, false, false);
@@ -261,8 +259,14 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
 
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
 
-    // two host allocs
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, signalHostEvent && this->l3FlushAfterPostSyncEnabled, false);
+    if (signalHostEvent && this->l3FlushAfterPostSyncEnabled) {
+        // two host allocs
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    }
 
     // mutate arg0 host -> device
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -274,8 +278,14 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    // one host alloc left
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, signalHostEvent && this->l3FlushAfterPostSyncEnabled, false);
+    if (signalHostEvent && this->l3FlushAfterPostSyncEnabled) {
+        // one host alloc left
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    }
 
     // mutate arg1 host -> device
     argDesc.argIndex = 1;
@@ -284,7 +294,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     context->freeMem(hostUsm0);
     context->freeMem(hostUsm1);
@@ -294,7 +305,6 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
           givenHostVisibleEventWhenImportedBufferArgMutatedThenL2FlushIsSetCorrectly,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0010u;
 
     bool signalHostEvent = true;
     auto *event = createTestEvent(true, signalHostEvent, false, false, false);
@@ -332,7 +342,13 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
 
     // one imported alloc
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, false, signalHostEvent && this->l3FlushAfterPostSyncEnabled);
+    if (signalHostEvent && this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2Flush());
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    }
 
     // mutate arg0 imported -> device usm
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -345,7 +361,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     // no imported allocs
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
 
     // mutate arg0 plain device -> imported
     argDesc.pArgValue = &importedUsm;
@@ -353,7 +370,13 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, false, signalHostEvent && this->l3FlushAfterPostSyncEnabled);
+    if (signalHostEvent && this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2Flush());
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    }
 }
 
 HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
@@ -386,7 +409,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
 
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     // mutate arg0 device USM -> device USM
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -398,14 +422,14 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 }
 
 HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
           givenHostVisibleEventWhenImportedHostBufferArgIsMutatedToDeviceThenBothL2FlushesAreCleared,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0010u;
 
     auto *event = createTestEvent(true, true, false, false, false);
     ASSERT_NE(nullptr, event);
@@ -431,7 +455,13 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, this->l3FlushAfterPostSyncEnabled, this->l3FlushAfterPostSyncEnabled);
+    if (this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_TRUE(walker->getPostSync().getL2Flush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    }
 
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
     argDesc.commandId = commandId;
@@ -442,7 +472,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     context->freeMem(importedHostUsm);
 }
@@ -451,7 +482,6 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
           givenHostSignalScopeEventAndMutableDeviceBufferWhenMutatedToHostThenL2TransientFlushIsUpdated,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0010u;
 
     auto *event = createTestEvent(true, true, false, false, false);
     ASSERT_NE(nullptr, event);
@@ -474,7 +504,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
     argDesc.commandId = commandId;
@@ -485,13 +516,19 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, this->l3FlushAfterPostSyncEnabled, false);
+    if (this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    }
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     argDesc.pArgValue = &deviceUsm;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     context->freeMem(hostUsm);
 }
@@ -500,7 +537,6 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
           givenHostSignalScopeEventAndDeviceBufferWhenMutatedToImportedDeviceAllocationThenL2FlushIsUpdated,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0010u;
 
     auto *event = createTestEvent(true, true, false, false, false);
     ASSERT_NE(nullptr, event);
@@ -528,7 +564,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
     argDesc.commandId = commandId;
@@ -539,13 +576,19 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, false, this->l3FlushAfterPostSyncEnabled);
+    if (this->l3FlushAfterPostSyncEnabled) {
+        EXPECT_TRUE(walker->getPostSync().getL2Flush());
+    } else {
+        EXPECT_FALSE(walker->getPostSync().getL2Flush());
+    }
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
 
     argDesc.pArgValue = &deviceUsm;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 }
 
 HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
@@ -587,7 +630,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
 
     auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     // mutate arg0 host USM-> device USM
     ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -599,7 +643,8 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     // mutate arg1 imported -> device USM
     argDesc.argIndex = 1;
@@ -608,104 +653,10 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
+    EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     context->freeMem(hostUsm0);
-}
-
-HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
-          givenRegularHostScopeEventWhenBufferArgIsMutatedThenEveryHostVisiblePostSyncIsUpdated,
-          IsAtLeastXe3pCore) {
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-    using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0110u;
-
-    auto *event = createTestEvent(false, true, false, false, false);
-    ASSERT_NE(nullptr, event);
-    auto &inOrderExecInfo = mutableCommandList->base->getInOrderExecInfo();
-    ASSERT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
-
-    resizeKernelArg(1);
-    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
-
-    void *hostUsm = nullptr;
-    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &hostUsm));
-    void *deviceUsm = allocateDeviceUsm(4096);
-    ASSERT_NE(nullptr, deviceUsm);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &hostUsm));
-
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
-
-    auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
-    EXPECT_EQ(inOrderExecInfo->getBaseDeviceAddress(), walker->getPostSync().getDestinationAddress());
-    EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(), walker->getPostSyncOpn1().getDestinationAddress());
-    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, walker->getPostSyncOpn2().getOperation());
-    EXPECT_EQ(event->getPacketAddress(device), walker->getPostSyncOpn2().getDestinationAddress());
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, this->l3FlushAfterPostSyncEnabled, false);
-
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
-    argDesc.commandId = commandId;
-    argDesc.argIndex = 0;
-    argDesc.argSize = sizeof(void *);
-    argDesc.pArgValue = &deviceUsm;
-    mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
-
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
-    context->freeMem(hostUsm);
-}
-
-HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
-          givenAggregatedExternalHostScopeEventWhenBufferArgIsMutatedThenHostCounterAndExternalCounterPostSyncsAreUpdated,
-          IsAtLeastXe3pCore) {
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-    using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
-    constexpr NEO::PostSyncFlushMask postSyncFlushMask = 0b0110u;
-
-    auto *event = createTestEvent(true, true, false, true, false);
-    ASSERT_NE(nullptr, event);
-    ASSERT_GT(event->getInOrderIncrementValue(1), 0u);
-    auto &inOrderExecInfo = mutableCommandList->base->getInOrderExecInfo();
-    ASSERT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
-
-    resizeKernelArg(1);
-    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
-
-    void *hostUsm = nullptr;
-    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &hostUsm));
-    void *deviceUsm = allocateDeviceUsm(4096);
-    ASSERT_NE(nullptr, deviceUsm);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &hostUsm));
-
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
-
-    auto *walker = reinterpret_cast<WalkerType *>(mutableCommandList->mutableWalkerCmds[0]->getWalkerCmdPointer());
-    EXPECT_EQ(inOrderExecInfo->getBaseDeviceAddress(), walker->getPostSync().getDestinationAddress());
-    EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(), walker->getPostSyncOpn1().getDestinationAddress());
-    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, walker->getPostSyncOpn2().getOperation());
-    EXPECT_EQ(event->getInOrderExecEventHelper().getBaseDeviceAddress(), walker->getPostSyncOpn2().getDestinationAddress());
-    expectPostSyncFlushes<FamilyType>(walker, postSyncFlushMask, this->l3FlushAfterPostSyncEnabled, false);
-
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
-    argDesc.commandId = commandId;
-    argDesc.argIndex = 0;
-    argDesc.argSize = sizeof(void *);
-    argDesc.pArgValue = &deviceUsm;
-    mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
-
-    expectPostSyncFlushes<FamilyType>(walker, 0, false, false);
-    context->freeMem(hostUsm);
 }
 
 } // namespace ult

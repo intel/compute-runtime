@@ -16,8 +16,6 @@
 namespace NEO {
 struct RootDeviceEnvironment;
 
-using PostSyncFlushMask = uint8_t;
-
 struct EncodeDummyBlitWaArgs {
     bool isWaRequired = false;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
