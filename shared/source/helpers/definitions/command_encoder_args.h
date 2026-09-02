@@ -35,6 +35,7 @@ struct EncodeSlmSizePerSubSliceArgs {
     uint32_t threadsPerThreadGroup = 0;
     uint32_t workloadThreadGroupCount = 0;
     uint32_t slmTotalSizePerThreadGroup = 0;
+    uint32_t grfCount = 0;
     SlmPolicy slmPolicy = SlmPolicy::slmPolicyNone;
 };
 

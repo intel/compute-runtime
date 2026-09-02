@@ -13,6 +13,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -1557,10 +1558,14 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenForcingDifferent
     EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, pDevice->getHardwareInfo()), expectedAlignment);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCountPerSubsliceThenUseDualSubSliceAsDenominator, IsAtMostXeCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingMaxConcurrentThreadCountPerSubsliceThenAllThreadsAreCountedAndDualSubSliceIsUsedAsDenominator, IsAtMostXeCore) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto &hwInfo = pDevice->getHardwareInfo();
     auto expectedValue = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
-    EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
+
+    for (auto grfCount : {GrfConfig::defaultGrfNumber, GrfConfig::largeGrfNumber}) {
+        EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount)) << ", grfCount: " << grfCount;
+    }
 }
 
 HWTEST2_F(CommandEncodeStatesTest, givenWorkloadThreadGroupCountWhenCalculateThreadGroupCountPerSubsliceThenDivideByDualSubSliceCountAndRoundUp, IsAtMostXeCore) {
@@ -1581,8 +1586,18 @@ HWTEST2_F(CommandEncodeStatesTest, givenWorkloadThreadGroupCountWhenCalculateThr
     EXPECT_EQ(5u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 17));
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCountPerSubsliceThenUseSubSliceAsDenominator, IsAtLeastXe2HpgCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingMaxConcurrentThreadCountPerSubsliceThenGrfCountLimitedThreadCountIsUsedAndSubSliceIsUsedAsDenominator, IsAtLeastXe2HpgCore) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto expectedValue = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
-    EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
+
+    for (auto grfCount : {GrfConfig::defaultGrfNumber, GrfConfig::largeGrfNumber}) {
+        auto expectedValue = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount, rootDeviceEnvironment) / hwInfo.gtSystemInfo.SubSliceCount;
+        EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount)) << ", grfCount: " << grfCount;
+    }
+
+    auto threadCountForDefaultGrf = NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::defaultGrfNumber);
+    auto threadCountForLargeGrf = NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::largeGrfNumber);
+    EXPECT_LE(threadCountForLargeGrf, threadCountForDefaultGrf);
+    EXPECT_LE(threadCountForDefaultGrf, hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount);
 }

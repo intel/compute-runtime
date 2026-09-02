@@ -251,7 +251,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     template <typename InterfaceDescriptorType>
     static void encodeSlmSizePerThreadGroup(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled);
 
-    static uint32_t getThreadCountPerSubslice(const HardwareInfo &hwInfo);
+    static uint32_t getMaxConcurrentThreadCountPerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t grfCount);
     static uint32_t calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t workloadThreadGroupCount);
 
     template <typename InterfaceDescriptorType>

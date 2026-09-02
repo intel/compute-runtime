@@ -58,8 +58,7 @@ void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorT
     using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
     UNRECOVERABLE_IF(slmArgs.threadsPerThreadGroup == 0u);
 
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
+    const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, slmArgs.grfCount);
     const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, slmArgs.threadsPerThreadGroup));
 
     const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();

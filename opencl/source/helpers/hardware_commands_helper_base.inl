@@ -166,6 +166,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
         .threadsPerThreadGroup = threadsPerThreadGroup,
         .workloadThreadGroupCount = threadGroupCount,
         .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+        .grfCount = kernelDescriptor.kernelAttributes.numGrfRequired,
         .slmPolicy = SlmPolicy::slmPolicyNone};
 
     EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmArgs);

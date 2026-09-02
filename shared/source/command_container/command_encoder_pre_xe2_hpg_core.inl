@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -17,7 +18,8 @@ size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment(bool isLocalMemory, 
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareInfo &hwInfo) {
+uint32_t EncodeDispatchKernel<Family>::getMaxConcurrentThreadCountPerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment, [[maybe_unused]] uint32_t grfCount) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
 }
 

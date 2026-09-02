@@ -8,6 +8,7 @@
 #include "shared/test/unit_test/encoders/test_encode_slm_xe2_and_later.h"
 
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include <limits>
@@ -33,6 +34,7 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmTotalSizeAboveActualHwL
         .threadsPerThreadGroup = 1,
         .workloadThreadGroupCount = 128,
         .slmTotalSizePerThreadGroup = slmAtLimit,
+        .grfCount = GrfConfig::defaultGrfNumber,
         .slmPolicy = NEO::SlmPolicy::slmPolicyLargeData};
 
     NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
@@ -43,6 +45,76 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmTotalSizeAboveActualHwL
     NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
 
     EXPECT_EQ(valueAtLimit, idd.getPreferredSlmAllocationSize());
+}
+
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenLargestDispatchableThreadGroupWhenGettingMaxConcurrentThreadCountPerSubsliceThenWholeThreadGroupIsResident, IsAtLeastXe2HpgCore) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    const auto grfCounts = rootDeviceEnvironment.getProductHelper().getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
+
+    for (auto grfCount : grfCounts) {
+        auto maxConcurrentThreadCountPerSubslice = this->getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount);
+        ASSERT_NE(0u, maxConcurrentThreadCountPerSubslice) << ", grfCount: " << grfCount;
+
+        for (auto simd : {16u, 32u}) {
+            auto maxThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, CommonConstants::maxWorkgroupSize, grfCount, rootDeviceEnvironment);
+
+            EXPECT_LE(maxThreadsPerThreadGroup, maxConcurrentThreadCountPerSubslice)
+                << ", grfCount: " << grfCount
+                << ", simd: " << simd
+                << ", maxThreadsPerThreadGroup: " << maxThreadsPerThreadGroup
+                << ", maxConcurrentThreadCountPerSubslice: " << maxConcurrentThreadCountPerSubslice;
+        }
+    }
+}
+
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenIncreasingGrfCountWhenCallingEncodeSlmSizePerSubSliceThenFewerThreadGroupsShareSubsliceSlm, IsAtLeastXe2HpgCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const auto grfCounts = rootDeviceEnvironment.getProductHelper().getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
+
+    constexpr uint32_t threadsPerThreadGroup = 1;
+    constexpr uint32_t slmTotalSizePerThreadGroup = MemoryConstants::kiloByte;
+    const uint32_t unlimitedWorkloadThreadGroupCount = hwInfo.gtSystemInfo.ThreadCount;
+
+    auto encodePreferredSlm = [&](uint32_t grfCount, uint32_t workloadThreadGroupCount) {
+        auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = threadsPerThreadGroup,
+            .workloadThreadGroupCount = workloadThreadGroupCount,
+            .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+            .grfCount = grfCount,
+            .slmPolicy = NEO::SlmPolicy::slmPolicyLargeSlm};
+
+        NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
+        return static_cast<uint32_t>(idd.getPreferredSlmAllocationSize());
+    };
+
+    const uint32_t smallestGrfCount = *grfCounts.begin();
+    const uint32_t largestGrfCount = *(grfCounts.end() - 1);
+
+    uint32_t previousPreferredSlm = std::numeric_limits<uint32_t>::max();
+    for (auto grfCount : grfCounts) {
+        auto preferredSlm = encodePreferredSlm(grfCount, unlimitedWorkloadThreadGroupCount);
+
+        EXPECT_GE(previousPreferredSlm, preferredSlm) << ", grfCount: " << grfCount;
+
+        auto maxConcurrentThreadCountPerSubslice = this->getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount);
+        auto workloadThreadGroupCountFittingInSubslices = maxConcurrentThreadCountPerSubslice * hwInfo.gtSystemInfo.SubSliceCount;
+        EXPECT_EQ(encodePreferredSlm(smallestGrfCount, workloadThreadGroupCountFittingInSubslices), preferredSlm)
+            << ", grfCount: " << grfCount
+            << ", maxConcurrentThreadCountPerSubslice: " << maxConcurrentThreadCountPerSubslice;
+
+        previousPreferredSlm = preferredSlm;
+    }
+
+    EXPECT_LT(this->getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, largestGrfCount),
+              this->getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, smallestGrfCount));
+    EXPECT_LT(encodePreferredSlm(largestGrfCount, unlimitedWorkloadThreadGroupCount),
+              encodePreferredSlm(smallestGrfCount, unlimitedWorkloadThreadGroupCount));
 }
 
 HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsBMG) {
@@ -150,7 +222,7 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEn
     verifyPreferredSlmValues<FamilyType>(slmHelperXe3Core, pDevice->getRootDeviceEnvironment());
 }
 
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsXe3pCore) {
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsXe3pLpg) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;

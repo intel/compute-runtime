@@ -456,6 +456,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         .threadsPerThreadGroup = threadsPerThreadGroup,
         .workloadThreadGroupCount = threadGroupCount,
         .slmTotalSizePerThreadGroup = args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
+        .grfCount = kernelDescriptor.kernelAttributes.numGrfRequired,
         .slmPolicy = args.dispatchInterface->getSlmPolicy()};
 
     EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);

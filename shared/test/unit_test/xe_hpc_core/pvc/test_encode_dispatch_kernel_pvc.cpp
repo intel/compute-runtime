@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/kernel/grf_config.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -37,6 +38,7 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenZeroSlmSizeWhenSetAdditionalInfoIsCal
         .threadsPerThreadGroup = threadsCount,
         .workloadThreadGroupCount = 1024,
         .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+        .grfCount = GrfConfig::defaultGrfNumber,
         .slmPolicy = SlmPolicy::slmPolicyNone};
 
     EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
