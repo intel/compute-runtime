@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/kernel/debug_data.h"
@@ -266,7 +267,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             nearest,
             linear
         };
-        static constexpr size_t borderColorStateSize = 64U;
+        static constexpr size_t borderColorStateSize = SamplerConstants::borderColorStateSize;
         static constexpr size_t samplerStateSize = 16U;
 
         uint32_t samplerIndex;

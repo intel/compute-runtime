@@ -39,7 +39,7 @@ class D3DSharing : public SharingHandler {
     D3DQuery *getQuery() { return d3dQuery; }
     D3DFence *getFence() { return d3dFence; }
     bool isSharedResource() { return sharedResource; }
-    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags, bool packedSupported);
+    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags);
     static bool isFormatWithPlane1(DXGI_FORMAT format);
 
   protected:

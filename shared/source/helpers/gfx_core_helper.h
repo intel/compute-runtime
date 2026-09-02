@@ -53,7 +53,6 @@ using GfxCoreHelperCreateFunctionType = std::unique_ptr<GfxCoreHelper> (*)();
 class GfxCoreHelper {
   public:
     static std::unique_ptr<GfxCoreHelper> create(const GFXCORE_FAMILY gfxCoreFamily);
-    virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
     virtual size_t getPaddingForISAAllocation() const = 0;
     virtual size_t getKernelIsaPointerAlignment() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -112,7 +111,6 @@ class GfxCoreHelper {
     virtual int32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
-    virtual bool packedFormatsSupported() const = 0;
     virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
@@ -139,7 +137,6 @@ class GfxCoreHelper {
     virtual void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual void adjustPreemptionSurfaceSize(size_t &csrSize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getSamplerStateSize() const = 0;
-    virtual uint32_t getSamplerBorderColorStateSize() const = 0;
     virtual bool preferInternalBcsEngine() const = 0;
     virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
     virtual uint32_t getMaxScratchSize(const NEO::ProductHelper &productHelper) const = 0;
@@ -147,7 +144,6 @@ class GfxCoreHelper {
     virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const = 0;
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
     virtual uint64_t getMaxMemAllocSize() const = 0;
-    virtual bool isStatelessToStatefulWithOffsetSupported() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const = 0;
     virtual bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getBatchBufferEndSize() const = 0;
@@ -237,10 +233,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
         return sizeof(SAMPLER_STATE);
     }
 
-    uint32_t getSamplerBorderColorStateSize() const override {
-        return 64u;
-    }
-
     uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const override {
         using DataPortBindlessSurfaceExtendedMessageDescriptor = typename GfxFamily::DataPortBindlessSurfaceExtendedMessageDescriptor;
         DataPortBindlessSurfaceExtendedMessageDescriptor messageExtDescriptor = {};
@@ -253,8 +245,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     }
 
     uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const override;
-
-    size_t getMaxBarrierRegisterPerSlice() const override;
 
     size_t getPaddingForISAAllocation() const override;
 
@@ -359,8 +349,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const override;
 
-    bool packedFormatsSupported() const override;
-
     bool isRcsAvailable(const HardwareInfo &hwInfo) const override;
 
     bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
@@ -405,7 +393,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool preferInternalBcsEngine() const override;
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
-    bool isStatelessToStatefulWithOffsetSupported() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override;
     bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     size_t getBatchBufferEndSize() const override;

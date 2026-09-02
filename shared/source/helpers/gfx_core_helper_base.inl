@@ -59,21 +59,11 @@ uint64_t GfxCoreHelperHw<Family>::getMaxMemAllocSize() const {
 }
 
 template <typename Family>
-bool GfxCoreHelperHw<Family>::isStatelessToStatefulWithOffsetSupported() const {
-    return true;
-}
-
-template <typename Family>
 SipKernelType GfxCoreHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
     if (!debuggingActive) {
         return SipKernelType::csr;
     }
     return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::dbgBindless : SipKernelType::dbgCsr;
-}
-
-template <typename Family>
-size_t GfxCoreHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
-    return 32;
 }
 
 template <typename Family>

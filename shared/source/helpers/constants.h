@@ -94,12 +94,17 @@ inline constexpr uint32_t maximalSimdSize = 32;
 inline constexpr uint32_t maximalSizeOfAtomicType = 8;
 inline constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::maxEngineGroups);
 inline constexpr uint32_t maxWorkgroupSize = 1024u;
+inline constexpr uint32_t maxBarrierRegisterPerSlice = 32u;
 inline constexpr uint32_t minimalSyncBufferSize = 12;
 inline constexpr uint32_t gpuHangCheckTimeInUS = 500'000;
 inline constexpr double defaultProfilingTimerResolution = 83.333;
 inline constexpr uint64_t nsecPerSec = 1000000000ull;
 inline constexpr uint32_t maxAllowedEnvVariableSize = 4096u;
 } // namespace CommonConstants
+
+namespace SamplerConstants {
+inline constexpr uint32_t borderColorStateSize = 64u;
+} // namespace SamplerConstants
 
 namespace DeviceVectorWidthConstants {
 inline constexpr uint32_t charWidth = 16u;

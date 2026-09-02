@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -101,13 +100,12 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     const ClSurfaceFormatInfo *clSurfaceFormat = nullptr;
     if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
         clSurfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, imagePlane, flags);
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     } else {
-        clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, gfxCoreHelper.packedFormatsSupported());
+        clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     }
 
@@ -189,9 +187,8 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
-    auto *clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, gfxCoreHelper.packedFormatsSupported());
+    auto *clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
     imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch();
 
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;

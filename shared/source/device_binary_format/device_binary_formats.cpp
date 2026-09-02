@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
@@ -39,7 +40,7 @@ TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment)
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;
     targetDevice.minScratchSpaceSize = gfxCoreHelper.getMinimalScratchSpaceSize();
     targetDevice.samplerStateSize = static_cast<uint32_t>(gfxCoreHelper.getSamplerStateSize());
-    targetDevice.samplerBorderColorStateSize = gfxCoreHelper.getSamplerBorderColorStateSize();
+    targetDevice.samplerBorderColorStateSize = SamplerConstants::borderColorStateSize;
 
     if (auto ail = rootDeviceEnvironment.getAILConfigurationHelper(); nullptr != ail) {
         targetDevice.applyValidationWorkaround = ail->useLegacyValidationLogic();

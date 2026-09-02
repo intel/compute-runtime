@@ -88,11 +88,6 @@ HWTEST2_F(GfxCoreHelperTestGen12Lp, givenFtrCcsNodeNotSetAndBcsInfoSetWhenGetGpg
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[4].first);
 }
 
-GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
-    auto &helper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
-}
-
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto stepping = hardwareInfo.platform.usRevId;
@@ -296,11 +291,6 @@ GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, whenSettingCacheFlushExtraFiel
     MemorySynchronizationCommands<FamilyType>::setCacheFlushExtraProperties(args);
     EXPECT_TRUE(args.hdcPipelineFlush);
     EXPECT_FALSE(args.constantCacheInvalidationEnable);
-}
-
-GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenGen12WhenCallIsPackedSupportedThenReturnTrue) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.packedFormatsSupported());
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, whenRequestingMocsThenProperMocsIndicesAreBeingReturned) {

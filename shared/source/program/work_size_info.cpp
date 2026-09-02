@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/program/kernel_info.h"
@@ -44,7 +45,7 @@ void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
 void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool disableEUFusion) {
     minWorkGroupSize = 0;
     if (hasBarriers) {
-        uint32_t maxBarriersPerHSlice = 32;
+        constexpr auto maxBarriersPerHSlice = CommonConstants::maxBarrierRegisterPerSlice;
         minWorkGroupSize = numThreadsPerSubSlice * simdSize / maxBarriersPerHSlice;
     }
     if (slmTotalSizePerThreadGroup > 0) {
