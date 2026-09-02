@@ -139,6 +139,11 @@ const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelpe
     return &guidToKeyOffsetMap;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported() {
+    return true;
+}
+
 ze_result_t readMcChannelCounters(std::map<std::string, uint64_t> keyOffsetMap, uint64_t &readCounters, uint64_t &writeCounters, std::string telemDir, uint64_t telemOffset) {
     uint32_t numMcChannels = 16u;
     std::vector<std::string> nameOfCounters{"IDI_READS", "IDI_WRITES", "DISPLAY_VC1_READS"};

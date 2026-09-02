@@ -218,7 +218,7 @@ struct MockXePowerFsAccess : public L0::Sysman::FsAccessInterface {
 class XePublicLinuxPowerImp : public L0::Sysman::LinuxPowerImp {
   public:
     XePublicLinuxPowerImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) : L0::Sysman::LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, powerDomain) {}
-    using L0::Sysman::LinuxPowerImp::isTelemetrySupportAvailable;
+    using L0::Sysman::LinuxPowerImp::isPmtBasedPowerSupported;
     using L0::Sysman::LinuxPowerImp::pSysfsAccess;
 
     bool mockGetPropertiesFail = false;

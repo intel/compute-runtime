@@ -11,6 +11,7 @@
 #include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
@@ -82,7 +83,7 @@ ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtProp
 ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 
-    if (isTelemetrySupportAvailable) {
+    if (isPmtBasedPowerSupported) {
         return pSysmanProductHelper->getPowerEnergyCounter(pEnergy, pLinuxSysmanImp, powerDomain, subdeviceId);
     }
 
@@ -464,7 +465,7 @@ void LinuxPowerImp::init() {
 }
 
 bool LinuxPowerImp::isPowerModuleSupported() {
-    bool isEnergyCounterAvailable = (pSysfsAccess->fileExists(energyCounterNodeFile) || isTelemetrySupportAvailable);
+    bool isEnergyCounterAvailable = (pSysfsAccess->fileExists(energyCounterNodeFile) || isPmtBasedPowerSupported);
 
     if (isSubdevice) {
         return isEnergyCounterAvailable;
@@ -478,7 +479,7 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-    isTelemetrySupportAvailable = PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
+    isPmtBasedPowerSupported = pSysmanProductHelper->isPmtBasedPowerSupported() && PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
     init();
 }
 

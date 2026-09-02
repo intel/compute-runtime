@@ -86,16 +86,16 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenPowerHandleWithUnknownPowerDomainWhenI
     EXPECT_FALSE(pPowerImp->isPowerModuleSupported());
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenTelemetrySupportAndEnergyCounterNodeExistanceStatesWhenIsPowerModuleSupportedIsCalledForSubdeviceHandleThenCorrectSupportStatusIsReturnedForPackageDomain) {
+TEST_F(SysmanDevicePowerFixtureI915, GivenPmtBasedPowerSupportAndEnergyCounterNodeExistenceStatesWhenIsPowerModuleSupportedIsCalledForSubdeviceHandleThenCorrectSupportStatusIsReturnedForPackageDomain) {
     // Loop through all combinations of the three boolean flags (false/true) for the file existence
     for (bool isPackageEnergyCounterFilePresent : {false, true}) {
-        for (bool isTelemetrySupportAvailable : {false, true}) {
+        for (bool isPmtBasedPowerSupported : {false, true}) {
             // Set the file existence flags based on the current combination
             pSysfsAccess->isEnergyCounterFilePresent = isPackageEnergyCounterFilePresent;
             auto pPowerImp = std::make_unique<PublicLinuxPowerImp>(pOsSysman, true, 0, ZES_POWER_DOMAIN_PACKAGE);
-            pPowerImp->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+            pPowerImp->isPmtBasedPowerSupported = isPmtBasedPowerSupported;
             // The expected result is true if at least one of the path is present
-            bool expected = (isTelemetrySupportAvailable || isPackageEnergyCounterFilePresent);
+            bool expected = (isPmtBasedPowerSupported || isPackageEnergyCounterFilePresent);
 
             // Verify if the power module is supported as expected
             EXPECT_EQ(pPowerImp->isPowerModuleSupported(), expected);
@@ -106,7 +106,7 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenTelemetrySupportAndEnergyCounterNodeEx
 TEST_F(SysmanDevicePowerFixtureI915, GivenVariousPowerLimitFileExistanceStatesWhenIsPowerModuleSupportedIsCalledForRootDeviceHandleThenCorrectSupportStatusIsReturnedForPackageDomain) {
     // Loop through all combinations of the three boolean flags (false/true) for the file existence
     for (bool isPackageEnergyCounterFilePresent : {false, true}) {
-        for (bool isTelemetrySupportAvailable : {false, true}) {
+        for (bool isPmtBasedPowerSupported : {false, true}) {
             for (bool isPackagedSustainedPowerLimitFilePresent : {false, true}) {
                 for (bool isPackageCriticalPowerLimit2Present : {false, true}) {
                     // Set the file existence flags based on the current combination
@@ -115,9 +115,9 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenVariousPowerLimitFileExistanceStatesWh
                     pSysfsAccess->isCriticalPowerLimitFilePresent = isPackageCriticalPowerLimit2Present;
 
                     auto pPowerImp = std::make_unique<PublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
-                    pPowerImp->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+                    pPowerImp->isPmtBasedPowerSupported = isPmtBasedPowerSupported;
                     // The expected result is true if at least one of the files is present
-                    bool expected = (isTelemetrySupportAvailable || isPackageEnergyCounterFilePresent ||
+                    bool expected = (isPmtBasedPowerSupported || isPackageEnergyCounterFilePresent ||
                                      isPackagedSustainedPowerLimitFilePresent || isPackageCriticalPowerLimit2Present);
 
                     // Verify if the power module is supported as expected
@@ -537,10 +537,10 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenHwMonDoesNotExistAndTelemDataNotAvaila
     }
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandlesWithTelemetrySupportNotAvailableButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode) {
+TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandlesWithPmtBasedPowerNotSupportedButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode) {
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
-    pLinuxPowerImp->isTelemetrySupportAvailable = false;
+    pLinuxPowerImp->isPmtBasedPowerSupported = false;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
     EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
 }

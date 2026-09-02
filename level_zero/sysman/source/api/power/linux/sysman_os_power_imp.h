@@ -49,7 +49,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
     SysFsAccessInterface *pSysfsAccess = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
-    bool isTelemetrySupportAvailable = false;
+    bool isPmtBasedPowerSupported = false;
 
   private:
     std::string intelGraphicsHwmonDir = {};

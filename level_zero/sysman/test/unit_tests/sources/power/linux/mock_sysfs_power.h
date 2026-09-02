@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -263,7 +263,7 @@ struct MockPowerFsAccessInterface : public L0::Sysman::FsAccessInterface {
 class PublicLinuxPowerImp : public L0::Sysman::LinuxPowerImp {
   public:
     PublicLinuxPowerImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) : L0::Sysman::LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, powerDomain) {}
-    using L0::Sysman::LinuxPowerImp::isTelemetrySupportAvailable;
+    using L0::Sysman::LinuxPowerImp::isPmtBasedPowerSupported;
     using L0::Sysman::LinuxPowerImp::pSysfsAccess;
 };
 

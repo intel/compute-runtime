@@ -72,7 +72,7 @@ inline static int mockStatSuccess(const std::string &filePath, struct stat *stat
 HWTEST2_F(SysmanDevicePowerFixtureXe, GivenVariousPowerLimitFileExistanceStatesWhenIsPowerModuleSupportedIsCalledForRootDeviceHandleThenCorrectSupportStatusIsReturnedForCardDomain, IsBMG) {
     // Loop through all combinations of the three boolean flags (false/true) for the file existence
     for (bool isEnergyCounterFilePresent : {false, true}) {
-        for (bool isTelemetrySupportAvailable : {false, true}) {
+        for (bool isPmtBasedPowerSupported : {false, true}) {
             for (bool isSustainedPowerLimitFilePresent : {false, true}) {
                 for (bool isCriticalPowerLimitPresent : {false, true}) {
                     for (bool isBurstPowerLimitPresent : {false, true}) {
@@ -87,16 +87,16 @@ HWTEST2_F(SysmanDevicePowerFixtureXe, GivenVariousPowerLimitFileExistanceStatesW
                         pSysfsAccess->isPackageBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
 
                         // The expected result is true if at least one of the files is present
-                        bool expected = (isTelemetrySupportAvailable || isEnergyCounterFilePresent || isSustainedPowerLimitFilePresent ||
+                        bool expected = (isPmtBasedPowerSupported || isEnergyCounterFilePresent || isSustainedPowerLimitFilePresent ||
                                          isCriticalPowerLimitPresent || isBurstPowerLimitPresent);
 
                         // Verify if the power module is supported as expected
                         auto pPowerImpForCard = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
-                        pPowerImpForCard->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+                        pPowerImpForCard->isPmtBasedPowerSupported = isPmtBasedPowerSupported;
                         EXPECT_EQ(pPowerImpForCard->isPowerModuleSupported(), expected);
 
                         auto pPowerImpForPackage = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
-                        pPowerImpForPackage->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+                        pPowerImpForPackage->isPmtBasedPowerSupported = isPmtBasedPowerSupported;
                         EXPECT_EQ(pPowerImpForPackage->isPowerModuleSupported(), expected);
                     }
                 }
@@ -491,12 +491,12 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportNotAvailableButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode, IsBMG) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWithPmtBasedPowerNotSupportedButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode, IsBMG) {
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_CARD};
     for (const auto &powerDomain : powerDomains) {
         zes_power_energy_counter_t energyCounter = {};
         std::unique_ptr<XePublicLinuxPowerImp> pLinuxPowerImp(new XePublicLinuxPowerImp(pOsSysman, false, 0, powerDomain));
-        pLinuxPowerImp->isTelemetrySupportAvailable = false;
+        pLinuxPowerImp->isPmtBasedPowerSupported = false;
         const uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
         EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
         EXPECT_EQ(energyCounter.energy, xeMockEnergyCounter);
@@ -1237,6 +1237,16 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysfsReadFailsWithVariousErrorCod
             EXPECT_EQ(errorCode, pPowerImp->getLimitsExt2(&limit));
         }
     }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenTrueIsReturned, IsDg2BmgOrCri) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported());
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenFalseIsReturned, IsNotDg2BmgOrCri) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported());
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerUsageThenUnsupportedFeatureIsReturned, IsNotBmgOrCri) {

@@ -33,6 +33,11 @@ inline constexpr int standbyModeRc6Never = 0;
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_hw.inl"
 
 template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported() {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
     return nullptr;
 }

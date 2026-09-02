@@ -15,6 +15,7 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace NEO {
@@ -134,6 +135,9 @@ class SysmanProductHelper {
 
     // Netlink
     virtual bool isNetlinkEventSupported() = 0;
+
+    // Pmt
+    virtual bool isPmtBasedPowerSupported() = 0;
 
     virtual ~SysmanProductHelper() = default;
     virtual const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() = 0;

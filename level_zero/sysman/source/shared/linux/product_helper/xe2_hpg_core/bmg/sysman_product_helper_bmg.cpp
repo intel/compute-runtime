@@ -1280,6 +1280,11 @@ const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelpe
 }
 
 template <>
+bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported() {
+    return true;
+}
+
+template <>
 bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
 }

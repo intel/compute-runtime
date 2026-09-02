@@ -106,6 +106,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Netlink
     bool isNetlinkEventSupported() override;
 
+    // Pmt
+    bool isPmtBasedPowerSupported() override;
+
     ~SysmanProductHelperHw() override = default;
 
     const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override;

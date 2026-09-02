@@ -27,7 +27,7 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenKmdInterfaceWhenGettingSysFsFilenamesFor
     EXPECT_STREQ("power2_max_interval", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimitInterval, 0, false).c_str());
 }
 
-TEST_F(SysmanDevicePowerFixtureXe, GivenComponentCountZeroWhenEnumeratingPowerDomainsWhenOnlySysfsNodesExistThenValidCountIsReturned) {
+TEST_F(SysmanDevicePowerFixtureXe, GivenComponentCountZeroWhenEnumeratingPowerDomainsThenValidCountIsReturned) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(xePowerHandleComponentCount, count);

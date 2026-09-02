@@ -171,6 +171,11 @@ const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelpe
     return &guidToKeyOffsetMap;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported() {
+    return true;
+}
+
 static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::string &rootPath,
                                                    std::map<std::string, uint64_t> &keyOffsetMap,
                                                    std::unordered_map<std::string, std::string> &keyTelemInfoMap) {
