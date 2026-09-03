@@ -782,8 +782,10 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
 }
 
 HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesThenValidPropertiesAreReturned, IsCRI) {
-    static const uint32_t memoryMsuCount = 20;
-    static const uint32_t busWidthPerMsuInBits = 64;
+    // 20 MSUs x 4 channels per MSU
+    const int32_t expectedNumChannels = 80;
+    // 20 MSUs x 64 bit data width per MSU
+    const int32_t expectedBusWidth = 1280;
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_mem_properties_t properties = {};
@@ -792,8 +794,6 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
 
     auto pDrm = setUpMemoryDrmForXeProductHelperTest(pSysmanDeviceImp);
     pDrm->setMemoryInfoWithDefaultRegions();
-    const int32_t expectedNumChannels = static_cast<int32_t>(memoryMsuCount);
-    const int32_t expectedBusWidth = expectedNumChannels * busWidthPerMsuInBits;
 
     auto pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
     auto pSysfsAccess = new MockMemorySysFsAccessInterface();

@@ -32,6 +32,7 @@ constexpr static auto gfxProduct = IGFX_CRI;
 
 constexpr static uint32_t memoryMsuCount = 20;
 constexpr static uint32_t busWidthPerMsuInBits = 64;
+constexpr static uint32_t channelCountPerMemoryMsu = 4;
 constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
@@ -1177,8 +1178,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
     pProperties->type = ZES_MEM_TYPE_LPDDR5X;
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subDeviceId;
-    pProperties->numChannels = memoryMsuCount;
-    pProperties->busWidth = pProperties->numChannels * busWidthPerMsuInBits;
+    pProperties->numChannels = memoryMsuCount * channelCountPerMemoryMsu;
+    pProperties->busWidth = memoryMsuCount * busWidthPerMsuInBits;
     pProperties->physicalSize = physicalMemorySize;
     return ZE_RESULT_SUCCESS;
 }
