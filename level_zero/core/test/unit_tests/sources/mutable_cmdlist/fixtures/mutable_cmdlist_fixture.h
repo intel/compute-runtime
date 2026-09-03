@@ -181,6 +181,10 @@ struct MutableCommandListFixture : public MutableCommandListFixtureInit {
     }
 };
 
+struct MutableCommandListSWTagsFixture : public MutableCommandListFixture<false, -1> {
+    void setUp();
+};
+
 struct WhiteBoxMutableResidencyAllocations : public ::L0::MCL::MutableResidencyAllocations {
     using MutableResidencyAllocations::addedAllocations;
 };

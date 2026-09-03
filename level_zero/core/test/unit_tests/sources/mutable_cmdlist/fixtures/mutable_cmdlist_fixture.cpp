@@ -7,6 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
@@ -696,6 +697,11 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendHostFunctionCallbac
     callbackData->result = this->mutableCommandList->appendHostFunction(pHostFunction, pUserData, nullptr, callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, parameters);
     callbackData->outWaitCmds = parameters.waitEventParams.outWaitCmds;
     callbackData->skipAddingWaitEventsToResidency = parameters.waitEventParams.skipAddingWaitEventsToResidency;
+}
+
+void MutableCommandListSWTagsFixture::setUp() {
+    NEO::debugManager.flags.EnableSWTags.set(true);
+    MutableCommandListFixture<false, -1>::setUp();
 }
 
 } // namespace ult

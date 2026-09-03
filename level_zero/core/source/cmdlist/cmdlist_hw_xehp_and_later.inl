@@ -61,7 +61,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     launchParams.inOrderNonWalkerSignalingRequired = isInOrderNonWalkerSignalingRequired(event);
 
-    if (NEO::debugManager.flags.ForcePipeControlPriorToWalker.get()) {
+    if (!launchParams.makeKernelCommandView && NEO::debugManager.flags.ForcePipeControlPriorToWalker.get()) {
         NEO::PipeControlArgs args;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
@@ -131,44 +131,44 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                 kernelNeedsScratchSpace = true;
             }
         }
-    }
-    auto requiredSshSize = kernel->getSurfaceStateHeapDataSize();
-    if ((this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) && (requiredSshSize > 0 || needScratchSpace)) {
-        if (!this->immediateCmdListHeapSharing && neoDevice->getBindlessHeapsHelper()) {
-            commandContainer.prepareBindfulSsh();
-            commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::surfaceState, requiredSshSize, NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment());
-        }
-    }
 
-    if ((this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) &&
-        (this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) &&
-        (!launchParams.makeKernelCommandView)) {
-
-        auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();
-        NEO::HeapReserveArguments sshReserveArgs = {sshReserveConfig.indirectHeapReservation,
-                                                    NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
-                                                    NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment()};
-
-        // update SSH size - when global bindless addressing is used, kernel args may not require ssh space
-        if (kernel->getSurfaceStateHeapDataSize() == 0) {
-            sshReserveArgs.size = 0;
+        auto requiredSshSize = kernel->getSurfaceStateHeapDataSize();
+        if ((this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) && (requiredSshSize > 0 || needScratchSpace)) {
+            if (!this->immediateCmdListHeapSharing && neoDevice->getBindlessHeapsHelper()) {
+                commandContainer.prepareBindfulSsh();
+                commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::surfaceState, requiredSshSize, NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment());
+            }
         }
 
-        NEO::HeapReserveArguments dshReserveArgs = {};
-        if (this->dynamicHeapRequired) {
-            auto &dshReserveConfig = commandContainer.getDynamicStateHeapReserve();
-            dshReserveArgs = {
-                dshReserveConfig.indirectHeapReservation,
-                NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, 0),
-                NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment()};
+        if ((this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) &&
+            (this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps)) {
+
+            auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();
+            NEO::HeapReserveArguments sshReserveArgs = {sshReserveConfig.indirectHeapReservation,
+                                                        NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
+                                                        NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment()};
+
+            // update SSH size - when global bindless addressing is used, kernel args may not require ssh space
+            if (kernel->getSurfaceStateHeapDataSize() == 0) {
+                sshReserveArgs.size = 0;
+            }
+
+            NEO::HeapReserveArguments dshReserveArgs = {};
+            if (this->dynamicHeapRequired) {
+                auto &dshReserveConfig = commandContainer.getDynamicStateHeapReserve();
+                dshReserveArgs = {
+                    dshReserveConfig.indirectHeapReservation,
+                    NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, 0),
+                    NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment()};
+            }
+
+            commandContainer.reserveSpaceForDispatch(
+                sshReserveArgs,
+                dshReserveArgs, this->dynamicHeapRequired);
+
+            ssh = sshReserveArgs.indirectHeapReservation;
+            dsh = dshReserveArgs.indirectHeapReservation;
         }
-
-        commandContainer.reserveSpaceForDispatch(
-            sshReserveArgs,
-            dshReserveArgs, this->dynamicHeapRequired);
-
-        ssh = sshReserveArgs.indirectHeapReservation;
-        dsh = dshReserveArgs.indirectHeapReservation;
     }
 
     auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
@@ -245,7 +245,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->indirectAllocationsAllowed = true;
     }
 
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
+    if (!launchParams.makeKernelCommandView && this->swTagsEnabled) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::KernelNameTag>(
             *commandContainer.getCommandStream(),
             *neoDevice,
@@ -338,12 +338,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    if (this->consumeTextureCacheFlushPending() ||
-        (this->isPreImageReadFlushRequired &&
-         (kernelDescriptor.kernelAttributes.hasImageReadArg || kernelDescriptor.kernelAttributes.flags.hasBindlessImageRead))) {
-        NEO::PipeControlArgs args;
-        args.textureCacheInvalidationEnable = true;
-        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+    if (!launchParams.makeKernelCommandView) {
+        if (this->consumeTextureCacheFlushPending() ||
+            (this->isPreImageReadFlushRequired &&
+             (kernelDescriptor.kernelAttributes.hasImageReadArg || kernelDescriptor.kernelAttributes.flags.hasBindlessImageRead))) {
+            NEO::PipeControlArgs args;
+            args.textureCacheInvalidationEnable = true;
+            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+        }
     }
 
     bool isFlushL3ForExternalAllocationRequired = false;
@@ -495,32 +497,35 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    if (textureFlushRequired) {
+    if (!launchParams.makeKernelCommandView && textureFlushRequired) {
         NEO::PipeControlArgs args;
         args.textureCacheInvalidationEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
 
-    if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing && !neoDevice->getBindlessHeapsHelper() && this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
-        auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
-        auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
-        auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    if (!launchParams.makeKernelCommandView) {
+        if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing && !neoDevice->getBindlessHeapsHelper() && this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
+            auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
+            auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
+            auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
-        NEO::EncodeSurfaceStateArgs args;
-        args.outMemory = &surfaceState;
-        args.graphicsAddress = device->getDebugSurface()->getGpuAddress();
-        args.size = device->getDebugSurface()->getUnderlyingBufferSize();
-        args.mocs = device->getMOCS(false, false);
-        args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
-        args.allocation = device->getDebugSurface();
-        args.gmmHelper = neoDevice->getGmmHelper();
-        args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
-        args.implicitScaling = this->partitionCount > 1;
-        args.isDebuggerActive = true;
+            NEO::EncodeSurfaceStateArgs args;
+            args.outMemory = &surfaceState;
+            args.graphicsAddress = device->getDebugSurface()->getGpuAddress();
+            args.size = device->getDebugSurface()->getUnderlyingBufferSize();
+            args.mocs = device->getMOCS(false, false);
+            args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+            args.allocation = device->getDebugSurface();
+            args.gmmHelper = neoDevice->getGmmHelper();
+            args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
+            args.implicitScaling = this->partitionCount > 1;
+            args.isDebuggerActive = true;
 
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
-        *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+            NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+            *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+        }
     }
+
     // Attach kernel residency to our CommandList residency
     {
         if (!launchParams.omitAddingKernelInternalResidency) {
@@ -553,7 +558,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                                                 releaseHelper.isStateCacheInvalidationWaRequired(this->isImmediateType(),
                                                                                                  kernelDescriptor.kernelAttributes.usesImageOrSamplerState()));
 
-    if (programStateCacheInvalidation) {
+    if (!launchParams.makeKernelCommandView && programStateCacheInvalidation) {
         NEO::PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

@@ -15,6 +15,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/software_tags.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -38,6 +39,7 @@ namespace ult {
 
 using MutableCommandListKernelTest = Test<MutableCommandListFixture<false, -1>>;
 using MutableCommandListKernelInOrderTest = Test<MutableCommandListFixture<true, -1>>;
+using MutableCommandListKernelSWTagsTest = Test<MutableCommandListSWTagsFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
@@ -2183,6 +2185,85 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     memcpy(&usmPatchAddressValue, gpuVa2PatchFullAddress, sizeof(uint64_t));
     EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelSWTagsTest,
+            givenEnableSWTagsWhenAppendLaunchKernelForTwoKernelMutationGroupThenSingleKernelSwTagIsInserted) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
+    // Create a kernel group with two kernels - only the main (active) kernel is dispatched,
+    // the other kernel is only command-viewed and must not produce its own SW tag.
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+
+    auto cmdStream = mutableCommandList->getBase()->getCmdContainer().getCommandStream();
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    result = mutableCommandList->close();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(cmdStream->getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+    auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
+
+    // SW tag for the active kernel of the kernel group must be inserted exactly once,
+    // the inactive command-viewed kernel must not add its own SW tag.
+    uint32_t kernelSwTagMarkerCount = 0;
+    for (auto it = noops.begin(); it != noops.end(); ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::kernelName) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true) {
+            ++kernelSwTagMarkerCount;
+        }
+    }
+    EXPECT_EQ(1u, kernelSwTagMarkerCount);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenForcePipeControlPriorToWalkerWhenAppendLaunchKernelForTwoKernelMutationGroupThenSinglePipeControlIsInsertedBeforeWalker) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    debugManager.flags.ForcePipeControlPriorToWalker.set(1);
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto cmdStream = mutableCommandList->getBase()->getCmdContainer().getCommandStream();
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(cmdStream->getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    // ForcePipeControlPriorToWalker must insert exactly one PIPE_CONTROL before the walker.
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), itorWalker);
+    EXPECT_EQ(1u, pipeControls.size());
 }
 
 } // namespace ult
