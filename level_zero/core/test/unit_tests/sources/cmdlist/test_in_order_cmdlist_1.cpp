@@ -1419,6 +1419,41 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderCmdListWhenSubmitt
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenMultiplePartitionsWhenResolvingInOrderDependencyThenUseSemaphoreInsteadOfPipeControl) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);
+
+    uint32_t counterOffset = 64;
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
+    regularCmdList->partitionCount = 2;
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    auto expectedWaitValue = regularCmdList->inOrderExecInfo->getCounterValue();
+    auto offset = cmdStream->getUsed();
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), offset),
+        cmdStream->getUsed() - offset));
+
+    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(regularCmdList->isQwordInOrderCounter(), device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport)) {
+        std::advance(itor, -2); // verify 2x LRI before semaphore
+    }
+
+    EXPECT_TRUE(verifyInOrderDependency<FamilyType>(itor, expectedWaitValue, regularCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, regularCmdList->isQwordInOrderCounter(), false));
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterleavedCsrSubmissionWhenResolvingInOrderDependencyThenUseSemaphoreInsteadOfPipeControl) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);

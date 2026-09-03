@@ -3582,7 +3582,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isResolveIoqDependencyWithBarrier(boo
 
     const bool heapfulProfilingEvent = !this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling;
     const auto isBarrierRequired = (this->isInOrderCounterSignalPending() || heapfulProfilingEvent);
-    auto resolveIoqDependencyWithBarrier = true;
+    auto resolveIoqDependencyWithBarrier = !(this->partitionCount > 1);
     if (this->isImmediateType() && !isBarrierRequired) {
         // Use semaphore to avoid serialization if different cmd list submitted workload between previous and current submission.
         // Semaphore is not allowed if previous submission used HP event or post sync was skipped.
