@@ -1173,6 +1173,13 @@ cl_int CL_API_CALL clReleaseMemObject(cl_mem memobj) {
 
     DBG_LOG_INPUTS("memobj", memobj);
 
+    if (debugManager.flags.FillBufferTailWithPattern.get() != 0) {
+        auto pBuffer = castToObject<Buffer>(memobj);
+        if ((pBuffer != nullptr) && (pBuffer->getRefApiCount() == 1) && (false == pBuffer->isTailPatternValid())) {
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Buffer tail pattern corrupted on release: buffer=%p\n", static_cast<void *>(pBuffer));
+        }
+    }
+
     auto pMemObj = castToObject<MemObj>(memobj);
     if (pMemObj) {
         pMemObj->release();
