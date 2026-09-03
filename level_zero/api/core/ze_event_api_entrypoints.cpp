@@ -107,14 +107,11 @@ ze_result_t ZE_APICALL zeEventHostSynchronize(
 ze_result_t ZE_APICALL zeEventQueryStatus(
     ze_event_handle_t hEvent) {
     auto event = L0::Event::fromHandle(hEvent);
-    if (L0::Event::isBeingUsedInActiveGraphRecording(event)) {
-        return ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED;
-    }
-    if (event->getIsSignalledAsGraphInternalEvent()) {
+    if (event->isCapturedGraphInternalEvent() || event->getIsSignalledAsGraphInternalEvent()) {
         return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
     }
 
-    return L0::Event::fromHandle(hEvent)->queryStatus(0);
+    return event->queryStatus(0);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendEventReset(

@@ -4332,21 +4332,44 @@ TEST_F(GraphTestCaptureRestrictions, GivenEventSignalledByCapturingCmdlistWhenEv
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(hPool));
 }
 
-TEST_F(GraphTestCaptureRestrictions, GivenEventSignalledByCapturingCmdlistWhenEventQueryStatusCalledThenGraphCaptureUnsupportedReturned) {
+TEST_F(GraphTestCaptureRestrictions, GivenInternalCbEventSignalledByCapturingCmdlistWhenEventQueryStatusCalledThenGraphInternalEventReturned) {
     GraphsCleanupGuard graphCleanup;
 
     auto eventHandle = createCounterBasedEvent(context, device, false);
     auto *event = L0::Event::fromHandle(eventHandle);
 
     event->setRecordedSignalFrom(immCmdList);
-    EXPECT_TRUE(L0::Event::isBeingUsedInActiveGraphRecording(event));
-    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED, zeEventQueryStatus(eventHandle));
+    EXPECT_TRUE(event->isCapturedGraphInternalEvent());
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, zeEventQueryStatus(eventHandle));
 
     event->setRecordedSignalFrom(nullptr);
-    EXPECT_FALSE(L0::Event::isBeingUsedInActiveGraphRecording(event));
-    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED, zeEventQueryStatus(eventHandle));
+    EXPECT_FALSE(event->isCapturedGraphInternalEvent());
+    EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, zeEventQueryStatus(eventHandle));
 
     event->destroy();
+}
+
+TEST_F(GraphTestCaptureRestrictions, GivenRegularEventSignalledByCapturingCmdlistWhenEventQueryStatusCalledThenStatusIsReported) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_event_pool_desc_t poolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 1};
+    ze_event_pool_handle_t hPool = nullptr;
+    auto hDevice = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &poolDesc, 1, &hDevice, &hPool));
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
+    ze_event_handle_t hEvent = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(hPool, &eventDesc, &hEvent));
+    auto *event = L0::Event::fromHandle(hEvent);
+
+    event->setRecordedSignalFrom(immCmdList);
+    EXPECT_FALSE(event->isCapturedGraphInternalEvent());
+    EXPECT_EQ(ZE_RESULT_NOT_READY, zeEventQueryStatus(hEvent));
+
+    event->setRecordedSignalFrom(nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(hEvent));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(hPool));
 }
 
 TEST(GraphTestZeCommandListGetGraphExp, GivenInvalidParametersThenReturnsAppropriateErrorCode) {
