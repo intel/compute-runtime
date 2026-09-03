@@ -12,6 +12,7 @@
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -540,6 +541,32 @@ TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagWhenGettingMemSizeVi
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(memObj));
 }
 
+TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagWhenBufferIsNotLargerThanTailThenFullSizeIsReturned) {
+    DebugManagerStateRestore restorer;
+    constexpr size_t requestedSize = 64u;
+    constexpr int32_t pageSizeNumber = 2;
+    debugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
+
+    cl_int retVal = CL_SUCCESS;
+    cl_context clCtx = pContext;
+    cl_mem memObj = clCreateBuffer(clCtx, CL_MEM_READ_WRITE, requestedSize, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, memObj);
+
+    auto bufferObj = NEO::castToObject<Buffer>(memObj);
+    ASSERT_NE(nullptr, bufferObj);
+
+    const auto tailPageCount = static_cast<int32_t>((bufferObj->getSize() / MemoryConstants::pageSize) + 1);
+    debugManager.flags.ForceExtendedBufferSize.set(tailPageCount);
+
+    size_t queriedSize = 0;
+    retVal = clGetMemObjectInfo(memObj, CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(bufferObj->getSize(), queriedSize);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(memObj));
+}
+
 TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagNotSetWhenGettingMemSizeViaApiThenBufferSizeIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_context clCtx = pContext;
@@ -556,4 +583,29 @@ TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagNotSetWhenGettingMem
     EXPECT_EQ(bufferObj->getSize(), queriedSize);
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(memObj));
+}
+
+TEST_F(GetMemObjectInfo, GivenForceExtendedBufferSizeFlagWhenGettingImageSizeThenActualSizeIsReturned) {
+    DebugManagerStateRestore restorer;
+    MockContext context(pClDevice);
+
+    cl_image_format imageFormat = Image2dDefaults::imageFormat;
+    cl_image_desc imageDesc = Image2dDefaults::imageDesc;
+    imageDesc.image_width = 512;
+    imageDesc.image_height = 512;
+
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imageDesc, &imageFormat));
+    ASSERT_NE(nullptr, image.get());
+
+    const auto actualSize = image->getSize();
+    ASSERT_GT(actualSize, MemoryConstants::pageSize);
+
+    debugManager.flags.ForceExtendedBufferSize.set(1);
+
+    size_t queriedSize = 0;
+    size_t sizeReturned = 0;
+    auto retVal = image->getMemObjectInfo(CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, &sizeReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(queriedSize), sizeReturned);
+    EXPECT_EQ(actualSize, queriedSize);
 }
