@@ -14,8 +14,6 @@ namespace NEO {
 class MockCompilerReleaseHelper : public CompilerReleaseHelper {
   public:
     MockCompilerReleaseHelper() : CompilerReleaseHelper(0) {}
-    ADDMETHOD_CONST_NOBASE(getAdditionalFp16Caps, uint32_t, {}, ());
-    ADDMETHOD_CONST_NOBASE(getAdditionalExtraCaps, uint32_t, {}, ());
 };
 
 } // namespace NEO

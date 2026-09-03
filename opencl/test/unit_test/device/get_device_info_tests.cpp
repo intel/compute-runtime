@@ -1146,10 +1146,9 @@ struct DeviceAttributeQueryTest : public ::testing::Test {
     DebugManagerStateRestore restorer;
 };
 
-TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFromCompilerReleaseHelperIsReturnedOrNone) {
+TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFromCapsIsReturnedOrNone) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    const auto &compilerReleaseHelper = device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getCompilerReleaseHelper();
-    uint32_t extraKernelCapabilities = compilerReleaseHelper.getAdditionalExtraCaps();
+    const auto &hwInfo = device->getHardwareInfo();
     uint64_t value = 0u;
     size_t retSize = 0u;
 
@@ -1160,7 +1159,7 @@ TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFro
         &retSize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(extraKernelCapabilities, value);
+    EXPECT_EQ(hwInfo.caps.kernelBFloat16AtomicCapabilities, value);
     EXPECT_EQ(sizeof(cl_device_atomic_capabilities), retSize);
 }
 

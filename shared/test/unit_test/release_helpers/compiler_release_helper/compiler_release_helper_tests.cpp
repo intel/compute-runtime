@@ -7,7 +7,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -16,30 +15,6 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-using CompilerReleaseHelperKernelCapabilitiesTests = ::testing::Test;
-
-TEST(CompilerReleaseHelperKernelCapabilitiesTests, givenNoAdditionalFp16CapsWhenGettingKernelFp16AtomicCapabilitiesThenReturnMinMaxAndLoadStoreCapabilities) {
-    MockCompilerReleaseHelper compilerReleaseHelper;
-    compilerReleaseHelper.getAdditionalFp16CapsResult = 0u;
-
-    uint32_t fp16Caps = 0u;
-    compilerReleaseHelper.getKernelFp16AtomicCapabilities(fp16Caps);
-
-    EXPECT_EQ(1u, compilerReleaseHelper.getAdditionalFp16CapsCalled);
-    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, fp16Caps);
-}
-
-TEST(CompilerReleaseHelperKernelCapabilitiesTests, givenAdditionalFp16CapsWhenGettingKernelFp16AtomicCapabilitiesThenAdditionalCapsAreOredIn) {
-    MockCompilerReleaseHelper compilerReleaseHelper;
-    compilerReleaseHelper.getAdditionalFp16CapsResult = FpAtomicExtFlags::addAtomicCaps;
-
-    uint32_t fp16Caps = 0u;
-    compilerReleaseHelper.getKernelFp16AtomicCapabilities(fp16Caps);
-
-    EXPECT_EQ(1u, compilerReleaseHelper.getAdditionalFp16CapsCalled);
-    EXPECT_EQ(FpAtomicExtFlags::addAtomicCaps | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, fp16Caps);
-}
-
 using CompilerReleaseHelperSemaphore64Tests = ::testing::Test;
 
 TEST(CompilerReleaseHelperSemaphore64Tests, givenFtrHwSemaphore64SetWhenIsAvailableSemaphore64CalledThenValueFromReleaseSpecificImplementationIsReturned) {

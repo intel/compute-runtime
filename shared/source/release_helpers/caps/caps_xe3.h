@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/hw_ip_version.h"
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/caps/materialize_caps.h"
 
 #include "neo_aot_platforms.h"
@@ -17,6 +18,8 @@
 namespace NEO {
 
 struct CapsXe3Core {
+    static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
+
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool blitImageAllowedForDepthFormat = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;

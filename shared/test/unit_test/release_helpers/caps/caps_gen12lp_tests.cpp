@@ -23,6 +23,8 @@ TEST(CapsGen12LpTest, givenGen12LpIpVersionWhenResolvingCapsThenCapsOfMatchingRe
 
 TEST(CapsGen12LpTest, givenTglReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsTgl = materializeCaps<CapsTgl>();
+    EXPECT_EQ(0u, capsTgl.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsTgl.kernelFp16AtomicCapabilities);
     EXPECT_FALSE(capsTgl.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsTgl.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsTgl.availableSemaphore64);
@@ -57,6 +59,8 @@ TEST(CapsGen12LpTest, givenTglReleaseWhenMaterializingCapsThenCapabilitiesAreCor
 
 TEST(CapsGen12LpTest, givenRklReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsRkl = materializeCaps<CapsRkl>();
+    EXPECT_EQ(0u, capsRkl.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsRkl.kernelFp16AtomicCapabilities);
     EXPECT_FALSE(capsRkl.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsRkl.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsRkl.availableSemaphore64);
@@ -91,6 +95,8 @@ TEST(CapsGen12LpTest, givenRklReleaseWhenMaterializingCapsThenCapabilitiesAreCor
 
 TEST(CapsGen12LpTest, givenAdlSReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsAdlS = materializeCaps<CapsAdlS>();
+    EXPECT_EQ(0u, capsAdlS.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsAdlS.kernelFp16AtomicCapabilities);
     EXPECT_FALSE(capsAdlS.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsAdlS.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsAdlS.availableSemaphore64);
@@ -125,6 +131,8 @@ TEST(CapsGen12LpTest, givenAdlSReleaseWhenMaterializingCapsThenCapabilitiesAreCo
 
 TEST(CapsGen12LpTest, givenAdlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsAdlP = materializeCaps<CapsAdlP>();
+    EXPECT_EQ(0u, capsAdlP.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsAdlP.kernelFp16AtomicCapabilities);
     EXPECT_FALSE(capsAdlP.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsAdlP.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsAdlP.availableSemaphore64);
@@ -159,6 +167,8 @@ TEST(CapsGen12LpTest, givenAdlPReleaseWhenMaterializingCapsThenCapabilitiesAreCo
 
 TEST(CapsGen12LpTest, givenAdlNReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsAdlN = materializeCaps<CapsAdlN>();
+    EXPECT_EQ(0u, capsAdlN.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsAdlN.kernelFp16AtomicCapabilities);
     EXPECT_FALSE(capsAdlN.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsAdlN.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsAdlN.availableSemaphore64);
@@ -193,6 +203,8 @@ TEST(CapsGen12LpTest, givenAdlNReleaseWhenMaterializingCapsThenCapabilitiesAreCo
 
 TEST(CapsGen12LpTest, givenDg1ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsDg1 = materializeCaps<CapsDg1>();
+    EXPECT_EQ(0u, capsDg1.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsDg1.kernelFp16AtomicCapabilities);
     EXPECT_FALSE(capsDg1.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsDg1.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsDg1.availableSemaphore64);

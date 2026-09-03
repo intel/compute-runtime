@@ -7,9 +7,14 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace NEO {
 
 struct Caps {
+    uint32_t kernelBFloat16AtomicCapabilities = 0u;
+    uint32_t kernelFp16AtomicCapabilities = 0u;
+
     bool adjustWalkOrderAvailable = false;
     bool auxSurfaceModeOverrideRequired = false;
     bool availableSemaphore64 = false;

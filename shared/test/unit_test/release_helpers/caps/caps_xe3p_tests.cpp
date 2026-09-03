@@ -35,6 +35,9 @@ TEST(CapsXe3pTest, givenNvlPIpVersionWhenResolvingCapsThenReleaseCapsAreReturned
 
 TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsCri = materializeCaps<CapsCri>();
+
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsCri.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsCri.kernelFp16AtomicCapabilities);
     EXPECT_FALSE(capsCri.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsCri.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsCri.availableSemaphore64);
@@ -71,6 +74,8 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     constexpr auto capsNvlPA0 = materializeCaps<CapsNvlPA0>();
     constexpr auto capsNvlPB0 = materializeCaps<CapsNvlPB0>();
 
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPA0.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPA0.kernelFp16AtomicCapabilities);
     EXPECT_FALSE(capsNvlPA0.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsNvlPA0.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsNvlPA0.availableSemaphore64);
@@ -102,6 +107,8 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsNvlPA0.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsNvlPA0.splitMatrixMultiplyAccumulateSupported);
 
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPB0.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPB0.kernelFp16AtomicCapabilities);
     EXPECT_FALSE(capsNvlPB0.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsNvlPB0.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsNvlPB0.availableSemaphore64);

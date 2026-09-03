@@ -44,7 +44,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -762,7 +761,6 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
     const auto &deviceInfo = this->getDeviceInfo();
     const auto &productHelper = this->getProductHelper();
     const auto &releaseHelper = this->neoDevice->getReleaseHelper();
-    const auto &compilerReleaseHelper = this->neoDevice->getCompilerReleaseHelper();
 
     std::string ilVersion = deviceInfo.ilVersion;
     size_t majorVersionPos = ilVersion.find('_');
@@ -813,7 +811,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES) {
             ze_float_atomic_ext_properties_t *floatProperties =
                 reinterpret_cast<ze_float_atomic_ext_properties_t *>(extendedProperties);
-            compilerReleaseHelper.getKernelFp16AtomicCapabilities(floatProperties->fp16Flags);
+            floatProperties->fp16Flags = hardwareInfo.caps.kernelFp16AtomicCapabilities;
             compilerProductHelper.getKernelFp32AtomicCapabilities(floatProperties->fp32Flags);
             compilerProductHelper.getKernelFp64AtomicCapabilities(floatProperties->fp64Flags);
             static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE == FpAtomicExtFlags::globalLoadStore, "Mismatch between internal and API - specific capabilities.");
@@ -881,7 +879,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             }
         } else if (static_cast<uint32_t>(extendedProperties->stype) == ZEX_STRUCTURE_TYPE_BFLOAT16_ATOMIC_EXT_PROPERTIES) {
             zex_bfloat16_atomic_ext_properties_t *properties = reinterpret_cast<zex_bfloat16_atomic_ext_properties_t *>(extendedProperties);
-            properties->bfloat16Flags |= compilerReleaseHelper.getAdditionalExtraCaps();
+            properties->bfloat16Flags |= hardwareInfo.caps.kernelBFloat16AtomicCapabilities;
         }
 
         pNext = const_cast<void *>(extendedProperties->pNext);

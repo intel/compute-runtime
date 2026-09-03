@@ -79,7 +79,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
         }
 
         auto &hwInfo = clDevice.getHardwareInfo();
-        const auto &compilerReleaseHelper = clDevice.getDevice().getCompilerReleaseHelper();
         auto openclCFeatureIterator = clDevice.getDeviceInfo().openclCFeatures.begin();
 
         EXPECT_STREQ("__opencl_c_int64", openclCFeatureIterator->name);
@@ -115,22 +114,22 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit", (++openclCFeatureIterator)->name);
         EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit_packed", (++openclCFeatureIterator)->name);
 
-        uint32_t fp16AdditionalCaps = compilerReleaseHelper.getAdditionalFp16Caps();
-        uint32_t fpExtraAdditionalCaps = compilerReleaseHelper.getAdditionalExtraCaps();
+        uint32_t fp16AtomicCapabilities = hwInfo.caps.kernelFp16AtomicCapabilities;
+        uint32_t bFloat16AtomicCapabilities = hwInfo.caps.kernelBFloat16AtomicCapabilities;
 
-        if (isValueSet(fp16AdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+        if (isValueSet(fp16AtomicCapabilities, FpAtomicExtFlags::addAtomicCaps)) {
             EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_add", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_add", (++openclCFeatureIterator)->name);
         }
-        if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+        if (isValueSet(bFloat16AtomicCapabilities, FpAtomicExtFlags::addAtomicCaps)) {
             EXPECT_STREQ("__opencl_c_ext_bfloat16_global_atomic_add", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_ext_bfloat16_local_atomic_add", (++openclCFeatureIterator)->name);
         }
-        if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::loadStoreAtomicCaps)) {
+        if (isValueSet(bFloat16AtomicCapabilities, FpAtomicExtFlags::loadStoreAtomicCaps)) {
             EXPECT_STREQ("__opencl_c_ext_bfloat16_global_atomic_load_store", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_ext_bfloat16_local_atomic_load_store", (++openclCFeatureIterator)->name);
         }
-        if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::minMaxAtomicCaps)) {
+        if (isValueSet(bFloat16AtomicCapabilities, FpAtomicExtFlags::minMaxAtomicCaps)) {
             EXPECT_STREQ("__opencl_c_ext_bfloat16_global_atomic_min_max", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_ext_bfloat16_local_atomic_min_max", (++openclCFeatureIterator)->name);
         }

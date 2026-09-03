@@ -13,14 +13,13 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_properties.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 #include <sstream>
 #include <string>
 
 namespace NEO {
 
-void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures, const CompilerProductHelper &compilerProductHelper, const CompilerReleaseHelper &compilerReleaseHelper) {
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures) {
     cl_name_version openClCFeature;
     openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
 
@@ -110,28 +109,28 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
     strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit_packed");
     openclCFeatures.push_back(openClCFeature);
 
-    uint32_t fp16AdditionalCaps = compilerReleaseHelper.getAdditionalFp16Caps();
-    uint32_t fpExtraAdditionalCaps = compilerReleaseHelper.getAdditionalExtraCaps();
+    uint32_t fp16AtomicCapabilities = hwInfo.caps.kernelFp16AtomicCapabilities;
+    uint32_t bFloat16AtomicCapabilities = hwInfo.caps.kernelBFloat16AtomicCapabilities;
 
-    if (isValueSet(fp16AdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+    if (isValueSet(fp16AtomicCapabilities, FpAtomicExtFlags::addAtomicCaps)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_add");
         openclCFeatures.push_back(openClCFeature);
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_add");
         openclCFeatures.push_back(openClCFeature);
     }
-    if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+    if (isValueSet(bFloat16AtomicCapabilities, FpAtomicExtFlags::addAtomicCaps)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_global_atomic_add");
         openclCFeatures.push_back(openClCFeature);
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_local_atomic_add");
         openclCFeatures.push_back(openClCFeature);
     }
-    if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::loadStoreAtomicCaps)) {
+    if (isValueSet(bFloat16AtomicCapabilities, FpAtomicExtFlags::loadStoreAtomicCaps)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_global_atomic_load_store");
         openclCFeatures.push_back(openClCFeature);
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_local_atomic_load_store");
         openclCFeatures.push_back(openClCFeature);
     }
-    if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::minMaxAtomicCaps)) {
+    if (isValueSet(bFloat16AtomicCapabilities, FpAtomicExtFlags::minMaxAtomicCaps)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_global_atomic_min_max");
         openclCFeatures.push_back(openClCFeature);
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_local_atomic_min_max");

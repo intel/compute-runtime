@@ -153,7 +153,7 @@ void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::st
     }
     OpenClCFeaturesContainer openclCFeatures;
     if (requiresOpenClCFeatures(options)) {
-        getOpenclCFeaturesList(hwInfo, openclCFeatures, *compilerProductHelper.get(), *compilerReleaseHelper);
+        getOpenclCFeaturesList(hwInfo, openclCFeatures);
     }
 
     auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);

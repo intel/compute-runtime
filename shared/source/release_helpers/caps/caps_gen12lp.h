@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/hw_ip_version.h"
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/caps/materialize_caps.h"
 
 #include <optional>
@@ -15,6 +16,8 @@
 namespace NEO {
 
 struct CapsGen12Lp {
+    static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
+
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;
     static constexpr bool localOnlyAllowed = true;

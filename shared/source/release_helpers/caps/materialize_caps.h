@@ -15,6 +15,9 @@
 namespace NEO {
 
 #define NEO_CAP_FIELDS(NEO_COPY_CAP_FUNC)                                        \
+    NEO_COPY_CAP_FUNC(kernelBFloat16AtomicCapabilities)                          \
+    NEO_COPY_CAP_FUNC(kernelFp16AtomicCapabilities)                              \
+                                                                                 \
     NEO_COPY_CAP_FUNC(adjustWalkOrderAvailable)                                  \
     NEO_COPY_CAP_FUNC(auxSurfaceModeOverrideRequired)                            \
     NEO_COPY_CAP_FUNC(availableSemaphore64)                                      \

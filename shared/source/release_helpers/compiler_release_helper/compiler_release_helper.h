@@ -26,9 +26,6 @@ class CompilerReleaseHelper {
     static std::unique_ptr<CompilerReleaseHelper> create(HardwareIpVersion hardwareIpVersion);
     virtual ~CompilerReleaseHelper() = default;
 
-    virtual uint32_t getAdditionalFp16Caps() const = 0;
-    virtual uint32_t getAdditionalExtraCaps() const = 0;
-    void getKernelFp16AtomicCapabilities(uint32_t &fp16Caps) const;
     bool isAvailableSemaphore64(const HardwareInfo &hwInfo) const;
 
   protected:
@@ -42,9 +39,6 @@ class CompilerReleaseHelperHw : public CompilerReleaseHelper {
     static std::unique_ptr<CompilerReleaseHelper> create(HardwareIpVersion hardwareIpVersion) {
         return std::make_unique<CompilerReleaseHelperHw<releaseType>>(hardwareIpVersion);
     }
-
-    uint32_t getAdditionalFp16Caps() const override;
-    uint32_t getAdditionalExtraCaps() const override;
 };
 
 template <uint32_t architecture>

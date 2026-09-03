@@ -8,36 +8,6 @@ set(NEO_CORE_COMPILER_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_gen12lp.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe_hpg.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe_hpc.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe_lpg.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_common_xe3p_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_tgl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_rkl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_adl_s.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_adl_p.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_adl_n.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_dg1.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_dg2_g10.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_dg2_g11.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_dg2_g12.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_pvc.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_pvc_vg.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_mtl_u.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_mtl_h.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_arl_h.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_bmg_g21.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_bmg_g31.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_lnl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_ptl_h.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_ptl_u.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_wcl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_nvl_s.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_nvl_u.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_nvl_p.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_release_helper_cri.cpp
 )
 
 set(NEO_CORE_ENABLE_COMPILER_RELEASE_HELPER

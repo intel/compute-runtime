@@ -17,7 +17,6 @@
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
@@ -91,7 +90,6 @@ void ClDevice::initializeCaps() {
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
     deviceExtensions.append(compilerProductHelper.getDeviceExtensions(hwInfo));
@@ -139,11 +137,9 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.singleFpAtomicCapabilities = defaultFpAtomicCapabilities;
     deviceInfo.halfFpAtomicCapabilities = 0;
-    uint32_t fp16Caps = 0u;
     uint32_t fp32Caps = 0u;
-    compilerReleaseHelper.getKernelFp16AtomicCapabilities(fp16Caps);
     compilerProductHelper.getKernelFp32AtomicCapabilities(fp32Caps);
-    deviceInfo.halfFpAtomicCapabilities = fp16Caps;
+    deviceInfo.halfFpAtomicCapabilities = hwInfo.caps.kernelFp16AtomicCapabilities;
     deviceInfo.singleFpAtomicCapabilities = fp32Caps;
 
     const cl_device_fp_atomic_capabilities_ext baseFP64AtomicCapabilities = defaultFpAtomicCapabilities;
@@ -365,7 +361,7 @@ void ClDevice::initializeCaps() {
         CL_TRUE}; // accumulating_saturating_mixed_signedness_accelerated;
 
     this->initializeOsSpecificCaps();
-    getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures, getDevice().getCompilerProductHelper(), compilerReleaseHelper);
+    getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures);
 }
 
 void ClDevice::initializeExtensionsWithVersion() {
