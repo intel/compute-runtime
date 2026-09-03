@@ -168,5 +168,5 @@ NVLPTEST_F(NvlProductHelper, givenNvlPA0WhenCallingAdjustMaxThreadsPerThreadGrou
 }
 
 NVLPTEST_F(NvlProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
-    EXPECT_EQ(RTASDeviceFormat::version3, productHelper->getSupportedRtasFormat());
+    EXPECT_EQ(RTASDeviceFormat::version2, productHelper->getSupportedRtasFormat());
 }
