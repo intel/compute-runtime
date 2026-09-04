@@ -328,6 +328,16 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIsDisableScratchPagesSup
     EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
 }
 
+HWTEST2_F(ProductHelperTest, givenXe2AndLaterWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned, IsAtLeastXe2HpgCore) {
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
+}
+
+HWTEST2_F(ProductHelperTest, givenXe2AndLaterAndForceTlbFlushSetWhenAskedIfIsTlbFlushRequiredThenTrueIsReturned, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.ForceTlbFlush.set(1);
+    EXPECT_TRUE(productHelper->isTlbFlushRequired());
+}
+
 HWTEST2_F(ProductHelperTestLinux, givenE2ECompressionWhenConfiguringHwInfoDrmThenCompressionFlagsAreCorrectlySet, IsAtMostXeCore) {
     pInHwInfo.featureTable.flags.ftrE2ECompression = true;
     int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());

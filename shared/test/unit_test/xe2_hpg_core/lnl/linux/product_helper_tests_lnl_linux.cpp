@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,10 +75,6 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIn
 
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
     EXPECT_FALSE(productHelper->useSharedSystemUsm());
-}
-
-LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }
 
 using LnlHwInfoLinux = ::testing::Test;

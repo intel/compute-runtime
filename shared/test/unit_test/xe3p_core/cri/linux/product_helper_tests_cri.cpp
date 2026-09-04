@@ -102,7 +102,3 @@ CRITEST_F(CriHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
 }
-
-CRITEST_F(CriProductHelperLinux, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
-}
