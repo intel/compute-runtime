@@ -446,7 +446,8 @@ struct Event : _ze_event_handle_t {
     void setIsSignalledAsGraphInternalEvent(bool signalledFromGraph) {
         isSignalledAsGraphInternalEvent = signalledFromGraph &&
                                           isCounterBasedExplicitlyEnabled() &&
-                                          !isExternalEvent();
+                                          !isExternalEvent() &&
+                                          !isAggregatedEvent(this);
     }
 
   protected:
