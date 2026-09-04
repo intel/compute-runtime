@@ -125,7 +125,7 @@ endif()
 
 if(SUPPORT_XE2_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later_drm.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later_drm_slm.inl
   )
 endif()
 

@@ -77,6 +77,10 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmTh
     EXPECT_FALSE(productHelper->useSharedSystemUsm());
 }
 
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
+}
+
 using LnlHwInfoLinux = ::testing::Test;
 
 LNLTEST_F(LnlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {

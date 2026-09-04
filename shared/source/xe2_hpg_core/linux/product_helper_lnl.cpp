@@ -13,7 +13,7 @@
 constexpr static auto gfxProduct = IGFX_LUNARLAKE;
 
 #include "shared/source/os_interface/linux/product_helper_mtl_and_later.inl"
-#include "shared/source/os_interface/linux/product_helper_xe2_and_later_drm.inl"
+#include "shared/source/os_interface/linux/product_helper_xe2_and_later_drm_slm.inl"
 #include "shared/source/xe2_hpg_core/lnl/os_agnostic_product_helper_lnl.inl"
 #include "shared/source/xe2_hpg_core/os_agnostic_product_helper_xe2_hpg_core.inl"
 
@@ -33,6 +33,11 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 template <>
 bool ProductHelperHw<gfxProduct>::deferMOCSToPatIndex(bool isWddmOnLinux) const {
     return !isWddmOnLinux;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
+    return false;
 }
 
 template <>
