@@ -39,6 +39,7 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         ASSERT_TRUE(expectedCaps.has_value());
         EXPECT_EQ(expectedCaps->kernelBFloat16AtomicCapabilities, hwInfo.caps.kernelBFloat16AtomicCapabilities);
         EXPECT_EQ(expectedCaps->kernelFp16AtomicCapabilities, hwInfo.caps.kernelFp16AtomicCapabilities);
+        EXPECT_EQ(expectedCaps->stackSizePerRay, hwInfo.caps.stackSizePerRay);
         EXPECT_EQ(expectedCaps->adjustWalkOrderAvailable, hwInfo.caps.adjustWalkOrderAvailable);
         EXPECT_EQ(expectedCaps->auxSurfaceModeOverrideRequired, hwInfo.caps.auxSurfaceModeOverrideRequired);
         EXPECT_EQ(expectedCaps->availableSemaphore64, hwInfo.caps.availableSemaphore64);
@@ -86,6 +87,7 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
 
     EXPECT_EQ(0u, caps.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(0u, caps.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(0u, caps.stackSizePerRay);
     EXPECT_FALSE(caps.adjustWalkOrderAvailable);
     EXPECT_FALSE(caps.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(caps.availableSemaphore64);

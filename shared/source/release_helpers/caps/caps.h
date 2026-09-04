@@ -14,6 +14,7 @@ namespace NEO {
 struct Caps {
     uint32_t kernelBFloat16AtomicCapabilities = 0u;
     uint32_t kernelFp16AtomicCapabilities = 0u;
+    uint32_t stackSizePerRay = 0u;
 
     bool adjustWalkOrderAvailable = false;
     bool auxSurfaceModeOverrideRequired = false;

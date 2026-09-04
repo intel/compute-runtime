@@ -19,6 +19,7 @@ namespace NEO {
 
 struct CapsXe3Core {
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
+    static constexpr uint32_t stackSizePerRay = 64u;
 
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool blitImageAllowedForDepthFormat = true;

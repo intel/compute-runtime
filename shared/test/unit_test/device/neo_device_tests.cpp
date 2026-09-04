@@ -263,8 +263,8 @@ TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenStackSizePerRayIsSet
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
     RTDispatchGlobals dispatchGlobals = *reinterpret_cast<struct RTDispatchGlobals *>(pDevice->getRTDispatchGlobals(3)->rtDispatchGlobalsArray->getUnderlyingBuffer());
 
-    const auto &releaseHelper = getReleaseHelper();
-    EXPECT_EQ(dispatchGlobals.stackSizePerRay, releaseHelper.getStackSizePerRay());
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    EXPECT_EQ(hwInfo.caps.stackSizePerRay, dispatchGlobals.stackSizePerRay);
 }
 
 TEST_F(DeviceTest, givenNot48bResourceForRtWhenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsAllocatedWithout48bResourceFlag) {

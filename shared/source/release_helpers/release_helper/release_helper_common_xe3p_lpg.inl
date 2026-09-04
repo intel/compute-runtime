@@ -23,11 +23,6 @@ const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
 }
 
 template <>
-uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
-    return 64u;
-}
-
-template <>
 uint32_t ReleaseHelperHw<release>::adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const {
     auto adjustedMaxThreadsPerEuCount = maxThreadsPerEuCount;
 

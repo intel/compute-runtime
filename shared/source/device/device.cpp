@@ -1263,12 +1263,11 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         }
 
         auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(hwInfo);
-        const auto &releaseHelper = getReleaseHelper();
 
         RTDispatchGlobals dispatchGlobals = {
             .rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize,
             .callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr),
-            .stackSizePerRay = releaseHelper.getStackSizePerRay(),
+            .stackSizePerRay = hwInfo.caps.stackSizePerRay,
             .numDSSRTStacks = rtStacksPerDss,
             .maxBVHLevels = maxBvhLevelsToProgram,
             .flags = RTDispatchGlobals::depthTestLessEqualFlag,
