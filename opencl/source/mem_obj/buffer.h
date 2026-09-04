@@ -156,10 +156,6 @@ class Buffer : public MemObj {
 
     static void provideCompressionHint(bool compressionEnabled, Context *context, Buffer *buffer);
 
-    static bool getExtendedTailRegion(size_t totalSize, size_t &origSize, size_t &extSize);
-
-    bool isTailPatternValid();
-
     BufferCreateFunc createFunction = nullptr;
     bool isSubBuffer();
     bool isValidSubBufferOffset(size_t offset);

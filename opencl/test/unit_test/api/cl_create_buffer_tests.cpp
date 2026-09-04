@@ -738,19 +738,4 @@ TEST_F(BufferTailFillPatternTests, GivenBothDebugFlagsSetWithSinglePageExtension
     clReleaseMemObject(buffer);
 }
 
-TEST_F(BufferTailFillPatternTests, GivenFillPatternFlagSetWithoutExtendedBufferSizeWhenCreatingBufferThenEnqueueFillBufferIsNotCalled) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.FillBufferTailWithPattern.set(1);
-
-    constexpr size_t bufferSize = 64u;
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clCreateBuffer(context.get(), 0, bufferSize, nullptr, &retVal);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, buffer);
-
-    EXPECT_EQ(0u, spyQueue->enqueueFillBufferCallCount);
-
-    clReleaseMemObject(buffer);
-}
-
 } // namespace ULT
