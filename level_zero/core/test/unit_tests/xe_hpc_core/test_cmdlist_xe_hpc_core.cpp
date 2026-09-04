@@ -25,6 +25,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -42,6 +43,113 @@ struct CommandListCoreFamily;
 namespace ult {
 template <typename Type>
 struct WhiteBox;
+
+HWTEST_EXCLUDE_PRODUCT(InOrderCmdListTests, givenInOrderCmdListWhenSubmittingThenProgramPipeControlInBetweenDispatches, IGFX_XE_HPC_CORE);
+HWTEST_EXCLUDE_PRODUCT(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppendingRegularCommandListWithCounterBasedSignalEventThenDispatchCorrectCommands, IGFX_XE_HPC_CORE);
+
+using CommandListInOrderDependencyXeHpcCore = Test<ModuleFixture>;
+
+HWTEST2_F(CommandListInOrderDependencyXeHpcCore, givenImplicitInOrderDependencyWhenAskingForResolveMethodThenUseBarrierOnlyWhenRequired, IsXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    ASSERT_FALSE(commandList->dcFlushSupport);
+    ASSERT_FALSE(commandList->isInOrderCounterSignalPending());
+
+    commandList->latestOperationHasHeapfullCbEventWithProfiling = false;
+    EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(true, false, false));
+
+    EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(false, false, false));
+    EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(true, true, false));
+
+    commandList->latestOperationHasHeapfullCbEventWithProfiling = true;
+    EXPECT_EQ(!commandList->heaplessModeEnabled, commandList->isResolveIoqDependencyWithBarrier(true, false, false));
+
+    commandList->latestOperationHasHeapfullCbEventWithProfiling = false;
+    NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    EXPECT_TRUE(commandList->isResolveIoqDependencyWithBarrier(true, false, false));
+
+    NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
+    EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(true, false, false));
+}
+
+using CommandListAppendSignalEventXeHpcCore = Test<CommandListFixture>;
+
+HWTEST2_F(CommandListAppendSignalEventXeHpcCore, givenInOrderImmediateCmdListWhenAppendingRegularCommandListWithCounterBasedSignalEventThenDispatchCorrectCommands, IsXeHpcCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    ze_event_pool_counter_based_exp_desc_t counterBasedExtension = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+    counterBasedExtension.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE;
+    eventPoolDesc.pNext = &counterBasedExtension;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto signalEvent = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
+
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    ASSERT_NE(nullptr, immCommandList);
+
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    commandListRegular->close();
+    auto commandListHandle = commandListRegular->toHandle();
+
+    size_t usedBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
+    ze_event_handle_t eventHandle = signalEvent->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = immCommandList->appendCommandLists(1u, &commandListHandle, eventHandle, 0u, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = immCommandList->getCmdContainer().getCommandStream()->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                      ptrOffset(immCommandList->getCmdContainer().getCommandStream()->getCpuBase(), usedBefore),
+                                                      usedAfter - usedBefore));
+
+    auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorPC);
+    GenCmdList::iterator itorSignalCmd = cmdList.end();
+    if (neoDevice->getGfxCoreHelper().inOrderAtomicSignallingEnabled()) {
+        itorSignalCmd = find<MI_ATOMIC *>(itorPC, cmdList.end());
+    } else {
+        itorSignalCmd = find<MI_STORE_DATA_IMM *>(itorPC, cmdList.end());
+    }
+    ASSERT_NE(cmdList.end(), itorSignalCmd);
+    cmdList.clear();
+
+    usedBefore = usedAfter;
+    result = immCommandList->appendCommandLists(1u, &commandListHandle, eventHandle, 0u, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    usedAfter = immCommandList->getCmdContainer().getCommandStream()->getUsed();
+
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                      ptrOffset(immCommandList->getCmdContainer().getCommandStream()->getCpuBase(), usedBefore),
+                                                      usedAfter - usedBefore));
+
+    auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBbStart);
+
+    auto itorResolveCmd = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), itorBbStart);
+    ASSERT_NE(itorBbStart, itorResolveCmd);
+}
 
 struct LocalMemoryModuleFixture : public ModuleFixture {
     void setUp() {
