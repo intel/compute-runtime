@@ -168,7 +168,7 @@ class Event : public BaseObject<_cl_event> {
     ProfilingInfo startTimeStamp{};
     ProfilingInfo endTimeStamp{};
     ProfilingInfo completeTimeStamp{};
-    bool dataCalculated = false;
+    std::atomic<bool> dataCalculated = false;
 
     cl_command_type commandType = 0;
     std::atomic<cl_int> eventStatus = CL_SUBMITTED;

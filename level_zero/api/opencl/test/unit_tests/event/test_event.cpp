@@ -9,6 +9,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/event/leo_event.h"
@@ -170,12 +171,16 @@ struct MockEventForProfilingWiring : public NEO::LEO::Event {
         queryKernelTimestampCalled++;
         result.global.kernelStart = injectedKernelStart;
         result.global.kernelEnd = injectedKernelEnd;
+        if (markDataCalculatedDuringQuery) {
+            dataCalculated.store(true, std::memory_order_release);
+        }
         return ZE_RESULT_SUCCESS;
     }
 
     uint64_t injectedKernelStart = 0;
     uint64_t injectedKernelEnd = 0;
     uint32_t queryKernelTimestampCalled = 0;
+    bool markDataCalculatedDuringQuery = false;
 };
 
 using ProfilingInfoWiringTests = Test<QueryAndUpdateEventStatusFixture>;
@@ -206,7 +211,7 @@ TEST_F(ProfilingInfoWiringTests, givenProfilingEventWhenGettingProfilingInfoThen
     EXPECT_LE(start, end);
     EXPECT_LE(end, complete);
     EXPECT_TRUE(event.dataCalculated);
-    EXPECT_NE(0u, event.queryKernelTimestampCalled);
+    EXPECT_EQ(1u, event.queryKernelTimestampCalled);
 
     // Exact wiring (resolution-independent): start == kernelStart (idempotent restore here), end == kernelEnd, complete == end.
     EXPECT_EQ(event.injectedKernelStart, event.startTimeStamp.gpuTimeStamp);
@@ -231,6 +236,35 @@ TEST_F(ProfilingInfoWiringTests, givenProfilingInfoAlreadyCalculatedWhenQueriedA
     EXPECT_EQ(CL_SUCCESS, event.getProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(second), &second, nullptr));
 
     EXPECT_EQ(first, second);
+    EXPECT_EQ(1u, event.queryKernelTimestampCalled);
+}
+
+TEST_F(ProfilingInfoWiringTests, givenDataCalculatedSetWhileQueryingTimestampThenDerivationIsSkipped) {
+    MockEventForProfilingWiring event{CL_COMMAND_NDRANGE_KERNEL, commandQueue};
+    event.setQueueTimeStamp();
+    event.setSubmitTimeStamp();
+    event.injectedKernelStart = event.submitTimeStamp.gpuTimeStamp + 0x1000;
+    event.injectedKernelEnd = event.injectedKernelStart + 0x500;
+    event.startTimeStamp.gpuTimeStamp = 0x1234;
+
+    event.markDataCalculatedDuringQuery = true;
+
+    cl_ulong value = 0;
+    EXPECT_EQ(CL_SUCCESS, event.getProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(value), &value, nullptr));
+
+    EXPECT_EQ(1u, event.queryKernelTimestampCalled);
+    EXPECT_EQ(0x1234u, event.startTimeStamp.gpuTimeStamp);
+}
+
+TEST_F(ProfilingInfoWiringTests, givenParamNotUsingProfilingInfoWhenGettingProfilingInfoThenTimestampIsNotQueried) {
+    MockEventForProfilingWiring event{CL_COMMAND_NDRANGE_KERNEL, commandQueue};
+
+    cl_ulong value = 0;
+    EXPECT_EQ(CL_INVALID_VALUE, event.getProfilingInfo(0, sizeof(value), &value, nullptr));
+    EXPECT_EQ(CL_INVALID_VALUE, event.getProfilingInfo(CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL, sizeof(value), &value, nullptr));
+
+    EXPECT_EQ(0u, event.queryKernelTimestampCalled);
+    EXPECT_FALSE(event.dataCalculated);
 }
 
 } // namespace ult

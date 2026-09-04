@@ -121,25 +121,49 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
         return CL_PROFILING_INFO_NOT_AVAILABLE;
     }
 
-    const void *src = nullptr;
-    size_t srcSize = GetInfo::invalidSourceSize;
-    uint64_t timestamp = 0;
-
-    ze_kernel_timestamp_result_t ts{};
-    auto queryResult = this->queryKernelTimestamp(ts);
-    if (queryResult != ZE_RESULT_SUCCESS) {
-        return L0ToClResultMapper(queryResult);
-    }
-
     auto device = getL0Object()->getDevice();
     auto neoDevice = device->getNEODevice();
     auto resolution = neoDevice->getDeviceInfo().profilingTimerResolution;
 
-    // Rebase raw packet start/end onto the submit epoch, restoring high bits a narrow packet drops.
-    // Computed once: the derivation may adjust the submit/queue anchors.
-    // Ownership covers only the derivation - once dataCalculated is set the anchors are read-only,
-    // so the switch below (and the blocking status query it may reach) must not hold the lock.
-    {
+    const ProfilingInfo *anchor = nullptr;
+    switch (paramName) {
+    case CL_PROFILING_COMMAND_QUEUED:
+        anchor = &queueTimeStamp;
+        break;
+    case CL_PROFILING_COMMAND_SUBMIT:
+        anchor = &submitTimeStamp;
+        break;
+    case CL_PROFILING_COMMAND_START:
+        anchor = &startTimeStamp;
+        break;
+    case CL_PROFILING_COMMAND_END:
+    case CL_PROFILING_COMMAND_COMPLETE:
+        anchor = &endTimeStamp;
+        break;
+    case CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL: {
+        if (!perfCountersEnabled) {
+            return CL_INVALID_VALUE;
+        }
+        auto cmdQ = getCommandQueue();
+        if (!cmdQ->getPerfCounters()->getApiReport(perfCounterNode, paramValueSize, paramValue, paramValueSizeRet,
+                                                   queryAndUpdateEventStatus() == CL_COMPLETE)) {
+            return CL_PROFILING_INFO_NOT_AVAILABLE;
+        }
+        return CL_SUCCESS;
+    }
+    default:
+        return CL_INVALID_VALUE;
+    }
+
+    // calculateProfilingData can move the submit/queue anchors, so a second pass would shift them again.
+    // The query can wait for the timestamp writeback, so it runs before ownership is taken.
+    if (!dataCalculated.load(std::memory_order_acquire)) {
+        ze_kernel_timestamp_result_t ts{};
+        auto queryResult = this->queryKernelTimestamp(ts);
+        if (queryResult != ZE_RESULT_SUCCESS) {
+            return L0ToClResultMapper(queryResult);
+        }
+
         auto lock = this->takeOwnership();
         if (!dataCalculated) {
             auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
@@ -148,55 +172,16 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
             NEO::calculateProfilingData(gfxCoreHelper, *neoDevice->getOSTime(), resolution, kernelTimestampValidBits,
                                         queueTimeStamp, submitTimeStamp, startTimeStamp, endTimeStamp, completeTimeStamp,
                                         ts.global.kernelStart, ts.global.kernelEnd, &contextCompleteTS, ts.global.kernelStart);
-            dataCalculated = true;
+            dataCalculated.store(true, std::memory_order_release);
         }
     }
 
-    switch (paramName) {
-    case CL_PROFILING_COMMAND_QUEUED:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(queueTimeStamp.gpuTimeStamp, resolution);
-        break;
+    const uint64_t timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(anchor->gpuTimeStamp, resolution);
 
-    case CL_PROFILING_COMMAND_SUBMIT:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(submitTimeStamp.gpuTimeStamp, resolution);
-        break;
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &timestamp, sizeof(timestamp));
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, sizeof(timestamp), getInfoStatus);
 
-    case CL_PROFILING_COMMAND_START:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(startTimeStamp.gpuTimeStamp, resolution);
-        break;
-
-    case CL_PROFILING_COMMAND_END:
-    case CL_PROFILING_COMMAND_COMPLETE:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(endTimeStamp.gpuTimeStamp, resolution);
-        break;
-
-    case CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL:
-        if (!perfCountersEnabled) {
-            return CL_INVALID_VALUE;
-        }
-        {
-            auto cmdQ = getCommandQueue();
-            if (!cmdQ->getPerfCounters()->getApiReport(perfCounterNode,
-                                                       paramValueSize,
-                                                       paramValue,
-                                                       paramValueSizeRet,
-                                                       queryAndUpdateEventStatus() == CL_COMPLETE)) {
-                return CL_PROFILING_INFO_NOT_AVAILABLE;
-            }
-            return CL_SUCCESS;
-        }
-    default:
-        return CL_INVALID_VALUE;
-    }
-
-    src = &timestamp;
-    srcSize = sizeof(srcSize);
-
-    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, src, srcSize);
-    auto retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
-    GetInfo::setParamValueReturnSize(paramValueSizeRet, srcSize, getInfoStatus);
-
-    return retVal;
+    return changeGetInfoStatusToCLResultType(getInfoStatus);
 }
 
 ze_result_t Event::queryKernelTimestamp(ze_kernel_timestamp_result_t &result) {
