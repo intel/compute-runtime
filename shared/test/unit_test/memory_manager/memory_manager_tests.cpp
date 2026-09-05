@@ -69,6 +69,18 @@ TEST(MemoryManagerTest, WhenCallingGetSharedSystemAtomicAccessThenReturnTrue) {
     EXPECT_EQ(AtomicAccessMode::none, memoryManager.getSharedSystemAtomicAccess(nullptr, 0u, subDeviceId, 0u));
 }
 
+TEST(MemoryManagerTest, WhenCallingIsPhysicalHostMemoryOffsetFoldRequiredThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    EXPECT_FALSE(memoryManager.isPhysicalHostMemoryOffsetFoldRequired(0u));
+}
+
+TEST(MemoryManagerTest, WhenCallingReserveExactCpuAddressThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    EXPECT_FALSE(memoryManager.reserveExactCpuAddress(0x1000u, MemoryConstants::pageSize));
+}
+
 TEST(MemoryManagerTest, WhenCallingHasPageFaultsEnabledThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
@@ -214,7 +226,7 @@ TEST(MemoryManagerTest, givenHostGraphicsAllocationWhenMapCalledThenDontResetCpu
         EXPECT_NE(multiGraphicsAllocation.getGraphicsAllocation(static_cast<uint32_t>(i)), nullptr);
     }
 
-    EXPECT_TRUE(memoryManager.unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, static_cast<GraphicsAllocation *>(&allocation), 0x12300, 0));
+    EXPECT_TRUE(memoryManager.unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, static_cast<GraphicsAllocation *>(&allocation), 0x12300, 0, true));
     EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
     EXPECT_NE(0x12300u, allocation.getGpuAddress());
     for (size_t i = 0; i < rootDeviceIndices.size(); i++) {

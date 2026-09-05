@@ -47,6 +47,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool isSetPairAvailable() override;
     bool isChunkingAvailable() override;
     bool isVmBindAvailable() override;
+    bool isMmapWindowRelocationSupported() const override { return true; }
     bool isVmBindDecompressAvailable(uint32_t vmId) override;
     bool useKmdAllocationForIsa() const override { return noCompressionHintAvailable; }
     int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) override;

@@ -87,6 +87,7 @@ static_assert(sizeof(IpcOpaqueMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueM
 
 constexpr uint64_t ipcRangeHandleMagic = 0x4e454f5250434752ull;
 constexpr uint32_t ipcRangeTransportVersion = 2u;
+constexpr size_t virtualMemoryFoldHeadroom = MemoryConstants::pageSize2M;
 
 #pragma pack(1)
 // Header written at the start of the range transport host buffer, followed by numHandles

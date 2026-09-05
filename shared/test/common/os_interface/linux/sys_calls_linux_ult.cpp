@@ -97,6 +97,8 @@ bool failMmap = false;
 uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 bool failMunmap = false;
+uint32_t mremapFixedFuncCalled = 0u;
+uint32_t mmapFixedNoReplaceFuncCalled = 0u;
 
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 int (*sysCallsClose)(int fileDescriptor) = nullptr;
@@ -145,6 +147,8 @@ int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval
 int (*sysCallsDup)(int oldfd) = nullptr;
 void *(*sysCallsMmap)(void *addr, size_t size, int prot, int flags, int fd, off_t off) = nullptr;
 int (*sysCallsMunmap)(void *addr, size_t size) = nullptr;
+void *(*sysCallsMremapFixed)(void *oldAddress, size_t size, void *newAddress) = nullptr;
+void *(*sysCallsMmapFixedNoReplace)(void *address, size_t size) = nullptr;
 int (*sysCallsGetpid)() = nullptr;
 int (*sysCallsGetrlimit)(int resource, struct rlimit *rlim) = nullptr;
 FILE *(*sysCallsFdopen)(int fd, const char *mode) = nullptr;
@@ -418,6 +422,22 @@ void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noex
         mmapVector.push_back(ptr);
     }
     return ptr;
+}
+
+void *mremapFixed(void *oldAddress, size_t size, void *newAddress) noexcept {
+    mremapFixedFuncCalled++;
+    if (sysCallsMremapFixed != nullptr) {
+        return sysCallsMremapFixed(oldAddress, size, newAddress);
+    }
+    return newAddress;
+}
+
+void *mmapFixedNoReplace(void *address, size_t size) noexcept {
+    mmapFixedNoReplaceFuncCalled++;
+    if (sysCallsMmapFixedNoReplace != nullptr) {
+        return sysCallsMmapFixedNoReplace(address, size);
+    }
+    return address;
 }
 
 int munmap(void *addr, size_t size) noexcept {

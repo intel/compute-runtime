@@ -2448,7 +2448,7 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return false; };
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override { return false; };
     bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override {
         if (failMapVirtualMemory) {
             return false;
@@ -2499,6 +2499,236 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
     size_t size = 0;
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
 };
+
+struct FoldPrefixMemoryManagerMock : public NEO::MockMemoryManager {
+    using NEO::MockMemoryManager::MockMemoryManager;
+    bool isPhysicalHostMemoryOffsetFoldRequired(uint32_t rootDeviceIndex) override { return foldRequired; }
+    NEO::AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override {
+        auto range = NEO::MockMemoryManager::reserveCpuAddress(requiredStartAddress, size + MemoryConstants::pageSize2M);
+        if (range.address == 0) {
+            return range;
+        }
+        const uint64_t misalignedBase = alignUp(range.address, MemoryConstants::pageSize2M) + MemoryConstants::pageSize64k;
+        allocatedBases[misalignedBase] = range;
+        return {misalignedBase, size};
+    }
+    bool reserveExactCpuAddress(uint64_t requiredStartAddress, size_t size) override {
+        reserveExactCalls++;
+        lastReserveExactAddress = requiredStartAddress;
+        lastReserveExactSize = size;
+        if (failReserveExactCpuAddress) {
+            return false;
+        }
+        claimedAddresses.insert(requiredStartAddress);
+        return true;
+    }
+    void freeCpuAddress(NEO::AddressRange addressRange) override {
+        freedCpuRanges.push_back(addressRange);
+        if (claimedAddresses.erase(addressRange.address) > 0) {
+            return;
+        }
+        auto it = allocatedBases.find(addressRange.address);
+        if (it != allocatedBases.end()) {
+            auto backing = it->second;
+            allocatedBases.erase(it);
+            NEO::MockMemoryManager::freeCpuAddress(backing);
+            return;
+        }
+        NEO::MockMemoryManager::freeCpuAddress(addressRange);
+    }
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, NEO::MultiGraphicsAllocation &multiGraphicsAllocation, NEO::GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override {
+        if (failMapPhysicalHostMemory) {
+            return false;
+        }
+        return NEO::MockMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset);
+    }
+    bool foldRequired = false;
+    bool failMapPhysicalHostMemory = false;
+    bool failReserveExactCpuAddress = false;
+    uint32_t reserveExactCalls = 0u;
+    uint64_t lastReserveExactAddress = 0u;
+    size_t lastReserveExactSize = 0u;
+    std::vector<NEO::AddressRange> freedCpuRanges;
+    std::set<uint64_t> claimedAddresses;
+    std::map<uint64_t, NEO::AddressRange> allocatedBases;
+};
+
+struct ContextFoldPrefixTest : public ContextTest {
+    void TearDown() override {
+        memoryManagerBackup.reset();
+        memoryManagerMock.reset();
+        ContextTest::TearDown();
+    }
+    void setUpMock(bool foldRequired) {
+        ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&desc, 0u, nullptr, &hContext));
+        contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->queryVirtualMemPageSize(device, 1024, &pagesize));
+
+        memoryManagerMock = std::make_unique<FoldPrefixMemoryManagerMock>(*neoDevice->executionEnvironment);
+        memoryManagerMock->foldRequired = foldRequired;
+        memoryManagerBackup = std::make_unique<VariableBackup<NEO::MemoryManager *>>(&driverHandle->memoryManager, memoryManagerMock.get());
+
+        NEO::debugManager.flags.EnableReservingInSvmRange.set(1);
+        contextImp->settings.enableSvmHeapReservation = true;
+
+        device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+            std::make_unique<NEO::MockMemoryOperations>();
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->reserveVirtualMem(nullptr, 2 * pagesize, &reservedPtr));
+
+        ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_HOST, 3 * MemoryConstants::pageSize2M};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->createPhysicalMem(device, &descMem, &physicalMem));
+
+        auto reservation = getReservation();
+        ASSERT_NE(nullptr, reservation);
+        ASSERT_EQ(castToUint64(reservedPtr) - reservation->reservationBase, reservation->foldHeadroomSize);
+        ASSERT_GT(reservation->foldHeadroomSize, virtualMemoryFoldHeadroom);
+    }
+    void tearDownMock(void *mappedPtr = nullptr) {
+        if (mappedPtr != nullptr) {
+            contextImp->unMapVirtualMem(mappedPtr, pagesize);
+        }
+        if (reservedPtr != nullptr) {
+            contextImp->freeVirtualMem(reservedPtr, 2 * pagesize);
+        }
+        contextImp->destroyPhysicalMem(physicalMem);
+        L0::Context::fromHandle(hContext)->destroy();
+    }
+    NEO::VirtualMemoryReservation *getReservation() {
+        auto &reservationMap = driverHandle->getMemoryManager()->getVirtualMemoryReservationMap();
+        auto it = reservationMap.find(reservedPtr);
+        return (it == reservationMap.end()) ? nullptr : it->second;
+    }
+    ze_context_handle_t hContext = nullptr;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    Context *contextImp = nullptr;
+    size_t pagesize = 0u;
+    void *reservedPtr = nullptr;
+    ze_physical_mem_handle_t physicalMem = {};
+    std::unique_ptr<FoldPrefixMemoryManagerMock> memoryManagerMock;
+    std::unique_ptr<VariableBackup<NEO::MemoryManager *>> memoryManagerBackup;
+    DebugManagerStateRestore debugRestore;
+};
+
+TEST_F(ContextFoldPrefixTest, givenHostBackedRangeWhenSettingAccessAttributeThenItIsRemappedWithTheSamePhysicalHandleAndOffset) {
+    setUpMock(true);
+    auto reservation = getReservation();
+    ASSERT_NE(nullptr, reservation);
+    const size_t offset = pagesize;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, offset, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    ASSERT_EQ(1u, reservation->mappedAllocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
+
+    ASSERT_EQ(1u, reservation->mappedAllocations.size());
+    auto mappedRange = reservation->mappedAllocations.begin()->second;
+    EXPECT_EQ(static_cast<void *>(physicalMem), mappedRange->physicalHandle);
+    EXPECT_EQ(offset, mappedRange->mappedPhysicalOffset);
+
+    tearDownMock(reservedPtr);
+}
+
+TEST_F(ContextFoldPrefixTest, givenUnmapFailingWhenSettingAccessAttributeThenErrorIsReturnedWithoutRemapping) {
+    setUpMock(true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    memoryManagerMock->failUnMapPhysicalToVirtualMemory = true;
+    EXPECT_NE(ZE_RESULT_SUCCESS, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
+    memoryManagerMock->failUnMapPhysicalToVirtualMemory = false;
+
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenRemapFailingWhenSettingAccessAttributeThenErrorIsReturnedInsteadOfSuccess) {
+    setUpMock(true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    memoryManagerMock->failMapPhysicalHostMemory = true;
+    EXPECT_NE(ZE_RESULT_SUCCESS, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
+    memoryManagerMock->failMapPhysicalHostMemory = false;
+
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenOffsetFoldRequiredWhenMappingHostPhysicalMemoryAwayFromReservationBaseThenInvalidArgumentIsReturned) {
+    setUpMock(true);
+
+    void *interiorPtr = reinterpret_cast<void *>(castToUint64(reservedPtr) + pagesize);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT,
+              contextImp->mapVirtualMem(interiorPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(0u, memoryManagerMock->reserveExactCalls);
+
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenOffsetWithinReservationHeadroomWhenMappingHostPhysicalMemoryThenNoAddressRangeIsTakenFromTheOs) {
+    setUpMock(true);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(0u, memoryManagerMock->reserveExactCalls);
+
+    tearDownMock(reservedPtr);
+}
+
+TEST_F(ContextFoldPrefixTest, givenOffsetBeyondReservationHeadroomWhenMappingHostPhysicalMemoryThenOnlyTheExcessIsClaimedAndReleasedWithTheReservation) {
+    setUpMock(true);
+    auto reservation = getReservation();
+    ASSERT_NE(nullptr, reservation);
+
+    ASSERT_EQ(castToUint64(reservedPtr) - reservation->reservationBase, reservation->foldHeadroomSize);
+    ASSERT_GT(reservation->foldHeadroomSize, virtualMemoryFoldHeadroom);
+
+    const size_t offset = reservation->foldHeadroomSize + pagesize;
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, offset, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(1u, memoryManagerMock->reserveExactCalls);
+    EXPECT_EQ(castToUint64(reservedPtr) - offset, memoryManagerMock->lastReserveExactAddress);
+    EXPECT_EQ(pagesize, memoryManagerMock->lastReserveExactSize);
+    EXPECT_EQ(reservation->reservationBase, memoryManagerMock->lastReserveExactAddress + memoryManagerMock->lastReserveExactSize);
+
+    const uint64_t claimBase = castToUint64(reservedPtr) - offset;
+    contextImp->unMapVirtualMem(reservedPtr, pagesize);
+    memoryManagerMock->freedCpuRanges.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, contextImp->freeVirtualMem(reservedPtr, 2 * pagesize));
+
+    bool excessReleased = false;
+    for (auto &range : memoryManagerMock->freedCpuRanges) {
+        excessReleased |= (range.address == claimBase) && (range.size == pagesize);
+    }
+    EXPECT_TRUE(excessReleased);
+
+    reservedPtr = nullptr;
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenPrefixClaimFailingWhenMappingHostPhysicalMemoryWithOffsetThenOutOfHostMemoryIsReturned) {
+    setUpMock(true);
+    auto reservation = getReservation();
+    ASSERT_NE(nullptr, reservation);
+    memoryManagerMock->failReserveExactCpuAddress = true;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, reservation->foldHeadroomSize + pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(1u, memoryManagerMock->reserveExactCalls);
+
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenWindowRelocationSupportedWhenMappingHostPhysicalMemoryWithOffsetThenNoPrefixIsClaimedAndInteriorPointerIsAllowed) {
+    setUpMock(false);
+
+    void *interiorPtr = reinterpret_cast<void *>(castToUint64(reservedPtr) + pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(interiorPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(0u, memoryManagerMock->reserveExactCalls);
+
+    tearDownMock(interiorPtr);
+}
 
 TEST_F(ContextTest, givenValidHandleAndExportFdExtensionWhenCallingGetPhysicalMemPropertiesThenFdIsPopulated) {
     ze_context_handle_t hContext;

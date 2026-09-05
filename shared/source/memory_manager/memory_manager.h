@@ -101,6 +101,9 @@ struct VirtualMemoryReservation {
     size_t reservationSize;
     uint64_t reservationBase;
     size_t reservationTotalSize;
+    // Bytes below virtualAddressRange backing a folded offset; only the part beyond foldHeadroomSize is claimed.
+    size_t foldPrefixSize = 0u;
+    size_t foldHeadroomSize = 0u;
 };
 
 struct CustomHeapAllocatorConfig {
@@ -349,6 +352,8 @@ class MemoryManager {
     virtual AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) = 0;
     AddressRange reserveCpuAddressWithZeroBaseRetry(const uint64_t requiredStartAddress, size_t size);
     virtual void freeCpuAddress(AddressRange addressRange) = 0;
+    virtual bool isPhysicalHostMemoryOffsetFoldRequired(uint32_t rootDeviceIndex) { return false; }
+    virtual bool reserveExactCpuAddress(uint64_t requiredStartAddress, size_t size) { return false; }
     static HeapIndex selectInternalHeap(bool useLocalMemory);
     static HeapIndex selectExternalHeap(bool useLocalMemory);
 
@@ -406,7 +411,7 @@ class MemoryManager {
     virtual bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) = 0;
     virtual bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) = 0;
     virtual bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) = 0;
-    virtual bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) = 0;
+    virtual bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) = 0;
     bool allocateBindlessSlot(GraphicsAllocation *allocation);
     static uint64_t adjustToggleBitFlagForGpuVa(AllocationType inputAllocationType, uint64_t gpuAddress);
     virtual bool isCompressionSupportedForShareable(bool isShareable) { return true; }

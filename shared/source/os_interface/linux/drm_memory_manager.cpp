@@ -845,7 +845,7 @@ bool DrmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAlloca
     return result;
 }
 
-bool DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+bool DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) {
     void *addressToUnmap = static_cast<DrmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex()))->getMmapPtr();
     size_t sizeToUnmap = static_cast<DrmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex()))->getMmapSize();
 
@@ -877,8 +877,24 @@ bool DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAll
             delete allocation;
         }
     }
-    // Unmap the memory region
-    return (this->munmapFunction(addressToUnmap, sizeToUnmap) == 0);
+    // Only an SVM reservation releases this range later, so anywhere else the placeholder would never be reclaimed.
+    if (!keepReservationPlaceholder) {
+        return this->munmapFunction(addressToUnmap, sizeToUnmap) == 0;
+    }
+    return restoreVirtualMemoryReservationPlaceholder(addressToUnmap, sizeToUnmap);
+}
+
+bool DrmMemoryManager::restoreVirtualMemoryReservationPlaceholder(void *address, size_t size) {
+    return this->mmapFunction(address, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED | MAP_NORESERVE, -1, 0) == address;
+}
+
+bool DrmMemoryManager::isPhysicalHostMemoryOffsetFoldRequired(uint32_t rootDeviceIndex) {
+    return !getDrm(rootDeviceIndex).getIoctlHelper()->isMmapWindowRelocationSupported();
+}
+
+bool DrmMemoryManager::reserveExactCpuAddress(uint64_t requiredStartAddress, size_t size) {
+    void *address = addrToPtr(requiredStartAddress);
+    return this->mmapFixedNoReplaceFunction(address, size) == address;
 }
 
 bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
@@ -939,26 +955,36 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
     BufferObject *physicalBo = drmPhysicalAllocation->getBO();
     const bool vmBindAvailable = drm.isVmBindAvailable();
 
-    // On a non-vmBind system the BO is made resident through the execbuffer path, which maps the
-    // whole BO at a single GPU VA with no per-bind offset, and the i915 mmap-offset token must be
-    // used exactly (it cannot encode a byte offset). So fold the physical offset into the
-    // placement: object byte 0 is positioned at (gpuRange - offset) on both the CPU mmap and the
-    // GPU residency, so byte `offset` resolves to gpuRange. With vmBind the bind carries the
-    // offset/length, so the BO sits exactly at gpuRange and the token encodes the offset.
+    // The mmap-offset token must be used exactly, so an offset window cannot be mapped straight at gpuRange.
     const uint64_t baseAddress = vmBindAvailable ? gpuRange : gpuRange - offset;
     const size_t mappedSize = vmBindAvailable ? bufferSize : offset + bufferSize;
-    const uint64_t mmapOffset = vmBindAvailable ? physicalBo->getMmapOffset() + offset : physicalBo->getMmapOffset();
+    const uint64_t mmapOffset = physicalBo->getMmapOffset();
+    const bool relocateWindow = (offset != 0u) && drm.getIoctlHelper()->isMmapWindowRelocationSupported();
+    const uint64_t cpuMapAddress = relocateWindow ? gpuRange : gpuRange - offset;
+    const size_t cpuMapSize = relocateWindow ? bufferSize : offset + bufferSize;
 
     uint64_t internalHandle = 0;
     if ((rootDeviceIndices.size() > 1) && (physicalAllocation->peekInternalHandle(this, internalHandle, nullptr) < 0)) {
         return false;
     }
 
-    auto retPtr = this->mmapFunction(addrToPtr(baseAddress), mappedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
-    if (retPtr != addrToPtr(baseAddress)) {
-        // A partial-BO CPU mmap of a non-zero physical offset is rejected on vmBind (xe requires the mmap
-        // to use the exact GEM_MMAP_OFFSET token). Fail gracefully instead of leaving an invalid mapping;
-        // the caller surfaces this as ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY (the documented rejection).
+    void *retPtr = nullptr;
+    if (relocateWindow) {
+        const size_t wholeSize = offset + bufferSize;
+        auto wholeObject = this->mmapFunction(nullptr, wholeSize, PROT_READ | PROT_WRITE, MAP_SHARED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
+        if (wholeObject == MAP_FAILED) {
+            return false;
+        }
+        retPtr = this->mremapFixedFunction(ptrOffset(wholeObject, offset), bufferSize, addrToPtr(cpuMapAddress));
+        if (retPtr != addrToPtr(cpuMapAddress)) {
+            this->munmapFunction(wholeObject, wholeSize);
+            return false;
+        }
+        this->munmapFunction(wholeObject, offset);
+    } else {
+        retPtr = this->mmapFunction(addrToPtr(cpuMapAddress), cpuMapSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
+    }
+    if (retPtr != addrToPtr(cpuMapAddress)) {
         return false;
     }
 
@@ -991,10 +1017,10 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
 
     drmAllocation->setUsmHostAllocation(true);
     drmAllocation->setShareableHostMemory(true);
-    drmAllocation->setMmapPtr(addrToPtr(baseAddress));
-    drmAllocation->setMmapSize(mappedSize);
+    drmAllocation->setMmapPtr(addrToPtr(cpuMapAddress));
+    drmAllocation->setMmapSize(cpuMapSize);
     drmAllocation->setCpuPtrAndGpuAddress(addrToPtr(gpuRange), gpuRange);
-    drmAllocation->setReservedAddressRange(addrToPtr(baseAddress), mappedSize);
+    drmAllocation->setReservedAddressRange(addrToPtr(cpuMapAddress), cpuMapSize);
     multiGraphicsAllocation.addAllocation(drmAllocation);
     this->registerSysMemAlloc(drmAllocation);
 
@@ -1011,10 +1037,14 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
         if (0 != ioctlHelper->ioctl(DrmIoctl::primeFdToHandle, &openFd)) {
             for (auto allocation : multiGraphicsAllocation.getGraphicsAllocations()) {
                 if (allocation != nullptr) {
+                    auto drmAlloc = static_cast<DrmAllocation *>(allocation);
+                    drmAlloc->setMmapPtr(nullptr);
+                    drmAlloc->setMmapSize(0u);
                     multiGraphicsAllocation.removeAllocation(allocation->getRootDeviceIndex());
                     freeGraphicsMemory(allocation);
                 }
             }
+            restoreVirtualMemoryReservationPlaceholder(addrToPtr(cpuMapAddress), cpuMapSize);
             return false;
         }
 
@@ -1621,8 +1651,9 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
     auto ioctlHelper = drm.getIoctlHelper();
     const uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
     const auto memoryPool = MemoryPool::system4KBPages;
-    // Legacy folds the offset into the reported base (see device merge); it stays contiguous only for a single object.
-    const bool legacyFold = !drm.isVmBindAvailable();
+    // Folding is safe here: the importer reserves the whole object extent itself, but only for one object.
+    const bool relocateWindows = ioctlHelper->isMmapWindowRelocationSupported();
+    const bool foldOffset = !relocateWindows;
 
     std::unique_lock<std::mutex> lock(mtx);
 
@@ -1654,13 +1685,13 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
         chunks.push_back({size, mappedSize, offset});
     }
 
-    if (legacyFold && anyOffset && handles.size() > 1) {
-        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "contiguous multi-object host range with a non-zero physical offset requires vm_bind\n");
+    if (foldOffset && anyOffset && handles.size() > 1) {
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "contiguous multi-object host range with a non-zero physical offset needs window relocation\n");
         return nullptr;
     }
 
     const size_t reportedSize = totalMappedSize;
-    const size_t reserveSize = legacyFold ? totalBoSize : totalMappedSize;
+    const size_t reserveSize = foldOffset ? totalBoSize : totalMappedSize;
 
     // Reserve one contiguous CPU VA for the whole range; host USM keeps GPU VA == CPU VA.
     void *cpuBase = this->mmapFunction(nullptr, reserveSize, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -1668,7 +1699,7 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
         return nullptr;
     }
-    const uint64_t reportedGpuAddress = legacyFold ? (reinterpret_cast<uint64_t>(cpuBase) + chunks[0].offset) : reinterpret_cast<uint64_t>(cpuBase);
+    const uint64_t reportedGpuAddress = foldOffset ? (reinterpret_cast<uint64_t>(cpuBase) + chunks[0].offset) : reinterpret_cast<uint64_t>(cpuBase);
 
     BufferObjects bos;
     uint64_t runningAddress = reinterpret_cast<uint64_t>(cpuBase);
@@ -1707,18 +1738,24 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
             break;
         }
 
-        // vm_bind maps only the window (mmap token carries the offset); legacy maps the whole object
-        // and relies on the folded reported base.
-        const size_t mapSize = legacyFold ? chunk.size : chunk.mappedSize;
-        const off_t mapFileOffset = legacyFold ? static_cast<off_t>(mmapOffset) : static_cast<off_t>(mmapOffset + chunk.offset);
-        auto retPtr = this->mmapFunction(addrToPtr(runningAddress), mapSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), mapFileOffset);
+        const size_t mapSize = foldOffset ? chunk.size : chunk.mappedSize;
+        void *retPtr = nullptr;
+        if (relocateWindows && (chunk.offset != 0u)) {
+            auto wholeObject = this->mmapFunction(nullptr, chunk.size, PROT_READ | PROT_WRITE, MAP_SHARED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
+            if (wholeObject != MAP_FAILED) {
+                retPtr = this->mremapFixedFunction(ptrOffset(wholeObject, chunk.offset), chunk.mappedSize, addrToPtr(runningAddress));
+                this->munmapFunction(wholeObject, (retPtr == addrToPtr(runningAddress)) ? static_cast<size_t>(chunk.offset) : chunk.size);
+            }
+        } else {
+            retPtr = this->mmapFunction(addrToPtr(runningAddress), mapSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
+        }
         if (retPtr != addrToPtr(runningAddress)) {
             pendingBo = bo;
             failed = true;
             break;
         }
         bo->setUnmapSize(mapSize);
-        if (!legacyFold && chunk.offset != 0) {
+        if (!foldOffset && chunk.offset != 0) {
             bo->setPhysicalMemoryOffset(chunk.offset);
             bo->setVirtualMappingSize(chunk.mappedSize);
         }

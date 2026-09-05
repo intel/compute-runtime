@@ -54,6 +54,14 @@ TEST_F(IoctlHelperXeTest, whenGettingIfImmediateVmBindIsRequiredThenTrueIsReturn
     EXPECT_TRUE(ioctlHelper.isImmediateVmBindRequired());
 }
 
+TEST_F(IoctlHelperXeTest, whenGettingIfMmapWindowRelocationIsSupportedThenTrueIsReturned) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    IoctlHelperXe ioctlHelper{*drm};
+
+    EXPECT_TRUE(ioctlHelper.isMmapWindowRelocationSupported());
+}
+
 TEST_F(IoctlHelperXeTest, whenGettingIfWaitUserFenceNotEqualSupportedThenTrueIsReturned) {
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};

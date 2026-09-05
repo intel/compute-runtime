@@ -433,7 +433,7 @@ bool OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(Graphic
     return true;
 }
 
-bool OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+bool OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) {
     for (uint32_t i = 0; i < static_cast<uint32_t>(multiGraphicsAllocation.getGraphicsAllocations().size()); i++) {
         delete multiGraphicsAllocation.getGraphicsAllocation(i);
         multiGraphicsAllocation.removeAllocation(i);

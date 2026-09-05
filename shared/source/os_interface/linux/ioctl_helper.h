@@ -127,6 +127,8 @@ class IoctlHelper {
     virtual bool isSetPairAvailable() = 0;
     virtual bool isChunkingAvailable() = 0;
     virtual bool isVmBindAvailable() = 0;
+    // True when the KMD derives the object page index from vm_pgoff, so mremap can move a mapping window.
+    virtual bool isMmapWindowRelocationSupported() const { return false; }
     virtual bool isVmBindDecompressAvailable(uint32_t vmId) { return false; }
     virtual bool isUserptrCoherencyRequired() const { return false; }
     virtual bool useKmdAllocationForIsa() const { return false; }

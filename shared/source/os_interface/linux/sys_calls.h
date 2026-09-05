@@ -41,6 +41,9 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noexcept;
 int munmap(void *addr, size_t size) noexcept;
+// The MREMAP_/MAP_ flags stay in the Linux-only wrapper; they are not visible to every build.
+void *mremapFixed(void *oldAddress, size_t size, void *newAddress) noexcept;
+void *mmapFixedNoReplace(void *address, size_t size) noexcept;
 ssize_t read(int fd, void *buf, size_t count);
 ssize_t write(int fd, const void *buf, size_t count);
 int fcntl(int fd, int cmd);

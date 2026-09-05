@@ -162,6 +162,14 @@ int munmap(void *addr, size_t size) noexcept {
     return ::munmap(addr, size);
 }
 
+void *mremapFixed(void *oldAddress, size_t size, void *newAddress) noexcept {
+    return ::mremap(oldAddress, size, size, MREMAP_MAYMOVE | MREMAP_FIXED, newAddress);
+}
+
+void *mmapFixedNoReplace(void *address, size_t size) noexcept {
+    return ::mmap(address, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE | MAP_NORESERVE, -1, 0);
+}
+
 ssize_t read(int fd, void *buf, size_t count) {
     return ::read(fd, buf, count);
 }

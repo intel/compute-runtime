@@ -95,6 +95,63 @@ void setAnonymousMmapFunctions(TestedDrmMemoryManager &memoryManager) {
 }
 } // namespace
 
+namespace {
+void *capturedHostMmapAddr = nullptr;
+size_t capturedHostMmapLen = 0u;
+off_t capturedHostMmapOffset = 0;
+int capturedHostMmapProt = 0;
+int capturedHostMmapFlags = 0;
+void *capturingHostMmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() {
+    capturedHostMmapAddr = addr;
+    capturedHostMmapLen = len;
+    capturedHostMmapOffset = offset;
+    capturedHostMmapProt = prot;
+    capturedHostMmapFlags = flags;
+    return addr;
+}
+void *capturedMremapOldAddress = nullptr;
+size_t capturedMremapSize = 0u;
+void *capturedMremapNewAddress = nullptr;
+uint32_t capturedMremapCalls = 0u;
+bool failCapturedMremap = false;
+void *capturingMremapFixed(void *oldAddress, size_t size, void *newAddress) noexcept {
+    capturedMremapOldAddress = oldAddress;
+    capturedMremapSize = size;
+    capturedMremapNewAddress = newAddress;
+    capturedMremapCalls++;
+    return failCapturedMremap ? MAP_FAILED : newAddress;
+}
+void *capturedNoReplaceAddress = nullptr;
+size_t capturedNoReplaceSize = 0u;
+uint32_t capturedNoReplaceCalls = 0u;
+bool failCapturedNoReplace = false;
+void *capturingMmapFixedNoReplace(void *address, size_t size) noexcept {
+    capturedNoReplaceAddress = address;
+    capturedNoReplaceSize = size;
+    capturedNoReplaceCalls++;
+    return failCapturedNoReplace ? MAP_FAILED : address;
+}
+void resetCapturedNoReplace() {
+    capturedNoReplaceAddress = nullptr;
+    capturedNoReplaceSize = 0u;
+    capturedNoReplaceCalls = 0u;
+    failCapturedNoReplace = false;
+}
+void resetCapturedMremap() {
+    capturedMremapOldAddress = nullptr;
+    capturedMremapSize = 0u;
+    capturedMremapNewAddress = nullptr;
+    capturedMremapCalls = 0u;
+    failCapturedMremap = false;
+}
+template <typename DrmMockT>
+void enableMmapWindowRelocation(DrmMockT *drm) {
+    auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
+    ioctlHelper->isMmapWindowRelocationSupportedResult = true;
+    drm->ioctlHelper = std::move(ioctlHelper);
+}
+} // namespace
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingHasPageFaultsEnabledThenReturnCorrectValue) {
     DebugManagerStateRestore dbgState;
 
@@ -5374,10 +5431,87 @@ TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenImportedAllocationWhenFre
     EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(rootDeviceIndex));
 }
 
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenWindowRelocationAndChunkWithoutOffsetWhenCreateHostAllocationFromMultipleSharedHandlesThenChunkIsMappedInPlace) {
+    static uint8_t hostRangeBuffer[4 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    enableMmapWindowRelocation(drm);
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+    resetCapturedMremap();
+    memoryManager->mremapFixedFunction = capturingMremapFixed;
+
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        return addr ? addr : hostRangeBuffer;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {0u, MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    ASSERT_NE(nullptr, gfxAllocation);
+
+    EXPECT_EQ(1u, capturedMremapCalls);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenWholeObjectMmapFailingWhenCreateHostAllocationFromMultipleSharedHandlesWithOffsetThenNullptrIsReturned) {
+    static uint8_t hostRangeBuffer[4 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    enableMmapWindowRelocation(drm);
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+    resetCapturedMremap();
+    memoryManager->mremapFixedFunction = capturingMremapFixed;
+
+    memoryManager->mmapFunction = [](void *addr, size_t, int prot, int, int, off_t) noexcept -> void * {
+        if ((addr == nullptr) && (prot == (PROT_READ | PROT_WRITE))) {
+            return MAP_FAILED;
+        }
+        return addr ? addr : hostRangeBuffer;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    EXPECT_EQ(nullptr, memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false));
+    EXPECT_EQ(0u, capturedMremapCalls);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenMremapFailingWhenCreateHostAllocationFromMultipleSharedHandlesWithOffsetThenWholeObjectIsReleasedAndNullptrIsReturned) {
+    static uint8_t hostRangeBuffer[4 * MemoryConstants::pageSize] = {};
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    enableMmapWindowRelocation(drm);
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+    resetCapturedMremap();
+    failCapturedMremap = true;
+    memoryManager->mremapFixedFunction = capturingMremapFixed;
+
+    memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
+        return addr ? addr : hostRangeBuffer;
+    };
+    memoryManager->munmapFunction = [](void *, size_t) noexcept -> int { return 0; };
+
+    std::vector<osHandle> handles = {11u};
+    std::vector<uint64_t> physicalOffsets = {MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    EXPECT_EQ(nullptr, memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false));
+    EXPECT_EQ(1u, capturedMremapCalls);
+
+    failCapturedMremap = false;
+}
+
 TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPhysicalOffsetsAndVmBindWhenCreateHostAllocationFromMultipleSharedHandlesThenAllocationIsCreatedWithPerObjectOffset) {
     static uint8_t hostRangeBuffer[3 * MemoryConstants::pageSize] = {};
     drm->bindAvailable = true;
     installSystemMemoryInfo();
+    enableMmapWindowRelocation(drm);
     VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
 
     memoryManager->mmapFunction = [](void *addr, size_t, int, int, int, off_t) noexcept -> void * {
@@ -9208,13 +9342,16 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHole
         EXPECT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(i));
     }
 
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size));
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, true));
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMultipleRootDevicesWhenMappingPhysicalHostMemoryWithOffsetThenEachDeviceBufferObjectCarriesTheOffsetAndMappingSize) {
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
+    enableMmapWindowRelocation(mock);
+    resetCapturedMremap();
+    memoryManager->mremapFixedFunction = capturingMremapFixed;
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -9250,7 +9387,44 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMultipleRootDevicesWhe
         EXPECT_EQ(mappingSize, mappedBo->getVirtualMappingSize());
     }
 
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize));
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, true));
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenVmBindAvailableAndZeroOffsetWhenMmapFailsThenMappingPhysicalHostMemoryReturnsFalse) {
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+    resetCapturedMremap();
+    memoryManager->mremapFixedFunction = capturingMremapFixed;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 2 * MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.type = AllocationType::bufferHostMemory;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    uint64_t gpuAddress = 0x100000;
+    size_t mappingSize = MemoryConstants::pageSize;
+
+    auto physicalAllocation = static_cast<DrmAllocation *>(memoryManager->allocatePhysicalHostMemory(allocData, status));
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFunction = [](void *, size_t, int, int, int, off_t) throw()->void * { return MAP_FAILED; };
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
+    MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u));
+
+    EXPECT_EQ(0u, capturedMremapCalls);
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+
+    memoryManager->mmapFunction = originalMmap;
     mock->isVmBindAvailableCall.callParent = true;
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
@@ -9287,18 +9461,6 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMmapFailsForOffsetWind
     mock->isVmBindAvailableCall.callParent = true;
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
-
-namespace {
-void *capturedHostMmapAddr = nullptr;
-size_t capturedHostMmapLen = 0u;
-off_t capturedHostMmapOffset = 0;
-void *capturingHostMmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() {
-    capturedHostMmapAddr = addr;
-    capturedHostMmapLen = len;
-    capturedHostMmapOffset = offset;
-    return addr;
-}
-} // namespace
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenVmBindUnavailableWhenMappingPhysicalHostMemoryWithOffsetThenMmapTokenIsUnmodifiedAndBaseFoldsTheOffset) {
     mock->isVmBindAvailableCall.callParent = false;
@@ -9342,7 +9504,258 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenVmBindUnavailableWhenM
     EXPECT_EQ(gmmHelper->canonize(gpuAddress - offset), mappedBo->peekAddress());
     EXPECT_EQ(offset + mappingSize, mappedBo->peekSize());
 
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize));
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, true));
+
+    memoryManager->mmapFunction = originalMmap;
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenPrimeFdToHandleFailingWhenMappingPhysicalHostMemoryThenReservationPlaceholderIsRestoredOnRollback) {
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFunction = capturingHostMmap;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 2 * MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.type = AllocationType::bufferHostMemory;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    uint64_t gpuAddress = 0x100000;
+    size_t mappingSize = MemoryConstants::pageSize;
+
+    auto physicalAllocation = static_cast<DrmAllocation *>(memoryManager->allocatePhysicalHostMemory(allocData, status));
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    rootDeviceIndices.pushUnique(1);
+    rootDeviceIndices.pushUnique(2);
+    MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
+
+    capturedHostMmapAddr = nullptr;
+    capturedHostMmapLen = 0u;
+    capturedHostMmapProt = -1;
+    capturedHostMmapFlags = 0;
+    mock->failOnPrimeFdToHandle = true;
+
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u));
+
+    EXPECT_EQ(reinterpret_cast<void *>(gpuAddress), capturedHostMmapAddr);
+    EXPECT_EQ(mappingSize, capturedHostMmapLen);
+    EXPECT_EQ(PROT_NONE, capturedHostMmapProt);
+    EXPECT_NE(0, capturedHostMmapFlags & MAP_ANONYMOUS);
+    EXPECT_NE(0, capturedHostMmapFlags & MAP_FIXED);
+
+    mock->failOnPrimeFdToHandle = false;
+    memoryManager->mmapFunction = originalMmap;
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
+struct PhysicalHostOffsetMapFixture : DrmMemoryManagerWithExplicitExpectationsTest {
+    DrmAllocation *createPhysicalHostAllocation() {
+        allocData.allFlags = 0;
+        allocData.size = 4 * MemoryConstants::pageSize;
+        allocData.flags.allocateMemory = true;
+        allocData.flags.isUSMHostAllocation = true;
+        allocData.type = AllocationType::bufferHostMemory;
+        allocData.storageInfo.multiStorage = false;
+        allocData.rootDeviceIndex = rootDeviceIndex;
+        MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+        return static_cast<DrmAllocation *>(memoryManager->allocatePhysicalHostMemory(allocData, status));
+    }
+    AllocationData allocData{};
+    static constexpr uint64_t gpuAddress = 0x100000;
+    static constexpr size_t offset = MemoryConstants::pageSize;
+    static constexpr size_t mappingSize = MemoryConstants::pageSize;
+};
+
+TEST_F(PhysicalHostOffsetMapFixture, givenNonSvmReservationWhenUnmappingPhysicalHostMemoryThenRangeIsReleasedInsteadOfLeavingAPlaceholder) {
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = false;
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFunction = capturingHostMmap;
+
+    auto physicalAllocation = createPhysicalHostAllocation();
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
+    MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
+    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u));
+
+    capturedHostMmapAddr = nullptr;
+    capturedHostMmapProt = -1;
+    auto munmapCallsBefore = SysCalls::munmapFuncCalled;
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, false));
+
+    EXPECT_EQ(munmapCallsBefore + 1u, SysCalls::munmapFuncCalled);
+    EXPECT_EQ(nullptr, capturedHostMmapAddr);
+
+    memoryManager->mmapFunction = originalMmap;
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
+TEST_F(PhysicalHostOffsetMapFixture, givenWholeObjectMmapFailingWhenRelocatingWindowThenMappingIsRejectedBeforeRemap) {
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+    enableMmapWindowRelocation(mock);
+    resetCapturedMremap();
+    memoryManager->mremapFixedFunction = capturingMremapFixed;
+
+    auto physicalAllocation = createPhysicalHostAllocation();
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFunction = [](void *, size_t, int, int, int, off_t) throw()->void * { return MAP_FAILED; };
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
+    MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+
+    EXPECT_EQ(0u, capturedMremapCalls);
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+
+    memoryManager->mmapFunction = originalMmap;
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
+TEST_F(PhysicalHostOffsetMapFixture, givenWindowRelocationSupportThenPhysicalHostMemoryOffsetFoldIsRequiredOnlyWithoutIt) {
+    EXPECT_TRUE(memoryManager->isPhysicalHostMemoryOffsetFoldRequired(rootDeviceIndex));
+    enableMmapWindowRelocation(mock);
+    EXPECT_FALSE(memoryManager->isPhysicalHostMemoryOffsetFoldRequired(rootDeviceIndex));
+}
+
+#if defined(__linux__)
+TEST_F(PhysicalHostOffsetMapFixture, givenRangeOverlappingAnExistingMappingWhenReservingExactCpuAddressThenClaimIsRejected) {
+    memoryManager->mmapFixedNoReplaceFunction = [](void *address, size_t size) noexcept -> void * {
+        return ::mmap(address, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE | MAP_NORESERVE, -1, 0);
+    };
+
+    const size_t claimSize = 2 * MemoryConstants::pageSize;
+    auto occupied = ::mmap(nullptr, claimSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+    ASSERT_NE(MAP_FAILED, occupied);
+
+    EXPECT_FALSE(memoryManager->reserveExactCpuAddress(castToUint64(occupied), claimSize));
+    EXPECT_FALSE(memoryManager->reserveExactCpuAddress(castToUint64(occupied) + MemoryConstants::pageSize, MemoryConstants::pageSize));
+
+    ::munmap(occupied, claimSize);
+    EXPECT_TRUE(memoryManager->reserveExactCpuAddress(castToUint64(occupied), claimSize));
+    ::munmap(occupied, claimSize);
+
+    memoryManager->mmapFixedNoReplaceFunction = SysCalls::mmapFixedNoReplace;
+}
+#endif
+
+TEST_F(PhysicalHostOffsetMapFixture, givenReserveExactCpuAddressThenClaimIsReportedFromTheUnderlyingMapping) {
+    resetCapturedNoReplace();
+    auto originalNoReplace = memoryManager->mmapFixedNoReplaceFunction;
+    memoryManager->mmapFixedNoReplaceFunction = capturingMmapFixedNoReplace;
+
+    EXPECT_TRUE(memoryManager->reserveExactCpuAddress(gpuAddress - offset, offset));
+    EXPECT_EQ(1u, capturedNoReplaceCalls);
+    EXPECT_EQ(reinterpret_cast<void *>(gpuAddress - offset), capturedNoReplaceAddress);
+    EXPECT_EQ(offset, capturedNoReplaceSize);
+
+    failCapturedNoReplace = true;
+    EXPECT_FALSE(memoryManager->reserveExactCpuAddress(gpuAddress - offset, offset));
+    EXPECT_EQ(2u, capturedNoReplaceCalls);
+
+    failCapturedNoReplace = false;
+    memoryManager->mmapFixedNoReplaceFunction = originalNoReplace;
+}
+
+TEST_F(PhysicalHostOffsetMapFixture, givenVmBindAvailableButWindowRelocationUnsupportedWhenMappingWithOffsetThenOffsetIsFoldedInsteadOfMappingObjectStart) {
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+    resetCapturedNoReplace();
+    resetCapturedMremap();
+    auto originalNoReplace = memoryManager->mmapFixedNoReplaceFunction;
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFixedNoReplaceFunction = capturingMmapFixedNoReplace;
+    memoryManager->mremapFixedFunction = capturingMremapFixed;
+    memoryManager->mmapFunction = capturingHostMmap;
+
+    auto physicalAllocation = createPhysicalHostAllocation();
+    ASSERT_NE(nullptr, physicalAllocation);
+    auto token = physicalAllocation->getBO()->getMmapOffset();
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
+    MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+
+    EXPECT_EQ(0u, capturedMremapCalls);
+    EXPECT_EQ(static_cast<off_t>(token), capturedHostMmapOffset);
+    EXPECT_EQ(reinterpret_cast<void *>(gpuAddress - offset), capturedHostMmapAddr);
+    EXPECT_EQ(offset + mappingSize, capturedHostMmapLen);
+
+    auto mappedBo = static_cast<DrmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex))->getBO();
+    ASSERT_NE(nullptr, mappedBo);
+    EXPECT_EQ(device->getGmmHelper()->canonize(gpuAddress), mappedBo->peekAddress());
+    EXPECT_EQ(offset, mappedBo->getPhysicalMemoryOffset());
+    EXPECT_EQ(mappingSize, mappedBo->getVirtualMappingSize());
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, true));
+    memoryManager->mmapFunction = originalMmap;
+    memoryManager->mmapFixedNoReplaceFunction = originalNoReplace;
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenPhysicalHostMemoryMappedWithOffsetWhenUnmappingThenReservationPlaceholderIsRestoredInsteadOfReleasingTheRange) {
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = false;
+
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFunction = capturingHostMmap;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 2 * MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.type = AllocationType::bufferHostMemory;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    uint64_t gpuAddress = 0x100000;
+    size_t offset = MemoryConstants::pageSize;
+    size_t mappingSize = MemoryConstants::pageSize;
+
+    auto physicalAllocation = static_cast<DrmAllocation *>(memoryManager->allocatePhysicalHostMemory(allocData, status));
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
+    MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
+    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+
+    capturedHostMmapAddr = nullptr;
+    capturedHostMmapLen = 0u;
+    capturedHostMmapProt = -1;
+    capturedHostMmapFlags = 0;
+    auto munmapCallsBeforeUnmap = SysCalls::munmapFuncCalled;
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, true));
+
+    EXPECT_EQ(reinterpret_cast<void *>(gpuAddress - offset), capturedHostMmapAddr);
+    EXPECT_EQ(offset + mappingSize, capturedHostMmapLen);
+    EXPECT_EQ(PROT_NONE, capturedHostMmapProt);
+    EXPECT_NE(0, capturedHostMmapFlags & MAP_ANONYMOUS);
+    EXPECT_NE(0, capturedHostMmapFlags & MAP_FIXED);
+    EXPECT_EQ(munmapCallsBeforeUnmap, SysCalls::munmapFuncCalled);
 
     memoryManager->mmapFunction = originalMmap;
     mock->isVmBindAvailableCall.callParent = true;
@@ -9396,8 +9809,8 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenVmBindUnavailableWhenM
     EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, drmMemoryOperationsHandler->isResident(device.get(), *mappedAllocation0));
     EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, drmMemoryOperationsHandler->isResident(device.get(), *mappedAllocation1));
 
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation0, physicalAllocation, gpuAddress0, allocData.size));
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation1, physicalAllocation, gpuAddress1, allocData.size));
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation0, physicalAllocation, gpuAddress0, allocData.size, true));
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation1, physicalAllocation, gpuAddress1, allocData.size, true));
 
     mock->isVmBindAvailableCall.callParent = true;
     memoryManager->freeGraphicsMemory(physicalAllocation);
@@ -9518,13 +9931,17 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceWhenMa
     EXPECT_NE(nullptr, multiGraphicsAllocation.getDefaultGraphicsAllocation());
     EXPECT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
 
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size));
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, true));
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
 
-TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceWhenMappingPhysicalHostMemoryWithOffsetThenOffsetIsFoldedIntoCpuMmapAndCarriedByGpuBind) {
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceWhenMappingPhysicalHostMemoryWithOffsetThenWindowIsRelocatedOntoTheReservationAndCarriedByGpuBind) {
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
+    enableMmapWindowRelocation(mock);
+    resetCapturedMremap();
+    resetCapturedNoReplace();
+    memoryManager->mremapFixedFunction = capturingMremapFixed;
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -9553,12 +9970,74 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceWhenMa
     auto mappedBo = mappedAllocation->getBO();
     ASSERT_NE(nullptr, mappedBo);
 
-    EXPECT_EQ(physicalMmapOffset + offset, mappedBo->getMmapOffset());
+    EXPECT_EQ(physicalMmapOffset, mappedBo->getMmapOffset());
     EXPECT_EQ(device->getGmmHelper()->canonize(gpuAddress), mappedBo->peekAddress());
     EXPECT_EQ(offset, mappedBo->getPhysicalMemoryOffset());
     EXPECT_EQ(mappingSize, mappedBo->getVirtualMappingSize());
 
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize));
+    EXPECT_EQ(1u, capturedMremapCalls);
+    EXPECT_EQ(reinterpret_cast<void *>(gpuAddress), capturedMremapNewAddress);
+    EXPECT_EQ(mappingSize, capturedMremapSize);
+    EXPECT_EQ(reinterpret_cast<void *>(gpuAddress), mappedAllocation->getMmapPtr());
+    EXPECT_EQ(mappingSize, mappedAllocation->getMmapSize());
+    EXPECT_EQ(0u, capturedNoReplaceCalls);
+
+    capturedHostMmapAddr = nullptr;
+    capturedHostMmapLen = 0u;
+    capturedHostMmapProt = -1;
+    capturedHostMmapFlags = 0;
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFunction = capturingHostMmap;
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, true));
+
+    EXPECT_EQ(reinterpret_cast<void *>(gpuAddress), capturedHostMmapAddr);
+    EXPECT_EQ(mappingSize, capturedHostMmapLen);
+    EXPECT_EQ(PROT_NONE, capturedHostMmapProt);
+    EXPECT_NE(0, capturedHostMmapFlags & MAP_ANONYMOUS);
+    EXPECT_NE(0, capturedHostMmapFlags & MAP_FIXED);
+
+    memoryManager->mmapFunction = originalMmap;
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMremapFailingWhenMappingPhysicalHostMemoryWithOffsetThenWholeObjectMappingIsReleasedAndFalseIsReturned) {
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+    enableMmapWindowRelocation(mock);
+    resetCapturedMremap();
+    failCapturedMremap = true;
+    memoryManager->mremapFixedFunction = capturingMremapFixed;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 4 * MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.type = AllocationType::bufferHostMemory;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    uint64_t gpuAddress = 0x1234;
+    size_t offset = 2 * MemoryConstants::pageSize;
+    size_t mappingSize = MemoryConstants::pageSize;
+
+    auto physicalAllocation = static_cast<DrmAllocation *>(memoryManager->allocatePhysicalHostMemory(allocData, status));
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    auto munmapCallsBefore = SysCalls::munmapFuncCalled;
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(rootDeviceIndex);
+    MultiGraphicsAllocation multiGraphicsAllocation{1u};
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+
+    EXPECT_EQ(1u, capturedMremapCalls);
+    EXPECT_EQ(munmapCallsBefore + 1u, SysCalls::munmapFuncCalled);
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+
+    failCapturedMremap = false;
     mock->isVmBindAvailableCall.callParent = true;
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
@@ -9587,7 +10066,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceWhenMa
     EXPECT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
     multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->lock(addrToPtr(gpuAddress));
 
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size));
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, true));
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
 
@@ -9615,7 +10094,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceAndPri
     EXPECT_NE(nullptr, multiGraphicsAllocation.getDefaultGraphicsAllocation());
     EXPECT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
 
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size));
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, true));
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
 
@@ -11596,7 +12075,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmDeviceVMAllocationBufferObjectU
 }
 
 // Test: unmap host virtual memory allocations fails.
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmHostVMAllocationUnmapFails) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmHostVMAllocationPlaceholderRestoreFails) {
     const uint64_t gpuAddr = 0x1234;
     const uint32_t rootDeviceIdx = 0u;
 
@@ -11614,9 +12093,10 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmHostVMAllocationUnmapFails) {
     MultiGraphicsAllocation gfxAllocs{1u};
     gfxAllocs.addAllocation(gfxAlloc);
 
-    SysCalls::failMunmap = true;
-    EXPECT_FALSE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(gfxAllocs, gfxAlloc, gpuAddr, MemoryConstants::pageSize));
-    SysCalls::failMunmap = false;
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFunction = [](void *, size_t, int, int, int, off_t) throw()->void * { return MAP_FAILED; };
+    EXPECT_FALSE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(gfxAllocs, gfxAlloc, gpuAddr, MemoryConstants::pageSize, true));
+    memoryManager->mmapFunction = originalMmap;
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCpuAddressReservationIsAttemptedwithMmapFailureThenNullptrAllocationReturned) {

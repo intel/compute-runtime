@@ -120,7 +120,7 @@ bool WddmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAlloc
     return true;
 }
 
-bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) {
     bool success = true;
     for (auto alloc : multiGraphicsAllocation.getGraphicsAllocations()) {
         if (alloc == nullptr) {

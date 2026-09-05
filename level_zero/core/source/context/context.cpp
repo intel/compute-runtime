@@ -2126,6 +2126,7 @@ ze_result_t Context::reserveVirtualMem(const void *pStart,
     uint32_t reservedOnRootDeviceIndex = 0;
     uint64_t reservationBase = 0;
     size_t reservationTotalSize = 0;
+    size_t foldHeadroom = 0;
 
     bool reserveOnSvmHeap = true;
     uint64_t maxCpuVa = 0;
@@ -2147,7 +2148,8 @@ ze_result_t Context::reserveVirtualMem(const void *pStart,
 
     if (reserveOnSvmHeap) {
 
-        reservationTotalSize = alignUp(size, MemoryConstants::pageSize2M) + MemoryConstants::pageSize2M;
+        // A folded physical offset places object byte 0 below the reported pointer, so keep owned space there.
+        reservationTotalSize = alignUp(size, MemoryConstants::pageSize2M) + MemoryConstants::pageSize2M + virtualMemoryFoldHeadroom;
         addressRange = this->driverHandle->getMemoryManager()->reserveCpuAddressWithZeroBaseRetry(requiredStartAddress, reservationTotalSize);
         if (addressRange.address == 0) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -2155,8 +2157,10 @@ ze_result_t Context::reserveVirtualMem(const void *pStart,
         DEBUG_BREAK_IF(addressRange.address + reservationTotalSize > maxCpuVa);
 
         reservationBase = addressRange.address;
-        addressRange.address = alignUp(addressRange.address, MemoryConstants::pageSize2M);
+        addressRange.address = alignUp(addressRange.address, MemoryConstants::pageSize2M) + virtualMemoryFoldHeadroom;
         addressRange.size = size;
+        // Alignment padding is owned too, so a claim beyond this would overlap the reservation itself.
+        foldHeadroom = addressRange.address - reservationBase;
     } else {
 
         bool useStartAddressHint = (requiredStartAddress != 0ULL);
@@ -2193,6 +2197,8 @@ ze_result_t Context::reserveVirtualMem(const void *pStart,
     virtualMemoryReservation->reservationSize = size;
     virtualMemoryReservation->reservationBase = reservationBase;
     virtualMemoryReservation->reservationTotalSize = reservationTotalSize;
+    virtualMemoryReservation->foldPrefixSize = foldHeadroom;
+    virtualMemoryReservation->foldHeadroomSize = foldHeadroom;
     auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
     this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().emplace(reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address), virtualMemoryReservation);
     *pptr = reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address);
@@ -2214,6 +2220,11 @@ ze_result_t Context::freeVirtualMem(const void *ptr,
             NEO::VirtualMemoryReservation *virtualMemoryReservation = it->second;
             if (virtualMemoryReservation->reservationSize != size) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            const size_t claimedBelowReservation = virtualMemoryReservation->foldPrefixSize - std::min(virtualMemoryReservation->foldPrefixSize, virtualMemoryReservation->foldHeadroomSize);
+            if (claimedBelowReservation > 0u) {
+                const uint64_t claimedBase = virtualMemoryReservation->virtualAddressRange.address - virtualMemoryReservation->foldPrefixSize;
+                this->driverHandle->getMemoryManager()->freeCpuAddress({claimedBase, claimedBelowReservation});
             }
             NEO::AddressRange addressRange{virtualMemoryReservation->reservationBase, virtualMemoryReservation->reservationTotalSize};
             if (virtualMemoryReservation->isSvmReservation) {
@@ -2525,7 +2536,26 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         RootDeviceIndicesContainer rootDeviceIndicesVector(this->rootDeviceIndices);
         auto maxRootDeviceIndex = *std::max_element(rootDeviceIndicesVector.begin(), rootDeviceIndicesVector.end(), std::less<uint32_t const>());
         NEO::SvmAllocationData allocData(maxRootDeviceIndex);
-        if (!this->driverHandle->getMemoryManager()->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, allocData.gpuAllocations, allocationNode->allocation, castToUint64(ptr), size, offset)) {
+        auto memoryManager = this->driverHandle->getMemoryManager();
+        const size_t previousFoldPrefix = virtualMemoryReservation->foldPrefixSize;
+        if ((offset != 0u) && memoryManager->isPhysicalHostMemoryOffsetFoldRequired(allocationNode->allocation->getRootDeviceIndex())) {
+            // Object byte 0 lands at (ptr - offset); anywhere but the base reaches back over a mapped window.
+            if (castToUint64(ptr) != virtualMemoryReservation->virtualAddressRange.address) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            if (offset > previousFoldPrefix) {
+                if (!memoryManager->reserveExactCpuAddress(castToUint64(ptr) - offset, offset - previousFoldPrefix)) {
+                    return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+                }
+                virtualMemoryReservation->foldPrefixSize = offset;
+            }
+        }
+        if (!memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, allocData.gpuAllocations, allocationNode->allocation, castToUint64(ptr), size, offset)) {
+            if (virtualMemoryReservation->foldPrefixSize != previousFoldPrefix) {
+                const uint64_t claimedBase = castToUint64(ptr) - virtualMemoryReservation->foldPrefixSize;
+                memoryManager->freeCpuAddress({claimedBase, virtualMemoryReservation->foldPrefixSize - previousFoldPrefix});
+                virtualMemoryReservation->foldPrefixSize = previousFoldPrefix;
+            }
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         allocData.cpuAllocation = nullptr;
@@ -2633,7 +2663,7 @@ ze_result_t Context::unMapVirtualMem(const void *ptr, size_t size) {
                 NEO::MultiGraphicsAllocation gpuAllocations = allocData->gpuAllocations;
                 svmAllocsManager->removeSVMAlloc(*allocData);
                 retVal = memManager->unMapPhysicalHostMemoryFromVirtualMemory(
-                    gpuAllocations, allocation, mappingVa, mappingSize);
+                    gpuAllocations, allocation, mappingVa, mappingSize, virtualMemoryReservation->isSvmReservation);
             }
 
             if (!retVal) {
@@ -2680,10 +2710,15 @@ ze_result_t Context::setVirtualMemAccessAttribute(const void *ptr,
             std::map<void *, NEO::MemoryMappedRange *>::iterator physicalMapIt;
             physicalMapIt = virtualMemoryReservation->mappedAllocations.find(const_cast<void *>(ptr));
             if (physicalMapIt != virtualMemoryReservation->mappedAllocations.end()) {
-                auto allocation = physicalMapIt->second->mappedAllocation.allocation;
+                // mappedAllocation.allocation is the mapped allocation on the host path, not the key of the physical map.
+                auto physicalHandle = reinterpret_cast<ze_physical_mem_handle_t>(physicalMapIt->second->physicalHandle);
+                auto mappedOffset = static_cast<size_t>(physicalMapIt->second->mappedPhysicalOffset);
                 lockVirtual.unlock();
-                unMapVirtualMem(ptr, size);
-                mapVirtualMem(ptr, size, reinterpret_cast<ze_physical_mem_handle_t>(allocation), 0, access);
+                auto result = unMapVirtualMem(ptr, size);
+                if (result != ZE_RESULT_SUCCESS) {
+                    return result;
+                }
+                return mapVirtualMem(ptr, size, physicalHandle, mappedOffset, access);
             }
         }
         return ZE_RESULT_SUCCESS;

@@ -356,9 +356,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return retVal;
     }
 
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override {
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override {
         // Need to call actual unMapPhysicalDeviceMemoryFromVirtualMemory to ensure the virtual memory is unmapped.
-        bool retVal = OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize);
+        bool retVal = OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, true);
         if (failUnMapPhysicalToVirtualMemory) { // Return false if unmapping is supposed to fail.
             return false;
         }

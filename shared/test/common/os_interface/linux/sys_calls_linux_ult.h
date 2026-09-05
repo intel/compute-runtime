@@ -76,6 +76,8 @@ extern int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void 
 extern int (*sysCallsDup)(int oldfd);
 extern void *(*sysCallsMmap)(void *addr, size_t size, int prot, int flags, int fd, off_t off);
 extern int (*sysCallsMunmap)(void *addr, size_t size);
+extern void *(*sysCallsMremapFixed)(void *oldAddress, size_t size, void *newAddress);
+extern void *(*sysCallsMmapFixedNoReplace)(void *address, size_t size);
 extern pid_t (*sysCallsGetpid)();
 extern int (*sysCallsGetrlimit)(int resource, struct rlimit *rlim);
 extern FILE *(*sysCallsFdopen)(int fd, const char *mode);
@@ -141,6 +143,8 @@ extern bool mmapCaptureExtendedPointers;
 extern bool mmapAllowExtendedPointers;
 extern uint32_t mmapFuncCalled;
 extern uint32_t munmapFuncCalled;
+extern uint32_t mremapFixedFuncCalled;
+extern uint32_t mmapFixedNoReplaceFuncCalled;
 
 extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;

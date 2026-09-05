@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_memory.h"
 
 #include <map>
@@ -93,6 +94,8 @@ class DrmMemoryManager : public MemoryManager {
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
     AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override;
     void freeCpuAddress(AddressRange addressRange) override;
+    bool isPhysicalHostMemoryOffsetFoldRequired(uint32_t rootDeviceIndex) override;
+    bool reserveExactCpuAddress(uint64_t requiredStartAddress, size_t size) override;
     MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
                                                                     DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation);
 
@@ -149,8 +152,11 @@ class DrmMemoryManager : public MemoryManager {
 
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;
+    decltype(&SysCalls::mremapFixed) mremapFixedFunction = SysCalls::mremapFixed;
+    decltype(&SysCalls::mmapFixedNoReplace) mmapFixedNoReplaceFunction = SysCalls::mmapFixedNoReplace;
 
   protected:
+    bool restoreVirtualMemoryReservationPlaceholder(void *address, size_t size);
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
     BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle, uint32_t rootDeviceIndex);
     void eraseSharedBoHandleWrapper(int boHandle, uint32_t rootDeviceIndex);
@@ -189,7 +195,7 @@ class DrmMemoryManager : public MemoryManager {
     bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override;
     bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override;
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override;
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override;
     GraphicsAllocation *createSharedUnifiedMemoryAllocation(const AllocationData &allocationData);
