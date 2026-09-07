@@ -134,6 +134,10 @@ NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocator
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
+NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isLEOSupported());
+}
+
 NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;

@@ -209,6 +209,7 @@ using IsNotBMG = IsNotWithinProducts<IGFX_BMG, IGFX_BMG>;
 using IsLNL = IsProduct<IGFX_LUNARLAKE>;
 using IsPTL = IsProduct<IGFX_PTL>;
 using IsNVLS = IsProduct<IGFX_NVL_XE3G>;
+using IsNVLP = IsProduct<IGFX_NVL>;
 using IsCRI = IsProduct<IGFX_CRI>;
 using IsNotCRI = IsNotWithinProducts<IGFX_CRI, IGFX_CRI>;
 
@@ -229,7 +230,7 @@ using IsNotDg2BmgOrCri = IsNoneProducts<IGFX_DG2, IGFX_BMG, IGFX_CRI>;
 struct IsLeoSupported {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        return IsCRI::isMatched<productFamily>() || IsNVLS::isMatched<productFamily>();
+        return IsCRI::isMatched<productFamily>() || IsNVLS::isMatched<productFamily>() || IsNVLP::isMatched<productFamily>();
     }
 };
 

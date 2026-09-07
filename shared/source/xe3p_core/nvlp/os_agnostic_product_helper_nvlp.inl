@@ -67,6 +67,11 @@ bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
+    return true;
+}
+
+template <>
 uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
     auto adjustedMaxThreadsPerThreadGroup = maxThreadsPerThreadGroup;
 
