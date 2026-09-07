@@ -1623,8 +1623,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
     NEO::MemAdviseFlags flags{};
     Device *adviceDevice = L0::Device::fromHandle(hDevice);
 
-    if (adviceDevice->memAdviseSharedAllocations.find(allocData) != adviceDevice->memAdviseSharedAllocations.end()) {
-        flags = adviceDevice->memAdviseSharedAllocations[allocData];
+    {
+        std::unique_lock<NEO::SpinLock> lock(adviceDevice->memAdviseAllocationsMutex);
+        auto it = adviceDevice->memAdviseSharedAllocations.find(allocData);
+        if (it != adviceDevice->memAdviseSharedAllocations.end()) {
+            flags = it->second;
+        }
     }
 
     const auto currentFlags = flags;
@@ -1682,7 +1686,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
     auto alloc = allocData->gpuAllocations.getGraphicsAllocation(adviceDevice->getRootDeviceIndex());
     memoryManager->setMemAdvise(alloc, flags, adviceDevice->getRootDeviceIndex());
 
-    adviceDevice->memAdviseSharedAllocations[allocData] = flags;
+    {
+        std::unique_lock<NEO::SpinLock> lock(adviceDevice->memAdviseAllocationsMutex);
+        adviceDevice->memAdviseSharedAllocations[allocData] = flags;
+    }
 
     return ZE_RESULT_SUCCESS;
 }

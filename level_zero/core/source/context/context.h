@@ -354,6 +354,9 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void freePeerAllocationsFromAll(const void *ptr, bool blocking);
     void freePeerAllocations(const void *ptr, bool blocking, Device *device);
 
+    void clearMemAdviseStateFromAll(NEO::SvmAllocationData *svmData);
+    void clearMemAdviseState(NEO::SvmAllocationData *svmData, Device *device);
+
     ze_result_t handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type,
                                            void *pNext, DriverHandle *driverHandle);
 

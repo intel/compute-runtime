@@ -207,6 +207,11 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             allocationIter->svmData->isSavedForReuse = false;
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
+            for (auto gpuAllocation : allocationIter->svmData->gpuAllocations.getGraphicsAllocations()) {
+                if (gpuAllocation) {
+                    memoryManager->setMemAdvise(gpuAllocation, MemAdviseFlags{}, gpuAllocation->getRootDeviceIndex());
+                }
+            }
             if (requireUpdatingAllocsForIndirectAccess) {
                 allocationIter->svmData->setAllocId(++svmAllocsManager->allocationsCounter);
                 svmAllocsManager->reinsertToAllocsForIndirectAccess(*allocationIter->svmData);

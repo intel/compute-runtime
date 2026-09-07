@@ -910,6 +910,42 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationWithDifferentSizeWhenAllocat
     EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
 }
 
+TEST_F(SvmDeviceAllocationCacheTest, givenAllocationWithMemAdviseWhenAllocatingAfterFreeThenMemAdviseIsResetToDefault) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device);
+    ASSERT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
+
+    auto unifiedMemoryProperties = createMemoryProperties(InternalMemoryType::deviceUnifiedMemory, device);
+    auto allocation = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, allocation);
+
+    auto svmData = svmManager->getSVMAlloc(allocation);
+    ASSERT_NE(nullptr, svmData);
+
+    MemAdviseFlags flags{};
+    flags.cachedMemory = 0;
+    flags.devicePreferredLocation = 1;
+    memoryManager->setMemAdvise(svmData->gpuAllocations.getDefaultGraphicsAllocation(), flags, device->getRootDeviceIndex());
+    EXPECT_EQ(flags.allFlags, memoryManager->memAdviseFlags.allFlags);
+
+    svmManager->freeSVMAlloc(allocation);
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    auto reusedAllocation = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties);
+    ASSERT_EQ(allocation, reusedAllocation);
+
+    EXPECT_EQ(MemAdviseFlags{}.allFlags, memoryManager->memAdviseFlags.allFlags);
+
+    svmManager->freeSVMAlloc(reusedAllocation);
+    svmManager->cleanupUSMAllocCaches();
+}
+
 TEST_F(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentSizesWhenAllocatingAfterFreeThenLimitMemoryWastage) {
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     DebugManagerStateRestore restore;

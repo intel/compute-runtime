@@ -260,6 +260,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     std::mutex printfKernelMutex;
 
     NEO::SpinLock peerImageAllocationsMutex;
+    NEO::SpinLock memAdviseAllocationsMutex;
     std::map<NEO::SvmAllocationData *, NEO::MemAdviseFlags> memAdviseSharedAllocations;
     std::map<NEO::SvmAllocationData *, ze_memory_atomic_attr_exp_flags_t> atomicAccessAllocations;
     std::vector<Device *> subDevices;

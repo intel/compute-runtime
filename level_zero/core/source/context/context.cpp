@@ -525,6 +525,23 @@ void Context::freePeerAllocationsFromAll(const void *ptr, bool blocking) {
     }
 }
 
+void Context::clearMemAdviseState(NEO::SvmAllocationData *svmData, Device *device) {
+    {
+        std::unique_lock<NEO::SpinLock> lock(device->memAdviseAllocationsMutex);
+        device->memAdviseSharedAllocations.erase(svmData);
+    }
+
+    for (auto &subDevice : device->subDevices) {
+        this->clearMemAdviseState(svmData, subDevice);
+    }
+}
+
+void Context::clearMemAdviseStateFromAll(NEO::SvmAllocationData *svmData) {
+    for (auto &pairDevice : this->devices) {
+        this->clearMemAdviseState(svmData, Device::fromHandle(pairDevice.second));
+    }
+}
+
 NEO::UsmMemAllocPool *Context::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData) {
     DEBUG_BREAK_IF(nullptr == svmData);
     NEO::UsmMemAllocPool *usmPool = nullptr;
@@ -589,6 +606,8 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
 
     this->invokeMemFreeCallbacks(*allocation);
 
+    this->clearMemAdviseStateFromAll(allocation);
+
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lockIPC = this->driverHandle->lockIPCHandleMap();
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().begin();
@@ -650,6 +669,8 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
         // SvmAllocationData to the next allocation, so a list left behind here would fire
         // for an unrelated pointer.
         this->invokeMemFreeCallbacks(*allocation);
+
+        this->clearMemAdviseStateFromAll(allocation);
 
         if (this->tryFreeViaPooling(ptr, allocation, usmPool, NEO::FreePolicyType::defer)) {
             return ZE_RESULT_SUCCESS;

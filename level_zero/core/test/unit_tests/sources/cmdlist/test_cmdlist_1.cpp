@@ -854,6 +854,103 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndC
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(CommandListCreateTests, givenMemAdvisedAllocationWhenFreeMemIsCalledThenMemAdviseStateIsCleared) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto res = context->allocSharedMem(device->toHandle(),
+                                       &deviceDesc,
+                                       &hostDesc,
+                                       size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_EQ(1u, device->memAdviseSharedAllocations.count(allocData));
+
+    res = context->freeMem(ptr);
+    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(0u, device->memAdviseSharedAllocations.count(allocData));
+}
+
+TEST_F(CommandListCreateTests, givenMemAdvisedAllocationWhenFreeMemExtWithDeferFreeIsCalledThenMemAdviseStateIsCleared) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto res = context->allocSharedMem(device->toHandle(),
+                                       &deviceDesc,
+                                       &hostDesc,
+                                       size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_EQ(1u, device->memAdviseSharedAllocations.count(allocData));
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    res = context->freeMemExt(&memFreeDesc, ptr);
+    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(0u, device->memAdviseSharedAllocations.count(allocData));
+}
+
+using CommandListMemAdviseSubDevice = Test<SingleRootMultiSubDeviceFixture>;
+
+TEST_F(CommandListMemAdviseSubDevice, givenMemAdvisedAllocationOnSubDeviceWhenFreeMemIsCalledThenSubDeviceMemAdviseStateIsCleared) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ASSERT_FALSE(device->subDevices.empty());
+    auto subDevice = device->subDevices[0];
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto res = context->allocSharedMem(subDevice->toHandle(),
+                                       &deviceDesc,
+                                       &hostDesc,
+                                       size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, subDevice, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    res = commandList->executeMemAdvise(subDevice->toHandle(), ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_EQ(1u, subDevice->memAdviseSharedAllocations.count(allocData));
+
+    res = context->freeMem(ptr);
+    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(0u, subDevice->memAdviseSharedAllocations.count(allocData));
+}
+
 using CommandListMemAdvisePageFault = Test<PageFaultDeviceFixture>;
 
 TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerThenExecuteMemAdviseWithReadOnlyAndDevicePreferredClearsMigrationBlocked) {
