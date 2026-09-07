@@ -713,20 +713,7 @@ TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenMultiplePartitionsWhenLaterPar
     EXPECT_TRUE(usmMemAllocPool.deferredFreeChunks.empty());
 }
 
-TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenPoolWithDeferFreedChunkWhenCleaningUpThenEnginesAreWaitedFor) {
-    auto memoryProperties = makeHostProperties();
-    auto pooledPtr = usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties);
-    ASSERT_NE(nullptr, pooledPtr);
-
-    markPoolUsedByGpu(completedTaskCount + 1);
-    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(pooledPtr, FreePolicyType::defer));
-    EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
-
-    usmMemAllocPool.cleanup();
-    EXPECT_EQ(1u, memoryManager->waitForEnginesCompletionCalled);
-}
-
-TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenPoolWithDeferFreedChunkWhenCleaningUpThenTaskCountFloorIsAppliedBeforeWaiting) {
+TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenPoolWithDeferFreedChunkWhenCleaningUpThenPoolAllocationIsDeferFreedWithoutWaiting) {
     auto memoryProperties = makeHostProperties();
     auto pooledPtr = usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties);
     ASSERT_NE(nullptr, pooledPtr);
@@ -735,12 +722,19 @@ TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenPoolWithDeferFreedChunkWhenCle
     EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(pooledPtr, FreePolicyType::defer));
     ASSERT_EQ(1u, usmMemAllocPool.deferredFreeChunks.size());
     EXPECT_EQ(0u, svmManager->applyIndirectAccessTaskCountFloorCalled);
+    EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+    ASSERT_EQ(0u, svmManager->getNumDeferFreeAllocs());
 
-    // snapshots can bound work up to latestSentTaskCount, which the wait only covers
-    // once that floor is written into the pool allocation
+    memoryManager->deferAllocInUse = true;
     usmMemAllocPool.cleanup();
     EXPECT_EQ(1u, svmManager->applyIndirectAccessTaskCountFloorCalled);
-    EXPECT_EQ(1u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_EQ(FreePolicyType::defer, svmManager->freeSVMAllocImplLastFreePolicy);
+    EXPECT_EQ(1u, svmManager->getNumDeferFreeAllocs());
+
+    memoryManager->deferAllocInUse = false;
+    svmManager->freeSVMAllocDeferImpl();
+    EXPECT_EQ(0u, svmManager->getNumDeferFreeAllocs());
 }
 
 TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenPoolWithoutDeferFreedChunksWhenCleaningUpThenEnginesAreNotWaitedFor) {
@@ -753,6 +747,42 @@ TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenPoolWithoutDeferFreedChunksWhe
 
     usmMemAllocPool.cleanup();
     EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_EQ(FreePolicyType::none, svmManager->freeSVMAllocImplLastFreePolicy);
+}
+
+TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenPoolAllocationNotInUseWhenCleaningUpThenItIsReleasedImmediately) {
+    auto memoryProperties = makeHostProperties();
+    auto pooledPtr = usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties);
+    ASSERT_NE(nullptr, pooledPtr);
+
+    markPoolUsedByGpu(completedTaskCount + 1);
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(pooledPtr, FreePolicyType::defer));
+
+    usmMemAllocPool.cleanup();
+    EXPECT_EQ(FreePolicyType::defer, svmManager->freeSVMAllocImplLastFreePolicy);
+    EXPECT_EQ(0u, svmManager->getNumDeferFreeAllocs());
+}
+
+TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenPoolKeptResidentForIndirectAccessWithoutDeferFreedChunksWhenCleaningUpThenTaskCountFloorIsNotApplied) {
+    auto memoryProperties = makeHostProperties();
+    auto pooledPtr = usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties);
+    ASSERT_NE(nullptr, pooledPtr);
+
+    const auto osContextId = csr->getOsContext().getContextId();
+    const TaskCountType latestSentTaskCount = completedTaskCount + 5;
+    markPoolUsedByGpu(completedTaskCount);
+    poolGraphicsAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContextId);
+    svmManager->indirectAllocationsResidency[csr.get()] = {latestSentTaskCount, 0u};
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(pooledPtr, FreePolicyType::none));
+
+    auto poolPtr = usmMemAllocPool.pool;
+    svmManager->freeSVMAllocImplCallBase = false;
+    usmMemAllocPool.cleanup();
+    EXPECT_EQ(completedTaskCount, poolGraphicsAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+
+    svmManager->freeSVMAllocImplCallBase = true;
+    svmManager->freeSVMAlloc(poolPtr, true);
 }
 
 TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenPoolKeptResidentForIndirectAccessWhenChunkIsDeferFreedThenLatestSentTaskCountIsRespected) {

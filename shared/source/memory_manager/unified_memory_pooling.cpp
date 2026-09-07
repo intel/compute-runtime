@@ -70,32 +70,30 @@ size_t UsmMemAllocPool::getPoolSize() const {
 }
 
 void UsmMemAllocPool::cleanup() {
-    if (isInitialized()) {
-        {
-            std::unique_lock<std::mutex> lock(mtx);
-            this->drainDeferredFreeChunks();
-            if (false == this->deferredFreeChunks.empty()) {
-                // snapshots can bound work up to latestSentTaskCount, which is not stamped on
-                // the pool allocation, so raise it first or the wait would not cover them
-                this->svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
-                this->svmMemoryManager->waitForEnginesCompletion(allocationData);
-                this->drainDeferredFreeChunks();
-                // whole pool allocation is about to be released, so neither the chunk
-                // bookkeeping nor the residency those chunks still hold matters
-                this->deferredFreeChunks.clear();
-            }
-        }
-        if (this->customCleanup) {
-            this->customCleanup(this->pool);
-        }
-        [[maybe_unused]] const auto status = this->svmMemoryManager->freeSVMAlloc(this->pool, false);
-        DEBUG_BREAK_IF(false == status);
-        this->svmMemoryManager = nullptr;
-        this->pool = nullptr;
-        this->poolEnd = nullptr;
-        this->poolInfo.poolSize = 0u;
-        this->poolMemoryType = InternalMemoryType::notSpecified;
+    if (!isInitialized()) {
+        return;
     }
+    bool hasDeferredChunks = false;
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        hasDeferredChunks = false == this->deferredFreeChunks.empty();
+        if (hasDeferredChunks) {
+            // snapshots can bound work up to latestSentTaskCount, which is not stamped on
+            // the pool allocation, so raise it first or defer free would not cover them
+            this->svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
+        }
+    }
+
+    if (this->customCleanup) {
+        this->customCleanup(this->pool);
+    }
+    [[maybe_unused]] const auto status = hasDeferredChunks ? this->svmMemoryManager->freeSVMAllocDefer(this->pool) : this->svmMemoryManager->freeSVMAlloc(this->pool);
+    DEBUG_BREAK_IF(false == status);
+    this->svmMemoryManager = nullptr;
+    this->pool = nullptr;
+    this->poolEnd = nullptr;
+    this->poolInfo.poolSize = 0u;
+    this->poolMemoryType = InternalMemoryType::notSpecified;
 }
 
 bool UsmMemAllocPool::alignmentIsAllowed(size_t alignment) {
