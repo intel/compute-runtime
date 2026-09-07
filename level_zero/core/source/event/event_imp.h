@@ -35,7 +35,8 @@ struct EventImp : public Event {
 
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
-    ze_result_t queryStatus(int64_t timeSinceWait) override;
+    using Event::queryStatus;
+    ze_result_t queryStatus(int64_t timeSinceWait, bool blockOnMiss) override;
 
     ze_result_t reset() override;
 
@@ -79,8 +80,8 @@ struct EventImp : public Event {
     NEO::WaitStatus tryUserFenceWaitForHostSynchronize(int64_t timeSinceWait);
 
     ze_result_t calculateProfilingData();
-    ze_result_t queryStatusEventPackets(int64_t timeSinceWait);
-    ze_result_t queryCounterBasedEventStatus(int64_t timeSinceWait);
+    ze_result_t queryStatusEventPackets(int64_t timeSinceWait, bool blockOnMiss);
+    ze_result_t queryCounterBasedEventStatus(int64_t timeSinceWait, bool blockOnMiss);
     void handleSuccessfulHostSynchronization();
     MOCKABLE_VIRTUAL ze_result_t hostEventSetValueTimestamps(State eventState);
     void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) override;
@@ -93,7 +94,7 @@ struct EventImp : public Event {
     bool isTimestampPopulated() const { return (contextEndTS != Event::STATE_CLEARED || globalEndTS != Event::STATE_CLEARED); }
     void synchronizeTimestampCompletionWithTimeout();
     bool isCacheFlushRequiredForHostSync() const;
-    bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) override;
+    bool isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) override;
 };
 
 } // namespace L0

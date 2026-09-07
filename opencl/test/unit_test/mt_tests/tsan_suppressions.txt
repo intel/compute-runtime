@@ -1,8 +1,13 @@
 # This file describes excludes for false-positive issues reported by TSAN.
 
-# waitFunctionWithPredicate polls a tag address written by KMD (hardware-signaled).
+# The WaitUtils helpers poll a tag address written by KMD (hardware-signaled), for both the waiting
+# and the querying callers.
 # No C++ synchronization primitive can describe this relationship; the read is intentionally non-atomic.
-race:WaitUtils::waitFunctionWithPredicate
+# Matched on the namespace rather than on the function holding the read, because the helpers are all
+# inline: which one survives in a release build's stack depends on inlining, and has already been
+# observed as waitFunctionWithPredicate and as pollFunctionWithPredicate on different build
+# configurations.
+race:WaitUtils::*
 
 # Test polling loops call isUsedByOsContext while the async deleter concurrently frees the
 # allocation. The deleter holds exclusive ownership at the point of free; happens-before is

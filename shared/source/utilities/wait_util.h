@@ -11,7 +11,6 @@
 
 #include <cstdint>
 #include <functional>
-#include <thread>
 #include <utility>
 
 namespace NEO {
@@ -64,7 +63,7 @@ inline bool monitorWait(volatile void const *monitorAddress) {
 }
 
 template <typename T>
-inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedValue, std::function<bool(T, T)> predicate, int64_t timeElapsedSinceWaitStarted, uint64_t counterValue, int64_t waitPkgThreshold) {
+inline bool pollFunctionWithPredicate(volatile T const *pollAddress, T expectedValue, std::function<bool(T, T)> predicate, int64_t timeElapsedSinceWaitStarted, uint64_t counterValue, int64_t waitPkgThreshold, bool blockOnMiss) {
     if (waitpkgUse == WaitpkgUse::tpause && timeElapsedSinceWaitStarted > waitPkgThreshold) {
         tpause(counterValue);
     } else {
@@ -77,7 +76,7 @@ inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedV
         if (predicate(*pollAddress, expectedValue)) {
             return true;
         }
-        if (waitpkgUse == WaitpkgUse::umonitorAndUmwait) {
+        if (blockOnMiss && waitpkgUse == WaitpkgUse::umonitorAndUmwait) {
             if (monitorWait(pollAddress)) {
                 if (predicate(*pollAddress, expectedValue)) {
                     return true;
@@ -85,8 +84,15 @@ inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedV
             }
         }
     }
-    std::this_thread::yield();
+    if (blockOnMiss) {
+        CpuIntrinsics::yield();
+    }
     return false;
+}
+
+template <typename T>
+inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedValue, std::function<bool(T, T)> predicate, int64_t timeElapsedSinceWaitStarted, uint64_t counterValue, int64_t waitPkgThreshold) {
+    return pollFunctionWithPredicate<T>(pollAddress, expectedValue, std::move(predicate), timeElapsedSinceWaitStarted, counterValue, waitPkgThreshold, true);
 }
 
 template <typename T>
@@ -107,6 +113,10 @@ inline void waitFunctionWithoutPredicate(int64_t timeElapsedSinceWaitStarted) {
             CpuIntrinsics::pause();
         }
     }
+}
+
+inline bool pollFunction(volatile TagAddressType *pollAddress, TaskCountType expectedValue, int64_t timeElapsedSinceWaitStarted, bool blockOnMiss) {
+    return pollFunctionWithPredicate<TaskCountType>(pollAddress, expectedValue, std::greater_equal<TaskCountType>(), timeElapsedSinceWaitStarted, waitpkgCounterValue, waitPkgThresholdInMicroSeconds, blockOnMiss);
 }
 
 inline bool waitFunction(volatile TagAddressType *pollAddress, TaskCountType expectedValue, int64_t timeElapsedSinceWaitStarted) {

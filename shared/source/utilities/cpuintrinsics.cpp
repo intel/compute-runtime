@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,8 @@ extern "C" uint64_t __rdtsc();
 #include <emmintrin.h>
 #endif
 
+#include <thread>
+
 namespace NEO {
 namespace CpuIntrinsics {
 
@@ -51,6 +53,10 @@ void mfence() {
 
 void pause() {
     _mm_pause();
+}
+
+void yield() {
+    std::this_thread::yield();
 }
 
 uint8_t tpause(uint32_t control, uint64_t counter) {

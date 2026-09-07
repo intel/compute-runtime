@@ -129,7 +129,8 @@ class MockEmptyEvent : public ::L0::Event {
     // Need to override all pure virtual functions of ::L0::Event in order to create an instance, but they won't be called, so they can just return success.
     ze_result_t hostSignal(bool) override { return ZE_RESULT_SUCCESS; };
     ze_result_t hostSynchronize(uint64_t) override { return ZE_RESULT_SUCCESS; };
-    ze_result_t queryStatus(int64_t) override { return ZE_RESULT_SUCCESS; };
+    using ::L0::Event::queryStatus;
+    ze_result_t queryStatus(int64_t, bool) override { return ZE_RESULT_SUCCESS; };
     ze_result_t reset() override { return ZE_RESULT_SUCCESS; };
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *) override { return ZE_RESULT_SUCCESS; };
     ze_result_t queryTimestampsExp(L0::Device *, uint32_t *, ze_kernel_timestamp_result_t *) override { return ZE_RESULT_SUCCESS; };
@@ -147,7 +148,7 @@ class MockEmptyEvent : public ::L0::Event {
     ze_result_t hostEventSetValue(State) override { return ZE_RESULT_SUCCESS; };
 
     void clearTimestampTagData(uint32_t, NEO::TagNodeBase *) override {};
-    bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) override {
+    bool isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) override {
         return true;
     }
 };

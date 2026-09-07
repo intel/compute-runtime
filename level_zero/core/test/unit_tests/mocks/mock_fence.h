@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,8 @@ struct Mock<Fence> : public Fence {
 
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
-    ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
+    using Fence::queryStatus;
+    ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, (bool blockOnMiss));
     ADDMETHOD_NOBASE(assignTaskCountFromCsr, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, (bool signaled));
 };

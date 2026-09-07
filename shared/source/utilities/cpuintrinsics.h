@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,9 @@ void clFlush(void const *ptr);
 void clFlushOpt(void *ptr);
 
 void pause();
+
+// Declared here so ULTs get the libult substitute of this file, which counts the call.
+void yield();
 
 uint8_t tpause(uint32_t control, uint64_t counter);
 

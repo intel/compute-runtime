@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ using namespace NEO;
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
+extern std::atomic<uint32_t> yieldCounter;
 } // namespace CpuIntrinsicsTests
 
 struct WaitPredicateOnlyFixture {
@@ -82,6 +83,41 @@ TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenPollAddressProvidedMeetsCr
     bool ret = WaitUtils::waitFunction(&pollValue, expectedValue, 0);
     EXPECT_TRUE(ret);
     EXPECT_EQ(oldCount + WaitUtils::waitCount, CpuIntrinsicsTests::pauseCounter);
+}
+
+TEST_F(WaitPredicateOnlyTest, givenNotReadyPollAddressWhenWaitFunctionCalledThenYieldTheCore) {
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
+
+    volatile TagAddressType pollValue = 1u;
+    TaskCountType expectedValue = 3;
+
+    uint32_t oldCount = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_FALSE(WaitUtils::waitFunction(&pollValue, expectedValue, 0));
+    EXPECT_EQ(oldCount + 1, CpuIntrinsicsTests::yieldCounter);
+}
+
+TEST_F(WaitPredicateOnlyTest, givenNotReadyPollAddressWhenPollFunctionCalledWithoutBlockOnMissThenPollWithoutYieldingTheCore) {
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
+
+    volatile TagAddressType pollValue = 1u;
+    TaskCountType expectedValue = 3;
+
+    uint32_t oldPauseCount = CpuIntrinsicsTests::pauseCounter.load();
+    uint32_t oldYieldCount = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_FALSE(WaitUtils::pollFunction(&pollValue, expectedValue, 0, false));
+    EXPECT_EQ(oldPauseCount + WaitUtils::waitCount, CpuIntrinsicsTests::pauseCounter);
+    EXPECT_EQ(oldYieldCount, CpuIntrinsicsTests::yieldCounter);
+}
+
+TEST_F(WaitPredicateOnlyTest, givenReadyPollAddressWhenPollFunctionCalledWithoutBlockOnMissThenReturnTrueWithoutYieldingTheCore) {
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
+
+    volatile TagAddressType pollValue = 3u;
+    TaskCountType expectedValue = 1;
+
+    uint32_t oldCount = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_TRUE(WaitUtils::pollFunction(&pollValue, expectedValue, 0, false));
+    EXPECT_EQ(oldCount, CpuIntrinsicsTests::yieldCounter);
 }
 
 TEST_F(WaitPredicateOnlyTest, givenDebugFlagSetZeroWhenPollAddressProvidedMeetsCriteriaThenPauseZeroTimesAndReturnTrue) {

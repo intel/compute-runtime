@@ -33,6 +33,7 @@ using namespace std::chrono_literals;
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
+extern std::atomic<uint32_t> yieldCounter;
 extern volatile TagAddressType *pauseAddress;
 extern TaskCountType pauseValue;
 extern uint32_t pauseOffset;
@@ -95,6 +96,63 @@ TEST_F(FenceTest, whenQueryingStatusWithoutCsrAndFenceUnsignaledThenReturnsNotRe
     auto status = fence->queryStatus();
     EXPECT_EQ(ZE_RESULT_NOT_READY, status);
     fence->destroy();
+}
+
+TEST_F(FenceTest, GivenNotReadyFenceWhenQueryStatusIsCalledThenCoreIsNotYielded) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc = {};
+
+    std::unique_ptr<WhiteBox<L0::Fence>> fence;
+    fence.reset(whiteboxCast(Fence::create(&cmdqueue, &desc)));
+    ASSERT_NE(nullptr, fence);
+
+    fence->taskCount = 1;
+    *csr->getTagAddress() = 0u;
+
+    const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, fence->queryStatus());
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter);
+}
+
+TEST_F(FenceTest, GivenNotReadyFenceWhenHostSynchronizeWithZeroTimeoutThenCoreIsNotYielded) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = false;
+
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc = {};
+
+    std::unique_ptr<WhiteBox<L0::Fence>> fence;
+    fence.reset(whiteboxCast(Fence::create(&cmdqueue, &desc)));
+    ASSERT_NE(nullptr, fence);
+
+    fence->taskCount = 1;
+    fence->gpuHangCheckPeriod = 0ms;
+    *csr->getTagAddress() = 0u;
+
+    const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, fence->hostSynchronize(0));
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter);
+}
+
+TEST_F(FenceTest, GivenNotReadyFenceWhenHostSynchronizeWithTimeoutThenCoreIsYieldedBetweenPolls) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = false;
+
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc = {};
+
+    std::unique_ptr<WhiteBox<L0::Fence>> fence;
+    fence.reset(whiteboxCast(Fence::create(&cmdqueue, &desc)));
+    ASSERT_NE(nullptr, fence);
+
+    fence->taskCount = 1;
+    fence->gpuHangCheckPeriod = 0ms;
+    *csr->getTagAddress() = 0u;
+
+    const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, fence->hostSynchronize(1));
+    EXPECT_GT(CpuIntrinsicsTests::yieldCounter.load(), yieldCountBefore);
 }
 
 TEST_F(FenceTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturned) {

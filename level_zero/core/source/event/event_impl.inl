@@ -300,7 +300,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWait) {
+ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWait, bool blockOnMiss) {
     if (!inOrderExecHelper.isDataAssigned()) {
         return reportEmptyCbEventAsReady ? ZE_RESULT_SUCCESS : ZE_RESULT_NOT_READY;
     }
@@ -322,9 +322,9 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
         } else {
             const uint64_t *hostAddress = ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset);
             for (uint32_t i = 0; i < inOrderExecHelper.getEventData()->hostPartitions; i++) {
-                if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>(), timeSinceWait,
+                if (!NEO::WaitUtils::pollFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>(), timeSinceWait,
                                                                                NEO::WaitUtils::counterValueForEventHostSync,
-                                                                               NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds)) {
+                                                                               NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, blockOnMiss)) {
                     signaled = false;
                     break;
                 }
@@ -423,7 +423,7 @@ NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t t
         return NEO::WaitStatus::ready;
     }
 
-    if (isActiveExternalCbEvent() && !isPatchPreambleCounterCompleted(timeSinceWait)) {
+    if (isActiveExternalCbEvent() && !isPatchPreambleCounterCompleted(timeSinceWait, true)) {
         return NEO::WaitStatus::notReady;
     }
 
@@ -568,7 +568,7 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
+ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait, bool blockOnMiss) {
     assignKernelEventCompletionData(getHostAddress());
     uint32_t queryVal = Event::STATE_CLEARED;
     uint32_t packets = kernelEventCompletionData.getPacketsUsed();
@@ -577,13 +577,14 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
         void const *queryAddress = isEventTimestampFlagSet()
                                        ? kernelEventCompletionData.getContextEndAddress(packetId)
                                        : kernelEventCompletionData.getContextStartAddress(packetId);
-        bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
+        bool ready = NEO::WaitUtils::pollFunctionWithPredicate<const TagSizeT>(
             static_cast<TagSizeT const *>(queryAddress),
             queryVal,
             std::not_equal_to<TagSizeT>(),
             timeSinceWait,
             NEO::WaitUtils::counterValueForEventHostSync,
-            NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
+            NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds,
+            blockOnMiss);
         if (!ready) {
             return ZE_RESULT_NOT_READY;
         }
@@ -594,13 +595,14 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
         remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->getCompletionFieldOffset());
         for (uint32_t i = 0; i < remainingPackets; i++) {
             void const *queryAddress = remainingPacketSyncAddress;
-            bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
+            bool ready = NEO::WaitUtils::pollFunctionWithPredicate<const TagSizeT>(
                 static_cast<TagSizeT const *>(queryAddress),
                 queryVal,
                 std::not_equal_to<TagSizeT>(),
                 timeSinceWait,
                 NEO::WaitUtils::counterValueForEventHostSync,
-                NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
+                NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds,
+                blockOnMiss);
             if (!ready) {
                 return ZE_RESULT_NOT_READY;
             }
@@ -701,21 +703,21 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryStatus(int64_t timeSinceWait) {
+ze_result_t EventImp<TagSizeT>::queryStatus(int64_t timeSinceWait, bool blockOnMiss) {
     if (handlePreQueryStatusOperationsAndCheckCompletion()) {
         return ZE_RESULT_SUCCESS;
     }
 
     if (isActiveExternalCbEvent()) {
-        if (!isPatchPreambleCounterCompleted(timeSinceWait)) {
+        if (!isPatchPreambleCounterCompleted(timeSinceWait, blockOnMiss)) {
             return ZE_RESULT_NOT_READY;
         }
     }
 
     if (isCounterBased() || this->inOrderExecHelper.isDataAssigned()) {
-        return queryCounterBasedEventStatus(timeSinceWait);
+        return queryCounterBasedEventStatus(timeSinceWait, blockOnMiss);
     } else {
-        return queryStatusEventPackets(timeSinceWait);
+        return queryStatusEventPackets(timeSinceWait, blockOnMiss);
     }
 }
 
@@ -889,7 +891,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout, int64_t timeS
     }
 
     if (isActiveExternalCbEvent()) {
-        if (!isPatchPreambleCounterCompleted(timeSinceWait)) {
+        if (!isPatchPreambleCounterCompleted(timeSinceWait, timeout != 0)) {
             return ZE_RESULT_NOT_READY;
         }
     }
@@ -995,7 +997,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             if (fenceWait) {
                 ret = waitForUserFence(timeout, elapsedTimeSinceWaitStartUs);
             } else {
-                ret = queryStatus(elapsedTimeSinceWaitStartUs);
+                ret = queryStatus(elapsedTimeSinceWaitStartUs, timeout != 0);
             }
         }
         if (ret == ZE_RESULT_SUCCESS) {
@@ -1401,16 +1403,16 @@ bool EventImp<TagSizeT>::isCacheFlushRequiredForHostSync() const {
 }
 
 template <typename TagSizeT>
-bool EventImp<TagSizeT>::isPatchPreambleCounterCompleted(int64_t timeSinceWait) {
+bool EventImp<TagSizeT>::isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) {
     const auto counterValue = inOrderExecHelper.getPatchPreambleCounter();
     auto hostAddress = inOrderExecHelper.getPatchPreambleHostAddress();
     const auto hostPartitions = inOrderExecHelper.getEventData()->hostPartitions;
     const auto partitionOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
 
     for (uint32_t partition = 0; partition < hostPartitions; partition++) {
-        if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, counterValue, std::greater_equal<uint64_t>(), timeSinceWait,
+        if (!NEO::WaitUtils::pollFunctionWithPredicate<const uint64_t>(hostAddress, counterValue, std::greater_equal<uint64_t>(), timeSinceWait,
                                                                        NEO::WaitUtils::counterValueForEventHostSync,
-                                                                       NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds)) {
+                                                                       NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, blockOnMiss)) {
             return false;
         }
         hostAddress = ptrOffset(hostAddress, partitionOffset);

@@ -687,11 +687,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return isAnyDirectSubmissionEnabledResult;
     }
 
-    bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) override {
+    using BaseClass::testTaskCountReady;
+    bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss) override {
         if (testTaskCountReadyReturnValue.has_value()) {
             return *testTaskCountReadyReturnValue;
         }
-        return BaseClass::testTaskCountReady(pollAddress, taskCountToWait);
+        return BaseClass::testTaskCountReady(pollAddress, taskCountToWait, blockOnMiss);
     }
 
     bool isGpuHangDetected() const override {

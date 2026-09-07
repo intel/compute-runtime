@@ -266,7 +266,10 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle, uint64_t timeoutNanoseconds) { return WaitStatus::notReady; }
     virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait);
     WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait);
-    MOCKABLE_VIRTUAL bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait);
+    MOCKABLE_VIRTUAL bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss);
+    bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) {
+        return testTaskCountReady(pollAddress, taskCountToWait, false);
+    }
     void downloadAllocations(bool blockingWait) { downloadAllocations(blockingWait, this->latestFlushedTaskCount); };
     virtual void downloadAllocations(bool blockingWait, TaskCountType taskCount) {};
     virtual void removeDownloadAllocation(GraphicsAllocation *alloc) {};

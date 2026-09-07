@@ -54,6 +54,7 @@
 
 #include <array>
 #include <iostream>
+#include <thread>
 
 namespace NEO {
 
@@ -1434,10 +1435,10 @@ void CommandStreamReceiver::downloadTagAllocation(TaskCountType taskCountToWait)
     }
 }
 
-bool CommandStreamReceiver::testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) {
+bool CommandStreamReceiver::testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss) {
     this->downloadTagAllocation(taskCountToWait);
     for (uint32_t i = 0; i < activePartitions; i++) {
-        if (!WaitUtils::waitFunction(pollAddress, taskCountToWait, 0)) {
+        if (!WaitUtils::pollFunction(pollAddress, taskCountToWait, 0, blockOnMiss)) {
             return false;
         }
 

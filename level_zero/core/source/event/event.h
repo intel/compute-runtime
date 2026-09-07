@@ -156,7 +156,8 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t destroy();
     virtual ze_result_t hostSignal(bool allowCounterBased) = 0;
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
-    virtual ze_result_t queryStatus(int64_t timeSinceWait) = 0;
+    virtual ze_result_t queryStatus(int64_t timeSinceWait, bool blockOnMiss) = 0;
+    ze_result_t queryStatus(int64_t timeSinceWait) { return queryStatus(timeSinceWait, false); }
     virtual ze_result_t reset() = 0;
     virtual ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) = 0;
     virtual ze_result_t queryTimestampsExp(Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) = 0;
@@ -435,7 +436,7 @@ struct Event : _ze_event_handle_t {
         return (nullptr != getRecordedSignalFrom()) && isCounterBased() && (false == externalEvent);
     }
 
-    virtual bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) = 0;
+    virtual bool isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) = 0;
 
     static bool isBeingUsedInActiveGraphRecording(const Event *event);
 

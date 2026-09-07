@@ -13,12 +13,14 @@
 #include <atomic>
 #include <cstdint>
 #include <functional>
+#include <thread>
 
 namespace CpuIntrinsicsTests {
 // std::atomic is used for sake of sanitation in MT tests
 std::atomic<uintptr_t> lastClFlushedPtr(0u);
 std::atomic<uint32_t> clFlushCounter(0u);
 std::atomic<uint32_t> pauseCounter(0u);
+std::atomic<uint32_t> yieldCounter(0u);
 std::atomic<uint32_t> sfenceCounter(0u);
 std::atomic<uint32_t> mfenceCounter(0u);
 
@@ -75,6 +77,13 @@ void pause() {
             CpuIntrinsicsTests::pauseAddress = ptrOffset(CpuIntrinsicsTests::pauseAddress, CpuIntrinsicsTests::pauseOffset);
         }
     }
+}
+
+void yield() {
+    CpuIntrinsicsTests::yieldCounter++;
+    // Counted AND performed: a ULT wait loop polls a tag that another thread writes, so dropping
+    // the real sched_yield() here would leave it spinning hot against the thread it waits for.
+    std::this_thread::yield();
 }
 
 uint8_t tpause(uint32_t control, uint64_t counter) {

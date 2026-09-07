@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ bool DeferrableAllocationDeletion::apply() {
         for (auto &engine : memoryManager.getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
             auto contextId = engine.osContext->getContextId();
             if (graphicsAllocation.isUsedByOsContext(contextId)) {
-                if (engine.commandStreamReceiver->testTaskCountReady(engine.commandStreamReceiver->getTagAddress(), graphicsAllocation.getTaskCount(contextId))) {
+                if (engine.commandStreamReceiver->testTaskCountReady(engine.commandStreamReceiver->getTagAddress(), graphicsAllocation.getTaskCount(contextId), true)) {
                     graphicsAllocation.releaseUsageInOsContext(contextId);
                 } else {
                     isStillUsed = true;

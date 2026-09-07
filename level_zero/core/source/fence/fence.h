@@ -29,7 +29,8 @@ struct Fence : _ze_fence_handle_t {
         return ZE_RESULT_SUCCESS;
     }
     MOCKABLE_VIRTUAL ze_result_t hostSynchronize(uint64_t timeout);
-    MOCKABLE_VIRTUAL ze_result_t queryStatus();
+    MOCKABLE_VIRTUAL ze_result_t queryStatus(bool blockOnMiss);
+    ze_result_t queryStatus() { return queryStatus(false); }
     MOCKABLE_VIRTUAL ze_result_t assignTaskCountFromCsr();
     MOCKABLE_VIRTUAL ze_result_t reset(bool signaled);
 
