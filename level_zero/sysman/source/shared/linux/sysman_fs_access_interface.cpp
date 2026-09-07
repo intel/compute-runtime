@@ -216,6 +216,16 @@ ze_result_t FsAccessInterface::write(const std::string &file, std::string_view v
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FsAccessInterface::write(const std::string &file, const uint64_t val) {
+    const auto str = std::to_string(val);
+    return FsAccessInterface::write(file, std::string_view(str));
+}
+
+ze_result_t FsAccessInterface::write(const std::string &file, const int val) {
+    const auto str = std::to_string(val);
+    return FsAccessInterface::write(file, std::string_view(str));
+}
+
 ze_result_t FsAccessInterface::canRead(const std::string file) {
     struct stat sb;
     if (NEO::SysCalls::stat(file, &sb) != 0) {

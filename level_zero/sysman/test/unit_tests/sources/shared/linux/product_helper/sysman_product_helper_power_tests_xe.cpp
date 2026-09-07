@@ -77,14 +77,14 @@ HWTEST2_F(SysmanDevicePowerFixtureXe, GivenVariousPowerLimitFileExistanceStatesW
                 for (bool isCriticalPowerLimitPresent : {false, true}) {
                     for (bool isBurstPowerLimitPresent : {false, true}) {
                         // Set the file existence flags based on the current combination
-                        pSysfsAccess->isCardEnergyCounterFilePresent = isEnergyCounterFilePresent;
-                        pSysfsAccess->isCardSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
-                        pSysfsAccess->isCardCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
-                        pSysfsAccess->isCardBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
-                        pSysfsAccess->isPackageEnergyCounterFilePresent = isEnergyCounterFilePresent;
-                        pSysfsAccess->isPackageSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
-                        pSysfsAccess->isPackageCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
-                        pSysfsAccess->isPackageBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
+                        pFsAccess->isCardEnergyCounterFilePresent = isEnergyCounterFilePresent;
+                        pFsAccess->isCardSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
+                        pFsAccess->isCardCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
+                        pFsAccess->isCardBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
+                        pFsAccess->isPackageEnergyCounterFilePresent = isEnergyCounterFilePresent;
+                        pFsAccess->isPackageSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
+                        pFsAccess->isPackageCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
+                        pFsAccess->isPackageBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
 
                         // The expected result is true if at least one of the files is present
                         bool expected = (isPmtBasedPowerSupported || isEnergyCounterFilePresent || isSustainedPowerLimitFilePresent ||
@@ -125,6 +125,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenComponentCountZeroWhenEnumerating
         return count;
     });
 
+    pFsAccess->isTelemetryDataFilePresent = true;
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, bmgPowerHandleComponentCount);
@@ -370,6 +371,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     constexpr uint64_t mockTimestamp = 0xabef;
     constexpr double indexToXtalClockFrequencyMap[4] = {24, 19.2, 38.4, 25};
 
+    pFsAccess->isTelemetryDataFilePresent = true;
     auto handles = getPowerHandles();
     EXPECT_EQ(bmgPowerHandleComponentCount, handles.size());
 
@@ -456,6 +458,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     constexpr uint64_t mockTimestamp = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
     constexpr double indexToXtalClockFrequencyMap[4] = {24, 19.2, 38.4, 25};
 
+    pFsAccess->isTelemetryDataFilePresent = true;
     auto handles = getPowerHandles();
     EXPECT_EQ(bmgPowerHandleComponentCount, handles.size());
 
@@ -505,10 +508,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWithPmtBasedPowe
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadResultsForSustainedPowerLimitWhenGetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -517,8 +520,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 
         for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
             for (ze_result_t sustainedLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-                pSysfsAccess->sustainedReadResult = sustainedLimitResult;
-                pSysfsAccess->sustainedIntervalReadResult = sustainedLimitIntervalResult;
+                pFsAccess->sustainedReadResult = sustainedLimitResult;
+                pFsAccess->sustainedIntervalReadResult = sustainedLimitIntervalResult;
 
                 uint32_t count = 0;
                 EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
@@ -530,14 +533,14 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
                 EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
 
                 if (sustainedLimitResult == ZE_RESULT_SUCCESS) {
-                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor));
+                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pFsAccess->sustainedPowerLimitVal / milliFactor));
                     EXPECT_EQ(allLimits[0].enabledStateLocked, true);
                     EXPECT_EQ(allLimits[0].intervalValueLocked, false);
                     EXPECT_EQ(allLimits[0].limitValueLocked, false);
                     EXPECT_EQ(allLimits[0].source, ZES_POWER_SOURCE_ANY);
                     EXPECT_EQ(allLimits[0].level, ZES_POWER_LEVEL_SUSTAINED);
                     EXPECT_EQ(allLimits[0].limitUnit, ZES_LIMIT_UNIT_POWER);
-                    EXPECT_EQ(allLimits[0].interval, (sustainedLimitIntervalResult == ZE_RESULT_SUCCESS) ? pSysfsAccess->sustainedPowerLimitIntervalVal : -1);
+                    EXPECT_EQ(allLimits[0].interval, (sustainedLimitIntervalResult == ZE_RESULT_SUCCESS) ? pFsAccess->sustainedPowerLimitIntervalVal : -1);
                 }
             }
         }
@@ -545,10 +548,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsWriteResultsForSustainedPowerLimitIntervalWhenSetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -556,7 +559,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
         auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 
         for (ze_result_t sustainedLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-            pSysfsAccess->sustainedIntervalWriteResult = sustainedLimitIntervalResult;
+            pFsAccess->sustainedIntervalWriteResult = sustainedLimitIntervalResult;
 
             uint32_t count = 0;
 
@@ -581,10 +584,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadResultsForBurstPowerLimitWhenGetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -593,8 +596,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 
         for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
             for (ze_result_t burstLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-                pSysfsAccess->burstReadResult = burstLimitResult;
-                pSysfsAccess->burstIntervalReadResult = burstLimitIntervalResult;
+                pFsAccess->burstReadResult = burstLimitResult;
+                pFsAccess->burstIntervalReadResult = burstLimitIntervalResult;
 
                 uint32_t count = 0;
                 EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
@@ -606,14 +609,14 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
                 EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
 
                 if (burstLimitResult == ZE_RESULT_SUCCESS) {
-                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor));
+                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pFsAccess->burstPowerLimitVal / milliFactor));
                     EXPECT_EQ(allLimits[0].enabledStateLocked, true);
                     EXPECT_EQ(allLimits[0].intervalValueLocked, false);
                     EXPECT_EQ(allLimits[0].limitValueLocked, false);
                     EXPECT_EQ(allLimits[0].source, ZES_POWER_SOURCE_ANY);
                     EXPECT_EQ(allLimits[0].level, ZES_POWER_LEVEL_BURST);
                     EXPECT_EQ(allLimits[0].limitUnit, ZES_LIMIT_UNIT_POWER);
-                    EXPECT_EQ(allLimits[0].interval, (burstLimitIntervalResult == ZE_RESULT_SUCCESS) ? pSysfsAccess->burstPowerLimitIntervalVal : -1);
+                    EXPECT_EQ(allLimits[0].interval, (burstLimitIntervalResult == ZE_RESULT_SUCCESS) ? pFsAccess->burstPowerLimitIntervalVal : -1);
                 }
             }
         }
@@ -621,10 +624,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsWriteResultsForBurstPowerLimitIntervalWhenSetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -632,7 +635,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
         auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 
         for (ze_result_t burstLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-            pSysfsAccess->burstIntervalWriteResult = burstLimitIntervalResult;
+            pFsAccess->burstIntervalWriteResult = burstLimitIntervalResult;
 
             uint32_t count = 0;
 
@@ -657,10 +660,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadResultsForPeakPowerLimitWhenGetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -668,7 +671,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
         auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 
         for (ze_result_t criticalLimitResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-            pSysfsAccess->criticalReadResult = criticalLimitResult;
+            pFsAccess->criticalReadResult = criticalLimitResult;
 
             uint32_t count = 0;
             EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
@@ -680,7 +683,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
             EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
 
             if (criticalLimitResult == ZE_RESULT_SUCCESS) {
-                EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pSysfsAccess->criticalPowerLimitVal / milliFactor));
+                EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pFsAccess->criticalPowerLimitVal / milliFactor));
                 EXPECT_EQ(allLimits[0].enabledStateLocked, true);
                 EXPECT_EQ(allLimits[0].intervalValueLocked, true);
                 EXPECT_EQ(allLimits[0].limitValueLocked, false);
@@ -708,27 +711,27 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
         EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, allLimits.data()));
 
         uint8_t index = 0;
-        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor));
+        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pFsAccess->sustainedPowerLimitVal / milliFactor));
         EXPECT_EQ(allLimits[index].enabledStateLocked, true);
         EXPECT_EQ(allLimits[index].intervalValueLocked, false);
         EXPECT_EQ(allLimits[index].limitValueLocked, false);
         EXPECT_EQ(allLimits[index].source, ZES_POWER_SOURCE_ANY);
         EXPECT_EQ(allLimits[index].level, ZES_POWER_LEVEL_SUSTAINED);
         EXPECT_EQ(allLimits[index].limitUnit, ZES_LIMIT_UNIT_POWER);
-        EXPECT_EQ(allLimits[index].interval, pSysfsAccess->sustainedPowerLimitIntervalVal);
+        EXPECT_EQ(allLimits[index].interval, pFsAccess->sustainedPowerLimitIntervalVal);
 
         index++;
-        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor));
+        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pFsAccess->burstPowerLimitVal / milliFactor));
         EXPECT_EQ(allLimits[index].enabledStateLocked, true);
         EXPECT_EQ(allLimits[index].intervalValueLocked, false);
         EXPECT_EQ(allLimits[index].limitValueLocked, false);
         EXPECT_EQ(allLimits[index].source, ZES_POWER_SOURCE_ANY);
         EXPECT_EQ(allLimits[index].level, ZES_POWER_LEVEL_BURST);
         EXPECT_EQ(allLimits[index].limitUnit, ZES_LIMIT_UNIT_POWER);
-        EXPECT_EQ(allLimits[index].interval, pSysfsAccess->burstPowerLimitIntervalVal);
+        EXPECT_EQ(allLimits[index].interval, pFsAccess->burstPowerLimitIntervalVal);
 
         index++;
-        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pSysfsAccess->criticalPowerLimitVal / milliFactor));
+        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pFsAccess->criticalPowerLimitVal / milliFactor));
         EXPECT_EQ(allLimits[index].enabledStateLocked, true);
         EXPECT_EQ(allLimits[index].intervalValueLocked, true);
         EXPECT_EQ(allLimits[index].limitValueLocked, false);
@@ -752,12 +755,12 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainAnd
         for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
             for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
                 for (ze_result_t peakLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
-                    pSysfsAccess->sustainedReadResult = sustainedLimitResult;
-                    pSysfsAccess->burstReadResult = burstLimitResult;
-                    pSysfsAccess->criticalReadResult = peakLimitResult;
-                    pSysfsAccess->sustainedWriteResult = sustainedLimitResult;
-                    pSysfsAccess->burstWriteResult = burstLimitResult;
-                    pSysfsAccess->criticalWriteResult = peakLimitResult;
+                    pFsAccess->sustainedReadResult = sustainedLimitResult;
+                    pFsAccess->burstReadResult = burstLimitResult;
+                    pFsAccess->criticalReadResult = peakLimitResult;
+                    pFsAccess->sustainedWriteResult = sustainedLimitResult;
+                    pFsAccess->burstWriteResult = burstLimitResult;
+                    pFsAccess->criticalWriteResult = peakLimitResult;
 
                     ze_result_t expectedResult = ((sustainedLimitResult == ZE_RESULT_SUCCESS) && (burstLimitResult == ZE_RESULT_SUCCESS) && (peakLimitResult == ZE_RESULT_SUCCESS))
                                                      ? ZE_RESULT_SUCCESS
@@ -850,10 +853,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlySustainedAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -882,10 +885,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlyBurstAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -914,10 +917,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlyPeakAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -945,8 +948,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndSustainedAndBurstAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -1015,20 +1018,20 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileExistanceSta
         for (bool sustainedLimitFilePresent : {false, true}) {
             for (bool burstLimitFilePresent : {false, true}) {
                 // Set the file existence flags based on the current combination
-                pSysfsAccess->isCardSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
-                pSysfsAccess->isCardBurstPowerLimitFilePresent = burstLimitFilePresent;
-                pSysfsAccess->isPackageSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
-                pSysfsAccess->isPackageBurstPowerLimitFilePresent = burstLimitFilePresent;
+                pFsAccess->isCardSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
+                pFsAccess->isCardBurstPowerLimitFilePresent = burstLimitFilePresent;
+                pFsAccess->isPackageSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
+                pFsAccess->isPackageBurstPowerLimitFilePresent = burstLimitFilePresent;
 
                 auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 
                 for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
                     for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
                         // Set the Read/Write results based on the current combination
-                        pSysfsAccess->sustainedReadResult = sustainedLimitResult;
-                        pSysfsAccess->burstReadResult = burstLimitResult;
-                        pSysfsAccess->sustainedWriteResult = sustainedLimitResult;
-                        pSysfsAccess->burstWriteResult = burstLimitResult;
+                        pFsAccess->sustainedReadResult = sustainedLimitResult;
+                        pFsAccess->burstReadResult = burstLimitResult;
+                        pFsAccess->sustainedWriteResult = sustainedLimitResult;
+                        pFsAccess->burstWriteResult = burstLimitResult;
 
                         ze_result_t expectedResult = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 
@@ -1047,9 +1050,9 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileExistanceSta
                         }
 
                         if (sustainedLimitFilePresent && (sustainedLimitResult == ZE_RESULT_SUCCESS)) {
-                            EXPECT_EQ(static_cast<uint32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor), limit);
+                            EXPECT_EQ(static_cast<uint32_t>(pFsAccess->sustainedPowerLimitVal / milliFactor), limit);
                         } else if (burstLimitFilePresent && (burstLimitResult == ZE_RESULT_SUCCESS)) {
-                            EXPECT_EQ(static_cast<uint32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor), limit);
+                            EXPECT_EQ(static_cast<uint32_t>(pFsAccess->burstPowerLimitVal / milliFactor), limit);
                         }
                     }
                 }
@@ -1065,11 +1068,11 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileExistanceSta
             for (bool burstLimitFilePresent : {false, true}) {
                 for (bool criticalLimitFilePresent : {false, true}) {
                     // Set the file existence flags based on the current combination
-                    pSysfsAccess->isCardSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
-                    pSysfsAccess->isCardBurstPowerLimitFilePresent = burstLimitFilePresent;
-                    pSysfsAccess->isCardCriticalPowerLimitFilePresent = criticalLimitFilePresent;
-                    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
-                    pSysfsAccess->isPackageBurstPowerLimitFilePresent = burstLimitFilePresent;
+                    pFsAccess->isCardSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
+                    pFsAccess->isCardBurstPowerLimitFilePresent = burstLimitFilePresent;
+                    pFsAccess->isCardCriticalPowerLimitFilePresent = criticalLimitFilePresent;
+                    pFsAccess->isPackageSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
+                    pFsAccess->isPackageBurstPowerLimitFilePresent = burstLimitFilePresent;
 
                     ze_result_t expectedReasult = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
                     if ((powerDomain == ZES_POWER_DOMAIN_CARD) && (sustainedLimitFilePresent || burstLimitFilePresent || criticalLimitFilePresent)) {
@@ -1095,12 +1098,12 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileReadStatuses
         for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
             for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
                 for (ze_result_t peakLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
-                    pSysfsAccess->sustainedReadResult = sustainedLimitResult;
-                    pSysfsAccess->burstReadResult = burstLimitResult;
-                    pSysfsAccess->criticalReadResult = peakLimitResult;
-                    pSysfsAccess->sustainedWriteResult = sustainedLimitResult;
-                    pSysfsAccess->burstWriteResult = burstLimitResult;
-                    pSysfsAccess->criticalWriteResult = peakLimitResult;
+                    pFsAccess->sustainedReadResult = sustainedLimitResult;
+                    pFsAccess->burstReadResult = burstLimitResult;
+                    pFsAccess->criticalReadResult = peakLimitResult;
+                    pFsAccess->sustainedWriteResult = sustainedLimitResult;
+                    pFsAccess->burstWriteResult = burstLimitResult;
+                    pFsAccess->criticalWriteResult = peakLimitResult;
 
                     ze_result_t expectedResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
                     if (powerDomain == ZES_POWER_DOMAIN_CARD) {
@@ -1126,9 +1129,9 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileReadStatuses
                     EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt2(&testLimitRetrieved));
 
                     if (sustainedLimitResult == ZE_RESULT_SUCCESS) {
-                        EXPECT_EQ(static_cast<uint32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor), testLimitRetrieved);
+                        EXPECT_EQ(static_cast<uint32_t>(pFsAccess->sustainedPowerLimitVal / milliFactor), testLimitRetrieved);
                     } else if (burstLimitResult == ZE_RESULT_SUCCESS) {
-                        EXPECT_EQ(static_cast<uint32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor), testLimitRetrieved);
+                        EXPECT_EQ(static_cast<uint32_t>(pFsAccess->burstPowerLimitVal / milliFactor), testLimitRetrieved);
                     }
                 }
             }
@@ -1137,29 +1140,29 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileReadStatuses
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenCardDomainAndOnlyCriticalLimitFilePresentWhenSetLimitsExt2IsCalledThenCriticalLimitIsUpdatedWithMultiplier, IsCRI) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = true;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = true;
 
     auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
 
     constexpr uint32_t testLimit = 300u;
     const uint64_t convertedLimit = (static_cast<uint64_t>(testLimit) / milliFactor) * criticalLimitMultiplyFactor;
     const uint64_t expectedLimit = std::max(convertedLimit, xeMockMinPowerLimitVal);
-    const uint64_t sustainedLimitBeforeSet = pSysfsAccess->sustainedPowerLimitVal;
-    const uint64_t burstLimitBeforeSet = pSysfsAccess->burstPowerLimitVal;
+    const uint64_t sustainedLimitBeforeSet = pFsAccess->sustainedPowerLimitVal;
+    const uint64_t burstLimitBeforeSet = pFsAccess->burstPowerLimitVal;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->setLimitsExt2(testLimit));
-    EXPECT_EQ(expectedLimit, pSysfsAccess->criticalPowerLimitVal);
-    EXPECT_EQ(sustainedLimitBeforeSet, pSysfsAccess->sustainedPowerLimitVal);
-    EXPECT_EQ(burstLimitBeforeSet, pSysfsAccess->burstPowerLimitVal);
+    EXPECT_EQ(expectedLimit, pFsAccess->criticalPowerLimitVal);
+    EXPECT_EQ(sustainedLimitBeforeSet, pFsAccess->sustainedPowerLimitVal);
+    EXPECT_EQ(burstLimitBeforeSet, pFsAccess->burstPowerLimitVal);
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenCardDomainAndCriticalLimitWriteFailsWhenSetLimitsExt2IsCalledThenMappedErrorIsReturned, IsCRI) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = true;
-    pSysfsAccess->criticalWriteResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = true;
+    pFsAccess->criticalWriteResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 
     auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
 
@@ -1167,15 +1170,15 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenCardDomainAndCriticalLimitWriteFa
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenPackageDomainAndOnlyCriticalLimitFilePresentWhenSetLimitsExt2IsCalledThenDependencyUnavailableIsReturned, IsCRI) {
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = true;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = true;
 
     auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
-    const uint64_t criticalLimitBeforeSet = pSysfsAccess->criticalPowerLimitVal;
+    const uint64_t criticalLimitBeforeSet = pFsAccess->criticalPowerLimitVal;
 
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPowerImp->setLimitsExt2(300u));
-    EXPECT_EQ(criticalLimitBeforeSet, pSysfsAccess->criticalPowerLimitVal);
+    EXPECT_EQ(criticalLimitBeforeSet, pFsAccess->criticalPowerLimitVal);
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenPowerHandlesWhenGetAndSetLimitsExt2AreCalledThenUnsupportedFeatureErrorIsReturnedForGpuAndMemoryDomains, IsCRI) {
@@ -1225,10 +1228,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysfsReadFailsWithVariousErrorCod
 
     for (auto powerDomain : powerDomains) {
         for (auto errorCode : errorCodes) {
-            pSysfsAccess->isCardSustainedPowerLimitFilePresent = true;
-            pSysfsAccess->isPackageSustainedPowerLimitFilePresent = true;
-            pSysfsAccess->sustainedReadResult = errorCode;
-            pSysfsAccess->mockRead64Result = errorCode;
+            pFsAccess->isCardSustainedPowerLimitFilePresent = true;
+            pFsAccess->isPackageSustainedPowerLimitFilePresent = true;
+            pFsAccess->sustainedReadResult = errorCode;
+            pFsAccess->mockRead64Result = errorCode;
 
             auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 

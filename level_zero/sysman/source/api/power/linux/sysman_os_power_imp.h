@@ -15,6 +15,7 @@
 namespace L0 {
 namespace Sysman {
 
+class FsAccessInterface;
 class SysFsAccessInterface;
 class SysmanKmdInterface;
 class SysmanProductHelper;
@@ -47,6 +48,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
+    FsAccessInterface *pFsAccess = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
     bool isPmtBasedPowerSupported = false;

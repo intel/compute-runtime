@@ -666,6 +666,58 @@ TEST_F(SysmanDeviceFixture, GivenSysfsAccessAndValidDeviceNameWhenCallingUnbindD
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysfsAccess->unbindDevice(pSysmanKmdInterface->getGpuUnBindEntry(), deviceName.data()));
 }
 
+TEST_F(SysmanDeviceFixture, GivenFsAccessWhenCallingWriteWithTypedValuesThenValuesAreFormattedAndWritten) {
+    static std::string writtenValue;
+    writtenValue.clear();
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return 0;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        writtenValue.assign(static_cast<const char *>(buf), count);
+        return static_cast<ssize_t>(count);
+    });
+
+    auto pFsAccess = &pLinuxSysmanImp->getFsAccess();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFsAccess->write("/mockDir/mockFile.txt", static_cast<int>(-42)));
+    EXPECT_EQ("-42", writtenValue);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFsAccess->write("/mockDir/mockFile.txt", static_cast<uint64_t>(4200000000ull)));
+    EXPECT_EQ("4200000000", writtenValue);
+}
+
+TEST_F(SysmanDeviceFixture, GivenFsAccessWhenCallingWriteWithTypedValuesAndSysCallsFailThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return 0;
+    });
+
+    auto pFsAccess = &pLinuxSysmanImp->getFsAccess();
+
+    {
+        VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+            errno = ENOENT;
+            return -1;
+        });
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFsAccess->write("/mockDir/mockFile.txt", static_cast<int>(1)));
+    }
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        errno = EBUSY;
+        return -1;
+    });
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, pFsAccess->write("/mockDir/mockFile.txt", static_cast<uint64_t>(1ull)));
+}
+
 TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermissionsReturnedByIsRootUserAreCorrect) {
     int euid = geteuid();
     auto pFsAccess = &pLinuxSysmanImp->getFsAccess();

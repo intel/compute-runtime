@@ -281,24 +281,25 @@ int32_t SysmanProductHelperHw<gfxProduct>::getPowerMinLimit(const int32_t &defau
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint64_t powerLimit = 0;
+    auto pFsAccess = pSysmanKmdInterface->getFsAccess();
 
     const auto &[sustainedPowerLimitFile, sustainedPowerLimitFileExists] = powerLimitFiles.at("sustainedLimitFile");
     const auto &[burstPowerLimitFile, burstPowerLimitFileExists] = powerLimitFiles.at("burstLimitFile");
 
     // Return PL1 if enabled, otherwise return PL2
     if (sustainedPowerLimitFileExists) {
-        result = pSysfsAccess->read(sustainedPowerLimitFile, powerLimit);
+        result = pFsAccess->read(sustainedPowerLimitFile, powerLimit);
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sustainedPowerLimitFile.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sustainedPowerLimitFile.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
     } else if (burstPowerLimitFileExists) {
-        result = pSysfsAccess->read(burstPowerLimitFile, powerLimit);
+        result = pFsAccess->read(burstPowerLimitFile, powerLimit);
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, burstPowerLimitFile.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, burstPowerLimitFile.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
     } else {
@@ -312,10 +313,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExt2(SysmanKmdInterface 
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint64_t val = static_cast<uint64_t>(limit);
     bool anyLimitSet = false;
+    auto pFsAccess = pSysmanKmdInterface->getFsAccess();
 
     const auto &[sustainedPowerLimitFile, sustainedPowerLimitFileExists] = powerLimitFiles.at("sustainedLimitFile");
     const auto &[burstPowerLimitFile, burstPowerLimitFileExists] = powerLimitFiles.at("burstLimitFile");
@@ -326,18 +328,18 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface 
     if (powerDomain == ZES_POWER_DOMAIN_CARD) {
         // Card domain: Apply to PL1 and PL2 if enabled, Apply x2 to PsysCRIT if enabled
         if (sustainedPowerLimitFileExists) {
-            result = pSysfsAccess->write(sustainedPowerLimitFile, val);
+            result = pFsAccess->write(sustainedPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sustainedPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sustainedPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;
         }
 
         if (burstPowerLimitFileExists) {
-            result = pSysfsAccess->write(burstPowerLimitFile, val);
+            result = pFsAccess->write(burstPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, burstPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, burstPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;
@@ -345,9 +347,9 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface 
 
         if (criticalPowerLimitFileExists) {
             val = val * criticalLimitMultiplyFactor;
-            result = pSysfsAccess->write(criticalPowerLimitFile, val);
+            result = pFsAccess->write(criticalPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, criticalPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, criticalPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;
@@ -355,18 +357,18 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface 
     } else if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
         // Package domain: Apply to PL1 and PL2 if enabled
         if (sustainedPowerLimitFileExists) {
-            result = pSysfsAccess->write(sustainedPowerLimitFile, val);
+            result = pFsAccess->write(sustainedPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sustainedPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sustainedPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;
         }
 
         if (burstPowerLimitFileExists) {
-            result = pSysfsAccess->write(burstPowerLimitFile, val);
+            result = pFsAccess->write(burstPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, burstPowerLimitFile.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->write() failed to write into %s and returning error:0x%x \n", NEO_FUNCTION_NAME, burstPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             anyLimitSet = true;

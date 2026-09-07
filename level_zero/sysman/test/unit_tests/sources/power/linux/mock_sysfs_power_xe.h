@@ -24,7 +24,10 @@ constexpr uint32_t xeMockDefaultPowerLimitVal = 600000000;
 constexpr uint64_t xeMockMinPowerLimitVal = 30000000;
 constexpr uint64_t xeMockMaxPowerLimitVal = 600000000;
 
-const std::string xeHwmonDir("device/hwmon/hwmon1");
+const std::string mockXePowerDevicePciBdf("0000:3a:00.0");
+const std::string mockXePowerDeviceRealPath("/sys/devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/" + mockXePowerDevicePciBdf);
+const std::string mockXePowerHwmonBaseDir("/sys/bus/pci/devices/" + mockXePowerDevicePciBdf + "/hwmon");
+const std::string xeHwmonDir(mockXePowerHwmonBaseDir + "/hwmon1");
 const std::string xeCardEnergyCounterNode("energy1_input");
 const std::string xeCardBurstLimitNode("power1_cap");
 const std::string xeCardBurstLimitIntervalNode("power1_cap_interval");
@@ -39,10 +42,32 @@ const std::string xePackageSustainedLimitNode("power2_max");
 const std::string xePackageSustainedLimitIntervalNode("power2_max_interval");
 const std::string xePackageDefaultLimitNode("power2_rated_max");
 const std::string xePackageCriticalLimitNode("power2_crit");
+const std::string xeTelem1TelemFileName("/sys/class/intel_pmt/telem1/telem");
+const std::string xeTelem2TelemFileName("/sys/class/intel_pmt/telem2/telem");
+const std::string xeTelem3TelemFileName("/sys/class/intel_pmt/telem3/telem");
 
 class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
   public:
+    ze_result_t realPathResult = ZE_RESULT_SUCCESS;
+    std::string mockRealPathValue = mockXePowerDeviceRealPath;
+
+    ze_result_t getRealPath(const std::string &path, std::string &val) override {
+        if (realPathResult != ZE_RESULT_SUCCESS) {
+            return realPathResult;
+        }
+        if (path == "device" || path == "device/") {
+            val = mockRealPathValue;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    MockXePowerSysfsAccess() = default;
+};
+
+struct MockXePowerFsAccess : public L0::Sysman::FsAccessInterface {
+
     ze_result_t mockScanDirEntriesResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadResult = ZE_RESULT_SUCCESS;
     ze_result_t mockRead64Result = ZE_RESULT_SUCCESS;
@@ -50,6 +75,7 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockWritePeakLimitResult = ZE_RESULT_SUCCESS;
     std::vector<ze_result_t> mockReadValueUnsignedLongResult{};
     std::vector<ze_result_t> mockWriteValueUnsignedLongResult{};
+    std::string listDirectoryPathRequested;
 
     bool isCardEnergyCounterFilePresent = true;
     bool isCardSustainedPowerLimitFilePresent = true;
@@ -60,6 +86,7 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     bool isPackageSustainedPowerLimitFilePresent = true;
     bool isPackageBurstPowerLimitFilePresent = true;
     bool isPackageCriticalPowerLimitFilePresent = true;
+    bool isTelemetryDataFilePresent = true;
 
     ze_result_t defaultReadResult = ZE_RESULT_SUCCESS;
     ze_result_t sustainedReadResult = ZE_RESULT_SUCCESS;
@@ -125,7 +152,7 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return result;
     }
 
-    ze_result_t write(const std::string &file, const int32_t val) override {
+    ze_result_t write(const std::string &file, const int val) override {
         if (mockWriteIntResult != ZE_RESULT_SUCCESS) {
             return mockWriteIntResult;
         }
@@ -175,12 +202,12 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return result;
     }
 
-    ze_result_t scanDirEntries(const std::string path, std::vector<std::string> &listOfEntries) override {
-        const std::string hwmonDir("device/hwmon");
+    ze_result_t listDirectory(const std::string path, std::vector<std::string> &listOfEntries) override {
+        listDirectoryPathRequested = path;
         if (mockScanDirEntriesResult != ZE_RESULT_SUCCESS) {
             return mockScanDirEntriesResult;
         }
-        if (path.compare(hwmonDir) == 0) {
+        if (path == mockXePowerHwmonBaseDir) {
             listOfEntries.push_back("hwmon1");
             return ZE_RESULT_SUCCESS;
         }
@@ -204,14 +231,12 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
             return isCardCriticalPowerLimitFilePresent;
         } else if (file.find(xePackageCriticalLimitNode) != std::string::npos) {
             return isPackageCriticalPowerLimitFilePresent;
+        } else if (file == xeTelem1TelemFileName || file == xeTelem2TelemFileName || file == xeTelem3TelemFileName) {
+            return isTelemetryDataFilePresent;
         }
         return false;
     }
 
-    MockXePowerSysfsAccess() = default;
-};
-
-struct MockXePowerFsAccess : public L0::Sysman::FsAccessInterface {
     MockXePowerFsAccess() = default;
 };
 
@@ -219,7 +244,7 @@ class XePublicLinuxPowerImp : public L0::Sysman::LinuxPowerImp {
   public:
     XePublicLinuxPowerImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) : L0::Sysman::LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, powerDomain) {}
     using L0::Sysman::LinuxPowerImp::isPmtBasedPowerSupported;
-    using L0::Sysman::LinuxPowerImp::pSysfsAccess;
+    using L0::Sysman::LinuxPowerImp::pFsAccess;
 
     bool mockGetPropertiesFail = false;
     bool mockGetPropertiesExtFail = false;
@@ -256,7 +281,7 @@ class SysmanDevicePowerFixtureXe : public SysmanDeviceFixture {
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
         pLinuxSysmanImp->pFsAccess = pFsAccess;
-        pSysfsAccess->mockScanDirEntriesResult = ZE_RESULT_SUCCESS;
+        pFsAccess->mockScanDirEntriesResult = ZE_RESULT_SUCCESS;
     }
 
     void TearDown() override {
