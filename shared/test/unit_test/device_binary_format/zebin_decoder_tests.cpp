@@ -6176,7 +6176,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerEndingExactlyAtInlineData
     EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
 }
 
-TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerBeyondSecondQwordWhenDecodeZeInfoThenScratchPointerIsPopulatedAndNonComplianceWarningIsEmitted) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerBeyondSecondQwordWhenDecodeZeInfoThenScratchPointerIsPopulated) {
     ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
@@ -6191,9 +6191,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerBeyondSecondQwordWhenDeco
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_FALSE(warnings.empty());
-    EXPECT_NE(std::string::npos, warnings.find("scratch_pointer"));
-    EXPECT_NE(std::string::npos, warnings.find("not compliant with xeABI"));
+    EXPECT_TRUE(warnings.empty());
     const auto scratchPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
     EXPECT_EQ(32u, scratchPointerAddress.offset);
     EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
@@ -6294,8 +6292,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerOffsetBeyondInlineOffsetR
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_FALSE(warnings.empty());
-    EXPECT_NE(std::string::npos, warnings.find("not compliant with xeABI"));
+    EXPECT_TRUE(warnings.empty()) << warnings;
     const auto scratchPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
     EXPECT_TRUE(NEO::isValidOffset(scratchPointerAddress.offset));
     EXPECT_EQ(255u, scratchPointerAddress.offset);

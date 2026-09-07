@@ -1450,7 +1450,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
                 return DecodeError::invalidBinary;
             }
             constexpr int32_t compliantScratchPointerOffset = static_cast<int32_t>(sizeof(uint64_t));
-            if (src.offset != compliantScratchPointerOffset) {
+            if (src.offset < compliantScratchPointerOffset) {
                 outWarning.append("DeviceBinaryFormat::zebin : Module is not compliant with xeABI which requires scratch_pointer to be placed as the second qword of indirect data (offset " + std::to_string(compliantScratchPointerOffset) + "). scratch_pointer at offset " + std::to_string(src.offset) + " with size " + std::to_string(src.size) + " in context of : " + kernelName + ".\n");
             }
         }
