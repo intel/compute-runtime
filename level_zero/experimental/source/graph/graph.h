@@ -471,6 +471,7 @@ bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList);
 bool usesForkEvents(std::span<ze_event_handle_t> events);
 bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events);
 bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent);
+bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents);
 
 template <CaptureApi api, typename... TArgs>
 ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarget, RecordedApiCommands *flatCaptureTarget, TArgs... apiArgs) {
@@ -501,6 +502,10 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
         // it's an error to merge two capture sessions by waiting on an event recorded by a different one
         if (usesForkEventsFromOtherSession(graphCaptureTarget->getRootGraph(), eventsWaitList)) {
             return ZE_RESULT_ERROR_GRAPH_CAPTURE_MERGE_ATTEMPT;
+        }
+        // a non-external counter-based event bound outside the graph cannot be re-resolved per replay
+        if (waitsOnCbEventSignalledOutsideGraph(eventsWaitList)) {
+            return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
     }
     if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation

@@ -1559,6 +1559,20 @@ bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_h
     return signalEvent && L0::Event::fromHandle(signalEvent)->isCapturedGraphInternalEvent();
 }
 
+bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents) {
+    for (const auto &hEvent : waitEvents) {
+        auto *event = L0::Event::fromHandle(hEvent);
+        if ((false == event->isCounterBasedExplicitlyEnabled()) || event->isExternalEvent() ||
+            L0::Event::isAggregatedEvent(event) || (nullptr != event->getRecordedSignalFrom())) {
+            continue;
+        }
+        if (event->getInOrderExecEventHelper().isDataAssigned()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events) {
     for (const auto &event : events) {
         const auto *signalFromCmdList = L0::Event::fromHandle(event)->getRecordedSignalFrom();
