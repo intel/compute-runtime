@@ -128,7 +128,7 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenDebugFlagWhenProgrammingState
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_DELAY_TIMER;
 
-    constexpr uint32_t midthreadPreemptionDelayTimerMask = 0b111u;
+    constexpr uint32_t midthreadPreemptionDelayTimerMask = FamilyType::stateComputeModeMidthreadPreemptionDelayTimerMask;
 
     DebugManagerStateRestore restore;
 
@@ -152,7 +152,7 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenDebugFlagWhenProgrammingState
     const auto productDefaultMaskBits = unsetFlagCmd.getMask2() & midthreadPreemptionDelayTimerMask;
 
     for (auto outsideField : {-2, 8}) {
-        // not representable in the 3-bit field - the product default is left in place
+        // not representable in the field - the product default is left in place
         debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.set(outsideField);
 
         auto &stateComputeModeCmd = programStateComputeMode();
@@ -182,7 +182,7 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenCapsDefaultWhenProgrammingSta
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_DELAY_TIMER;
 
-    constexpr uint32_t midthreadPreemptionDelayTimerMask = 0b111u;
+    constexpr uint32_t midthreadPreemptionDelayTimerMask = FamilyType::stateComputeModeMidthreadPreemptionDelayTimerMask;
 
     DebugManagerStateRestore restore;
 

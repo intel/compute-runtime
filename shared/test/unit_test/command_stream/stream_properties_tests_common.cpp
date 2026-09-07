@@ -1975,6 +1975,35 @@ TEST(StreamPropertiesTests, givenEnableMemoryExceptionSettingWhenSettingProperty
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.enableMemoryException.value);
 }
+TEST(StreamPropertiesTests, givenEnableTypedGlobalMemoryCachedSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enableTypedGlobalMemoryCached = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableTypedGlobalMemoryCached.value);
+
+    scmProperties.scmPropertiesSupport.enableTypedGlobalMemoryCached = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableTypedGlobalMemoryCached.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableTypedGlobalMemoryCached.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableTypedGlobalMemoryCached.value);
+}
 TEST(StreamPropertiesTests, givenEnableBreakpointsSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
     bool clearDirtyState = false;
     bool coherencyRequired = false;

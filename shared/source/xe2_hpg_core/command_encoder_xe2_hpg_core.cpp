@@ -83,7 +83,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
         maskBits2 |= Family::stateComputeModeUavCoherencyModeMask;
     }
 
-    appendMidthreadPreemptionDelayTimer(stateComputeMode, maskBits2, *rootDeviceEnvironment.getHardwareInfo());
+    appendMidthreadPreemptionDelayTimer(stateComputeMode, maskBits2, *rootDeviceEnvironment.getHardwareInfo(), Family::stateComputeModeMidthreadPreemptionDelayTimerMask);
 
     stateComputeMode.setMask1(maskBits);
     stateComputeMode.setMask2(maskBits2);

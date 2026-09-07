@@ -21,6 +21,7 @@ std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeP
     allProperties.push_back(&properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers);
     allProperties.push_back(&properties.enableVariableRegisterSizeAllocation);
     allProperties.push_back(&properties.lscSamplerBackingThreshold);
+    allProperties.push_back(&properties.enableTypedGlobalMemoryCached);
     allProperties.push_back(&properties.enableOutOfBoundariesInTranslationException);
     allProperties.push_back(&properties.enablePageFaultException);
     allProperties.push_back(&properties.enableSystemMemoryReadFence);

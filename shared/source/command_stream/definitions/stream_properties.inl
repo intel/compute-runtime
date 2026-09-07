@@ -25,6 +25,7 @@ struct StateComputeModePropertiesSupport {
     bool enableVariableRegisterSizeAllocation : 1 = false;
     bool pipelinedEuThreadArbitration : 1 = false;
     bool enableL1FlushUavCoherencyMode : 1 = false;
+    bool enableTypedGlobalMemoryCached : 1 = false;
     bool lscSamplerBackingThreshold : 1 = false;
     bool enableOutOfBoundariesInTranslationException : 1 = false;
     bool enablePageFaultException : 1 = false;
@@ -47,6 +48,7 @@ struct StateComputeModeProperties {
     StreamProperty enableVariableRegisterSizeAllocation{};
     StreamProperty pipelinedEuThreadArbitration{};
     StreamProperty enableL1FlushUavCoherencyMode{};
+    StreamProperty enableTypedGlobalMemoryCached{};
     StreamProperty lscSamplerBackingThreshold{};
     StreamProperty enableOutOfBoundariesInTranslationException{};
     StreamProperty enablePageFaultException{};

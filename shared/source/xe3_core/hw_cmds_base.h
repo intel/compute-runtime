@@ -26,6 +26,7 @@ struct Xe3Core {
     static constexpr uint32_t stateComputeModeEuThreadSchedulingModeOverrideMask = (0b11u << 13);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
     // DW2
+    static constexpr uint32_t stateComputeModeMidthreadPreemptionDelayTimerMask = 0b111u;
     static constexpr uint32_t stateComputeModeUavCoherencyModeMask = (1u << 6);
     static constexpr uint32_t bcsEngineCount = 1u;
     static constexpr uint32_t timestampPacketCount = 16u;

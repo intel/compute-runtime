@@ -30,6 +30,7 @@ struct Xe3pCore {
     static constexpr uint32_t stateComputeModeEuThreadSchedulingModeOverrideMask = (0b11u << 13);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
     // DW2
+    static constexpr uint32_t stateComputeModeMidthreadPreemptionDelayTimerMask = 0b111u;
     static constexpr uint32_t stateComputeModeUavCoherencyModeMask = (1u << 6);
     static constexpr uint32_t stateComputeModeEnableOutOfBoundariesInTranslationExceptionMask = (1u << 7);
     static constexpr uint32_t stateComputeModePageFaultExceptionEnableMask = (1u << 9);
