@@ -155,7 +155,7 @@ void *UsmMemAllocPool::createUnifiedMemoryAllocation(size_t requestedSize, const
     return pooledPtr;
 }
 
-bool UsmMemAllocPool::isInPool(const void *ptr) const {
+bool UsmMemAllocPool::isInPoolRange(const void *ptr) const {
     return ptr >= this->pool && ptr < this->poolEnd;
 }
 
@@ -165,7 +165,7 @@ bool UsmMemAllocPool::isEmpty() const {
 }
 
 bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
-    if (false == isInitialized() || false == isInPool(ptr)) {
+    if (false == isInitialized() || false == isInPoolRange(ptr)) {
         return false;
     }
     std::unique_lock<std::mutex> lock(mtx);
@@ -220,7 +220,7 @@ void UsmMemAllocPool::drainDeferredFreeChunks() {
 }
 
 bool UsmMemAllocPool::freeIfOwned(UsmMemAllocPool *pool, const void *ptr, FreePolicyType policy) {
-    if (nullptr == pool || false == pool->isInPool(ptr)) {
+    if (nullptr == pool || false == pool->isInPoolRange(ptr)) {
         return false;
     }
     [[maybe_unused]] const auto freed = pool->freeSVMAlloc(ptr, policy);
@@ -229,7 +229,7 @@ bool UsmMemAllocPool::freeIfOwned(UsmMemAllocPool *pool, const void *ptr, FreePo
 }
 
 size_t UsmMemAllocPool::getPooledAllocationSize(const void *ptr) {
-    if (false == isInitialized() || false == isInPool(ptr)) {
+    if (false == isInitialized() || false == isInPoolRange(ptr)) {
         return 0u;
     }
     std::unique_lock<std::mutex> lock(mtx);
@@ -238,7 +238,7 @@ size_t UsmMemAllocPool::getPooledAllocationSize(const void *ptr) {
 }
 
 void *UsmMemAllocPool::getPooledAllocationBasePtr(const void *ptr) {
-    if (false == isInitialized() || false == isInPool(ptr)) {
+    if (false == isInitialized() || false == isInPoolRange(ptr)) {
         return nullptr;
     }
     std::unique_lock<std::mutex> lock(mtx);
@@ -251,7 +251,7 @@ bool UsmMemAllocPool::isPooledAllocation(const void *ptr) {
 }
 
 size_t UsmMemAllocPool::getOffsetInPool(const void *ptr) const {
-    if (false == isInitialized() || false == isInPool(ptr)) {
+    if (false == isInitialized() || false == isInPoolRange(ptr)) {
         return 0u;
     }
     return ptrDiff(ptr, this->pool);
@@ -415,7 +415,7 @@ UsmMemAllocPool *UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr
     std::unique_lock<std::mutex> lock(mtx);
     for (const auto &poolInfo : getPoolInfos()) {
         for (auto &pool : this->pools[poolInfo]) {
-            if (pool->isInPool(ptr)) {
+            if (pool->isInPoolRange(ptr)) {
                 return pool.get();
             }
         }
@@ -539,7 +539,7 @@ UsmMemAllocPool *UsmMemAllocPoolsFacade::getPoolContainingAlloc(const void *ptr)
         if (auto poolPtr = this->poolManager->getPoolContainingAlloc(ptr)) {
             return poolPtr;
         }
-    } else if (this->pool && this->pool->isInPool(ptr)) {
+    } else if (this->pool && this->pool->isInPoolRange(ptr)) {
         return this->pool.get();
     }
     return nullptr;

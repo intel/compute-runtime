@@ -623,7 +623,7 @@ TEST_F(ProgramFromBinaryTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenProgramIsBei
 
     pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.reset(allocateGlobalsSurface(pContext->getSVMAllocsManager(), pClDevice->getDevice(), initData.size(), 0u, true, &linkerInput, initData.data()));
     auto &constantSurface = pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface;
-    EXPECT_TRUE(pClDevice->getDevice().getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(constantSurface->getGpuAddress())));
+    EXPECT_TRUE(pClDevice->getDevice().getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(constantSurface->getGpuAddress())));
     pProgram->processGenBinary(*pClDevice);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
@@ -633,7 +633,7 @@ TEST_F(ProgramFromBinaryTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenProgramIsBei
 
     pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.reset(allocateGlobalsSurface(pContext->getSVMAllocsManager(), pClDevice->getDevice(), initData.size(), 0u, false, &linkerInput, initData.data()));
     auto &globalSurface = pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface;
-    EXPECT_TRUE(pClDevice->getDevice().getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_TRUE(pClDevice->getDevice().getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     pProgram->processGenBinary(*pClDevice);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());

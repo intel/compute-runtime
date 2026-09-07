@@ -152,12 +152,12 @@ TEST_F(ProgramDataTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenGlobalsExportedThe
     auto constantSurface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, constantSurface);
     ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation());
-    EXPECT_TRUE(pClDevice->getDevice().getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(constantSurface->getGpuAddress())));
+    EXPECT_TRUE(pClDevice->getDevice().getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(constantSurface->getGpuAddress())));
 
     auto globalSurface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, globalSurface);
     ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation());
-    EXPECT_TRUE(pClDevice->getDevice().getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_TRUE(pClDevice->getDevice().getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
 
     EXPECT_EQ(0u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
     EXPECT_EQ(0u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);

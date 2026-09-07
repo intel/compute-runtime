@@ -223,7 +223,7 @@ cl_int Program::processGenBinary(ClDevice &clDevice) {
     if (buildInfo.constantSurface) {
         auto gpuAddress = reinterpret_cast<void *>(buildInfo.constantSurface->getGpuAddress());
         if (auto usmPool = clDevice.getDevice().getUsmConstantSurfaceAllocPool();
-            usmPool && usmPool->isInPool(gpuAddress)) {
+            usmPool && usmPool->isInPoolRange(gpuAddress)) {
             [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
             DEBUG_BREAK_IF(!ret);
         } else if (auto &pool = clDevice.getDevice().getConstantSurfacePoolAllocator();
@@ -239,7 +239,7 @@ cl_int Program::processGenBinary(ClDevice &clDevice) {
     if (buildInfo.globalSurface) {
         auto gpuAddress = reinterpret_cast<void *>(buildInfo.globalSurface->getGpuAddress());
         if (auto usmPool = clDevice.getDevice().getUsmGlobalSurfaceAllocPool();
-            usmPool && usmPool->isInPool(gpuAddress)) {
+            usmPool && usmPool->isInPoolRange(gpuAddress)) {
             [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
             DEBUG_BREAK_IF(!ret);
         } else if (auto &pool = clDevice.getDevice().getGlobalSurfacePoolAllocator();

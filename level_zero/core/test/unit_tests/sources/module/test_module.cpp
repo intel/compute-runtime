@@ -4423,8 +4423,8 @@ kernels:
         EXPECT_EQ(AllocationType::constantSurface, moduleTu.globalConstBuffer->getGraphicsAllocation()->getAllocationType());
         EXPECT_EQ(AllocationType::globalSurface, moduleTu.globalVarBuffer->getGraphicsAllocation()->getAllocationType());
 
-        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress())));
-        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress())));
     }
 
     EXPECT_EQ(1u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
@@ -4567,8 +4567,8 @@ kernels:
         auto retVal = moduleTu.processUnpackedBinary();
         EXPECT_EQ(retVal, ZE_RESULT_SUCCESS);
 
-        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress())));
-        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress())));
 
         L0::ModuleTranslationUnit moduleTu2(this->device);
         moduleTu2.unpackedDeviceBinarySize = zebin.size();
@@ -4578,8 +4578,8 @@ kernels:
         retVal = moduleTu2.processUnpackedBinary();
         EXPECT_EQ(retVal, ZE_RESULT_SUCCESS);
 
-        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu2.globalConstBuffer->getGpuAddress())));
-        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu2.globalVarBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu2.globalConstBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu2.globalVarBuffer->getGpuAddress())));
 
         EXPECT_EQ(moduleTu.globalConstBuffer->getGraphicsAllocation(), moduleTu2.globalConstBuffer->getGraphicsAllocation());
         EXPECT_EQ(moduleTu.globalVarBuffer->getGraphicsAllocation(), moduleTu2.globalVarBuffer->getGraphicsAllocation());

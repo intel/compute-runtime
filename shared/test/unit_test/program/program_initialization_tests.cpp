@@ -475,7 +475,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, GivenUsmAllocPoolAnd2MBLocalMemAlig
 
     globalSurface.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalConstants, initData.data()));
     ASSERT_NE(nullptr, globalSurface);
-    EXPECT_FALSE(device.getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_FALSE(device.getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     EXPECT_FALSE(globalSurface->isFromPool());
     EXPECT_EQ(globalSurface->getGraphicsAllocation()->getUnderlyingBufferSize(), globalSurface->getSize());
     EXPECT_EQ(0u, globalSurface->getOffset());
@@ -483,7 +483,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, GivenUsmAllocPoolAnd2MBLocalMemAlig
 
     globalSurface.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, false /* constant */, &linkerInputExportGlobalVariables, initData.data()));
     ASSERT_NE(nullptr, globalSurface);
-    EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     EXPECT_FALSE(globalSurface->isFromPool());
     EXPECT_EQ(globalSurface->getGraphicsAllocation()->getUnderlyingBufferSize(), globalSurface->getSize());
     EXPECT_EQ(0u, globalSurface->getOffset());
@@ -504,7 +504,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, GivenUsmAllocPoolAnd2MBLocalMemAlig
 
         constantSurface1.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalConstants, initData.data()));
         ASSERT_NE(nullptr, constantSurface1);
-        EXPECT_TRUE(device.getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(constantSurface1->getGpuAddress())));
+        EXPECT_TRUE(device.getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(constantSurface1->getGpuAddress())));
         EXPECT_TRUE(constantSurface1->isFromPool());
         EXPECT_NE(constantSurface1->getGraphicsAllocation()->getUnderlyingBufferSize(), constantSurface1->getSize());
         EXPECT_EQ(0, memcmp(constantSurface1->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -513,7 +513,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, GivenUsmAllocPoolAnd2MBLocalMemAlig
 
         constantSurface2.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalConstants, initData.data()));
         ASSERT_NE(nullptr, constantSurface2);
-        EXPECT_TRUE(device.getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(constantSurface2->getGpuAddress())));
+        EXPECT_TRUE(device.getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(constantSurface2->getGpuAddress())));
         EXPECT_TRUE(constantSurface2->isFromPool());
         EXPECT_NE(constantSurface2->getGraphicsAllocation()->getUnderlyingBufferSize(), constantSurface2->getSize());
         EXPECT_EQ(0, memcmp(constantSurface2->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -532,7 +532,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, GivenUsmAllocPoolAnd2MBLocalMemAlig
 
         globalSurface1.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, false /* constant */, &linkerInputExportGlobalVariables, initData.data()));
         ASSERT_NE(nullptr, globalSurface1);
-        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface1->getGpuAddress())));
+        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface1->getGpuAddress())));
         EXPECT_TRUE(globalSurface1->isFromPool());
         EXPECT_NE(globalSurface1->getGraphicsAllocation()->getUnderlyingBufferSize(), globalSurface1->getSize());
         EXPECT_EQ(0, memcmp(globalSurface1->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -541,7 +541,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, GivenUsmAllocPoolAnd2MBLocalMemAlig
 
         globalSurface2.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, false /* constant */, &linkerInputExportGlobalVariables, initData.data()));
         ASSERT_NE(nullptr, globalSurface2);
-        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface2->getGpuAddress())));
+        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface2->getGpuAddress())));
         EXPECT_TRUE(globalSurface2->isFromPool());
         EXPECT_NE(globalSurface2->getGraphicsAllocation()->getUnderlyingBufferSize(), globalSurface2->getSize());
         EXPECT_EQ(0, memcmp(globalSurface2->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -569,7 +569,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledUSMAllocationWhenReusedC
 
     auto verifyAllocation = [&](SharedPoolAllocation *allocation) {
         ASSERT_NE(nullptr, allocation);
-        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(
+        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(
             reinterpret_cast<void *>(allocation->getGpuAddress())));
         EXPECT_NE(allocation->getGraphicsAllocation()->getUnderlyingBufferSize(),
                   allocation->getSize());
@@ -617,7 +617,7 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledUSMAllocationWhenReusedC
 
     auto verifyAllocation = [&](SharedPoolAllocation *allocation) {
         ASSERT_NE(nullptr, allocation);
-        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(
+        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(
             reinterpret_cast<void *>(allocation->getGpuAddress())));
         EXPECT_NE(allocation->getGraphicsAllocation()->getUnderlyingBufferSize(),
                   allocation->getSize());
@@ -721,12 +721,12 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, Given2MBLocalMemAlignmentEnabledBut
 
     globalSurface.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalConstants, initData.data()));
     ASSERT_NE(nullptr, globalSurface);
-    EXPECT_FALSE(device.getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_FALSE(device.getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(globalSurface->getGpuAddress())));
 
     globalSurface.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, false /* constant */, &linkerInputExportGlobalVariables, initData.data()));
     ASSERT_NE(nullptr, globalSurface);
-    EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(globalSurface->getGpuAddress())));
 }
 
@@ -754,12 +754,12 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, Given2MBLocalMemAlignmentEnabledBut
 
     globalSurface.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalConstants, initData.data()));
     ASSERT_NE(nullptr, globalSurface);
-    EXPECT_FALSE(device.getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_FALSE(device.getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(globalSurface->getGpuAddress())));
 
     globalSurface.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, initData.size(), 0u, false /* constant */, &linkerInputExportGlobalVariables, initData.data()));
     ASSERT_NE(nullptr, globalSurface);
-    EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(globalSurface->getGpuAddress())));
 }
 
@@ -776,7 +776,7 @@ HWTEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledBssOnlyAllocationWhenA
     auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, nullptr));
 
     ASSERT_NE(nullptr, globalSurface);
-    EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     EXPECT_EQ(1u, csr.writePooledMemoryCalledCount);
     EXPECT_EQ(globalSurface.get(), csr.latestWritePooledMemoryAllocation);
 }
@@ -797,7 +797,7 @@ HWTEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledMixedInitAndBssAllocat
     auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, initData.data()));
 
     ASSERT_NE(nullptr, globalSurface);
-    EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     EXPECT_EQ(1u, csr.writePooledMemoryCalledCount);
     EXPECT_EQ(globalSurface.get(), csr.latestWritePooledMemoryAllocation);
 }
@@ -815,7 +815,7 @@ HWTEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenNonPooledAllocationWhenAlloc
     auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, nullptr));
 
     ASSERT_NE(nullptr, globalSurface);
-    EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     EXPECT_EQ(0u, csr.writePooledMemoryCalledCount);
     svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(globalSurface->getGpuAddress())));
 }

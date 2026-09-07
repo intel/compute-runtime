@@ -594,7 +594,7 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsExpected
     auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc);
 
     if (usmPool &&
-        usmPool->isInPool(ptr)) {
+        usmPool->isInPoolRange(ptr)) {
         EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
     } else {
         EXPECT_EQ(memoryProperties.id,
@@ -629,7 +629,7 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsExpectedPr
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
 
-    if (usmPool && usmPool->isInPool(ptr)) {
+    if (usmPool && usmPool->isInPoolRange(ptr)) {
         EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
     } else {
         EXPECT_EQ(memoryProperties.id,
@@ -862,7 +862,7 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsMemoryId) 
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
     EXPECT_EQ(deviceHandle, nullptr);
     if (usmPool &&
-        usmPool->isInPool(ptr)) {
+        usmPool->isInPoolRange(ptr)) {
         EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
     } else {
         EXPECT_EQ(memoryProperties.id,

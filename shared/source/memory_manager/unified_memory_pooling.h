@@ -64,7 +64,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     bool sizeIsAllowed(size_t size);
     bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties);
     MOCKABLE_VIRTUAL void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
-    bool isInPool(const void *ptr) const;
+    bool isInPoolRange(const void *ptr) const;
     bool isEmpty() const;
     MOCKABLE_VIRTUAL bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
     void reclaimDeferredFreeChunks();

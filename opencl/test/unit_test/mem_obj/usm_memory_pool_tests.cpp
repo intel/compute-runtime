@@ -264,7 +264,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenUsmPoolsManagerSupportedWhenCreatingAll
 
     auto pool = mockDeviceMemPoolsFacade->getPoolContainingAlloc(deviceAlloc);
     EXPECT_NE(pool, nullptr);
-    EXPECT_TRUE(pool->isInPool(deviceAlloc));
+    EXPECT_TRUE(pool->isInPoolRange(deviceAlloc));
 
     clMemFreeINTEL(mockContext.get(), deviceAlloc);
 }

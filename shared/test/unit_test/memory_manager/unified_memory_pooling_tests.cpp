@@ -151,7 +151,7 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     MockDevice mockPeerDevice;
     // ptr in pool but not allocated -> error
     const auto notAllocatedPtrInPool = pooledPtrs[2];
-    EXPECT_TRUE(usmMemAllocPool.isInPool(notAllocatedPtrInPool));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(notAllocatedPtrInPool));
     auto expectedMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount.load();
     auto expectedEvictCount = mockMemoryOperationsHandler->evictCalledCount.load();
     EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.residencyOperation<Op::makeResident>(notAllocatedPtrInPool));
@@ -371,16 +371,16 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenVariousPointersWhenCallingI
     void *ptrBeforePool = reinterpret_cast<void *>(reinterpret_cast<size_t>(usmMemAllocPool.pool) - 1);
     void *lastPtrInPool = reinterpret_cast<void *>(reinterpret_cast<size_t>(usmMemAllocPool.poolEnd) - 1);
 
-    EXPECT_FALSE(usmMemAllocPool.isInPool(ptrBeforePool));
+    EXPECT_FALSE(usmMemAllocPool.isInPoolRange(ptrBeforePool));
     EXPECT_EQ(0u, usmMemAllocPool.getOffsetInPool(ptrBeforePool));
 
-    EXPECT_TRUE(usmMemAllocPool.isInPool(usmMemAllocPool.pool));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(usmMemAllocPool.pool));
     EXPECT_EQ(0u, usmMemAllocPool.getOffsetInPool(usmMemAllocPool.pool));
 
-    EXPECT_TRUE(usmMemAllocPool.isInPool(lastPtrInPool));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(lastPtrInPool));
     EXPECT_EQ(ptrDiff(lastPtrInPool, usmMemAllocPool.pool), usmMemAllocPool.getOffsetInPool(lastPtrInPool));
 
-    EXPECT_FALSE(usmMemAllocPool.isInPool(usmMemAllocPool.poolEnd));
+    EXPECT_FALSE(usmMemAllocPool.isInPoolRange(usmMemAllocPool.poolEnd));
     EXPECT_EQ(0u, usmMemAllocPool.getOffsetInPool(usmMemAllocPool.poolEnd));
 }
 
@@ -401,7 +401,7 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenUsing
 
     auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
     EXPECT_NE(nullptr, allocFromPool);
-    EXPECT_TRUE(usmMemAllocPool.isInPool(allocFromPool));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(allocFromPool));
     auto allocationInfo = usmMemAllocPool.allocations.get(allocFromPool);
     EXPECT_NE(nullptr, allocationInfo);
     EXPECT_EQ(allocationSize, allocationInfo->size);
@@ -451,7 +451,7 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenVariousAlignmentsWhenUsingP
         memoryProperties.alignment = alignment;
         auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
         EXPECT_NE(nullptr, allocFromPool);
-        EXPECT_TRUE(usmMemAllocPool.isInPool(allocFromPool));
+        EXPECT_TRUE(usmMemAllocPool.isInPoolRange(allocFromPool));
         auto address = castToUint64(allocFromPool);
         EXPECT_EQ(0u, address % alignment);
 
@@ -476,10 +476,10 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenGetti
     // we want an allocation from the middle of the pool for testing
     auto unusedAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(requestedAllocSize, memoryProperties);
     EXPECT_NE(nullptr, unusedAlloc);
-    EXPECT_TRUE(usmMemAllocPool.isInPool(unusedAlloc));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(unusedAlloc));
     auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(requestedAllocSize, memoryProperties);
     EXPECT_NE(nullptr, allocFromPool);
-    EXPECT_TRUE(usmMemAllocPool.isInPool(allocFromPool));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(allocFromPool));
     auto allocInfo = usmMemAllocPool.allocations.get(allocFromPool);
     EXPECT_NE(nullptr, allocInfo);
     auto actualAllocSize = allocInfo->size;
@@ -492,8 +492,8 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenGetti
     auto offsetPointer = ptrOffset(allocFromPool, actualAllocSize - 1);
     auto pastEndPointer = ptrOffset(allocFromPool, actualAllocSize);
 
-    EXPECT_TRUE(usmMemAllocPool.isInPool(offsetPointer));
-    EXPECT_TRUE(usmMemAllocPool.isInPool(pastEndPointer));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(offsetPointer));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(pastEndPointer));
 
     EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(bogusPtr));
     EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(usmMemAllocPool.pool));
@@ -517,11 +517,11 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPointersWithDifferentOwners
     EXPECT_TRUE(usmMemAllocPool.isPooledAllocation(allocFromPool));
 
     const auto ptrInPoolButNotAllocated = usmMemAllocPool.pool;
-    EXPECT_TRUE(usmMemAllocPool.isInPool(ptrInPoolButNotAllocated));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(ptrInPoolButNotAllocated));
     EXPECT_FALSE(usmMemAllocPool.isPooledAllocation(ptrInPoolButNotAllocated));
 
     const auto ptrOutsidePool = reinterpret_cast<void *>(0x1);
-    EXPECT_FALSE(usmMemAllocPool.isInPool(ptrOutsidePool));
+    EXPECT_FALSE(usmMemAllocPool.isInPoolRange(ptrOutsidePool));
 
     // null pool is never the owner
     EXPECT_FALSE(UsmMemAllocPool::freeIfOwned(nullptr, allocFromPool, FreePolicyType::none));
@@ -1186,7 +1186,7 @@ TEST_F(InitializedHostMultiDeviceUnifiedMemoryPoolingTest, givenInitializedPoolW
 
     auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
     EXPECT_NE(nullptr, allocFromPool);
-    EXPECT_TRUE(usmMemAllocPool.isInPool(allocFromPool));
+    EXPECT_TRUE(usmMemAllocPool.isInPoolRange(allocFromPool));
 
     auto svmData = svmManager->getSVMAlloc(allocFromPool);
     EXPECT_EQ(memoryProperties.rootDeviceIndices.size(), devicesCount);
@@ -1429,7 +1429,7 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
         EXPECT_NE(nullptr, poolAllocMinSize);
         EXPECT_EQ(poolAllocMinSize, usmMemAllocPoolsManager->getPooledAllocationBasePtr(poolAllocMinSize));
         EXPECT_EQ(minServicedSize, usmMemAllocPoolsManager->getPooledAllocationSize(poolAllocMinSize));
-        EXPECT_TRUE(usmMemAllocPoolsManager->pools[poolInfo][0]->isInPool(poolAllocMinSize));
+        EXPECT_TRUE(usmMemAllocPoolsManager->pools[poolInfo][0]->isInPoolRange(poolAllocMinSize));
         EXPECT_EQ(totalSize, usmMemAllocPoolsManager->totalSize);
         EXPECT_TRUE(usmMemAllocPoolsManager->freeSVMAlloc(poolAllocMinSize, FreePolicyType::blocking));
         EXPECT_EQ(++expectedWaitForEnginesCompletionCalled, memoryManager->waitForEnginesCompletionCalled);
@@ -1438,7 +1438,7 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
         EXPECT_NE(nullptr, poolAllocMaxSize);
         EXPECT_EQ(poolAllocMaxSize, usmMemAllocPoolsManager->getPooledAllocationBasePtr(poolAllocMaxSize));
         EXPECT_EQ(poolInfo.maxServicedSize, usmMemAllocPoolsManager->getPooledAllocationSize(poolAllocMaxSize));
-        EXPECT_TRUE(usmMemAllocPoolsManager->pools[poolInfo][0]->isInPool(poolAllocMaxSize));
+        EXPECT_TRUE(usmMemAllocPoolsManager->pools[poolInfo][0]->isInPoolRange(poolAllocMaxSize));
         EXPECT_EQ(totalSize, usmMemAllocPoolsManager->totalSize);
         EXPECT_TRUE(usmMemAllocPoolsManager->freeSVMAlloc(poolAllocMaxSize, FreePolicyType::blocking));
         EXPECT_EQ(++expectedWaitForEnginesCompletionCalled, memoryManager->waitForEnginesCompletionCalled);
@@ -1587,10 +1587,10 @@ TEST_P(UnifiedMemoryPoolingFacadeTest, givenVariousConfigurationsWhenAllocatingT
     void *allocation = mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(allocationSize, *poolMemoryProperties.get());
     if (isPoolManagerEnabled) {
         EXPECT_EQ(mockUsmMemAllocPoolsFacade.poolManager->getPoolContainingAlloc(allocation), mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(allocation));
-        EXPECT_TRUE(mockUsmMemAllocPoolsFacade.poolManager->getPoolContainingAlloc(allocation)->isInPool(allocation));
+        EXPECT_TRUE(mockUsmMemAllocPoolsFacade.poolManager->getPoolContainingAlloc(allocation)->isInPoolRange(allocation));
     } else {
         EXPECT_EQ(mockUsmMemAllocPoolsFacade.pool.get(), mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(allocation));
-        EXPECT_TRUE(mockUsmMemAllocPoolsFacade.pool->isInPool(allocation));
+        EXPECT_TRUE(mockUsmMemAllocPoolsFacade.pool->isInPoolRange(allocation));
     }
 
     EXPECT_NE(nullptr, allocation);
