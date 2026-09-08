@@ -63,6 +63,15 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         return vmAdviseAtomicAttribute;
     }
 
+    int getContextHealth(ContextHealth &contextHealth) override {
+        if (!contextBanReasonToReturn.has_value()) {
+            return IoctlHelperPrelim20::getContextHealth(contextHealth);
+        }
+        contextHealth.banned = *contextBanReasonToReturn != ContextBanReason::none;
+        contextHealth.banReason = *contextBanReasonToReturn;
+        return 0;
+    }
+
     std::unique_ptr<MemoryInfo> createMemoryInfo() override {
 
         std::vector<MemoryRegion> regionInfo(3);
@@ -95,6 +104,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     bool callBaseVmAdviseAtomicAttribute = true;
     bool is2MBSizeAlignmentRequiredResult = false;
     std::optional<uint32_t> vmAdviseAtomicAttribute{};
+    std::optional<ContextBanReason> contextBanReasonToReturn{};
     void *pciBarrierMmapReturnValue = nullptr;
     bool pciBarrierMmapCalled = false;
     void *pciBarrierMmap() override {
