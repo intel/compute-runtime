@@ -227,6 +227,9 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     std::once_flag hostUsmPoolOnceFlag;
     std::once_flag deviceUsmPoolOnceFlag;
 
+    // Fork safety: track if this handle was inherited from parent via fork()
+    bool isOrphanedFromFork = false;
+
     // Error messages per thread, variable initialized / destroyed per thread,
     // not based on the lifetime of the object of a class.
     std::unordered_map<std::thread::id, std::string> errorDescs;
