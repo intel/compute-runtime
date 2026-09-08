@@ -166,7 +166,7 @@ void usage() {
                  "\n        [--buffersize <kilobytes>]                                                                optionally request a total collection buffer size for --instancepeek/--instanceread"
                  "\n        [--timeout <milliseconds>]                                                                optionally override the event listen timeout of --instancepeek/--instanceread, default is 1000"
                  "\n"
-                 "\n  All L0 Syman APIs that set values require root privileged execution"
+                 "\n  All L0 Sysman APIs that set values require root privileged execution"
                  "\n"
                  "\n";
 }
