@@ -92,6 +92,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     void unregisterCsrClient();
     void registerCsrClient();
     void setCsrClientRegistered(bool registered) { csrClientRegistered = registered; }
+    void takeCsrQueueOwnership() { csrQueueOwnershipTaken = true; }
 
     TaskCountType getTaskCount() const { return taskCount; }
     void setTaskCount(TaskCountType newTaskCount) { taskCount = newTaskCount; }
@@ -209,6 +210,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool patchingPreamble = false;
     bool saveWaitForPreamble = false;
     bool csrClientRegistered = false;
+    bool csrQueueOwnershipTaken = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device * device, NEO::CommandStreamReceiver *csr,

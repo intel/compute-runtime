@@ -605,6 +605,7 @@ TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQue
                                                           returnValue);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
     ASSERT_EQ(nullptr, commandQueue);
+    EXPECT_EQ(0u, csr->getOwningQueueCount());
 }
 
 struct CommandQueueInitTests : public ::testing::Test {

@@ -1973,6 +1973,141 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListThenEa
     commandList2->destroy();
 }
 
+struct CommandListCsrReuseTests : public ::testing::Test {
+    void SetUp() override {
+        HardwareInfo hwInfo = *defaultHwInfo;
+        if (hwInfo.capabilityTable.defaultEngineType != aub_stream::ENGINE_CCS) {
+            GTEST_SKIP();
+        }
+        debugManager.flags.ContextGroupSize.set(5);
+        debugManager.flags.OverrideNumHighPriorityContexts.set(1);
+        hwInfo.featureTable.flags.ftrCCSNode = true;
+        hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+        device = driverHandle->devices[0];
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    NEO::MockDevice *neoDevice = nullptr;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
+    L0::Device *device = nullptr;
+};
+
+TEST_F(CommandListCsrReuseTests, givenSequentialImmediateCommandListsWhenDestroyedThenReuseCsrWithoutInitializingUnusedContexts) {
+    auto &contexts = neoDevice->secondaryEngines[aub_stream::ENGINE_CCS];
+    for (auto priority : {ZE_COMMAND_QUEUE_PRIORITY_NORMAL, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH}) {
+        ze_command_queue_desc_t desc = {};
+        desc.priority = priority;
+        NEO::CommandStreamReceiver *firstCsr = nullptr;
+        for (auto i = 0; i < 10; i++) {
+            ze_command_list_handle_t handle = nullptr;
+            ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandListImmediate(&desc, &handle));
+            auto commandList = L0::CommandList::fromHandle(handle);
+            auto csr = commandList->getCsr(false);
+            if (i == 0) {
+                firstCsr = csr;
+            }
+            EXPECT_EQ(firstCsr, csr);
+            EXPECT_EQ(1u, csr->getOwningQueueCount());
+            EXPECT_TRUE(csr->isInitialized());
+            commandList->destroy();
+            EXPECT_EQ(0u, csr->getOwningQueueCount());
+        }
+    }
+    EXPECT_EQ(1u, contexts.npIndices.size());
+    EXPECT_EQ(1u, contexts.hpIndices.size());
+    for (uint32_t i = 1; i < contexts.regularEnginesTotal; i++) {
+        EXPECT_FALSE(contexts.engines[i].commandStreamReceiver->isInitialized());
+    }
+}
+
+TEST_F(CommandListCsrReuseTests, givenAllRegularCsrsInUseWhenQueuesAreReleasedThenReuseOnlyAfterLastOwnerIsDestroyed) {
+    ze_command_queue_desc_t desc = {};
+    std::vector<L0::CommandQueue *> queues;
+    auto &contexts = neoDevice->secondaryEngines[aub_stream::ENGINE_CCS];
+    for (uint32_t i = 0; i <= contexts.regularEnginesTotal; i++) {
+        ze_command_queue_handle_t handle = nullptr;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &handle));
+        queues.push_back(L0::CommandQueue::fromHandle(handle));
+        if (i < contexts.regularEnginesTotal) {
+            for (uint32_t j = 0; j < i; j++) {
+                EXPECT_NE(queues[j]->getCsr(), queues[i]->getCsr());
+            }
+        }
+    }
+    auto sharedCsr = queues.front()->getCsr();
+    EXPECT_EQ(sharedCsr, queues.back()->getCsr());
+    EXPECT_EQ(2u, sharedCsr->getOwningQueueCount());
+    queues.back()->destroy();
+    queues.pop_back();
+    EXPECT_EQ(1u, sharedCsr->getOwningQueueCount());
+
+    auto releasedCsr = queues[2]->getCsr();
+    queues[2]->destroy();
+    queues[2] = nullptr;
+    ze_command_list_handle_t handle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandListImmediate(&desc, &handle));
+    auto commandList = L0::CommandList::fromHandle(handle);
+    EXPECT_EQ(releasedCsr, commandList->getCsr(false));
+    EXPECT_EQ(1u, releasedCsr->getOwningQueueCount());
+    commandList->destroy();
+    for (auto queue : queues) {
+        if (queue) {
+            queue->destroy();
+        }
+    }
+    EXPECT_EQ(0u, sharedCsr->getOwningQueueCount());
+}
+
+TEST_F(CommandListCsrReuseTests, givenCommandQueueWhenCreatedAndDestroyedThenSecondaryContextOwnershipIsTakenAndReleased) {
+    ze_command_queue_desc_t desc = {};
+    ze_command_queue_handle_t handle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &handle));
+
+    auto commandQueue = L0::CommandQueue::fromHandle(handle);
+    auto csr = commandQueue->getCsr();
+    ASSERT_TRUE(csr->getOsContext().isPartOfContextGroup());
+    EXPECT_EQ(1u, csr->getOwningQueueCount());
+
+    commandQueue->destroy();
+    EXPECT_EQ(0u, csr->getOwningQueueCount());
+}
+
+TEST_F(CommandListCsrReuseTests, givenInternalCommandQueueWhenDestroyedThenOwnershipIsNotReleased) {
+    ze_command_queue_desc_t desc = {};
+    ze_command_queue_handle_t handle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, device->createInternalCommandQueue(&desc, &handle));
+
+    auto commandQueue = L0::CommandQueue::fromHandle(handle);
+    auto internalCsr = neoDevice->getInternalEngine().commandStreamReceiver;
+    ASSERT_EQ(internalCsr, commandQueue->getCsr());
+    EXPECT_EQ(0u, internalCsr->getOwningQueueCount());
+
+    commandQueue->destroy();
+    EXPECT_EQ(0u, internalCsr->getOwningQueueCount());
+}
+
+TEST_F(CommandListCsrReuseTests, givenInternalImmediateCommandListWhenDestroyedThenOwnershipIsNotReleased) {
+    ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    auto commandList = CommandList::createImmediate(device->getHwInfo().platform.eProductFamily, device, &desc,
+                                                    true, NEO::EngineGroupType::renderCompute, returnValue);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    auto internalCsr = neoDevice->getInternalEngine().commandStreamReceiver;
+    ASSERT_EQ(internalCsr, commandList->getCsr(false));
+    EXPECT_EQ(0u, internalCsr->getOwningQueueCount());
+
+    commandList->destroy();
+    EXPECT_EQ(0u, internalCsr->getOwningQueueCount());
+}
+
 struct DeferredFirstSubmissionCmdListTests : public Test<ModuleFixture> {
     void SetUp() override {
         debugManager.flags.ContextGroupSize.set(5);

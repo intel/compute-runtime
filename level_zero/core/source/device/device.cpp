@@ -273,7 +273,8 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     auto queueProperties = CommandQueue::extractQueueProperties(*desc);
 
-    auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.priorityLevel, powerHint);
+    bool queueOwnershipTaken = false;
+    auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.priorityLevel, powerHint, &queueOwnershipTaken);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -282,6 +283,13 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, &commandQueueDesc, isCopyOnly, false, false, returnValue);
+    if (queueOwnershipTaken) {
+        if (*commandQueue != nullptr) {
+            CommandQueue::fromHandle(*commandQueue)->takeCsrQueueOwnership();
+        } else {
+            csr->releaseQueueOwnership();
+        }
+    }
     return returnValue;
 }
 
@@ -1858,7 +1866,8 @@ bool Device::isQueueGroupOrdinalValid(uint32_t ordinal) {
     return true;
 }
 
-ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint) {
+ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint, bool *queueOwnershipTaken) {
+    *queueOwnershipTaken = false;
     auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 
@@ -1971,7 +1980,7 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
         if (priorityLevel.has_value()) {
             hwPriority = gfxCoreHelper.getHwQueuePriority(priorityLevel.value());
         }
-        selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr);
+        *queueOwnershipTaken = selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr);
     }
 
     return ZE_RESULT_SUCCESS;
