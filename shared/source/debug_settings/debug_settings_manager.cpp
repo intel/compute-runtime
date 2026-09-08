@@ -138,14 +138,7 @@ void DebugSettingsManager<debugLevel>::getStringWithFlags(std::string &allFlags,
     if constexpr (enabled) {                                                                     \
         DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)              \
     }
-#define DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT(enabled, dataType, variableName, defaultValue, description) \
-    if constexpr (enabled) {                                                                               \
-        DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description)              \
-    }
 #include "release_variables.inl"
-#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT
-#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
 #define DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description)                 \
@@ -206,42 +199,28 @@ void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
 #endif
 #undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                \
-    {                                                                                              \
-        DebugVarPrefix type;                                                                       \
-        dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get(), type); \
-        if (0 != (this->scope & flags.variableName.getScopeMask())) {                              \
-            flags.variableName.setPrefixType(type);                                                \
-            flags.variableName.set(tempData);                                                      \
-        }                                                                                          \
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) \
+    {                                                                               \
+        DebugVarPrefix type = DebugVarPrefix::none;                                 \
+        dataType tempData = flags.variableName.get();                               \
+        if (readerImpl->hasSetting(#variableName, type)) {                          \
+            tempData = readerImpl->getSetting(#variableName, tempData, type);       \
+        } else if (envOnlyReader.hasSetting(#variableName, type)) {                 \
+            tempData = envOnlyReader.getSetting(#variableName, tempData, type);     \
+        }                                                                           \
+        if (0 != (this->scope & flags.variableName.getScopeMask())) {               \
+            flags.variableName.setPrefixType(type);                                 \
+            flags.variableName.set(tempData);                                       \
+        }                                                                           \
     }
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
     if constexpr (enabled) {                                                                     \
         DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)              \
     }
-    // Env variables are looked up by their exact name directly in the OS environment, regardless of
-    // readerImpl - a NEO settings file must never be able to override a plain OS/spec environment variable.
+    // A reader that always goes straight to the OS environment, bypassing readerImpl - used both as
+    // the release-variable env fallback above and for env variables below.
     EnvironmentVariableReader envOnlyReader;
-    // "Env-first" release variables take priority over readerImpl (file or registry) whenever the
-    // exact literal name is genuinely present in the real OS environment; otherwise they fall back to
-    // the normal readerImpl-based release variable read, unchanged.
-#define DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description)          \
-    if (nullptr != IoFunctions::getenvPtr(#variableName)) {                                            \
-        if (0 != (this->scope & flags.variableName.getScopeMask())) {                                  \
-            flags.variableName.setPrefixType(DebugVarPrefix::none);                                    \
-            flags.variableName.set(envOnlyReader.getSetting(#variableName, flags.variableName.get())); \
-        }                                                                                              \
-    } else {                                                                                           \
-        DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                    \
-    }
-#define DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT(enabled, dataType, variableName, defaultValue, description) \
-    if constexpr (enabled) {                                                                               \
-        DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description)              \
-    }
-
 #include "release_variables.inl"
-#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT
-#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
 #define DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description) \

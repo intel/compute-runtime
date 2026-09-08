@@ -24,14 +24,13 @@ TEST(DebugVariablesHelperTests, whenIsDebugKeysReadEnableIsCalledThenFalseIsRetu
     EXPECT_FALSE(NEO::isDebugKeysReadEnabled());
 }
 
-TEST(DebugSettingsManager, givenFileOrRegistryReaderActiveThenRegularVariablesFollowItWhileRawEnvVariablesAlwaysComeFromRealEnvironment) {
+TEST(DebugSettingsManager, givenFileOrRegistryReaderActiveThenReleaseVariablesFallBackToEnvironmentWhileDebugVariablesDoNot) {
     // Plays the role of a neo.config/igdrcl.config settings file. Deliberately has no entry for
-    // OverrideDefaultFP64Settings - unlike RegistryReader, SettingsFileReader has no fallback to the
-    // environment for keys it doesn't contain.
+    // OverrideDefaultFP64Settings (a release variable, so it falls back to the environment) nor for
+    // LogApiCalls (a debug variable, so it does not).
     struct MockSettingFileReader : SettingsFileReader {
         MockSettingFileReader() : SettingsFileReader("") {
             settingStringMap["EnableLEO"] = "1";
-            settingStringMap["ZE_AFFINITY_MASK"] = "0.5";
         }
     };
 
@@ -39,6 +38,13 @@ TEST(DebugSettingsManager, givenFileOrRegistryReaderActiveThenRegularVariablesFo
     // debug_registry_reader.cpp): a real registry hit for EnableLEO only; every other key falls
     // through to the same environment check RegistryReader itself performs when the registry misses.
     struct MockRegistryReader : SettingsReader {
+        bool hasSetting(const char *settingName, DebugVarPrefix &type) override {
+            type = DebugVarPrefix::none;
+            if (strcmp(settingName, "EnableLEO") == 0) {
+                return true;
+            }
+            return nullptr != IoFunctions::getenvPtr(settingName);
+        }
         int32_t getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) override {
             type = DebugVarPrefix::none;
             if (strcmp(settingName, "EnableLEO") == 0) {
@@ -57,14 +63,14 @@ TEST(DebugSettingsManager, givenFileOrRegistryReaderActiveThenRegularVariablesFo
         int64_t getSetting(const char *settingName, int64_t defaultValue) override { return defaultValue; }
         bool getSetting(const char *settingName, bool defaultValue, DebugVarPrefix &type) override {
             type = DebugVarPrefix::none;
+            if (const char *envValue = IoFunctions::getenvPtr(settingName)) {
+                return 0 != atoi(envValue);
+            }
             return defaultValue;
         }
         bool getSetting(const char *settingName, bool defaultValue) override { return defaultValue; }
         std::string getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) override {
             type = DebugVarPrefix::none;
-            if (strcmp(settingName, "ZE_AFFINITY_MASK") == 0) {
-                return "0.9";
-            }
             return value;
         }
         std::string getSetting(const char *settingName, const std::string &value) override { return value; }
@@ -83,14 +89,14 @@ TEST(DebugSettingsManager, givenFileOrRegistryReaderActiveThenRegularVariablesFo
         std::unordered_map<std::string, std::string> mockableEnvs = {
             {"EnableLEO", "2"},
             {"OverrideDefaultFP64Settings", "5"},
+            {"LogApiCalls", "1"},
             {"NEO_CACHE_PERSISTENT", "42"},
-            {"ZE_AFFINITY_MASK", "0.1"},
         };
         VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
         if (fileConfigPresent) {
-            // readerImpl becomes the settings file - it replaces (rather than merges with) the
-            // registry for regular debug/release variables.
+            // readerImpl becomes the settings file - authoritative for the keys it holds, with the
+            // environment still consulted for release variables it doesn't.
             mockSettingsReader = std::make_unique<MockSettingFileReader>();
         } else {
             // No settings file - readerImpl falls back to the registry.
@@ -100,23 +106,26 @@ TEST(DebugSettingsManager, givenFileOrRegistryReaderActiveThenRegularVariablesFo
 
         if (fileConfigPresent) {
             EXPECT_EQ(1, debugManager.flags.EnableLEO.get());
-            // readerImpl has no entry for this one and, unlike the registry, never falls back to the
-            // environment - it stays at its default.
-            EXPECT_EQ(-1, debugManager.flags.OverrideDefaultFP64Settings.get());
         } else {
             EXPECT_EQ(3, debugManager.flags.EnableLEO.get());
-            // Not present "in the registry", so the registry reader's own env fallback kicks in.
-            EXPECT_EQ(5, debugManager.flags.OverrideDefaultFP64Settings.get());
+        }
+
+        // A release variable readerImpl doesn't hold falls back to the environment either way: via
+        // the merge when readerImpl is the settings file, via RegistryReader's own env fallback
+        // otherwise.
+        EXPECT_EQ(5, debugManager.flags.OverrideDefaultFP64Settings.get());
+
+        if (fileConfigPresent) {
+            // Debug variables get no such fallback - an existing settings file suppresses registry
+            // and environment reads for them, so this stays at its default despite being in the env.
+            EXPECT_FALSE(debugManager.flags.LogApiCalls.get());
+        } else {
+            EXPECT_TRUE(debugManager.flags.LogApiCalls.get());
         }
 
         // Raw env variables are read through their own dedicated EnvironmentVariableReader,
         // completely independent of readerImpl - always the real environment, in both branches above.
         EXPECT_EQ(42, debugManager.flags.EnvCachePersistent.get());
-
-        // Env-first release variables also always come from the real environment - winning over both
-        // the settings file (which has its own, different value) and the registry (whose own mock
-        // returns yet another value), in both branches above.
-        EXPECT_STREQ("0.1", debugManager.flags.ZE_AFFINITY_MASK.get().c_str());
     }
 }
 

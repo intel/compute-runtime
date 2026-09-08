@@ -61,6 +61,15 @@ Release variables (always readable, not gated by `NEOReadDebugKeys`, same per-bi
 described above) are listed
 [here](https://github.com/intel/compute-runtime/blob/master/shared/source/debug_settings/release_variables_base.inl).
 
+A `neo.config`/`igdrcl.config` settings file placed in the working directory, if present, replaces
+the registry (Windows) or the environment (Linux) as the primary source - once such a file exists,
+the registry is never consulted at all, on either platform. Keys in the file may be written with the
+same per-binary prefixes. This lookup is unconditional in both debug and release driver builds. For
+release variables the file takes precedence only for the keys it actually contains - a release
+variable the file does not mention still falls back to the environment. Debug variables behave
+differently: an existing settings file, even an empty one, disables environment reads for them
+entirely, so a debug key absent from the file falls back to its built-in default.
+
 Plain OS/spec environment variables that must always come from the real process environment
 (e.g. `HOME`, `XDG_CACHE_HOME`, compiler cache configuration) are looked up by their exact external
 name, never overridable by a settings file, and are listed
@@ -68,11 +77,8 @@ name, never overridable by a settings file, and are listed
 Level Zero spec/experimental variables such as `ZE_AFFINITY_MASK` and `ZET_ENABLE_PROGRAM_DEBUGGING`,
 along with a handful of `NEO_`-prefixed release variables (e.g. `NEO_CAL_ENABLED`), are release
 variables (see above), not part of this list, even though their names look like plain environment
-variables. Unlike other release variables, these specific ones are "env-first": if the exact,
-unprefixed name (e.g. `ZE_AFFINITY_MASK`, not `NEO_L0_ZE_AFFINITY_MASK`) is set in the real process
-environment, that value is used unconditionally - it wins even when a `neo.config`/`igdrcl.config`
-settings file is present. Only when that exact name is absent from the environment do they fall
-back to the normal release-variable read (settings file, or per-binary prefix scanning).
+variables. They follow the same rule as every other release variable: a settings file takes
+precedence if it holds the key, otherwise the environment is used.
 
 ## Platform support
 

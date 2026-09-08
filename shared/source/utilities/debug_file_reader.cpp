@@ -37,9 +37,7 @@ int32_t SettingsFileReader::getSetting(const char *settingName, int32_t defaultV
     return static_cast<int32_t>(getSetting(settingName, static_cast<int64_t>(defaultValue)));
 }
 
-int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) {
-    int64_t value = defaultValue;
-
+const std::string *SettingsFileReader::findSetting(const char *settingName, DebugVarPrefix &type) const {
     auto prefixString = ApiSpecificConfig::getPrefixStrings();
     auto prefixType = ApiSpecificConfig::getPrefixTypes();
 
@@ -47,16 +45,26 @@ int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultV
     for (const auto &prefix : prefixString) {
         std::string neoKey = prefix;
         neoKey += settingName;
-        std::map<std::string, std::string>::iterator it = settingStringMap.find(neoKey);
+        auto it = settingStringMap.find(neoKey);
         if (it != settingStringMap.end()) {
-            value = strtoll(it->second.c_str(), nullptr, 0);
             type = prefixType[i];
-            return value;
+            return &it->second;
         }
         i++;
     }
     type = DebugVarPrefix::none;
-    return value;
+    return nullptr;
+}
+
+bool SettingsFileReader::hasSetting(const char *settingName, DebugVarPrefix &type) {
+    return nullptr != findSetting(settingName, type);
+}
+
+int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) {
+    if (auto setting = findSetting(settingName, type)) {
+        return strtoll(setting->c_str(), nullptr, 0);
+    }
+    return defaultValue;
 }
 
 int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultValue) {
@@ -79,25 +87,10 @@ bool SettingsFileReader::getSetting(const char *settingName, bool defaultValue) 
 }
 
 std::string SettingsFileReader::getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) {
-    std::string returnValue = value;
-
-    auto prefixString = ApiSpecificConfig::getPrefixStrings();
-    auto prefixType = ApiSpecificConfig::getPrefixTypes();
-
-    uint32_t i = 0;
-    for (const auto &prefix : prefixString) {
-        std::string neoKey = prefix;
-        neoKey += settingName;
-        std::map<std::string, std::string>::iterator it = settingStringMap.find(neoKey);
-        if (it != settingStringMap.end()) {
-            returnValue = it->second;
-            type = prefixType[i];
-            return returnValue;
-        }
-        i++;
+    if (auto setting = findSetting(settingName, type)) {
+        return *setting;
     }
-    type = DebugVarPrefix::none;
-    return returnValue;
+    return value;
 }
 
 std::string SettingsFileReader::getSetting(const char *settingName, const std::string &value) {

@@ -65,13 +65,7 @@ TEST(DebugVariables, givenCompileTimeVariablesWhenCheckingTheirClassificationThe
     static_assert(PubliclyMutableDebugVariable<decltype(debugVariables.variableName), dataType>);
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
     DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description) \
-    DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT(enabled, dataType, variableName, defaultValue, description) \
-    DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
-#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT
-#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
 
@@ -123,11 +117,7 @@ TEST(DebugSettingsManager, WhenDebugManagerIsDisabledThenDebugFunctionalityIsNot
 #include "debug_variables.inl"
 #define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE_ENV_FIRST(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
-#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST_OPT
-#undef DECLARE_RELEASE_VARIABLE_ENV_FIRST
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
 #undef DECLARE_DEBUG_VARIABLE_OPT
@@ -723,10 +713,10 @@ TEST(DebugSettingsManager, whenDebugVariableDoesntMatchScopeThenIgnoreIt) {
     }
 }
 
-TEST(DebugSettingsManager, givenFileOrEnvironmentReaderActiveThenRegularVariablesFollowItWhileRawEnvVariablesAlwaysComeFromRealEnvironment) {
+TEST(DebugSettingsManager, givenFileOrEnvironmentReaderActiveThenReleaseVariablesFallBackToEnvironmentWhileDebugVariablesDoNot) {
     // Plays the role of a neo.config/igdrcl.config settings file. Deliberately has no entry for
-    // OverrideDefaultFP64Settings - unlike RegistryReader, SettingsFileReader has no fallback to the
-    // environment for keys it doesn't contain.
+    // OverrideDefaultFP64Settings (a release variable, so it falls back to the environment) nor for
+    // LogApiCalls (a debug variable, so it does not).
     struct MockSettingFileReader : SettingsFileReader {
         MockSettingFileReader() : SettingsFileReader("") {
             settingStringMap["EnableLEO"] = "1";
@@ -740,17 +730,19 @@ TEST(DebugSettingsManager, givenFileOrEnvironmentReaderActiveThenRegularVariable
         VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::OCL);
 
         // The real OS environment always holds a *different* value for EnableLEO than the file does,
-        // plus values for a second regular variable the file doesn't have, and for the raw env variable.
+        // plus values for variables the file doesn't have - one release, one debug - and for the raw
+        // env variable.
         std::unordered_map<std::string, std::string> mockableEnvs = {
             {"EnableLEO", "2"},
             {"OverrideDefaultFP64Settings", "5"},
+            {"LogApiCalls", "1"},
             {"NEO_CACHE_PERSISTENT", "42"},
         };
         VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
         if (fileConfigPresent) {
-            // readerImpl becomes the settings file - it replaces (rather than merges with) the
-            // OS-native reader for regular debug/release variables.
+            // readerImpl becomes the settings file - authoritative for the keys it holds, with the
+            // environment still consulted for release variables it doesn't.
             mockSettingsReader = std::make_unique<MockSettingFileReader>();
         } else {
             // No settings file - readerImpl falls back to the OS-native reader
@@ -760,13 +752,16 @@ TEST(DebugSettingsManager, givenFileOrEnvironmentReaderActiveThenRegularVariable
 
         if (fileConfigPresent) {
             EXPECT_EQ(1, debugManager.flags.EnableLEO.get());
-            // The file has no entry for this one and, unlike the registry, never falls back to the
-            // environment - it stays at its default.
-            EXPECT_EQ(-1, debugManager.flags.OverrideDefaultFP64Settings.get());
+            // The file has no entry for this debug variable, and an existing file suppresses
+            // environment reads for debug variables - so it stays at its default.
+            EXPECT_FALSE(debugManager.flags.LogApiCalls.get());
         } else {
             EXPECT_EQ(2, debugManager.flags.EnableLEO.get());
-            EXPECT_EQ(5, debugManager.flags.OverrideDefaultFP64Settings.get());
+            EXPECT_TRUE(debugManager.flags.LogApiCalls.get());
         }
+
+        // A release variable the file doesn't hold still comes from the environment.
+        EXPECT_EQ(5, debugManager.flags.OverrideDefaultFP64Settings.get());
 
         // Raw env variables are read through their own dedicated EnvironmentVariableReader,
         // completely independent of readerImpl - always the real environment, in both branches above.
@@ -774,33 +769,126 @@ TEST(DebugSettingsManager, givenFileOrEnvironmentReaderActiveThenRegularVariable
     }
 }
 
-TEST(DebugSettingsManager, givenEnvFirstReleaseVariableWhenRealEnvironmentHasItThenItWinsOverAFilePresentSettingsFileOtherwiseTheFileWins) {
-    // Plays the role of a neo.config/igdrcl.config settings file that explicitly sets
-    // ZE_AFFINITY_MASK - an env-first release variable (Level Zero spec name).
-    struct MockSettingFileReader : SettingsFileReader {
-        MockSettingFileReader() : SettingsFileReader("") {
-            settingStringMap["ZE_AFFINITY_MASK"] = "0.5";
-        }
+TEST(DebugSettingsManager, givenEmptySettingsFileWhenEnvironmentHasValuesThenOnlyReleaseVariablesAreTakenFromIt) {
+    // An empty settings file still counts as "a settings file is present". Debug variables are then
+    // deliberately not read from the environment at all, while release variables are.
+    struct EmptyMockSettingFileReader : SettingsFileReader {
+        EmptyMockSettingFileReader() : SettingsFileReader("") {}
     };
 
-    for (bool envValuePresent : {true, false}) {
+    VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
+    VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+
+    std::unordered_map<std::string, std::string> mockableEnvs = {
+        {"LogApiCalls", "1"},
+        {"OverrideDefaultFP64Settings", "5"},
+        {"NEO_CACHE_PERSISTENT", "42"},
+    };
+    VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    mockSettingsReader = std::make_unique<EmptyMockSettingFileReader>();
+    // Fully enabled, so debug variables are genuinely eligible to be read - otherwise the debug-side
+    // expectation below would pass for the wrong reason.
+    FullyEnabledTestDebugManager debugManager;
+
+    EXPECT_FALSE(debugManager.flags.LogApiCalls.get());
+    EXPECT_EQ(5, debugManager.flags.OverrideDefaultFP64Settings.get());
+    EXPECT_EQ(42, debugManager.flags.EnvCachePersistent.get());
+}
+
+TEST(DebugSettingsManager, givenReleaseVariableInBothSettingsFileAndEnvironmentThenFileWinsRegardlessOfPrefixUsed) {
+    struct PrefixedCase {
+        const char *fileKey;
+        const char *envKey;
+        DebugVarPrefix expectedPrefix;
+    };
+
+    // The settings file always wins, whichever prefix either side happens to use - the file's own
+    // prefix scan is what picks the winner, and it reports the prefix the file entry was found under.
+    const PrefixedCase cases[] = {
+        {"NEO_OCL_OverrideDefaultFP64Settings", "NEO_OverrideDefaultFP64Settings", DebugVarPrefix::neoOcl},
+        {"NEO_OverrideDefaultFP64Settings", "NEO_OCL_OverrideDefaultFP64Settings", DebugVarPrefix::neo},
+        {"OverrideDefaultFP64Settings", "NEO_OverrideDefaultFP64Settings", DebugVarPrefix::none},
+    };
+
+    for (const auto &testCase : cases) {
         VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
         VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::OCL);
 
-        std::unordered_map<std::string, std::string> mockableEnvs;
-        if (envValuePresent) {
-            mockableEnvs["ZE_AFFINITY_MASK"] = "0.1";
-        }
+        std::unordered_map<std::string, std::string> mockableEnvs = {{testCase.envKey, "5"}};
         VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
-        // The settings file is present in both iterations - it must not matter for an env-first variable.
-        mockSettingsReader = std::make_unique<MockSettingFileReader>();
+        struct MockSettingFileReader : SettingsFileReader {
+            MockSettingFileReader(const char *key) : SettingsFileReader("") {
+                settingStringMap[key] = "1";
+            }
+        };
+        mockSettingsReader = std::make_unique<MockSettingFileReader>(testCase.fileKey);
         FullyEnabledTestDebugManager debugManager;
 
-        if (envValuePresent) {
-            EXPECT_STREQ("0.1", debugManager.flags.ZE_AFFINITY_MASK.get().c_str());
-        } else {
-            EXPECT_STREQ("0.5", debugManager.flags.ZE_AFFINITY_MASK.get().c_str());
-        }
+        EXPECT_EQ(1, debugManager.flags.OverrideDefaultFP64Settings.get());
+        EXPECT_EQ(testCase.expectedPrefix, debugManager.flags.OverrideDefaultFP64Settings.getPrefixType());
     }
+}
+
+TEST(DebugSettingsManager, givenReleaseVariableOnlyInEnvironmentUnderPrefixThenItIsUsedAndPrefixIsReported) {
+    struct EmptyMockSettingFileReader : SettingsFileReader {
+        EmptyMockSettingFileReader() : SettingsFileReader("") {}
+    };
+
+    VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
+    VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_OCL_OverrideDefaultFP64Settings", "5"}};
+    VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    mockSettingsReader = std::make_unique<EmptyMockSettingFileReader>();
+    FullyEnabledTestDebugManager debugManager;
+
+    EXPECT_EQ(5, debugManager.flags.OverrideDefaultFP64Settings.get());
+    EXPECT_EQ(DebugVarPrefix::neoOcl, debugManager.flags.OverrideDefaultFP64Settings.getPrefixType());
+}
+
+TEST(DebugSettingsManager, givenReleaseVariableInNeitherSettingsFileNorEnvironmentThenDefaultIsKept) {
+    struct EmptyMockSettingFileReader : SettingsFileReader {
+        EmptyMockSettingFileReader() : SettingsFileReader("") {}
+    };
+
+    VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
+    VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    mockSettingsReader = std::make_unique<EmptyMockSettingFileReader>();
+    FullyEnabledTestDebugManager debugManager;
+
+    EXPECT_EQ(-1, debugManager.flags.OverrideDefaultFP64Settings.get());
+    EXPECT_EQ(DebugVarPrefix::none, debugManager.flags.OverrideDefaultFP64Settings.getPrefixType());
+}
+
+TEST(DebugSettingsManager, givenSettingsFileWithSomeDebugKeysThenDebugKeysMissingFromItStayAtDefaults) {
+    // Guards the scope boundary: the file reader is demonstrably being consulted (Enable64kbpages
+    // comes from it), yet a debug variable it lacks does not fall back to the environment.
+    struct MockSettingFileReader : SettingsFileReader {
+        MockSettingFileReader() : SettingsFileReader("") {
+            settingStringMap["Enable64kbpages"] = "1";
+        }
+    };
+
+    VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
+    VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+
+    std::unordered_map<std::string, std::string> mockableEnvs = {
+        {"LogApiCalls", "1"},
+        {"NEO_OCL_MakeAllBuffersResident", "1"},
+    };
+    VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    mockSettingsReader = std::make_unique<MockSettingFileReader>();
+    FullyEnabledTestDebugManager debugManager;
+
+    EXPECT_EQ(1, debugManager.flags.Enable64kbpages.get());
+    EXPECT_FALSE(debugManager.flags.LogApiCalls.get());
+    EXPECT_FALSE(debugManager.flags.MakeAllBuffersResident.get());
 }

@@ -62,8 +62,6 @@ inline int snprintf(char *buff, size_t buffLen, char const *const formatStr, ...
     return ret;
 }
 
-char *getEnvironmentVariable(const char *name);
-
 #ifdef _WIN32
 inline int makedir(const char *dirName) {
     return _mkdir(dirName);

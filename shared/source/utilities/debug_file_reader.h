@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class SettingsFileReader : public SettingsReader {
   public:
     SettingsFileReader(const char *filePath);
     ~SettingsFileReader() override;
+    bool hasSetting(const char *settingName, DebugVarPrefix &type) override;
     int32_t getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) override;
     int32_t getSetting(const char *settingName, int32_t defaultValue) override;
     int64_t getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) override;
@@ -33,6 +34,7 @@ class SettingsFileReader : public SettingsReader {
 
   protected:
     void parseStream(std::istream &inputStream);
+    const std::string *findSetting(const char *settingName, DebugVarPrefix &type) const;
     std::map<std::string, std::string> settingStringMap;
 };
 }; // namespace NEO

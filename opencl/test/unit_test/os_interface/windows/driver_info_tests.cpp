@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,6 +111,7 @@ class MockRegistryReader : public SettingsReader {
   public:
     std::string nameString;
     std::string versionString;
+    bool hasSetting(const char *settingName, DebugVarPrefix &type) override { return false; };
     std::string getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) override { return ""; };
 
     std::string getSetting(const char *settingName, const std::string &value) override {
