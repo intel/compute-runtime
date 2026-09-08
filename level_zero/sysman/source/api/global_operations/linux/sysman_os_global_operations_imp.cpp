@@ -847,7 +847,7 @@ bool LinuxGlobalOperationsImp::isDrmIoctlOk() {
 }
 
 std::string LinuxGlobalOperationsImp::getAlertReasonFilePath() {
-    const std::string alertReasonFile = pLinuxSysmanImp->getSysmanKmdInterface()->getNodeFileName(NodeName::nodeNameAmcAlertReason);
+    const std::string alertReasonFile = pLinuxSysmanImp->getSysmanKmdInterface()->getNodeFileName(NodeName::amcAlertReason);
     if (alertReasonFile.empty()) {
         return {};
     }

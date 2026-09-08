@@ -782,6 +782,16 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     EXPECT_TRUE(pSysmanProductHelper->isMemoryMaxTemperatureSupported());
 }
 
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenQueryingIsTemperatureReadFromSysfsSupportedThenTrueIsReturned, IsBMG) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isTemperatureReadFromSysfsSupported());
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenQueryingIsTemperatureReadFromSysfsSupportedThenFalseIsReturned, IsDG2) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_FALSE(pSysmanProductHelper->isTemperatureReadFromSysfsSupported());
+}
+
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);

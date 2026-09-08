@@ -1463,6 +1463,11 @@ bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
     return true;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isTemperatureReadFromSysfsSupported() {
+    return true;
+}
+
 static ze_result_t readMemoryMaxTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
                                             double *pTemperature) {
     uint32_t memoryMaxTemperature = 0;
