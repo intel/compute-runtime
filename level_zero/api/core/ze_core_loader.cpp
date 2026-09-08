@@ -294,6 +294,8 @@ zeGetCommandListProcAddrTable(
     fillDdiEntry(pDdiTable->pfnImmediateGetMode, L0::globalDriverDispatch.coreCommandList.pfnImmediateGetMode, version, ZE_API_VERSION_1_17);
     fillDdiEntry(pDdiTable->pfnImmediateGetPriority, L0::globalDriverDispatch.coreCommandList.pfnImmediateGetPriority, version, ZE_API_VERSION_1_17);
     fillDdiEntry(pDdiTable->pfnAppendHostFunction, L0::globalDriverDispatch.coreCommandList.pfnAppendHostFunction, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnAppendSignalEventWithParameters, L0::globalDriverDispatch.coreCommandList.pfnAppendSignalEventWithParameters, version, ZE_API_VERSION_1_18);
+    fillDdiEntry(pDdiTable->pfnAppendWaitOnEventsWithParameters, L0::globalDriverDispatch.coreCommandList.pfnAppendWaitOnEventsWithParameters, version, ZE_API_VERSION_1_18);
     return result;
 }
 

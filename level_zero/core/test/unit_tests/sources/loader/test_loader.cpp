@@ -209,6 +209,18 @@ TEST(zeGetEventProcAddrTableTest,
     EXPECT_NE(nullptr, pDdiTable.pfnGetCounterBasedFlags);
 }
 
+TEST(zeGetCommandListProcAddrTableTest,
+     whenCallingZeGetCommandListProcAddrTableForVersion1_18ThenSignalEventAndWaitEventsWithParametersArePopulated) {
+
+    ze_api_version_t version = ZE_API_VERSION_1_18;
+    ze_command_list_dditable_t pDdiTable = {};
+
+    ze_result_t result = zeGetCommandListProcAddrTable(version, &pDdiTable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pDdiTable.pfnAppendSignalEventWithParameters);
+    EXPECT_NE(nullptr, pDdiTable.pfnAppendWaitOnEventsWithParameters);
+}
+
 TEST(zeGetFenceProcAddrTableTest,
      whenCallingZeGetFenceProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 

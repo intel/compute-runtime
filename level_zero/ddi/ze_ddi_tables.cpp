@@ -235,6 +235,8 @@ DriverDispatch::DriverDispatch() {
     this->coreCommandList.pfnImmediateGetMode = L0::zeCommandListImmediateGetMode;
     this->coreCommandList.pfnImmediateGetPriority = L0::zeCommandListImmediateGetPriority;
     this->coreCommandList.pfnAppendHostFunction = L0::zeCommandListAppendHostFunction;
+    this->coreCommandList.pfnAppendSignalEventWithParameters = L0::zeCommandListAppendSignalEventWithParameters;
+    this->coreCommandList.pfnAppendWaitOnEventsWithParameters = L0::zeCommandListAppendWaitOnEventsWithParameters;
     this->coreCommandListExp.pfnCreateCloneExp = L0::zeCommandListCreateCloneExp;
     this->coreCommandListExp.pfnImmediateAppendCommandListsExp = L0::zeCommandListImmediateAppendCommandListsExp;
     this->coreCommandListExp.pfnGetNextCommandIdExp = L0::zeCommandListGetNextCommandIdExp;
