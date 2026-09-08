@@ -3733,6 +3733,31 @@ HWTEST_F(CommandStreamReceiverHwTest, givenPendingTaskCountWhenSubmittingLatePre
     EXPECT_EQ(6u, commandStreamReceiver.peekTaskCount());
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenSkippedPreemptionAllocationWhenSubmittingLatePreemptionStartThenPreemptionAllocationIsMadeResidentInSameSubmission) {
+    auto *engineControl = pDevice->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular);
+    if (!engineControl) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*engineControl->commandStreamReceiver);
+    if (!commandStreamReceiver.getPreemptionAllocation()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    auto preemptionAllocation = commandStreamReceiver.getPreemptionAllocation();
+    if (!preemptionAllocation) {
+        GTEST_SKIP();
+    }
+
+    commandStreamReceiver.skipPreemptionAllocation = true;
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.makeResidentAllocations.clear();
+
+    commandStreamReceiver.submitLateMidThreadPreemptionStart();
+
+    EXPECT_FALSE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(preemptionAllocation));
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

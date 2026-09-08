@@ -2586,16 +2586,17 @@ void CommandStreamReceiverHw<GfxFamily>::submitLateMidThreadPreemptionStart() {
 
     auto lock = obtainUniqueOwnership();
 
+    this->skipPreemptionAllocation = false;
+
     auto dispatchSize = PreemptionHelper::getRequiredCmdStreamSizeForLateStart<GfxFamily>();
     auto &commandStream = getCS(dispatchSize);
     auto commandStreamStart = commandStream.getUsed();
     PreemptionHelper::programCmdStreamForLateStart<GfxFamily>(commandStream);
     makeResident(*commandStream.getGraphicsAllocation());
+    makeResidentPreemptionAllocation();
 
     auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     UNRECOVERABLE_IF(submissionStatus != NEO::SubmissionStatus::success);
-
-    this->skipPreemptionAllocation = false;
 }
 
 template <typename GfxFamily>
