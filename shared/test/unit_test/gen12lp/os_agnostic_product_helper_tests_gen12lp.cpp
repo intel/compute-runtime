@@ -48,7 +48,3 @@ GEN12LPTEST_F(Gen12lpProductHelper, givenProductHelperThenCompressionIsForbidden
     auto hwInfo = *defaultHwInfo;
     EXPECT_TRUE(productHelper->isCompressionForbidden(hwInfo));
 }
-
-GEN12LPTEST_F(Gen12lpProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
-    EXPECT_EQ(RTASDeviceFormat::invalid, productHelper->getSupportedRtasFormat());
-}

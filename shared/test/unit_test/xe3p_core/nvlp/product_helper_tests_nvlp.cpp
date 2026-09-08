@@ -166,7 +166,3 @@ NVLPTEST_F(NvlProductHelper, givenNvlPA0WhenCallingAdjustMaxThreadsPerThreadGrou
     EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 320));
     EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 256));
 }
-
-NVLPTEST_F(NvlProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
-    EXPECT_EQ(RTASDeviceFormat::version3, productHelper->getSupportedRtasFormat());
-}

@@ -93,7 +93,3 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAll
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
     EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
 }
-
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
-    EXPECT_EQ(RTASDeviceFormat::version2, productHelper->getSupportedRtasFormat());
-}

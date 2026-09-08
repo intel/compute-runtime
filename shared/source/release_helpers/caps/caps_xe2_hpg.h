@@ -19,6 +19,7 @@ namespace NEO {
 
 struct CapsXe2HpgCore {
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
+    static constexpr uint32_t rtasFormat = 1u;
 
     static constexpr bool auxSurfaceModeOverrideRequired = true;
     static constexpr bool bFloat16ConversionSupported = true;

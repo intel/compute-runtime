@@ -265,10 +265,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnC
     EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::sharedUsmToSharedUsm));
 }
 
-CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
-    EXPECT_EQ(RTASDeviceFormat::invalid, productHelper->getSupportedRtasFormat());
-}
-
 CRITEST_F(CriProductHelper, givenNoDebugFlagSetWhenGettingIsaPrefetchSizeThenWholeIsaSizeIsReturned) {
     EXPECT_EQ(0u, productHelper->getIsaPrefetchSize(0u));
     EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte / 2), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte / 2)));

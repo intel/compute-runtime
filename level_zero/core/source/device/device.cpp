@@ -1038,7 +1038,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXP_PROPERTIES) {
                 ze_rtas_device_exp_properties_t *rtasProperties = reinterpret_cast<ze_rtas_device_exp_properties_t *>(extendedProperties);
                 rtasProperties->flags = 0;
-                rtasProperties->rtasFormat = static_cast<ze_rtas_format_exp_t>(getProductHelper().getSupportedRtasFormat());
+                rtasProperties->rtasFormat = static_cast<ze_rtas_format_exp_t>(hardwareInfo.caps.rtasFormat);
                 rtasProperties->rtasBufferAlignment = 128;
 
                 if (hardwareInfo.caps.rayTracingSupported) {
@@ -1050,7 +1050,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXT_PROPERTIES) {
                 ze_rtas_device_ext_properties_t *rtasProperties = reinterpret_cast<ze_rtas_device_ext_properties_t *>(extendedProperties);
                 rtasProperties->flags = 0;
-                rtasProperties->rtasFormat = static_cast<ze_rtas_format_ext_t>(getProductHelper().getSupportedRtasFormat());
+                rtasProperties->rtasFormat = static_cast<ze_rtas_format_ext_t>(hardwareInfo.caps.rtasFormat);
                 rtasProperties->rtasBufferAlignment = 128;
 
                 if (hardwareInfo.caps.rayTracingSupported) {

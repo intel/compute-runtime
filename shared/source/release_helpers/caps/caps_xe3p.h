@@ -37,6 +37,8 @@ struct CapsCri : CapsXe3pCore {
     static constexpr bool deviceConfigStringXeCuSegmentIncluded = true;
 };
 struct CapsNvlP : CapsXe3pCore {
+    static constexpr uint32_t rtasFormat = 3u;
+
     static constexpr bool ftrXe2Compression = true;
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rayTracingSupported = true;

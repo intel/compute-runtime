@@ -98,7 +98,3 @@ ARLTEST_F(ArlProductHelper, givenProductHelperWhenCheckingIsUsmAllocationReuseSu
         EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
     }
 }
-
-ARLTEST_F(ArlProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
-    EXPECT_EQ(RTASDeviceFormat::version1, productHelper->getSupportedRtasFormat());
-}

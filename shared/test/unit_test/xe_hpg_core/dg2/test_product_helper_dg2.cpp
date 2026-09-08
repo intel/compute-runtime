@@ -192,7 +192,3 @@ DG2TEST_F(Dg2ProductHelper, givenBitmapDssComputeEmptyAndDssGeometryNotStartingW
     EXPECT_EQ(topologyInfo.euCount, 256);
     EXPECT_EQ(topologyInfo.l3BankCount, 16);
 }
-
-DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenAskingForSupportedRtasFormatThenCorrectFormatIsReturned) {
-    EXPECT_EQ(RTASDeviceFormat::version1, productHelper->getSupportedRtasFormat());
-}

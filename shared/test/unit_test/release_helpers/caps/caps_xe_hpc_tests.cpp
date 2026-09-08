@@ -42,6 +42,7 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_EQ(0u, capsPvc.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPvc.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, capsPvc.stackSizePerRay);
+    EXPECT_EQ(1u, capsPvc.rtasFormat);
     EXPECT_FALSE(capsPvc.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPvc.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsPvc.availableSemaphore64);
@@ -79,6 +80,7 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_EQ(0u, capsPvcVg.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPvcVg.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, capsPvcVg.stackSizePerRay);
+    EXPECT_EQ(1u, capsPvcVg.rtasFormat);
     EXPECT_FALSE(capsPvcVg.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPvcVg.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsPvcVg.availableSemaphore64);

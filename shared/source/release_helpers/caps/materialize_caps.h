@@ -18,6 +18,7 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(kernelBFloat16AtomicCapabilities)                          \
     NEO_COPY_CAP_FUNC(kernelFp16AtomicCapabilities)                              \
     NEO_COPY_CAP_FUNC(stackSizePerRay)                                           \
+    NEO_COPY_CAP_FUNC(rtasFormat)                                                \
                                                                                  \
     NEO_COPY_CAP_FUNC(adjustWalkOrderAvailable)                                  \
     NEO_COPY_CAP_FUNC(auxSurfaceModeOverrideRequired)                            \
