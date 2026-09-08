@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
@@ -27,8 +28,9 @@ MemObj::MemObj(Context *context, MemoryProperties &properties, cl_mem_flags flag
 
 MemObj::~MemObj() {
     if (cpuPtr && !properties.flags.useHostPtr && !this->isSubBuffer()) {
-        ze_memory_free_ext_desc_t freeDesc{ZE_STRUCTURE_TYPE_MEMORY_FREE_EXT_DESC, nullptr, ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE};
-        zeMemFreeExt(context->getL0ContextHandle(), &freeDesc, cpuPtr);
+        ze_memory_free_ext_desc_t freeDesc{ZE_STRUCTURE_TYPE_MEMORY_FREE_EXT_DESC, nullptr, this->getFreePolicy()};
+        [[maybe_unused]] auto freeResult = zeMemFreeExt(context->getL0ContextHandle(), &freeDesc, cpuPtr);
+        DEBUG_BREAK_IF(ZE_RESULT_SUCCESS != freeResult);
     }
     for (auto callback : std::ranges::reverse_view(callbacks)) {
         callback.first(this, callback.second);
