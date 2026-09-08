@@ -48,6 +48,23 @@ extern uint32_t waitpkgControlValue;
 extern uint32_t waitCount;
 extern bool waitpkgSupport;
 
+/* clSetEventCallback may probe completion non-blockingly; yielding on a
+ * not-ready tag poll can stall the caller for multiple ms under load.
+ * Activate SkipYieldGuard around that path so miss returns immediately.
+ */
+inline thread_local uint32_t skipYieldNestingDepth = 0;
+
+struct SkipYieldGuard {
+    SkipYieldGuard() { ++skipYieldNestingDepth; }
+    ~SkipYieldGuard() { --skipYieldNestingDepth; }
+    SkipYieldGuard(const SkipYieldGuard &) = delete;
+    SkipYieldGuard &operator=(const SkipYieldGuard &) = delete;
+};
+
+inline bool shouldSkipYield() {
+    return skipYieldNestingDepth > 0;
+}
+
 inline void tpause(uint64_t counterValue) {
     uint64_t currentCounter = CpuIntrinsics::rdtsc() + counterValue;
     CpuIntrinsics::tpause(waitpkgControlValue, currentCounter);
@@ -85,7 +102,9 @@ inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedV
             }
         }
     }
-    std::this_thread::yield();
+    if (!shouldSkipYield()) {
+        std::this_thread::yield();
+    }
     return false;
 }
 
