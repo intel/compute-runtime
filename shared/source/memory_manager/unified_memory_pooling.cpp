@@ -358,24 +358,32 @@ bool UsmMemAllocPoolsManager::canBePooled(size_t size, const UnifiedMemoryProper
 }
 
 void UsmMemAllocPoolsManager::trimEmptyPools(PoolInfo poolInfo) {
-    std::lock_guard lock(mtx);
-    auto &bucket = pools[poolInfo];
-    // A pool holding chunks awaiting GPU completion never reports empty. Reclaim what
-    // retired since those chunks were freed, otherwise one stale chunk would keep the pool
-    // alive for good - allocations that fit do not drain, so nothing else revisits it.
-    for (auto &pool : bucket) {
-        pool->reclaimDeferredFreeChunks();
-    }
-    auto firstEmptyPoolIt = std::partition(bucket.begin(), bucket.end(), [](std::unique_ptr<UsmMemAllocPool> &pool) {
-        return !pool->isEmpty();
-    });
-    const auto emptyPoolsCount = static_cast<size_t>(std::distance(firstEmptyPoolIt, bucket.end()));
-    if (emptyPoolsCount > maxEmptyPoolsPerBucket) {
-        std::advance(firstEmptyPoolIt, maxEmptyPoolsPerBucket);
-        for (auto it = firstEmptyPoolIt; it != bucket.end(); ++it) {
-            (*it)->cleanup();
+    std::vector<std::unique_ptr<UsmMemAllocPool>> poolsToCleanup;
+    {
+        std::lock_guard lock(mtx);
+        auto &bucket = pools[poolInfo];
+        // A pool holding chunks awaiting GPU completion never reports empty. Reclaim what
+        // retired since those chunks were freed, otherwise one stale chunk would keep the pool
+        // alive for good - allocations that fit do not drain, so nothing else revisits it.
+        for (auto &pool : bucket) {
+            pool->reclaimDeferredFreeChunks();
         }
-        bucket.erase(firstEmptyPoolIt, bucket.end());
+        auto firstEmptyPoolIt = std::partition(bucket.begin(), bucket.end(), [](std::unique_ptr<UsmMemAllocPool> &pool) {
+            return !pool->isEmpty();
+        });
+        const auto emptyPoolsCount = static_cast<size_t>(std::distance(firstEmptyPoolIt, bucket.end()));
+        if (emptyPoolsCount > maxEmptyPoolsPerBucket) {
+            std::advance(firstEmptyPoolIt, maxEmptyPoolsPerBucket);
+            poolsToCleanup.reserve(std::distance(firstEmptyPoolIt, bucket.end()));
+            for (auto it = firstEmptyPoolIt; it != bucket.end(); ++it) {
+                poolsToCleanup.push_back(std::move(*it));
+            }
+            bucket.erase(firstEmptyPoolIt, bucket.end());
+        }
+    }
+    // customCleanup reaches into the API layer and takes its locks, so cleanup must run unlocked
+    for (auto &pool : poolsToCleanup) {
+        pool->cleanup();
     }
 }
 

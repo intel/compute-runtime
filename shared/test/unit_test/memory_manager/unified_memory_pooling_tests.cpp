@@ -1151,6 +1151,32 @@ TEST_F(DeferredFreeUnifiedMemoryPoolingManagerTest, givenPoolWithDeferFreedChunk
     EXPECT_EQ(UsmMemAllocPoolsManager::maxEmptyPoolsPerBucket, usmMemAllocPoolsManager->pools[poolInfo].size());
 }
 
+TEST_F(DeferredFreeUnifiedMemoryPoolingManagerTest, givenTrimmedPoolWhenCleaningItUpThenItIsAlreadyRemovedFromTheBucket) {
+    auto memoryProperties = makeHostProperties();
+    auto pooledPtr = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(chunkSize, memoryProperties);
+    ASSERT_NE(nullptr, pooledPtr);
+    auto pool = usmMemAllocPoolsManager->getPoolContainingAlloc(pooledPtr);
+    ASSERT_NE(nullptr, pool);
+    const auto poolInfo = pool->getPoolInfo();
+    ASSERT_NE(nullptr, usmMemAllocPoolsManager->tryAddPool(poolInfo));
+    ASSERT_EQ(2u, usmMemAllocPoolsManager->pools[poolInfo].size());
+
+    size_t bucketSizeDuringCleanup = 0u;
+    for (auto &bucketPool : usmMemAllocPoolsManager->pools[poolInfo]) {
+        bucketPool->setCustomCleanup([this, poolInfo, &bucketSizeDuringCleanup](const void *) {
+            bucketSizeDuringCleanup = usmMemAllocPoolsManager->pools[poolInfo].size();
+        });
+    }
+
+    EXPECT_TRUE(usmMemAllocPoolsManager->freeSVMAlloc(pooledPtr, FreePolicyType::none));
+    EXPECT_EQ(UsmMemAllocPoolsManager::maxEmptyPoolsPerBucket, usmMemAllocPoolsManager->pools[poolInfo].size());
+    EXPECT_EQ(UsmMemAllocPoolsManager::maxEmptyPoolsPerBucket, bucketSizeDuringCleanup);
+
+    for (auto &bucketPool : usmMemAllocPoolsManager->pools[poolInfo]) {
+        bucketPool->setCustomCleanup(nullptr);
+    }
+}
+
 class InitializedHostMultiDeviceUnifiedMemoryPoolingTest : public Test<SVMMemoryAllocatorFixture<true, 4u>> {
   public:
     void SetUp() override {
