@@ -116,10 +116,6 @@ IpSamplingMetricCalcOpImp::IpSamplingMetricCalcOpImp(bool multidevice,
     for (auto &scope : metricScopesInCalcOp) {
         auto scopeId = scope->getId();
         perScopeIpDataCaches[scopeId] = new std::map<uint64_t, void *>{};
-        if (scope->isAggregated()) {
-            isAggregateScopeIncluded = true;
-            aggregateScopeId = scope->getId();
-        }
     }
 
     const auto device = &(metricSource.getMetricDeviceContext().getDevice());
@@ -235,81 +231,6 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
     }
 
     return status;
-}
-
-ze_result_t IpSamplingMetricCalcOpImp::getSingleComputeScopeReportCount(const size_t rawDataSize, const uint8_t *pRawData,
-                                                                        bool newData, uint32_t scopeId, uint32_t *pTotalMetricReportCount) {
-    ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
-    auto ipSamplingCalculation = metricSource.ipSamplingCalculation.get();
-    std::unordered_set<uint64_t> iPs{};
-    if (newData) {
-        status = ipSamplingCalculation->getIpsInRawData(rawDataSize, pRawData, iPs);
-        if (status != ZE_RESULT_SUCCESS) {
-            *pTotalMetricReportCount = 0;
-            return status;
-        }
-    }
-
-    *pTotalMetricReportCount = getUniqueIpCountForScope(scopeId, iPs);
-
-    DEBUG_BREAK_IF(*pTotalMetricReportCount == 0);
-
-    return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t IpSamplingMetricCalcOpImp::getMultiScopeReportCount(const size_t rawDataSize, const uint8_t *pRawData,
-                                                                bool newData, uint32_t *pTotalMetricReportCount) {
-
-    ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
-    auto ipSamplingCalculation = metricSource.ipSamplingCalculation.get();
-
-    // IPs are shared across sub-devices. So, if aggregated scope is provided, the number of reports is the total
-    // number of unique IPs across all sub-devices data.
-    // Otherwise, the number of reports is the number of IPs in the sub-device compute scope that has the most IPs, and
-    // results will have invalid status for reports in compute scopes that have fewer IPs.
-
-    if (newData) {
-        std::unordered_set<uint64_t> iPs{};
-        std::vector<uint32_t> subDeviceIndexes{};
-        std::vector<MetricScopeImp *>::iterator it = metricScopesInCalcOp.begin();
-        if (isAggregateScopeIncluded) {
-            Device *device = &metricSource.getMetricDeviceContext().getDevice();
-            uint32_t subDeviceCount = device->numSubDevices;
-            std::vector<ze_device_handle_t> subDevices(subDeviceCount);
-            device->getSubDevices(&subDeviceCount, subDevices.data());
-            for (auto &subDeviceHandle : subDevices) {
-                auto neoSubDevice = static_cast<NEO::SubDevice *>(Device::fromHandle(subDeviceHandle)->getNEODevice());
-                subDeviceIndexes.push_back(neoSubDevice->getSubDeviceIndex());
-            }
-        } else {
-            for (auto &scope : metricScopesInCalcOp) {
-                subDeviceIndexes.push_back(scope->getComputeSubDeviceIndex());
-            }
-        }
-
-        for (auto &subdevIndex : subDeviceIndexes) {
-            status = ipSamplingCalculation->getIpsInRawDataForSubDevIndex(rawDataSize, pRawData, subdevIndex, iPs);
-            if (status != ZE_RESULT_SUCCESS) {
-                *pTotalMetricReportCount = 0;
-                return status;
-            }
-
-            if (!isAggregateScopeIncluded) {
-                *pTotalMetricReportCount = std::max(*pTotalMetricReportCount, getUniqueIpCountForScope((*it)->getId(), iPs));
-                it++;
-                iPs.clear();
-            }
-        }
-
-        if (isAggregateScopeIncluded) {
-            *pTotalMetricReportCount = getUniqueIpCountForScope(aggregateScopeId, iPs);
-        }
-    } else {
-        *pTotalMetricReportCount = getLargestCacheSize();
-    }
-
-    DEBUG_BREAK_IF(*pTotalMetricReportCount == 0);
-    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t IpSamplingMetricCalcOpImp::updateCacheForSingleScope(const size_t rawDataSize, const uint8_t *pRawData,
@@ -440,12 +361,18 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
     uint32_t metricReportCount = 0;
     bool dataOverflow = false;
     auto ipSamplingCalculation = metricSource.ipSamplingCalculation.get();
-    bool getSize = (*pTotalMetricReportCount == 0);
     bool newData = false; // Track if there is fresh new raw data that requires updating caches
     uint64_t dataSize = rawDataSize;
     const uint8_t *rawDataStart = pRawData;
 
     ze_result_t status = ZE_RESULT_SUCCESS;
+
+    // Querying the number of reports available in the raw data is not supported, so the caller must
+    // always request a number of reports to calculate and provide a buffer big enough to hold them.
+    if (*pTotalMetricReportCount == 0) {
+        METRICS_LOG_ERR("%s", "Number of metric reports to calculate must be greater than zero");
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     if (areAllCachesEmpty()) {
         // All data is new: user asked to calculate all results available in the raw data. So, all caches are empty
@@ -474,10 +401,6 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
         DEBUG_BREAK_IF(metricScopesInCalcOp[0]->isAggregated());
         DEBUG_BREAK_IF(scopeId != 0);
 
-        if (getSize) {
-            return getSingleComputeScopeReportCount(dataSize, rawDataStart, newData, scopeId, pTotalMetricReportCount);
-        }
-
         status = updateCacheForSingleScope(dataSize, rawDataStart, newData, *perScopeIpDataCaches[scopeId], dataOverflow);
         if (status != ZE_RESULT_SUCCESS) {
             clearScopesCaches();
@@ -491,10 +414,6 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
         if (!isMultiDeviceData) {
             METRICS_LOG_ERR("%s", "Cannot use sub-device raw data in a root device calculation operation handle");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-
-        if (getSize) {
-            return getMultiScopeReportCount(dataSize, rawDataStart, newData, pTotalMetricReportCount);
         }
 
         status = updateCachesForMultiScopes(dataSize, rawDataStart, newData, dataOverflow);

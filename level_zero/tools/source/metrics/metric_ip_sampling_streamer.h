@@ -74,17 +74,11 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
     std::vector<uint32_t> includedMetricIndexes{};
     std::vector<MetricScopeImp *> metricScopesInCalcOp{};
     bool isMultiDeviceData = false;
-    bool isAggregateScopeIncluded = false;
-    uint32_t aggregateScopeId = 0; // valid if isAggregateScopeIncluded is true
 
     std::map<uint32_t, std::map<uint64_t, void *> *> perScopeIpDataCaches{};
     size_t processedSize = 0;
     L0::L0GfxCoreHelper *l0GfxCoreHelper = nullptr;
 
-    ze_result_t getSingleComputeScopeReportCount(const size_t rawDataSize, const uint8_t *pRawData,
-                                                 bool newData, uint32_t scopeId, uint32_t *pTotalMetricReportCount);
-    ze_result_t getMultiScopeReportCount(const size_t rawDataSize, const uint8_t *pRawData,
-                                         bool newData, uint32_t *pTotalMetricReportCount);
     ze_result_t updateCacheForSingleScope(const size_t rawDataSize, const uint8_t *pRawData,
                                           bool newData, std::map<uint64_t, void *> &reportDataMap, bool &dataOverflow);
     ze_result_t updateCachesForMultiScopes(const size_t rawDataSize, const uint8_t *pRawData,
@@ -103,14 +97,6 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
     }
 
     void clearScopesCaches();
-
-    // Get unique IPs count from new data and scope cache
-    uint32_t getUniqueIpCountForScope(uint32_t scopeId, std::unordered_set<uint64_t> &ips) {
-        for (const auto &entry : *perScopeIpDataCaches[scopeId]) {
-            ips.insert(entry.first);
-        }
-        return static_cast<uint32_t>(ips.size());
-    }
 
     std::map<uint64_t, void *> *getScopeCache(uint32_t scopeId) {
         return perScopeIpDataCaches[scopeId];

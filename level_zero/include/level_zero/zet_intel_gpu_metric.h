@@ -280,8 +280,7 @@ zetIntelMetricCalculateValuesExp(
     size_t *usedDataSize,                                                      ///< [out] The number raw bytes processed. User is expected to advance pRawData
                                                                                ///< pointer by this amount if calling this function subsequently.
     uint32_t *pTotalMetricReportCount,                                         ///< [in,out] [optional] pointer to the total number of metric reports calculated,
-                                                                               ///< If count is zero, then the driver shall update the value with the total number of
-                                                                               ///< metric reports to be calculated. If count is greater than zero but less than the
+                                                                               ///< Must not be zero. If count is greater than zero but less than the
                                                                                ///< total number of reports available in the raw data, then only that number of
                                                                                ///< reports will be calculated. If count is greater than the number of reports
                                                                                ///< available in the raw data buffer, then the driver shall update the value with
