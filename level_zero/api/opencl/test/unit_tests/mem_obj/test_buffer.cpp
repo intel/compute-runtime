@@ -28,6 +28,8 @@ namespace NEO {
 namespace LEO {
 namespace ult {
 
+void CL_CALLBACK destructorCallback(cl_mem, void *) {}
+
 struct BufferDestructorTest : public Test<OclFixture> {
     void SetUp() override {
         Test<OclFixture>::SetUp();
@@ -43,9 +45,13 @@ struct BufferDestructorTest : public Test<OclFixture> {
         Test<OclFixture>::TearDown();
     }
 
+    Buffer *createBuffer(cl_mem_flags flags, void *usmPtr, bool usesExternalHandle, void *cpuPtr) {
+        auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &clDevice->getDevice());
+        return new Buffer(leoContext.get(), memoryProperties, flags, usmPtr, cpuPtr, 64u, usesExternalHandle);
+    }
+
     Buffer *createBuffer(void *usmPtr, bool usesExternalHandle = false, void *cpuPtr = nullptr) {
-        auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &clDevice->getDevice());
-        return new Buffer(leoContext.get(), memoryProperties, CL_MEM_READ_WRITE, usmPtr, cpuPtr, 64u, usesExternalHandle);
+        return createBuffer(CL_MEM_READ_WRITE, usmPtr, usesExternalHandle, cpuPtr);
     }
 
     ClDevice *clDevice = nullptr;
@@ -55,9 +61,36 @@ struct BufferDestructorTest : public Test<OclFixture> {
     uint64_t dummyStorage = 0u;
 };
 
-TEST_F(BufferDestructorTest, givenBufferWithoutSvmAndWithoutExternalHandleWhenDestroyedThenZeMemFreeExtIsCalledWithBlockingPolicy) {
+TEST_F(BufferDestructorTest, givenBufferWithoutSvmAndWithoutExternalHandleWhenDestroyedThenZeMemFreeExtIsCalledWithDeferPolicy) {
     void *usmPtr = &dummyStorage;
     auto buffer = createBuffer(usmPtr);
+    buffer->setUsesSvm(false);
+
+    delete buffer;
+
+    ASSERT_EQ(1u, capturingContext->freeMemExtArgs.count());
+    const auto &freeMem = capturingContext->freeMemExtArgs[0];
+    EXPECT_EQ(ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE, freeMem.freePolicy);
+    EXPECT_EQ(usmPtr, freeMem.ptr);
+}
+
+TEST_F(BufferDestructorTest, givenBufferWithCpuAllocationAndSvmWhenDestroyedThenMemObjCallsZeMemFreeExtWithDeferPolicy) {
+    uint64_t dummyCpuStorage = 0u;
+    auto buffer = createBuffer(&dummyStorage, false, &dummyCpuStorage);
+    buffer->setUsesSvm(true);
+
+    delete buffer;
+
+    ASSERT_EQ(1u, capturingContext->freeMemExtArgs.count());
+    const auto &freeMem = capturingContext->freeMemExtArgs[0];
+    EXPECT_EQ(ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE, freeMem.freePolicy);
+    EXPECT_EQ(&dummyCpuStorage, freeMem.ptr);
+}
+
+TEST_F(BufferDestructorTest, givenBufferWithUseHostPtrWhenDestroyedThenZeMemFreeExtIsCalledWithBlockingPolicy) {
+    void *usmPtr = &dummyStorage;
+    uint64_t dummyCpuStorage = 0u;
+    auto buffer = createBuffer(CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, usmPtr, false, &dummyCpuStorage);
     buffer->setUsesSvm(false);
 
     delete buffer;
@@ -68,10 +101,25 @@ TEST_F(BufferDestructorTest, givenBufferWithoutSvmAndWithoutExternalHandleWhenDe
     EXPECT_EQ(usmPtr, freeMem.ptr);
 }
 
-TEST_F(BufferDestructorTest, givenBufferWithCpuAllocationAndSvmWhenDestroyedThenMemObjCallsZeMemFreeExtWithBlockingPolicy) {
+TEST_F(BufferDestructorTest, givenBufferWithDestructorCallbackWhenDestroyedThenZeMemFreeExtIsCalledWithBlockingPolicy) {
+    void *usmPtr = &dummyStorage;
+    auto buffer = createBuffer(usmPtr);
+    buffer->setUsesSvm(false);
+    buffer->addCallback(&destructorCallback, nullptr);
+
+    delete buffer;
+
+    ASSERT_EQ(1u, capturingContext->freeMemExtArgs.count());
+    const auto &freeMem = capturingContext->freeMemExtArgs[0];
+    EXPECT_EQ(ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE, freeMem.freePolicy);
+    EXPECT_EQ(usmPtr, freeMem.ptr);
+}
+
+TEST_F(BufferDestructorTest, givenMemObjWithDestructorCallbackAndCpuAllocationWhenDestroyedThenZeMemFreeExtIsCalledWithBlockingPolicy) {
     uint64_t dummyCpuStorage = 0u;
     auto buffer = createBuffer(&dummyStorage, false, &dummyCpuStorage);
     buffer->setUsesSvm(true);
+    buffer->addCallback(&destructorCallback, nullptr);
 
     delete buffer;
 
