@@ -272,6 +272,7 @@ LinuxSysmanDriverImp::~LinuxSysmanDriverImp() {
 // registry of them so that the events path can poll every open stream.
 void LinuxSysmanDriverImp::registerCperTracePipeFd(int fd) {
     if (fd < 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Refusing to register an invalid trace_pipe descriptor %d, it will not be polled for CPER records\n", NEO_FUNCTION_NAME, fd);
         return;
     }
     std::lock_guard<std::mutex> lock(cperFdsMutex);

@@ -1617,6 +1617,33 @@ TEST_F(SysmanInfoLogFixture, GivenCperEventsWithDifferentSeveritiesWhenPeekingWi
     }
 }
 
+TEST_F(SysmanInfoLogFixture, GivenCperEventWithUnassignedFieldNameOccurrencesWhenPeekingWithMetadataThenOnlyAssignedOccurrencesAreExtracted) {
+    MockTraceFsApiWithData traceFsApi(false, false, mockCperEventWithUnassignedFieldNameOccurrences);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t recordCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_intel_info_log_metadata_exp> descriptors(recordCount);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    ASSERT_EQ(1u, recordCount);
+    EXPECT_EQ(2u, size);
+    EXPECT_EQ(0xAB, buffer[0]);
+    EXPECT_EQ(0xCD, buffer[1]);
+    EXPECT_EQ(2u, descriptors[0].lengthOfData);
+    EXPECT_EQ(ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN, descriptors[0].recordType);
+    EXPECT_EQ(0u, descriptors[0].address.domain);
+    EXPECT_EQ(0x13u, descriptors[0].address.bus);
+    EXPECT_EQ(0u, descriptors[0].address.device);
+    EXPECT_EQ(0u, descriptors[0].address.function);
+
+    static const uint8_t expectedUuid[16] = {0xe5, 0xaf, 0x46, 0x90, 0x41, 0x90, 0x24, 0x51,
+                                             0x86, 0x14, 0x92, 0x55, 0x0d, 0x9e, 0x9d, 0xa6};
+    for (int i = 0; i < 16; i++) {
+        EXPECT_EQ(expectedUuid[i], descriptors[0].uuid.id[i]) << "UUID mismatch at byte " << i;
+    }
+}
+
 TEST_F(SysmanInfoLogFixture, GivenTimestampWithoutColonSeparatorWhenParsingThenTimestampIsZero) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithConfigurableBehavior>(mockCperEventWithoutTimestampColon);
@@ -1826,7 +1853,7 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceNotPreExistingWhenEventEnableFail
         mockApi->eventEnableReturnValue = -1;
         return mockApi;
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
@@ -1844,6 +1871,7 @@ TEST_F(SysmanInfoLogFixture, GivenPreExistingNamedInstanceWhenEventEnableFailsTh
         mockApi->eventEnableReturnValue = -1;
         return mockApi;
     });
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, false);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
@@ -1861,6 +1889,7 @@ TEST_F(SysmanInfoLogFixture, GivenPreExistingNamedInstanceOwnedByAnotherCollecti
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, false);
     // The advisory lock on the instance directory is held elsewhere, which is what identifies the
     // instance as one this API is already collecting from.
     VariableBackup<int> flockRetValBackup(&NEO::SysCalls::flockRetVal, -1);
@@ -1887,6 +1916,7 @@ TEST_F(SysmanInfoLogFixture, GivenPreExistingNamedInstanceNotOwnedByAnyCollectio
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, false);
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
@@ -2159,7 +2189,7 @@ TEST_F(SysmanInfoLogFixture, GivenNewlyCreatedNamedInstanceWhenDeletingInstanceT
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
@@ -2200,7 +2230,7 @@ TEST_F(SysmanInfoLogFixture, GivenSetBufferSizeFailsWhenCreatingNamedInstanceThe
         mockApi->setBufferSizeReturnValue = -1;
         return mockApi;
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
     MockPerCpuDirBackup perCpuDirBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
@@ -2331,7 +2361,7 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenCreatingAndDeletingItThenWake
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
 
@@ -2355,7 +2385,7 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWithABufferSizeWhenCreatingInstan
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithConfigurableBehavior>();
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
     MockPerCpuDirBackup perCpuDirBackup;
@@ -2387,7 +2417,7 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstancePerCpuPathIsUnavailableWhenCreati
         mockApi->failGetFile = true;
         return mockApi;
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccessBackup(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
     MockPerCpuDirBackup perCpuDirBackup;
 
     auto infoLogHandles = getInfoLogHandles(handleCount);
@@ -3369,6 +3399,32 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceAlreadyTornDownWhenTearingDownAgainThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, instance.teardown());
     EXPECT_EQ(ZE_RESULT_SUCCESS, instance.teardown());
     EXPECT_EQ(1u, pRawMockOsInstance->teardownCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInstanceTeardownFailsWhenDestroyingAllInstancesThenTheRemainingInstancesAreStillTornDownAndDropped) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
+    auto *pRawMockOsInfoLog = pMockOsInfoLog.get();
+    pMockOsInfoLog->instanceTeardownResult = ZE_RESULT_ERROR_UNKNOWN;
+    infoLog.pOsInfoLog = std::move(pMockOsInfoLog);
+    infoLog.init();
+
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hNamedInstance = nullptr;
+    zes_intel_info_log_instance_handle_t hUnnamedInstance = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, infoLog.infoLogCreateInstance("named", &desc, &hNamedInstance));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, infoLog.infoLogCreateInstance(nullptr, &desc, &hUnnamedInstance));
+
+    infoLog.destroyAllInstances();
+    EXPECT_EQ(2u, pRawMockOsInfoLog->instanceTeardownCallCount);
+
+    pRawMockOsInfoLog->instanceTeardownResult = ZE_RESULT_SUCCESS;
+    zes_intel_info_log_instance_handle_t hReusedInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, infoLog.infoLogCreateInstance("named", &desc, &hReusedInstance));
+    EXPECT_NE(nullptr, hReusedInstance);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenSysmanInitFromCoreWhenCallingInfoLogEntryPointsThenUnsupportedFeatureIsReturned) {

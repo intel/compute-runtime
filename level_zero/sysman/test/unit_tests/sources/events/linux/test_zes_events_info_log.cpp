@@ -986,7 +986,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenNeitherInitFlagSetWhenCallingDriverEvent
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsEnabledOnNamedInstanceAndCperDataAvailableIsRegisteredWhenListeningForDriverEventsThenEventIsReportedFromThatInstance) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccess(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
     VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, mockSysCallsPipe);
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         recordPollCall(pollFd, numberOfFds);
@@ -1032,7 +1032,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsEnabledOnNamedInstanc
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenInfoLogCollectionIsEnabledOnNamedInstanceAndCperDataAvailableIsRegisteredWhileListeningWhenRegistrationPipeIsNotifiedThenTracefsSourceUsesTheInstanceDescriptor) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsAccess)> mockAccess(&NEO::SysCalls::sysCallsAccess, MockTraceFsApiWithData::mockSysCallsAccessWithoutPreExistingInstance);
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
     VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, mockSysCallsPipe);
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         recordPollCall(pollFd, numberOfFds);

@@ -574,6 +574,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(
 ///       is left in place when the collection instance is deleted.
 ///     - When pInstanceName is nullptr the records are collected from the default buffer, which may
 ///       be shared with other consumers and may carry data from other sources.
+///     - A non-null pInstanceName must be a null terminated string. Names are compared and matched
+///       as byte sequences, so two different names never denote the same buffer.
 ///     - The application must not call this function from simultaneous threads.
 ///     - The application must pass a valid hInfoLog, a non-null pDesc whose stype is
 ///       ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC, and a non-null phInfoLogInstance.

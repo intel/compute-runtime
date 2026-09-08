@@ -305,13 +305,6 @@ class MockTraceFsApiWithData : public PublicTraceFsApi {
         return PublicTraceFsApi::traceFsTraceOff(instance);
     }
 
-    static int mockSysCallsAccessWithoutPreExistingInstance(const char *pathname, int mode) {
-        if (pathname != nullptr && std::string(pathname).find("/instances/") != std::string::npos) {
-            return -1;
-        }
-        return 0;
-    }
-
     // Reports a tracefs mount point which offers no named instances at all, as on a kernel built
     // without them.
     static int mockSysCallsAccessWithoutInstancesDir(const char *pathname, int mode) {
@@ -480,11 +473,14 @@ static const std::string mockCperEventWithTrailingField =
     "    kworker/13:2-370     [013] .....  5058.247549: xe_error_cper: dev=0000:13:00.0 "
     "cper_len=4 cper_raw=AB CD EF 01 extra=1\n";
 
-// The cper_raw value is the last field on the line and ends in a trailing space, so the field
-// scan advances past the final value to the end of the line instead of stopping at a separator.
 static const std::string mockCperEventWithTrailingSpaceValue =
     "    kworker/13:2-370     [013] .....  5058.247549: xe_error_cper: dev=0000:13:00.0 "
     "cper_len=2 cper_raw=AB CD \n";
+
+static const std::string mockCperEventWithUnassignedFieldNameOccurrences =
+    "    kworker/13:2-370     [013] .....  5058.247549: xe_error_cper: note=cper_length "
+    "cper_len=2 cper_raw=AB CD dev=0000:13:00.0 "
+    "fru_id=e5af4690-4190-2451-8614-92550d9e9da6 severity\n";
 
 static const std::string mockCperEventWithHeaderLine =
     "# tracer: nop\n"
@@ -915,6 +911,7 @@ class MockOsInfoLogInstance : public OsInfoLogInstance {
   public:
     ze_result_t teardownResult = ZE_RESULT_SUCCESS;
     uint32_t teardownCallCount = 0;
+    uint32_t *pSharedTeardownCallCount = nullptr;
 
     ze_result_t readWithMetadata(uint64_t, uint32_t *, uint8_t *, uint32_t *,
                                  zes_intel_info_log_metadata_exp *,
@@ -928,6 +925,9 @@ class MockOsInfoLogInstance : public OsInfoLogInstance {
     }
     ze_result_t teardown() override {
         teardownCallCount++;
+        if (pSharedTeardownCallCount != nullptr) {
+            (*pSharedTeardownCallCount)++;
+        }
         return teardownResult;
     }
     int getTracePipeFd() const override { return -1; }
@@ -942,6 +942,8 @@ class MockOsInfoLog : public OsInfoLog {
     ze_result_t createInstanceResult = ZE_RESULT_SUCCESS;
     bool createInstanceReturnsNullInstance = false;
     uint32_t createInstanceCallCount = 0;
+    ze_result_t instanceTeardownResult = ZE_RESULT_SUCCESS;
+    uint32_t instanceTeardownCallCount = 0;
 
     ze_result_t getProperties(zes_intel_info_log_properties_exp_t *pProperties) override {
         if (getPropertiesResult == ZE_RESULT_SUCCESS && pProperties != nullptr) {
@@ -954,7 +956,10 @@ class MockOsInfoLog : public OsInfoLog {
                                std::unique_ptr<OsInfoLogInstance> &pOsInfoLogInstance) override {
         createInstanceCallCount++;
         if (createInstanceResult == ZE_RESULT_SUCCESS && !createInstanceReturnsNullInstance) {
-            pOsInfoLogInstance = std::make_unique<MockOsInfoLogInstance>();
+            auto pInstance = std::make_unique<MockOsInfoLogInstance>();
+            pInstance->teardownResult = instanceTeardownResult;
+            pInstance->pSharedTeardownCallCount = &instanceTeardownCallCount;
+            pOsInfoLogInstance = std::move(pInstance);
         }
         return createInstanceResult;
     }

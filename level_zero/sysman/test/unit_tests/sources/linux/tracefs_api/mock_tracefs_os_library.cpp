@@ -21,6 +21,7 @@ static constexpr const char *mockTraceFsAbsolutePath = "/tmp/neo_sysman_mock_tra
 struct tracefs_instance MockTraceFsOsLibrary::mockTraceFsInstance;
 struct tep_handle MockTraceFsOsLibrary::mockTepHandle;
 const char *MockTraceFsOsLibrary::mockInstanceName = "test_instance";
+bool MockTraceFsOsLibrary::mockInstanceIsNew = false;
 const char *MockTraceFsOsLibrary::mockTraceDir = "/sys/kernel/tracing/instances/test";
 const char *MockTraceFsOsLibrary::mockFileName = "trace";
 const char *MockTraceFsOsLibrary::mockFileContent = "test trace data";
@@ -43,6 +44,11 @@ struct tracefs_instance *mockTraceFsInstanceCreate(const char *name) {
         EXPECT_STREQ(MockTraceFsOsLibrary::mockInstanceName, name);
     }
     return &MockTraceFsOsLibrary::mockTraceFsInstance;
+}
+
+bool mockTraceFsInstanceIsNew(struct tracefs_instance *instance) {
+    EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, instance);
+    return MockTraceFsOsLibrary::mockInstanceIsNew;
 }
 
 void mockTraceFsInstanceDestroy(struct tracefs_instance *instance) {
@@ -177,6 +183,7 @@ MockTraceFsOsLibrary::MockTraceFsOsLibrary() {
     putTracingFileCallCount = 0;
 
     funcMap["tracefs_instance_create"] = reinterpret_cast<void *>(mockTraceFsInstanceCreate);
+    funcMap["tracefs_instance_is_new"] = reinterpret_cast<void *>(mockTraceFsInstanceIsNew);
     funcMap["tracefs_instance_destroy"] = reinterpret_cast<void *>(mockTraceFsInstanceDestroy);
     funcMap["tracefs_instance_free"] = reinterpret_cast<void *>(mockTraceFsInstanceFree);
     funcMap["tracefs_instance_get_name"] = reinterpret_cast<void *>(mockTraceFsInstanceGetName);

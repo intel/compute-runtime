@@ -7,14 +7,20 @@
 
 #include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/os_library.h"
 
 namespace L0 {
 namespace Sysman {
 
 static constexpr std::string_view libTraceFsFile = "libtracefs.so.1";
+
+static constexpr std::string_view minimumLibTraceFsVersion = "1.8.0";
+
 static constexpr std::string_view traceFsInstanceCreateRoutine = "tracefs_instance_create";
+static constexpr std::string_view traceFsInstanceIsNewRoutine = "tracefs_instance_is_new";
 static constexpr std::string_view traceFsInstanceDestroyRoutine = "tracefs_instance_destroy";
 static constexpr std::string_view traceFsInstanceFreeRoutine = "tracefs_instance_free";
 static constexpr std::string_view traceFsInstanceGetNameRoutine = "tracefs_instance_get_name";
@@ -39,19 +45,29 @@ static constexpr std::string_view traceFsPutTracingFileRoutine = "tracefs_put_tr
 template <class T>
 bool TraceFsApi::getSymbolAddr(std::string_view name, T &sym) {
     sym = reinterpret_cast<T>(traceFsLibraryHandle->getProcAddress(std::string(name)));
-    return nullptr != sym;
+    if (nullptr == sym) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Entry point '%.*s' not found in %.*s, libtracefs %.*s or newer is required\n",
+                     NEO_FUNCTION_NAME, static_cast<int>(name.length()), name.data(),
+                     static_cast<int>(libTraceFsFile.length()), libTraceFsFile.data(),
+                     static_cast<int>(minimumLibTraceFsVersion.length()), minimumLibTraceFsVersion.data());
+        return false;
+    }
+    return true;
 }
 
 bool TraceFsApi::loadEntryPoints() {
     if (!isAvailable()) {
         traceFsLibraryHandle.reset(NEO::OsLibrary::loadFunc(std::string(libTraceFsFile)));
         if (!isAvailable()) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to load %.*s\n", NEO_FUNCTION_NAME,
+                         static_cast<int>(libTraceFsFile.length()), libTraceFsFile.data());
             return false;
         }
     }
 
     bool allEntryPointsLoaded = true;
     allEntryPointsLoaded = getSymbolAddr(traceFsInstanceCreateRoutine, traceFsInstanceCreateEntry);
+    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceIsNewRoutine, traceFsInstanceIsNewEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceDestroyRoutine, traceFsInstanceDestroyEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceFreeRoutine, traceFsInstanceFreeEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetNameRoutine, traceFsInstanceGetNameEntry);
@@ -81,6 +97,13 @@ struct tracefs_instance *TraceFsApi::traceFsInstanceCreate(const char *name) {
         return nullptr;
     }
     return (*traceFsInstanceCreateEntry)(name);
+}
+
+bool TraceFsApi::traceFsInstanceIsNew(struct tracefs_instance *instance) {
+    if (nullptr == traceFsInstanceIsNewEntry) {
+        return false;
+    }
+    return (*traceFsInstanceIsNewEntry)(instance);
 }
 
 void TraceFsApi::traceFsInstanceDestroy(struct tracefs_instance *instance) {

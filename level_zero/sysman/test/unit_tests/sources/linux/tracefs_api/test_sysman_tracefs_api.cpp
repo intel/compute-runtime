@@ -51,6 +51,7 @@ class SysmanTraceFsApiFixture : public ::testing::Test {
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenMissingLibraryEntryPointThenVerifyLoadEntryPointsFails) {
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_create"));
+    EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_is_new"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_destroy"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_free"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_get_name"));
@@ -99,6 +100,14 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceCreateCalledWithLoade
     EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
     auto instance = testTraceFsApi.traceFsInstanceCreateBase(MockTraceFsOsLibrary::mockInstanceName);
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, instance);
+}
+
+TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceIsNewCalledThenWhatTheLibraryReportsIsReturned) {
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
+    EXPECT_TRUE(testTraceFsApi.traceFsInstanceIsNew(&MockTraceFsOsLibrary::mockTraceFsInstance));
+
+    MockTraceFsOsLibrary::mockInstanceIsNew = false;
+    EXPECT_FALSE(testTraceFsApi.traceFsInstanceIsNew(&MockTraceFsOsLibrary::mockTraceFsInstance));
 }
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenInstanceDestroyCalledThenVerifySuccess) {
@@ -327,6 +336,8 @@ class SysmanTraceFsApiNullEntryFixture : public ::testing::Test {
 
 TEST_F(SysmanTraceFsApiNullEntryFixture, GivenTraceFsApiWhenAllApisCalledWithNoEntryPointThenVerifyDefaultValuesReturned) {
     EXPECT_EQ(nullptr, testTraceFsApi.traceFsInstanceCreate(MockTraceFsOsLibrary::mockInstanceName));
+    VariableBackup<bool> instanceIsNewBackup(&MockTraceFsOsLibrary::mockInstanceIsNew, true);
+    EXPECT_FALSE(testTraceFsApi.traceFsInstanceIsNew(nullptr));
     EXPECT_EQ(nullptr, testTraceFsApi.traceFsInstanceGetName(nullptr));
     EXPECT_EQ(nullptr, testTraceFsApi.traceFsInstanceGetTraceDir(nullptr));
     EXPECT_EQ(nullptr, testTraceFsApi.traceFsLocalEvents(MockTraceFsOsLibrary::mockTraceDir));

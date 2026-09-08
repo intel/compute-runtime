@@ -24,6 +24,7 @@ namespace L0 {
 namespace Sysman {
 
 typedef struct tracefs_instance *(*pTraceFsInstanceCreate)(const char *);
+typedef bool (*pTraceFsInstanceIsNew)(struct tracefs_instance *);
 typedef void (*pTraceFsInstanceDestroy)(struct tracefs_instance *);
 typedef void (*pTraceFsInstanceFree)(struct tracefs_instance *);
 typedef const char *(*pTraceFsInstanceGetName)(struct tracefs_instance *);
@@ -48,6 +49,7 @@ typedef void (*pTraceFsPutTracingFile)(char *);
 class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
   public:
     MOCKABLE_VIRTUAL struct tracefs_instance *traceFsInstanceCreate(const char *name);
+    MOCKABLE_VIRTUAL bool traceFsInstanceIsNew(struct tracefs_instance *instance);
     MOCKABLE_VIRTUAL void traceFsInstanceDestroy(struct tracefs_instance *instance);
     MOCKABLE_VIRTUAL void traceFsInstanceFree(struct tracefs_instance *instance);
     MOCKABLE_VIRTUAL const char *traceFsInstanceGetName(struct tracefs_instance *instance);
@@ -89,6 +91,7 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<NEO::OsLibrary> traceFsLibraryHandle;
 
     pTraceFsInstanceCreate traceFsInstanceCreateEntry = nullptr;
+    pTraceFsInstanceIsNew traceFsInstanceIsNewEntry = nullptr;
     pTraceFsInstanceDestroy traceFsInstanceDestroyEntry = nullptr;
     pTraceFsInstanceFree traceFsInstanceFreeEntry = nullptr;
     pTraceFsInstanceGetName traceFsInstanceGetNameEntry = nullptr;

@@ -38,20 +38,21 @@ ze_result_t InfoLogImp::infoLogCreateInstance(const char *pInstanceName,
     }
 
     if (pInstanceName != nullptr && !infoLogProperties.isNamedInstancedCollectionSupported) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Named collection instances are not supported\n", NEO_FUNCTION_NAME);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Named collection instances are not supported, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     std::lock_guard<std::mutex> lock(instancesMutex);
 
     if (pInstanceName != nullptr && activeInstanceNames.count(pInstanceName) != 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Collection instance '%s' is already in use\n", NEO_FUNCTION_NAME, pInstanceName);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Collection instance '%s' is already in use, returning error: 0x%x\n", NEO_FUNCTION_NAME, pInstanceName, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
         return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     }
 
     std::unique_ptr<OsInfoLogInstance> pOsInstance;
     auto result = pOsInfoLog->createInstance(pInstanceName, pDesc, pOsInstance);
     if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The backend failed to create the collection instance, returning error: 0x%x\n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -72,6 +73,7 @@ ze_result_t InfoLogImp::destroyInstance(InfoLogInstance *pInstance) {
     auto it = std::find_if(instances.begin(), instances.end(),
                            [pInstance](const std::unique_ptr<InfoLogInstance> &pOwned) { return pOwned.get() == pInstance; });
     if (it == instances.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Collection instance is not owned by this info log, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_NULL_HANDLE);
         return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
     }
 
@@ -91,7 +93,10 @@ void InfoLogImp::destroyAllInstances() {
     std::lock_guard<std::mutex> lock(instancesMutex);
 
     for (auto &pInstance : instances) {
-        pInstance->teardown();
+        auto result = pInstance->teardown();
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to tear down a collection instance, error: 0x%x, dropping it regardless\n", NEO_FUNCTION_NAME, result);
+        }
     }
 
     instances.clear();

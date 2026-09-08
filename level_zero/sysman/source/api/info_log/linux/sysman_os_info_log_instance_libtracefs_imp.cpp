@@ -68,11 +68,13 @@ static bool hexStringToBytes(const std::string &hexStr, std::vector<uint8_t> &by
 // 'line' is a single tracefs event line, e.g.:
 //   "     kworker-42   [000] ....  1234.567890: xe_error_cper: cper_len=8 cper_raw=AB CD EF 01 02 03 04 05"
 // 'fieldName' is the name of the field to extract (e.g., "cper_len" or "cper_raw").
-static std::string extractFieldValue(const std::string &line, const std::string &fieldName) {
-    std::string searchStr = fieldName + "=";
+static std::string extractFieldValue(const std::string &line, std::string_view fieldName) {
+    std::string searchStr(fieldName);
+    searchStr += '=';
     size_t pos = line.find(searchStr);
     if (pos == std::string::npos) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Field '%s' not found in trace line\n", NEO_FUNCTION_NAME, fieldName.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Field '%.*s' not found in trace line\n", NEO_FUNCTION_NAME,
+                     static_cast<int>(fieldName.length()), fieldName.data());
         return "";
     }
 
@@ -547,7 +549,7 @@ ze_result_t LinuxInfoLogInstanceImp::applyBufferSize(uint32_t *pBufferSize) {
     uint32_t requestedSizeKb = *pBufferSize;
     uint32_t perCpuBufferCount = getPerCpuBufferCount();
     if (perCpuBufferCount == 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to determine the number of per-CPU collection buffers\n", NEO_FUNCTION_NAME);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to determine the number of per-CPU collection buffers, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -559,8 +561,8 @@ ze_result_t LinuxInfoLogInstanceImp::applyBufferSize(uint32_t *pBufferSize) {
     long long currentPerCpuSizeKb = pTraceFsApi->traceFsInstanceGetBufferSize(pTraceFsInstance, 0);
 
     if (pTraceFsApi->traceFsInstanceSetBufferSize(pTraceFsInstance, perCpuSizeKb, -1) != 0) { // -1 = all CPUs
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set buffer size to %zu KB per CPU for a %u KB total\n",
-                     NEO_FUNCTION_NAME, perCpuSizeKb, requestedSizeKb);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set buffer size to %zu KB per CPU for a %u KB total, returning error: 0x%x\n",
+                     NEO_FUNCTION_NAME, perCpuSizeKb, requestedSizeKb, ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     savedPerCpuBufferSizeKb = currentPerCpuSizeKb;
@@ -581,7 +583,7 @@ ze_result_t LinuxInfoLogInstanceImp::startCollection() {
 
     if (!eventWasAlreadyEnabled) {
         if (pTraceFsApi->traceFsEventEnable(pTraceFsInstance, "xe", "xe_error_cper") != 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to enable xe_error_cper tracepoint\n", NEO_FUNCTION_NAME);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to enable xe_error_cper tracepoint, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNKNOWN);
             restoreBufferConfiguration();
             return ZE_RESULT_ERROR_UNKNOWN;
         }
@@ -589,7 +591,7 @@ ze_result_t LinuxInfoLogInstanceImp::startCollection() {
 
     if (!tracingWasAlreadyOn) {
         if (pTraceFsApi->traceFsTraceOn(pTraceFsInstance) != 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to turn tracing on\n", NEO_FUNCTION_NAME);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to turn tracing on, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNKNOWN);
             if (!eventWasAlreadyEnabled) {
                 pTraceFsApi->traceFsEventDisable(pTraceFsInstance, "xe", "xe_error_cper");
             }
@@ -744,8 +746,8 @@ ze_result_t LinuxInfoLogInstanceImp::openTracePipe() {
     if (pTraceFsInstance != nullptr) {
         char *tracePipePath = pTraceFsApi->traceFsInstanceGetFile(pTraceFsInstance, "trace_pipe");
         if (tracePipePath == nullptr) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get trace_pipe path for instance '%s'\n",
-                         NEO_FUNCTION_NAME, instanceName.c_str());
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get trace_pipe path for instance '%s', returning error: 0x%x\n",
+                         NEO_FUNCTION_NAME, instanceName.c_str(), ZE_RESULT_ERROR_UNKNOWN);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
@@ -794,8 +796,8 @@ ze_result_t LinuxInfoLogInstanceImp::queryRecords(uint32_t *pSize, uint32_t *pRe
         pTraceFsApi->traceFsInstanceFileRead(pTraceFsInstance, "trace", nullptr), free);
     if (!traceData) {
         std::string context = getTraceContext(pTraceFsInstance, instanceName);
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read trace file from %s\n",
-                     NEO_FUNCTION_NAME, context.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read trace file from %s, returning error: 0x%x\n",
+                     NEO_FUNCTION_NAME, context.c_str(), ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -831,8 +833,8 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTracePipe(uint64_t deadlineMs, u
     int dupedFd = SysmanSysCallsWrapper::dup(tracePipeFd, errorNum);
     if (dupedFd < 0) {
         std::string context = getTraceContext(pTraceFsInstance, instanceName);
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to dup trace_pipe fd %d for %s, errno=%d\n",
-                     NEO_FUNCTION_NAME, tracePipeFd, context.c_str(), errorNum);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to dup trace_pipe fd %d for %s, errno=%d, returning error: 0x%x\n",
+                     NEO_FUNCTION_NAME, tracePipeFd, context.c_str(), errorNum, ZE_RESULT_ERROR_UNKNOWN);
         *pSize = 0;
         *pRecordCount = 0;
         stopReason = StopReason::error;
@@ -842,8 +844,8 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTracePipe(uint64_t deadlineMs, u
     FILE *pTracePipeFile = SysmanSysCallsWrapper::fdopen(dupedFd, "r", errorNum);
     if (pTracePipeFile == nullptr) {
         std::string context = getTraceContext(pTraceFsInstance, instanceName);
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to fdopen trace_pipe for %s, dup'd fd=%d, errno=%d\n",
-                     NEO_FUNCTION_NAME, context.c_str(), dupedFd, errorNum);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to fdopen trace_pipe for %s, dup'd fd=%d, errno=%d, returning error: 0x%x\n",
+                     NEO_FUNCTION_NAME, context.c_str(), dupedFd, errorNum, ZE_RESULT_ERROR_UNKNOWN);
         SysmanSysCallsWrapper::close(dupedFd, errorNum);
         *pSize = 0;
         *pRecordCount = 0;
@@ -969,8 +971,8 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTraceSnapshot(uint64_t deadlineM
         pTraceFsApi->traceFsInstanceFileRead(pTraceFsInstance, "trace", nullptr), free);
     if (!traceData) {
         std::string context = getTraceContext(pTraceFsInstance, instanceName);
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read trace file from %s\n",
-                     NEO_FUNCTION_NAME, context.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read trace file from %s, returning error: 0x%x\n",
+                     NEO_FUNCTION_NAME, context.c_str(), ZE_RESULT_ERROR_UNKNOWN);
         *pSize = 0;
         *pRecordCount = 0;
         stopReason = StopReason::error;

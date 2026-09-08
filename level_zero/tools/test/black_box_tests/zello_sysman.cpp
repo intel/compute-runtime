@@ -2731,6 +2731,27 @@ void printInfoLogReadStatus(const zes_intel_info_log_read_status_exp_t &readStat
     }
 }
 
+struct InfoLogChecks {
+    void operator()(bool condition, const std::string &description) {
+        if (condition) {
+            std::cout << "  [PASS] " << description << std::endl;
+            passed++;
+        } else {
+            std::cout << "  [FAIL] " << description << std::endl;
+            failed++;
+        }
+    }
+
+    void printSummary() const {
+        std::cout << passed << " check(s) passed, " << failed << " check(s) failed" << std::endl;
+    }
+
+    uint32_t passed = 0;
+    uint32_t failed = 0;
+};
+
+const uint64_t collectWhatIsQueued = std::numeric_limits<uint64_t>::max();
+
 // A call with '*pSize' and '*pRecordCount' zero on input is a query: it reports the totals the
 // instance holds without consuming anything, for both the read and the peek entry point
 ze_result_t queryInfoLogRecords(zesIntelInfoLogInstanceCollectExp_pfn pfnCollect,
@@ -2739,7 +2760,7 @@ ze_result_t queryInfoLogRecords(zesIntelInfoLogInstanceCollectExp_pfn pfnCollect
     zes_intel_info_log_read_status_exp_t readStatus = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP};
     size = 0;
     recordCount = 0;
-    return pfnCollect(hInstance, std::numeric_limits<uint64_t>::max(), &size, nullptr, &recordCount, nullptr, &readStatus);
+    return pfnCollect(hInstance, collectWhatIsQueued, &size, nullptr, &recordCount, nullptr, &readStatus);
 }
 
 // Queries what the instance holds, then allocates exactly that much and collects it in a second call
@@ -2767,7 +2788,7 @@ ze_result_t collectInfoLogRecords(zesIntelInfoLogInstanceCollectExp_pfn pfnColle
     }
     records.readStatus = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP};
 
-    result = pfnCollect(hInstance, std::numeric_limits<uint64_t>::max(), &records.size, records.buffer.data(),
+    result = pfnCollect(hInstance, collectWhatIsQueued, &records.size, records.buffer.data(),
                         &records.recordCount, records.descriptors.data(), &records.readStatus);
     if (result != ZE_RESULT_SUCCESS) {
         std::cout << callName << "() Failed: " << getErrorString(result) << std::endl;
@@ -2906,17 +2927,7 @@ void testSysmanInfoLogInstanceReadPeek(zes_driver_handle_t driver, std::vector<z
     }
     std::cout << "Created collection instance '" << instanceName << "'" << std::endl;
 
-    uint32_t checksPassed = 0;
-    uint32_t checksFailed = 0;
-    auto check = [&checksPassed, &checksFailed](bool condition, const std::string &description) {
-        if (condition) {
-            std::cout << "  [PASS] " << description << std::endl;
-            checksPassed++;
-        } else {
-            std::cout << "  [FAIL] " << description << std::endl;
-            checksFailed++;
-        }
-    };
+    InfoLogChecks check;
 
     // Only records generated after the instance was created are collected into it, so the counters are
     // read here rather than before the create call
@@ -2996,8 +3007,8 @@ void testSysmanInfoLogInstanceReadPeek(zes_driver_handle_t driver, std::vector<z
     result = queryInfoLogRecords(zesIntelInfoLogInstanceReadWithMetadataExpPtr, hInstance, pendingSize, pendingCount);
     check(result == ZE_RESULT_SUCCESS && pendingCount == 0, "the instance is drained after the read, nothing is pending");
 
-    std::cout << "\n"
-              << checksPassed << " check(s) passed, " << checksFailed << " check(s) failed" << std::endl;
+    std::cout << std::endl;
+    check.printSummary();
 
     VALIDATECALL(zesIntelInfoLogInstanceDeleteExpPtr(hInstance));
     std::cout << "Deleted collection instance '" << instanceName << "'" << std::endl;
@@ -3078,18 +3089,9 @@ void testSysmanInfoLogInstanceOnEvent(zes_driver_handle_t driver, std::vector<ze
     while (getCh() != -1) {
     }
 
-    uint32_t checksPassed = 0;
-    uint32_t checksFailed = 0;
-    uint32_t totalRecords = 0;
-    auto check = [&checksPassed, &checksFailed](bool condition, const std::string &description) {
-        if (condition) {
-            std::cout << "  [PASS] " << description << std::endl;
-            checksPassed++;
-        } else {
-            std::cout << "  [FAIL] " << description << std::endl;
-            checksFailed++;
-        }
-    };
+    InfoLogChecks check;
+    uint32_t totalRecordsRead = 0;
+    uint32_t lastPeekedRecords = 0;
 
     bool listening = true;
     while (listening) {
@@ -3119,10 +3121,11 @@ void testSysmanInfoLogInstanceOnEvent(zes_driver_handle_t driver, std::vector<ze
             continue;
         }
 
-        printInfoLogRecords(records, usePeek ? 1u : totalRecords + 1u);
-        totalRecords += records.recordCount;
+        printInfoLogRecords(records, usePeek ? 1u : totalRecordsRead + 1u);
 
         if (usePeek) {
+            lastPeekedRecords = records.recordCount;
+
             // The peek left the records in place, so the same totals must still be reported and the
             // event stays asserted. The sleep keeps that from spinning on data nothing consumes.
             uint32_t pendingSize = 0;
@@ -3132,11 +3135,13 @@ void testSysmanInfoLogInstanceOnEvent(zes_driver_handle_t driver, std::vector<ze
                   "the peeked records are still pending on the instance");
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else {
+            totalRecordsRead += records.recordCount;
+
             if (records.readStatus.hasDataToRead) {
                 ze_result_t drainResult = ZE_RESULT_SUCCESS;
                 uint32_t drained = drainInfoLogRecords(pfnCollect, hInstance, collectName,
-                                                       totalRecords + 1u, drainResult);
-                totalRecords += drained;
+                                                       totalRecordsRead + 1u, drainResult);
+                totalRecordsRead += drained;
                 check(drainResult == ZE_RESULT_SUCCESS, "the reads which drained the remaining records succeeded");
             }
 
@@ -3147,8 +3152,12 @@ void testSysmanInfoLogInstanceOnEvent(zes_driver_handle_t driver, std::vector<ze
         }
     }
 
-    std::cout << "\nTotal records " << operation << "ed: " << totalRecords << std::endl;
-    std::cout << checksPassed << " check(s) passed, " << checksFailed << " check(s) failed" << std::endl;
+    if (usePeek) {
+        std::cout << "\nRecords pending at the last peek: " << lastPeekedRecords << std::endl;
+    } else {
+        std::cout << "\nTotal records read: " << totalRecordsRead << std::endl;
+    }
+    check.printSummary();
 
     VALIDATECALL(zesIntelDriverEventRegisterExpPtr(driver, 0));
     VALIDATECALL(zesIntelInfoLogInstanceDeleteExpPtr(hInstance));

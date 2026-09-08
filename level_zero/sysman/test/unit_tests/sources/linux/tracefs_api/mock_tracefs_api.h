@@ -199,6 +199,7 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
 
     bool allEntryPointsLoaded() const {
         return traceFsInstanceCreateEntry != nullptr &&
+               traceFsInstanceIsNewEntry != nullptr &&
                traceFsInstanceDestroyEntry != nullptr &&
                traceFsInstanceFreeEntry != nullptr &&
                traceFsInstanceGetNameEntry != nullptr &&

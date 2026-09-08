@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <errno.h>
+#include <string>
 
 namespace L0 {
 namespace Sysman {
@@ -75,9 +76,9 @@ int SysmanSysCallsWrapper::flock(int fd, int operation, int &errorNum) {
     return result;
 }
 
-int SysmanSysCallsWrapper::access(const char *pathname, int mode, int &errorNum) {
+int SysmanSysCallsWrapper::access(std::string_view pathname, int mode, int &errorNum) {
     errno = 0;
-    int result = NEO::SysCalls::access(pathname, mode);
+    int result = NEO::SysCalls::access(std::string(pathname), mode);
     errorNum = errno;
     return result;
 }

@@ -141,14 +141,19 @@ struct MockOsInfoLog : public OsInfoLog {
     }
     ze_result_t createInstance(const char *, zes_intel_info_log_instance_exp_desc_t *,
                                std::unique_ptr<OsInfoLogInstance> &pOsInfoLogInstance) override {
+        createInstanceCallCount++;
         if (createInstanceResult == ZE_RESULT_SUCCESS) {
-            pOsInfoLogInstance = std::make_unique<MockOsInfoLogInstance>(&teardownCallCount);
+            auto pInstance = std::make_unique<MockOsInfoLogInstance>(&teardownCallCount);
+            pInstance->teardownResult = instanceTeardownResult;
+            pOsInfoLogInstance = std::move(pInstance);
         }
         return createInstanceResult;
     }
     ze_result_t getPropertiesResult = ZE_RESULT_SUCCESS;
     ze_result_t createInstanceResult = ZE_RESULT_SUCCESS;
+    ze_result_t instanceTeardownResult = ZE_RESULT_SUCCESS;
     bool isNamedInstancedCollectionSupported = true;
+    uint32_t createInstanceCallCount = 0;
     uint32_t teardownCallCount = 0;
 };
 
@@ -451,6 +456,16 @@ TEST_F(SysmanInfoLogFixture, GivenNamedCollectionUnsupportedWhenCreatingNamedIns
     EXPECT_NE(nullptr, hInstance);
 }
 
+TEST_F(SysmanInfoLogFixture, GivenNoInstanceNameWhenCreatingInstanceThenTheInstanceIsCreated) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(nullptr, &desc, &hInstance));
+    EXPECT_NE(nullptr, hInstance);
+    EXPECT_EQ(1u, pMockOsInfoLog->createInstanceCallCount);
+}
+
 TEST_F(SysmanInfoLogFixture, GivenNamedCollectionSupportedWhenCreatingTheSameNamedInstanceTwiceThenTheSecondRequestReportsTheNameInUse) {
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
@@ -525,6 +540,26 @@ TEST_F(SysmanInfoLogFixture, GivenOwnedInstancesWhenDestroyingAllInstancesThenEv
     pInfoLogImp->destroyAllInstances();
     EXPECT_EQ(2u, pMockOsInfoLog->teardownCallCount);
 
+    zes_intel_info_log_instance_handle_t hReusedInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hReusedInstance));
+    EXPECT_NE(nullptr, hReusedInstance);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInstanceTeardownFailsWhenDestroyingAllInstancesThenTheRemainingInstancesAreStillTornDownAndDropped) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+    pMockOsInfoLog->instanceTeardownResult = ZE_RESULT_ERROR_UNKNOWN;
+
+    auto desc = makeInstanceDesc();
+    zes_intel_info_log_instance_handle_t hNamedInstance = nullptr;
+    zes_intel_info_log_instance_handle_t hUnnamedInstance = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hNamedInstance));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(nullptr, &desc, &hUnnamedInstance));
+
+    pInfoLogImp->destroyAllInstances();
+    EXPECT_EQ(2u, pMockOsInfoLog->teardownCallCount);
+
+    pMockOsInfoLog->instanceTeardownResult = ZE_RESULT_SUCCESS;
     zes_intel_info_log_instance_handle_t hReusedInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hReusedInstance));
     EXPECT_NE(nullptr, hReusedInstance);

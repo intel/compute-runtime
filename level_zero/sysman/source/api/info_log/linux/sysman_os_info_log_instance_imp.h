@@ -76,11 +76,11 @@ class LinuxInfoLogInstanceImp : public OsInfoLogInstance {
     void restoreBufferSize();
     void restoreBufferConfiguration();
 
-    static constexpr size_t kTraceLineBufferSize = 8192;     // Sized to handle max CPER line (~8292 bytes)
-    static constexpr size_t kMaxAccumulatedLineSize = 16384; // Safety limit: 2x buffer size
+    static constexpr size_t kTraceLineBufferSize = 8192;
+    static constexpr size_t kMaxAccumulatedLineSize = 16384;
 
     TraceFsApi *pTraceFsApi = nullptr;
-    zes_intel_info_log_format_exp_t infoLogFormat;
+    zes_intel_info_log_format_exp_t infoLogFormat = ZES_INTEL_INFO_LOG_FORMAT_CPER;
     struct tracefs_instance *pTraceFsInstance = nullptr;
     std::string instanceName;
     bool instanceWasPreExisting = false;

@@ -40,6 +40,7 @@ class MockTraceFsOsLibrary : public NEO::OsLibrary {
     static struct tep_handle mockTepHandle;
 
     static const char *mockInstanceName;
+    static bool mockInstanceIsNew;
     static const char *mockTraceDir;
     static const char *mockFileName;
     static const char *mockFileContent;

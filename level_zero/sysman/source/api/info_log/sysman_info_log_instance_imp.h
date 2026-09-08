@@ -35,9 +35,8 @@ class InfoLogInstanceImp : public InfoLogInstance {
     const std::string &getInstanceName() const { return instanceName; }
     bool isNamed() const { return named; }
 
-    std::unique_ptr<OsInfoLogInstance> pOsInfoLogInstance;
-
   private:
+    std::unique_ptr<OsInfoLogInstance> pOsInfoLogInstance;
     InfoLog *pInfoLog = nullptr;
     std::string instanceName;
     bool named = false;
