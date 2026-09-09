@@ -158,15 +158,6 @@ struct GemWait {
     int64_t timeoutNs;
 };
 
-struct ResetStats {
-    uint32_t contextId;
-    uint32_t flags;
-    uint32_t resetCount;
-    uint32_t batchActive;
-    uint32_t batchPending;
-    uint32_t reserved;
-};
-
 struct GetParam {
     int32_t param;
     int *value;
@@ -307,8 +298,7 @@ enum class DrmIoctl {
     gemContextCreateExt,
     gemContextDestroy,
     regRead,
-    getResetStats,
-    getResetStatsPrelim,
+    queryContextHealth,
     gemContextGetparam,
     gemContextSetparam,
     query,

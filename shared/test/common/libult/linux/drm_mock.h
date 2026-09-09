@@ -23,6 +23,12 @@
 
 using namespace NEO;
 
+struct MockResetStats {
+    uint32_t contextId;
+    uint32_t batchActive;
+    uint32_t batchPending;
+};
+
 class DrmMock : public Drm {
   public:
     using BaseClass = Drm;
@@ -243,7 +249,7 @@ class DrmMock : public Drm {
     std::optional<bool> isVMBindImmediateSupported{};
 
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
-    std::vector<ResetStats> resetStatsToReturn{};
+    std::vector<MockResetStats> resetStatsToReturn{};
 
     GemContextCreateExtSetParam receivedContextCreateSetParam = {};
     uint32_t receivedContextCreateFlags = 0;

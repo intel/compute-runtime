@@ -39,7 +39,7 @@ void Ioctls::reset() {
     gemSetDomain = 0;
     gemWait = 0;
     gemClose = 0;
-    getResetStats = 0;
+    queryContextHealth = 0;
     regRead = 0;
     getParam = 0;
     contextGetParam = 0;
@@ -72,7 +72,7 @@ void DrmMockCustom::testIoctls() {
     NEO_IOCTL_EXPECT_EQ(gemSetDomain);
     NEO_IOCTL_EXPECT_EQ(gemWait);
     NEO_IOCTL_EXPECT_EQ(gemClose);
-    NEO_IOCTL_EXPECT_EQ(getResetStats);
+    NEO_IOCTL_EXPECT_EQ(queryContextHealth);
     NEO_IOCTL_EXPECT_EQ(regRead);
     NEO_IOCTL_EXPECT_EQ(getParam);
     NEO_IOCTL_EXPECT_EQ(contextGetParam);
@@ -269,8 +269,8 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         vmCreate->vmId = vmIdToCreate;
         break;
     }
-    case DrmIoctl::getResetStats: {
-        ioctlCnt.getResetStats++;
+    case DrmIoctl::queryContextHealth: {
+        ioctlCnt.queryContextHealth++;
         break;
     }
     default:

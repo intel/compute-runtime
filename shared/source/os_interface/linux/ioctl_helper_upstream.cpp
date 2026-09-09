@@ -249,8 +249,18 @@ int IoctlHelperUpstream::vmUnbind(const VmBindParams &vmBindParams) {
     return 0;
 }
 
-int IoctlHelperUpstream::getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) {
-    return ioctl(DrmIoctl::getResetStats, &resetStats);
+int IoctlHelperUpstream::getContextHealth(ContextHealth &contextHealth) {
+    drm_i915_reset_stats resetStats{};
+    resetStats.ctx_id = contextHealth.contextId;
+
+    const auto retVal = ioctl(DrmIoctl::queryContextHealth, &resetStats);
+    if (retVal != 0) {
+        return retVal;
+    }
+    contextHealth.banReason = ((resetStats.batch_active > 0) || (resetStats.batch_pending > 0))
+                                  ? ContextBanReason::gpuHang
+                                  : ContextBanReason::none;
+    return retVal;
 }
 
 UuidRegisterResult IoctlHelperUpstream::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {

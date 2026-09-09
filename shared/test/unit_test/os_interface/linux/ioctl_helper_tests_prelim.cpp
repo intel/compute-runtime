@@ -76,8 +76,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsRet
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextCreateExt), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextDestroy), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::regRead), static_cast<unsigned int>(DRM_IOCTL_I915_REG_READ));
-    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::getResetStats), static_cast<unsigned int>(DRM_IOCTL_I915_GET_RESET_STATS));
-    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::getResetStatsPrelim), static_cast<unsigned int>(PRELIM_DRM_IOCTL_I915_GET_RESET_STATS));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::queryContextHealth), static_cast<unsigned int>(DRM_IOCTL_I915_GET_RESET_STATS));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextGetparam), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextSetparam), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::query), static_cast<unsigned int>(DRM_IOCTL_I915_QUERY));
@@ -134,8 +133,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestStringThenProperStringIsRe
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextCreateExt).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextDestroy).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::regRead).c_str(), "DRM_IOCTL_I915_REG_READ");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::getResetStats).c_str(), "DRM_IOCTL_I915_GET_RESET_STATS");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::getResetStatsPrelim).c_str(), "PRELIM_DRM_IOCTL_I915_GET_RESET_STATS");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::queryContextHealth).c_str(), "DRM_IOCTL_I915_GET_RESET_STATS");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextGetparam).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextSetparam).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::query).c_str(), "DRM_IOCTL_I915_QUERY");
@@ -444,28 +442,27 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
                 return *overrideGemCreateExtReturnValue;
             }
         }
-        if (request == DrmIoctl::getResetStatsPrelim) {
-            resetStatsPrelimCalled++;
-            if (overrideResetStatsPrelim.has_value()) {
-                auto resetStats = reinterpret_cast<ResetStats *>(arg);
-                *resetStats = std::get<0>(overrideResetStatsPrelim.value());
-                auto resetStatsPrelim = reinterpret_cast<prelim_drm_i915_reset_stats *>(arg);
-                resetStatsPrelim->status = std::get<1>(overrideResetStatsPrelim.value());
-                auto fault = std::get<2>(overrideResetStatsPrelim.value());
-                resetStatsPrelim->fault = {fault.addr, fault.type, fault.level, fault.access, fault.flags};
-                return overrideResetStatsPrelimReturnValue;
-            }
-        }
-        if (request == DrmIoctl::getResetStats) {
+        if (request == DrmIoctl::queryContextHealth) {
             resetStatsCalled++;
             if (overrideResetStats.has_value()) {
-                auto resetStats = reinterpret_cast<ResetStats *>(arg);
-                *resetStats = overrideResetStats.value();
+                *reinterpret_cast<drm_i915_reset_stats *>(arg) = overrideResetStats.value();
                 return overrideResetStatsReturnValue;
             }
         }
 
         return IoctlHelperPrelim20::ioctl(request, arg);
+    }
+    int ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName) override {
+        ioctlCallCount++;
+        EXPECT_EQ(DrmIoctl::queryContextHealth, request);
+        EXPECT_EQ(static_cast<unsigned int>(PRELIM_DRM_IOCTL_I915_GET_RESET_STATS), requestValue);
+        EXPECT_STREQ("PRELIM_DRM_IOCTL_I915_GET_RESET_STATS", requestName);
+        resetStatsPrelimCalled++;
+        if (overrideResetStatsPrelim.has_value()) {
+            *static_cast<prelim_drm_i915_reset_stats *>(arg) = overrideResetStatsPrelim.value();
+            return overrideResetStatsPrelimReturnValue;
+        }
+        return IoctlHelperPrelim20::ioctlWithRequestValue(request, arg, requestValue, requestName);
     }
     int ioctl(int fd, DrmIoctl request, void *arg) override {
         if (request == DrmIoctl::perfDisable) {
@@ -508,9 +505,9 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
     uint32_t lastPolicyMode = 0;
     uint32_t lastPolicyFlags = 0;
     std::vector<unsigned long> lastPolicyNodeMask{};
-    std::optional<std::tuple<ResetStats, uint32_t, ResetStatsFault>> overrideResetStatsPrelim{};
+    std::optional<prelim_drm_i915_reset_stats> overrideResetStatsPrelim{};
     int overrideResetStatsPrelimReturnValue = 0;
-    std::optional<ResetStats> overrideResetStats{};
+    std::optional<drm_i915_reset_stats> overrideResetStats{};
     int overrideResetStatsReturnValue = 0;
     size_t resetStatsPrelimCalled = 0;
     size_t resetStatsCalled = 0;
@@ -857,70 +854,177 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGetFdFromVmExportIsCalledThenFalse
     EXPECT_FALSE(ioctlHelper.getFdFromVmExport(vmId, flags, &fd));
 }
 
-TEST_F(IoctlPrelimHelperTests, whenGetResetStatsIsCalledThenCorrectValueIsReturned) {
+TEST_F(IoctlPrelimHelperTests, whenGetContextHealthIsCalledThenPrelimStatusAndFaultAreTranslated) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
 
-    uint32_t status = 1;
-    ResetStatsFault fault{};
-    fault.flags = 1;
+    prelim_drm_i915_reset_stats prelimResetStats{};
+    prelimResetStats.ctx_id = 0;
+    prelimResetStats.status = I915_RESET_STATS_BANNED;
+    prelimResetStats.batch_active = 1;
+    prelimResetStats.fault.addr = 0x1234;
+    prelimResetStats.fault.flags = I915_RESET_STATS_FAULT_VALID;
+    mockIoctlHelper.overrideResetStatsPrelim = prelimResetStats;
 
-    ResetStats resetStats{};
-    resetStats.contextId = 0;
-    mockIoctlHelper.overrideResetStatsPrelim = {resetStats, status, fault};
+    ContextHealth contextHealth{};
+    contextHealth.contextId = 0;
 
-    status = 0;
-    fault.flags = 0;
-
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, nullptr, nullptr));
+    EXPECT_EQ(0, mockIoctlHelper.getContextHealth(contextHealth));
+    EXPECT_TRUE(contextHealth.banned);
+    EXPECT_EQ(ContextBanReason::gpuHang, contextHealth.banReason);
+    EXPECT_TRUE(contextHealth.faultValid);
+    EXPECT_EQ(0x1234u, contextHealth.fault.addr);
     EXPECT_EQ(1u, mockIoctlHelper.resetStatsPrelimCalled);
-    EXPECT_EQ(0u, mockIoctlHelper.resetStatsCalled);
-
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, nullptr));
-    EXPECT_EQ(1u, status);
-    EXPECT_EQ(2u, mockIoctlHelper.resetStatsPrelimCalled);
-    EXPECT_EQ(0u, mockIoctlHelper.resetStatsCalled);
-
-    status = 0;
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, &fault));
-    EXPECT_EQ(1u, status);
-    EXPECT_EQ(1, fault.flags);
-    EXPECT_EQ(3u, mockIoctlHelper.resetStatsPrelimCalled);
     EXPECT_EQ(0u, mockIoctlHelper.resetStatsCalled);
 }
 
-TEST_F(IoctlPrelimHelperTests, givenNonZeroReturnValuewhenGetResetStatsIsCalledThenReturnsValueFromRegularResetStatsIoctl) {
+TEST_F(IoctlPrelimHelperTests, givenHealthyContextWhenGetContextHealthIsCalledThenNoBanIsReported) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
 
-    uint32_t status = 1;
-    ResetStatsFault fault{};
-    fault.flags = 1;
+    mockIoctlHelper.overrideResetStatsPrelim = prelim_drm_i915_reset_stats{};
 
-    ResetStats resetStats{};
-    resetStats.contextId = 0;
-    mockIoctlHelper.overrideResetStatsPrelim = {resetStats, status, fault};
+    ContextHealth contextHealth{};
+    contextHealth.contextId = 0;
+
+    EXPECT_EQ(0, mockIoctlHelper.getContextHealth(contextHealth));
+    EXPECT_FALSE(contextHealth.banned);
+    EXPECT_EQ(ContextBanReason::none, contextHealth.banReason);
+    EXPECT_FALSE(contextHealth.faultValid);
+}
+
+TEST_F(IoctlPrelimHelperTests, givenNonZeroReturnValuewhenGetContextHealthIsCalledThenReturnsValueFromRegularResetStatsIoctl) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
+
+    mockIoctlHelper.overrideResetStatsPrelim = prelim_drm_i915_reset_stats{};
+    mockIoctlHelper.overrideResetStatsPrelimReturnValue = -1;
+
+    drm_i915_reset_stats resetStats{};
+    resetStats.batch_pending = 3;
     mockIoctlHelper.overrideResetStats = resetStats;
 
-    status = 0;
-    fault.flags = 0;
-    mockIoctlHelper.overrideResetStatsPrelimReturnValue = -1;
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, &fault));
+    ContextHealth contextHealth{};
+    contextHealth.contextId = 0;
+
+    EXPECT_EQ(0, mockIoctlHelper.getContextHealth(contextHealth));
+    EXPECT_EQ(ContextBanReason::gpuHang, contextHealth.banReason);
+    EXPECT_FALSE(contextHealth.banned);
+    EXPECT_FALSE(contextHealth.faultValid);
     EXPECT_EQ(1u, mockIoctlHelper.resetStatsPrelimCalled);
     EXPECT_EQ(1u, mockIoctlHelper.resetStatsCalled);
 }
-TEST_F(IoctlPrelimHelperTests, whenCallingGetStatusAndFlagsForResetStatsThenExpectedValueIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    MockIoctlHelperPrelim20 ioctlHelper{*drm};
 
-    EXPECT_EQ(static_cast<uint32_t>(I915_RESET_STATS_BANNED), ioctlHelper.getStatusForResetStats(true));
-    EXPECT_EQ(0u, ioctlHelper.getStatusForResetStats(false));
+TEST_F(IoctlPrelimHelperTests, givenInterruptedPrelimHealthQueryWhenRetriedThenNativeRequestLoggingAndTimingArePreserved) {
+    struct DrmWithStatistics : DrmMock {
+        using Drm::ioctlStatistics;
+        using DrmMock::DrmMock;
+    };
+    DrmWithStatistics drmWithStatistics{*executionEnvironment.rootDeviceEnvironments[0]};
+    IoctlHelperPrelim20 helper{drmWithStatistics};
+    DebugManagerStateRestore restore;
+    debugManager.flags.PrintIoctlEntries.set(true);
+    debugManager.flags.PrintKmdTimes.set(true);
+    VariableBackup<int> errnoBackup(&errno);
+    static uint32_t callCount = 0;
+    VariableBackup<uint32_t> callCountBackup(&callCount, 0);
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> ioctlBackup(&SysCalls::sysCallsIoctl);
+    SysCalls::sysCallsIoctl = [](int, unsigned long request, void *arg) -> int {
+        EXPECT_EQ(static_cast<unsigned long>(PRELIM_DRM_IOCTL_I915_GET_RESET_STATS), request);
+        auto &stats = *static_cast<prelim_drm_i915_reset_stats *>(arg);
+        EXPECT_EQ(7u, stats.ctx_id);
+        if (++callCount == 1) {
+            errno = EINTR;
+            return -1;
+        }
+        stats.status = I915_RESET_STATS_BANNED;
+        return 0;
+    };
+    StreamCapture capture;
+    capture.captureStdout();
+    ContextHealth health{};
+    health.contextId = 7;
 
-    EXPECT_TRUE(ioctlHelper.validPageFault(static_cast<uint16_t>(I915_RESET_STATS_FAULT_VALID)));
-    EXPECT_FALSE(ioctlHelper.validPageFault(0u));
+    EXPECT_EQ(0, helper.getContextHealth(health));
+
+    auto output = capture.getCapturedStdout();
+    EXPECT_TRUE(health.banned);
+    EXPECT_EQ(2u, callCount);
+    EXPECT_EQ(2u, drmWithStatistics.ioctlStatistics[DrmIoctl::queryContextHealth].count);
+    EXPECT_NE(std::string::npos, output.find("IOCTL PRELIM_DRM_IOCTL_I915_GET_RESET_STATS called\n"));
+    EXPECT_NE(std::string::npos, output.find("IOCTL PRELIM_DRM_IOCTL_I915_GET_RESET_STATS returns -1, errno"));
+    EXPECT_NE(std::string::npos, output.find("IOCTL PRELIM_DRM_IOCTL_I915_GET_RESET_STATS returns 0\n"));
+    debugManager.flags.PrintKmdTimes.set(false);
+}
+
+TEST_F(IoctlPrelimHelperTests, givenFailedPrelimHealthQueryWhenFallingBackThenUpstreamNativeRequestAndPayloadAreUsed) {
+    struct DrmWithNativeIoctl : DrmMock {
+        using DrmMock::DrmMock;
+        int ioctl(DrmIoctl request, void *arg) override {
+            return Drm::ioctl(request, arg);
+        }
+    };
+    DrmWithNativeIoctl nativeDrm{*executionEnvironment.rootDeviceEnvironments[0]};
+    IoctlHelperPrelim20 helper{nativeDrm};
+    VariableBackup<int> errnoBackup(&errno);
+    static uint32_t callCount = 0;
+    VariableBackup<uint32_t> callCountBackup(&callCount, 0);
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> ioctlBackup(&SysCalls::sysCallsIoctl);
+    SysCalls::sysCallsIoctl = [](int, unsigned long request, void *arg) -> int {
+        if (++callCount == 1) {
+            EXPECT_EQ(static_cast<unsigned long>(PRELIM_DRM_IOCTL_I915_GET_RESET_STATS), request);
+            EXPECT_EQ(7u, static_cast<prelim_drm_i915_reset_stats *>(arg)->ctx_id);
+            errno = EINVAL;
+            return -1;
+        }
+        EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GET_RESET_STATS), request);
+        auto &stats = *static_cast<drm_i915_reset_stats *>(arg);
+        EXPECT_EQ(7u, stats.ctx_id);
+        stats.batch_pending = 1;
+        return 0;
+    };
+    ContextHealth health{};
+    health.contextId = 7;
+
+    EXPECT_EQ(0, helper.getContextHealth(health));
+
+    EXPECT_EQ(2u, callCount);
+    EXPECT_EQ(ContextBanReason::gpuHang, health.banReason);
+    EXPECT_FALSE(health.banned);
+    EXPECT_FALSE(health.faultValid);
+}
+
+TEST_F(IoctlPrelimHelperTests, givenExternalContextWhenQueryingHealthThenNativeRequestsAreRoutedThroughExternalIoctl) {
+    for (bool failPrelim : {false, true}) {
+        uint32_t callCount = 0;
+        int handle = 0;
+        ExternalCtx ctx{&handle, [&](void *passedHandle, int fd, unsigned long request, void *arg, bool flag) -> int {
+                            EXPECT_EQ(&handle, passedHandle);
+                            EXPECT_EQ(drm->getFileDescriptor(), fd);
+                            EXPECT_FALSE(flag);
+                            if (++callCount == 1) {
+                                EXPECT_EQ(static_cast<unsigned long>(PRELIM_DRM_IOCTL_I915_GET_RESET_STATS), request);
+                                auto &stats = *static_cast<prelim_drm_i915_reset_stats *>(arg);
+                                EXPECT_EQ(7u, stats.ctx_id);
+                                stats.status = I915_RESET_STATS_BANNED;
+                                return failPrelim ? -1 : 0;
+                            }
+                            EXPECT_EQ(static_cast<unsigned long>(DRM_IOCTL_I915_GET_RESET_STATS), request);
+                            EXPECT_EQ(7u, static_cast<drm_i915_reset_stats *>(arg)->ctx_id);
+                            return -1;
+                        }};
+        ioctlHelper.setExternalContext(&ctx);
+        ContextHealth health{};
+        health.contextId = 7;
+
+        EXPECT_EQ(failPrelim ? -1 : 0, ioctlHelper.getContextHealth(health));
+        EXPECT_EQ(failPrelim ? 2u : 1u, callCount);
+        EXPECT_EQ(!failPrelim, health.banned);
+        ioctlHelper.setExternalContext(nullptr);
+    }
 }
 
 TEST_F(IoctlPrelimHelperTests, GivenIoctlHelperWhenCallingGetTileIdFromGtIdThenExpectedValueIsReturned) {

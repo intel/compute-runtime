@@ -495,7 +495,6 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGetPreferredLocationArgsCorr
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    // auto drm = new DrmQueryMock(*executionEnvironment.rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
     auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm->queryMemUsage);
@@ -750,7 +749,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyIoctlString(DrmIoctl::syncObjSignal, "DRM_IOCTL_SYNCOBJ_SIGNAL");
     verifyIoctlString(DrmIoctl::syncObjTimelineWait, "DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT");
     verifyIoctlString(DrmIoctl::syncObjTimelineSignal, "DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL");
-    verifyIoctlString(DrmIoctl::getResetStats, "DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY");
+    verifyIoctlString(DrmIoctl::queryContextHealth, "DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY");
 
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
 
@@ -1151,11 +1150,6 @@ TEST_F(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         test.size = 123;
         test.cpu_caching = DRM_XE_GEM_CPU_CACHING_WC;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemCreate, &test);
-        EXPECT_EQ(0, ret);
-    }
-    {
-        ResetStats test = {};
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getResetStats, &test);
         EXPECT_EQ(0, ret);
     }
     {
@@ -2900,7 +2894,7 @@ TEST_F(IoctlHelperXeTest, whenBindingDrmContextWithVirtualEnginesThenProperEngin
     }
 }
 
-TEST_F(IoctlHelperXeTest, whenCallingGetResetStatsThenSuccessIsReturned) {
+TEST_F(IoctlHelperXeTest, whenCallingGetContextHealthThenBanPropertyDecidesTheBanReason) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
@@ -2909,21 +2903,21 @@ TEST_F(IoctlHelperXeTest, whenCallingGetResetStatsThenSuccessIsReturned) {
     xeIoctlHelper->initialize();
     drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
 
-    ResetStats resetStats{};
-    resetStats.contextId = 0;
+    ContextHealth contextHealth{};
+    contextHealth.contextId = 0;
 
-    EXPECT_EQ(0, xeIoctlHelper->getResetStats(resetStats, nullptr, nullptr));
-}
+    drm->execQueueBanPropertyReturn = 0;
+    EXPECT_EQ(0, xeIoctlHelper->getContextHealth(contextHealth));
+    EXPECT_FALSE(contextHealth.banned);
+    EXPECT_EQ(ContextBanReason::none, contextHealth.banReason);
 
-TEST_F(IoctlHelperXeTest, whenCallingGetStatusAndFlagsForResetStatsThenZeroIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    drm->execQueueBanPropertyReturn = 1;
+    EXPECT_EQ(0, xeIoctlHelper->getContextHealth(contextHealth));
+    EXPECT_TRUE(contextHealth.banned);
+    EXPECT_EQ(ContextBanReason::gpuHang, contextHealth.banReason);
 
-    EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(true));
-    EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(false));
-
-    EXPECT_FALSE(ioctlHelper->validPageFault(0u));
+    // xe exposes no fault details through this property
+    EXPECT_FALSE(contextHealth.faultValid);
 }
 
 TEST_F(IoctlHelperXeTest, whenInitializeThenProperHwInfoIsSet) {
@@ -3443,8 +3437,8 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperWhenSettingExtContextThenCallExternalI
     IoctlHelperXe ioctlHelper{*drm};
 
     bool ioctlCalled = false;
-    ResetStats resetStats{};
-    EXPECT_TRUE(ioctlHelper.ioctl(DrmIoctl::getResetStats, &resetStats));
+    SyncObjDestroy syncObjDestroy{};
+    EXPECT_TRUE(ioctlHelper.ioctl(DrmIoctl::syncObjDestroy, &syncObjDestroy));
     EXPECT_FALSE(ioctlCalled);
 
     int handle = 0;
@@ -3453,12 +3447,12 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperWhenSettingExtContextThenCallExternalI
 
     ioctlHelper.setExternalContext(&ctx);
     ioctlCalled = false;
-    EXPECT_EQ(0, ioctlHelper.ioctl(DrmIoctl::getResetStats, &resetStats));
+    EXPECT_EQ(0, ioctlHelper.ioctl(DrmIoctl::syncObjDestroy, &syncObjDestroy));
     EXPECT_TRUE(ioctlCalled);
 
     ioctlHelper.setExternalContext(nullptr);
     ioctlCalled = false;
-    EXPECT_TRUE(ioctlHelper.ioctl(DrmIoctl::getResetStats, &resetStats));
+    EXPECT_TRUE(ioctlHelper.ioctl(DrmIoctl::syncObjDestroy, &syncObjDestroy));
     EXPECT_FALSE(ioctlCalled);
 }
 TEST_F(IoctlHelperXeTest, givenL3BankWhenGetTopologyDataAndMapThenResultsAreCorrect) {

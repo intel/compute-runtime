@@ -299,20 +299,21 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         ioctlCount.gemClose++;
         return storedRetValForGemClose;
     }
-    if (request == DrmIoctl::getResetStats && arg != nullptr) {
-        ioctlCount.getResetStats++;
-        auto outResetStats = static_cast<ResetStats *>(arg);
+    if (request == DrmIoctl::queryContextHealth && arg != nullptr) {
+        ioctlCount.queryContextHealth++;
+        auto outResetStats = static_cast<drm_i915_reset_stats *>(arg);
         for (const auto &resetStats : resetStatsToReturn) {
-            if (resetStats.contextId == outResetStats->contextId) {
-                *outResetStats = resetStats;
+            if (resetStats.contextId == outResetStats->ctx_id) {
+                outResetStats->batch_active = resetStats.batchActive;
+                outResetStats->batch_pending = resetStats.batchPending;
                 return 0;
             }
         }
 
         if (allowMissingResetStats) {
-            auto contextId = outResetStats->contextId;
+            auto contextId = outResetStats->ctx_id;
             *outResetStats = {};
-            outResetStats->contextId = contextId;
+            outResetStats->ctx_id = contextId;
             return 0;
         }
 

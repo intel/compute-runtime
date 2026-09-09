@@ -1591,7 +1591,7 @@ TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCa
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
@@ -1614,7 +1614,7 @@ TEST(DrmTest, GivenBatchActiveGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThen
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
@@ -1637,7 +1637,7 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(8);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 8;
     resetStats.batchPending = 7;
     drm.resetStatsToReturn.push_back(resetStats);
@@ -1647,34 +1647,19 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
     EXPECT_TRUE(isGpuHangDetected);
 }
 
-class MockIoctlHelperResetStats : public MockIoctlHelper {
+class MockIoctlHelperContextHealth : public MockIoctlHelper {
   public:
     using MockIoctlHelper::MockIoctlHelper;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override {
-        int ret = MockIoctlHelper::getResetStats(resetStats, status, resetStatsFault);
-        if (status) {
-            *status = statusReturnValue;
-        }
-        if (resetStatsFault) {
-            *resetStatsFault = resetStatsFaultReturnValue;
-        }
+    int getContextHealth(ContextHealth &contextHealth) override {
+        int ret = MockIoctlHelper::getContextHealth(contextHealth);
+        contextHealth.banned = bannedReturnValue;
+        contextHealth.fault = faultReturnValue;
+        contextHealth.faultValid = true;
         return ret;
     }
 
-    bool validPageFault(uint16_t flags) override {
-        return true;
-    }
-
-    uint32_t getStatusForResetStats(bool banned) override {
-        if (banned) {
-            return statusReturnValue;
-        } else {
-            return 0u;
-        }
-    }
-
-    uint32_t statusReturnValue = 0;
-    ResetStatsFault resetStatsFaultReturnValue{};
+    bool bannedReturnValue = false;
+    ContextFault faultReturnValue{};
 };
 
 TEST(DrmTest, GivenResetStatsWithValidFaultAndContextNotBannedAndDebuggingEnabledWhenIsGpuHangIsCalledThenProcessNotTerminated) {
@@ -1688,23 +1673,22 @@ TEST(DrmTest, GivenResetStatsWithValidFaultAndContextNotBannedAndDebuggingEnable
     drm.configureGpuFaultCheckThreshold();
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
-    auto ioctlHelper = std::make_unique<MockIoctlHelperResetStats>(drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperContextHealth>(drm);
 
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStatsExpected{};
-    ResetStatsFault resetStatsFaultExpected{};
+    MockResetStats resetStatsExpected{};
+    ContextFault resetStatsFaultExpected{};
     resetStatsExpected.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStatsExpected);
 
-    resetStatsFaultExpected.flags = 1;
     resetStatsFaultExpected.addr = 0x1234;
     resetStatsFaultExpected.type = 2;
     resetStatsFaultExpected.level = 3;
 
-    ioctlHelper->statusReturnValue = 0u;
-    ioctlHelper->resetStatsFaultReturnValue = resetStatsFaultExpected;
+    ioctlHelper->bannedReturnValue = false;
+    ioctlHelper->faultReturnValue = resetStatsFaultExpected;
 
     drm.ioctlHelper = std::move(ioctlHelper);
     EXPECT_FALSE(drm.isGpuHangDetected(mockOsContextLinux));
@@ -1720,23 +1704,22 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
     drm.configureGpuFaultCheckThreshold();
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
-    auto ioctlHelper = std::make_unique<MockIoctlHelperResetStats>(drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperContextHealth>(drm);
 
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStatsExpected{};
-    ResetStatsFault resetStatsFaultExpected{};
+    MockResetStats resetStatsExpected{};
+    ContextFault resetStatsFaultExpected{};
     resetStatsExpected.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStatsExpected);
 
-    resetStatsFaultExpected.flags = 1;
     resetStatsFaultExpected.addr = 0x1234;
     resetStatsFaultExpected.type = 2;
     resetStatsFaultExpected.level = 3;
 
-    ioctlHelper->statusReturnValue = 2u;
-    ioctlHelper->resetStatsFaultReturnValue = resetStatsFaultExpected;
+    ioctlHelper->bannedReturnValue = true;
+    ioctlHelper->faultReturnValue = resetStatsFaultExpected;
 
     drm.ioctlHelper = std::move(ioctlHelper);
 
@@ -1877,7 +1860,7 @@ TEST(DrmTest, givenDisableScratchPagesSetWhenSettingGpuFaultCheckThresholdThenFa
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
@@ -1920,7 +1903,7 @@ TEST(DrmTest, givenDisableScratchPagesSetWhenSettingGpuFaultCheckThresholdToZero
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
@@ -1956,7 +1939,7 @@ TEST(DrmTest, whenNotDisablingScratchPagesThenFaultCheckingDoesNotHappen) {
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 

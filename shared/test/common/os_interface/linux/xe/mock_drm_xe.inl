@@ -57,7 +57,7 @@ struct DrmMockXe : public DrmMockCustom {
     drm_xe_exec_queue_set_property latestExecQueueSetProperty = {};
 
     int waitUserFenceReturn = 0;
-    int execQueueBanPropertyReturn = 0;
+    uint64_t execQueueBanPropertyReturn = 0;
     uint32_t createParamsFlags = 0u;
     uint16_t createParamsCpuCaching = 0u;
     uint32_t createParamsPlacement = 0u;

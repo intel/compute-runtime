@@ -89,12 +89,24 @@ struct UuidRegisterResult {
     uint32_t handle;
 };
 
-struct ResetStatsFault {
+struct ContextFault {
     uint64_t addr;
     uint16_t type;
     uint16_t level;
     uint16_t access;
-    uint16_t flags;
+};
+
+enum class ContextBanReason : uint32_t {
+    none = 0,
+    gpuHang,
+};
+
+struct ContextHealth {
+    uint32_t contextId = 0;
+    ContextBanReason banReason = ContextBanReason::none;
+    ContextFault fault = {};
+    bool banned = false;
+    bool faultValid = false;
 };
 
 using IoctlFunc = std::function<int(void *, int, unsigned long int, void *, bool)>;
@@ -120,6 +132,7 @@ class IoctlHelper {
     static std::unique_ptr<IoctlHelper> getI915Helper(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, Drm &drm);
     virtual int ioctl(DrmIoctl request, void *arg);
     virtual int ioctl(int fd, DrmIoctl request, void *arg);
+    virtual int ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName);
     virtual void setExternalContext(ExternalCtx *ctx);
     virtual bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) = 0;
 
@@ -184,7 +197,7 @@ class IoctlHelper {
     virtual std::optional<uint32_t> getVmAdviseAtomicAttribute() = 0;
     virtual int vmBind(const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(const VmBindParams &vmBindParams) = 0;
-    virtual int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) = 0;
+    virtual int getContextHealth(ContextHealth &contextHealth) = 0;
     virtual bool isEuStallSupported() = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
     virtual bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) = 0;
@@ -255,8 +268,6 @@ class IoctlHelper {
     virtual int getEuDebugSysFsEnable() { return false; }
     virtual bool isVmBindPatIndexExtSupported() { return false; }
 
-    virtual bool validPageFault(uint16_t flags) { return false; }
-    virtual uint32_t getStatusForResetStats(bool banned) { return 0u; }
     virtual void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) { return; }
 
     virtual void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) = 0;
@@ -389,7 +400,7 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
+    int getContextHealth(ContextHealth &contextHealth) override;
     bool isEuStallSupported() override;
     uint32_t getEuStallFdParameter() override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;
@@ -453,7 +464,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
+    int getContextHealth(ContextHealth &contextHealth) override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;
     bool perfDisableEuStallStream(int32_t *stream) override;
     bool isEuStallSupported() override;
@@ -485,8 +496,6 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     int getEuDebugSysFsEnable() override;
     bool isVmBindPatIndexExtSupported() override { return true; }
 
-    bool validPageFault(uint16_t flags) override;
-    uint32_t getStatusForResetStats(bool banned) override;
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
     EngineCapabilities::Flags getEngineCapabilitiesFlags(uint64_t capabilities) const override;
     uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override;

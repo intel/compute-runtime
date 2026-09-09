@@ -802,25 +802,35 @@ int IoctlHelperPrelim20::vmUnbind(const VmBindParams &vmBindParams) {
     return IoctlHelper::ioctl(DrmIoctl::gemVmUnbind, &prelimVmBind);
 }
 
-int IoctlHelperPrelim20::getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) {
+int IoctlHelperPrelim20::getContextHealth(ContextHealth &contextHealth) {
     prelim_drm_i915_reset_stats prelimResetStats{};
-    prelimResetStats.ctx_id = resetStats.contextId;
-    prelimResetStats.flags = resetStats.flags;
+    prelimResetStats.ctx_id = contextHealth.contextId;
 
-    const auto retVal = ioctl(DrmIoctl::getResetStatsPrelim, &prelimResetStats);
+    auto retVal = ioctlWithRequestValue(DrmIoctl::queryContextHealth, &prelimResetStats,
+                                        PRELIM_DRM_IOCTL_I915_GET_RESET_STATS, "PRELIM_DRM_IOCTL_I915_GET_RESET_STATS");
     if (retVal != 0) {
-        return ioctl(DrmIoctl::getResetStats, &resetStats);
+        drm_i915_reset_stats resetStats{};
+        resetStats.ctx_id = contextHealth.contextId;
+        retVal = ioctl(DrmIoctl::queryContextHealth, &resetStats);
+        if (retVal == 0) {
+            contextHealth.banReason = ((resetStats.batch_active > 0) || (resetStats.batch_pending > 0))
+                                          ? ContextBanReason::gpuHang
+                                          : ContextBanReason::none;
+        }
+        return retVal;
     }
-    resetStats.resetCount = prelimResetStats.reset_count;
-    resetStats.batchActive = prelimResetStats.batch_active;
-    resetStats.batchPending = prelimResetStats.batch_pending;
-    if (status) {
-        *status = prelimResetStats.status;
-    }
-    if (resetStatsFault) {
-        auto fault = reinterpret_cast<ResetStatsFault *>(&(prelimResetStats.fault));
-        *resetStatsFault = *fault;
-    }
+    contextHealth.banned = (prelimResetStats.status & I915_RESET_STATS_BANNED) != 0;
+    contextHealth.banReason = ((prelimResetStats.batch_active > 0) || (prelimResetStats.batch_pending > 0))
+                                  ? ContextBanReason::gpuHang
+                                  : ContextBanReason::none;
+    const auto &fault = prelimResetStats.fault;
+    contextHealth.fault = {
+        .addr = fault.addr,
+        .type = fault.type,
+        .level = fault.level,
+        .access = fault.access,
+    };
+    contextHealth.faultValid = (fault.flags & I915_RESET_STATS_FAULT_VALID) != 0;
 
     return retVal;
 }
@@ -902,8 +912,6 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) co
         return PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE;
     case DrmIoctl::gemCacheReserve:
         return PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE;
-    case DrmIoctl::getResetStatsPrelim:
-        return PRELIM_DRM_IOCTL_I915_GET_RESET_STATS;
     case DrmIoctl::syncObjFdToHandle:
         return DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE;
     case DrmIoctl::syncObjDestroy:
@@ -974,8 +982,6 @@ std::string IoctlHelperPrelim20::getIoctlString(DrmIoctl ioctlRequest) const {
         return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
     case DrmIoctl::gemCacheReserve:
         return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
-    case DrmIoctl::getResetStatsPrelim:
-        return "PRELIM_DRM_IOCTL_I915_GET_RESET_STATS";
     default:
         return IoctlHelperI915::getIoctlString(ioctlRequest);
     }
@@ -1216,21 +1222,6 @@ int IoctlHelperPrelim20::getEuDebugSysFsEnable() {
     return enabledEuDebug - '0';
 }
 
-bool IoctlHelperPrelim20::validPageFault(uint16_t flags) {
-    if ((flags & I915_RESET_STATS_FAULT_VALID) != 0) {
-        return true;
-    }
-    return false;
-}
-
-uint32_t IoctlHelperPrelim20::getStatusForResetStats(bool banned) {
-    uint32_t retVal = 0u;
-    if (banned) {
-        retVal |= I915_RESET_STATS_BANNED;
-    }
-    return retVal;
-}
-
 void IoctlHelperPrelim20::registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) {
     DrmResourceClass resourceClass = DrmResourceClass::maxSize;
 
@@ -1302,5 +1293,4 @@ void IoctlHelperPrelim20::registerBOBindHandle(Drm *drm, DrmAllocation *drmAlloc
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));
 static_assert(offsetof(MemoryClassInstance, memoryClass) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_class));
 static_assert(offsetof(MemoryClassInstance, memoryInstance) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_instance));
-static_assert(sizeof(ResetStatsFault) == sizeof(prelim_drm_i915_reset_stats::fault));
 } // namespace NEO

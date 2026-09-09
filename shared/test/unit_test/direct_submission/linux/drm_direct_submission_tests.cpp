@@ -1221,14 +1221,14 @@ HWTEST_F(DrmDirectSubmissionTest, givenGpuHangWhenWaitCalledThenGpuHangDetected)
     *pollAddress = 0;
 
     auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     resetStats.batchActive = 1;
     drm->resetStatsToReturn.push_back(resetStats);
 
-    EXPECT_EQ(0, drm->ioctlCount.getResetStats);
+    EXPECT_EQ(0, drm->ioctlCount.queryContextHealth);
     directSubmission.wait(1);
-    EXPECT_EQ(1, drm->ioctlCount.getResetStats);
+    EXPECT_EQ(1, drm->ioctlCount.queryContextHealth);
 }
 
 HWTEST2_F(DrmDirectSubmissionTest, givenRelaxedOrderingSchedulerRequiredWhenAskingForCmdsSizeThenReturnCorrectValue, IsAtLeastXeHpcCore) {

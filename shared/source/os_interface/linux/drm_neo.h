@@ -82,6 +82,7 @@ class Drm : public DriverModel {
     ~Drm() override;
 
     virtual int ioctl(DrmIoctl request, void *arg);
+    int ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName);
 
     unsigned int getDeviceHandle() const override {
         return 0;

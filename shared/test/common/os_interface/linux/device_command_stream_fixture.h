@@ -55,7 +55,7 @@ class Ioctls {
     std::atomic<int32_t> gemSetDomain;
     std::atomic<int32_t> gemWait;
     std::atomic<int32_t> gemClose;
-    std::atomic<int32_t> getResetStats;
+    std::atomic<int32_t> queryContextHealth;
     std::atomic<int32_t> regRead;
     std::atomic<int32_t> getParam;
     std::atomic<int32_t> contextGetParam;

@@ -137,7 +137,7 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::getparam:
         ret = -2;
         break;
-    case DrmIoctl::getResetStats: {
+    case DrmIoctl::queryContextHealth: {
         auto execQueueProperty = static_cast<drm_xe_exec_queue_get_property *>(arg);
         EXPECT_EQ(execQueueProperty->property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN));
         execQueueProperty->value = execQueueBanPropertyReturn;

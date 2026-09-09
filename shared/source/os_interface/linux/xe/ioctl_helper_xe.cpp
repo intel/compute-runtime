@@ -1394,8 +1394,21 @@ int IoctlHelperXe::vmUnbind(const VmBindParams &vmBindParams) {
     return xeVmBind(vmBindParams, false);
 }
 
-int IoctlHelperXe::getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) {
-    return ioctl(DrmIoctl::getResetStats, &resetStats);
+int IoctlHelperXe::getContextHealth(ContextHealth &contextHealth) {
+    drm_xe_exec_queue_get_property getProperty{};
+    getProperty.exec_queue_id = contextHealth.contextId;
+    getProperty.property = DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN;
+
+    const auto ret = this->ioctl(DrmIoctl::queryContextHealth, &getProperty);
+    XELOG(" -> IoctlHelperXe::getContextHealth ctx=0x%x r=%d value=%llu\n",
+          contextHealth.contextId, ret, getProperty.value);
+    if (ret != 0) {
+        return ret;
+    }
+    contextHealth.banned = getProperty.value != 0;
+    contextHealth.banReason = contextHealth.banned ? ContextBanReason::gpuHang : ContextBanReason::none;
+
+    return 0;
 }
 
 UuidRegisterResult IoctlHelperXe::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
@@ -1620,16 +1633,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         XELOG(" -> IoctlHelperXe::ioctl GemMmapOffset h=0x%x o=0x%x f=0x%x r=%d\n",
               d->handle, d->offset, d->flags, ret);
     } break;
-    case DrmIoctl::getResetStats: {
-        ResetStats *resetStats = static_cast<ResetStats *>(arg);
-        drm_xe_exec_queue_get_property getProperty{};
-        getProperty.exec_queue_id = resetStats->contextId;
-        getProperty.property = DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN;
-        ret = IoctlHelper::ioctl(request, &getProperty);
-        resetStats->batchPending = static_cast<uint32_t>(getProperty.value);
-        XELOG(" -> IoctlHelperXe::ioctl GetResetStats ctx=0x%x r=%d value=%llu\n",
-              resetStats->contextId, ret, getProperty.value);
-    } break;
     case DrmIoctl::primeFdToHandle: {
         PrimeHandle *prime = static_cast<PrimeHandle *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
@@ -1649,6 +1652,10 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::syncObjDestroy: {
         ret = IoctlHelper::ioctl(request, arg);
         XELOG(" -> IoctlHelperXe::ioctl SyncObjDestroy r=%d\n", ret);
+    } break;
+    case DrmIoctl::queryContextHealth: {
+        ret = IoctlHelper::ioctl(request, arg);
+        XELOG(" -> IoctlHelperXe::ioctl QueryContextHealth r=%d\n", ret);
     } break;
     case DrmIoctl::syncObjTimelineWait: {
         ret = IoctlHelper::ioctl(request, arg);
@@ -2342,7 +2349,7 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
         RETURN_ME(DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT);
     case DrmIoctl::syncObjTimelineSignal:
         RETURN_ME(DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL);
-    case DrmIoctl::getResetStats:
+    case DrmIoctl::queryContextHealth:
         RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY);
     case DrmIoctl::debuggerOpen:
     case DrmIoctl::metadataCreate:
@@ -2413,7 +2420,7 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_CREATE);
     case DrmIoctl::metadataDestroy:
         STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_DESTROY);
-    case DrmIoctl::getResetStats:
+    case DrmIoctl::queryContextHealth:
         STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY);
     default:
         return "???";

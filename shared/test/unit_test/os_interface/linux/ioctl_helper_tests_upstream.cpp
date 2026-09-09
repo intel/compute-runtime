@@ -188,7 +188,7 @@ TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestStringThenProperStringIsRet
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextCreateExt).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextDestroy).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::regRead).c_str(), "DRM_IOCTL_I915_REG_READ");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::getResetStats).c_str(), "DRM_IOCTL_I915_GET_RESET_STATS");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::queryContextHealth).c_str(), "DRM_IOCTL_I915_GET_RESET_STATS");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextGetparam).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextSetparam).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::query).c_str(), "DRM_IOCTL_I915_QUERY");
@@ -226,7 +226,7 @@ TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestValueThenProperValueIsRetur
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextCreateExt), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextDestroy), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::regRead), static_cast<unsigned int>(DRM_IOCTL_I915_REG_READ));
-    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::getResetStats), static_cast<unsigned int>(DRM_IOCTL_I915_GET_RESET_STATS));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::queryContextHealth), static_cast<unsigned int>(DRM_IOCTL_I915_GET_RESET_STATS));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextGetparam), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextSetparam), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::query), static_cast<unsigned int>(DRM_IOCTL_I915_QUERY));
@@ -880,27 +880,32 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetFdFromVmExportIsCalledThenFal
     EXPECT_FALSE(ioctlHelper.getFdFromVmExport(vmId, flags, &fd));
 }
 
-TEST(IoctlHelperTestsUpstream, whenCallingGetResetStatsThenSuccessIsReturned) {
+TEST(IoctlHelperTestsUpstream, whenCallingGetContextHealthThenBatchCountersDecideTheBanReason) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     IoctlHelperUpstream ioctlHelper{*drm};
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm->resetStatsToReturn.push_back(resetStats);
 
-    EXPECT_EQ(0, ioctlHelper.getResetStats(resetStats, nullptr, nullptr));
-}
+    ContextHealth contextHealth{};
+    contextHealth.contextId = 0;
 
-TEST(IoctlHelperTestsUpstream, whenCallingGetStatusAndFlagsForResetStatsThenZeroIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    IoctlHelperUpstream ioctlHelper{*drm};
+    EXPECT_EQ(0, ioctlHelper.getContextHealth(contextHealth));
+    EXPECT_EQ(ContextBanReason::none, contextHealth.banReason);
 
-    EXPECT_EQ(0u, ioctlHelper.getStatusForResetStats(true));
-    EXPECT_EQ(0u, ioctlHelper.getStatusForResetStats(false));
+    // upstream i915 exposes neither a ban status word nor fault details
+    EXPECT_FALSE(contextHealth.banned);
+    EXPECT_FALSE(contextHealth.faultValid);
 
-    EXPECT_FALSE(ioctlHelper.validPageFault(0u));
+    drm->resetStatsToReturn.clear();
+    resetStats.batchActive = 1;
+    drm->resetStatsToReturn.push_back(resetStats);
+
+    EXPECT_EQ(0, ioctlHelper.getContextHealth(contextHealth));
+    EXPECT_EQ(ContextBanReason::gpuHang, contextHealth.banReason);
+    EXPECT_FALSE(contextHealth.banned);
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryDeviceParamsIsCalledThenFalseIsReturned) {

@@ -112,6 +112,10 @@ void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
 
 int Drm::ioctl(DrmIoctl request, void *arg) {
     auto requestValue = getIoctlRequestValue(request, ioctlHelper.get());
+    return ioctlWithRequestValue(request, arg, requestValue, nullptr);
+}
+
+int Drm::ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName) {
     int ret;
     int returnedErrno = 0;
     SYSTEM_ENTER();
@@ -121,9 +125,11 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         std::chrono::steady_clock::time_point end;
 
         auto printIoctl = debugManager.flags.PrintIoctlEntries.get();
+        std::string ioctlName;
 
         if (printIoctl) {
-            PRINT_STRING(true, stdout, "IOCTL %s called\n", ioctlHelper->getIoctlString(request).c_str());
+            ioctlName = requestName ? requestName : ioctlHelper->getIoctlString(request);
+            PRINT_STRING(true, stdout, "IOCTL %s called\n", ioctlName.c_str());
         }
 
         if (measureTime) {
@@ -159,10 +165,10 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         if (printIoctl) {
             if (ret == 0) {
                 PRINT_STRING(true, stdout, "IOCTL %s returns %d\n",
-                             ioctlHelper->getIoctlString(request).c_str(), ret);
+                             ioctlName.c_str(), ret);
             } else {
                 PRINT_STRING(true, stdout, "IOCTL %s returns %d, errno %d(%s)\n",
-                             ioctlHelper->getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+                             ioctlName.c_str(), ret, returnedErrno, strerror(returnedErrno));
             }
         }
 
@@ -282,37 +288,31 @@ bool Drm::checkResetStatus(OsContext &osContext) {
     const auto &drmContextIds = osContextLinux->getDrmContextIds();
 
     for (const auto drmContextId : drmContextIds) {
-        ResetStats resetStats{};
-        resetStats.contextId = drmContextId;
-        ResetStatsFault fault{};
-        uint32_t status = 0;
-        const auto retVal{ioctlHelper->getResetStats(resetStats, &status, &fault)};
+        ContextHealth contextHealth{};
+        contextHealth.contextId = drmContextId;
+        const auto retVal{ioctlHelper->getContextHealth(contextHealth)};
         UNRECOVERABLE_IF(retVal != 0);
         auto debuggingEnabled = rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled();
-        if (checkToDisableScratchPage() && ioctlHelper->validPageFault(fault.flags)) {
-            bool banned = ((status & ioctlHelper->getStatusForResetStats(true)) != 0);
-            if (!banned && debuggingEnabled) {
+        if (checkToDisableScratchPage() && contextHealth.faultValid) {
+            const auto &fault = contextHealth.fault;
+            if (!contextHealth.banned && debuggingEnabled) {
                 return false;
             }
-            IoFunctions::fprintf(stderr, "Segmentation fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
-                                 fault.addr,
-                                 resetStats.contextId,
-                                 EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
-                                 fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
-                                 fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
-                                 fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
-                                 banned);
-            IoFunctions::fprintf(stdout, "Segmentation fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
-                                 fault.addr,
-                                 resetStats.contextId,
-                                 EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
-                                 fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
-                                 fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
-                                 fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
-                                 banned);
+            auto printFault = [&](FILE *stream) {
+                IoFunctions::fprintf(stream, "Segmentation fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                                     fault.addr,
+                                     contextHealth.contextId,
+                                     EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
+                                     fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
+                                     fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
+                                     fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
+                                     contextHealth.banned);
+            };
+            printFault(stderr);
+            printFault(stdout);
             UNRECOVERABLE_IF(true);
         }
-        if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
+        if (contextHealth.banReason == ContextBanReason::gpuHang) {
             PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
             osContextLinux->setHangDetected();
             return true;
