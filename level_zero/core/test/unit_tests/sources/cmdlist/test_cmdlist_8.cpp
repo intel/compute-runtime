@@ -1215,6 +1215,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndC
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.cmdQImmediate = mockCmdQ.get();
+    mockCmdQ->setTaskCount(1);
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr(false))->callBaseWaitForCompletionWithTimeout = false;
@@ -1271,6 +1272,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithB
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.cmdQImmediate = mockCmdQ.get();
+    mockCmdQ->setTaskCount(1);
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     CmdListWaitEventParameters waitEventsParameters = {
@@ -1297,6 +1299,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierT
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.cmdQImmediate = mockCmdQ.get();
+    mockCmdQ->setTaskCount(1);
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -1990,6 +1993,8 @@ struct ImmediateCommandListHostSynchronize : public Test<DeviceFixture> {
         cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->isSyncModeQueue = false;
 
+        commandQueue->setTaskCount(1);
+
         return cmdList;
     }
 };
@@ -2012,6 +2017,7 @@ HWTEST_F(ImmediateCommandListHostSynchronize, givenCsrClientCountWhenCallingSync
     EXPECT_EQ(clientCount - 1, csr->getNumClients());
 
     cmdList->cmdQImmediate->registerCsrClient();
+    cmdList->cmdQImmediate->setTaskCount(cmdList->cmdQImmediate->getTaskCount() + 1);
 
     clientCount = csr->getNumClients();
 

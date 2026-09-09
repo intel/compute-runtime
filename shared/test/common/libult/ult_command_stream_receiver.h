@@ -346,6 +346,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
             latestWaitForCompletionWithTimeoutWaitParams = params;
             waitForCompletionWithTimeoutTaskCountCalled++;
         }
+        if (onWaitForCompletionWithTimeout) {
+            onWaitForCompletionWithTimeout();
+        }
         if (callBaseWaitForCompletionWithTimeout) {
             return BaseClass::waitForCompletionWithTimeout(params, taskCountToWait);
         }
@@ -775,6 +778,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
     std::atomic<bool> latestDownloadAllocationsBlocking = false;
     std::function<void()> onDownloadAllocations;
+    std::function<void()> onWaitForCompletionWithTimeout;
     OsContext *initialOsContext = nullptr;
 
     bool renderStateCacheFlushed = false;

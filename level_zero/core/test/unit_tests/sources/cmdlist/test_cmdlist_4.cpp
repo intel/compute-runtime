@@ -1191,6 +1191,8 @@ HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
     }
     auto &csrStream = ultCsr.commandStream;
 
+    commandListImmediate->cmdQImmediate->setTaskCount(1);
+
     size_t csrUsedBefore = csrStream.getUsed();
     appendNonKernelOperation(commandListImmediate.get(), NonKernelOperation::Barrier);
     size_t csrUsedAfter = csrStream.getUsed();

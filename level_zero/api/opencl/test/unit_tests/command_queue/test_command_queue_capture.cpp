@@ -201,6 +201,44 @@ TEST_F(LeoCommandQueueCaptureTest, givenMarkerWithoutWaitListWhenEnqueuedThenApp
     EXPECT_EQ(nullptr, params.signalEvent);
 }
 
+TEST_F(LeoCommandQueueCaptureTest, givenMarkerWithoutWaitListOnIdleCmdListWhenEnqueuedThenEventIsAlreadyComplete) {
+    capturingCmdList.completeSignalEventOnAppendBarrier = true;
+
+    cl_event outEvent = nullptr;
+    EXPECT_EQ(CL_SUCCESS, clEnqueueMarkerWithWaitList(getCommandQueue(), 0, nullptr, &outEvent));
+    ASSERT_NE(nullptr, outEvent);
+
+    ASSERT_EQ(1u, capturingCmdList.appendBarrierArgs.count());
+    EXPECT_TRUE(capturingCmdList.appendBarrierArgs[0].waitEvents.empty());
+    EXPECT_FALSE(capturingCmdList.hostSynchronizeArgs.wasCalled());
+
+    cl_int executionStatus = CL_QUEUED;
+    EXPECT_EQ(CL_SUCCESS, clGetEventInfo(outEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(executionStatus), &executionStatus, nullptr));
+    EXPECT_EQ(CL_COMPLETE, executionStatus);
+
+    cl_command_type commandType = 0;
+    EXPECT_EQ(CL_SUCCESS, clGetEventInfo(outEvent, CL_EVENT_COMMAND_TYPE, sizeof(commandType), &commandType, nullptr));
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), commandType);
+
+    clReleaseEvent(outEvent);
+}
+
+TEST_F(LeoCommandQueueCaptureTest, givenMarkerWithWaitListWhenEnqueuedThenBarrierIsAppendedWithWaitEvents) {
+    cl_int errcode = CL_SUCCESS;
+    auto userEvent = clCreateUserEvent(clContext, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueMarkerWithWaitList(getCommandQueue(), 1, &userEvent, nullptr));
+
+    EXPECT_EQ(CL_SUCCESS, clSetUserEventStatus(userEvent, CL_COMPLETE));
+
+    ASSERT_EQ(1u, capturingCmdList.appendBarrierArgs.count());
+    ASSERT_EQ(1u, capturingCmdList.appendBarrierArgs[0].waitEvents.size());
+    EXPECT_EQ(castToObject<Event>(userEvent)->getL0Handle(), capturingCmdList.appendBarrierArgs[0].waitEvents[0]);
+
+    clReleaseEvent(userEvent);
+}
+
 TEST_F(LeoCommandQueueCaptureTest, givenMultipleEnqueuesWhenInspectingSequenceThenAllCallsCapturedInIssueOrder) {
     constexpr size_t bufferSize = 64u;
     auto buffer = createBuffer(bufferSize);

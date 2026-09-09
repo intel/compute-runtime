@@ -2853,6 +2853,8 @@ TEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAnd
         .dualStreamCopyOffloadOperation = false,
     };
 
+    queue->setTaskCount(1);
+
     const auto appendBarrierResult = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, appendBarrierResult);
 

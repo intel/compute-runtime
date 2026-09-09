@@ -280,6 +280,21 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ComputeFlushMethodType computeFlushMethod = nullptr;
     uint64_t relaxedOrderingCounter = 0;
     std::atomic<bool> dependenciesPresent{false};
+    struct SynchronizationTaskCounts {
+        bool matches(TaskCountType mainTaskCount, TaskCountType copyOffloadTaskCount) const {
+            return main.load() == mainTaskCount && copyOffload.load() == copyOffloadTaskCount;
+        }
+
+        void store(TaskCountType mainTaskCount, TaskCountType copyOffloadTaskCount) {
+            main.store(mainTaskCount);
+            copyOffload.store(copyOffloadTaskCount);
+        }
+
+        std::atomic<TaskCountType> main{0};
+        std::atomic<TaskCountType> copyOffload{0};
+    };
+    SynchronizationTaskCounts lastBarrierTaskCounts;
+    SynchronizationTaskCounts lastHostSynchronizeTaskCounts;
     bool latestFlushIsHostVisible = false;
     bool keepRelaxedOrderingEnabled = false;
 };

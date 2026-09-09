@@ -652,6 +652,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelInd
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
+    const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(true) && this->cmdQImmediateCopyOffload != nullptr;
 
     bool isStallingOperation = true;
 
@@ -663,18 +664,38 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
 
         waitEventsParameters.relaxedOrderingAllowed = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
         isStallingOperation = hasStallingCmdsForRelaxedOrdering(numWaitEvents, waitEventsParameters.relaxedOrderingAllowed);
+    } else {
+        const auto mainTaskCount = this->cmdQImmediate->getTaskCount();
+        const auto copyOffloadTaskCount = dualStreamCopyOffload ? this->cmdQImmediateCopyOffload->getTaskCount() : 0;
+        const bool redundantBarrier = this->lastBarrierTaskCounts.matches(mainTaskCount, copyOffloadTaskCount) && numWaitEvents == 0 &&
+                                      !this->isCopyOnly(false) && this->synchronizedDispatchMode == NEO::SynchronizedDispatchMode::disabled;
+        if (redundantBarrier) {
+            auto signalEvent = Event::fromHandle(hSignalEvent);
+            if (!signalEvent) {
+                return ZE_RESULT_SUCCESS;
+            }
+            if (this->lastHostSynchronizeTaskCounts.matches(mainTaskCount, copyOffloadTaskCount) && !signalEvent->isEventTimestampFlagSet() && !signalEvent->isSignalWithUserInterrupt() &&
+                !signalEvent->isCounterBased() && !Event::isAggregatedEvent(signalEvent)) {
+                return signalEvent->hostSignal(false);
+            }
+        }
     }
 
-    if (!isInOrderExecutionEnabled() && isDualStreamCopyOffloadOperation(true) && this->cmdQImmediateCopyOffload != nullptr) {
-        return appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, isStallingOperation);
+    if (!isInOrderExecutionEnabled() && dualStreamCopyOffload) {
+        ret = appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, isStallingOperation);
+    } else {
+        checkAvailableSpace(numWaitEvents, waitEventsParameters.relaxedOrderingAllowed, commonImmediateCommandSize, false);
+
+        ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+
+        this->dependenciesPresent = true;
+        ret = flushImmediate(ret, true, isStallingOperation, waitEventsParameters.relaxedOrderingAllowed, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
     }
-
-    checkAvailableSpace(numWaitEvents, waitEventsParameters.relaxedOrderingAllowed, commonImmediateCommandSize, false);
-
-    ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
-
-    this->dependenciesPresent = true;
-    return flushImmediate(ret, true, isStallingOperation, waitEventsParameters.relaxedOrderingAllowed, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
+    if (ret == ZE_RESULT_SUCCESS && !isInOrderExecutionEnabled()) {
+        this->lastBarrierTaskCounts.store(this->cmdQImmediate->getTaskCount(),
+                                          dualStreamCopyOffload ? this->cmdQImmediateCopyOffload->getTaskCount() : 0);
+    }
+    return ret;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1347,8 +1368,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
 
-    TaskCountType mainQueueTaskCount = waitQueue->getTaskCount();
-    TaskCountType copyOffloadTaskCount = 0;
+    const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(isCopyOffloadEnabled());
+    const TaskCountType mainQueueTaskCount = waitQueue->getTaskCount();
+    const TaskCountType copyOffloadTaskCount = dualStreamCopyOffload ? this->cmdQImmediateCopyOffload->getTaskCount() : 0;
+
+    if (!isInOrderExecutionEnabled() && this->lastHostSynchronizeTaskCounts.matches(mainQueueTaskCount, copyOffloadTaskCount)) {
+        return ZE_RESULT_SUCCESS;
+    }
 
     NEO::CommandStreamReceiver *mainQueueCsr = getCsr(false);
     NEO::CommandStreamReceiver *copyOffloadCsr = nullptr;
@@ -1359,10 +1385,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     bool mainStorageCleanupNeeded = !mainInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
     bool copyOffloadStorageCleanupNeeded = false;
 
-    const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(isCopyOffloadEnabled());
-
     if (dualStreamCopyOffload) {
-        copyOffloadTaskCount = this->cmdQImmediateCopyOffload->getTaskCount();
         copyOffloadCsr = getCsr(true);
         copyOffloadInternalAllocStorage = copyOffloadCsr->getInternalAllocationStorage();
         copyOffloadStorageCleanupNeeded = !copyOffloadInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
@@ -1372,7 +1395,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
         }
     }
 
-    auto waitTaskCount = waitQueue->getTaskCount();
+    auto waitTaskCount = waitQueue == this->cmdQImmediate ? mainQueueTaskCount : copyOffloadTaskCount;
     auto waitCsr = waitQueue->getCsr();
 
     auto tempAllocsCleanupRequired = handlePostWaitOperations && (mainStorageCleanupNeeded || copyOffloadStorageCleanupNeeded);
@@ -1467,6 +1490,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             if (handlePostWaitOperations) {
                 inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
             }
+        }
+    }
+
+    if (status == ZE_RESULT_SUCCESS && !isInOrderExecutionEnabled()) {
+        // Reading live queue counts here could mark submissions made after the wait as completed.
+        this->lastBarrierTaskCounts.store(mainQueueTaskCount, copyOffloadTaskCount);
+        if (handlePostWaitOperations) {
+            this->lastHostSynchronizeTaskCounts.store(mainQueueTaskCount, copyOffloadTaskCount);
         }
     }
 

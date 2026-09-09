@@ -567,6 +567,19 @@ TEST_F(ClEnqueueSvmFreeTest, givenEventThatNeverCompletesWhenTheHandlerShutsDown
     EXPECT_EQ(2u, freeRecord.numSvmPointers);
 }
 
+TEST_F(ClEnqueueSvmFreeTest, givenIdleCmdListWhenClEnqueueSVMFreeThenFreeCallbackRunsImmediately) {
+    capturingQueueCmdList.completeSignalEventOnAppendBarrier = true;
+
+    cl_event event = nullptr;
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMFree(commandQueue, 2, svmPointers, svmFreeCallback, &freeRecord, 0, nullptr, &event));
+    ASSERT_NE(nullptr, event);
+
+    EXPECT_EQ(1u, freeRecord.callCount);
+    EXPECT_EQ(2u, freeRecord.numSvmPointers);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(event));
+}
+
 TEST_F(ClEnqueueSvmFreeTest, givenMarkerEnqueuedWhenQueryingCommandTypeThenMarkerIsReported) {
     cl_event event = nullptr;
     EXPECT_EQ(CL_SUCCESS, clEnqueueMarkerWithWaitList(commandQueue, 0, nullptr, &event));

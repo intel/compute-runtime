@@ -1483,6 +1483,7 @@ struct StagingBuffersFixture : public AppendMemoryCopyTests {
         }
         ze_command_queue_desc_t queueDesc = {};
         this->queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+        this->queue->setTaskCount(1);
 
         ze_device_mem_alloc_desc_t deviceDesc = {};
         auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, size, &usmDevice);

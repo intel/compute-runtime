@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list_args.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
 #include <cstdint>
@@ -108,9 +109,14 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
 
     ze_result_t appendImageCopyFromMemoryExtResult = ZE_RESULT_SUCCESS;
 
+    bool completeSignalEventOnAppendBarrier = false;
+
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                               ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters) override {
         auto result = BaseClass::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+        if (this->completeSignalEventOnAppendBarrier && (hSignalEvent != nullptr) && (result == ZE_RESULT_SUCCESS)) {
+            result = L0::Event::fromHandle(hSignalEvent)->hostSignal(false);
+        }
         return record(this->appendBarrierArgs, ApiId::appendBarrier,
                       AppendBarrierArgs{hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters}, result);
     }

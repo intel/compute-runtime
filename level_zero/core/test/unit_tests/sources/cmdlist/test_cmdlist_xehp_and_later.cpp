@@ -2183,6 +2183,8 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     if (csrImmediate.heaplessModeEnabled) {
         GTEST_SKIP();
     }
+    commandListImmediate->cmdQImmediate->setTaskCount(1);
+
     size_t csrUsedBefore = csrStream.getUsed();
     CmdListWaitEventParameters waitEventsParameters = {
         .outWaitCmds = nullptr,

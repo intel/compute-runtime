@@ -180,6 +180,19 @@ TEST_F(EnqueueValidationFixture, givenPlainMarkerWhenEnqueuedThenBarrierIsAppend
     clReleaseEvent(outEvent);
 }
 
+TEST_F(EnqueueValidationFixture, givenPlainMarkerOnIdleCmdListWhenEnqueuedThenEventIsAlreadyComplete) {
+    capturingCmdList.completeSignalEventOnAppendBarrier = true;
+    cl_event outEvent = nullptr;
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueMarker(getCommandQueue(), &outEvent));
+
+    ASSERT_NE(nullptr, outEvent);
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), castToObject<Event>(outEvent)->getCommandType());
+    EXPECT_EQ(CL_COMPLETE, castToObject<Event>(outEvent)->queryAndUpdateEventStatus());
+
+    clReleaseEvent(outEvent);
+}
+
 TEST_F(EnqueueValidationFixture, givenPlainBarrierWhenEnqueuedThenBarrierIsAppendedWithoutSignalEvent) {
     EXPECT_EQ(CL_SUCCESS, clEnqueueBarrier(getCommandQueue()));
 
