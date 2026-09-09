@@ -10,5 +10,8 @@ set(NEO_CORE_UTILITIES_LINUX
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_UTILITIES_LINUX ${NEO_CORE_UTILITIES_LINUX})
-
-add_subdirectories()
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${NEO_TARGET_PROCESSOR}")
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/${NEO_TARGET_PROCESSOR}")
+else ()
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/general")
+endif ()
