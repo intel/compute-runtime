@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -256,6 +256,9 @@ zetGetMetricProgrammableExpProcAddrTable(
     if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.tools.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGetExp, L0::globalDriverDispatch.toolsMetricProgrammableExp.pfnGetExp, version, ZE_API_VERSION_1_9);
@@ -274,6 +277,9 @@ zetGetMetricExpProcAddrTable(
     if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.tools.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreateFromProgrammableExp, L0::globalDriverDispatch.toolsMetricExp.pfnCreateFromProgrammableExp, version, ZE_API_VERSION_1_9);
@@ -289,6 +295,9 @@ zetGetMetricTracerExpProcAddrTable(
     zet_metric_tracer_exp_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.tools.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -311,6 +320,9 @@ zetGetMetricDecoderExpProcAddrTable(
     if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.tools.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -328,6 +340,9 @@ zetGetDeviceExpProcAddrTable(
 
     if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.tools.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
