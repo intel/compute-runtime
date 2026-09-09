@@ -18,6 +18,20 @@
 
 namespace L0 {
 
+namespace ApiTemplateValues {
+
+const static CmdListWaitEventParameters defaultWaitEventsParameters{
+    .outWaitCmds = nullptr,
+    .relaxedOrderingAllowed = false,
+    .trackDependencies = true,
+    .waitForImplicitInOrderDependency = false,
+    .skipAddingWaitEventsToResidency = false,
+    .dualStreamCopyOffloadOperation = false,
+    .apiRequest = true,
+    .skipFlush = false};
+
+} // namespace ApiTemplateValues
+
 ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,
     ze_host_function_callback_t pHostFunction,
@@ -340,16 +354,7 @@ ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
         return ret;
     }
 
-    CmdListWaitEventParameters waitEventsParameters{
-        .outWaitCmds = nullptr,
-        .relaxedOrderingAllowed = false,
-        .trackDependencies = true,
-        .waitForImplicitInOrderDependency = false,
-        .skipAddingWaitEventsToResidency = false,
-        .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
-
+    CmdListWaitEventParameters waitEventsParameters = ApiTemplateValues::defaultWaitEventsParameters;
     return cmdList->appendWaitOnEvents(numEvents, phEvents, waitEventsParameters);
 }
 
@@ -370,6 +375,10 @@ ze_result_t ZE_APICALL zeCommandListAppendSignalEventWithParameters(
     const void *pNext,
     ze_event_handle_t hEvent) {
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendSignalEventWithParameters>(hCommandList, pNext, hEvent);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
     return cmdList->appendSignalEvent(hEvent, false);
 }
 
@@ -379,17 +388,12 @@ ze_result_t ZE_APICALL zeCommandListAppendWaitOnEventsWithParameters(
     uint32_t numEvents,
     ze_event_handle_t *phEvents) {
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(hCommandList, pNext, numEvents, phEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
 
-    CmdListWaitEventParameters waitEventsParameters{
-        .outWaitCmds = nullptr,
-        .relaxedOrderingAllowed = false,
-        .trackDependencies = true,
-        .waitForImplicitInOrderDependency = false,
-        .skipAddingWaitEventsToResidency = false,
-        .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
-
+    CmdListWaitEventParameters waitEventsParameters = ApiTemplateValues::defaultWaitEventsParameters;
     return cmdList->appendWaitOnEvents(numEvents, phEvents, waitEventsParameters);
 }
 

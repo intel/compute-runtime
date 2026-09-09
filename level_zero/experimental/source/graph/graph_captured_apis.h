@@ -79,6 +79,8 @@ struct Event;
     RR_CAPTURED_API(zetCommandListAppendMetricQueryEnd)               \
     RR_CAPTURED_API(zetCommandListAppendMetricMemoryBarrier)          \
     RR_CAPTURED_API(zetCommandListAppendMarkerExp)                    \
+    RR_CAPTURED_API(zeCommandListAppendSignalEventWithParameters)     \
+    RR_CAPTURED_API(zeCommandListAppendWaitOnEventsWithParameters)    \
     RR_CAPTURED_APIS_EXT()
 
 enum class CaptureApi {
@@ -116,6 +118,8 @@ constexpr bool isAllowedPostJoin(CaptureApi api) {
     case CaptureApi::zetCommandListAppendMetricQueryEnd:
     case CaptureApi::zetCommandListAppendMetricMemoryBarrier:
     case CaptureApi::zetCommandListAppendMarkerExp:
+    case CaptureApi::zeCommandListAppendSignalEventWithParameters:
+    case CaptureApi::zeCommandListAppendWaitOnEventsWithParameters:
         return true;
     default:
         return false;
@@ -439,14 +443,14 @@ inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
 }
 
 template <CaptureApi api, typename... TArgs>
-    requires(api == CaptureApi::zeCommandListAppendSignalEvent)
+    requires(api == CaptureApi::zeCommandListAppendSignalEvent || api == CaptureApi::zeCommandListAppendSignalEventWithParameters)
 inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
     typename Closure<api>::ApiArgs structuredApiArgs{args...};
     return structuredApiArgs.hEvent;
 }
 
 template <CaptureApi api, typename... TArgs>
-    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent))
+    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent && api != CaptureApi::zeCommandListAppendSignalEventWithParameters))
 inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
     return nullptr;
 }
@@ -476,13 +480,13 @@ inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiA
 }
 
 template <CaptureApi api>
-    requires(api == CaptureApi::zeCommandListAppendSignalEvent)
+    requires(api == CaptureApi::zeCommandListAppendSignalEvent || api == CaptureApi::zeCommandListAppendSignalEventWithParameters)
 inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiArgs &structuredApiArgs) {
     return structuredApiArgs.hEvent;
 }
 
 template <CaptureApi api>
-    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent))
+    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent && api != CaptureApi::zeCommandListAppendSignalEventWithParameters))
 inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiArgs &structuredApiArgs) {
     return nullptr;
 }
@@ -616,6 +620,30 @@ struct Closure<CaptureApi::zeCommandListAppendWaitOnEvents> {
 
     using IndirectArgs = IndirectArgsWithWaitEvents;
     IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const void *pNext;
+        uint32_t numEvents;
+        ze_event_handle_t *phEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage),
+                                                                                                 pNext(apiArgs.pNext) {}
+
+        const void *pNext;
+    } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
@@ -919,6 +947,29 @@ struct Closure<CaptureApi::zeCommandListAppendSignalEvent> {
 
     using IndirectArgs = EmptyIndirectArgs;
     IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const void *pNext;
+        ze_event_handle_t hEvent;
+    } apiArgs;
+
+    struct IndirectArgs : EmptyIndirectArgs {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : EmptyIndirectArgs(apiArgs, externalStorage),
+                                                                                                 pNext(apiArgs.pNext) {}
+
+        const void *pNext;
+    } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 

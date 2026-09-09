@@ -191,6 +191,7 @@ TEST_F(GraphDotExporterTest, GivenDifferentCommandTypesWhenGetCommandNodeAttribu
     testGraph.capture<CaptureApi::zeCommandListAppendSignalEvent>(cmdlistHandle, eventHandle);
     testGraph.capture<CaptureApi::zeCommandListAppendImageCopy>(cmdlistHandle, nullptr, nullptr, nullptr, 0U, nullptr);
     testGraph.capture<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(cmdlistHandle, nullptr, nullptr, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendSignalEventWithParameters>(cmdlistHandle, nullptr, eventHandle);
     testGraph.capture<CaptureApi::NoopedCommandListFailedFunction>(cmdlistHandle);
 
     testGraph.stopCapturing();
@@ -200,7 +201,8 @@ TEST_F(GraphDotExporterTest, GivenDifferentCommandTypesWhenGetCommandNodeAttribu
     EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 2), ", fillcolor=yellow");
     EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 3), ", fillcolor=lightgreen");
     EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 4), ", fillcolor=pink");
-    EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 5), ", fillcolor=red");
+    EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 5), ", fillcolor=yellow");
+    EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 6), ", fillcolor=red");
 }
 
 TEST_F(GraphDotExporterTest, WhenGenerateNodeIdThenReturnsCorrectFormat) {
@@ -698,6 +700,42 @@ struct ForkJoinEventNodesScenario {
     Graph *subGraph = nullptr;
 };
 
+struct ForkJoinEventWithParametersNodesScenario {
+    ForkJoinEventWithParametersNodesScenario(L0::Context *ctx, L0::Device *device) : testGraph(ctx, true) {
+        mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+        mainCmdList.device = device;
+        subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+        subCmdList.device = device;
+    }
+
+    void capture() {
+        auto mainCmdListHandle = mainCmdList.toHandle();
+        auto subCmdListHandle = subCmdList.toHandle();
+        auto forkEventHandle = forkEvent.toHandle();
+        auto joinEventHandle = joinEvent.toHandle();
+        Graph *mainGraph = &testGraph;
+
+        testGraph.startCapturingFrom(mainCmdList, false);
+        captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(mainCmdList, mainGraph, nullptr, mainCmdListHandle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+        captureCommand<CaptureApi::zeCommandListAppendSignalEventWithParameters>(mainCmdList, mainGraph, nullptr, mainCmdListHandle, nullptr, forkEventHandle);
+
+        captureCommand<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(subCmdList, subGraph, nullptr, subCmdListHandle, nullptr, 1U, &forkEventHandle);
+        captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList, subGraph, nullptr, subCmdListHandle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+        captureCommand<CaptureApi::zeCommandListAppendSignalEventWithParameters>(subCmdList, subGraph, nullptr, subCmdListHandle, nullptr, joinEventHandle);
+
+        captureCommand<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(mainCmdList, mainGraph, nullptr, mainCmdListHandle, nullptr, 1U, &joinEventHandle);
+        captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(mainCmdList, mainGraph, nullptr, mainCmdListHandle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+        testGraph.stopCapturing();
+    }
+
+    Graph testGraph;
+    Mock<Event> forkEvent;
+    Mock<Event> joinEvent;
+    Mock<CommandList> mainCmdList;
+    Mock<CommandList> subCmdList;
+    Graph *subGraph = nullptr;
+};
+
 TEST_F(GraphDotExporterTest, GivenMultiQueueForkJoinGraphWhenExportToStringThenInternalEventOperationsAreNotDumped) {
     ForkJoinEventNodesScenario scenario{&ctx, this->device};
     scenario.capture();
@@ -721,6 +759,29 @@ TEST_F(GraphDotExporterTest, GivenMultiQueueForkJoinGraphWhenExportToStringThenI
     EXPECT_NE(dot.find("L1_S0_C1 -> L0_S0_C3;"), std::string::npos); // join edge
 }
 
+TEST_F(GraphDotExporterTest, GivenMultiQueueForkJoinGraphWhenExportToStringThenInternalEventWithParametersOperationsAreNotDumped) {
+    ForkJoinEventWithParametersNodesScenario scenario{&ctx, this->device};
+    scenario.capture();
+    ASSERT_NE(scenario.subGraph, nullptr);
+
+    std::string dot = exporter.exportToString(scenario.testGraph);
+
+    EXPECT_EQ(dot.find("zeCommandListAppendSignalEventWithParameters"), std::string::npos);
+    EXPECT_EQ(dot.find("zeCommandListAppendWaitOnEventsWithParameters"), std::string::npos);
+
+    EXPECT_NE(dot.find("L0_S0_C0 [label="), std::string::npos);
+    EXPECT_NE(dot.find("L0_S0_C3 [label="), std::string::npos);
+    EXPECT_NE(dot.find("L1_S0_C1 [label="), std::string::npos);
+    EXPECT_EQ(dot.find("L0_S0_C1 [label="), std::string::npos);
+    EXPECT_EQ(dot.find("L0_S0_C2 [label="), std::string::npos);
+    EXPECT_EQ(dot.find("L1_S0_C0 [label="), std::string::npos);
+    EXPECT_EQ(dot.find("L1_S0_C2 [label="), std::string::npos);
+
+    EXPECT_NE(dot.find("L0_S0_C0 -> L0_S0_C3;"), std::string::npos); // sequential edge bypassing the fork/join operations
+    EXPECT_NE(dot.find("L0_S0_C0 -> L1_S0_C1;"), std::string::npos); // fork edge
+    EXPECT_NE(dot.find("L1_S0_C1 -> L0_S0_C3;"), std::string::npos); // join edge
+}
+
 TEST_F(GraphDotExporterTest, GivenMultiQueueForkJoinGraphWhenEventNodesAreEnabledThenInternalEventOperationsAreDumped) {
     ForkJoinEventNodesScenario scenario{&ctx, this->device};
     scenario.capture();
@@ -730,6 +791,26 @@ TEST_F(GraphDotExporterTest, GivenMultiQueueForkJoinGraphWhenEventNodesAreEnable
 
     EXPECT_NE(dot.find("zeCommandListAppendSignalEvent"), std::string::npos);
     EXPECT_NE(dot.find("zeCommandListAppendWaitOnEvents"), std::string::npos);
+
+    EXPECT_NE(dot.find("L0_S0_C1 [label="), std::string::npos);
+    EXPECT_NE(dot.find("L0_S0_C2 [label="), std::string::npos);
+    EXPECT_NE(dot.find("L1_S0_C0 [label="), std::string::npos);
+    EXPECT_NE(dot.find("L1_S0_C2 [label="), std::string::npos);
+
+    EXPECT_NE(dot.find("L0_S0_C0 -> L0_S0_C1;"), std::string::npos);
+    EXPECT_NE(dot.find("L0_S0_C1 -> L1_S0_C0;"), std::string::npos); // fork edge
+    EXPECT_NE(dot.find("L1_S0_C2 -> L0_S0_C2;"), std::string::npos); // join edge
+}
+
+TEST_F(GraphDotExporterTest, GivenMultiQueueForkJoinGraphWhenEventNodesAreEnabledThenInternalEventWithParametersOperationsAreDumped) {
+    ForkJoinEventWithParametersNodesScenario scenario{&ctx, this->device};
+    scenario.capture();
+    ASSERT_NE(scenario.subGraph, nullptr);
+
+    std::string dot = exporterWithEventNodes.exportToString(scenario.testGraph);
+
+    EXPECT_NE(dot.find("zeCommandListAppendSignalEventWithParameters"), std::string::npos);
+    EXPECT_NE(dot.find("zeCommandListAppendWaitOnEventsWithParameters"), std::string::npos);
 
     EXPECT_NE(dot.find("L0_S0_C1 [label="), std::string::npos);
     EXPECT_NE(dot.find("L0_S0_C2 [label="), std::string::npos);
@@ -1085,7 +1166,7 @@ TEST_F(GraphDotExporterFileTest, WhenDumpGraphOnInstantiateThenGraphContentWritt
 }
 
 TEST(GraphDumpHelperTest, GivenNullptrAndPtrWhenFormatPointerIsCalledThenReturnsFormattedString) {
-    EXPECT_EQ(GraphDumpHelper::formatPointer(nullptr), "0x0");
+    EXPECT_EQ(GraphDumpHelper::formatPointer(nullptr), "nullptr");
     const void *ptr = reinterpret_cast<void *>(0x1234);
     EXPECT_EQ(GraphDumpHelper::formatPointer(ptr), "0x1234");
 }
@@ -1152,7 +1233,9 @@ DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyFromMemory, "hCommandList", "h
 DEFINE_APIARGS_FIELDS(zeCommandListAppendMemoryPrefetch, "hCommandList", "ptr", "size");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendMemAdvise, "hCommandList", "hDevice", "ptr", "size", "advice");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendSignalEvent, "hCommandList", "hEvent");
+DEFINE_APIARGS_FIELDS(zeCommandListAppendSignalEventWithParameters, "hCommandList", "pNext", "hEvent");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendWaitOnEvents, "hCommandList", "numEvents", "phEvents", "phEvents[0]");
+DEFINE_APIARGS_FIELDS(zeCommandListAppendWaitOnEventsWithParameters, "hCommandList", "pNext", "numEvents", "phEvents", "phEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendEventReset, "hCommandList", "hEvent");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendQueryKernelTimestamps, "hCommandList", "numEvents", "phEvents", "phEvents[0]", "dstptr", "pOffsets", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernel, "hCommandList", "hKernel", "kernelName", "launchFuncArgs", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
@@ -1287,11 +1370,23 @@ TEST_F(ExtractParametersTest, zeCommandListAppendSignalEvent) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendSignalEvent>(args);
 }
 
+TEST_F(ExtractParametersTest, zeCommandListAppendSignalEventWithParameters) {
+    Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters>::ApiArgs args{};
+    expectAllApiArgsPresent<CaptureApi::zeCommandListAppendSignalEventWithParameters>(args);
+}
+
 TEST_F(ExtractParametersTest, zeCommandListAppendWaitOnEvents) {
     Closure<CaptureApi::zeCommandListAppendWaitOnEvents>::ApiArgs args{};
     args.numEvents = 1;
     args.phEvents = dummyEvents;
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendWaitOnEvents>(args);
+}
+
+TEST_F(ExtractParametersTest, zeCommandListAppendWaitOnEventsWithParameters) {
+    Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>::ApiArgs args{};
+    args.numEvents = 1;
+    args.phEvents = dummyEvents;
+    expectAllApiArgsPresent<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(args);
 }
 
 TEST_F(ExtractParametersTest, zeCommandListAppendEventReset) {

@@ -246,8 +246,18 @@ std::vector<ze_event_handle_t> getEventOnlyCommandEvents(const CapturedCommand &
         addEvent(closure.apiArgs.hEvent);
         break;
     }
+    case CaptureApi::zeCommandListAppendSignalEventWithParameters: {
+        const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendSignalEventWithParameters)>(cmd);
+        addEvent(closure.apiArgs.hEvent);
+        break;
+    }
     case CaptureApi::zeCommandListAppendWaitOnEvents: {
         const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendWaitOnEvents)>(cmd);
+        addWaitEvents(closure, closure.apiArgs.numEvents);
+        break;
+    }
+    case CaptureApi::zeCommandListAppendWaitOnEventsWithParameters: {
+        const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendWaitOnEventsWithParameters)>(cmd);
         addWaitEvents(closure, closure.apiArgs.numEvents);
         break;
     }
@@ -464,7 +474,9 @@ std::string GraphDotExporter::getCommandNodeAttributes(const Graph &graph, Captu
         return ", fillcolor=orange";
 
     case CaptureApi::zeCommandListAppendSignalEvent:
+    case CaptureApi::zeCommandListAppendSignalEventWithParameters:
     case CaptureApi::zeCommandListAppendWaitOnEvents:
+    case CaptureApi::zeCommandListAppendWaitOnEventsWithParameters:
     case CaptureApi::zeCommandListAppendEventReset:
         return ", fillcolor=yellow";
 
@@ -520,6 +532,9 @@ std::string GraphDotExporter::getSubgraphFillColor(uint32_t level) const {
 namespace GraphDumpHelper {
 
 std::string formatPointer(const void *ptr) {
+    if (ptr == nullptr) {
+        return std::string("nullptr");
+    }
     std::ostringstream addr;
     addr << "0x" << std::hex << std::uppercase << reinterpret_cast<uintptr_t>(ptr);
     return addr.str();
@@ -627,11 +642,6 @@ void addKernelInformation(std::vector<std::pair<std::string, std::string>> &para
 }
 
 void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext) {
-    if (pNext == nullptr) {
-        params.emplace_back("pNext", "nullptr");
-        return;
-    }
-
     params.emplace_back("pNext", formatPointer(pNext));
 
     const auto *baseDesc = reinterpret_cast<const ze_base_desc_t *>(pNext);
@@ -651,11 +661,6 @@ void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::
 }
 
 void addMemoryTransferExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext) {
-    if (pNext == nullptr) {
-        params.emplace_back("pNext", "nullptr");
-        return;
-    }
-
     params.emplace_back("pNext", formatPointer(pNext));
 
     const auto *baseDesc = reinterpret_cast<const ze_base_desc_t *>(pNext);
@@ -722,6 +727,17 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListAppendWaitOnEvents> &closure, const ClosureExternalStorage &storage) {
 
     auto params = createBaseParams(closure.apiArgs);
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(
+    const Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("pNext", formatPointer(closure.apiArgs.pNext));
     addCommonEventParameters(params, closure, storage);
 
     return params;
@@ -873,6 +889,16 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     auto params = createBaseParams(closure.apiArgs);
     params.emplace_back("hEvent", formatPointer(closure.apiArgs.hEvent));
 
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendSignalEventWithParameters>(
+    const Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("hEvent", formatPointer(closure.apiArgs.hEvent));
+    params.emplace_back("pNext", formatPointer(closure.apiArgs.pNext));
     return params;
 }
 
