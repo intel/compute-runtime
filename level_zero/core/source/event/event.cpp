@@ -41,6 +41,10 @@ template Event *Event::create<uint64_t>(const EventDescriptor &, Device *, ze_re
 template Event *Event::create<uint32_t>(const EventDescriptor &, Device *, ze_result_t &);
 
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+    if (this->numEvents == 0) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
     this->context = context;
 
     const bool counterBased = (counterBasedFlags != 0);

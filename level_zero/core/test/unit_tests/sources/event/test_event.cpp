@@ -226,6 +226,19 @@ TEST_F(EventPoolFailTests, givenEnabledTimestampPoolAllocatorWhenCreatingEventPo
     EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
 
+TEST_F(EventPoolCreate, givenZeroEventCountWhenCreatingEventPoolThenInvalidSizeIsReturned) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        0,
+        0};
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, result);
+    EXPECT_EQ(nullptr, eventPool);
+}
+
 TEST_F(EventPoolCreate, GivenEventPoolThenAllocationContainsAtLeast16Bytes) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
