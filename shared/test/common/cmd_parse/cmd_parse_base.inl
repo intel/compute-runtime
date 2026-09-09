@@ -35,7 +35,7 @@ using XY_COLOR_BLT                    = GenGfxFamily::XY_COLOR_BLT;
 
 template <typename SBAType>
 SBAType *genSBACast(void *buffer) {
-    if constexpr (std::is_same_v<SBAType, SBAPlaceholder>) {
+    if constexpr (!GfxFamilyWithSBA<GenStruct>) {
         return nullptr;
     } else {
         return matchCommandHeader<SBAType>(buffer, [](const SBAType &header) {
@@ -54,7 +54,7 @@ STATE_BASE_ADDRESS *genCmdCast<STATE_BASE_ADDRESS *>(void *buffer) {
 
 template <typename SBAType>
 size_t getSBALength(void *cmd) {
-    if constexpr (std::is_same_v<SBAType, SBAPlaceholder>) {
+    if constexpr (!GfxFamilyWithSBA<GenStruct>) {
         return 0u;
     } else {
         auto pCmd = genCmdCast<SBAType *>(cmd);
