@@ -305,6 +305,10 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         return DebugSessionLinuxXe::getInternalEvent();
     }
 
+    float getThreadStartLimitTime() override {
+        return threadStartLimit;
+    }
+
     bool pushApiEventValidateAckEvents = false;
     bool pushApiEventAckEventsFound = false;
     void pushApiEvent(zet_debug_event_t &debugEvent, uint64_t moduleHandle) override {
@@ -392,6 +396,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
     size_t numThreadsPassedToThreadControl = 0;
     bool synchronousInternalEventRead = false;
+    float threadStartLimit = 0.0;
     std::atomic<int> getInternalEventCounter = 0;
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;
     static constexpr uint64_t mockClientHandle = 1;
