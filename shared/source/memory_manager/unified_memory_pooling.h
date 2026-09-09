@@ -25,7 +25,19 @@ class GraphicsAllocation;
 class MemoryManager;
 class MemoryOperationsHandler;
 class SVMAllocsManager;
+class UsmMemAllocPool;
 struct SvmAllocationData;
+
+// pool is a bare pointer into a UsmMemAllocPoolsManager bucket, returned after the manager
+// lock is dropped. Only a live chunk keeps that pool off trimEmptyPools; the residency paths
+// deliberately dereference it without one and rely on the API-level pointer being valid.
+struct UsmPoolLookupResult {
+    UsmMemAllocPool *pool{nullptr};
+    PoolInfo poolInfo{};
+    void *pooledAllocationBasePtr{nullptr};
+    size_t pooledAllocationSize{0u};
+    bool isAllocatedInPool() const { return nullptr != pooledAllocationBasePtr; }
+};
 
 class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
   public:
@@ -68,12 +80,9 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     bool isEmpty() const;
     MOCKABLE_VIRTUAL bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
     void reclaimDeferredFreeChunks();
-    size_t getPooledAllocationSize(const void *ptr);
-    void *getPooledAllocationBasePtr(const void *ptr);
-    bool isPooledAllocation(const void *ptr);
+    UsmPoolLookupResult lookupAlloc(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
     uint64_t getPoolAddress() const;
-    PoolInfo getPoolInfo() const;
     std::mutex &getMutex() noexcept { return mtx; }
     void enableResidencyTracking() { this->trackResidency = true; }
     bool isTrackingResidency() { return this->trackResidency; }
@@ -159,10 +168,7 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool canAddPool(PoolInfo poolInfo);
     void trimEmptyPools(PoolInfo poolInfo);
     bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
-    size_t getPooledAllocationSize(const void *ptr);
-    void *getPooledAllocationBasePtr(const void *ptr);
-    size_t getOffsetInPool(const void *ptr);
-    UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
+    UsmPoolLookupResult getPoolContainingAlloc(const void *ptr);
     void enableResidencyTracking() { this->trackResidency = true; }
     void setCustomCleanup(CustomCleanupFn customCleanup) {
         this->customCleanup = std::move(customCleanup);
@@ -199,7 +205,7 @@ class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
     bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
-    UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
+    UsmPoolLookupResult getPoolContainingAlloc(const void *ptr);
     UsmMemAllocPool *getPool() const { return pool.get(); }
     UsmMemAllocPoolsManager *getPoolManager() const { return poolManager.get(); }
 

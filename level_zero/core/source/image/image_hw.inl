@@ -145,8 +145,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         this->samplerDesc.pNext = nullptr;
     }
 
-    NEO::UsmMemAllocPool *usmPool = nullptr;
-
     if (!isImageView()) {
         if (lookupTable.isSharedHandle) {
             if (!lookupTable.sharedHandleType.isSupportedHandle) {
@@ -205,8 +203,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
 
-                usmPool = this->device->getNEODevice()->getUsmPoolOwningPtr(lookupTable.imageProperties.pitchedPtr);
-                if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(lookupTable.imageProperties.pitchedPtr)) {
+                auto poolLookup = this->device->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(lookupTable.imageProperties.pitchedPtr);
+                if (poolLookup.pool && false == poolLookup.isAllocatedInPool()) {
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
 

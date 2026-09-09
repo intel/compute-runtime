@@ -233,7 +233,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         return this->semaphorePoolAllocator;
     }
     UsmMemAllocPoolsFacade &getDeviceUsmMemAllocPoolFacade();
-    UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr);
     UsmMemAllocPool *getUsmConstantSurfaceAllocPool() {
         return usmConstantSurfaceAllocPool.get();
     }

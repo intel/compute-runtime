@@ -630,7 +630,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenPooledAllocationWithRangeSizeFittingPoo
     void *ptr = reinterpret_cast<uint8_t *>(poolBase) + MemoryConstants::pageSize;
 
     auto pool = installPooledDeviceAllocation(poolBase, poolSize, ptr, pooledSize);
-    ASSERT_EQ(pool, neoDevice->getUsmPoolOwningPtr(ptr));
+    ASSERT_EQ(pool, neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr).pool);
 
     auto desc = buildRangeDesc(pooledSize);
     ze_ipc_mem_handle_t ipcHandle = {};
@@ -646,7 +646,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenPooledAllocationWithRangeSizeExceedingP
     void *ptr = reinterpret_cast<uint8_t *>(poolBase) + MemoryConstants::pageSize;
 
     auto pool = installPooledDeviceAllocation(poolBase, poolSize, ptr, pooledSize);
-    ASSERT_EQ(pool, neoDevice->getUsmPoolOwningPtr(ptr));
+    ASSERT_EQ(pool, neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr).pool);
 
     auto desc = buildRangeDesc(4u * MemoryConstants::pageSize);
     ze_ipc_mem_handle_t ipcHandle = {};

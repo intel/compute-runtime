@@ -714,6 +714,30 @@ TEST_F(AllocationReuseContextTest, givenHostSvmAllocPresentButRequestingTooBigSi
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
+TEST_F(AllocationReuseContextTest, givenPooledPtrThatIsNotAnAllocatedChunkWhenGettingExistingHostPtrAllocThenReturnError) {
+
+    uint64_t svmPtrGpu = 0x1234;
+    void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
+    MockGraphicsAllocation allocation{svmPtr, svmPtrGpu, 400};
+    addSvmPtr(InternalMemoryType::deviceUnifiedMemory, allocation);
+
+    auto mockPoolsFacade = static_cast<MockUsmMemAllocPoolsFacade *>(&context->getDeviceMemAllocPoolsManager());
+    auto mockPool = new MockUsmMemAllocPool;
+    mockPool->pool = svmPtr;
+    mockPool->poolEnd = reinterpret_cast<void *>(svmPtrGpu + allocation.getUnderlyingBufferSize());
+    mockPool->callBaseCleanup = false;
+    mockPoolsFacade->pool.reset(mockPool);
+
+    const size_t ptrSizeToRetrieve = 4u;
+    GraphicsAllocation *retrievedAllocation{};
+    InternalMemoryType retrievedMemoryType{};
+    bool retrievedCpuCopyStatus = false;
+    retVal = context->tryGetExistingHostPtrAllocation(svmPtr, ptrSizeToRetrieve, getRootDeviceIndex(),
+                                                      retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, retrievedAllocation);
+}
+
 TEST_F(AllocationReuseContextTest, givenHostPtrStoredInMapOperationsStorageWhenGettingExistingHostPtrAllocThenRetrieveTheAllocation) {
     MockGraphicsAllocation allocation{};
     MockBuffer buffer{context, allocation};

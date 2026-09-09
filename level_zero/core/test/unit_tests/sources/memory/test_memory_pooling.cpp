@@ -249,7 +249,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
     EXPECT_EQ(0u, mockHostMemAllocPool->allocations.getNumAllocs());
 
     void *notAllocatedPoolPtr = mockHostMemAllocPool->pool;
-    EXPECT_EQ(nullptr, mockHostMemAllocPool->getPooledAllocationBasePtr(notAllocatedPoolPtr));
+    EXPECT_FALSE(mockHostMemAllocPool->lookupAlloc(notAllocatedPoolPtr).isAllocatedInPool());
     result = context->freeMemExt(&memFreeDesc, notAllocatedPoolPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
@@ -262,7 +262,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDeferFreePolicyWhenPooledChunkIsUsedB
     ze_host_mem_alloc_desc_t hostDesc = {};
     void *ptr = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, poolAllocationThreshold, 0u, &ptr));
-    ASSERT_TRUE(mockHostMemAllocPool->isPooledAllocation(ptr));
+    ASSERT_TRUE(mockHostMemAllocPool->lookupAlloc(ptr).isAllocatedInPool());
 
     auto &csr = *l0Devices[0]->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     auto poolAllocation = driverHandle->svmAllocsManager->getSVMAlloc(mockHostMemAllocPool->pool)->gpuAllocations.getDefaultGraphicsAllocation();
@@ -274,7 +274,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDeferFreePolicyWhenPooledChunkIsUsedB
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, ptr));
 
     EXPECT_EQ(waitCalledBeforeFree, mockMemoryManager->waitForEnginesCompletionCalled);
-    EXPECT_FALSE(mockHostMemAllocPool->isPooledAllocation(ptr));
+    EXPECT_FALSE(mockHostMemAllocPool->lookupAlloc(ptr).isAllocatedInPool());
     EXPECT_EQ(1u, mockHostMemAllocPool->deferredFreeChunks.size());
 
     // chunk is not allocated anymore, freeing it again is an error
@@ -293,7 +293,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenBlockingFreePolicyWhenFreeingPooledCh
     ze_host_mem_alloc_desc_t hostDesc = {};
     void *ptr = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, poolAllocationThreshold, 0u, &ptr));
-    ASSERT_TRUE(mockHostMemAllocPool->isPooledAllocation(ptr));
+    ASSERT_TRUE(mockHostMemAllocPool->lookupAlloc(ptr).isAllocatedInPool());
 
     const auto expectedWaitCalled = mockMemoryManager->waitForEnginesCompletionCalled + 1;
     ze_memory_free_ext_desc_t memFreeDesc = {};
@@ -301,7 +301,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenBlockingFreePolicyWhenFreeingPooledCh
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, ptr));
 
     EXPECT_EQ(expectedWaitCalled, mockMemoryManager->waitForEnginesCompletionCalled);
-    EXPECT_FALSE(mockHostMemAllocPool->isPooledAllocation(ptr));
+    EXPECT_FALSE(mockHostMemAllocPool->lookupAlloc(ptr).isAllocatedInPool());
     EXPECT_TRUE(mockHostMemAllocPool->deferredFreeChunks.empty());
 }
 
@@ -322,15 +322,17 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenPooledAllocationWhenCallingGetMemAddr
     EXPECT_NE(nullptr, pooledAllocation);
     EXPECT_TRUE(pool->isInPoolRange(pooledAllocation));
 
+    const auto poolLookup = pool->lookupAlloc(pooledAllocation);
+
     size_t size = 0u;
     context->getMemAddressRange(pooledAllocation, nullptr, &size);
     EXPECT_GE(size, 1u);
-    EXPECT_EQ(pool->getPooledAllocationSize(pooledAllocation), size);
+    EXPECT_EQ(poolLookup.pooledAllocationSize, size);
 
     void *basePtr = nullptr;
     context->getMemAddressRange(pooledAllocation, &basePtr, nullptr);
     EXPECT_NE(nullptr, basePtr);
-    EXPECT_EQ(pool->getPooledAllocationBasePtr(pooledAllocation), basePtr);
+    EXPECT_EQ(poolLookup.pooledAllocationBasePtr, basePtr);
 
     result = context->freeMem(pooledAllocation);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -620,15 +622,17 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCalli
     EXPECT_NE(nullptr, pooledAllocation);
     EXPECT_TRUE(pool->isInPoolRange(pooledAllocation));
 
+    const auto poolLookup = pool->lookupAlloc(pooledAllocation);
+
     size_t size = 0u;
     context->getMemAddressRange(pooledAllocation, nullptr, &size);
     EXPECT_GE(size, poolAllocationThreshold);
-    EXPECT_EQ(pool->getPooledAllocationSize(pooledAllocation), size);
+    EXPECT_EQ(poolLookup.pooledAllocationSize, size);
 
     void *basePtr = nullptr;
     context->getMemAddressRange(pooledAllocation, &basePtr, nullptr);
     EXPECT_NE(nullptr, basePtr);
-    EXPECT_EQ(pool->getPooledAllocationBasePtr(pooledAllocation), basePtr);
+    EXPECT_EQ(poolLookup.pooledAllocationBasePtr, basePtr);
 
     result = context->freeMem(pooledAllocation);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -837,7 +841,7 @@ TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhen
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(allocation));
     // not allocated pool ptr
     EXPECT_TRUE(mockDeviceMemAllocPool->isInPoolRange(allocation));
-    EXPECT_EQ(nullptr, mockDeviceMemAllocPool->getPooledAllocationBasePtr(allocation));
+    EXPECT_FALSE(mockDeviceMemAllocPool->lookupAlloc(allocation).isAllocatedInPool());
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->evictMemory(l0Devices[0], allocation, 1u));
     EXPECT_EQ(expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
 
@@ -898,13 +902,15 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, allocation);
     EXPECT_TRUE(usmMemAllocPoolsManager->isInitialized());
-    EXPECT_EQ(allocation, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation));
-    EXPECT_EQ(1u, usmMemAllocPoolsManager->getPooledAllocationSize(allocation));
+    const auto allocationLookup = usmMemAllocPoolsManager->getPoolContainingAlloc(allocation);
+    ASSERT_NE(nullptr, allocationLookup.pool);
+    EXPECT_EQ(allocation, allocationLookup.pooledAllocationBasePtr);
+    EXPECT_EQ(1u, allocationLookup.pooledAllocationSize);
     ze_ipc_mem_handle_t ipcHandle{};
     result = context->getIpcMemHandle(allocation, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
-    auto pooledAllocationOffset = usmMemAllocPoolsManager->getOffsetInPool(allocation);
+    auto pooledAllocationOffset = allocationLookup.pool->getOffsetInPool(allocation);
     EXPECT_EQ(pooledAllocationOffset, ipcData.poolOffset);
 
     ze_ipc_memory_flags_t ipcFlags{};
@@ -924,11 +930,11 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
         result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, sizeToAllocate, 0u, &allocation);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, allocation);
-        EXPECT_EQ(allocation, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation));
-        auto pool = usmMemAllocPoolsManager->getPoolContainingAlloc(allocation);
-        EXPECT_NE(nullptr, pool);
+        auto lookupResult = usmMemAllocPoolsManager->getPoolContainingAlloc(allocation);
+        EXPECT_NE(nullptr, lookupResult.pool);
+        EXPECT_EQ(allocation, lookupResult.pooledAllocationBasePtr);
 
-        auto allocationSizeReportedByPool = usmMemAllocPoolsManager->getPooledAllocationSize(allocation);
+        auto allocationSizeReportedByPool = lookupResult.pooledAllocationSize;
         EXPECT_GE(allocationSizeReportedByPool, poolInfo.minServicedSize);
         EXPECT_LE(allocationSizeReportedByPool, poolInfo.maxServicedSize);
         EXPECT_EQ(allocationSizeReportedByPool, sizeToAllocate);
@@ -940,7 +946,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
         result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, maxPooledSize + 1, 0u, &allocationOverLimit);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, allocationOverLimit);
-        auto pool = usmMemAllocPoolsManager->getPoolContainingAlloc(allocationOverLimit);
+        auto pool = usmMemAllocPoolsManager->getPoolContainingAlloc(allocationOverLimit).pool;
         EXPECT_EQ(nullptr, pool);
         context->freeMem(allocationOverLimit);
     }

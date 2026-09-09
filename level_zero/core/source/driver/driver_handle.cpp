@@ -453,7 +453,7 @@ void DriverHandle::initUsmPooling() {
     }
 }
 
-NEO::UsmMemAllocPool *DriverHandle::getHostUsmPoolOwningPtr(const void *ptr) {
+NEO::UsmPoolLookupResult DriverHandle::getHostUsmPoolOwningPtr(const void *ptr) {
     return usmHostMemAllocPoolFacade.getPoolContainingAlloc(ptr);
 }
 

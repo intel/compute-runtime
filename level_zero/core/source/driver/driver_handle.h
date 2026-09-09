@@ -161,7 +161,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     void initDeviceUsmAllocPoolOnce();
     void initUsmPooling();
     NEO::UsmMemAllocPool::CustomCleanupFn getPoolCleanupFn();
-    NEO::UsmMemAllocPool *getHostUsmPoolOwningPtr(const void *ptr);
+    NEO::UsmPoolLookupResult getHostUsmPoolOwningPtr(const void *ptr);
 
     void shutdownIpcSocketServer();
     bool unregisterIpcHandleWithServer(uint64_t handleId);

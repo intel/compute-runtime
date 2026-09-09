@@ -879,10 +879,6 @@ UsmMemAllocPoolsFacade &Device::getDeviceUsmMemAllocPoolFacade() {
     return *deviceUsmMemAllocPoolFacade;
 }
 
-UsmMemAllocPool *Device::getUsmPoolOwningPtr(const void *ptr) {
-    return deviceUsmMemAllocPoolFacade->getPoolContainingAlloc(ptr);
-}
-
 uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {
     auto globalMemorySize = getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())
                                 ? getMemoryManager()->getLocalMemorySize(this->getRootDeviceIndex(), deviceBitfield)

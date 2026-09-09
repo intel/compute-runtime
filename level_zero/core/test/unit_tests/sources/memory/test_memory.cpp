@@ -591,7 +591,7 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsExpected
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
-    auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc);
+    auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc).pool;
 
     if (usmPool &&
         usmPool->isInPoolRange(ptr)) {
@@ -623,7 +623,7 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsExpectedPr
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
-    auto usmPool = driverHandle->getHostUsmPoolOwningPtr(ptr);
+    auto usmPool = driverHandle->getHostUsmPoolOwningPtr(ptr).pool;
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
@@ -851,7 +851,7 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsMemoryId) 
     EXPECT_NE(nullptr, ptr);
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
-    auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc);
+    auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc).pool;
 
     ze_memory_allocation_properties_t memoryProperties = {};
     ze_device_handle_t deviceHandle;
@@ -7189,7 +7189,9 @@ TEST_F(AllocUsmPoolMemoryTest, givenChunkDeviceMemoryWhenCallingMapDeviceMemToHo
 
     auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     auto gpuAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
-    auto expectedPtrAddress = ptrOffset(gpuAllocation->getLockedPtr(), allocData->device->getDeviceUsmMemAllocPoolFacade().getPoolManager()->getOffsetInPool(ptr));
+    const auto poolLookup = allocData->device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr);
+    ASSERT_NE(nullptr, poolLookup.pool);
+    auto expectedPtrAddress = ptrOffset(gpuAllocation->getLockedPtr(), poolLookup.pool->getOffsetInPool(ptr));
     EXPECT_EQ(expectedPtrAddress, cpuPtr);
 
     result = context->freeMem(ptr);

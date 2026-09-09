@@ -542,17 +542,16 @@ void Context::clearMemAdviseStateFromAll(NEO::SvmAllocationData *svmData) {
     }
 }
 
-NEO::UsmMemAllocPool *Context::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData) {
+NEO::UsmPoolLookupResult Context::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData) {
     DEBUG_BREAK_IF(nullptr == svmData);
-    NEO::UsmMemAllocPool *usmPool = nullptr;
 
     if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType) {
-        usmPool = driverHandle->getHostUsmPoolOwningPtr(ptr);
+        return driverHandle->getHostUsmPoolOwningPtr(ptr);
     } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
-        usmPool = svmData->device->getUsmPoolOwningPtr(ptr);
+        return svmData->device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr);
     }
 
-    return usmPool;
+    return {};
 }
 
 bool Context::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, NEO::FreePolicyType policy) {
@@ -594,13 +593,13 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
     }
 
     uint64_t addressForIpc = reinterpret_cast<uint64_t>(ptr);
-    auto *usmPool = getUsmPoolOwningPtr(ptr, allocation);
-    if (usmPool) {
-        if (false == usmPool->isPooledAllocation(ptr)) {
+    auto poolLookup = getUsmPoolOwningPtr(ptr, allocation);
+    if (poolLookup.pool) {
+        if (false == poolLookup.isAllocatedInPool()) {
             // ptr is within usm pool address space but is not allocated
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         } else {
-            addressForIpc = usmPool->getPoolAddress();
+            addressForIpc = poolLookup.pool->getPoolAddress();
         }
     }
 
@@ -614,7 +613,7 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
     while (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         if (ipcHandleIterator->second->ptr == addressForIpc) {
             ipcHandleIterator->second->refcnt -= 1;
-            if (ipcHandleIterator->second->refcnt == 0 || nullptr == usmPool) {
+            if (ipcHandleIterator->second->refcnt == 0 || nullptr == poolLookup.pool) {
                 auto *memoryManager = driverHandle->getMemoryManager();
                 void *reservedHandleData = nullptr;
                 if (ipcHandleIterator->second->hasReservedHandleData) {
@@ -636,7 +635,7 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
         ipcHandleIterator++;
     }
 
-    if (this->tryFreeViaPooling(ptr, allocation, usmPool,
+    if (this->tryFreeViaPooling(ptr, allocation, poolLookup.pool,
                                 blocking ? NEO::FreePolicyType::blocking : NEO::FreePolicyType::none)) {
         return ZE_RESULT_SUCCESS;
     }
@@ -659,8 +658,8 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
         if (allocation == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        auto *usmPool = getUsmPoolOwningPtr(ptr, allocation);
-        if (usmPool && false == usmPool->isPooledAllocation(ptr)) {
+        auto poolLookup = getUsmPoolOwningPtr(ptr, allocation);
+        if (poolLookup.pool && false == poolLookup.isAllocatedInPool()) {
             // ptr is within usm pool address space but is not allocated
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -672,7 +671,7 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
 
         this->clearMemAdviseStateFromAll(allocation);
 
-        if (this->tryFreeViaPooling(ptr, allocation, usmPool, NEO::FreePolicyType::defer)) {
+        if (this->tryFreeViaPooling(ptr, allocation, poolLookup.pool, NEO::FreePolicyType::defer)) {
             return ZE_RESULT_SUCCESS;
         }
 
@@ -690,7 +689,7 @@ ze_result_t Context::registerMemoryFreeCallback(zex_memory_free_callback_ext_des
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto *usmPool = getUsmPoolOwningPtr(ptr, allocation);
+    auto *usmPool = getUsmPoolOwningPtr(ptr, allocation).pool;
     std::lock_guard<std::mutex> lock(this->driverHandle->svmAllocsManager->getMemFreeCallbacksMutex());
     if (usmPool) {
         // pooled chunks share one SvmAllocationData, so a list would fire callbacks of
@@ -705,8 +704,8 @@ ze_result_t Context::registerMemoryFreeCallback(zex_memory_free_callback_ext_des
 ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, size_t size) {
     Device *device = L0::Device::fromHandle(hDevice);
     NEO::Device *neoDevice = device->getNEODevice();
-    if (auto usmPool = neoDevice->getUsmPoolOwningPtr(ptr); usmPool && usmPool->isTrackingResidency()) {
-        auto result = usmPool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::makeResident>(ptr);
+    if (auto poolLookup = neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr); poolLookup.pool && poolLookup.pool->isTrackingResidency()) {
+        auto result = poolLookup.pool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::makeResident>(ptr);
         return changeMemoryOperationStatusToL0ResultType(result);
     }
     for (auto peerL0Device : this->getDriverHandle()->devices) {
@@ -714,8 +713,8 @@ ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, s
             continue;
         }
         auto peerDevice = peerL0Device->getNEODevice();
-        if (auto usmPool = peerDevice->getUsmPoolOwningPtr(ptr); usmPool && usmPool->isTrackingResidency()) {
-            auto result = usmPool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::makeResident>(ptr, neoDevice);
+        if (auto poolLookup = peerDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr); poolLookup.pool && poolLookup.pool->isTrackingResidency()) {
+            auto result = poolLookup.pool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::makeResident>(ptr, neoDevice);
             return changeMemoryOperationStatusToL0ResultType(result);
         }
     }
@@ -746,8 +745,8 @@ ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, s
 ze_result_t Context::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t size) {
     Device *device = L0::Device::fromHandle(hDevice);
     NEO::Device *neoDevice = device->getNEODevice();
-    if (auto usmPool = neoDevice->getUsmPoolOwningPtr(ptr); usmPool && usmPool->isTrackingResidency()) {
-        auto result = usmPool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::evict>(ptr);
+    if (auto poolLookup = neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr); poolLookup.pool && poolLookup.pool->isTrackingResidency()) {
+        auto result = poolLookup.pool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::evict>(ptr);
         return changeMemoryOperationStatusToL0ResultType(result);
     }
     for (auto peerL0Device : this->getDriverHandle()->devices) {
@@ -755,8 +754,8 @@ ze_result_t Context::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t s
             continue;
         }
         auto peerDevice = peerL0Device->getNEODevice();
-        if (auto usmPool = peerDevice->getUsmPoolOwningPtr(ptr); usmPool && usmPool->isTrackingResidency()) {
-            auto result = usmPool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::evict>(ptr, neoDevice);
+        if (auto poolLookup = peerDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr); poolLookup.pool && poolLookup.pool->isTrackingResidency()) {
+            auto result = poolLookup.pool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::evict>(ptr, neoDevice);
             return changeMemoryOperationStatusToL0ResultType(result);
         }
     }
@@ -809,19 +808,18 @@ ze_result_t Context::getMemAddressRange(const void *ptr,
                                         size_t *pSize) {
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (allocData) {
-        auto usmPool = getUsmPoolOwningPtr(ptr, allocData);
-        if (usmPool) {
-            auto pooledBasePtr = usmPool->getPooledAllocationBasePtr(ptr);
-            if (nullptr == pooledBasePtr) {
+        auto poolLookup = getUsmPoolOwningPtr(ptr, allocData);
+        if (poolLookup.pool) {
+            if (false == poolLookup.isAllocatedInPool()) {
                 // ptr is within usm pool address space but is not allocated
                 return ZE_RESULT_ERROR_ADDRESS_NOT_FOUND;
             }
             if (pBase) {
-                *pBase = pooledBasePtr;
+                *pBase = poolLookup.pooledAllocationBasePtr;
             }
 
             if (pSize) {
-                *pSize = usmPool->getPooledAllocationSize(ptr);
+                *pSize = poolLookup.pooledAllocationSize;
             }
         } else {
             NEO::GraphicsAllocation *alloc;
@@ -1059,12 +1057,13 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
     } else {
         type = allocData->memoryType;
 
-        usmPool = getUsmPoolOwningPtr(ptr, allocData);
+        auto poolLookup = getUsmPoolOwningPtr(ptr, allocData);
 
-        if (usmPool && false == usmPool->isPooledAllocation(ptr)) {
+        if (poolLookup.pool && false == poolLookup.isAllocatedInPool()) {
             // ptr is within usm pool address space but is not allocated
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
+        usmPool = poolLookup.pool;
         alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
         fabricAccessibleHandle = allocData->ipcHandleTypeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
         allocSupportsIpc = allocData->ipcHandleTypeFlags != 0;
@@ -1431,8 +1430,8 @@ ze_result_t Context::getIpcRangeHandle(const void *ptr,
         if (allocData != nullptr) {
             // Bound against the pooled sub-allocation, not the whole USM pool, so an oversized request is
             // rejected instead of exporting past ptr's allocation (matches getMemAddressRange).
-            auto usmPool = getUsmPoolOwningPtr(ptr, allocData);
-            effectiveAllocSize = usmPool ? usmPool->getPooledAllocationSize(ptr) : allocData->size;
+            auto usmPoolLookup = getUsmPoolOwningPtr(ptr, allocData);
+            effectiveAllocSize = usmPoolLookup.pool ? usmPoolLookup.pooledAllocationSize : allocData->size;
         }
         if (allocData != nullptr && desc->size <= effectiveAllocSize) {
             return getIpcMemHandle(ptr, nullptr, pIpcHandle);
@@ -2066,8 +2065,8 @@ ze_result_t Context::mapDeviceMemToHost(const void *ptr, void **pptr, void *pNex
         return ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE;
     }
 
-    auto pool = getUsmPoolOwningPtr(ptr, allocData);
-    *pptr = ptrOffset(cpuPtr, pool ? pool->getOffsetInPool(ptr) : 0u);
+    auto poolLookup = getUsmPoolOwningPtr(ptr, allocData);
+    *pptr = ptrOffset(cpuPtr, poolLookup.pool ? poolLookup.pool->getOffsetInPool(ptr) : 0u);
 
     return ZE_RESULT_SUCCESS;
 }

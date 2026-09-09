@@ -222,7 +222,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenTwoContextsWhenHostAllocationIsFreedInF
             MockUsmMemAllocPool *mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(mockUsmHostFacade->pool.get());
             EXPECT_GT(mockHostUsmMemAllocPool->poolInfo.poolSize, 0u);
         } else {
-            EXPECT_NE(nullptr, mockUsmHostFacade->getPoolContainingAlloc(pooledHostAlloc1));
+            EXPECT_NE(nullptr, mockUsmHostFacade->getPoolContainingAlloc(pooledHostAlloc1).pool);
         }
 
         clMemFreeINTEL(mockContext.get(), pooledHostAlloc1);
@@ -262,7 +262,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenUsmPoolsManagerSupportedWhenCreatingAll
     EXPECT_TRUE(mockDeviceMemPoolsFacade->isInitialized());
     EXPECT_TRUE(mockDeviceMemPoolsFacade->poolManager->isInitialized());
 
-    auto pool = mockDeviceMemPoolsFacade->getPoolContainingAlloc(deviceAlloc);
+    auto pool = mockDeviceMemPoolsFacade->getPoolContainingAlloc(deviceAlloc).pool;
     EXPECT_NE(pool, nullptr);
     EXPECT_TRUE(pool->isInPoolRange(deviceAlloc));
 
@@ -281,7 +281,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenUsmPoolsManagerAllocationsWhenFreeingAl
     EXPECT_TRUE(mockDeviceMemPoolsFacade->isInitialized());
     EXPECT_TRUE(mockDeviceMemPoolsFacade->poolManager->isInitialized());
 
-    auto pool = mockDeviceMemPoolsFacade->getPoolContainingAlloc(deviceAlloc);
+    auto pool = mockDeviceMemPoolsFacade->getPoolContainingAlloc(deviceAlloc).pool;
     EXPECT_NE(pool, nullptr);
     EXPECT_FALSE(pool->isEmpty());
 
@@ -302,7 +302,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenUsmPoolsManagerAllocationsWhenFreeingIn
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(mockDeviceMemPoolsFacade->isInitialized());
     EXPECT_TRUE(mockDeviceMemPoolsFacade->poolManager->isInitialized());
-    EXPECT_NE(nullptr, mockDeviceMemPoolsFacade->getPoolContainingAlloc(deviceAlloc));
+    EXPECT_NE(nullptr, mockDeviceMemPoolsFacade->getPoolContainingAlloc(deviceAlloc).pool);
     retVal = clMemFreeINTEL(mockContext.get(), deviceAlloc);
     EXPECT_EQ(retVal, CL_SUCCESS);
 

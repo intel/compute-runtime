@@ -121,18 +121,19 @@ cl_int Context::tryGetExistingSvmAllocation(const void *ptr,
         SvmAllocationData *svmEntry = getSVMAllocsManager()->getSVMAlloc(ptr);
         if (svmEntry) {
             memoryType = svmEntry->memoryType;
-            UsmMemAllocPool *pool = nullptr;
+            UsmPoolLookupResult poolLookup{};
             if (memoryType == InternalMemoryType::hostUnifiedMemory) {
-                pool = this->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().getPoolContainingAlloc(ptr);
+                poolLookup = this->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().getPoolContainingAlloc(ptr);
             } else if (memoryType == InternalMemoryType::deviceUnifiedMemory) {
-                pool = this->getDeviceMemAllocPoolsManager().getPoolContainingAlloc(ptr);
+                poolLookup = this->getDeviceMemAllocPoolsManager().getPoolContainingAlloc(ptr);
             }
-            if (pool) {
-                size_t pooledSize = pool->getPooledAllocationSize(ptr);
-                uint64_t pooledBasePtr = castToUint64(pool->getPooledAllocationBasePtr(ptr));
-                if ((pooledBasePtr + pooledSize) < (castToUint64(ptr) + size)) {
+            if (poolLookup.isAllocatedInPool()) {
+                const auto pooledBasePtr = castToUint64(poolLookup.pooledAllocationBasePtr);
+                if ((pooledBasePtr + poolLookup.pooledAllocationSize) < (castToUint64(ptr) + size)) {
                     return CL_INVALID_OPERATION;
                 }
+            } else if (poolLookup.pool) {
+                return CL_INVALID_OPERATION;
             } else if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
                 return CL_INVALID_OPERATION;
             }

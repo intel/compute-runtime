@@ -382,7 +382,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     uint32_t getNumDevices() const {
         return numDevices;
     }
-    NEO::UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
+    NEO::UsmPoolLookupResult getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
 
     bool isSocketHandleSharingSupported() const { return (((settings.useOpaqueHandle & OpaqueHandlingType::sockets) == OpaqueHandlingType::sockets) && (settings.handleType == IpcHandleType::fdHandle)); }
     void registerIpcHandleWithServer(uint64_t handleId);

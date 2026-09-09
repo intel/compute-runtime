@@ -5087,7 +5087,7 @@ class ZexMemFreeRegisterCallbackExtTests : public Test<DeviceFixture> {
 
     NEO::UsmMemAllocPool *getPoolOwningPtr(const void *ptr) {
         auto svmData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-        return svmData ? context->getUsmPoolOwningPtr(ptr, svmData) : nullptr;
+        return svmData ? context->getUsmPoolOwningPtr(ptr, svmData).pool : nullptr;
     }
 
     void *allocHostMem(size_t size) {
@@ -5468,7 +5468,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenPointerInsidePoolRangeThat
     // SvmAllocationData, so freeing any live chunk would drain the list and leave nothing
     // for the invalid free below to expose.
     ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freedPtr));
-    ASSERT_FALSE(usmPool->isPooledAllocation(freedPtr));
+    ASSERT_FALSE(usmPool->lookupAlloc(freedPtr).isAllocatedInPool());
 
     CallbackTracker tracker{};
     auto callbackDesc = makeCallbackDesc(tracker);

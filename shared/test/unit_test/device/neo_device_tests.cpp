@@ -2888,10 +2888,10 @@ TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueRetur
         usmAllocPool->poolEnd = pastPoolEndPtr;
         usmAllocPool->poolInfo = poolInfo;
         usmAllocPool->callBaseCleanup = false;
-        EXPECT_EQ(nullptr, device->getUsmPoolOwningPtr(beforePoolPtr));
-        EXPECT_EQ(usmAllocPool, device->getUsmPoolOwningPtr(poolStartPtr));
-        EXPECT_EQ(usmAllocPool, device->getUsmPoolOwningPtr(poolEndPtr));
-        EXPECT_EQ(nullptr, device->getUsmPoolOwningPtr(pastPoolEndPtr));
+        EXPECT_EQ(nullptr, device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(beforePoolPtr).pool);
+        EXPECT_EQ(usmAllocPool, device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(poolStartPtr).pool);
+        EXPECT_EQ(usmAllocPool, device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(poolEndPtr).pool);
+        EXPECT_EQ(nullptr, device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(pastPoolEndPtr).pool);
 
         EXPECT_EQ(0u, usmAllocPool->cleanupCalled);
         device->cleanupUsmAllocationPool();
@@ -2915,10 +2915,10 @@ TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueRetur
         usmAllocPool->callBaseCleanup = false;
         usmAllocPoolManager->pools[poolInfo].push_back(std::unique_ptr<UsmMemAllocPool>(usmAllocPool));
 
-        EXPECT_EQ(nullptr, device->getUsmPoolOwningPtr(beforePoolPtr));
-        EXPECT_EQ(usmAllocPool, device->getUsmPoolOwningPtr(poolStartPtr));
-        EXPECT_EQ(usmAllocPool, device->getUsmPoolOwningPtr(poolEndPtr));
-        EXPECT_EQ(nullptr, device->getUsmPoolOwningPtr(pastPoolEndPtr));
+        EXPECT_EQ(nullptr, device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(beforePoolPtr).pool);
+        EXPECT_EQ(usmAllocPool, device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(poolStartPtr).pool);
+        EXPECT_EQ(usmAllocPool, device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(poolEndPtr).pool);
+        EXPECT_EQ(nullptr, device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(pastPoolEndPtr).pool);
     }
 }
 

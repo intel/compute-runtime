@@ -531,7 +531,7 @@ TEST_F(HostUsmPoolMemoryOpenIpcHandleTest,
                                                size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
-    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(driverHandle->getHostUsmPoolOwningPtr(ptr));
+    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(driverHandle->getHostUsmPoolOwningPtr(ptr).pool);
     ASSERT_NE(nullptr, mockHostMemAllocPool);
     const auto pooledAllocationOffset = ptrDiff(mockHostMemAllocPool->allocations.get(ptr)->address, castToUint64(mockHostMemAllocPool->pool));
 
