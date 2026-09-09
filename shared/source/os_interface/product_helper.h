@@ -106,7 +106,6 @@ class ProductHelper {
     virtual uint32_t getPreferredWorkgroupCountPerSubslice() const = 0;
     virtual uint32_t getDefaultMidthreadPreemptionDelayTimer() const = 0; // STATE_COMPUTE_MODE field encoding, not microseconds
     virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const = 0;
-    virtual void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
@@ -134,7 +133,6 @@ class ProductHelper {
     virtual bool isBlitterForImagesSupported() const = 0;
     virtual bool isPageFaultSupported() const = 0;
     virtual bool isEuDebugPageFaultSupported() const = 0;
-    virtual bool isKmdMigrationSupported() const = 0;
     virtual bool isL1PolicyMissmatchCheckNeeded() const = 0;
     virtual bool isDisableScratchPagesSupported() const = 0;
     virtual bool isDisableScratchPagesRequiredForDebugger() const = 0;
@@ -262,7 +260,6 @@ class ProductHelper {
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
     virtual uint64_t getSharedSystemPatIndex() const = 0;
     virtual bool useSharedSystemUsm() const = 0;
-    virtual uint32_t getGmmResourceUsageOverride(uint32_t usageType) const = 0;
     virtual bool isSharingWith3dOrMediaAllowed() const = 0;
     virtual bool isL3FlushAfterPostSyncSupported() const = 0;
     virtual void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const = 0;

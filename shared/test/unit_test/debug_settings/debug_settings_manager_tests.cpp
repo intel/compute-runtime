@@ -474,7 +474,7 @@ TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementation
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     MockProductHelper productHelper{};
-    EXPECT_STREQ(graphicsAllocation.getPatIndexInfoString(productHelper).c_str(), "");
+    EXPECT_STREQ(graphicsAllocation.getPatIndexInfoString().c_str(), "");
 }
 
 TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVariablesAreRead) {

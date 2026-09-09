@@ -66,9 +66,6 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
     stateComputeMode.setMaskBits(maskBits);
 
-    auto &productHelper = rootDeviceEnvironment.getProductHelper();
-    productHelper.updateScmCommand(&stateComputeMode, properties);
-
     auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();
     *buffer = stateComputeMode;
 }

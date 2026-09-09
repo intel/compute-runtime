@@ -83,7 +83,7 @@ std::string DrmAllocation::getAllocationInfoString() const {
     return ss.str();
 }
 
-std::string DrmAllocation::getPatIndexInfoString(const ProductHelper &productHelper) const {
+std::string DrmAllocation::getPatIndexInfoString() const {
     std::stringstream ss;
 
     auto bo = getBO();

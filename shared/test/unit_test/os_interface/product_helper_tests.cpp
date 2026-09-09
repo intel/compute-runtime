@@ -444,11 +444,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfEuDebugPageFaultIsSuppo
     EXPECT_FALSE(productHelper->isEuDebugPageFaultSupported());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupportedThenReturnFalse) {
-
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfVmBindDecompressionProbeAllowedThenReturnFalse, IsAtMostXeCore) {
 
     EXPECT_FALSE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
@@ -1057,12 +1052,6 @@ HWTEST_F(ProductHelperTest, givenBooleanUncachedWhenCallOverridePatIndexThenProp
 
     isUncached = false;
     EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
-}
-
-HWTEST_F(ProductHelperTest, givenGmmUsageTypeWhenCallingGetGmmResourceUsageOverrideThenReturnNoOverride) {
-    constexpr uint32_t noOverride = GMM_RESOURCE_USAGE_UNKNOWN;
-    EXPECT_EQ(noOverride, productHelper->getGmmResourceUsageOverride(GMM_RESOURCE_USAGE_OCL_BUFFER));
-    EXPECT_EQ(noOverride, productHelper->getGmmResourceUsageOverride(GMM_RESOURCE_USAGE_XADAPTER_SHARED_RESOURCE));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCorrectValueIsReturned) {

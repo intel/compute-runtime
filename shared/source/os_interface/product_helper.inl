@@ -267,9 +267,6 @@ template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const {}
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const {}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
@@ -408,11 +405,6 @@ bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBu
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isL1PolicyMissmatchCheckNeeded() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
     return false;
 }
 
@@ -964,11 +956,6 @@ bool ProductHelperHw<gfxProduct>::isPatIndexValidForUserptr(uint64_t patIndex) c
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getGmmResourceUsageOverride(uint32_t usageType) const {
-    return 0u;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

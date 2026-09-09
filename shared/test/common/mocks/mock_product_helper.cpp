@@ -295,10 +295,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isVmBindDecompressionProbeAllowed(const Hard
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const {
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return false;
 }

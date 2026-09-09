@@ -521,8 +521,7 @@ TEST(DrmQueryTest, givenUseKmdMigrationSetWhenCallingHasKmdMigrationSupportThenR
     for (auto useKmdMigration : {-1, 0, 1}) {
         debugManager.flags.UseKmdMigration.set(useKmdMigration);
         if (useKmdMigration == -1) {
-            auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-            EXPECT_EQ(productHelper.isKmdMigrationSupported(), drm.hasKmdMigrationSupport());
+            EXPECT_FALSE(drm.hasKmdMigrationSupport());
         } else {
             EXPECT_EQ(useKmdMigration, drm.hasKmdMigrationSupport());
         }

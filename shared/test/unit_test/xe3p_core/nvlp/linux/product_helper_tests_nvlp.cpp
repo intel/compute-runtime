@@ -56,10 +56,6 @@ NVLPTEST_F(NvlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupporte
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
-NVLPTEST_F(NvlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
-}
-
 NVLPTEST_F(NvlProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {
     EXPECT_EQ(19ull, productHelper->getSharedSystemPatIndex());
 }

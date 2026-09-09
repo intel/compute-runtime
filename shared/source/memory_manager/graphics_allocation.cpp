@@ -90,7 +90,7 @@ std::string GraphicsAllocation::getAllocationInfoString() const {
     return "";
 }
 
-std::string GraphicsAllocation::getPatIndexInfoString(const ProductHelper &) const {
+std::string GraphicsAllocation::getPatIndexInfoString() const {
     return "";
 }
 

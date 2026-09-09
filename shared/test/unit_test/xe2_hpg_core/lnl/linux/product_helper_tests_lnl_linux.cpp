@@ -56,10 +56,6 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupported
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
-LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
-}
-
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
     EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }

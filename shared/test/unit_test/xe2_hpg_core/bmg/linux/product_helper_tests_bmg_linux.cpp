@@ -62,10 +62,6 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupported
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
-BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
-}
-
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {
     EXPECT_EQ(0ull, productHelper->getSharedSystemPatIndex());
 }

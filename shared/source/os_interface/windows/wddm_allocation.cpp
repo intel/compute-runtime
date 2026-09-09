@@ -14,7 +14,7 @@ namespace NEO {
 std::string WddmAllocation::getAllocationInfoString() const {
     return getHandleInfoString();
 }
-std::string WddmAllocation::getPatIndexInfoString(const ProductHelper &) const {
+std::string WddmAllocation::getPatIndexInfoString() const {
     return "";
 }
 } // namespace NEO

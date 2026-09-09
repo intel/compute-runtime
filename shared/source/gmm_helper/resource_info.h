@@ -36,7 +36,7 @@ class GmmResourceInfo : NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL size_t getRenderPitch();
 
-    MOCKABLE_VIRTUAL uint64_t getDriverProtectionBits(uint32_t overrideUsage, bool compressionDenied);
+    MOCKABLE_VIRTUAL uint64_t getDriverProtectionBits(bool compressionDenied);
 
     MOCKABLE_VIRTUAL bool isResourceDenyCompressionEnabled();
 

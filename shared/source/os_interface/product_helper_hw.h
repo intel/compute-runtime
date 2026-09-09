@@ -39,7 +39,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getPreferredWorkgroupCountPerSubslice() const override;
     uint32_t getDefaultMidthreadPreemptionDelayTimer() const override;
     void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const override;
-    void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const override;
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
     bool isBlitterFullySupported(const HardwareInfo &hwInfo) const override;
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
@@ -69,7 +68,6 @@ class ProductHelperHw : public ProductHelper {
     bool isEuDebugPageFaultSupported() const override;
     bool isL1PolicyMissmatchCheckNeeded() const override;
     bool blitEnqueuePreferred(bool isWriteToImageFromBuffer) const override;
-    bool isKmdMigrationSupported() const override;
     bool isDisableScratchPagesSupported() const override;
     bool isDisableScratchPagesRequiredForDebugger() const override;
     bool areSecondaryContextsSupported() const override;
@@ -194,7 +192,6 @@ class ProductHelperHw : public ProductHelper {
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     uint64_t getSharedSystemPatIndex() const override;
     bool useSharedSystemUsm() const override;
-    uint32_t getGmmResourceUsageOverride(uint32_t usageType) const override;
     bool isSharingWith3dOrMediaAllowed() const override;
     bool isL3FlushAfterPostSyncSupported() const override;
     void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const override;

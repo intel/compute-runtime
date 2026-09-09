@@ -9,12 +9,8 @@
 
 namespace NEO {
 
-uint64_t GmmResourceInfo::getDriverProtectionBits(uint32_t overrideUsage, bool compressionDenied) {
-    GMM_OVERRIDE_VALUES overrideValues{};
-    if (GMM_RESOURCE_USAGE_UNKNOWN != overrideUsage) {
-        overrideValues.Usage = overrideUsage;
-    }
-    return static_cast<uint64_t>(resourceInfo->GetDriverProtectionBits(overrideValues));
+uint64_t GmmResourceInfo::getDriverProtectionBits(bool compressionDenied) {
+    return static_cast<uint64_t>(resourceInfo->GetDriverProtectionBits({}));
 }
 
 bool GmmResourceInfo::isResourceDenyCompressionEnabled() {
