@@ -348,7 +348,7 @@ HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenSettingKernelArg
     pKernel->setArg(0, sizeof(memObj), &memObj);
 
     const auto &gfxCoreHelper = pKernel->getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pDevice->getRootDeviceEnvironment());
 
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;

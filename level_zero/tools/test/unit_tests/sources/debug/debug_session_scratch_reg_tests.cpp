@@ -153,7 +153,7 @@ TEST_F(DebugSessionRegistersAccessTestScratchV3, WhenReadingThreadScratchRegiste
     uint64_t scratchExpected[2] = {0xdeadbeef, 0xbeefdead};
 
     constexpr auto implicitArgsAlignedSize = NEO::ImplicitArgsV1::getAlignedSize();
-    session->readMemoryBuffer.assign(4 * gfxCoreHelper.getRenderSurfaceStateSize() + implicitArgsAlignedSize, 5);
+    session->readMemoryBuffer.assign(4 * gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment()) + implicitArgsAlignedSize, 5);
     NEO::ImplicitArgsV1 args = {};
     args.header.structVersion = 1;
     args.header.structSize = NEO::ImplicitArgsV1::getSize();
@@ -169,7 +169,7 @@ TEST_F(DebugSessionRegistersAccessTestScratchV3, WhenReadingThreadScratchRegiste
                                                           &session->readMemoryBuffer[implicitArgsAlignedSize], 1, scratchExpected[0], 0,
                                                           ptss, nullptr, false, 6, false, true);
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
-                                                          &session->readMemoryBuffer[implicitArgsAlignedSize + gfxCoreHelper.getRenderSurfaceStateSize()], 1, scratchExpected[1], 0,
+                                                          &session->readMemoryBuffer[implicitArgsAlignedSize + gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment())], 1, scratchExpected[1], 0,
                                                           ptss, nullptr, false, 6, false, true);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readThreadScratchRegisters(threadId, 0, 2, scratch));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     auto sharingHandler = new UnifiedImage(context->getSharing<UnifiedSharingFunctions>(), description.type);
 
     return Image::createSharedImage(context, sharingHandler, McsSurfaceInfo{}, std::move(*multiGraphicsAllocation), nullptr,
-                                    flags, 0, clSurfaceFormat, imgInfo, gmmNoCubeMap, 0u, imageDesc->num_mip_levels, false);
+                                    flags, 0, clSurfaceFormat, imgInfo, gmmNoCubeMap, 0u, imageDesc->num_mip_levels, false, errcodeRet);
 }
 
 } // namespace NEO

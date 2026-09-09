@@ -390,11 +390,41 @@ Image *Image::createImageHw(Context *context, const MemoryProperties &memoryProp
     return image;
 }
 
+bool Image::isMultisampleConfigurationSupported(const NEO::Device &device, const ImageInfo &imgInfo,
+                                                const GraphicsAllocation *mcsAllocation, bool hasUnifiedMcsSurface) {
+    const auto &gfxCoreHelper = device.getGfxCoreHelper();
+
+    const bool usesReducedSurfaceState =
+        gfxCoreHelper.getRenderSurfaceStateSize(device.getRootDeviceEnvironment()) < gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+    if (!usesReducedSurfaceState || (imgInfo.imgDesc.numSamples <= 1u)) {
+        return true;
+    }
+
+    constexpr uint32_t maxSampleCountInReducedState = 8u;
+    return (imgInfo.imgDesc.numSamples <= maxSampleCountInReducedState) &&
+           (mcsAllocation == nullptr) && !hasUnifiedMcsSurface;
+}
+
 Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler, const McsSurfaceInfo &mcsSurfaceInfo,
                                 MultiGraphicsAllocation multiGraphicsAllocation, GraphicsAllocation *mcsAllocation,
                                 cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const ClSurfaceFormatInfo *surfaceFormat,
-                                ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount, bool hasUnifiedMcsSurface) {
+                                ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount, bool hasUnifiedMcsSurface,
+                                cl_int *errcodeRet) {
     auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
+
+    if (!isMultisampleConfigurationSupported(context->getDevice(0)->getDevice(), imgInfo, mcsAllocation, hasUnifiedMcsSurface)) {
+        delete sharingHandler;
+        auto memoryManager = context->getMemoryManager();
+        for (auto allocation : multiGraphicsAllocation.getGraphicsAllocations()) {
+            memoryManager->freeGraphicsMemory(allocation);
+        }
+        memoryManager->freeGraphicsMemory(mcsAllocation);
+        if (errcodeRet != nullptr) {
+            *errcodeRet = CL_INVALID_OPERATION;
+        }
+        return nullptr;
+    }
+
     auto size = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->getUnderlyingBufferSize();
     auto sharedImage = createImageHw(
         context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),

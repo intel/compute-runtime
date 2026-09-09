@@ -113,7 +113,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
                  kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
     } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
         auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getBindlessSurfaceStateSlotSize());
 
         this->surfaceStateHeapSize = (kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful +
                                       kernelInfo->kernelDescriptor.kernelAttributes.numBindlessImages) *
@@ -743,7 +743,7 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
 
         NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
         auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-        const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+        const auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
         if (bindlessHeapsHelper) {
 
             if (image->allocateBindlessSlotWithMipmap(mipLevel) != ZE_RESULT_SUCCESS) {
@@ -962,7 +962,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
 
         NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
         auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
-        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+        auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
         if (bindlessHeapsHelper) {
 
             if (image->allocateBindlessSlot() != ZE_RESULT_SUCCESS) {
@@ -1586,7 +1586,7 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
     UNRECOVERABLE_IF(this->module == nullptr);
 
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
     for (size_t argIndex = 0; argIndex < getImmutableData()->getDescriptor().payloadMappings.explicitArgs.size(); argIndex++) {
         const auto &arg = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex];
@@ -1683,7 +1683,7 @@ void KernelImp::patchBindlessOffsetsForImplicitArgs(uint64_t bindlessSurfaceStat
     auto implicitArgsVec = getImmutableData()->getDescriptor().getImplicitArgBindlessCandidatesVec();
 
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
     for (size_t i = 0; i < implicitArgsVec.size(); i++) {
         if (NEO::isValidOffset(implicitArgsVec[i]->bindless)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,11 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -50,6 +52,11 @@ struct KernelHw : public KernelImp {
         Device *device = module->getDevice();
         auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
 
+        const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+        auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
+        const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
+        const auto bindlessSurfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+
         auto argInfo = sharedState->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(),
                                                                          argInfo.bufferOffset, static_cast<uint32_t>(offset));
@@ -68,8 +75,6 @@ struct KernelHw : public KernelImp {
 
         if (NEO::isValidOffset(argInfo.bindful)) {
             surfaceStateAddress = &getSurfaceStateHeapDataSpan()[argInfo.bindful];
-            surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
-
         } else if (NEO::isValidOffset(argInfo.bindless)) {
             privateState.isBindlessOffsetSet[argIndex] = false;
             privateState.usingSurfaceStateHeap[argIndex] = false;
@@ -78,7 +83,7 @@ struct KernelHw : public KernelImp {
                 privateState.isBindlessOffsetSet[argIndex] = true;
             } else {
                 privateState.usingSurfaceStateHeap[argIndex] = true;
-                const auto surfaceStateOffset = getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE);
+                const auto surfaceStateOffset = getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * bindlessSurfaceStateSize;
                 surfaceStateAddress = &getSurfaceStateHeapDataSpan()[surfaceStateOffset];
             }
         }
@@ -116,10 +121,14 @@ struct KernelHw : public KernelImp {
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.implicitScaling = device->isImplicitScalingCapable();
         args.isDebuggerActive = isDebuggerActive;
+        if (NEO::isValidOffset(argInfo.bindful)) {
+            // preserve the compiler-programmed surface-state template for bindful args
+            args.inTemplateMemory = surfaceStateAddress;
+        }
 
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+        gfxCoreHelper.encodeBufferSurfaceState(args);
         UNRECOVERABLE_IF(surfaceStateAddress == nullptr);
-        *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;
+        memcpy_s(surfaceStateAddress, surfaceStateSize, &surfaceState, surfaceStateSize);
     }
 };
 

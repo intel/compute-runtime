@@ -2545,7 +2545,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledTh
     NEO::MockGraphicsAllocation alloc;
     uint32_t bindless = 0x40;
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
+    size_t size = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
     auto expectedSsInHeap = device->getNEODevice()->getBindlessHeapsHelper()->allocateSSInHeap(size, &alloc, NEO::BindlessHeapsHelper::globalSsh);
     alloc.setBindlessInfo(expectedSsInHeap);
 
@@ -2603,7 +2603,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessTh
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
+    size_t size = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
     uint64_t gpuAddress = 0x2000;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
 
@@ -2642,7 +2642,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSurf
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
+    size_t size = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
     uint64_t gpuAddress = 0x2000;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
 
@@ -2693,7 +2693,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhenS
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
+    size_t size = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
     uint64_t gpuAddress = 0x2000;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
 
@@ -2737,7 +2737,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulThe
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
+    size_t size = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
     uint64_t gpuAddress = 0x2000;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
 
@@ -2771,7 +2771,7 @@ HWTEST_F(KernelImpL3CachingTests, GivenKernelImpWhenSetSurfaceStateWithUnaligned
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
+    size_t size = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
     uint64_t gpuAddress = 0x2000;
     void *buffer = reinterpret_cast<void *>(0x20123);
 
@@ -3233,7 +3233,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopyImplic
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
 
     auto &expectedSsInHeap = imageHW->getAllocation()->getBindlessInfo();
     EXPECT_EQ(imageHW->passedImplicitArgsSurfaceStateHeap, ptrOffset(expectedSsInHeap.ssPtr, surfaceStateSize));
@@ -3264,7 +3264,7 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
 
     auto &expectedSsInHeap = imageHW->getAllocation()->getBindlessInfo();
     EXPECT_EQ(imageHW->passedRedescribedSurfaceStateHeap, ptrOffset(expectedSsInHeap.ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage));
@@ -3340,7 +3340,7 @@ HWTEST2_F(SetKernelArg, givenPackedImageBindlessKernelAndGlobalBindlessHelperWhe
     auto handle = imageHW->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize();
+    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
     const auto packedSlotOffset = surfaceStateSize * NEO::BindlessImageSlot::packedImage;
 
     ret = kernel->setArgRedescribedImage(3, handle, true, 1u);
@@ -3405,7 +3405,7 @@ HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrect
         EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
         auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
 
         auto ctd = kernel->privateState.crossThreadData.data();
 
@@ -3558,7 +3558,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCal
     mockKernel.privateState.crossThreadData.resize(sizeof(uint64_t[4]));
     mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
 
     mockKernel.privateState.surfaceStateHeapData.clear();
     mockKernel.privateState.surfaceStateHeapData.resize(surfaceStateSize);
@@ -3988,7 +3988,7 @@ HWTEST2_F(SetKernelArg, givenTwoBindlessImagesWithUniqueOffsetsWhenSetArgImageTh
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1);
 
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
 
     auto &imageArg1 = const_cast<NEO::ArgDescImage &>(kernel->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
     auto &addressingMode = kernel->getDescriptor().kernelAttributes.imageAddressingMode;
@@ -4920,7 +4920,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
 
     const uint64_t baseAddress = 0x1000;
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
 
     auto patchValue1 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress));
     auto patchValue2 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 1 * surfaceStateSize));
@@ -4983,7 +4983,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatc
 
     const uint64_t baseAddress = 0x1000;
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
 
     auto patchValue2 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + surfaceStateSize));
 
@@ -5126,7 +5126,7 @@ TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshT
         kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));
 
         EXPECT_EQ(surfaceStateSize, kernelImmutableData->getSurfaceStateHeapSize());
     }

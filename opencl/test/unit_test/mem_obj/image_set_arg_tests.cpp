@@ -282,7 +282,7 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
         0,
         &surfaceFormatInfo,
         imageInfo,
-        0, 0, 0, false)};
+        0, 0, 0, false, nullptr)};
     image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState{};

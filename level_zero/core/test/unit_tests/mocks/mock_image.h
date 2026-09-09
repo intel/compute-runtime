@@ -25,10 +25,11 @@ struct WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>
 
     ~WhiteBox() override {}
 
-    using BaseClass::implicitArgsSurfaceState;
-    using BaseClass::packedSurfaceState;
-    using BaseClass::redescribedSurfaceState;
-    using BaseClass::surfaceState;
+    using BaseClass::getImplicitArgsSurfaceState;
+    using BaseClass::getPackedSurfaceState;
+    using BaseClass::getRedescribedSurfaceState;
+    using BaseClass::getSurfaceState;
+
     using BaseClass::ImageImp::imageFromBuffer;
     using BaseClass::ImageImp::imgInfo;
     using BaseClass::ImageImp::isUnifiedMcsSurface;

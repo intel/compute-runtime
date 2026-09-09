@@ -446,7 +446,7 @@ TEST_F(BindlessKernelTests, GivenBindlessAddressingKernelWhenInitializeThenSurfa
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     const auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    const auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+    const auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment()));
     const auto expectedSsHeapSize = kernelInfo.kernelDescriptor.kernelAttributes.numArgsStateful * surfaceStateSize;
 
     const auto ssHeap = kernel.getSurfaceStateHeap();
@@ -493,7 +493,7 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThenCo
 
     const uint64_t baseAddress = 0x1000;
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
 
     auto patchValue1 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress));
     auto patchValue2 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 1 * surfaceStateSize));
@@ -551,7 +551,7 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchBindlessSurfaceStatesInC
     ASSERT_TRUE(baseAddress > std::numeric_limits<uint32_t>::max());
 
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
 
     auto bindlessSufaceState1Address = baseAddress;
     auto bindlessSufaceState2Address = baseAddress + 2 * surfaceStateSize;
@@ -3393,7 +3393,7 @@ HWTEST_F(KernelTest, givenBindlessArgBufferWhenPatchWithImplicitSurfaceThenSurfa
     kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
 
     const auto &gfxCoreHelper = device->getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment());
 
     const auto ssIndex = kernel.kernelInfo.kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;

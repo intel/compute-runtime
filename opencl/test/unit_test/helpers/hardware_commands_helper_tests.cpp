@@ -1119,7 +1119,7 @@ HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirect
     EXPECT_EQ(0, std::memcmp(expectedDestinationInHeap, mockKernel.getSurfaceStateHeap(), mockKernel.getSurfaceStateHeapSize()));
 
     const auto &gfxCoreHelper = mockKernel.getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
 
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + ssIndex * surfaceStateSize);

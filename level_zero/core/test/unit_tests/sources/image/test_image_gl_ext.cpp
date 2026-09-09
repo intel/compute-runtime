@@ -119,7 +119,7 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWhenCreatingImageThen
     EXPECT_EQ(0u, imageHW->imgInfo.yOffset);
     EXPECT_EQ(0u, imageHW->imgInfo.yOffsetForUVPlane);
 
-    EXPECT_EQ(imageHW->getAllocation()->getGpuAddress(), imageHW->surfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(imageHW->getAllocation()->getGpuAddress(), imageHW->getSurfaceState().getSurfaceBaseAddress());
 
     imageHW.reset(nullptr);
 }
@@ -162,10 +162,10 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithCubeFaceIndexWhen
     auto ret = imageHW->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    EXPECT_EQ(static_cast<uint32_t>(__GMM_CUBE_FACE_POS_Y), imageHW->surfaceState.getMinimumArrayElement());
-    EXPECT_TRUE(imageHW->surfaceState.getSurfaceArray());
-    EXPECT_EQ(static_cast<uint32_t>(__GMM_CUBE_FACE_POS_Y), imageHW->redescribedSurfaceState.getMinimumArrayElement());
-    EXPECT_TRUE(imageHW->redescribedSurfaceState.getSurfaceArray());
+    EXPECT_EQ(static_cast<uint32_t>(__GMM_CUBE_FACE_POS_Y), imageHW->getSurfaceState().getMinimumArrayElement());
+    EXPECT_TRUE(imageHW->getSurfaceState().getSurfaceArray());
+    EXPECT_EQ(static_cast<uint32_t>(__GMM_CUBE_FACE_POS_Y), imageHW->getRedescribedSurfaceState().getMinimumArrayElement());
+    EXPECT_TRUE(imageHW->getRedescribedSurfaceState().getSurfaceArray());
 
     imageHW.reset(nullptr);
 }
@@ -189,8 +189,8 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithNoCubeMapWhenCrea
     auto ret = imageHW->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    EXPECT_EQ(0u, imageHW->surfaceState.getMinimumArrayElement());
-    EXPECT_EQ(0u, imageHW->redescribedSurfaceState.getMinimumArrayElement());
+    EXPECT_EQ(0u, imageHW->getSurfaceState().getMinimumArrayElement());
+    EXPECT_EQ(0u, imageHW->getRedescribedSurfaceState().getMinimumArrayElement());
 
     imageHW.reset(nullptr);
 }
@@ -222,13 +222,13 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithMsaaSamplesWhenCr
     EXPECT_FALSE(imageHW->isUnifiedMcsSurface);
 
     auto expectedMultisamples = static_cast<typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES>(2u);
-    EXPECT_EQ(expectedMultisamples, imageHW->surfaceState.getNumberOfMultisamples());
-    EXPECT_EQ(expectedMultisamples, imageHW->redescribedSurfaceState.getNumberOfMultisamples());
+    EXPECT_EQ(expectedMultisamples, imageHW->getSurfaceState().getNumberOfMultisamples());
+    EXPECT_EQ(expectedMultisamples, imageHW->getRedescribedSurfaceState().getNumberOfMultisamples());
 
     EXPECT_EQ(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS,
-              imageHW->surfaceState.getMultisampledSurfaceStorageFormat());
+              imageHW->getSurfaceState().getMultisampledSurfaceStorageFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS,
-              imageHW->redescribedSurfaceState.getMultisampledSurfaceStorageFormat());
+              imageHW->getRedescribedSurfaceState().getMultisampledSurfaceStorageFormat());
 
     imageHW.reset(nullptr);
 }
@@ -258,8 +258,8 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWith16xMsaaSamplesWhe
     EXPECT_EQ(4u, imageHW->mcsMultisampleCount);
 
     auto expectedMultisamples = static_cast<typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES>(4u);
-    EXPECT_EQ(expectedMultisamples, imageHW->surfaceState.getNumberOfMultisamples());
-    EXPECT_EQ(expectedMultisamples, imageHW->redescribedSurfaceState.getNumberOfMultisamples());
+    EXPECT_EQ(expectedMultisamples, imageHW->getSurfaceState().getNumberOfMultisamples());
+    EXPECT_EQ(expectedMultisamples, imageHW->getRedescribedSurfaceState().getNumberOfMultisamples());
 
     imageHW.reset(nullptr);
 }
@@ -316,7 +316,7 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithNoMsaaWhenCreatin
     EXPECT_FALSE(imageHW->isUnifiedMcsSurface);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1,
-              imageHW->surfaceState.getNumberOfMultisamples());
+              imageHW->getSurfaceState().getNumberOfMultisamples());
 
     imageHW.reset(nullptr);
 }

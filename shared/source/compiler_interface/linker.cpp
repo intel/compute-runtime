@@ -484,9 +484,10 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
             } else if (relocation.symbolName == surfaceStateSizeRelocationSymbolName) {
                 UNRECOVERABLE_IF(!pDevice);
                 DEBUG_BREAK_IF(!pDevice->getHardwareInfo().caps.reducedSurfaceStateSupported);
-                const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
+                // The consumer steps between bindless slots with this value, so it has to be the slot stride.
+                const auto slotStride = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getBindlessSurfaceStateSlotSize());
                 auto patchSize = relocation.type == RelocationInfo::Type::address ? 8 : 4;
-                patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);
+                patchWithRequiredSize(relocAddress, patchSize, slotStride);
             } else if (relocation.symbolName.empty()) {
                 uint64_t patchValue = 0;
                 patchAddress(relocAddress, patchValue, relocation);
@@ -760,9 +761,9 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
             auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
                                           static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
             DEBUG_BREAK_IF(!pDevice->getHardwareInfo().caps.reducedSurfaceStateSupported);
-            const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
+            const auto slotStride = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getBindlessSurfaceStateSlotSize());
             auto patchSize = outUnresolvedExternals[vecIndex].unresolvedRelocation.type == RelocationInfo::Type::address ? 8 : 4;
-            patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);
+            patchWithRequiredSize(relocAddress, patchSize, slotStride);
             outUnresolvedExternals[vecIndex] = outUnresolvedExternals[outUnresolvedExternals.size() - 1u];
             outUnresolvedExternals.resize(outUnresolvedExternals.size() - 1u);
         }

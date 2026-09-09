@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
@@ -361,13 +362,15 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::setBufferSurfaceState(v
     const auto mocs = this->device->getMOCS(l3Enabled, false);
     const auto numAvailableDevices = neoDevice->getNumGenericSubDevices();
     auto gmmHelper = neoDevice->getGmmHelper();
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment());
 
     for (auto offsetInIOH : bufferUsages.bufferOffset) {
         auto patchLocation = ptrOffset(iohCpuBase, offsetInIOH);
         *reinterpret_cast<uint32_t *>(patchLocation) = bufferOffset;
     }
 
-    auto setSurfaceState = [&mocs, &numAvailableDevices, &alloc, &gmmHelper, &neoDevice](CpuAddress surfaceStateAddress, GpuAddress bufferAddressForSsh, size_t bufferSizeForSsh) {
+    auto setSurfaceState = [&mocs, &numAvailableDevices, &alloc, &gmmHelper, &neoDevice, &gfxCoreHelper, &surfaceStateSize](CpuAddress surfaceStateAddress, GpuAddress bufferAddressForSsh, size_t bufferSizeForSsh) {
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
         auto isDebuggerActive = neoDevice->getDebugger() != nullptr;
         NEO::EncodeSurfaceStateArgs args;
@@ -380,9 +383,9 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::setBufferSurfaceState(v
         args.gmmHelper = gmmHelper;
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.isDebuggerActive = isDebuggerActive;
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+        gfxCoreHelper.encodeBufferSurfaceState(args);
 
-        *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;
+        memcpy_s(reinterpret_cast<void *>(surfaceStateAddress), surfaceStateSize, &surfaceState, surfaceStateSize);
     };
     for (auto bindfulOffset : bufferUsages.bindful) {
         CpuAddress surfaceStateAddress = ptrOffset(sshCpuBase, bindfulOffset);

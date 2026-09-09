@@ -507,10 +507,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing && !neoDevice->getBindlessHeapsHelper() && this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
             auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
             auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
-            auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
             NEO::EncodeSurfaceStateArgs args;
-            args.outMemory = &surfaceState;
+            args.outMemory = surfaceStateSpace;
             args.graphicsAddress = device->getDebugSurface()->getGpuAddress();
             args.size = device->getDebugSurface()->getUnderlyingBufferSize();
             args.mocs = device->getMOCS(false, false);
@@ -521,8 +520,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             args.implicitScaling = this->partitionCount > 1;
             args.isDebuggerActive = true;
 
-            NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
-            *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+            neoDevice->getGfxCoreHelper().encodeBufferSurfaceState(args);
         }
     }
 

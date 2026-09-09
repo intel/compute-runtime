@@ -96,7 +96,8 @@ ze_result_t DebugSessionImp::readThreadScratchRegisters(EuThread::ThreadId threa
     }
 
     const NEO::GfxCoreHelper &gfxCoreHelper = connectedDevice->getGfxCoreHelper();
-    const size_t renderSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto &rootDeviceEnvironment = connectedDevice->getNEODevice()->getRootDeviceEnvironment();
+    const size_t renderSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
     const size_t topScratchAreaToRead = (count == 2) || (start == 1) ? 2 : 1;
     std::vector<char> renderSurfaceState(renderSurfaceStateSize * topScratchAreaToRead, 0);
 
@@ -107,10 +108,10 @@ ze_result_t DebugSessionImp::readThreadScratchRegisters(EuThread::ThreadId threa
 
     std::vector<uint64_t> packed;
     for (size_t i = 0; i < topScratchAreaToRead; i++) {
-        auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data() + (i * renderSurfaceStateSize), connectedDevice->getProductHelper());
+        auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data() + (i * renderSurfaceStateSize), rootDeviceEnvironment);
         auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, threadId);
         auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-        auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data() + (i * renderSurfaceStateSize)));
+        auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data() + (i * renderSurfaceStateSize), rootDeviceEnvironment));
         auto scratchSpaceBaseAddress = threadOffset + scratchAllocationBase;
 
         packed.push_back(scratchSpaceBaseAddress);

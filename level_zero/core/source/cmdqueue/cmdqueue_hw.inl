@@ -1940,10 +1940,9 @@ void CommandQueueHw<gfxCoreFamily>::updateDebugSurfaceState(CommandListExecution
             auto globalStatelessHeap = this->csr->getGlobalStatelessHeap();
 
             auto surfaceStateSpace = this->device->getNEODevice()->getDebugger()->getDebugSurfaceReservedSurfaceState(*globalStatelessHeap);
-            auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
             NEO::EncodeSurfaceStateArgs args;
-            args.outMemory = &surfaceState;
+            args.outMemory = surfaceStateSpace;
             args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
             args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
             args.mocs = this->device->getMOCS(false, false);
@@ -1952,8 +1951,7 @@ void CommandQueueHw<gfxCoreFamily>::updateDebugSurfaceState(CommandListExecution
             args.gmmHelper = this->device->getNEODevice()->getGmmHelper();
             args.areMultipleSubDevicesInContext = false;
             args.isDebuggerActive = true;
-            NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
-            *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+            this->device->getNEODevice()->getGfxCoreHelper().encodeBufferSurfaceState(args);
         }
     }
 }

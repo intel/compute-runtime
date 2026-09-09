@@ -186,7 +186,7 @@ ze_result_t ImageImp::allocateBindlessSlot() {
     if (bindlessHelper && !bindlessInfo) {
         auto &gfxCoreHelper = this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getHelper<NEO::GfxCoreHelper>();
         const auto surfStateCount = NEO::BindlessImageSlot::max;
-        auto surfaceStateSize = surfStateCount * gfxCoreHelper.getRenderSurfaceStateSize();
+        auto surfaceStateSize = surfStateCount * gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
         auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::globalSsh);
         if (surfaceStateInfo.heapAllocation == nullptr) {
@@ -226,7 +226,7 @@ ze_result_t ImageImp::allocateBindlessSlotWithMipmap(uint32_t mipLevel) {
         return ZE_RESULT_SUCCESS;
     }
 
-    const auto surfaceStateSize = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>().getRenderSurfaceStateSize();
+    const auto surfaceStateSize = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>().getBindlessSurfaceStateSlotSize();
     const auto slotSize = NEO::BindlessImageSlot::max * surfaceStateSize;
 
     auto surfaceStateInfo = bindlessHeapsHelper->allocateSSInHeap(slotSize, allocation, NEO::BindlessHeapsHelper::globalSsh);

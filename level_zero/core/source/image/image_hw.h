@@ -12,6 +12,14 @@
 
 #include "level_zero/core/source/image/image_imp.h"
 
+#include <array>
+#include <cstdint>
+
+namespace NEO {
+class Gmm;
+class GmmHelper;
+} // namespace NEO
+
 namespace L0 {
 struct StructuresLookupTable;
 
@@ -73,10 +81,48 @@ struct ImageCoreFamily : public ImageImp {
   protected:
     bool isSuitableForCompression(const StructuresLookupTable &structuresLookupTable, const NEO::ImageInfo &imgInfo);
 
-    RENDER_SURFACE_STATE surfaceState;
-    RENDER_SURFACE_STATE implicitArgsSurfaceState;
-    RENDER_SURFACE_STATE redescribedSurfaceState;
-    RENDER_SURFACE_STATE packedSurfaceState;
+    struct SurfaceStateSlotContext {
+        const ze_image_desc_t *desc = nullptr;
+        const NEO::ImageInfo *redescribedImageInfo = nullptr;
+        const NEO::SurfaceOffsets *surfaceOffsets = nullptr;
+        NEO::Gmm *gmm = nullptr;
+        NEO::GmmHelper *gmmHelper = nullptr;
+        typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D;
+        uint32_t cubeFaceIndex = 0u;
+        uint32_t numSamples = 1u;
+        bool isMediaFormatLayout = false;
+        bool hasFixedChannelSelect = false;
+        bool redescribedIsNV12 = false;
+        bool packedSupported = false;
+    };
+
+    void encodeSurfaceState(const SurfaceStateSlotContext &context);
+
+  private:
+    void encodeSurfaceStateReduced(const SurfaceStateSlotContext &context);
+    void encodeSurfaceStateFull(const SurfaceStateSlotContext &context);
+
+  protected:
+    using SurfaceStateSlotStorage = std::array<uint8_t, sizeof(RENDER_SURFACE_STATE)>;
+    static_assert(alignof(RENDER_SURFACE_STATE) == 1u);
+
+    RENDER_SURFACE_STATE &getSurfaceState() {
+        return *reinterpret_cast<RENDER_SURFACE_STATE *>(surfaceStateStorage.data());
+    }
+    RENDER_SURFACE_STATE &getRedescribedSurfaceState() {
+        return *reinterpret_cast<RENDER_SURFACE_STATE *>(redescribedSurfaceStateStorage.data());
+    }
+    RENDER_SURFACE_STATE &getPackedSurfaceState() {
+        return *reinterpret_cast<RENDER_SURFACE_STATE *>(packedSurfaceStateStorage.data());
+    }
+    RENDER_SURFACE_STATE &getImplicitArgsSurfaceState() {
+        return *reinterpret_cast<RENDER_SURFACE_STATE *>(implicitArgsSurfaceStateStorage.data());
+    }
+
+    SurfaceStateSlotStorage surfaceStateStorage = {};
+    SurfaceStateSlotStorage implicitArgsSurfaceStateStorage = {};
+    SurfaceStateSlotStorage redescribedSurfaceStateStorage = {};
+    SurfaceStateSlotStorage packedSurfaceStateStorage = {};
 };
 
 template <uint32_t gfxProductFamily>

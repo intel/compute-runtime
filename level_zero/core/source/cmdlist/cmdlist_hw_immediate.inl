@@ -168,10 +168,9 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleDebugSurfaceStateUpdat
 
         if (sshDirty) {
             auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
-            auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
             NEO::EncodeSurfaceStateArgs args;
-            args.outMemory = &surfaceState;
+            args.outMemory = surfaceStateSpace;
             args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
             args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
             args.mocs = this->device->getMOCS(false, false);
@@ -180,8 +179,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleDebugSurfaceStateUpdat
             args.gmmHelper = neoDevice->getGmmHelper();
             args.areMultipleSubDevicesInContext = false;
             args.isDebuggerActive = true;
-            NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
-            *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+            neoDevice->getGfxCoreHelper().encodeBufferSurfaceState(args);
         }
     }
 }
@@ -424,10 +422,9 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
 
             if (sshDirty) {
                 auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
-                auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
                 NEO::EncodeSurfaceStateArgs args;
-                args.outMemory = &surfaceState;
+                args.outMemory = surfaceStateSpace;
                 args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
                 args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
                 args.mocs = this->device->getMOCS(false, false);
@@ -436,8 +433,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
                 args.gmmHelper = neoDevice->getGmmHelper();
                 args.areMultipleSubDevicesInContext = false;
                 args.isDebuggerActive = true;
-                NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
-                *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+                neoDevice->getGfxCoreHelper().encodeBufferSurfaceState(args);
             }
         }
     }

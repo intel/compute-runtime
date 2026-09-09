@@ -349,7 +349,7 @@ HWTEST2_P(ImageCreateUsmPool, Given2dTypeWithPitchedPtrWhenImageCreatedThenQPitc
 
     EXPECT_TRUE(imageHW->imageFromBuffer);
     EXPECT_EQ(0u, imageHW->imgInfo.qPitch);
-    EXPECT_EQ(0u, imageHW->surfaceState.getSurfaceQPitch());
+    EXPECT_EQ(0u, imageHW->getSurfaceState().getSurfaceQPitch());
 
     imageHW.reset(nullptr);
 
@@ -408,7 +408,7 @@ HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrWhenImageCreatedThenQPitc
     const uint32_t expectedQPitch = static_cast<uint32_t>(imageHW->imgInfo.slicePitch / imageHW->imgInfo.rowPitch);
     EXPECT_EQ(expectedQPitch, imageHW->imgInfo.qPitch);
     EXPECT_EQ(0u, expectedQPitch % RENDER_SURFACE_STATE::SURFACEQPITCH_ALIGN_SIZE);
-    EXPECT_EQ(expectedQPitch, imageHW->surfaceState.getSurfaceQPitch());
+    EXPECT_EQ(expectedQPitch, imageHW->getSurfaceState().getSurfaceQPitch());
 
     imageHW.reset(nullptr);
 
@@ -469,7 +469,7 @@ HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrAndCustomPitchesWhenImage
     EXPECT_EQ(customRowPitch, imageHW->imgInfo.rowPitch);
     EXPECT_EQ(customSlicePitch, imageHW->imgInfo.slicePitch);
     EXPECT_EQ(rowsPerSlice, imageHW->imgInfo.qPitch);
-    EXPECT_EQ(rowsPerSlice, imageHW->surfaceState.getSurfaceQPitch());
+    EXPECT_EQ(rowsPerSlice, imageHW->getSurfaceState().getSurfaceQPitch());
 
     imageHW.reset(nullptr);
 
@@ -590,7 +590,7 @@ HWTEST_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrectS
     auto ret = imageHW->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto surfaceState = &imageHW->surfaceState;
+    auto surfaceState = &imageHW->getSurfaceState();
 
     ASSERT_EQ(surfaceState->getShaderChannelSelectRed(),
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
@@ -631,7 +631,7 @@ HWTEST_F(ImageCreate, givenYuvFormatWhenImageInitializeThenChannelSelectIsFixedR
             auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
             ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
 
-            auto surfaceState = &imageHW->surfaceState;
+            auto surfaceState = &imageHW->getSurfaceState();
             EXPECT_EQ(surfaceState->getShaderChannelSelectRed(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED)
                 << "layout " << static_cast<uint32_t>(layout) << ", swizzle " << static_cast<uint32_t>(swizzle);
             EXPECT_EQ(surfaceState->getShaderChannelSelectGreen(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN)
@@ -739,7 +739,7 @@ HWTEST_F(ImageCreate, givenDepthSwizzleFormatWhenImageInitializeThenCorrectSwizz
     auto ret = imageHW->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto surfaceState = &imageHW->surfaceState;
+    auto surfaceState = &imageHW->getSurfaceState();
 
     ASSERT_EQ(surfaceState->getShaderChannelSelectRed(),
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
@@ -816,7 +816,7 @@ HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgs
         EXPECT_EQ(0, memcmp(ptrOffset(imgImplicitArgsBuffer, offsetof(ImageImplicitArgs, numMipLevels)), &imageImplicitArgs.numMipLevels, sizeof(imageImplicitArgs.numMipLevels)));
     }
     {
-        auto implicitArgsSurfaceState = &imageHW->implicitArgsSurfaceState;
+        auto implicitArgsSurfaceState = &imageHW->getImplicitArgsSurfaceState();
 
         auto implicitArgsSurfaceStateBaseAddress = reinterpret_cast<void *>(implicitArgsSurfaceState->getSurfaceBaseAddress());
         EXPECT_EQ(imgImplicitArgsBuffer, implicitArgsSurfaceStateBaseAddress);
@@ -855,7 +855,7 @@ HWTEST_F(ImageCreate, givenBindlessModeDisabledAndNoBindlessHeapsHelperWhenImage
     auto imgImplicitArgsAllocation = imageHW->getImplicitArgsAllocation();
     EXPECT_EQ(nullptr, imgImplicitArgsAllocation);
 
-    auto implicitArgsSurfaceState = &imageHW->implicitArgsSurfaceState;
+    auto implicitArgsSurfaceState = &imageHW->getImplicitArgsSurfaceState();
     EXPECT_EQ(nullptr, reinterpret_cast<void *>(implicitArgsSurfaceState->getSurfaceBaseAddress()));
 }
 
@@ -1542,7 +1542,7 @@ HWTEST_F(ImageCreateWithMemoryManagerNTHandleMock, givenNTHandleWhenCreatingNV12
     auto ret = imageHW->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_EQ(imageHW->getAllocation()->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
-    EXPECT_EQ(yOffsetForUVPlane, imageHW->surfaceState.getYOffsetForUOrUvPlane());
+    EXPECT_EQ(yOffsetForUVPlane, imageHW->getSurfaceState().getYOffsetForUOrUvPlane());
 }
 
 class FailMemoryManagerMock : public NEO::OsAgnosticMemoryManager {
@@ -1618,7 +1618,7 @@ HWTEST_F(ImageCreate, givenMediaBlockOptionWhenCopySurfaceStateThenSurfaceStateI
     auto ret = imageHW->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto surfaceState = &imageHW->surfaceState;
+    auto surfaceState = &imageHW->getSurfaceState();
 
     RENDER_SURFACE_STATE rss = {};
 
@@ -1682,7 +1682,7 @@ HWTEST_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThenV
     imageHW->initialize(device, &zeDesc);
 
     EXPECT_EQ(imageHW->getAllocation()->getAllocationType(), NEO::AllocationType::image);
-    auto rss = imageHW->surfaceState;
+    auto rss = imageHW->getSurfaceState();
     EXPECT_EQ(rss.getSurfaceType(), FamilyType::RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
     EXPECT_EQ(rss.getAuxiliarySurfaceMode(), FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     EXPECT_EQ(rss.getRenderTargetViewExtent(), 1u);
@@ -2409,7 +2409,7 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurface, IsAtMostDg2) {
     ze_result_t ret = imageCore->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto surfaceState = &imageCore->surfaceState;
+    auto surfaceState = &imageCore->getSurfaceState();
 
     ASSERT_EQ(surfaceState->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D);
     ASSERT_EQ(surfaceState->getSurfaceFormat(), RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UINT);
@@ -2450,7 +2450,7 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescSwizzlesMatchSurface, IsAtMostD
     ze_result_t ret = imageCore->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto surfaceState = &imageCore->surfaceState;
+    auto surfaceState = &imageCore->getSurfaceState();
 
     ASSERT_EQ(surfaceState->getShaderChannelSelectRed(),
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
@@ -2522,7 +2522,7 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMost
             ze_result_t ret = imageCore->initialize(device, desc);
             ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-            auto surfaceState = &imageCore->surfaceState;
+            auto surfaceState = &imageCore->getSurfaceState();
 
             ASSERT_EQ(surfaceState->getSurfaceFormat(), testFormats[i].ssFormat);
 
@@ -3785,7 +3785,7 @@ HWTEST_F(ImageCreate, givenImageWhenEncodeImplicitArgsSurfaceStateCalledThenSurf
 
     imageHW->encodeImplicitArgsSurfaceState();
 
-    auto &implicitArgsSS = imageHW->implicitArgsSurfaceState;
+    auto &implicitArgsSS = imageHW->getImplicitArgsSurfaceState();
     EXPECT_NE(0u, implicitArgsSS.getRawData(0));
     uint64_t gpuAddress = imageHW->getImplicitArgsAllocation()->getGpuAddress();
     EXPECT_NE(0u, gpuAddress);
@@ -3816,7 +3816,7 @@ HWTEST_F(ImageCreate, givenBindlessModeAndBindlessHeapsHelperWhenImageInitialize
     auto implicitArgsAlloc = imageHW->getImplicitArgsAllocation();
     EXPECT_NE(nullptr, implicitArgsAlloc);
 
-    auto &implicitArgsSS = imageHW->implicitArgsSurfaceState;
+    auto &implicitArgsSS = imageHW->getImplicitArgsSurfaceState();
     auto baseAddr = implicitArgsSS.getSurfaceBaseAddress();
     EXPECT_EQ(baseAddr, implicitArgsAlloc->getGpuAddress());
 }
@@ -3842,7 +3842,7 @@ HWTEST_F(ImageCreate, givenNonBindlessImageAndBindlessHeapsHelperPresentWhenImag
     auto implicitArgsAlloc = imageHW->getImplicitArgsAllocation();
     EXPECT_NE(nullptr, implicitArgsAlloc);
 
-    auto &implicitArgsSS = imageHW->implicitArgsSurfaceState;
+    auto &implicitArgsSS = imageHW->getImplicitArgsSurfaceState();
     auto baseAddr = implicitArgsSS.getSurfaceBaseAddress();
     EXPECT_EQ(baseAddr, implicitArgsAlloc->getGpuAddress());
 }
@@ -3914,7 +3914,7 @@ HWTEST2_F(ImageCreate, givenMipmappedImageWhenAllocatingBindlessSlotWithMipmapTh
     EXPECT_EQ(imageHW->getBindlessSlot(), imageHW->getBindlessSlotWithMipmap(0u));
 
     const auto baseSlotOffset = imageHW->getBindlessSlot()->surfaceStateOffset;
-    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize();
+    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment());
     const auto samplerSlotOffset = surfaceStateSize * NEO::BindlessImageSlot::sampler;
 
     for (uint32_t mipLevel = 1u; mipLevel < desc.miplevels; mipLevel++) {
@@ -4021,7 +4021,7 @@ HWTEST2_F(ImageCreate, givenMipmappedImageWhenProgrammingPackedSlotForMipLevelTh
     auto baseSlot = imageHW->getBindlessSlot();
     ASSERT_NE(nullptr, baseSlot);
 
-    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize();
+    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment());
     const auto packedSlotOffset = surfaceStateSize * NEO::BindlessImageSlot::packedImage;
     constexpr uint32_t mipLevel = 2u;
 
@@ -4291,8 +4291,8 @@ HWTEST_F(ImageCreate, givenNonMipmappedImageWhenCopySurfaceStateToSSHThenXOffset
     auto ret = imageHW->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto originalXOffset = imageHW->surfaceState.getXOffset();
-    auto originalYOffset = imageHW->surfaceState.getYOffset();
+    auto originalXOffset = imageHW->getSurfaceState().getXOffset();
+    auto originalYOffset = imageHW->getSurfaceState().getYOffset();
 
     RENDER_SURFACE_STATE rss = {};
     imageHW->copySurfaceStateToSSH(&rss, 0u, NEO::BindlessImageSlot::image, false, 0u);

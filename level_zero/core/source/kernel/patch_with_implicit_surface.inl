@@ -48,7 +48,8 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
                                                              const NEO::SurfaceStateInHeapInfo &ssInHeap, const NEO::KernelDescriptor &kernelDescriptor) {
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     void *surfaceStateAddress = nullptr;
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device.getRootDeviceEnvironment());
+    auto bindlessSurfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
     bool useTempBuffer = false;
 
     if (NEO::isValidOffset(ptr.bindless)) {
@@ -67,7 +68,7 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
             }
 
             if (index < std::numeric_limits<uint32_t>::max()) {
-                surfaceStateAddress = ptrOffset(surfaceStateHeap.begin(), index * surfaceStateSize);
+                surfaceStateAddress = ptrOffset(surfaceStateHeap.begin(), index * bindlessSurfaceStateSize);
             }
         }
     }

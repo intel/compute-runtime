@@ -1344,7 +1344,7 @@ HWTEST_F(LinkerTests, givenSurfaceStateSizeSymbolInUnresolvedExternalSymbolsWhen
 
     uint32_t patchedValue = 0u;
     memcpy_s(&patchedValue, sizeof(patchedValue), instructionSegment.data() + relocationOffset, sizeof(patchedValue));
-    EXPECT_EQ(static_cast<uint32_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize()), patchedValue);
+    EXPECT_EQ(static_cast<uint32_t>(pDevice->getGfxCoreHelper().getBindlessSurfaceStateSlotSize()), patchedValue);
 }
 
 HWTEST_F(LinkerTests, givenUnresolvedExternalWhenPatchingInstructionsThenLinkPartially) {
@@ -2680,7 +2680,7 @@ TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsOrRequiredImplicitArg
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
-TEST_F(LinkerTests, givenSurfaceStateSizeRelocationWhenLinkingThenPatchRelocationWithRenderSurfaceStateSize) {
+TEST_F(LinkerTests, givenSurfaceStateSizeRelocationWhenLinkingThenPatchRelocationWithBindlessSlotStride) {
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
@@ -2724,12 +2724,12 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationWhenLinkingThenPatchRelocatio
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getRenderSurfaceStateSize(), *addressToPatch);
+    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getBindlessSurfaceStateSlotSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
 }
 
-TEST_F(LinkerTests, givenSurfaceStateSizeRelocationInElfWhenDecodingAndLinkingThenPatchRelocationWithRenderSurfaceStateSize) {
+TEST_F(LinkerTests, givenSurfaceStateSizeRelocationInElfWhenDecodingAndLinkingThenPatchRelocationWithBindlessSlotStride) {
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
     elf64.overrideSymbolName = true;
 
@@ -2782,7 +2782,7 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationInElfWhenDecodingAndLinkingTh
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + 8);
-    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getRenderSurfaceStateSize(), *addressToPatch);
+    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getBindlessSurfaceStateSlotSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
 }
@@ -2833,10 +2833,10 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationWith64BitTypeWhenLinkingThenP
     auto addressToPatch = (instructionSegment.data() + reloc.r_offset);
     uint64_t patchedValue = 0;
     memcpy_s(&patchedValue, sizeof(patchedValue), addressToPatch, sizeof(patchedValue));
-    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getRenderSurfaceStateSize(), patchedValue);
+    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getBindlessSurfaceStateSlotSize(), patchedValue);
 }
 
-TEST_F(LinkerTests, givenSurfaceStateSizeRelocationAndReducedSurfaceStateUnsupportedWhenLinkingThenPatchRelocationWithRenderSurfaceStateSize) {
+TEST_F(LinkerTests, givenSurfaceStateSizeRelocationAndReducedSurfaceStateUnsupportedWhenLinkingThenPatchRelocationWithBindlessSlotStride) {
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
@@ -2882,7 +2882,7 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationAndReducedSurfaceStateUnsuppo
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getRenderSurfaceStateSize(), *addressToPatch);
+    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getBindlessSurfaceStateSlotSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
 }

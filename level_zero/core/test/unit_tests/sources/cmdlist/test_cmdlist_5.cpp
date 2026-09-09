@@ -2467,7 +2467,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
     mockKernel.privateState.crossThreadData.resize(4 * sizeof(uint64_t), 0x0);
-    const auto surfStateSize = static_cast<uint32_t>(device->getNEODevice()->getGfxCoreHelper().getRenderSurfaceStateSize());
+    const auto surfStateSize = static_cast<uint32_t>(device->getNEODevice()->getGfxCoreHelper().getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment()));
     mockKernel.privateState.surfaceStateHeapData.resize(surfStateSize);
     mockKernel.info.heapInfo.surfaceStateHeapSize = surfStateSize;
     mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);

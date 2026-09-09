@@ -475,7 +475,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     ASSERT_NE(nullptr, stateBuffer);
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(sizeof(RENDER_SURFACE_STATE), gfxCoreHelper.getRenderSurfaceStateSize());
+    EXPECT_EQ(sizeof(RENDER_SURFACE_STATE), gfxCoreHelper.getRenderSurfaceStateSize(pDevice->getRootDeviceEnvironment()));
 
     size_t size = 0x1000;
     SurfaceStateBufferLength length;
@@ -1170,7 +1170,7 @@ HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStateBaseAddressCalledThenCorre
     uint64_t expectedBaseAddress = 0x1122334455667788;
     renderSurfaceState.setSurfaceBaseAddress(expectedBaseAddress);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(expectedBaseAddress, gfxCoreHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState));
+    EXPECT_EQ(expectedBaseAddress, gfxCoreHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState, pDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValueIsReturned) {
@@ -1181,7 +1181,7 @@ HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValu
     const auto &productHelper = getHelper<ProductHelper>();
     EncodeSurfaceState<FamilyType>::setPitchForScratch(&renderSurfaceState, expectedPitch, productHelper);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(expectedPitch, gfxCoreHelper.getRenderSurfaceStatePitch(&renderSurfaceState, productHelper));
+    EXPECT_EQ(expectedPitch, gfxCoreHelper.getRenderSurfaceStatePitch(&renderSurfaceState, pDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine) {

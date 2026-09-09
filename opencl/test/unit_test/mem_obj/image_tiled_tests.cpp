@@ -130,7 +130,7 @@ TEST_F(CreateTiledImageTest, GivenSharedTiledImageWhenCheckingIsTiledThenTrueRet
             0,
             &surfaceFormat,
             info,
-            0, 0, 0, false);
+            0, 0, 0, false, nullptr);
 
         ASSERT_NE(nullptr, image);
 
@@ -171,7 +171,7 @@ TEST_F(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
             0,
             &surfaceFormat,
             info,
-            0, 0, 0, false);
+            0, 0, 0, false, nullptr);
 
         ASSERT_NE(nullptr, image);
 

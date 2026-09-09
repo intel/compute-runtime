@@ -41,6 +41,9 @@ struct AllocationProperties;
 struct EncodeSurfaceStateArgs;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
+struct ImageInfo;
+struct SurfaceOffsets;
+struct ImageSurfaceStateInputs;
 struct KernelDescriptor;
 class ProductHelper;
 class ReleaseHelper;
@@ -74,7 +77,8 @@ class GfxCoreHelper {
     virtual bool timestampPacketWriteSupported() const = 0;
     virtual bool isUpdateTaskCountFromWaitSupported() const = 0;
     virtual bool makeResidentBeforeLockNeeded(bool precondition) const = 0;
-    virtual size_t getRenderSurfaceStateSize() const = 0;
+    virtual size_t getRenderSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual size_t getBindlessSurfaceStateSlotSize() const = 0;
     virtual void setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                          void *surfaceStateBuffer,
                                                          size_t bufferSize,
@@ -140,11 +144,18 @@ class GfxCoreHelper {
     virtual bool preferInternalBcsEngine() const = 0;
     virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
     virtual uint32_t getMaxScratchSize(const NEO::ProductHelper &productHelper) const = 0;
-    virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const = 0;
-    virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const = 0;
+    virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
     virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const = 0;
+    virtual void encodeImageSurfaceState(void *outMemory, const ImageSurfaceStateInputs &inputs) const = 0;
+    virtual void applyImageSurfaceStateMipAndMediaBlock(void *outMemory,
+                                                        const ImageInfo &imageInfo,
+                                                        Gmm *gmm,
+                                                        uint32_t mipLevel,
+                                                        bool isMediaBlockImage,
+                                                        const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getBatchBufferEndSize() const = 0;
     virtual const void *getBatchBufferEndReference() const = 0;
@@ -223,10 +234,9 @@ class GfxCoreHelperHw : public GfxCoreHelper {
         return std::make_unique<GfxCoreHelperHw<GfxFamily>>();
     }
 
-    size_t getRenderSurfaceStateSize() const override {
-        using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-        return sizeof(RENDER_SURFACE_STATE);
-    }
+    size_t getRenderSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
+
+    size_t getBindlessSurfaceStateSlotSize() const override;
 
     size_t getSamplerStateSize() const override {
         using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
@@ -240,11 +250,9 @@ class GfxCoreHelperHw : public GfxCoreHelper {
         return messageExtDescriptor.getBindlessSurfaceOffsetToPatch();
     }
 
-    uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const override {
-        return reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfaceBaseAddress();
-    }
+    uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
-    uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const override;
+    uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     size_t getPaddingForISAAllocation() const override;
 
@@ -300,6 +308,18 @@ class GfxCoreHelperHw : public GfxCoreHelper {
                                                  bool useL1Cache) const override;
 
     MOCKABLE_VIRTUAL void setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) const;
+
+    void programScratchSurfaceState(const RootDeviceEnvironment &rootDeviceEnvironment,
+                                    void *surfaceStateBuffer,
+                                    size_t bufferSize,
+                                    uint64_t gpuVa,
+                                    size_t offset,
+                                    uint32_t pitch,
+                                    GraphicsAllocation *gfxAlloc,
+                                    bool isReadOnly,
+                                    uint32_t surfaceType,
+                                    bool forceNonAuxMode,
+                                    bool useL1Cache) const;
 
     const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
@@ -394,6 +414,13 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override;
+    void encodeImageSurfaceState(void *outMemory, const ImageSurfaceStateInputs &inputs) const override;
+    void applyImageSurfaceStateMipAndMediaBlock(void *outMemory,
+                                                const ImageInfo &imageInfo,
+                                                Gmm *gmm,
+                                                uint32_t mipLevel,
+                                                bool isMediaBlockImage,
+                                                const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     size_t getBatchBufferEndSize() const override;
     const void *getBatchBufferEndReference() const override;

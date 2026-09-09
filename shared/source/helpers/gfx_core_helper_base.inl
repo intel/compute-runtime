@@ -21,7 +21,9 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/image/image_surface_state.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -77,6 +79,18 @@ inline bool GfxCoreHelperHw<GfxFamily>::checkResourceCompatibility(GraphicsAlloc
 }
 
 template <typename Family>
+size_t GfxCoreHelperHw<Family>::getRenderSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
+    return sizeof(RENDER_SURFACE_STATE);
+}
+
+template <typename Family>
+size_t GfxCoreHelperHw<Family>::getBindlessSurfaceStateSlotSize() const {
+    using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
+    return sizeof(RENDER_SURFACE_STATE);
+}
+
+template <typename Family>
 void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                                       void *surfaceStateBuffer,
                                                                       size_t bufferSize,
@@ -88,6 +102,22 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
                                                                       uint32_t surfaceType,
                                                                       bool forceNonAuxMode,
                                                                       bool useL1Cache) const {
+    programScratchSurfaceState(rootDeviceEnvironment, surfaceStateBuffer, bufferSize, gpuVa, offset, pitch,
+                               gfxAlloc, isReadOnly, surfaceType, forceNonAuxMode, useL1Cache);
+}
+
+template <typename Family>
+void GfxCoreHelperHw<Family>::programScratchSurfaceState(const RootDeviceEnvironment &rootDeviceEnvironment,
+                                                         void *surfaceStateBuffer,
+                                                         size_t bufferSize,
+                                                         uint64_t gpuVa,
+                                                         size_t offset,
+                                                         uint32_t pitch,
+                                                         GraphicsAllocation *gfxAlloc,
+                                                         bool isReadOnly,
+                                                         uint32_t surfaceType,
+                                                         bool forceNonAuxMode,
+                                                         bool useL1Cache) const {
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -637,6 +667,35 @@ void GfxCoreHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize, co
 }
 
 template <typename GfxFamily>
+void GfxCoreHelperHw<GfxFamily>::encodeImageSurfaceState(void *outMemory, const ImageSurfaceStateInputs &inputs) const {
+}
+
+template <typename GfxFamily>
+void GfxCoreHelperHw<GfxFamily>::applyImageSurfaceStateMipAndMediaBlock(void *outMemory,
+                                                                        const ImageInfo &imageInfo,
+                                                                        Gmm *gmm,
+                                                                        uint32_t mipLevel,
+                                                                        bool isMediaBlockImage,
+                                                                        const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(outMemory);
+
+    if (imageInfo.mipCount > 1u) {
+        const uint32_t mipCountLod = imageInfo.mipCount - 1u;
+        const uint32_t clampedMip = std::min(mipLevel, mipCountLod);
+        surfaceState->setSurfaceMinLOD(clampedMip);
+        surfaceState->setMIPCountLOD(mipCountLod);
+        if (gmm != nullptr) {
+            ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(surfaceState, gmm);
+        }
+    }
+
+    if (isMediaBlockImage) {
+        ImageSurfaceStateHelper<GfxFamily>::setWidthForMediaBlockSurfaceState(surfaceState, imageInfo);
+    }
+}
+
+template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(args.outMemory);
@@ -792,10 +851,16 @@ bool GfxCoreHelperHw<GfxFamily>::inOrderAtomicSignallingEnabled() const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const {
+uint64_t GfxCoreHelperHw<GfxFamily>::getRenderSurfaceStateBaseAddress(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+    return reinterpret_cast<RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfaceBaseAddress();
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getRenderSurfaceStatePitch(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(renderSurfaceState);
-    return EncodeSurfaceState<GfxFamily>::getPitchForScratchInBytes(surfaceState, productHelper);
+    return EncodeSurfaceState<GfxFamily>::getPitchForScratchInBytes(surfaceState, rootDeviceEnvironment.getHelper<ProductHelper>());
 }
 
 template <typename GfxFamily>

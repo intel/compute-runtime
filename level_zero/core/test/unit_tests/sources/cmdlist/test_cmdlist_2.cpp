@@ -1872,7 +1872,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListThenSshCorrectlyReserved, IsGe
     MockCommandListHw<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
     auto &gfxCoreHelper = commandList.device->getGfxCoreHelper();
-    auto size = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto size = gfxCoreHelper.getRenderSurfaceStateSize(commandList.device->getNEODevice()->getRootDeviceEnvironment());
     EXPECT_EQ(commandList.getReserveSshSize(), size);
 }
 

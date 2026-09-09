@@ -4332,7 +4332,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
         sbaExpected[i] = i * 0x1000;
     }
 
-    session->readMemoryBuffer.assign(4 * gfxCoreHelper.getRenderSurfaceStateSize(), 5);
+    session->readMemoryBuffer.assign(4 * gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment()), 5);
 
     sbaExpected[ZET_DEBUG_SBA_SURFACE_STATE_INTEL_GPU] = reinterpret_cast<uint64_t>(session->readMemoryBuffer.data());
 
@@ -4348,7 +4348,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;
         gfxCoreHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
-                                                              &session->readMemoryBuffer[1 * (gfxCoreHelper.getRenderSurfaceStateSize())], 1, scratchAllocationBase, 0,
+                                                              &session->readMemoryBuffer[1 * (gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment()))], 1, scratchAllocationBase, 0,
                                                               ptss, nullptr, false, 6, false, true);
 
         r0Thread0[5] = 1 << 10; // first surface state
@@ -4367,7 +4367,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;
         gfxCoreHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
-                                                              &session->readMemoryBuffer[1 * (gfxCoreHelper.getRenderSurfaceStateSize())], 1, scratchAllocationBase, 0,
+                                                              &session->readMemoryBuffer[1 * (gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment()))], 1, scratchAllocationBase, 0,
                                                               ptss, nullptr, false, 6, false, true);
 
         r0Thread0[5] = 1 << 10; // first surface state
@@ -4396,7 +4396,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;
         gfxCoreHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
-                                                              &session->readMemoryBuffer[2 * (gfxCoreHelper.getRenderSurfaceStateSize())], 1, scratchAllocationBase2Canonized, 0,
+                                                              &session->readMemoryBuffer[2 * (gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment()))], 1, scratchAllocationBase2Canonized, 0,
                                                               ptss, nullptr, false, 6, false, true);
 
         r0Thread1[5] = 2 << 10; // second surface state

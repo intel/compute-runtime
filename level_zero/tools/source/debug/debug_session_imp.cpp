@@ -1516,12 +1516,13 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
     uint64_t scratchSpaceBaseAddress = 0;
 
     auto &gfxCoreHelper = connectedDevice->getGfxCoreHelper();
+    const auto &rootDeviceEnvironment = connectedDevice->getNEODevice()->getRootDeviceEnvironment();
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         auto surfaceStateForScratch = ((r0[5] >> 10) << 6);
 
         if (surfaceStateForScratch > 0) {
             uint64_t renderSurfaceStateGpuVa = surfaceStateForScratch + sbaBuffer.surfaceStateBaseAddress;
-            constexpr size_t renderSurfaceStateSize = 64;
+            const size_t renderSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
             std::vector<char> renderSurfaceState(renderSurfaceStateSize, 0);
 
             ret = readGpuMemory(allThreads[threadId]->getMemoryHandle(), renderSurfaceState.data(), renderSurfaceStateSize, renderSurfaceStateGpuVa);
@@ -1530,10 +1531,10 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
                 return ret;
             }
 
-            auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data(), connectedDevice->getProductHelper());
+            auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data(), rootDeviceEnvironment);
             auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, threadId);
             auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-            auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
+            auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data(), rootDeviceEnvironment));
             if (scratchAllocationBase != 0) {
                 scratchSpaceBaseAddress = threadOffset + scratchAllocationBase;
             }

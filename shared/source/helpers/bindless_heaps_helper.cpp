@@ -50,7 +50,7 @@ using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
 BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : rootDevice(rootDevice),
                                                                                              memManager(rootDevice->getMemoryManager()),
                                                                                              deviceBitfield(rootDevice->getDeviceBitfield()),
-                                                                                             surfaceStateSize(rootDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getRenderSurfaceStateSize()),
+                                                                                             surfaceStateSize(rootDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getBindlessSurfaceStateSlotSize()),
                                                                                              rootDeviceIndex(rootDevice->getRootDeviceIndex()),
                                                                                              isMultiOsContextCapable(isMultiOsContextCapable) {
 
