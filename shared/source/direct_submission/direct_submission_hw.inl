@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
@@ -123,7 +124,14 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
                                                              true, MemoryConstants::pageSize,
                                                              AllocationType::semaphoreBuffer,
                                                              isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
-    semaphores = memoryManager->allocateGraphicsMemoryWithProperties(semaphoreAllocationProperties);
+    auto device = this->csr.getDevice();
+    if (device && this->rootDeviceEnvironment.getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+        !this->memoryManager->isSystemMemoryPreferred(semaphoreAllocationProperties)) {
+        this->semaphores = device->getSemaphorePoolAllocator().allocate(semaphoreAllocationProperties.size);
+    }
+    if (!this->semaphores) {
+        this->semaphores = this->memoryManager->allocateGraphicsMemoryWithProperties(semaphoreAllocationProperties);
+    }
     UNRECOVERABLE_IF(semaphores == nullptr);
     allocations.push_back(semaphores);
 
@@ -865,9 +873,13 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::deallocateResources() {
         memoryManager->freeGraphicsMemory(this->ringBuffers[ringBufferIndex].ringBuffer);
     }
     this->ringBuffers.clear();
-    if (semaphores) {
-        memoryManager->freeGraphicsMemory(semaphores);
-        semaphores = nullptr;
+    if (this->semaphores) {
+        if (this->semaphores->isView()) {
+            this->csr.getDevice()->getSemaphorePoolAllocator().free(this->semaphores);
+        } else {
+            this->memoryManager->freeGraphicsMemory(this->semaphores);
+        }
+        this->semaphores = nullptr;
     }
 
     memoryManager->freeGraphicsMemory(deferredTasksListAllocation);

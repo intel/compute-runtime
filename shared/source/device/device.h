@@ -229,6 +229,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     CommandBufferPoolAllocator &getCommandBufferPoolAllocator() {
         return commandBufferPoolAllocator;
     }
+    SemaphorePoolAllocator &getSemaphorePoolAllocator() {
+        return this->semaphorePoolAllocator;
+    }
     UsmMemAllocPoolsFacade &getDeviceUsmMemAllocPoolFacade();
     UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr);
     UsmMemAllocPool *getUsmConstantSurfaceAllocPool() {
@@ -388,6 +391,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     GlobalSurfacePoolAllocator globalSurfacePoolAllocator;
     ConstantSurfacePoolAllocator constantSurfacePoolAllocator;
     CommandBufferPoolAllocator commandBufferPoolAllocator;
+    SemaphorePoolAllocator semaphorePoolAllocator;
     std::unique_ptr<UsmMemAllocPoolsFacade> deviceUsmMemAllocPoolFacade;
     std::unique_ptr<UsmMemAllocPool> usmConstantSurfaceAllocPool;
     std::unique_ptr<UsmMemAllocPool> usmGlobalSurfaceAllocPool;

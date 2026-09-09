@@ -19,5 +19,6 @@ using ConstantSurfacePoolAllocator = GenericPoolAllocator<ConstantSurfacePoolTra
 using CommandBufferPoolAllocator = GenericViewPoolAllocator<CommandBufferPoolTraits>;
 using LinearStreamPoolAllocator = GenericViewPoolAllocator<LinearStreamPoolTraits>;
 using InternalHeapPoolAllocator = GenericViewPoolAllocator<InternalHeapPoolTraits>;
+using SemaphorePoolAllocator = GenericViewPoolAllocator<SemaphorePoolTraits>;
 
 } // namespace NEO

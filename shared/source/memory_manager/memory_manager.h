@@ -290,6 +290,7 @@ class MemoryManager {
 
     bool isAsyncDeleterEnabled() const;
     bool isLocalMemorySupported(uint32_t rootDeviceIndex) const;
+    bool isSystemMemoryPreferred(const AllocationProperties &properties);
     virtual bool isMemoryBudgetExhausted() const;
 
     virtual bool hasPageFaultsEnabled(const Device &neoDevice) { return false; }

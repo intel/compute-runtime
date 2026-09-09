@@ -1313,6 +1313,12 @@ bool MemoryManager::isAllocationTypeToCapture(AllocationType type) const {
     return false;
 }
 
+bool MemoryManager::isSystemMemoryPreferred(const AllocationProperties &properties) {
+    AllocationData allocationData;
+    this->getAllocationData(allocationData, properties, nullptr, this->createStorageInfoFromProperties(properties));
+    return allocationData.flags.useSystemMemory;
+}
+
 bool MemoryManager::isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex) {
     std::call_once(checkIsaPlacementOnceFlags[rootDeviceIndex], [&] {
         AllocationProperties properties = {rootDeviceIndex, 0x1000, AllocationType::kernelIsa, 1};
