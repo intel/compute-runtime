@@ -158,6 +158,7 @@ void usage() {
                  "\n  -H,   --health                                                                                  selectively run device health EXT API black box test"
                  "\n        [--set-health <ok|warning|critical|failed>]                                               optionally set device health status (requires root)"
                  "\n  -x,   --rescan                                                                                  selectively run driver rescan EXP API black box test and re-run telemetry on rescanned handles"
+                 "\n  -D,   --driverproperties                                                                        selectively run driver properties EXP API black box test"
                  "\n  -L,   --infolog                                                                                 selectively run info log EXP API black box test, reporting what each info log supports"
                  "\n        [--instanceapi]                                                                           create a collection instance, generate CPER records by reading the uncorrectable RAS counters, then verify peek and read (requires root)"
                  "\n        [--instancepeek]                                                                          create a collection instance, wait for the CPER data available event and peek the records (requires root)"
@@ -2624,6 +2625,38 @@ std::string uuidToString(const zes_uuid_t &uuid) {
     return std::string(buf);
 }
 
+void testSysmanDriverProperties(zes_driver_handle_t driver) {
+    std::cout << std::endl
+              << " ----  Driver Properties tests ---- " << std::endl;
+
+    using zesIntelDriverGetPropertiesExp_pfn = ze_result_t(ZE_APICALL *)(zes_driver_handle_t, zes_intel_driver_properties_exp_t *);
+
+    auto getDriverPropertiesExpFunctionPointer = [](zes_driver_handle_t driverHandle) {
+        zesIntelDriverGetPropertiesExp_pfn functionPointer = nullptr;
+        VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverGetPropertiesExp", reinterpret_cast<void **>(&functionPointer)));
+        return functionPointer;
+    };
+
+    auto zesIntelDriverGetPropertiesExpPtr = getDriverPropertiesExpFunctionPointer(driver);
+    if (!zesIntelDriverGetPropertiesExpPtr) {
+        std::cout << "Driver Properties EXP function pointer not available" << std::endl;
+        return;
+    }
+
+    zes_intel_driver_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP};
+    memset(properties.uuid.id, 0xFF, sizeof(properties.uuid.id));
+    VALIDATECALL(zesIntelDriverGetPropertiesExpPtr(driver, &properties));
+
+    if (verbose) {
+        std::cout << "properties.driverVersion = " << properties.driverVersion << std::endl;
+        std::cout << "properties.uuid = " << uuidToString(properties.uuid) << std::endl;
+    }
+
+    if (properties.driverVersion == 0) {
+        std::cout << "Warning: driverVersion is zero, the driver version could not be retrieved" << std::endl;
+    }
+}
+
 void printHexData(const uint8_t *data, uint32_t size, uint32_t maxBytes) {
     uint32_t bytesToPrint = std::min(size, maxBytes);
     for (uint32_t i = 0; i < bytesToPrint; i++) {
@@ -3584,6 +3617,10 @@ int main(int argc, char *argv[]) {
     if (isParamEnabled(argc, argv, "-x", "--rescan", &optind)) {
         getDriverRescanExpFunctionPointers(driver);
         testSysmanDriverRescan(driver, devices);
+    }
+
+    if (isParamEnabled(argc, argv, "-D", "--driverproperties", &optind)) {
+        testSysmanDriverProperties(driver);
     }
 
     if (isParamEnabled(argc, argv, "-L", "--infolog", &optind)) {

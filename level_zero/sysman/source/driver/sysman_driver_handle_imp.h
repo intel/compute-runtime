@@ -10,6 +10,7 @@
 
 #include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 
+#include <chrono>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -52,9 +53,11 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     ze_result_t driverEventRegister(zes_event_type_flags_t events) override;
     ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) override;
     ze_result_t getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) override;
+    ze_result_t getDriverProperties(zes_intel_driver_properties_exp_t *pProperties) override;
     const std::unordered_map<std::string, SysmanDevice *> &getUuidDeviceMap() const {
         return uuidDeviceMap;
     }
+    uint64_t getUuidTimestamp() const { return uuidTimestamp; }
     // list of supported extension apis
     static const std::vector<std::pair<std::string, uint32_t>> extensionsSupported;
 
@@ -73,6 +76,7 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     std::unordered_map<ze_device_handle_t, SysmanDevice *> coreToSysmanDeviceMap{};
 
   protected:
+    uint64_t uuidTimestamp = 0u;
     std::unordered_map<std::string, SysmanDevice *> uuidDeviceMap{};
     std::unordered_map<ze_driver_handle_t, SysmanDriverHandle *> coreToSysmanDriverMap{};
     std::mutex coreToSysmanDriverMapLock;

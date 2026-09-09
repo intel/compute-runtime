@@ -18,6 +18,8 @@ namespace L0 {
 namespace Sysman {
 
 struct SysmanDriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
+    static constexpr uint32_t initialDriverVersionValue = 0x01030000;
+
     static SysmanDriverHandle *fromHandle(zes_driver_handle_t handle);
     inline zes_driver_handle_t toHandle() { return this; }
 
@@ -37,6 +39,7 @@ struct SysmanDriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
     virtual ze_result_t driverEventRegister(zes_event_type_flags_t events) = 0;
     virtual ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) = 0;
     virtual ze_result_t getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) = 0;
+    virtual ze_result_t getDriverProperties(zes_intel_driver_properties_exp_t *pProperties) = 0;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<SysmanDriverHandle>);

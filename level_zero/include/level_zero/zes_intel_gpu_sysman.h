@@ -817,6 +817,58 @@ ze_result_t ZE_APICALL zesIntelDriverEventListenExp(
                                           ///< When `nullptr`, driver scoped events are not listened to.
 );
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME
+/// @brief Driver properties extension name
+#define ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME "ZES_intel_experimental_driver_properties"
+#endif // ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver properties extension Version(s)
+typedef enum _zes_intel_driver_properties_exp_version_t {
+    ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                           ///< version 1.0
+    ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_properties_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver properties structure
+typedef struct _zes_intel_driver_properties_exp_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP
+    void *pNext;                    ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    zes_uuid_t uuid;                ///< [out] universal unique identifier of the driver instance.
+    uint32_t driverVersion;         ///< [out] sysman driver version
+                                    ///< The driver version is a monotonically increasing value where higher
+                                    ///< values always indicate a more recent version. It is an opaque value
+                                    ///< and must not be interpreted as a packed major/minor/patch triple.
+                                    ///< A value of 0 means that this version could not be retrieved.
+} zes_intel_driver_properties_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get driver properties
+///
+/// @details
+///     - This function retrieves the properties of the sysman driver instance.
+///     - The properties are driver scoped, they do not describe any single device of
+///       the driver.
+///     - The application must initialize the stype member of pProperties.
+///     - The application may call this function from simultaneous threads.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pProperties`
+ze_result_t ZE_APICALL zesIntelDriverGetPropertiesExp(
+    zes_driver_handle_t hDriver,                   ///< [in] handle of the driver instance
+    zes_intel_driver_properties_exp_t *pProperties ///< [in,out] pointer to the driver properties
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
