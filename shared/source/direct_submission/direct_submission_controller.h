@@ -41,10 +41,18 @@ enum class TimeoutElapsedMode {
     fullyElapsed
 };
 
+struct ContextGroupKey {
+    uint32_t rootDeviceIndex;
+    uint32_t contextGroupId;
+
+    bool operator==(const ContextGroupKey &other) const {
+        return rootDeviceIndex == other.rootDeviceIndex && contextGroupId == other.contextGroupId;
+    }
+};
+
 class DirectSubmissionController {
   public:
     static constexpr size_t defaultTimeout = 5'000;
-    static constexpr size_t defaultContextGroupTimeout = 20'000;
     static constexpr size_t timeToPollTagUpdateNS = 20'000;
     DirectSubmissionController();
     virtual ~DirectSubmissionController();
@@ -114,7 +122,6 @@ class DirectSubmissionController {
     std::array<uint32_t, DeviceBitfield().size()> ccsCount = {};
     std::unordered_map<CommandStreamReceiver *, DirectSubmissionState> directSubmissions;
     std::mutex directSubmissionsMutex;
-    std::unordered_map<uint32_t, SteadyClock::time_point> groupLastActivityTime;
 
     std::unique_ptr<Thread> directSubmissionControllingThread;
     std::atomic_bool keepControlling = true;
@@ -126,7 +133,6 @@ class DirectSubmissionController {
     std::chrono::microseconds maxTimeout{defaultTimeout};
     std::chrono::microseconds timeout{defaultTimeout};
     int32_t timeoutDivisor = 1;
-    std::chrono::microseconds contextGroupTimeout{defaultContextGroupTimeout};
     int32_t bcsTimeoutDivisor = 1;
     QueueThrottle lowestThrottleSubmitted = QueueThrottle::HIGH;
     bool isCsrIdleDetectionEnabled = false;

@@ -25,9 +25,6 @@ DirectSubmissionController::DirectSubmissionController() {
     if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
         timeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerTimeout.get()};
     }
-    if (debugManager.flags.DirectSubmissionControllerContextGroupTimeout.get() != -1) {
-        contextGroupTimeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerContextGroupTimeout.get()};
-    }
     if (debugManager.flags.DirectSubmissionControllerBcsTimeoutDivisor.get() != -1) {
         bcsTimeoutDivisor = debugManager.flags.DirectSubmissionControllerBcsTimeoutDivisor.get();
     }
@@ -111,17 +108,6 @@ void DirectSubmissionController::checkNewSubmissions() {
     std::lock_guard<std::mutex> lock(this->directSubmissionsMutex);
     bool shouldRecalculateTimeout = false;
     std::optional<TaskCountType> bcsTaskCount{};
-
-    const auto now = getCpuTimestamp();
-    if (isCsrsContextGroupIdleDetectionEnabled) {
-        for (auto &[csr, state] : directSubmissions) {
-            if (state.isActive && csr->getOsContext().isPartOfContextGroup() &&
-                csr->peekTaskCount() != state.taskCount) {
-                groupLastActivityTime[csr->getContextGroupId()] = now;
-            }
-        }
-    }
-
     for (auto &[csr, state] : directSubmissions) {
         if (!state.isActive) {
             continue;
@@ -153,10 +139,6 @@ void DirectSubmissionController::checkNewSubmissions() {
             }
             state.taskCount = csr->peekTaskCount();
         } else {
-            if (isCsrsContextGroupIdleDetectionEnabled && csr->getOsContext().isPartOfContextGroup()) {
-                groupLastActivityTime[csr->getContextGroupId()] = now;
-            }
-
             state.isStopped = false;
             state.taskCount = taskCount;
         }
@@ -195,22 +177,13 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
         return !checkCsr->isBusyWithoutHang(lastHangCheckTime);
     };
 
-    const bool contextGroupIdleDetectionEnabled = isCsrsContextGroupIdleDetectionEnabled && csr->getOsContext().isPartOfContextGroup();
-    if (contextGroupIdleDetectionEnabled) {
-        auto groupLastActivity = groupLastActivityTime.find(csr->getContextGroupId());
-        if (groupLastActivity != groupLastActivityTime.end() &&
-            (getCpuTimestamp() - groupLastActivity->second) < contextGroupTimeout) {
-            return false;
-        }
-    }
-
     // Check if THIS CSR is idle
     if (!checkCSRIdle(csr, csrLock)) {
         return false;
     }
 
     // If context group optimization is disabled OR CSR is not part of a context group, use original behavior
-    if (!contextGroupIdleDetectionEnabled) {
+    if (!isCsrsContextGroupIdleDetectionEnabled || !csr->getOsContext().isPartOfContextGroup()) {
         return true;
     }
 
@@ -218,7 +191,7 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
     csrLock.unlock();
 
     // Check if all OTHER CSRs in the same context group are idle
-    const auto contextGroupId = csr->getContextGroupId();
+    auto myKey = ContextGroupKey{csr->getRootDeviceIndex(), csr->getContextGroupId()};
     bool allOthersIdle = true;
 
     for (auto &entry : directSubmissions) {
@@ -226,21 +199,21 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
         if (otherCsr == csr) {
             continue; // Skip self
         }
-        if (!otherCsr->getOsContext().isPartOfContextGroup() ||
-            otherCsr->getContextGroupId() != contextGroupId) {
-            continue;
-        }
-        if (!entry.second.isActive) {
-            continue; // Only consider active CSRs in the group.
-        }
-        auto otherLock = otherCsr->tryObtainUniqueOwnership();
-        if (!otherLock.owns_lock()) {
-            allOthersIdle = false;
-            break; // Treat contended CSR as active.
-        }
-        if (!checkCSRIdle(otherCsr, otherLock)) {
-            allOthersIdle = false; // Early exit for performance
-            break;
+
+        auto otherKey = ContextGroupKey{otherCsr->getRootDeviceIndex(), otherCsr->getContextGroupId()};
+        if (otherKey == myKey) {
+            if (!entry.second.isActive) {
+                continue; // Only consider active CSRs in the group
+            }
+            auto otherLock = otherCsr->tryObtainUniqueOwnership();
+            if (!otherLock.owns_lock()) {
+                allOthersIdle = false;
+                break; // Treat contended CSR as active (non-idle)
+            }
+            if (!checkCSRIdle(otherCsr, otherLock)) {
+                allOthersIdle = false;
+                break; // Early exit for performance
+            }
         }
     }
 
