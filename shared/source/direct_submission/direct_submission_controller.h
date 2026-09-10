@@ -44,7 +44,7 @@ enum class TimeoutElapsedMode {
 class DirectSubmissionController {
   public:
     static constexpr size_t defaultTimeout = 5'000;
-    static constexpr size_t defaultContextGroupTimeout = 0;
+    static constexpr size_t defaultContextGroupTimeout = 1'000;
     static constexpr size_t timeToPollTagUpdateNS = 20'000;
     DirectSubmissionController();
     virtual ~DirectSubmissionController();

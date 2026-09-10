@@ -1119,13 +1119,13 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenContextGroupIdleD
     }
 }
 
-TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDefaultContextGroupTimeoutWhenCreatingControllerThenContextGroupTimeoutIsDisabled) {
+TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDefaultContextGroupTimeoutWhenCreatingControllerThenContextGroupTimeoutIsInitialized) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionControllerContextGroupTimeout.set(-1);
 
     DirectSubmissionControllerMock controller;
 
-    EXPECT_EQ(std::chrono::microseconds{0}, controller.contextGroupTimeout);
+    EXPECT_EQ(std::chrono::microseconds{1'000}, controller.contextGroupTimeout);
 }
 
 TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenContextGroupTimeoutDebugSettingWhenCreatingControllerThenContextGroupTimeoutIsInitialized) {
