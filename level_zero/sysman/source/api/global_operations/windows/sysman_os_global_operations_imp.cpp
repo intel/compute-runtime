@@ -194,6 +194,10 @@ ze_result_t WddmGlobalOperationsImp::setDeviceHealthStatus(zes_device_health_sta
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t WddmGlobalOperationsImp::getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 WddmGlobalOperationsImp::WddmGlobalOperationsImp(OsSysman *pOsSysman) {
     pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();

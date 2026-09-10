@@ -109,6 +109,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidSysmanDeviceHandleWhenCallingSysmanDevic
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::memoryGetPageOfflineStateExp(invalidHandle, zes_intel_mem_page_status_exp_t(1), &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::getDeviceHealthStatus(invalidHandle, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::setDeviceHealthStatus(invalidHandle, ZES_DEVICE_HEALTH_STATUS_EXT_OK));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::getPowerOffReasonExp(invalidHandle, nullptr));
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallingGenerateUuidFromPciBusInfoThenFalseIsReturned) {

@@ -409,5 +409,13 @@ ze_result_t SysmanDevice::setDeviceHealthStatus(zes_device_handle_t hDevice, zes
     return pSysmanDevice->setDeviceHealthStatus(health);
 }
 
+ze_result_t SysmanDevice::getPowerOffReasonExp(zes_device_handle_t hDevice, zes_intel_device_power_off_reason_exp_t *pReason) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pSysmanDevice->getPowerOffReasonExp(pReason);
+}
+
 } // namespace Sysman
 } // namespace L0

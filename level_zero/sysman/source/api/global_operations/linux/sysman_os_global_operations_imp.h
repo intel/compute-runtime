@@ -61,6 +61,7 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     ze_result_t getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) override;
     ze_result_t getDeviceHealthStatus(zes_device_health_status_ext_t *pHealth) override;
     ze_result_t setDeviceHealthStatus(zes_device_health_status_ext_t health) override;
+    ze_result_t getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) override;
     void clearUuidCache() override;
     LinuxGlobalOperationsImp() = default;
     LinuxGlobalOperationsImp(OsSysman *pOsSysman);
@@ -109,6 +110,9 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     ze_result_t resetImpl(ze_bool_t force, zes_reset_type_t resetType);
     bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
     zes_device_state_ext_flags_t getDeviceStateExtFlags();
+    ze_result_t readPowerOffReasons(zes_intel_device_power_off_reason_exp_flags_t &reasons);
+    std::string getAlertReasonFilePath();
+    bool isPowerOffPending();
     MOCKABLE_VIRTUAL bool isDevicePciPathAccessible();
     MOCKABLE_VIRTUAL bool isDrmIoctlOk();
 };

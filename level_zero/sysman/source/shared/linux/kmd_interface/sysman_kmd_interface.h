@@ -117,6 +117,11 @@ enum class SysfsName {
     sysfsNameFanAutoPointPwm,
 };
 
+enum class NodeName {
+    nodeNameAmcAlertReason,
+    nodeNameTemperatureEmergency,
+};
+
 enum class SysfsValueUnit {
     milli,
     micro,
@@ -136,6 +141,7 @@ class SysmanKmdInterface {
     virtual std::string getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
                                                   zes_freq_domain_t frequencyDomainNumber) = 0;
     virtual std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) = 0;
+    virtual std::string getNodeFileName(NodeName nodeName) { return {}; }
     virtual std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) = 0;
     virtual ze_result_t getPmuConfigsForSingleEngines(const std::string &sysmanDeviceDir,
                                                       const EngineGroupInfo &engineInfo,
@@ -150,7 +156,6 @@ class SysmanKmdInterface {
                                                      std::vector<uint64_t> &pmuConfigs) = 0;
     virtual ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) = 0;
     virtual std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const = 0;
-    virtual std::string getTemperatureEmergencyFileName() const = 0;
     virtual bool isStandbyModeControlAvailable() const = 0;
     virtual bool clientInfoAvailableInFdInfo() const = 0;
     virtual bool isGroupEngineInterfaceAvailable() const = 0;
@@ -262,7 +267,6 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
                                              std::vector<uint64_t> &pmuConfigs) override;
     ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
-    std::string getTemperatureEmergencyFileName() const override;
     bool isStandbyModeControlAvailable() const override { return true; }
     bool clientInfoAvailableInFdInfo() const override { return false; }
     bool isGroupEngineInterfaceAvailable() const override { return false; }
@@ -333,7 +337,6 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
                                              std::vector<uint64_t> &pmuConfigs) override;
     ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
-    std::string getTemperatureEmergencyFileName() const override;
     bool isStandbyModeControlAvailable() const override { return true; }
     bool clientInfoAvailableInFdInfo() const override { return false; }
     bool isGroupEngineInterfaceAvailable() const override { return true; }
@@ -390,6 +393,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
                                           zes_freq_domain_t frequencyDomainNumber) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
+    std::string getNodeFileName(NodeName nodeName) override;
     std::string getEngineBasePath(uint32_t subDeviceId) const override;
     std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
     ze_result_t getPmuConfigsForSingleEngines(const std::string &sysmanDeviceDir,
@@ -405,7 +409,6 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
                                              std::vector<uint64_t> &pmuConfigs) override;
     ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
-    std::string getTemperatureEmergencyFileName() const override;
     bool isStandbyModeControlAvailable() const override { return false; }
     bool clientInfoAvailableInFdInfo() const override { return true; }
     bool isGroupEngineInterfaceAvailable() const override { return true; }
@@ -455,8 +458,10 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
+    std::map<NodeName, std::string> nodeNameToFileMap;
     std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap;
     void initSysfsNameToFileMap(SysmanProductHelper *pSysmanProductHelper);
+    void initNodeNameToFileMap();
     void initSysfsNameToNativeUnitMap(SysmanProductHelper *pSysmanProductHelper);
     const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() override {
         return sysfsNameToNativeUnitMap;

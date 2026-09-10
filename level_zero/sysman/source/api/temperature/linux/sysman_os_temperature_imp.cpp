@@ -122,7 +122,7 @@ void LinuxTemperatureImp::reInit() {
 }
 
 void LinuxTemperatureImp::init() {
-    const auto temperatureEmergencyFileName = pSysmanKmdInterface->getTemperatureEmergencyFileName();
+    const auto temperatureEmergencyFileName = pSysmanKmdInterface->getNodeFileName(NodeName::nodeNameTemperatureEmergency);
     if (temperatureEmergencyFileName.empty()) {
         return;
     }

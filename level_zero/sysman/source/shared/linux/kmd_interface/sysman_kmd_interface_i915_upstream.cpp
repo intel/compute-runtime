@@ -153,10 +153,6 @@ std::string SysmanKmdInterfaceI915Upstream::getHwmonName(uint32_t subDeviceId, b
     return getHwmonNameI915(subDeviceId, isSubdevice);
 }
 
-std::string SysmanKmdInterfaceI915Upstream::getTemperatureEmergencyFileName() const {
-    return "";
-}
-
 std::string SysmanKmdInterfaceI915Upstream::getEngineBasePath(uint32_t subDeviceId) const {
     return getEngineBasePathI915(subDeviceId);
 }

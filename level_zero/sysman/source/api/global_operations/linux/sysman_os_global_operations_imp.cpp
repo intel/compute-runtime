@@ -39,6 +39,13 @@ const std::string LinuxGlobalOperationsImp::clientsDir("clients");
 const std::string LinuxGlobalOperationsImp::ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
 const std::string gpuHealthSysfsNode = "device/gpu_health";
 
+const std::map<std::string, zes_intel_device_power_off_reason_exp_flags_t> alertReasonToPowerOffReasonMap = {
+    {"Firmware Download", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FIRMWARE_DOWNLOAD},
+    {"Thermal Trip", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_THERMAL_TRIP},
+    {"OOB Request", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_ALERT},
+    {"OOB Reset", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_RESET},
+    {"Catastrophic", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_CATASTROPHIC_ERROR}};
+
 // Map engine entries(numeric values) present in /sys/class/drm/card<n>/clients/<client_n>/busy,
 // with engine enum defined in leve-zero spec
 // Note that entries with int 2 and 3(represented by i915 as CLASS_VIDEO and CLASS_VIDEO_ENHANCE)
@@ -839,6 +846,58 @@ bool LinuxGlobalOperationsImp::isDrmIoctlOk() {
     return NEO::Drm::isDrmSupported(hwDeviceId.getFileDescriptor());
 }
 
+std::string LinuxGlobalOperationsImp::getAlertReasonFilePath() {
+    const std::string alertReasonFile = pLinuxSysmanImp->getSysmanKmdInterface()->getNodeFileName(NodeName::nodeNameAmcAlertReason);
+    if (alertReasonFile.empty()) {
+        return {};
+    }
+    const std::string devicePciPath = pSysfsAccess->getDevicePciPath();
+    if (devicePciPath.empty()) {
+        return {};
+    }
+    return devicePciPath + "/" + alertReasonFile;
+}
+
+bool LinuxGlobalOperationsImp::isPowerOffPending() {
+    const std::string alertReasonSysFsNodeName = getAlertReasonFilePath();
+    if (alertReasonSysFsNodeName.empty()) {
+        return false;
+    }
+    return pFsAccess->fileExists(alertReasonSysFsNodeName);
+}
+
+ze_result_t LinuxGlobalOperationsImp::readPowerOffReasons(zes_intel_device_power_off_reason_exp_flags_t &reasons) {
+    const std::string alertReasonSysFsNodeName = getAlertReasonFilePath();
+    if (alertReasonSysFsNodeName.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Alert reason node is unavailable and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::vector<std::string> alertReasonLines = {};
+    ze_result_t result = pFsAccess->read(alertReasonSysFsNodeName, alertReasonLines);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, alertReasonSysFsNodeName.c_str(), result);
+        return result;
+    }
+
+    if (alertReasonLines.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No alert reason reported by %s \n", NEO_FUNCTION_NAME, alertReasonSysFsNodeName.c_str());
+        DEBUG_BREAK_IF(1);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    const std::string &alertReason = alertReasonLines.front();
+    auto alertReasonFlag = alertReasonToPowerOffReasonMap.find(alertReason);
+    if (alertReasonFlag == alertReasonToPowerOffReasonMap.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unrecognized alert reason %s reported by %s \n", NEO_FUNCTION_NAME, alertReason.c_str(), alertReasonSysFsNodeName.c_str());
+        DEBUG_BREAK_IF(1);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    reasons = alertReasonFlag->second;
+    return ZE_RESULT_SUCCESS;
+}
+
 zes_device_state_ext_flags_t LinuxGlobalOperationsImp::getDeviceStateExtFlags() {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
 
@@ -855,6 +914,10 @@ zes_device_state_ext_flags_t LinuxGlobalOperationsImp::getDeviceStateExtFlags() 
         return ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY;
     }
 
+    if (isPowerOffPending()) {
+        return ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
+    }
+
     // The PCI path exists but no kernel driver is bound to the device.
     if (!pSysmanKmdInterface->isDriverLoaded()) {
         return ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED;
@@ -868,6 +931,17 @@ zes_device_state_ext_flags_t LinuxGlobalOperationsImp::getDeviceStateExtFlags() 
     }
 
     return ZES_DEVICE_STATE_EXT_FLAG_NORMAL;
+}
+
+ze_result_t LinuxGlobalOperationsImp::getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) {
+    zes_intel_device_power_off_reason_exp_flags_t reasons = 0;
+    ze_result_t result = readPowerOffReasons(reasons);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    pReason->reasons = reasons;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {

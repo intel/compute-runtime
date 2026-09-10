@@ -551,11 +551,21 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
     std::string mockWarmResetValue = "unknown";
     std::string mockFdoModeValue = "disabled";
     std::string mockSurvivabilityModeValue = "";
+    std::string mockAlertReason = "";
+    ze_result_t mockAlertReasonReadResult = ZE_RESULT_SUCCESS;
+    bool mockAlertReasonNodeExists = false;
     bool mockDevicePciPathAccessible = true;
     bool mockDriverLoaded = true;
 
     bool directoryExists(const std::string path) override {
         return mockDevicePciPathAccessible;
+    }
+
+    bool fileExists(const std::string file) override {
+        if (file.find("/xe_amc_alert_reason") != std::string::npos) {
+            return mockAlertReasonNodeExists;
+        }
+        return false;
     }
 
     // The driver symlink is resolved by absolute path through FsAccess, so the
@@ -612,6 +622,16 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t read(std::string file, std::vector<std::string> &val) override {
         if (mockReadError != ZE_RESULT_SUCCESS) {
             return mockReadError;
+        }
+
+        if (file.find("/xe_amc_alert_reason") != std::string::npos) {
+            if (mockAlertReasonReadResult != ZE_RESULT_SUCCESS) {
+                return mockAlertReasonReadResult;
+            }
+            if (!mockAlertReason.empty()) {
+                val.push_back(mockAlertReason);
+            }
+            return ZE_RESULT_SUCCESS;
         }
 
         if (file == "/proc/4/fdinfo/5") {

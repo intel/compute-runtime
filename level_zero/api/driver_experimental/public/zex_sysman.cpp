@@ -46,6 +46,16 @@ ze_result_t ZE_APICALL zesIntelDriverRescanDevicesExp(zes_driver_handle_t hDrive
     }
 }
 
+ze_result_t ZE_APICALL zesIntelDeviceGetPowerOffReasonExp(zes_device_handle_t hDevice, zes_intel_device_power_off_reason_exp_t *pReason) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::getPowerOffReasonExp(hDevice, pReason);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 ze_result_t ZE_APICALL zesIntelDriverEnumInfoLogsExp(zes_driver_handle_t hDriver, uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -157,6 +167,10 @@ ze_result_t ZE_APICALL zesIntelDevicePciLinkSpeedUpdateExp(zes_device_handle_t h
 
 ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
     return L0::zesIntelDeviceMemoryGetPageOfflineStateExp(hDevice, pageStatus, pCount, pPageOfflineInfo);
+}
+
+ze_result_t ZE_APICALL zesIntelDeviceGetPowerOffReasonExp(zes_device_handle_t hDevice, zes_intel_device_power_off_reason_exp_t *pReason) {
+    return L0::zesIntelDeviceGetPowerOffReasonExp(hDevice, pReason);
 }
 
 ze_result_t ZE_APICALL zesIntelDriverRescanDevicesExp(zes_driver_handle_t hDriver, uint32_t *pCount, zes_device_handle_t *phDevices) {

@@ -247,6 +247,12 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDevice
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceSetHealthStatusExt(pSysmanDevice->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_OK));
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnsupportedFeatureIsReturned) {
+    init(true);
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetPowerOffReasonExp(pSysmanDevice->toHandle(), &powerOffReason));
+}
+
 TEST_F(SysmanGlobalOperationsFixture, GivenValidExtensionStructureWhenCallingZesDeviceGetPropertiesThenProperValuesAndSuccessIsReturned) {
     uint32_t expectedMaxOfflinePages = 0;
     init(true);

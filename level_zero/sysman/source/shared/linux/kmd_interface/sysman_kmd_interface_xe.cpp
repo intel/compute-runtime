@@ -37,6 +37,7 @@ static const std::map<std::string, std::string> lateBindingSysfsFileToNameMap = 
 
 SysmanKmdInterfaceXe::SysmanKmdInterfaceXe(SysmanProductHelper *pSysmanProductHelper) {
     initSysfsNameToFileMap(pSysmanProductHelper);
+    initNodeNameToFileMap();
     initSysfsNameToNativeUnitMap(pSysmanProductHelper);
 }
 
@@ -125,6 +126,11 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap(SysmanProductHelper *pSysmanPr
     sysfsNameToFileMap[SysfsName::sysfsNameFanAutoPointPwm] = std::make_pair("", "_pwm");   // pwm[N]_auto_point[P]_pwm
 }
 
+void SysmanKmdInterfaceXe::initNodeNameToFileMap() {
+    nodeNameToFileMap[NodeName::nodeNameAmcAlertReason] = "xe_amc_alert_reason";
+    nodeNameToFileMap[NodeName::nodeNameTemperatureEmergency] = "temp2_emergency";
+}
+
 void SysmanKmdInterfaceXe::initSysfsNameToNativeUnitMap(SysmanProductHelper *pSysmanProductHelper) {
     sysfsNameToNativeUnitMap[SysfsName::sysfsNameSchedulerTimeout] = SysfsValueUnit::micro;
     sysfsNameToNativeUnitMap[SysfsName::sysfsNameSchedulerTimeslice] = SysfsValueUnit::micro;
@@ -142,6 +148,16 @@ std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, uint32_t
         return filePath;
     }
     // All sysfs accesses are expected to be covered
+    DEBUG_BREAK_IF(1);
+    return {};
+}
+
+std::string SysmanKmdInterfaceXe::getNodeFileName(NodeName nodeName) {
+    auto nodeFileName = nodeNameToFileMap.find(nodeName);
+    if (nodeFileName != nodeNameToFileMap.end()) {
+        return nodeFileName->second;
+    }
+    // All node accesses are expected to be covered
     DEBUG_BREAK_IF(1);
     return {};
 }
@@ -381,10 +397,6 @@ ze_result_t SysmanKmdInterfaceXe::readBusynessFromGroupFd(PmuInterface *const &p
 
 std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
     return "xe";
-}
-
-std::string SysmanKmdInterfaceXe::getTemperatureEmergencyFileName() const {
-    return "temp2_emergency";
 }
 
 std::optional<std::string> SysmanKmdInterfaceXe::getEngineClassString(uint16_t engineClass) {

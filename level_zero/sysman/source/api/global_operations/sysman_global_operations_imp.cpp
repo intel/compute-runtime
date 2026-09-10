@@ -216,6 +216,11 @@ ze_result_t GlobalOperationsImp::setDeviceHealthStatus(zes_device_health_status_
     return pOsGlobalOperations->setDeviceHealthStatus(health);
 }
 
+ze_result_t GlobalOperationsImp::getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) {
+    initGlobalOperations();
+    return pOsGlobalOperations->getPowerOffReasonExp(pReason);
+}
+
 void GlobalOperationsImp::init() {
     if (pOsGlobalOperations == nullptr) {
         pOsGlobalOperations = OsGlobalOperations::create(pOsSysman);

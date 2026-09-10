@@ -357,6 +357,87 @@ typedef struct _zes_intel_device_state_pending_action_exp_t {
 ///       ::zes_device_state_ext_flag_t)
 #define ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST ZE_BIT(4)          ///< The GPU is lost: the device PCI path is inaccessible
 #define ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED ZE_BIT(5) ///< No kernel driver is bound to the device
+#define ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING ZE_BIT(6) ///< The device is about to be powered off. Use
+                                                                    ///< ::zesIntelDeviceGetPowerOffReasonExp() to read the reason.
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME
+/// @brief Device power off reason extension name
+#define ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME "ZES_intel_experimental_device_power_off_reason"
+#endif // ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device power off reason extension Version(s)
+typedef enum _zes_intel_device_power_off_reason_exp_version_t {
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_power_off_reason_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device power off reason flags
+///
+/// @details
+///     - These flags describe why the device is about to be powered off when
+///       ::ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING is set in
+///       ::zes_device_ext_state_t.flags
+///     - More than one flag may be set if the device is being powered off for
+///       multiple concurrent reasons
+typedef uint32_t zes_intel_device_power_off_reason_exp_flags_t;
+typedef enum _zes_intel_device_power_off_reason_exp_flag_t {
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FIRMWARE_DOWNLOAD = ZE_BIT(0),  ///< The device is being powered off for firmware download
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_THERMAL_TRIP = ZE_BIT(1),       ///< The device is being powered off due to a thermal trip
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_ALERT = ZE_BIT(2),          ///< The device is being powered off due to an out-of-band alert
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_RESET = ZE_BIT(3),          ///< The device is being powered off due to an out-of-band reset
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_CATASTROPHIC_ERROR = ZE_BIT(4), ///< The device is being powered off due to a catastrophic error
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_power_off_reason_exp_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device power off reason
+///
+/// @details
+///     - This structure is returned from ::zesIntelDeviceGetPowerOffReasonExp()
+typedef struct _zes_intel_device_power_off_reason_exp_t {
+    zes_structure_type_ext_t stype;                        ///< [in] type of this structure
+    const void *pNext;                                     ///< [in][optional] must be null or a pointer to an extension-specific
+                                                           ///< structure (i.e. contains stype and pNext).
+    zes_intel_device_power_off_reason_exp_flags_t reasons; ///< [out] Reasons the device is being powered off, as a combination of
+                                                           ///< ::zes_intel_device_power_off_reason_exp_flags_t.
+} zes_intel_device_power_off_reason_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get the reason(s) the device is about to be powered off
+///
+/// @details
+///     - This function is intended to be called when
+///       ::ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING is set in
+///       ::zes_device_ext_state_t.flags.
+///     - An error is returned, and `pReason->reasons` is left unmodified, when no
+///       power off is pending or the platform cannot attribute a cause.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + The platform is not reporting an alert reason.
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///         + The platform reported no reason, or a reason that is not recognized.
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + The platform does not support reporting the reason a device is being powered off.
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///         + User does not have permissions to query the reason the device is being powered off.
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pReason`
+ze_result_t ZE_APICALL zesIntelDeviceGetPowerOffReasonExp(
+    zes_device_handle_t hDevice,                     ///< [in] Sysman handle of the device.
+    zes_intel_device_power_off_reason_exp_t *pReason ///< [in,out] Will contain the reason(s) the device is being powered off.
+);
 
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME

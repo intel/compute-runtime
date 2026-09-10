@@ -154,6 +154,9 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t setDeviceHealthStatus(zes_device_health_status_ext_t health) = 0;
     static ze_result_t setDeviceHealthStatus(zes_device_handle_t hDevice, zes_device_health_status_ext_t health);
 
+    virtual ze_result_t getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) = 0;
+    static ze_result_t getPowerOffReasonExp(zes_device_handle_t hDevice, zes_intel_device_power_off_reason_exp_t *pReason);
+
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual void getDeviceUuids(std::vector<std::string> &deviceUuids) = 0;
     std::atomic<bool> isDeviceInSurvivabilityMode = false;

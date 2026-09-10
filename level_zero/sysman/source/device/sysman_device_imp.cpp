@@ -243,5 +243,9 @@ ze_result_t SysmanDeviceImp::setDeviceHealthStatus(zes_device_health_status_ext_
     return pGlobalOperations->setDeviceHealthStatus(health);
 }
 
+ze_result_t SysmanDeviceImp::getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) {
+    return pGlobalOperations->getPowerOffReasonExp(pReason);
+}
+
 } // namespace Sysman
 } // namespace L0

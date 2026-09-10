@@ -85,7 +85,8 @@ bool verifyExtensionDefinition(std::vector<zes_driver_extension_properties_t> &e
         {ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME, ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_NAME, ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_VERSION_CURRENT},
         {ZES_INTEL_DRIVER_EVENT_EXP_NAME, ZES_INTEL_DRIVER_EVENT_EXP_VERSION_CURRENT},
-        {ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME, ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_CURRENT}};
+        {ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME, ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME, ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_CURRENT}};
     for (uint32_t i = 0; i < count; i++) {
         if (extensionsReturned[i].name != supportedExtensions[i].first) {
             return false;
@@ -162,6 +163,9 @@ TEST_F(SysmanDriverHandleTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogInstanceReadWithMetadataExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDeviceGetPowerOffReasonExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogInstancePeekWithMetadataExp", &funPtr);

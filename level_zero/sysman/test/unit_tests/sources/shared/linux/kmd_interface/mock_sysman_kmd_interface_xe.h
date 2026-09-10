@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,17 @@ class MockSysmanKmdInterfaceXe : public L0::Sysman::SysmanKmdInterfaceXe {
     using L0::Sysman::SysmanKmdInterface::pFsAccess;
     using L0::Sysman::SysmanKmdInterface::pProcfsAccess;
     using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
+    using L0::Sysman::SysmanKmdInterfaceXe::nodeNameToFileMap;
     MockSysmanKmdInterfaceXe(SysmanProductHelper *pSysmanProductHelper) : SysmanKmdInterfaceXe(pSysmanProductHelper) {}
     ~MockSysmanKmdInterfaceXe() override = default;
+
+    bool mockNodeFileNameUnavailable = false;
+    std::string getNodeFileName(NodeName nodeName) override {
+        if (mockNodeFileNameUnavailable) {
+            return {};
+        }
+        return SysmanKmdInterfaceXe::getNodeFileName(nodeName);
+    }
 };
 
 } // namespace ult

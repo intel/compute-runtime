@@ -60,6 +60,18 @@ class SysmanGlobalOperationsFixtureXe : public SysmanDeviceFixture {
         zes_device_state_t deviceState = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     }
+
+    uint32_t getDeviceStateExtFlags() {
+        zes_device_state_t deviceState = {};
+        deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+        zes_device_ext_state_t extState = {};
+        extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+        extState.pNext = nullptr;
+        deviceState.pNext = &extState;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
+        return extState.flags;
+    }
 };
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenValidDeviceHandleWhenCallingDeviceGetStateThenVerifyDeviceIsNotWedged) {
@@ -424,6 +436,135 @@ TEST_F(SysmanGlobalOperationsFixtureXe,
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_OK));
 
     pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeExistsWhenCallingDeviceGetStateWithExtensionThenWedgedAndPowerOffPendingFlagsAreSet) {
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    const uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
+    EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeExistsButIsUnreadableWhenCallingDeviceGetStateWithExtensionThenWedgedAndPowerOffPendingFlagsAreSet) {
+    pFsAccess->mockAlertReasonNodeExists = true;
+    pFsAccess->mockAlertReasonReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    const uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
+    EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenEachSupportedAlertReasonWhenCallingZesIntelDeviceGetPowerOffReasonExpThenMatchingReasonIsReturned) {
+    const std::map<std::string, zes_intel_device_power_off_reason_exp_flags_t> alertReasonToReason = {
+        {"Firmware Download", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FIRMWARE_DOWNLOAD},
+        {"Thermal Trip", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_THERMAL_TRIP},
+        {"OOB Request", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_ALERT},
+        {"OOB Reset", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_RESET},
+        {"Catastrophic", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_CATASTROPHIC_ERROR}};
+
+    for (const auto &[alertReason, expectedReason] : alertReasonToReason) {
+        pFsAccess->mockAlertReason = alertReason;
+        zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+        EXPECT_EQ(expectedReason, powerOffReason.reasons);
+    }
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonIsReportedOnAnOtherwiseHealthyDeviceWhenCallingDeviceGetStateWithExtensionThenNormalFlagIsNotSet) {
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        const char *drmVersion = "xe";
+        if (fileDescriptor < 0) {
+            return -1;
+        }
+        if (request == DRM_IOCTL_VERSION) {
+            auto pVersion = static_cast<NEO::DrmVersion *>(arg);
+            memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
+        }
+        return 0;
+    });
+
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
+    EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenDriverNotLoadedAndAlertReasonNodeExistsWhenCallingDeviceGetStateWithExtensionThenOnlyPowerOffPendingFlagsAreSet) {
+    pFsAccess->mockDriverLoaded = false;
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
+    EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenNoAlertReasonNodeAndDriverNotLoadedWhenCallingDeviceGetStateWithExtensionThenDriverNotLoadedFlagIsSet) {
+    pFsAccess->mockDriverLoaded = false;
+    pFsAccess->mockAlertReasonNodeExists = false;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED), getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenNoAlertReasonNodeWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
+    pFsAccess->mockAlertReasonNodeExists = false;
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_WEDGED), getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsNotExposedByKmdWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
+    pSysmanKmdInterface->mockNodeFileNameUnavailable = true;
+    pFsAccess->mockAlertReasonNodeExists = true;
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_WEDGED), getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsNotExposedByKmdWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnsupportedFeatureIsReturned) {
+    pSysmanKmdInterface->mockNodeFileNameUnavailable = true;
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenDevicePciPathIsUnavailableWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnsupportedFeatureIsReturned) {
+    pSysfsAccess->mockDeviceUnbound = true;
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsUnreadableWhenCallingZesIntelDeviceGetPowerOffReasonExpThenReadErrorIsReturned) {
+    pFsAccess->mockAlertReasonReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsNotReadableByUserWhenCallingZesIntelDeviceGetPowerOffReasonExpThenInsufficientPermissionsIsReturned) {
+    pFsAccess->mockAlertReasonReadResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenEmptyAlertReasonNodeWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnknownErrorIsReturned) {
+    pFsAccess->mockAlertReason = "";
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenUnrecognizedAlertReasonWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnknownErrorIsReturned) {
+    pFsAccess->mockAlertReason = "Some Unknown Reason";
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathIsInaccessibleWhenCallingDeviceGetStateWithExtensionThenOnlyGpuLostFlagIsSet) {
+    pFsAccess->mockDevicePciPathAccessible = false;
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST), getDeviceStateExtFlags());
 }
 
 } // namespace ult

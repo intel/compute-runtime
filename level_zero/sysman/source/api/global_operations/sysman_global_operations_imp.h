@@ -32,6 +32,7 @@ class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableAndNonMovab
     ze_result_t memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) override;
     ze_result_t getDeviceHealthStatus(zes_device_health_status_ext_t *pHealth) override;
     ze_result_t setDeviceHealthStatus(zes_device_health_status_ext_t health) override;
+    ze_result_t getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) override;
     OsGlobalOperations *pOsGlobalOperations = nullptr;
 
     GlobalOperationsImp() = default;
