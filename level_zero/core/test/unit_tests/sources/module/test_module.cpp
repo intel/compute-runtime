@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -1018,6 +1019,46 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWithLongSize
 using ModuleSpecConstantsCharTests = ModuleSpecConstantsTests<char, uint32_t>;
 TEST_F(ModuleSpecConstantsCharTests, givenSpecializationConstantsSetWithCharSizeInDescriptorThenModuleCorrectlyPassesThemToTheCompiler) {
     runTest();
+}
+
+using ModuleIlFormatTests = ModuleTest;
+
+TEST_F(ModuleIlFormatTests, givenLlvmBitcodePassedAsIlSpirVFormatThenCompilerReceivesLlvmBcCodeType) {
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
+
+    std::vector<uint8_t> llvmBc(NEO::llvmBcMagic.begin(), NEO::llvmBcMagic.end());
+    llvmBc.resize(64, 0u);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = llvmBc.data();
+    moduleDesc.inputSize = static_cast<uint32_t>(llvmBc.size());
+
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::user);
+    module->translationUnit.reset(mockTranslationUnit);
+    module->initialize(&moduleDesc, neoDevice);
+
+    EXPECT_EQ(IGC::CodeType::llvmBc, mockTranslationUnit->passedSrcType);
+}
+
+TEST_F(ModuleIlFormatTests, givenSpirVPassedAsIlSpirVFormatThenCompilerReceivesSpirVCodeType) {
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
+
+    std::vector<uint8_t> spirv(NEO::spirvMagic.begin(), NEO::spirvMagic.end());
+    spirv.resize(64, 0u);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = spirv.data();
+    moduleDesc.inputSize = static_cast<uint32_t>(spirv.size());
+
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::user);
+    module->translationUnit.reset(mockTranslationUnit);
+    module->initialize(&moduleDesc, neoDevice);
+
+    EXPECT_EQ(IGC::CodeType::spirV, mockTranslationUnit->passedSrcType);
 }
 
 TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompilerReturnsErrorThenModuleInitFails) {

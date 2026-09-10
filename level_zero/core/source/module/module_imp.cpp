@@ -1018,11 +1018,14 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
             if (oclExtensionsInternalOptions != nullptr) {
                 NEO::CompilerOptions::concatenateAppend(internalBuildOptions, oclExtensionsInternalOptions);
             }
-            return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
-                                                         static_cast<uint32_t>(desc->inputSize),
-                                                         buildOptions.c_str(),
-                                                         internalBuildOptions.c_str(),
-                                                         desc->pConstants);
+            ArrayRef<const uint8_t> il(reinterpret_cast<const uint8_t *>(desc->pInputModule), desc->inputSize);
+            auto ilCodeType = NEO::isLlvmBitcode(il) ? IGC::CodeType::llvmBc : IGC::CodeType::spirV;
+            return this->translationUnit->buildFromIntermediate(ilCodeType,
+                                                                reinterpret_cast<const char *>(desc->pInputModule),
+                                                                static_cast<uint32_t>(desc->inputSize),
+                                                                buildOptions.c_str(),
+                                                                internalBuildOptions.c_str(),
+                                                                desc->pConstants);
         } else if (desc->format == ZE_MODULE_FORMAT_OCLC) {
             this->isLlvmBitcode = NEO::CompilerOptions::contains(buildOptions, NEO::CompilerOptions::createLibrary);
             if (headersProgExt) {

@@ -48,6 +48,7 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
 
     ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, CompilationMode compilationMode) override {
         this->passedCompilationMode = compilationMode;
+        this->passedSrcType = inputArgs.srcType;
         if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
             return ZE_RESULT_SUCCESS;
         } else {
@@ -61,6 +62,7 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
 
     std::unique_ptr<NEO::KernelInfo> dummyKernelInfo = {};
     CompilationMode passedCompilationMode{};
+    IGC::CodeType::CodeType_t passedSrcType = IGC::CodeType::invalid;
 };
 
 constexpr inline MockModuleTranslationUnit *toMockPtr(L0::ModuleTranslationUnit *tu) {
