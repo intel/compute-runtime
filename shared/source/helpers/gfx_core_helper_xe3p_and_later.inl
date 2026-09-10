@@ -345,6 +345,20 @@ void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family
     setPipeControlRequiredFields(pipeControl, args);
 
     auto flushCachesMask = debugManager.flags.FlushAllCaches.get();
+    constexpr int64_t cacheInvalidationMask = FlushCachesBitmask::instructionCache | FlushCachesBitmask::textureCache |
+                                              FlushCachesBitmask::constantCache | FlushCachesBitmask::stateCache |
+                                              FlushCachesBitmask::tlb;
+    auto isCacheInvalidated = args.instructionCacheInvalidateEnable || args.stateCacheInvalidationEnable ||
+                              args.textureCacheInvalidationEnable || args.constantCacheInvalidationEnable ||
+                              args.tlbInvalidation ||
+                              (flushCachesMask & cacheInvalidationMask) != 0;
+    if (debugManager.flags.DrainAllQueuesOnCacheInvalidation.get() == 0) {
+        isCacheInvalidated = false;
+    }
+    if (isCacheInvalidated) {
+        pipeControl.setQueueDrainMode(QueueDrainMode::drainAllQueues);
+    }
+
     if (flushCachesMask) {
         if (flushCachesMask & FlushCachesBitmask::hdcPipeline) {
             pipeControl.setDataportFlush(true);
@@ -365,6 +379,27 @@ void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family
         pipeControl.setQueueDrainMode(!!debugManager.flags.PcQueueDrainMode.get());
     }
     EncodeCommandLevelMocs<Family>::apply(pipeControl);
+}
+
+template <>
+void MemorySynchronizationCommands<Family>::addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
+
+    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    cmd.setRenderTargetCacheFlushEnable(true);
+    cmd.setStateCacheInvalidationEnable(true);
+    cmd.setTextureCacheInvalidationEnable(true);
+
+    if (debugManager.flags.DrainAllQueuesOnCacheInvalidation.get() != 0) {
+        cmd.setQueueDrainMode(QueueDrainMode::drainAllQueues);
+    }
+    if (debugManager.flags.PcQueueDrainMode.get() != -1) {
+        cmd.setQueueDrainMode(!!debugManager.flags.PcQueueDrainMode.get());
+    }
+
+    auto commandsBuffer = commandStream.getSpace(sizeof(PIPE_CONTROL));
+    *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
 }
 
 template <>

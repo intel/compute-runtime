@@ -359,6 +359,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideComputeWalker2ThreadDispatchPolicy, -1, 
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDynamicPrefSlmIncrease, -1, "-1: default. >=0: override IDD->DynamicPrefSlmIncrease to given value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDispatchAllModValue, -1, "-1: default. >=0: override CW2->DispatchAllModValue to given value")
 DECLARE_DEBUG_VARIABLE(int32_t, PcQueueDrainMode, -1, "Control QueueDrainMode in PipeControl. -1: default (controlled by driver), >=0: override to given value")
+DECLARE_DEBUG_VARIABLE(int32_t, DrainAllQueuesOnCacheInvalidation, -1, "Set QueueDrainMode to drain all queues in barriers that invalidate caches. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL1P5CacheForRenderSurface, -1, "-1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, SkipImplicitInOrderDependencies, -1, "-1: default, 0: disable, 1: enable - skip all implicit in-order semaphores for L0 command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableOverrideToPat19ForSystemMemory, -1, "-1: default, 0: disable, 1: enable - when enabled force PAT 19 for system memory allocations")

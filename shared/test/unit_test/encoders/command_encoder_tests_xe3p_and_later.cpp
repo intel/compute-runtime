@@ -8,12 +8,17 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -993,4 +998,236 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenOverrideThreadArbitrationPol
         EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
         EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
     }
+}
+
+using MemorySynchronizationCommandsTestXe3pAndLater = ::testing::Test;
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenLinearStreamWhenSingleBarrierIsProgrammedThenOnlyCurrentQueueIsDrainedByDefaultAndAllQueuesAreDrainedWithDebugKey, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    PipeControlArgs args{};
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.PcQueueDrainMode.set(0);
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenStallingBarrierWhenProgrammedThenOnlyCurrentQueueIsDrainedByDefaultAndDebugKeyControlsDrainScope, IsAtLeastXe3pCore) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    uint32_t buffer[2 * sizeof(RESOURCE_BARRIER)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    auto resourceBarrier = reinterpret_cast<RESOURCE_BARRIER *>(buffer);
+
+    PipeControlArgs args{};
+    args.csStallOnly = true;
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.PcQueueDrainMode.set(0);
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    debugManager.flags.PcQueueDrainMode.set(1);
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesEnabledAndCacheInvalidationWhenSingleBarrierIsProgrammedThenAllQueuesAreDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(1);
+
+    bool PipeControlArgs::*const invalidationFlags[] = {
+        &PipeControlArgs::instructionCacheInvalidateEnable,
+        &PipeControlArgs::stateCacheInvalidationEnable,
+        &PipeControlArgs::textureCacheInvalidationEnable,
+        &PipeControlArgs::constantCacheInvalidationEnable,
+        &PipeControlArgs::tlbInvalidation,
+    };
+
+    for (auto flag : invalidationFlags) {
+        PipeControlArgs args{};
+        args.*flag = true;
+        MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+        EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+        linearStream.replaceBuffer(buffer, sizeof(buffer));
+    }
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesEnabledAndCacheInvalidationForcedByDebugKeyWhenSingleBarrierIsProgrammedThenAllQueuesAreDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    const int32_t invalidationMasks[] = {
+        FlushCachesBitmask::instructionCache,
+        FlushCachesBitmask::textureCache,
+        FlushCachesBitmask::constantCache,
+        FlushCachesBitmask::stateCache,
+        FlushCachesBitmask::tlb,
+    };
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(1);
+
+    for (auto mask : invalidationMasks) {
+        debugManager.flags.FlushAllCaches.set(mask);
+
+        PipeControlArgs args{};
+        MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+        EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+        linearStream.replaceBuffer(buffer, sizeof(buffer));
+    }
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesOnCacheInvalidationDisabledWhenCacheIsInvalidatedThenOnlyCurrentQueueIsDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(0);
+
+    PipeControlArgs args{};
+    args.tlbInvalidation = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    debugManager.flags.FlushAllCaches.set(FlushCachesBitmask::allCaches);
+
+    PipeControlArgs argsWithoutInvalidation{};
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, argsWithoutInvalidation);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesOnCacheInvalidationEnabledWhenCacheIsInvalidatedThenAllQueuesAreDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(1);
+
+    PipeControlArgs args{};
+    args.tlbInvalidation = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenNonTriggeringCacheFlagsWhenSingleBarrierIsProgrammedThenOnlyCurrentQueueIsDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    PipeControlArgs args{};
+    args.dcFlushEnable = true;
+    args.renderTargetCacheFlushEnable = true;
+    args.vfCacheInvalidationEnable = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenStateCacheFlushWhenProgrammedThenAllQueuesAreDrainedByDefaultAndDebugKeysControlDrainScope, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_TRUE(pc->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pc->getTextureCacheInvalidationEnable());
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(1);
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    debugManager.flags.PcQueueDrainMode.set(1);
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
 }
