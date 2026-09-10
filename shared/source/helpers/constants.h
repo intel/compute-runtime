@@ -36,6 +36,7 @@ inline constexpr size_t minBufferAlignment = 4;
 inline constexpr size_t cacheLineSize = 64;
 inline constexpr size_t cacheLineSize256B = 256;
 inline constexpr size_t pageSize = 4 * kiloByte;
+inline constexpr uint64_t maxStatefulBufferSize = fullStatefulRegion - 2 * pageSize; // Two pages reserved because driver may pad the buffer with additional pages for over fetching
 inline constexpr size_t pageSize64k = 64 * kiloByte;
 inline constexpr size_t pageSize2M = 2 * megaByte;
 inline constexpr size_t preferredAlignment = pageSize;  // alignment preferred for performance reasons, i.e. internal allocations

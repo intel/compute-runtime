@@ -54,21 +54,6 @@ size_t GfxCoreHelperHw<Family>::getMax3dImageWidthOrHeight() const {
 }
 
 template <typename Family>
-uint64_t GfxCoreHelperHw<Family>::getMaxMemAllocSize() const {
-    // With stateful messages we have an allocation cap of 4GB
-    // Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching
-    return (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
-}
-
-template <typename Family>
-SipKernelType GfxCoreHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
-    if (!debuggingActive) {
-        return SipKernelType::csr;
-    }
-    return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::dbgBindless : SipKernelType::dbgCsr;
-}
-
-template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return 4u;
 }
@@ -181,17 +166,6 @@ void GfxCoreHelperHw<Family>::programScratchSurfaceState(const RootDeviceEnviron
 
 template <typename GfxFamily>
 void NEO::GfxCoreHelperHw<GfxFamily>::setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) const {}
-
-template <typename Family>
-bool GfxCoreHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const {
-    if (debugManager.flags.EnableLocalMemory.get() != -1) {
-        return debugManager.flags.EnableLocalMemory.get();
-    } else if (debugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
-        return true;
-    }
-
-    return isLocalMemoryEnabled(hwInfo);
-}
 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const {
@@ -618,11 +592,6 @@ bool GfxCoreHelperHw<GfxFamily>::useOnlyGlobalTimestamps() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const {
-    return !getEnableLocalMemory(hwInfo);
-}
-
-template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return false;
 }
@@ -775,19 +744,6 @@ uint32_t GfxCoreHelperHw<GfxFamily>::calculateNumThreadsPerThreadGroup(uint32_t 
 template <typename GfxFamily>
 DeviceHierarchyMode GfxCoreHelperHw<GfxFamily>::getDefaultDeviceHierarchy() const {
     return DeviceHierarchyMode::composite;
-}
-
-template <typename GfxFamily>
-uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double resolution) const {
-    auto numBitsForResolution = Math::log2(static_cast<uint64_t>(resolution)) + 1u;
-    UNRECOVERABLE_IF(numBitsForResolution > 64U);
-    auto timestampMask = maxNBitValue(64 - numBitsForResolution);
-    return static_cast<uint64_t>(static_cast<uint64_t>(timeStamp & timestampMask) * resolution);
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::areSecondaryContextsSupported() const {
-    return getContextGroupContextsCount() > 1;
 }
 
 template <typename GfxFamily>

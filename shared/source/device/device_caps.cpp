@@ -84,7 +84,7 @@ void Device::initializeCaps() {
         deviceInfo.maxMemAllocSize = deviceInfo.globalMemSize;
     } else if (!compilerProductHelper.isForceToStatelessRequired()) {
         deviceInfo.maxMemAllocSize = ApiSpecificConfig::getReducedMaxAllocSize(deviceInfo.maxMemAllocSize);
-        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, gfxCoreHelper.getMaxMemAllocSize());
+        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, MemoryConstants::maxStatefulBufferSize);
     }
 
     // Some specific driver model configurations may impose additional limitations

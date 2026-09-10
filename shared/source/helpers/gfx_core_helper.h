@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/built_ins/sip_kernel_type.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/device_hierarchy_mode.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -61,7 +62,7 @@ class GfxCoreHelper {
     virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) = 0;
-    virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
+    static SipKernelType getSipKernelType(bool debuggingActive);
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
     virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
@@ -94,7 +95,7 @@ class GfxCoreHelper {
     virtual uint32_t getInternalCopyEngineIndex(const HardwareInfo &hwInfo) const = 0;
     virtual EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const = 0;
     virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
-    virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
+    bool getEnableLocalMemory(const HardwareInfo &hwInfo) const;
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
     virtual uint32_t getMetricsLibraryGenId() const = 0;
     virtual uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
@@ -107,14 +108,14 @@ class GfxCoreHelper {
     virtual uint32_t getMinimalGrfSize() const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const = 0;
-    virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double resolution) const = 0;
+    static uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double resolution);
     virtual uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const = 0;
     virtual void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
     virtual int32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
-    virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
+    bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const;
     virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
@@ -147,7 +148,6 @@ class GfxCoreHelper {
     virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
-    virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const = 0;
     virtual void encodeImageSurfaceState(void *outMemory, const ImageSurfaceStateInputs &inputs) const = 0;
     virtual void applyImageSurfaceStateMipAndMediaBlock(void *outMemory,
@@ -172,7 +172,7 @@ class GfxCoreHelper {
     virtual DeviceHierarchyMode getDefaultDeviceHierarchy() const = 0;
     static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
 
-    virtual bool areSecondaryContextsSupported() const = 0;
+    bool areSecondaryContextsSupported() const;
     virtual uint32_t getContextGroupContextsCount() const = 0;
     virtual uint32_t getContextGroupHpContextsCount(EngineGroupType type, bool hpEngineAvailable) const = 0;
     virtual void adjustCopyEngineRegularContextCount(const size_t enginesCount, uint32_t &contextCount) const = 0;
@@ -275,8 +275,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) override;
 
-    SipKernelType getSipKernelType(bool debuggingActive) const override;
-
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
 
     bool hvAlign4Required() const override;
@@ -329,8 +327,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     const StackVec<size_t, 3> getDeviceSubGroupSizes() const override;
 
-    bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
-
     uint32_t getMetricsLibraryGenId() const override;
 
     uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const override;
@@ -355,8 +351,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t getMinimalGrfSize() const override;
 
-    uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double resolution) const override;
-
     uint32_t getGlobalTimeStampBits() const override;
 
     void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
@@ -366,8 +360,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     int32_t getDefaultThreadArbitrationPolicy() const override;
 
     bool useOnlyGlobalTimestamps() const override;
-
-    bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const override;
 
     bool isRcsAvailable(const HardwareInfo &hwInfo) const override;
 
@@ -412,7 +404,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getMaxScratchSize(const NEO::ProductHelper &productHelper) const override;
     bool preferInternalBcsEngine() const override;
     size_t getMax3dImageWidthOrHeight() const override;
-    uint64_t getMaxMemAllocSize() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override;
     void encodeImageSurfaceState(void *outMemory, const ImageSurfaceStateInputs &inputs) const override;
     void applyImageSurfaceStateMipAndMediaBlock(void *outMemory,
@@ -436,7 +427,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const override;
     DeviceHierarchyMode getDefaultDeviceHierarchy() const override;
 
-    bool areSecondaryContextsSupported() const override;
     uint32_t getContextGroupContextsCount() const override;
     uint32_t getContextGroupHpContextsCount(EngineGroupType type, bool hpEngineAvailable) const override;
     void adjustCopyEngineRegularContextCount(const size_t enginesCount, uint32_t &contextCount) const override;

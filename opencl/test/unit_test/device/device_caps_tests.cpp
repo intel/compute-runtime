@@ -391,7 +391,7 @@ HWTEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndStatelessNotSupportedWhenCalcul
     const auto &caps = device->getSharedDeviceInfo();
     uint64_t expectedSize = std::max(caps.globalMemSize, static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
 
-    expectedSize = std::min(ApiSpecificConfig::getReducedMaxAllocSize(expectedSize), device->getGfxCoreHelper().getMaxMemAllocSize());
+    expectedSize = std::min(ApiSpecificConfig::getReducedMaxAllocSize(expectedSize), MemoryConstants::maxStatefulBufferSize);
 
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
 }

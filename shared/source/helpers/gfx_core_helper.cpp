@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -27,6 +28,38 @@ std::unique_ptr<GfxCoreHelper> GfxCoreHelper::create(const GFXCORE_FAMILY gfxCor
     }
     auto gfxCoreHelper = createFunction();
     return gfxCoreHelper;
+}
+
+SipKernelType GfxCoreHelper::getSipKernelType(bool debuggingActive) {
+    if (!debuggingActive) {
+        return SipKernelType::csr;
+    }
+    return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::dbgBindless : SipKernelType::dbgCsr;
+}
+
+bool GfxCoreHelper::getEnableLocalMemory(const HardwareInfo &hwInfo) const {
+    if (debugManager.flags.EnableLocalMemory.get() != -1) {
+        return debugManager.flags.EnableLocalMemory.get();
+    } else if (debugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
+        return true;
+    }
+
+    return isLocalMemoryEnabled(hwInfo);
+}
+
+bool GfxCoreHelper::useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const {
+    return !getEnableLocalMemory(hwInfo);
+}
+
+uint64_t GfxCoreHelper::getGpuTimeStampInNS(uint64_t timeStamp, double resolution) {
+    auto numBitsForResolution = Math::log2(static_cast<uint64_t>(resolution)) + 1u;
+    UNRECOVERABLE_IF(numBitsForResolution > 64U);
+    auto timestampMask = maxNBitValue(64 - numBitsForResolution);
+    return static_cast<uint64_t>(static_cast<uint64_t>(timeStamp & timestampMask) * resolution);
+}
+
+bool GfxCoreHelper::areSecondaryContextsSupported() const {
+    return getContextGroupContextsCount() > 1;
 }
 
 bool GfxCoreHelper::compressedBuffersSupported(const HardwareInfo &hwInfo) {

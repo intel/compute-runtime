@@ -1645,13 +1645,11 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
 
     auto &rootDeviceEnvironment = this->neoDevice->getRootDeviceEnvironment();
     const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-
     if (compilerProductHelper.isForceToStatelessRequired()) {
         EXPECT_EQ(deviceProperties.maxMemAllocSize, expectedSize);
     } else {
         EXPECT_EQ(deviceProperties.maxMemAllocSize,
-                  std::min(ApiSpecificConfig::getReducedMaxAllocSize(expectedSize), gfxCoreHelper.getMaxMemAllocSize()));
+                  std::min(ApiSpecificConfig::getReducedMaxAllocSize(expectedSize), MemoryConstants::maxStatefulBufferSize));
     }
 }
 
