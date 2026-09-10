@@ -14,10 +14,12 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::bcsTimeoutDivisor;
     using DirectSubmissionController::checkNewSubmissions;
     using DirectSubmissionController::condVarMutex;
+    using DirectSubmissionController::contextGroupTimeout;
     using DirectSubmissionController::directSubmissionControllingThread;
     using DirectSubmissionController::directSubmissions;
     using DirectSubmissionController::directSubmissionsMutex;
     using DirectSubmissionController::getSleepValue;
+    using DirectSubmissionController::groupLastActivityTime;
     using DirectSubmissionController::handlePagingFenceRequests;
     using DirectSubmissionController::isCopyEngineOnDeviceIdle;
     using DirectSubmissionController::isCsrsContextGroupIdleDetectionEnabled;

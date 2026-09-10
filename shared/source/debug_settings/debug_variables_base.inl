@@ -550,6 +550,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmissionController, -1, "Enable di
 DECLARE_RUNTIME_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerTimeout, -1, "Set direct submission controller timeout, -1: default 5000 us, >=0: timeout in us")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerBcsTimeoutDivisor, -1, "If >=1, divide controller timeout to stop BCS only engines faster than others")
 DECLARE_RUNTIME_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerMaxTimeout, -1, "Set direct submission controller max timeout - timeout will increase up to given value, -1: default 5000 us, >=0: max timeout in us")
+DECLARE_RUNTIME_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerContextGroupTimeout, -1, "Separate park window (us) for context-group rings; global timeout stays unchanged. -1: default, >=0: timeout in us")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionForceLocalMemoryStorageMode, -1, "Force local memory storage for command/ring/semaphore buffer, -1: default - for all engines, 0: disabled, 1: for multiOsContextCapable engine, 2: for all engines")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableRingSwitchTagUpdateWa, -1, "-1: default, 0 - disable, 1 - enable. If enabled, completionFences wont be updated if ring is not running.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionPCIBarrier, -1, "Use PCI barrier for data synchronization before semaphore unblock -1: default, 0 - disable, 1 - enable.")
