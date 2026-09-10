@@ -864,7 +864,8 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
                 parentID,
                 cacheId,
                 reservedHandleData,
-                neoDevice);
+                neoDevice,
+                true);
 
             if (!importResult.success) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;

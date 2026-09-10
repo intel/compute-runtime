@@ -158,7 +158,7 @@ struct CommonRangeContext : public L0::Context {
         isOpaqueHandle = true;
     }
 
-    OpaqueHandleImportResult importOpaqueHandleWithFallback(uint64_t handle, unsigned int processId, uint64_t cacheID, void *reservedHandleData, NEO::Device *neoDevice) override {
+    OpaqueHandleImportResult importOpaqueHandleWithFallback(uint64_t handle, unsigned int processId, uint64_t cacheID, void *reservedHandleData, NEO::Device *neoDevice, bool useCache) override {
         return {handle, true};
     }
 

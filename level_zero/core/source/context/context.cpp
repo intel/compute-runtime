@@ -1679,7 +1679,7 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
             releaseImportedRangeChunkHandles(importedChunks);
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        auto importResult = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice);
+        auto importResult = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice, true);
         if (!importResult.success) {
             releaseImportedRangeChunkHandles(importedChunks);
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;

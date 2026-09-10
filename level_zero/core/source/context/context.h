@@ -398,22 +398,14 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
                                                                              unsigned int processId,
                                                                              uint64_t cacheID,
                                                                              void *reservedHandleData,
-                                                                             NEO::Device *neoDevice);
+                                                                             NEO::Device *neoDevice,
+                                                                             bool useCache);
+    std::pair<NEO::GraphicsAllocation *, void *> importOpaqueFdHandle(NEO::Device *neoDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, uint64_t physicalOffset);
     // Releases per-chunk handles already imported by a range open that fails partway through, before the
     // merged allocation (which would otherwise own them) is created. Each entry is {importHandle, cacheID}.
     // OS-specific: Linux closes the imported fd and drops its import-cache entry; Windows only drops the
     // cache entry (importOpaqueHandleWithFallback returns the peer handle unchanged, so there is no fd to close).
     MOCKABLE_VIRTUAL void releaseImportedRangeChunkHandles(const std::vector<std::pair<uint64_t, uint64_t>> &importedChunks);
-    void *importHandleFromReservedHandleData(void *reservedHandleData,
-                                             uint64_t cacheID,
-                                             NEO::Device *neoDevice,
-                                             ze_ipc_memory_flags_t flags,
-                                             NEO::AllocationType allocationType,
-                                             bool isHostIpcAllocation,
-                                             bool compressedMemory,
-                                             uint64_t &importHandle,
-                                             NEO::GraphicsAllocation *&alloc,
-                                             uint64_t physicalOffset = 0);
     // Max range-IPC chunk handles for this OS ; 0 means unsupported.
     MOCKABLE_VIRTUAL uint32_t getMaxIpcRangeHandleCount();
 

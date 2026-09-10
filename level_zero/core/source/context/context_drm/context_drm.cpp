@@ -47,37 +47,13 @@ void Context::closeExternalHandle(uint64_t handle) {
 
 std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
-    uint64_t effectiveCacheID = cacheID;
-    uint64_t importHandle = handle;
-
-    bool opaqueHandlesAttempted = false;
     if (isOpaqueHandle && settings.useOpaqueHandle) {
         // Use helper to import opaque handle with fallback
-        auto importResult = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice);
-        if (!importResult.success) {
-            return {nullptr, nullptr};
-        }
-        importHandle = importResult.importHandle;
-        opaqueHandlesAttempted = importResult.opaqueHandlesAttempted;
+        return importOpaqueFdHandle(neoDevice, handle, allocationType, isHostIpcAllocation, processId, flags, cacheID, reservedHandleData, compressedMemory, physicalOffset);
     }
-
     NEO::GraphicsAllocation *alloc = nullptr;
     NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
-    auto result = this->driverHandle->importFdHandle(neoDevice, flags, importHandle, allocationType, isHostIpcAllocation, nullptr, &alloc, allocDataInternal, compressedMemory, physicalOffset);
-    if (opaqueHandlesAttempted && !alloc && reservedHandleData) {
-        result = importHandleFromReservedHandleData(reservedHandleData, cacheID, neoDevice, flags, allocationType, isHostIpcAllocation, compressedMemory, importHandle, alloc, physicalOffset);
-    }
-
-    // Store cacheID in IPC handle tracking if opaque handles are used
-    if (result && isOpaqueHandle && settings.useOpaqueHandle && effectiveCacheID != 0) {
-        auto lock = driverHandle->lockIPCHandleMap();
-        auto &ipcMap = driverHandle->getIPCHandleMap();
-        auto ipcIter = ipcMap.find(importHandle);
-        if (ipcIter != ipcMap.end()) {
-            ipcIter->second->cacheID = effectiveCacheID;
-        }
-    }
-
+    auto result = driverHandle->importFdHandle(neoDevice, flags, handle, allocationType, isHostIpcAllocation, nullptr, &alloc, allocDataInternal, compressedMemory, physicalOffset);
     return {alloc, result};
 }
 

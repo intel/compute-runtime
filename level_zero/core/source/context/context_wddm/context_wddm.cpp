@@ -62,7 +62,8 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
                                                                           unsigned int processId,
                                                                           uint64_t cacheID,
                                                                           void *reservedHandleData,
-                                                                          NEO::Device *neoDevice) {
+                                                                          NEO::Device *neoDevice,
+                                                                          bool useCache) {
     return {handle, true};
 }
 
