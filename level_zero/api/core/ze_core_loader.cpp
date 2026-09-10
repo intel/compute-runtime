@@ -186,6 +186,7 @@ zeGetDeviceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetRuntimeRequirementsKey, L0::globalDriverDispatch.coreDevice.pfnGetRuntimeRequirementsKey, version, ZE_API_VERSION_1_16);
     fillDdiEntry(pDdiTable->pfnValidateRuntimeRequirements, L0::globalDriverDispatch.coreDevice.pfnValidateRuntimeRequirements, version, ZE_API_VERSION_1_16);
     fillDdiEntry(pDdiTable->pfnGetCounterBasedEventMaxValue, L0::globalDriverDispatch.coreDevice.pfnGetCounterBasedEventMaxValue, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnGetCompilerInfo, L0::globalDriverDispatch.coreDevice.pfnGetCompilerInfo, version, ZE_API_VERSION_1_18);
     return result;
 }
 

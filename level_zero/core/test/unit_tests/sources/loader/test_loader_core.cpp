@@ -130,6 +130,7 @@ constexpr DdiEntryExpectation entries[] = {
     DDI_ENTRY(pfnGetRuntimeRequirementsKey, ZE_API_VERSION_1_16),
     DDI_ENTRY(pfnValidateRuntimeRequirements, ZE_API_VERSION_1_16),
     DDI_ENTRY(pfnGetCounterBasedEventMaxValue, ZE_API_VERSION_1_17),
+    DDI_ENTRY(pfnGetCompilerInfo, ZE_API_VERSION_1_18),
 };
 } // namespace zeDevice
 

@@ -164,6 +164,7 @@ DriverDispatch::DriverDispatch() {
     this->coreDevice.pfnGetRuntimeRequirementsKey = L0::zeDeviceGetRuntimeRequirementsKey;
     this->coreDevice.pfnValidateRuntimeRequirements = L0::zeDeviceValidateRuntimeRequirements;
     this->coreDevice.pfnGetCounterBasedEventMaxValue = L0::zeDeviceGetCounterBasedEventMaxValue;
+    this->coreDevice.pfnGetCompilerInfo = L0::zeDeviceGetCompilerInfo;
     this->coreDeviceExp.pfnGetFabricVertexExp = L0::zeDeviceGetFabricVertexExp;
     this->coreContext.pfnCreate = L0::zeContextCreate;
     this->coreContext.pfnDestroy = L0::zeContextDestroy;

@@ -140,6 +140,14 @@ ze_result_t ZE_APICALL zeDeviceGetCounterBasedEventMaxValue(
     ze_device_handle_t hDevice,
     uint64_t *maxValue);
 
+ze_result_t ZE_APICALL
+zeDeviceGetCompilerInfo(
+    ze_device_handle_t hDevice,
+    ze_device_compiler_info_t paramName,
+    const void *pNext,
+    size_t *pSize,
+    void *pData);
+
 } // namespace L0
 
 extern "C" {
@@ -268,5 +276,13 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceValidateRuntimeRequirements(
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetCounterBasedEventMaxValue(
     ze_device_handle_t hDevice,
     uint64_t *maxValue);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceGetCompilerInfo(
+    ze_device_handle_t hDevice,
+    ze_device_compiler_info_t paramName,
+    const void *pNext,
+    size_t *pSize,
+    void *pData);
 
 } // extern "C"
