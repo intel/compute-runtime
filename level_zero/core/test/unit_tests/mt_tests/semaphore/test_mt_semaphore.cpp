@@ -36,8 +36,8 @@ class MockNEOExternalSemaphore : public NEO::ExternalSemaphore {
         return true;
     }
 
-    bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override {
-        return true;
+    ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override {
+        return ImportResult::success;
     }
 
     bool enqueueSignal(uint64_t *fenceValue) override {

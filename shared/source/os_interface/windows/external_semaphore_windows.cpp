@@ -21,18 +21,20 @@ typedef VOID(NTAPI *_NtOpenDirectoryObject)(PHANDLE directoryHandle, ACCESS_MASK
 
 namespace NEO {
 
-std::unique_ptr<ExternalSemaphore> ExternalSemaphore::create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd, const char *name) {
-    if (osInterface) {
-        auto externalSemaphore = ExternalSemaphoreWindows::create(osInterface);
-
-        bool result = externalSemaphore->importSemaphore(handle, fd, 0, name, type, false);
-        if (result == false) {
-            return nullptr;
-        }
-
-        return externalSemaphore;
+std::unique_ptr<ExternalSemaphore> ExternalSemaphore::create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd, const char *name, ImportResult &importResult) {
+    if (osInterface == nullptr) {
+        importResult = ImportResult::unsupported;
+        return nullptr;
     }
-    return nullptr;
+
+    auto externalSemaphore = ExternalSemaphoreWindows::create(osInterface);
+
+    importResult = externalSemaphore->importSemaphore(handle, fd, 0, name, type, false);
+    if (importResult != ImportResult::success) {
+        return nullptr;
+    }
+
+    return externalSemaphore;
 }
 
 std::unique_ptr<ExternalSemaphoreWindows> ExternalSemaphoreWindows::create(OSInterface *osInterface) {
@@ -106,7 +108,7 @@ void *ExternalSemaphoreWindows::openSyncObjectByName(Gdi *gdi, const wchar_t *na
     return openName.hNtHandle;
 }
 
-bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) {
+ExternalSemaphore::ImportResult ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) {
     bool isD3dFence = false;
     bool isNameable = false;
     switch (type) {
@@ -120,7 +122,7 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
     case ExternalSemaphore::OpaqueWin32:
         break;
     default:
-        return false;
+        return ImportResult::unsupported;
     }
     HANDLE syncNtHandle = nullptr;
 
@@ -173,7 +175,7 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
         openName.pObjAttrib = &objectAttributes;
         auto status = gdi->openSyncObjectNtHandleFromName(&openName);
         if (status != STATUS_SUCCESS) {
-            return false;
+            return ImportResult::invalidResource;
         }
 
         syncNtHandle = openName.hNtHandle;
@@ -188,7 +190,7 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
 
         syncNtHandle = openSyncObjectByName(gdi, wideName.c_str(), D3DDDI_SYNC_OBJECT_ALL_ACCESS, forceGlobal);
         if (syncNtHandle == nullptr) {
-            return false;
+            return ImportResult::invalidResource;
         }
     }
 
@@ -202,12 +204,12 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
         SysCalls::closeHandle(syncNtHandle);
     }
     if (status != STATUS_SUCCESS) {
-        return false;
+        return ImportResult::invalidResource;
     }
 
     this->syncHandle = open.hSyncObject;
 
-    return true;
+    return ImportResult::success;
 }
 
 bool ExternalSemaphoreWindows::enqueueWait(uint64_t *fenceValue) {

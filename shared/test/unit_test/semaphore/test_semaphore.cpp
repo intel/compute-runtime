@@ -12,7 +12,7 @@
 namespace NEO {
 
 struct MockBaseExternalSemaphore : public ExternalSemaphore {
-    bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override { return true; }
+    ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override { return ImportResult::success; }
     bool enqueueWait(uint64_t *fenceValue) override { return true; }
     bool enqueueSignal(uint64_t *fenceValue) override { return true; }
 };

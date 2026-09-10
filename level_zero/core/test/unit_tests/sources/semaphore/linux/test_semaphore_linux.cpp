@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ class DrmSemaphoreFixture : public DeviceFixture {
 
 using DrmExternalSemaphoreTest = Test<DrmSemaphoreFixture>;
 
-HWTEST_F(DrmExternalSemaphoreTest, givenDriverModelDrmWhenImportExternalSemaphoreExpIsCalledThenUnsupportedFeatureIsReturned) {
+HWTEST_F(DrmExternalSemaphoreTest, givenUnusableFdWhenImportExternalSemaphoreExtIsCalledThenInvalidArgumentIsReturned) {
     MockDeviceImp l0Device(neoDevice);
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
@@ -59,6 +59,21 @@ HWTEST_F(DrmExternalSemaphoreTest, givenDriverModelDrmWhenImportExternalSemaphor
     fdDesc.fd = fd;
 
     desc.pNext = &fdDesc;
+
+    ze_result_t result = zeDeviceImportExternalSemaphoreExt(l0Device.toHandle(), &desc, &hSemaphore);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+HWTEST_F(DrmExternalSemaphoreTest, givenSemaphoreTypeUnsupportedByOsWhenImportExternalSemaphoreExtIsCalledThenUnsupportedFeatureIsReturned) {
+    MockDeviceImp l0Device(neoDevice);
+    ze_external_semaphore_ext_desc_t desc = {};
+    ze_external_semaphore_ext_handle_t hSemaphore;
+
+    ze_external_semaphore_win32_ext_desc_t win32Desc = {};
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
+
+    desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_D3D12_FENCE;
+    desc.pNext = &win32Desc;
 
     ze_result_t result = zeDeviceImportExternalSemaphoreExt(l0Device.toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);

@@ -121,9 +121,11 @@ ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(this->device->getOsInterface(), externalSemaphoreType, handle, fd, name);
+    NEO::ExternalSemaphore::ImportResult importResult = NEO::ExternalSemaphore::ImportResult::success;
+    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(this->device->getOsInterface(), externalSemaphoreType, handle, fd, name, importResult);
     if (!this->neoExternalSemaphore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return (importResult == NEO::ExternalSemaphore::ImportResult::invalidResource) ? ZE_RESULT_ERROR_INVALID_ARGUMENT
+                                                                                       : ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     return ZE_RESULT_SUCCESS;

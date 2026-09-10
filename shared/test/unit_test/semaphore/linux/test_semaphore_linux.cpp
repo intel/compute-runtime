@@ -26,18 +26,27 @@ namespace NEO {
 using DrmExternalSemaphoreTest = Test<DrmMemoryManagerFixtureWithoutQuietIoctlExpectation>;
 
 TEST_F(DrmExternalSemaphoreTest, givenNullOsInterfaceWhenCreateExternalSemaphoreIsCalledThenNullptrIsReturned) {
-    auto externalSemaphore = ExternalSemaphore::create(nullptr, ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr);
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::success;
+
+    auto externalSemaphore = ExternalSemaphore::create(nullptr, ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr, importResult);
     EXPECT_EQ(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::unsupported, importResult);
 }
 
 TEST_F(DrmExternalSemaphoreTest, givenInvalidLinuxSemaphoreTypeWhenCreateExternalSemaphoreIsCalledThenNullptrIsReturned) {
-    auto externalSemaphore = ExternalSemaphore::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), ExternalSemaphore::Type::OpaqueWin32, nullptr, 0u, nullptr);
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::success;
+
+    auto externalSemaphore = ExternalSemaphore::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), ExternalSemaphore::Type::OpaqueWin32, nullptr, 0u, nullptr, importResult);
     EXPECT_EQ(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::unsupported, importResult);
 }
 
 TEST_F(DrmExternalSemaphoreTest, givenOpaqueFdSemaphoreTypeWhenCreateExternalSemaphoreIsCalledThenNonNullptrIsReturned) {
-    auto externalSemaphore = ExternalSemaphore::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr);
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::unsupported;
+
+    auto externalSemaphore = ExternalSemaphore::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr, importResult);
     EXPECT_NE(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::success, importResult);
 }
 
 TEST_F(DrmExternalSemaphoreTest, givenSemaphoreWithBaseFenceValueAcquisitionWhenAcquireWaitFenceValueIsCalledThenPassedValueIsReturned) {
@@ -63,8 +72,11 @@ TEST_F(DrmExternalSemaphoreTest, givenIoctlFailsWhenCreateExternalSemaphoreIsCal
     mockDrm->failOnSyncObjFdToHandle = true;
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjFdToHandle, 0);
 
-    auto externalSemaphore = ExternalSemaphore::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr);
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::success;
+
+    auto externalSemaphore = ExternalSemaphore::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr, importResult);
     EXPECT_EQ(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::invalidResource, importResult);
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjFdToHandle, 1);
 }
 

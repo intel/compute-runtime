@@ -24,7 +24,7 @@ class ExternalSemaphoreLinux : public ExternalSemaphore {
 
     ~ExternalSemaphoreLinux() override;
 
-    bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override;
+    ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override;
 
     bool enqueueWait(uint64_t *fenceValue) override;
     bool enqueueSignal(uint64_t *fenceValue) override;

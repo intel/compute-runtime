@@ -25,21 +25,28 @@ using WddmExternalSemaphoreTest = WddmFixture;
 
 TEST_F(WddmExternalSemaphoreTest, givenNullOsInterfaceWhenCreateExternalSemaphoreIsCalledThenNullptrIsReturned) {
     HANDLE extSemaphoreHandle = 0;
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::success;
 
-    auto externalSemaphore = ExternalSemaphore::create(nullptr, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, nullptr);
+    auto externalSemaphore = ExternalSemaphore::create(nullptr, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, nullptr, importResult);
     EXPECT_EQ(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::unsupported, importResult);
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenOpaqueFdSemaphoreWhenCreateExternalSemaphoreIsCalledThenNullptrIsReturned) {
-    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr);
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::success;
+
+    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr, importResult);
     EXPECT_EQ(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::unsupported, importResult);
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenValidD3d12FenceSemaphoreWhenCreateExternalSemaphoreIsCalledThenSemaphoreIsSuccessfullyReturned) {
     HANDLE extSemaphoreHandle = 0;
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::unsupported;
 
-    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, nullptr);
+    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, nullptr, importResult);
     EXPECT_NE(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::success, importResult);
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenValidD3d11FenceSemaphoreWhenCreateExternalSemaphoreIsCalledThenSemaphoreIsSuccessfullyReturned) {
@@ -272,9 +279,11 @@ TEST_F(WddmExternalSemaphoreTest, givenTimelineSemaphoreWin32FailsToOpenSyncObje
     auto mockGdi = new MockSyncGdi();
     static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
     HANDLE extSemaphoreHandle = 0;
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::success;
 
-    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::TimelineSemaphoreWin32, extSemaphoreHandle, 0u, nullptr);
+    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::TimelineSemaphoreWin32, extSemaphoreHandle, 0u, nullptr, importResult);
     EXPECT_EQ(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::invalidResource, importResult);
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenD3d12FenceWithNameWhenOpenSyncObjectFromNameFailsThenNullptrIsReturned) {
@@ -284,9 +293,11 @@ TEST_F(WddmExternalSemaphoreTest, givenD3d12FenceWithNameWhenOpenSyncObjectFromN
     MockSyncGdi::failOpenSyncObjectFromNtHandle = false;
     HANDLE extSemaphoreHandle = 0;
     const char *extSemName = "d3d12_fence_name";
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::success;
 
-    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, extSemName);
+    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, extSemName, importResult);
     EXPECT_EQ(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::invalidResource, importResult);
 
     MockSyncGdi::failOpenSyncObjectNtHandleName = true;
     MockSyncGdi::failOpenSyncObjectFromNtHandle = true;
@@ -315,9 +326,11 @@ TEST_F(WddmExternalSemaphoreTest, givenD3d12FenceWithNameWhenOpenSyncObjectFromN
     MockSyncGdi::openSyncObjectNtHandleFromNameCallCount = 0;
     HANDLE extSemaphoreHandle = 0;
     const char *extSemName = "d3d12_fence_name";
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::unsupported;
 
-    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, extSemName);
+    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, extSemName, importResult);
     EXPECT_NE(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::success, importResult);
     EXPECT_EQ(MockSyncGdi::openSyncObjectNtHandleFromNameCallCount, 1u);
 
     MockSyncGdi::failOpenSyncObjectNtHandleName = true;
