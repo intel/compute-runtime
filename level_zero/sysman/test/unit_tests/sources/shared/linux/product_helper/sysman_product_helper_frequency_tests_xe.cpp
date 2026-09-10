@@ -20,6 +20,12 @@ constexpr uint32_t invalidReasonValue = 0u;
 constexpr uint32_t validReasonValue = 1u;
 constexpr uint32_t handleComponentCount = 1u;
 
+constexpr uint32_t mockMemoryFrequencyData = 2000u;
+constexpr double expectedMemoryFrequency = 2000.0;
+
+constexpr uint32_t mockMemoryVoltageData = 0x100u;
+constexpr double expectedMemoryVoltage = 1.0;
+
 class SysmanProductHelperFrequencyTestFixture : public SysmanDeviceFixture {
   public:
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = nullptr;
@@ -501,11 +507,11 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
             return count;
         } else if (fd == 6) {
             if (offset == 56) {
-                uint32_t frequencyData = 2000;
+                uint32_t frequencyData = mockMemoryFrequencyData;
                 memcpy(buf, &frequencyData, count);
                 return count;
             } else if (offset == 60) {
-                uint32_t voltageData = 850;
+                uint32_t voltageData = mockMemoryVoltageData;
                 memcpy(buf, &voltageData, count);
                 return count;
             }
@@ -533,8 +539,8 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
             state.stype = ZES_STRUCTURE_TYPE_FREQ_STATE;
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetState(handle, &state));
 
-            EXPECT_GT(state.actual, 0.0);
-            EXPECT_GT(state.currentVoltage, 0.0);
+            EXPECT_DOUBLE_EQ(expectedMemoryFrequency, state.actual);
+            EXPECT_DOUBLE_EQ(expectedMemoryVoltage, state.currentVoltage);
             EXPECT_EQ(-1.0, state.request);
             EXPECT_EQ(-1.0, state.tdp);
             EXPECT_EQ(-1.0, state.efficient);
@@ -677,11 +683,11 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
             return count;
         } else if (fd == 6) {
             if (offset == 56) {
-                uint32_t frequencyData = 2000;
+                uint32_t frequencyData = mockMemoryFrequencyData;
                 memcpy(buf, &frequencyData, count);
                 return count;
             } else if (offset == 60) {
-                uint32_t voltageData = 0x100; // 256 decimal = 1.0V in U1.8 format (256/256.0)
+                uint32_t voltageData = mockMemoryVoltageData;
                 memcpy(buf, &voltageData, count);
                 return count;
             }
@@ -706,8 +712,8 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
             state.stype = ZES_STRUCTURE_TYPE_FREQ_STATE;
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetState(handle, &state));
 
-            EXPECT_GT(state.actual, 0.0);
-            EXPECT_GT(state.currentVoltage, 0.0);
+            EXPECT_DOUBLE_EQ(expectedMemoryFrequency, state.actual);
+            EXPECT_DOUBLE_EQ(expectedMemoryVoltage, state.currentVoltage);
             EXPECT_EQ(-1.0, state.request);
             EXPECT_EQ(-1.0, state.tdp);
             EXPECT_EQ(-1.0, state.efficient);

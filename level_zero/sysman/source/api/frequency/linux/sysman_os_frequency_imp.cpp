@@ -151,7 +151,12 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
         pState->actual = -1;
     }
 
-    getCurrentVoltage(pState->currentVoltage);
+    result = getCurrentVoltage(pState->currentVoltage);
+    if (ZE_RESULT_SUCCESS != result) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): Failed to get current voltage, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        pState->currentVoltage = -1;
+    }
 
     pState->throttleReasons = pSysmanProductHelper->getThrottleReasons(pSysmanKmdInterface, pSysfsAccess, subdeviceId, const_cast<void *>(pState->pNext));
 
@@ -395,13 +400,12 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
     return ZE_RESULT_SUCCESS;
 }
 
-void LinuxFrequencyImp::getCurrentVoltage(double &voltage) {
+ze_result_t LinuxFrequencyImp::getCurrentVoltage(double &voltage) {
     if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
-        pSysmanProductHelper->getCurrentVoltage(pLinuxSysmanImp, frequencyDomainNumber, subdeviceId, &voltage);
-        return;
+        return pSysmanProductHelper->getCurrentVoltage(pLinuxSysmanImp, frequencyDomainNumber, subdeviceId, &voltage);
     }
 
-    voltage = -1.0;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 void LinuxFrequencyImp::reInit() {

@@ -59,7 +59,7 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableAndNonMovableClass
     ze_result_t getEfficient(double &efficient);
     ze_result_t getMaxVal(double &maxVal);
     ze_result_t getMinVal(double &minVal);
-    void getCurrentVoltage(double &voltage);
+    ze_result_t getCurrentVoltage(double &voltage);
 
   private:
     std::string minFreqFile;

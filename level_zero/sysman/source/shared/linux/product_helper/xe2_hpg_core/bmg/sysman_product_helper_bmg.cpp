@@ -1918,8 +1918,6 @@ bool SysmanProductHelperHw<gfxProduct>::isMemoryDomainSupported() {
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pActual) {
-    *pActual = -1.0;
-
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
@@ -1940,13 +1938,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp
     }
     *pActual = static_cast<double>(memoryActualFreq & 0xFFFF);
 
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pVoltage) {
-    *pVoltage = -1.0;
-
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
@@ -1966,13 +1962,9 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp 
         return result;
     }
 
-    // VRAM_VID is 9 bits U1.8 format representation
-    uint32_t vramVid = memoryVoltage & 0x1FF;
-    double vramVoltage = static_cast<double>(vramVid) / 256.0;
+    *pVoltage = convertU1p8(memoryVoltage & 0x1FF);
 
-    *pVoltage = vramVoltage;
-
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 template <>

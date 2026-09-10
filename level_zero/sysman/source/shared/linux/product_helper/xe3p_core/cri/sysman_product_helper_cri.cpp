@@ -843,8 +843,6 @@ bool SysmanProductHelperHw<gfxProduct>::isMediaDomainSupported(LinuxSysmanImp *p
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pActual) {
-    *pActual = -1.0;
-
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
@@ -865,13 +863,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp
     }
     *pActual = static_cast<double>(memoryActualFreq & 0xFFFF);
 
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pVoltage) {
-    *pVoltage = -1.0;
-
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
@@ -891,17 +887,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp 
         return result;
     }
 
-    // VCCDDRQX VID is 9 bits U1.8 format representation
-    uint32_t vccddrqxVid = memoryVoltage & 0x1FF;
-    double vccddrqxVoltage = static_cast<double>(vccddrqxVid) / 256.0;
-
-    // VCCDDRQ VID is 9 bits U1.8 format representation
-    uint32_t vccddrqVid = (memoryVoltage >> 18) & 0x1FF;
-    double vccddrqVoltage = static_cast<double>(vccddrqVid) / 256.0;
+    double vccddrqxVoltage = convertU1p8(memoryVoltage & 0x1FF);
+    double vccddrqVoltage = convertU1p8((memoryVoltage >> 18) & 0x1FF);
 
     *pVoltage = std::max(vccddrqxVoltage, vccddrqVoltage);
 
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 static ze_result_t readGpuMaxTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
