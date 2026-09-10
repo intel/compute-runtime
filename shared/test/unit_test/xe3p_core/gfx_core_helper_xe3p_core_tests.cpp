@@ -1079,7 +1079,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenSetStallOnlyBarrier
     EXPECT_EQ(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU, resourceBarrier->getSignalStage());
     EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
     EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
-    EXPECT_TRUE(resourceBarrier->getDisableGoSyncWithWalkerPostSync());
+    EXPECT_FALSE(resourceBarrier->getDisableGoSyncWithWalkerPostSync());
 }
 
 struct GfxCoreHelperTestsXe3pCoreResourceBarrier : public GfxCoreHelperTestsXe3pCore,

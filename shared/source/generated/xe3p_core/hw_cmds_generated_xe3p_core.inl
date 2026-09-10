@@ -8375,8 +8375,7 @@ typedef struct tagRESOURCE_BARRIER {
         TheStructure.Common.WaitStage = WAIT_STAGE_NONE;
         TheStructure.Common.SignalStage = SIGNAL_STAGE_NONE;
         TheStructure.Common.BarrierType = BARRIER_TYPE_IMMEDIATE;
-        TheStructure.Common.QueueDrainMode = 1;                  // Patched
-        TheStructure.Common.DisableGoSyncWithWalkerPostSync = 1; // Patched
+        TheStructure.Common.QueueDrainMode = 1; // Patched
     }
     static tagRESOURCE_BARRIER sInit() {
         RESOURCE_BARRIER state;
