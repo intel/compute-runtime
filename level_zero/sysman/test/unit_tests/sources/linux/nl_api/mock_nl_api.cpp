@@ -7,7 +7,6 @@
 
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api.h"
 
-#include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_uapi_ext.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
 
 #include "gtest/gtest.h"
@@ -338,11 +337,11 @@ int MockNlApi::genlHandleMsg(struct nl_msg *msg, void *arg) {
             }
         }
     } else if (getThreshold) {
-        next = addAttrib(info, next, NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_ID, 1);
-        next = addAttrib(info, next, NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_NAME, 7);
-        addAttrib(info, next, NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_THRESHOLD, mockThresholdValue);
+        next = addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID, 1);
+        next = addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_NAME, 7);
+        addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_THRESHOLD, mockThresholdValue);
         for (int i = 0; i < pOps->o_ncmds; i++) {
-            if (pOps->o_cmds[i].c_id == NEO_DRM_RAS_CMD_GET_ERROR_THRESHOLD && pOps->o_cmds[i].c_msg_parser != nullptr) {
+            if (pOps->o_cmds[i].c_id == DRM_RAS_CMD_GET_ERROR_THRESHOLD && pOps->o_cmds[i].c_msg_parser != nullptr) {
                 if (0 == (pOps->o_cmds[i].c_msg_parser)(reinterpret_cast<struct nl_cache_ops *>(this), &pOps->o_cmds[i], &info, arg)) {
                     succeeded = true;
                 }
@@ -453,11 +452,11 @@ int MockNlApi::nlRecvmsgsDefault(struct nl_sock *sock) {
             eventAttrChain = new MyNlattr;
             MyNlattr *next = eventAttrChain;
 
-            next->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID;
+            next->type = DRM_RAS_A_ERROR_EVENT_ATTRS_NODE_ID;
             next->content = eventNodeId;
             next = next->addNext();
 
-            next->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID;
+            next->type = DRM_RAS_A_ERROR_EVENT_ATTRS_ERROR_ID;
             next->content = eventErrorId;
         } else if (isEventSocket && !receiveEventData) {
             // Clear event attribute chain for event socket when not receiving event data
@@ -635,11 +634,11 @@ struct nlattr *MockNlApi::nlmsgAttrdata(const struct nlmsghdr *hdr, int attr) {
         if (eventAttrChain == nullptr) {
             // Create a chain of two attributes: nodeId and errorId
             auto *nodeAttr = new MyNlattr();
-            nodeAttr->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID;
+            nodeAttr->type = DRM_RAS_A_ERROR_EVENT_ATTRS_NODE_ID;
             nodeAttr->content = eventNodeId;
 
             auto *errorAttr = new MyNlattr();
-            errorAttr->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID;
+            errorAttr->type = DRM_RAS_A_ERROR_EVENT_ATTRS_ERROR_ID;
             errorAttr->content = eventErrorId;
 
             nodeAttr->next = errorAttr;

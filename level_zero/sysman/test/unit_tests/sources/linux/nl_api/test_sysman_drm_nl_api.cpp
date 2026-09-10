@@ -1250,7 +1250,7 @@ TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceWhenParseEventMessageWithOnly
         delete pNlApiPtr->eventAttrChain;
     }
     pNlApiPtr->eventAttrChain = new MyNlattr;
-    pNlApiPtr->eventAttrChain->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID;
+    pNlApiPtr->eventAttrChain->type = DRM_RAS_A_ERROR_EVENT_ATTRS_NODE_ID;
     pNlApiPtr->eventAttrChain->content = 99;
     pNlApiPtr->eventAttrChain->next = nullptr;
     ze_result_t result = drmNlApi->parseEventMessage(msg, event);
@@ -1279,7 +1279,7 @@ TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceWhenParseEventMessageWithOnly
         delete pNlApiPtr->eventAttrChain;
     }
     pNlApiPtr->eventAttrChain = new MyNlattr;
-    pNlApiPtr->eventAttrChain->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID;
+    pNlApiPtr->eventAttrChain->type = DRM_RAS_A_ERROR_EVENT_ATTRS_ERROR_ID;
     pNlApiPtr->eventAttrChain->content = 456;
     pNlApiPtr->eventAttrChain->next = nullptr;
     ze_result_t result = drmNlApi->parseEventMessage(msg, event);
@@ -1406,7 +1406,7 @@ TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceWhenParseEventMessageWithUnkn
     MyNlattr *current = chain;
 
     // First: NODE_ID
-    current->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID;
+    current->type = DRM_RAS_A_ERROR_EVENT_ATTRS_NODE_ID;
     current->content = 100;
     current->next = new MyNlattr;
     current = current->next;
@@ -1418,7 +1418,7 @@ TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceWhenParseEventMessageWithUnkn
     current = current->next;
 
     // Third: ERROR_ID
-    current->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID;
+    current->type = DRM_RAS_A_ERROR_EVENT_ATTRS_ERROR_ID;
     current->content = 200;
     current->next = new MyNlattr;
     current = current->next;
@@ -1537,13 +1537,13 @@ TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceAndAllocMsgFailsWhenCallingGe
 
 TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiAndNoThresholdAttrsWhenCallingGetErrorThresholdRspThenThresholdRemainsZero) {
     DrmErrorThreshold threshold = {};
-    drmNlApi->currentOperation = std::make_unique<MockDrmNlApi::Operation>(NEO_DRM_RAS_CMD_GET_ERROR_THRESHOLD, &threshold);
+    drmNlApi->currentOperation = std::make_unique<MockDrmNlApi::Operation>(DRM_RAS_CMD_GET_ERROR_THRESHOLD, &threshold);
 
     auto pNlApi = std::make_unique<MockNlApi>();
     drmNlApi->pNlApi = std::move(pNlApi);
 
-    auto attrs = std::make_unique<struct nlattr *[]>(NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1);
-    std::fill(attrs.get(), attrs.get() + NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1, nullptr);
+    auto attrs = std::make_unique<struct nlattr *[]>(DRM_RAS_A_ERROR_COUNTER_ATTRS_MAX + 1);
+    std::fill(attrs.get(), attrs.get() + DRM_RAS_A_ERROR_COUNTER_ATTRS_MAX + 1, nullptr);
 
     struct genl_info info = {};
     info.attrs = attrs.get();
