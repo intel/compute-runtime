@@ -7,6 +7,7 @@
 
 #include "level_zero/driver_experimental/zex_module.h"
 
+#include "level_zero/api/core/ze_module_api_entrypoints.h"
 #include "level_zero/api/internal/l0_module.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/kernel/kernel.h"
@@ -49,30 +50,16 @@ ze_result_t ZE_APICALL
 zeKernelGetModuleHandleExt(
     ze_kernel_handle_t hKernel,
     ze_module_handle_t *phModule) {
-    auto kernel = L0::Kernel::fromHandle(toInternalType(hKernel));
-    if (nullptr == kernel) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-    if (nullptr == phModule) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-    *phModule = kernel->getModule()->toHandle();
-    return ZE_RESULT_SUCCESS;
+    auto internalKernel = toInternalType(hKernel);
+    return L0::zeKernelGetModuleHandle(internalKernel, phModule);
 }
 
 ze_result_t ZE_APICALL
 zeModuleGetDeviceHandleExt(
     ze_module_handle_t hModule,
     ze_device_handle_t *phDevice) {
-    auto module = L0::Module::fromHandle(toInternalType(hModule));
-    if (nullptr == module) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-    if (nullptr == phDevice) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-    *phDevice = module->getDevice()->toHandle();
-    return ZE_RESULT_SUCCESS;
+    auto internalModule = toInternalType(hModule);
+    return L0::zeModuleGetDeviceHandle(internalModule, phDevice);
 }
 
 } // namespace L0

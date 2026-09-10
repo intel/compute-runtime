@@ -311,6 +311,7 @@ DriverDispatch::DriverDispatch() {
     this->coreModule.pfnGetProperties = L0::zeModuleGetProperties;
     this->coreModule.pfnGetFunctionPointer = L0::zeModuleGetFunctionPointer;
     this->coreModule.pfnInspectLinkageExt = L0::zeModuleInspectLinkageExt;
+    this->coreModule.pfnGetDeviceHandle = L0::zeModuleGetDeviceHandle;
     this->coreModuleBuildLog.pfnDestroy = L0::zeModuleBuildLogDestroy;
     this->coreModuleBuildLog.pfnGetString = L0::zeModuleBuildLogGetString;
     this->coreKernel.pfnCreate = L0::zeKernelCreate;
@@ -325,6 +326,7 @@ DriverDispatch::DriverDispatch() {
     this->coreKernel.pfnGetSourceAttributes = L0::zeKernelGetSourceAttributes;
     this->coreKernel.pfnGetProperties = L0::zeKernelGetProperties;
     this->coreKernel.pfnGetName = L0::zeKernelGetName;
+    this->coreKernel.pfnGetModuleHandle = L0::zeKernelGetModuleHandle;
     this->coreKernelExp.pfnSetGlobalOffsetExp = L0::zeKernelSetGlobalOffsetExp;
     this->coreKernelExp.pfnSchedulingHintExp = L0::zeKernelSchedulingHintExp;
     this->coreKernelExp.pfnGetBinaryExp = L0::zeKernelGetBinaryExp;

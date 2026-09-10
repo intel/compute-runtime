@@ -46,6 +46,7 @@
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/core/ze_module_api_entrypoints.h"
 #include "level_zero/api/internal/l0_module.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -70,15 +71,23 @@ TEST_F(ModuleTest, givenValidModuleHandleWhenCallingZeModuleGetDeviceHandleThenP
     ze_device_handle_t deviceHandle = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeModuleGetDeviceHandleExt(module->toHandle(), &deviceHandle));
     EXPECT_EQ(device->toHandle(), deviceHandle);
+
+    deviceHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeModuleGetDeviceHandle(module->toHandle(), &deviceHandle));
+    EXPECT_EQ(device->toHandle(), deviceHandle);
 }
 
 TEST_F(ModuleTest, givenNullModuleHandleWhenCallingZeModuleGetDeviceHandleThenInvalidNullHandleReturned) {
     ze_device_handle_t deviceHandle = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeModuleGetDeviceHandleExt(nullptr, &deviceHandle));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ::zeModuleGetDeviceHandle(nullptr, &deviceHandle));
 }
 
 TEST_F(ModuleTest, givenNullDeviceHandlePointerWhenCallingZeModuleGetDeviceHandleThenInvalidNullPointerReturned) {
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeModuleGetDeviceHandleExt(module->toHandle(), nullptr));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, ::zeModuleGetDeviceHandle(module->toHandle(), nullptr));
 }
 
 TEST_F(ModuleTest, GivenGeneralRegisterFileDescriptorWhenGetKernelPropertiesIsCalledThenDescriptorIsCorrectlySet) {
@@ -1715,7 +1724,7 @@ TEST_F(ModulePropertyTest, whenZeModuleGetPropertiesIsCalledThenGetPropertiesIsC
     // returning error code that is unlikely to be returned by the function
     module.getPropertiesResult = ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
 
-    ze_result_t res = zeModuleGetProperties(module.toHandle(), &moduleProperties);
+    ze_result_t res = ::zeModuleGetProperties(module.toHandle(), &moduleProperties);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, res);
 }
 
@@ -1794,13 +1803,13 @@ TEST_F(ModuleInspectionTests, givenCallToInspectionOnModulesWithoutUnresolvedSym
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolWhenTheOtherModuleDefinesTheSymbolThenInspectedLinkageShowsSymbolsAreResolvedInTheLog) {
@@ -1850,13 +1859,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolWhenTheOtherModuleD
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithExportSymolsThenInspectedLinkageShowsSymbolsInTheLog) {
@@ -1883,13 +1892,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithExportSymolsThenInspectedLinkageSho
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithFunctionDependenciesWhenOtherModuleDefinesThisFunctionThenExportedFunctionsAreDefinedInLog) {
@@ -1916,13 +1925,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithFunctionDependenciesWhenOtherModule
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedImportsButFullyLinkedThenImportedFunctionsAreDefinedInLog) {
@@ -1942,13 +1951,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedImportsButFullyLinkedThen
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, linkModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolsNotPresentInOtherModulesWhenInspectLinkageThenUnresolvedSymbolsReturned) {
@@ -1969,13 +1978,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolsNotPresentInOtherM
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleDynamicLinkTests, givenCallToDynamicLinkOnModulesWithoutUnresolvedSymbolsThenSuccessIsReturned) {
@@ -2500,13 +2509,13 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), &dynLinkLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(dynLinkLog);
+    ::zeModuleBuildLogDestroy(dynLinkLog);
 }
 
 TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnotherModuleWhenDynamicLinkThenLinkFailureIsReturnedAndLogged) {
@@ -2556,13 +2565,13 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), &dynLinkLog);
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(dynLinkLog);
+    ::zeModuleBuildLogDestroy(dynLinkLog);
 }
 
 TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnotherModuleWhenDynamicLinkWithoutRequiredFlagsThenLinkFailureIsReturnedAndLogged) {
@@ -2616,13 +2625,13 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
     EXPECT_NE(0, strcmp(pStr, emptyString.c_str()));
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(dynLinkLog);
+    ::zeModuleBuildLogDestroy(dynLinkLog);
 }
 
 using ModuleDynamicLinkTest = Test<ModuleFixture>;

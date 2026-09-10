@@ -329,6 +329,7 @@ constexpr DdiEntryExpectation entries[] = {
     DDI_ENTRY(pfnGetProperties, ZE_API_VERSION_1_0),
     DDI_ENTRY(pfnGetFunctionPointer, ZE_API_VERSION_1_0),
     DDI_ENTRY(pfnInspectLinkageExt, ZE_API_VERSION_1_3),
+    DDI_ENTRY(pfnGetDeviceHandle, ZE_API_VERSION_1_18),
 };
 } // namespace zeModule
 
@@ -355,6 +356,7 @@ constexpr DdiEntryExpectation entries[] = {
     DDI_ENTRY(pfnGetSourceAttributes, ZE_API_VERSION_1_0),
     DDI_ENTRY(pfnGetProperties, ZE_API_VERSION_1_0),
     DDI_ENTRY(pfnGetName, ZE_API_VERSION_1_0),
+    DDI_ENTRY(pfnGetModuleHandle, ZE_API_VERSION_1_18),
 };
 } // namespace zeKernel
 

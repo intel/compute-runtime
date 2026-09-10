@@ -27,6 +27,7 @@
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/core/ze_module_api_entrypoints.h"
 #include "level_zero/api/internal/l0_module.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
@@ -4201,23 +4202,32 @@ TEST_F(KernelProgramBinaryTests, givenValidKernelHandleWhenCallingZeKernelGetMod
     ze_module_handle_t moduleHandle = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeKernelGetModuleHandleExt(kernelHandle, &moduleHandle));
     EXPECT_EQ(module->toHandle(), moduleHandle);
+
+    moduleHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeKernelGetModuleHandle(kernelHandle, &moduleHandle));
+    EXPECT_EQ(module->toHandle(), moduleHandle);
 }
 
 TEST_F(KernelProgramBinaryTests, givenNullKernelHandleWhenCallingZeKernelGetModuleHandleThenInvalidNullHandleReturned) {
     ze_module_handle_t moduleHandle = nullptr;
+
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeKernelGetModuleHandleExt(nullptr, &moduleHandle));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ::zeKernelGetModuleHandle(nullptr, &moduleHandle));
 }
 
 TEST_F(KernelProgramBinaryTests, givenNullModuleHandlePointerWhenCallingZeKernelGetModuleHandleThenInvalidNullPointerReturned) {
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeKernelGetModuleHandleExt(kernelHandle, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, ::zeKernelGetModuleHandle(kernelHandle, nullptr));
 }
 
 TEST_F(KernelProgramBinaryTests, givenCallTozeKernelGetBinaryExpThenCorrectSizeAndDataReturned) {
     size_t kernelBinarySize = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetBinaryExp(kernelHandle, &kernelBinarySize, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeKernelGetBinaryExp(kernelHandle, &kernelBinarySize, nullptr));
     EXPECT_GT(kernelBinarySize, 0u);
     std::unique_ptr<uint8_t[]> kernelBinaryRetrieved = std::make_unique<uint8_t[]>(kernelBinarySize);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetBinaryExp(kernelHandle, &kernelBinarySize, reinterpret_cast<uint8_t *>(kernelBinaryRetrieved.get())));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeKernelGetBinaryExp(kernelHandle, &kernelBinarySize, reinterpret_cast<uint8_t *>(kernelBinaryRetrieved.get())));
 
     auto &kernelImmutableData = this->module->kernelImmData.front();
     EXPECT_EQ(kernelBinarySize, kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize);

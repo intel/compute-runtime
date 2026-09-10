@@ -495,6 +495,7 @@ zeGetModuleProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetFunctionPointer, L0::globalDriverDispatch.coreModule.pfnGetFunctionPointer, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.coreModule.pfnGetProperties, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnInspectLinkageExt, L0::globalDriverDispatch.coreModule.pfnInspectLinkageExt, version, ZE_API_VERSION_1_3);
+    fillDdiEntry(pDdiTable->pfnGetDeviceHandle, L0::globalDriverDispatch.coreModule.pfnGetDeviceHandle, version, ZE_API_VERSION_1_18);
     return result;
 }
 
@@ -539,6 +540,7 @@ zeGetKernelProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.coreKernel.pfnGetProperties, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnSetCacheConfig, L0::globalDriverDispatch.coreKernel.pfnSetCacheConfig, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetName, L0::globalDriverDispatch.coreKernel.pfnGetName, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetModuleHandle, L0::globalDriverDispatch.coreKernel.pfnGetModuleHandle, version, ZE_API_VERSION_1_18);
     return result;
 }
 

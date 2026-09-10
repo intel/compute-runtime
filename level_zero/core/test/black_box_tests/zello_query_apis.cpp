@@ -209,6 +209,15 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(functions.moduleGetDeviceHandle(module, &queriedModuleDevice));
     expect(queriedModuleDevice == device, "module device mismatch");
 
+    queriedModule = nullptr;
+    queriedModuleDevice = nullptr;
+
+    SUCCESS_OR_TERMINATE(zeKernelGetModuleHandle(kernel, &queriedModule));
+    expect(queriedModule == module, "kernel parent module mismatch (zeKernelGetModuleHandle)");
+
+    SUCCESS_OR_TERMINATE(zeModuleGetDeviceHandle(module, &queriedModuleDevice));
+    expect(queriedModuleDevice == device, "module device mismatch (zeModuleGetDeviceHandle)");
+
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 
