@@ -63,22 +63,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMemMapDeviceMemToHost);
 
     // command list
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetOrdinal);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetIndex);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetFlags);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetMode);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetPriority);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetDeviceHandle);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetContextHandle);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetOrdinal);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetFlags);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListImmediateGetIndex);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListImmediateGetFlags);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListImmediateGetMode);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListImmediateGetPriority);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListIsImmediate);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListIsMutableExp);
-
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory64);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWriteToMemory);
@@ -144,9 +128,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetGraphExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphSetDestructionCallbackExp);
 
-    // core ext graphs to use on loader < 1.17
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeExecutableGraphGetSourceGraphExt);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphGetPrimaryCommandListExt);
+    // core ext graphs without a graph ddi table entry
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphPauseCaptureExt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphResumeCaptureExt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphGetIdExt);
@@ -155,8 +137,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphVisitExt);
 
     // Metrics
-    RETURN_FUNC_PTR_IF_EXIST(zetDeviceEnableMetricsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetDeviceDisableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationCreateExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationDestroyExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationGetExcludedMetricsExp);
