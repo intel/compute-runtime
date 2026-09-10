@@ -30,9 +30,11 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 
+#include <algorithm>
+
 using DirectSubmissionTest = Test<DirectSubmissionFixture>;
 
-struct DirectSubmissionSemaphorePoolFixture : DirectSubmissionFixture {
+struct DirectSubmissionLocalMemoryFixture : DirectSubmissionFixture {
     void setUp() {
         this->debugRestore = std::make_unique<DebugManagerStateRestore>();
         debugManager.flags.EnableLocalMemory.set(1);
@@ -53,7 +55,85 @@ struct DirectSubmissionSemaphorePoolFixture : DirectSubmissionFixture {
     std::unique_ptr<RAIIProductHelperFactory<MockProductHelper>> productHelper;
 };
 
-using DirectSubmissionSemaphorePoolTest = Test<DirectSubmissionSemaphorePoolFixture>;
+using DirectSubmissionSemaphorePoolTest = Test<DirectSubmissionLocalMemoryFixture>;
+using DirectSubmissionRingSizeTest = Test<DirectSubmissionLocalMemoryFixture>;
+
+HWTEST_F(DirectSubmissionRingSizeTest, givenRingPlacementAndAlignmentPolicyWhenInitializingThenUsableSizeFitsStandaloneAllocation) {
+    auto memoryManager = static_cast<MockMemoryManager *>(this->pDevice->getMemoryManager());
+    VariableBackup localMemorySupportBackup{&memoryManager->localMemorySupported};
+    for (auto localMemorySupported : {false, true}) {
+        memoryManager->localMemorySupported[this->rootDeviceIndex] = localMemorySupported;
+        for (auto alignTo2MB : {false, true}) {
+            this->productHelper->mockProductHelper->is2MBLocalMemAlignmentEnabledResult = alignTo2MB;
+            for (auto useSystemMemory : {false, true}) {
+                debugManager.flags.DirectSubmissionBufferPlacement.set(useSystemMemory ? 1 : 0);
+                auto checkRingSize = [&]<typename Dispatcher>() {
+                    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*this->pDevice->getDefaultEngine().commandStreamReceiver);
+                    ASSERT_TRUE(directSubmission.initialize(false));
+                    const auto useLocalMemory = localMemorySupported && !useSystemMemory;
+                    const auto expectedUsableSize = alignTo2MB && useLocalMemory ? MemoryConstants::pageSize2M - MemoryConstants::pageSize : 256 * MemoryConstants::kiloByte;
+                    const auto expectedAllocationSize = alignUp(expectedUsableSize + MemoryConstants::pageSize, MemoryConstants::pageSize64k);
+                    EXPECT_EQ(expectedUsableSize, directSubmission.ringCommandStream.getMaxAvailableSpace());
+                    for (auto &ring : directSubmission.ringBuffers) {
+                        EXPECT_FALSE(ring.ringBuffer->isView());
+                        EXPECT_EQ(useLocalMemory, ring.ringBuffer->isAllocatedInLocalMemoryPool());
+                        EXPECT_EQ(expectedAllocationSize, ring.ringBuffer->getUnderlyingBufferSize());
+                    }
+                };
+                checkRingSize.template operator()<RenderDispatcher<FamilyType>>();
+                checkRingSize.template operator()<BlitterDispatcher<FamilyType>>();
+            }
+        }
+    }
+}
+
+HWTEST_F(DirectSubmissionRingSizeTest, givenLargeRingWhenFillingBeyond256KBAndSwitchingThenInitialAndAsyncRingsRetainUsableSize) {
+    debugManager.flags.DirectSubmissionBufferPlacement.set(0);
+    this->pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*this->pDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(true));
+    directSubmission.isCompletedReturn = true;
+    const auto initialRingBufferCount = directSubmission.ringBuffers.size();
+
+    const auto usableSize = MemoryConstants::pageSize2M - MemoryConstants::pageSize;
+    for (auto ringIndex = 0u; ringIndex < 3u; ringIndex++) {
+        auto ring = directSubmission.ringCommandStream.getGraphicsAllocation();
+        ASSERT_EQ(MemoryConstants::pageSize2M, ring->getUnderlyingBufferSize());
+        EXPECT_EQ(usableSize, directSubmission.ringCommandStream.getMaxAvailableSpace());
+        auto tail = ptrOffset(ring->getUnderlyingBuffer(), usableSize);
+        memset(tail, 0x5a, MemoryConstants::pageSize);
+
+        const auto remainingSpace = directSubmission.getSizeSwitchRingBufferSection() + directSubmission.getSizeEnd(false);
+        auto bytesToFill = directSubmission.ringCommandStream.getAvailableSpace() - remainingSpace;
+        memset(directSubmission.ringCommandStream.getSpace(bytesToFill), 0, bytesToFill);
+        EXPECT_GT(directSubmission.ringCommandStream.getUsed(), 256 * MemoryConstants::kiloByte);
+        directSubmission.switchRingBuffersNeeded(remainingSpace, nullptr);
+        EXPECT_EQ(ring, directSubmission.ringCommandStream.getGraphicsAllocation());
+        directSubmission.switchRingBuffersNeeded(remainingSpace + 1, nullptr);
+        EXPECT_NE(ring, directSubmission.ringCommandStream.getGraphicsAllocation());
+        EXPECT_EQ(usableSize, directSubmission.ringCommandStream.getMaxAvailableSpace());
+        EXPECT_TRUE(std::all_of(static_cast<uint8_t *>(tail), ptrOffset(static_cast<uint8_t *>(tail), MemoryConstants::pageSize), [](uint8_t value) { return value == 0x5a; }));
+    }
+    EXPECT_GT(directSubmission.fetchAsyncRingBufferCalled, 0u);
+    EXPECT_GT(directSubmission.ringBuffers.size(), initialRingBufferCount);
+}
+
+HWTEST_F(DirectSubmissionRingSizeTest, givenLocalRingWhenSwitchingToAsyncSystemMemoryRingThenStreamCapacityMatchesNewAllocation) {
+    debugManager.flags.DirectSubmissionBufferPlacement.set(0);
+    this->pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*this->pDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    directSubmission.isCompletedReturn = true;
+    EXPECT_EQ(MemoryConstants::pageSize2M - MemoryConstants::pageSize, directSubmission.ringCommandStream.getMaxAvailableSpace());
+
+    debugManager.flags.DirectSubmissionBufferPlacement.set(1);
+    for (auto switchIndex = 0u; switchIndex < 2u; switchIndex++) {
+        directSubmission.switchRingBuffersNeeded(directSubmission.ringCommandStream.getAvailableSpace() + 1, nullptr);
+    }
+    EXPECT_GT(directSubmission.fetchAsyncRingBufferCalled, 0u);
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(directSubmission.ringCommandStream.getGraphicsAllocation()->getMemoryPool()));
+    EXPECT_EQ(256 * MemoryConstants::kiloByte, directSubmission.ringCommandStream.getMaxAvailableSpace());
+}
 
 HWTEST_F(DirectSubmissionSemaphorePoolTest, givenLocalSemaphoresWhenInitializingMultipleDirectSubmissionsThenSeparateViewsShareDevicePool) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> first(*pDevice->getDefaultEngine().commandStreamReceiver);

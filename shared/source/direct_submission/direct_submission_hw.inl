@@ -178,7 +178,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     }
 
     handleResidency(nullptr);
-    ringCommandStream.replaceBuffer(this->ringBuffers[0u].ringBuffer->getUnderlyingBuffer(), minimumRingRequiredSize);
+    ringCommandStream.replaceBuffer(this->ringBuffers[0u].ringBuffer->getUnderlyingBuffer(), this->getRingBufferUsableSize(*this->ringBuffers[0u].ringBuffer));
     ringCommandStream.replaceGraphicsAllocation(this->ringBuffers[0].ringBuffer);
 
     semaphorePtr = semaphores->getUnderlyingBuffer();
@@ -754,12 +754,20 @@ inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers(Res
         dispatchSwitchRingBufferSection(nextRingBuffer->getGpuAddress());
     }
 
-    ringCommandStream.replaceBuffer(nextRingBuffer->getUnderlyingBuffer(), ringCommandStream.getMaxAvailableSpace());
+    ringCommandStream.replaceBuffer(nextRingBuffer->getUnderlyingBuffer(), this->getRingBufferUsableSize(*nextRingBuffer));
     ringCommandStream.replaceGraphicsAllocation(nextRingBuffer);
 
     handleSwitchRingBuffers(allocationsForResidency);
 
     return currentBufferGpuVa;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getRingBufferUsableSize(const GraphicsAllocation &ringBuffer) const {
+    if (this->rootDeviceEnvironment.getProductHelper().is2MBLocalMemAlignmentEnabled() && ringBuffer.isAllocatedInLocalMemoryPool()) {
+        return ringBuffer.getUnderlyingBufferSize() - additionalRingAllocationSize;
+    }
+    return minimumRingRequiredSize;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -770,6 +778,11 @@ GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::allocateRingBuffe
                                                            true, allocationSize,
                                                            AllocationType::ringBuffer,
                                                            isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
+    if (this->rootDeviceEnvironment.getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+        this->memoryManager->isLocalMemorySupported(this->rootDeviceIndex) &&
+        !this->memoryManager->isSystemMemoryPreferred(commandStreamAllocationProperties)) {
+        commandStreamAllocationProperties.size = alignUp(allocationSize, MemoryConstants::pageSize2M);
+    }
     return memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
 }
 

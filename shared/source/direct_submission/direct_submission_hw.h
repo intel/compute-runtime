@@ -131,6 +131,7 @@ class DirectSubmissionHw {
     virtual void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) = 0;
     GraphicsAllocation *switchRingBuffersAllocations(ResidencyContainer *allocationsForResidency);
     GraphicsAllocation *allocateRingBuffer();
+    size_t getRingBufferUsableSize(const GraphicsAllocation &ringBuffer) const;
 
     constexpr static uint64_t updateTagValueFail = std::numeric_limits<uint64_t>::max();
     virtual uint64_t updateTagValue(bool requireMonitorFence) = 0;
