@@ -25,6 +25,7 @@ class MockDriverModel : public NEO::DriverModel {
     ADDMETHOD_NOBASE_VOIDRETURN(cleanup, ());
     ADDMETHOD_NOBASE_VOIDRETURN(setGmmInputArgs, (void *));
     ADDMETHOD_NOBASE(isLatePreemptionStartSupported, bool, false, (const HardwareInfo &hwInfo));
+    ADDMETHOD_NOBASE(getDeviceMemoryPhysicalSizeInBytes, uint64_t, 0u, (uint32_t tileId));
 
     uint32_t getDeviceHandle() const override { return {}; }
 

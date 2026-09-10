@@ -641,6 +641,21 @@ const char *Device::getDeviceMemoryName() {
     return "unknown memory type";
 }
 
+uint32_t Device::getEnabledSubDeviceCount() const {
+    if (this->isImplicitScalingCapable() == false) {
+        return 1u;
+    }
+    return static_cast<uint32_t>(this->neoDevice->getDeviceBitfield().count());
+}
+
+uint64_t Device::getDeviceMemoryPhysicalSizeInBytes() const {
+    const auto osInterface = this->neoDevice->getRootDeviceEnvironment().osInterface.get();
+    if (osInterface == nullptr) {
+        return 0u;
+    }
+    return osInterface->getDriverModel()->getDeviceMemoryPhysicalSizeInBytes(0) * this->getEnabledSubDeviceCount();
+}
+
 ze_result_t Device::getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) {
     if (*pCount == 0) {
         *pCount = 1;
@@ -690,23 +705,19 @@ ze_result_t Device::getMemoryProperties(uint32_t *pCount, ze_device_memory_prope
                 ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM3E,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM4,
-                ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+                ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR6,
             };
 
-            UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sizeof(sysInfoMemType));
+            UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sysInfoMemType.size());
             extendedProperties->type = sysInfoMemType[hwInfo.gtSystemInfo.MemoryType];
 
-            uint32_t enabledSubDeviceCount = 1;
-            if (this->isImplicitScalingCapable()) {
-                enabledSubDeviceCount = static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
-            }
-            extendedProperties->physicalSize = productHelper.getDeviceMemoryPhysicalSizeInBytes(osInterface, 0) * enabledSubDeviceCount;
-            const uint64_t bandwidthInBytesPerSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, osInterface, 0) * enabledSubDeviceCount;
+            extendedProperties->physicalSize = this->getDeviceMemoryPhysicalSizeInBytes();
+            const uint64_t bandwidthInBytesPerSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, osInterface, 0) * this->getEnabledSubDeviceCount();
 
             // Convert to nano-seconds range
             extendedProperties->readBandwidth = static_cast<uint32_t>(bandwidthInBytesPerSecond * 1e-9);
             extendedProperties->writeBandwidth = extendedProperties->readBandwidth;
-            extendedProperties->bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+            extendedProperties->bandwidthUnit = (bandwidthInBytesPerSecond == 0) ? ZE_BANDWIDTH_UNIT_UNKNOWN : ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
         }
         pNext = static_cast<ze_base_properties_t *>(pNext->pNext);
     }

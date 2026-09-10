@@ -87,28 +87,6 @@ uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareIn
 }
 
 template <>
-uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(
-    const OSInterface *osIface, uint32_t subDeviceIndex) const {
-
-    if (osIface == nullptr) {
-        return 0;
-    }
-
-    auto driverModel = osIface->getDriverModel();
-    if (driverModel->getDriverModelType() != DriverModelType::drm) {
-        return 0;
-    }
-
-    auto pDrm = driverModel->as<Drm>();
-    uint64_t memoryPhysicalSize = 0;
-    if (pDrm->getDeviceMemoryPhysicalSizeInBytes(subDeviceIndex, memoryPhysicalSize) == false) {
-        return 0;
-    }
-
-    return memoryPhysicalSize;
-}
-
-template <>
 uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(
     const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
 

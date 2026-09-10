@@ -88,10 +88,6 @@ PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThen
     }
 }
 
-PVCTEST_F(PvcProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
-}
-
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsBlitSplitEnqueueWARequiredThenReturnTrue) {
     auto bcsSplitSettings = productHelper->getBcsSplitSettings(pInHwInfo);
 
@@ -109,14 +105,6 @@ PVCTEST_F(PvcProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxBan
     auto testHwInfo = *defaultHwInfo;
     testHwInfo.platform.usRevId = 0x8;
     EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, nullptr, 0));
-}
-
-PVCTEST_F(PvcProductHelperLinux, WhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnSuccess) {
-
-    drm->setPciPath("device");
-    drm->storedGetDeviceMemoryPhysicalSizeInBytesStatus = true;
-    drm->useBaseGetDeviceMemoryPhysicalSizeInBytes = false;
-    EXPECT_EQ(1024u, productHelper->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
 }
 
 PVCTEST_F(PvcProductHelperLinux, WhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnSuccess) {
@@ -157,11 +145,6 @@ PVCTEST_F(PvcProductHelperLinux, givenNullSystemInfoWhenGetDeviceMemoryMaxBandWi
 
 PVCTEST_F(PvcProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
     EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(*defaultHwInfo, nullptr, 0));
-}
-
-PVCTEST_F(PvcProductHelperLinux, givenNullDriverModelWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
-    osInterface->setDriverModel(std::unique_ptr<DriverModel>(nullptr));
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(*defaultHwInfo, osInterface, 0));
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenNonDrmDriverModelWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {

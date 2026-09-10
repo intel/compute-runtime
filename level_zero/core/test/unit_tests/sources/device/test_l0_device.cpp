@@ -2407,7 +2407,7 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM3E,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM4,
-        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR6,
     };
 
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*this->neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
@@ -2431,13 +2431,15 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
         EXPECT_EQ(res, ZE_RESULT_SUCCESS);
         EXPECT_EQ(1u, count);
 
-        auto bandwidthPerNanoSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0) / 1000000000;
+        const auto bandwidthInBytesPerSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0);
+        const auto bandwidthPerNanoSecond = bandwidthInBytesPerSecond / 1000000000;
+        const auto expectedBandwidthUnit = (bandwidthInBytesPerSecond == 0) ? ZE_BANDWIDTH_UNIT_UNKNOWN : ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
 
         EXPECT_EQ(memExtProperties.type, sysInfoMemType[memoryTypeIndex]);
-        EXPECT_EQ(memExtProperties.physicalSize, productHelper.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
+        EXPECT_EQ(0u, memExtProperties.physicalSize);
         EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond);
         EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
-        EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
+        EXPECT_EQ(memExtProperties.bandwidthUnit, expectedBandwidthUnit);
     }
 }
 
@@ -2453,7 +2455,7 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnext
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM3E,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM4,
-        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR6,
     };
 
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
@@ -2482,14 +2484,35 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnext
         EXPECT_EQ(res, ZE_RESULT_SUCCESS);
         EXPECT_EQ(1u, count);
 
-        auto bandwidthPerNanoSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0) / 1000000000;
+        const auto bandwidthInBytesPerSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0);
+        const auto bandwidthPerNanoSecond = bandwidthInBytesPerSecond / 1000000000;
+        const auto expectedBandwidthUnit = (bandwidthInBytesPerSecond == 0) ? ZE_BANDWIDTH_UNIT_UNKNOWN : ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
 
         EXPECT_EQ(memExtProperties.type, sysInfoMemType[memoryTypeIndex]);
-        EXPECT_EQ(memExtProperties.physicalSize, productHelper.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
+        EXPECT_EQ(0u, memExtProperties.physicalSize);
         EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond);
         EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
-        EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
+        EXPECT_EQ(memExtProperties.bandwidthUnit, expectedBandwidthUnit);
     }
+}
+
+TEST_F(DeviceGetMemoryTests, givenDriverModelReportingPhysicalMemorySizeWhenCallingGetMemoryPropertiesForMemoryExtPropertiesThenReportedSizeIsReturned) {
+    constexpr uint64_t physicalSize = 4096u;
+    auto driverModel = std::make_unique<NEO::MockDriverModel>();
+    driverModel->getDeviceMemoryPhysicalSizeInBytesResult = physicalSize;
+
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface());
+    rootDeviceEnvironment.osInterface->setDriverModel(std::move(driverModel));
+
+    uint32_t count = 1;
+    ze_device_memory_properties_t memProperties = {};
+    ze_device_memory_ext_properties_t memExtProperties = {};
+    memExtProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES;
+    memProperties.pNext = &memExtProperties;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMemoryProperties(&count, &memProperties));
+    EXPECT_EQ(physicalSize, memExtProperties.physicalSize);
 }
 
 TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWhenPnextIsNonNullAndStypeIsUnSupportedThenNoErrorIsReturned) {
@@ -2866,6 +2889,13 @@ HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabled
     L0::Device *device = driverHandle->devices[0];
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
 
+    constexpr uint64_t physicalSizePerTile = 1024u;
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    auto driverModel = std::make_unique<NEO::MockDriverModel>();
+    driverModel->getDeviceMemoryPhysicalSizeInBytesResult = physicalSizePerTile;
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface());
+    rootDeviceEnvironment.osInterface->setDriverModel(std::move(driverModel));
+
     // Test all memory types
     for (uint32_t memoryTypeIndex = 0; memoryTypeIndex < sysInfoMemType.size(); memoryTypeIndex++) {
         // Set the memory type in hardware info
@@ -2884,13 +2914,15 @@ HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabled
         EXPECT_EQ(res, ZE_RESULT_SUCCESS);
         EXPECT_EQ(1u, count);
 
-        auto bandwidthPerNanoSecond = raii.mockProductHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0) / 1000000000;
+        const auto bandwidthInBytesPerSecond = raii.mockProductHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0);
+        const auto bandwidthPerNanoSecond = bandwidthInBytesPerSecond / 1000000000;
+        const auto expectedBandwidthUnit = (bandwidthInBytesPerSecond == 0) ? ZE_BANDWIDTH_UNIT_UNKNOWN : ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
 
         EXPECT_EQ(memExtProperties.type, sysInfoMemType[memoryTypeIndex]);
-        EXPECT_EQ(memExtProperties.physicalSize, raii.mockProductHelper->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0) * numSubDevices);
+        EXPECT_EQ(memExtProperties.physicalSize, physicalSizePerTile * numSubDevices);
         EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond * numSubDevices);
         EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
-        EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
+        EXPECT_EQ(memExtProperties.bandwidthUnit, expectedBandwidthUnit);
     }
 }
 

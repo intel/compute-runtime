@@ -51,11 +51,6 @@ int MockProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInf
 }
 
 template <>
-uint64_t MockProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const {
-    return 1024u;
-}
-
-template <>
 uint32_t MockProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
     return 800u;
 }

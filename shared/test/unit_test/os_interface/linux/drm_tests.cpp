@@ -145,9 +145,7 @@ TEST(DrmTest, GivenValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThe
         memcpy(buf, testData.data(), testData.length() + 1);
         return 4;
     });
-    uint32_t clkRate = 0;
-    EXPECT_TRUE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
-    EXPECT_EQ(clkRate, 800u);
+    EXPECT_EQ(800u, drm.getDeviceMemoryMaxClockRateInMhz(0));
 }
 
 TEST(DrmTest, givenFailedProductHelperSetupHardwareInfoWhenDrmSetupHardwareInfoCalledThenFailureIsReturned) {
@@ -245,9 +243,7 @@ TEST(DrmTest, GivenMemoryInfoWithLocalMemoryRegionsWhenGetDeviceMemoryPhysicalSi
     memRegions[2] = {{memoryClassDevice, 1}, 3072};
     drm.memoryInfo.reset(new MemoryInfo{memRegions, drm});
 
-    uint64_t size{0U};
-    EXPECT_TRUE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
-    EXPECT_EQ(2048u, size);
+    EXPECT_EQ(2048u, drm.getDeviceMemoryPhysicalSizeInBytes(0));
 }
 
 TEST(DrmTest, GivenMemoryInfoWithNoLocalMemoryRegionsWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenZeroIsReturned) {
@@ -260,18 +256,14 @@ TEST(DrmTest, GivenMemoryInfoWithNoLocalMemoryRegionsWhenGetDeviceMemoryPhysical
     memRegions[0] = {{memoryClassSystem, 0}, 2048};
     drm.memoryInfo.reset(new MemoryInfo{memRegions, drm});
 
-    uint64_t size{0U};
-    EXPECT_FALSE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
-    EXPECT_EQ(0U, size);
+    EXPECT_EQ(0u, drm.getDeviceMemoryPhysicalSizeInBytes(0));
 }
 
 TEST(DrmTest, GivenNoMemoryInfoWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenZeroIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    uint64_t size{0U};
-    EXPECT_FALSE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
-    EXPECT_EQ(0U, size);
+    EXPECT_EQ(0u, drm.getDeviceMemoryPhysicalSizeInBytes(0));
 }
 
 TEST(DrmTest, GivenInValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnSuccess) {
@@ -283,8 +275,7 @@ TEST(DrmTest, GivenInValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledT
         return -1;
     });
 
-    uint32_t clkRate = 0;
-    EXPECT_FALSE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxClockRateInMhz(0));
 }
 
 TEST(DrmTest, givenSysfsNodeReadFailsWithErrnoWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnError) {
@@ -302,8 +293,7 @@ TEST(DrmTest, givenSysfsNodeReadFailsWithErrnoWhenGetDeviceMemoryMaxClockRateInM
         errno = 1;
         return 4;
     });
-    uint32_t clkRate = 0;
-    EXPECT_FALSE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxClockRateInMhz(0));
 }
 
 TEST(DrmTest, givenSysfsNodeReadFailsWithImproperDataWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnError) {
@@ -320,8 +310,7 @@ TEST(DrmTest, givenSysfsNodeReadFailsWithImproperDataWhenGetDeviceMemoryMaxClock
         memcpy(buf, testData.data(), testData.length() + 1);
         return 4;
     });
-    uint32_t clkRate = 0;
-    EXPECT_FALSE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxClockRateInMhz(0));
 }
 
 TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {

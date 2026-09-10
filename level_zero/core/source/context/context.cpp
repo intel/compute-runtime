@@ -236,19 +236,13 @@ bool Context::isDeviceDefinedForThisContext(Device *inDevice) {
 
 ze_result_t Context::checkMemSizeLimit(Device *inDevice, size_t size, bool relaxedSizeAllowed, void **ptr) {
     auto neoDevice = inDevice->getNEODevice();
-    auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
-    uint32_t enabledSubDeviceCount = 1;
-    if (inDevice->isImplicitScalingCapable()) {
-        enabledSubDeviceCount = static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
-    }
     if (size == 0 || (relaxedSizeAllowed == false &&
                       (size > neoDevice->getDeviceInfo().maxMemAllocSize))) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
 
-    auto &productHelper = inDevice->getProductHelper();
-    auto physicalMemSize = productHelper.getDeviceMemoryPhysicalSizeInBytes(osInterface, 0) * enabledSubDeviceCount;
+    const auto physicalMemSize = inDevice->getDeviceMemoryPhysicalSizeInBytes();
 
     uint64_t memSizeLimit = physicalMemSize;
     if (physicalMemSize == 0) {

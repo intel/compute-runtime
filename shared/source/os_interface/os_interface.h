@@ -87,6 +87,14 @@ class DriverModel : public NonCopyableClass {
         return std::numeric_limits<size_t>::max();
     }
 
+    virtual uint64_t getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId) {
+        return 0u;
+    }
+
+    virtual uint32_t getDeviceMemoryMaxClockRateInMhz(uint32_t tileId) {
+        return 0u;
+    }
+
     virtual bool isDriverAvailable() {
         return true;
     }

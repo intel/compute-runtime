@@ -25,6 +25,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
@@ -215,12 +216,10 @@ bool ProductHelperHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(Us
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
-    return 0u;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const {
-    return 0;
+    if (osIface == nullptr) {
+        return 0u;
+    }
+    return osIface->getDriverModel()->getDeviceMemoryMaxClockRateInMhz(subDeviceIndex);
 }
 
 template <PRODUCT_FAMILY gfxProduct>

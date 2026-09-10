@@ -13,11 +13,13 @@
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -3461,9 +3463,16 @@ TEST_F(MemoryRelaxedSizeTests,
     EXPECT_EQ(nullptr, ptr);
 }
 
-HWTEST_F(MemoryRelaxedSizeTests, givenCallToDeviceAllocWithPhysicalMemSizeThenAllocationLargerThanPhysicalMemSizeFails) {
-    NEO::RAIIProductHelperFactory<MockProductHelperHw<IGFX_UNKNOWN>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    size_t size = 1024u + 1;
+TEST_F(MemoryRelaxedSizeTests, givenCallToDeviceAllocWithPhysicalMemSizeThenAllocationLargerThanPhysicalMemSizeFails) {
+    constexpr uint64_t physicalMemSize = 1024u;
+    auto driverModel = std::make_unique<NEO::MockDriverModel>();
+    driverModel->getDeviceMemoryPhysicalSizeInBytesResult = physicalMemSize;
+
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface());
+    rootDeviceEnvironment.osInterface->setDriverModel(std::move(driverModel));
+
+    size_t size = physicalMemSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -3480,9 +3489,16 @@ HWTEST_F(MemoryRelaxedSizeTests, givenCallToDeviceAllocWithPhysicalMemSizeThenAl
     EXPECT_EQ(nullptr, ptr);
 }
 
-HWTEST_F(MemoryRelaxedSizeTests, givenCallToSharedAllocWithNoPhysicalMemSizeThenAllocationLargerThanPhysicalMemSizeFails) {
-    NEO::RAIIProductHelperFactory<MockProductHelperHw<IGFX_UNKNOWN>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    size_t size = 1024 + 1;
+TEST_F(MemoryRelaxedSizeTests, givenCallToSharedAllocWithNoPhysicalMemSizeThenAllocationLargerThanPhysicalMemSizeFails) {
+    constexpr uint64_t physicalMemSize = 1024u;
+    auto driverModel = std::make_unique<NEO::MockDriverModel>();
+    driverModel->getDeviceMemoryPhysicalSizeInBytesResult = physicalMemSize;
+
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface());
+    rootDeviceEnvironment.osInterface->setDriverModel(std::move(driverModel));
+
+    size_t size = physicalMemSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 

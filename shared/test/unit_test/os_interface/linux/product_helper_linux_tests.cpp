@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -354,4 +355,29 @@ HWTEST2_F(ProductHelperTestLinux, givenXe2CompressionWhenConfiguringHwInfoDrmThe
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenNullOsInterfaceWhenGettingDeviceMemoryMaxClkRateThenZeroIsReturned, IsNotBMG) {
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenDriverModelWithoutMemoryClockRateSupportWhenGettingDeviceMemoryMaxClkRateThenZeroIsReturned, IsNotBMG) {
+    drm = nullptr;
+    osInterface->setDriverModel(std::make_unique<MockDriverModel>());
+
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenFailingDrmQueryWhenGettingDeviceMemoryMaxClkRateThenZeroIsReturned, IsNotBMG) {
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = false;
+
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenSuccessfulDrmQueryWhenGettingDeviceMemoryMaxClkRateThenValueReportedByDrmIsReturned, IsNotBMG) {
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+
+    EXPECT_EQ(800u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
 }
