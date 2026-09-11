@@ -109,12 +109,6 @@ class MemObj : public BaseObject<_cl_mem> {
   protected:
     virtual void checkUsageAndReleaseOldAllocation(uint32_t rootDeviceIndex) = 0;
 
-    ze_driver_memory_free_policy_ext_flags_t getFreePolicy() const {
-        const bool waitForGpuCompletion = this->properties.flags.useHostPtr || false == this->callbacks.empty();
-        return waitForGpuCompletion ? ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE
-                                    : ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
-    }
-
     MapOperationsHandler mapOperationHandler{};
     std::vector<std::pair<CallbackT, void *>> callbacks{};
 
