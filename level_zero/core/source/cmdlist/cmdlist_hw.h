@@ -443,6 +443,7 @@ struct CommandListCoreFamily : public CommandList {
     void resolveImagePitchesAndBufferSize(Image *image, const ze_image_region_t *pRegion, uint32_t &rowPitch, uint64_t &slicePitch, uint64_t &bufferSize);
     MOCKABLE_VIRTUAL AlignedAllocationData resolveAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, const MemAllocInfo *bufferAllocInfo, const ResolveAlignedAllocationFlags &flags);
     AlignedAllocationData alignSvmAllocationData(Device *device, NEO::SvmAllocationData *svmAlloc, const void *buffer, uint64_t bufferSize, uintptr_t sourcePtr, size_t sshAlignmentOffset);
+    size_t bytesToPeerReservationBlockEnd(const void *ptr, size_t remaining);
     AlignedAllocationData alignImportedHostAllocationData(NEO::GraphicsAllocation *importedHostAlloc, void *ptr);
     AlignedAllocationData alignExplicitAllocationData(NEO::GraphicsAllocation *alloc, void *ptr);
     AlignedAllocationData alignCachedHostAllocationData(NEO::GraphicsAllocation *cachedHostAlloc, uintptr_t sourcePtr, size_t sshAlignmentOffset);
