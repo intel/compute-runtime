@@ -358,6 +358,9 @@ DriverDispatch::DriverDispatch() {
     this->coreGraph.pfnIsEmptyExt = L0::zeGraphIsEmptyExt;
     this->coreGraph.pfnDumpContentsExt = L0::zeGraphDumpContentsExt;
     this->coreGraph.pfnDestroyExt = L0::zeGraphDestroyExt;
+    this->coreGraph.pfnGetIdExt = L0::zeGraphGetIdExt;
+    this->coreGraph.pfnPauseCaptureExt = L0::zeGraphPauseCaptureExt;
+    this->coreGraph.pfnResumeCaptureExt = L0::zeGraphResumeCaptureExt;
     this->coreExecutableGraph.pfnGetSourceGraphExt = L0::zeExecutableGraphGetSourceGraphExt;
     this->coreExecutableGraph.pfnDestroyExt = L0::zeExecutableGraphDestroyExt;
 

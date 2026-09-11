@@ -241,6 +241,9 @@ constexpr DdiEntryExpectation entries[] = {
     DDI_ENTRY(pfnIsEmptyExt, ZE_API_VERSION_1_17),
     DDI_ENTRY(pfnDumpContentsExt, ZE_API_VERSION_1_17),
     DDI_ENTRY(pfnDestroyExt, ZE_API_VERSION_1_17),
+    DDI_ENTRY(pfnGetIdExt, ZE_API_VERSION_1_18),
+    DDI_ENTRY(pfnPauseCaptureExt, ZE_API_VERSION_1_18),
+    DDI_ENTRY(pfnResumeCaptureExt, ZE_API_VERSION_1_18),
 };
 } // namespace zeGraph
 

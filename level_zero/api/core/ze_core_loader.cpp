@@ -343,6 +343,9 @@ zeGetGraphProcAddrTable(
     fillDdiEntry(pDdiTable->pfnIsEmptyExt, L0::globalDriverDispatch.coreGraph.pfnIsEmptyExt, version, ZE_API_VERSION_1_17);
     fillDdiEntry(pDdiTable->pfnDumpContentsExt, L0::globalDriverDispatch.coreGraph.pfnDumpContentsExt, version, ZE_API_VERSION_1_17);
     fillDdiEntry(pDdiTable->pfnDestroyExt, L0::globalDriverDispatch.coreGraph.pfnDestroyExt, version, ZE_API_VERSION_1_17);
+    fillDdiEntry(pDdiTable->pfnGetIdExt, L0::globalDriverDispatch.coreGraph.pfnGetIdExt, version, ZE_API_VERSION_1_18);
+    fillDdiEntry(pDdiTable->pfnPauseCaptureExt, L0::globalDriverDispatch.coreGraph.pfnPauseCaptureExt, version, ZE_API_VERSION_1_18);
+    fillDdiEntry(pDdiTable->pfnResumeCaptureExt, L0::globalDriverDispatch.coreGraph.pfnResumeCaptureExt, version, ZE_API_VERSION_1_18);
     return result;
 }
 

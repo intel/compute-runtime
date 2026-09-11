@@ -2139,17 +2139,8 @@ bool testCopyEngineSimpleGraph(ze_context_handle_t &context,
 // 1) Start graph capture and copy patternA to device buffer
 // 2) Pause capture, copy patternB to the same device buffer and validate
 // 3) Resume capture, copy from device buffer to host and validate patternA is copied (patternB copy should not be captured)
-bool testPauseResumeCapture(ze_driver_handle_t driverHandle, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
+bool testPauseResumeCapture(ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
-
-    using GraphPauseCaptureExtFn = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
-    using GraphResumeCaptureExtFn = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
-    GraphPauseCaptureExtFn graphPauseCaptureExt = nullptr;
-    GraphResumeCaptureExtFn graphResumeCaptureExt = nullptr;
-    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphPauseCaptureExt", reinterpret_cast<void **>(&graphPauseCaptureExt)));
-    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphResumeCaptureExt", reinterpret_cast<void **>(&graphResumeCaptureExt)));
-    SUCCESS_OR_TERMINATE_BOOL(graphPauseCaptureExt != nullptr);
-    SUCCESS_OR_TERMINATE_BOOL(graphResumeCaptureExt != nullptr);
 
     constexpr size_t allocSize = 4096;
     constexpr uint8_t patternA = 0xAA;
@@ -2182,7 +2173,7 @@ bool testPauseResumeCapture(ze_driver_handle_t driverHandle, ze_context_handle_t
 
     ze_graph_handle_t virtualGraph{};
     SUCCESS_OR_TERMINATE(zeCommandListGetGraphExt(cmdList, &virtualGraph));
-    SUCCESS_OR_TERMINATE(graphPauseCaptureExt(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeGraphPauseCaptureExt(virtualGraph));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, srcBufferB, allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
@@ -2197,7 +2188,7 @@ bool testPauseResumeCapture(ze_driver_handle_t driverHandle, ze_context_handle_t
         }
     }
 
-    SUCCESS_OR_TERMINATE(graphResumeCaptureExt(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeGraphResumeCaptureExt(virtualGraph));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, zeBuffer, allocSize, nullptr, 0, nullptr));
 
@@ -2566,7 +2557,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestPauseResume)) {
         currentTest = "Pause Resume Graph Capture";
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testPauseResumeCapture(driverHandle, context, device0, aubMode, graphDumpSettings);
+        casePass = testPauseResumeCapture(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
