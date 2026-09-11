@@ -3332,6 +3332,28 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::resolveAligne
     }
 
     if (svmAllocFound) {
+        // Blocks of a virtual reservation are imported on a peer device one at a time,
+        // each at an address of its own, so the reservation is not contiguous there. A
+        // range that crosses a block end would address memory the peer never mapped, so
+        // reject it instead of letting the copy engine walk into it and hang.
+        auto *ownerAlloc = svmAlloc->gpuAllocations.getDefaultGraphicsAllocation();
+        auto *deviceAlloc = svmAlloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        if (ownerAlloc != nullptr && bufferSize > 0u && svmAlloc->virtualReservationData != nullptr &&
+            device->getDriverHandle()->isRemoteResourceNeeded(deviceAlloc, svmAlloc, device)) {
+            const uint64_t blockEnd = ownerAlloc->getGpuAddress() + svmAlloc->size;
+            const uint64_t rangeEnd = castToUint64(ptr) + bufferSize;
+            if (rangeEnd > blockEnd) {
+                CREATE_DEBUG_STRING(str, "Peer access at 0x%llx runs %llu bytes past the end of its virtual reservation block\n",
+                                    static_cast<unsigned long long>(castToUint64(ptr)),
+                                    static_cast<unsigned long long>(rangeEnd - blockEnd));
+                device->getDriverHandle()->setErrorDescription(std::string(str.get()));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "Peer access at 0x%llx runs %llu bytes past the end of its virtual reservation block\n",
+                             static_cast<unsigned long long>(castToUint64(ptr)),
+                             static_cast<unsigned long long>(rangeEnd - blockEnd));
+                return AlignedAllocationData::invalid();
+            }
+        }
         return alignSvmAllocationData(device, svmAlloc, buffer, sourcePtr, sshAlignmentOffset);
     }
 
