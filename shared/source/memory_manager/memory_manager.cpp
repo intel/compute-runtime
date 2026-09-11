@@ -913,7 +913,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         UNRECOVERABLE_IF(allocationData.imgInfo == nullptr);
         return allocateGraphicsMemoryForImage(allocationData);
     }
-    if (allocationData.flags.shareable || allocationData.flags.isHostInaccessibleAllocation) {
+    if ((allocationData.flags.shareable && !allocationData.flags.isUSMHostAllocation) || allocationData.flags.isHostInaccessibleAllocation) {
         return allocateMemoryByKMD(allocationData);
     }
     if (((false == allocationData.flags.isUSMHostAllocation) || (nullptr == allocationData.hostPtr)) &&

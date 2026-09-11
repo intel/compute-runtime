@@ -487,6 +487,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.uncacheable = memoryProperties.allocationFlags.flags.locallyUncachedResource;
     unifiedMemoryProperties.flags.preferCompressed = compressionEnabled;
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
+    unifiedMemoryProperties.flags.ipcSupportedAllocationByDefault = memoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault;
     unifiedMemoryProperties.flags.isUSMHostAllocation = true;
     unifiedMemoryProperties.flags.isHostInaccessibleAllocation = false;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);

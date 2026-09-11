@@ -461,6 +461,65 @@ TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuV
     EXPECT_GT(reinterpret_cast<MockGmmClientContextBase *>(gmmHelper->getClientContext())->freeGpuVirtualAddressCalled, 0u);
 }
 
+TEST_F(WddmMemoryManagerTests, givenShareableHostAllocationWhenAllocateUsingKmdAndMapToCpuVAThenNtHandleIsCreated) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::bufferHostMemory;
+    allocData.size = MemoryConstants::pageSize64k;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.flags.shareable = true;
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+
+    auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, true));
+    ASSERT_NE(nullptr, wddmAllocation);
+
+    EXPECT_NE(0u, wddmAllocation->getResourceHandle());
+    uint64_t ntHandle = 0u;
+    EXPECT_EQ(0, wddmAllocation->peekInternalHandle(memoryManager, ntHandle, nullptr));
+    EXPECT_NE(0u, ntHandle);
+
+    memoryManager->freeGraphicsMemory(wddmAllocation);
+}
+
+TEST_F(WddmMemoryManagerTests, givenNonShareableHostAllocationWhenAllocateUsingKmdAndMapToCpuVAThenNoSharedResourceIsCreated) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::bufferHostMemory;
+    allocData.size = MemoryConstants::pageSize64k;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.flags.shareable = false;
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+
+    auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, true));
+    ASSERT_NE(nullptr, wddmAllocation);
+
+    EXPECT_EQ(0u, wddmAllocation->getResourceHandle());
+    uint64_t ntHandle = 0u;
+    EXPECT_NE(0, wddmAllocation->peekInternalHandle(memoryManager, ntHandle, nullptr));
+    EXPECT_NE(nullptr, wddmAllocation->getUnderlyingBuffer());
+
+    memoryManager->freeGraphicsMemory(wddmAllocation);
+}
+
+TEST_F(WddmMemoryManagerTests, givenShareableHostAllocationSupportingIpcByDefaultWhenAllocateUsingKmdAndMapToCpuVAThenResourceIsCreatedWithoutNtHandle) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::bufferHostMemory;
+    allocData.size = MemoryConstants::pageSize64k;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.flags.shareable = true;
+    allocData.flags.ipcSupportedAllocationByDefault = true;
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+
+    auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, true));
+    ASSERT_NE(nullptr, wddmAllocation);
+
+    EXPECT_NE(0u, wddmAllocation->getResourceHandle());
+    uint64_t ntHandle = 0u;
+    EXPECT_NE(0, wddmAllocation->peekInternalHandle(memoryManager, ntHandle, nullptr));
+    EXPECT_EQ(0, wddmAllocation->createInternalHandle(memoryManager, 0u, ntHandle, nullptr));
+    EXPECT_NE(0u, ntHandle);
+
+    memoryManager->freeGraphicsMemory(wddmAllocation);
+}
+
 TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWhen32bitThenProperAddressSet) {
     if constexpr (is64bit) {
         GTEST_SKIP();

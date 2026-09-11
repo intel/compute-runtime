@@ -354,8 +354,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
                                                            1u, // numGmms
                                                            allocationData.type, nullptr, 0,
                                                            sizeAligned, nullptr, allowLargePages ? MemoryPool::system64KBPages : MemoryPool::system4KBPages,
-                                                           0u, // shareable
+                                                           allocationData.flags.shareable,
                                                            maxOsContextCount);
+    wddmAllocation->setipcSupportedAllocationByDefault(allocationData.flags.ipcSupportedAllocationByDefault);
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper()->getHardwareInfo();
@@ -382,7 +383,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
     wddmAllocation->storageInfo = storageInfo;
 
-    if (!getWddm(allocationData.rootDeviceIndex).createAllocation(gmm, wddmAllocation->getHandleToModify(0u))) {
+    if (!createGpuAllocationsWithRetry(wddmAllocation.get())) {
         delete gmm;
         return nullptr;
     }

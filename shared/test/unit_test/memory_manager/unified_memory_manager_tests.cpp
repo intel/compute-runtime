@@ -572,6 +572,44 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenExternalHostPointerWhenCreatingHostUnif
     alignedFree(externalHostPointer);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, givenShareableHostUnifiedMemoryPropertiesWhenCreatingAllocationThenShareableAndIpcSupportedFlagsArePassedToAllocationProperties) {
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;
+    unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = 1u;
+
+    uint32_t validatedCount = 0u;
+    memoryManager->validateAllocateProperties = [&validatedCount](const AllocationProperties &properties) {
+        EXPECT_EQ(1u, properties.flags.shareable);
+        EXPECT_EQ(1u, properties.flags.ipcSupportedAllocationByDefault);
+        validatedCount++;
+    };
+
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+    EXPECT_EQ(1u, validatedCount);
+
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &) -> void {};
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenNonShareableHostUnifiedMemoryPropertiesWhenCreatingAllocationThenShareableAndIpcSupportedFlagsAreNotSetInAllocationProperties) {
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    uint32_t validatedCount = 0u;
+    memoryManager->validateAllocateProperties = [&validatedCount](const AllocationProperties &properties) {
+        EXPECT_EQ(0u, properties.flags.shareable);
+        EXPECT_EQ(0u, properties.flags.ipcSupportedAllocationByDefault);
+        validatedCount++;
+    };
+
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+    EXPECT_EQ(1u, validatedCount);
+
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &) -> void {};
+    svmManager->freeSVMAlloc(ptr);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenUncachedHostAllocationThenSetAllocationAsUncached) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];

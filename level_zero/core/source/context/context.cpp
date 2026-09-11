@@ -199,6 +199,14 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
 
+    unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = 0;
+    auto neoDevice = L0::Device::fromHandle(this->devices.begin()->second)->getNEODevice();
+    auto &productHelper = neoDevice->getProductHelper();
+    if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
+        unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = productHelper.canShareMemoryWithoutNTHandle();
+    }
+    unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(hostMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice, unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault);
+
     if (false == lookupTable.exportMemory) {
         if (size <= NEO::PoolInfo::getHostMaxPoolableSize()) {
             this->driverHandle->initHostUsmAllocPoolOnce();
