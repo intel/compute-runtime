@@ -161,7 +161,9 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::importOpaqueFdHandle(NEO::
     }
 
     auto importOnce = [&](uint64_t fd) {
-        struct ScopedImportFd {
+        struct ScopedImportFd : NEO::NonCopyableAndNonMovableClass {
+            ScopedImportFd(int fd, bool owned) : fd(fd), owned(owned) {}
+
             int fd;
             bool owned;
             ~ScopedImportFd() {
@@ -170,6 +172,8 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::importOpaqueFdHandle(NEO::
                 }
             }
         } scopedFd{static_cast<int>(fd), !isHostIpcAllocation};
+        static_assert(NEO::NonCopyableAndNonMovable<ScopedImportFd>);
+
         NEO::GraphicsAllocation *alloc = nullptr;
         NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
         auto ptr = driverHandle->importFdHandle(neoDevice, flags, fd, allocationType, isHostIpcAllocation, nullptr, &alloc, allocData, compressedMemory, physicalOffset);
