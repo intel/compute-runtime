@@ -16,6 +16,8 @@
 #include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 ProductHelperCreateFunctionType productHelperFactory[NEO::maxProductEnumValue] = {};

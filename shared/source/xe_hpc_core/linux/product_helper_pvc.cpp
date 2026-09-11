@@ -19,7 +19,9 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
-#include <limits>
+#include <map>
+#include <string>
+#include <utility>
 
 constexpr static auto gfxProduct = IGFX_PVC;
 

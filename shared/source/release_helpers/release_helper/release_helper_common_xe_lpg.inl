@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {

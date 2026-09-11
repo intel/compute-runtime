@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/built_ins/sip_kernel_type.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/device_hierarchy_mode.h"
 #include "shared/source/helpers/engine_node_helper.h"

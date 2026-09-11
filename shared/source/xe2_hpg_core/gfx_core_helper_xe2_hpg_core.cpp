@@ -9,7 +9,6 @@
 
 using Family = NEO::Xe2HpgCoreFamily;
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
@@ -20,9 +19,7 @@ using Family = NEO::Xe2HpgCoreFamily;
 #include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_xe2_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
-#include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/simd_helper.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {
 

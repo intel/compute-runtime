@@ -6,12 +6,10 @@
  */
 
 #pragma once
-#include "shared/source/helpers/common_types.h"
-
-#include "aubstream/engine_node.h"
 #include "neo_igfxfmid.h"
 #include "supported_num_grfs.h"
 
+#include <array>
 #include <memory>
 #include <optional>
 #include <string>
@@ -21,6 +19,7 @@
 enum class TransferType : uint32_t;
 
 namespace aub_stream {
+enum EngineType : uint32_t;
 enum class ProductFamily : uint32_t;
 class AubManager;
 } // namespace aub_stream
@@ -29,6 +28,7 @@ namespace NEO {
 struct KmdNotifyProperties;
 struct AllocationData;
 struct BlitProperties;
+struct BcsSplitSettings;
 class CommandStreamReceiver;
 class Device;
 class Drm;

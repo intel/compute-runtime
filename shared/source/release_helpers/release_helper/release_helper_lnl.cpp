@@ -5,14 +5,11 @@
  *
  */
 
-#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper_base.inl"
 #include "shared/source/xe2_hpg_core/hw_cmds_base.h"
 
 #include "release_definitions.h"
-
-#include <algorithm>
 
 namespace NEO {
 constexpr auto release = ReleaseType::release2004;

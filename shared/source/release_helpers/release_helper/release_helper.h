@@ -15,16 +15,12 @@
 
 #include <array>
 #include <memory>
-#include <optional>
-#include <string>
-#include <vector>
 
 namespace NEO {
 
 class ReleaseHelper;
 struct HardwareInfo;
 enum class ReleaseType;
-struct HardwareInfo;
 
 inline constexpr uint32_t maxArchitecture = 64;
 using createReleaseHelperFunctionType = std::unique_ptr<ReleaseHelper> (*)(HardwareIpVersion hardwareIpVersion);

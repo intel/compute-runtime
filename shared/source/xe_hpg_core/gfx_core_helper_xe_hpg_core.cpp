@@ -6,14 +6,10 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/memory_manager/compression_selector.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 using Family = NEO::XeHpgCoreFamily;
 
-#include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"

@@ -9,10 +9,7 @@
 #include "shared/source/release_helpers/release_helper/release_helper_base.inl"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
-#include "neo_aot_platforms.h"
 #include "release_definitions.h"
-
-#include <algorithm>
 
 namespace NEO {
 constexpr auto release = ReleaseType::release1270;

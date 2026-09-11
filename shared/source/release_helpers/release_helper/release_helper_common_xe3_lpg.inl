@@ -6,9 +6,10 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe3_core/hw_cmds_base.h"
+
+#include <limits>
 
 namespace NEO {
 

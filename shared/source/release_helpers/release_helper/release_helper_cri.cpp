@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/string.h"
-#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper_base.inl"
 #include "shared/source/xe3p_core/hw_cmds_base.h"

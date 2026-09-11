@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
 #include "shared/source/helpers/device_caps_reader.h"

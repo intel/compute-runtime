@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/constants.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper_base.inl"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"

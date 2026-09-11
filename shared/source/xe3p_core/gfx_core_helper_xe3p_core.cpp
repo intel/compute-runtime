@@ -7,7 +7,6 @@
 
 #include "shared/source/xe3p_core/hw_cmds_base.h"
 using Family = NEO::Xe3pCoreFamily;
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
