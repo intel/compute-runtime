@@ -432,6 +432,18 @@ TEST_F(SysmanDevicePropertiesFixture,
     EXPECT_TRUE(0 == driverName.compare(drvName.driverName));
 }
 
+TEST_F(SysmanDevicePropertiesFixture,
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForDeviceIndexThenValidDeviceIndexIsReturned) {
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_index_exp_properties_t deviceIndexProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+    properties.pNext = &deviceIndexProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(device->getRootDeviceIndex(), deviceIndexProperties.deviceIndex);
+}
+
 HWTEST2_F(SysmanDevicePropertiesFixture,
           GivenValidDeviceHandleWhenCallingGetPropertiesnAndIsNotIntegratedDeviceThenFlagIsNotSetInCoreProperties, IsXeHpgCore) {
     auto mockHardwareInfo = device->getHardwareInfo();

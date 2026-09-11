@@ -1911,10 +1911,13 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
     zes_device_properties_t properties = {};
     zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
     zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
+    zes_intel_device_index_exp_properties_t deviceIndex = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+    drvName.pNext = &deviceIndex;
     oemSerialId.pNext = &drvName;
     properties.pNext = &oemSerialId;
     VALIDATECALL(zesDeviceGetProperties(device, &properties));
     if (verbose) {
+        std::cout << "deviceIndex.deviceIndex = " << deviceIndex.deviceIndex << std::endl;
         std::cout << "properties.numSubdevices = " << properties.numSubdevices << std::endl;
         std::cout << "properties.serialNumber = " << properties.serialNumber << std::endl;
         std::cout << "oemSerialId.oemSerialId = " << oemSerialId.oemSerialId << std::endl;

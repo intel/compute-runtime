@@ -54,6 +54,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     SysmanDeviceImp *getSysmanDeviceImp();
     SysmanProductHelper *getSysmanProductHelper();
     uint32_t getSubDeviceCount() override;
+    uint32_t getRootDeviceIndex() const override { return rootDeviceIndex; }
     void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
     std::string getPciUuid() override;
     const NEO::HardwareInfo &getHardwareInfo() const override { return pParentSysmanDeviceImp->getHardwareInfo(); }

@@ -43,6 +43,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     void releaseFwUtilInterface();
 
     uint32_t getSubDeviceCount() override;
+    uint32_t getRootDeviceIndex() const override;
     void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
     std::string getPciUuid() override;
     SysmanDeviceImp *getSysmanDeviceImp();

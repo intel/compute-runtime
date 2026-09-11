@@ -149,6 +149,9 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
                 memcpy_s(oemSerialIdProperties->oemSerialId, ZES_OEM_SERIAL_ID_SIZE, unknown.data(), unknown.length() + 1);
                 oemSerialIdProperties->length = static_cast<uint16_t>(unknown.length());
             }
+        } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES) {
+            auto deviceIndexProperties = reinterpret_cast<zes_intel_device_index_exp_properties_t *>(pNext);
+            deviceIndexProperties->deviceIndex = pOsSysman->getRootDeviceIndex();
         } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_PROPERTIES_EXP) {
             auto memPageOfflineProperties = reinterpret_cast<zes_intel_mem_page_offline_properties_exp_t *>(pNext);
             ze_result_t result = pOsGlobalOperations->getMaxMemoryOfflinePages(&memPageOfflineProperties->maxOfflinePages);

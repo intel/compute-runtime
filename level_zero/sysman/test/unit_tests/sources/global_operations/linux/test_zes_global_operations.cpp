@@ -704,6 +704,34 @@ TEST_F(SysmanGlobalOperationsFixture,
 }
 
 TEST_F(SysmanGlobalOperationsFixture,
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForDeviceIndexThenValidDeviceIndexIsReturned) {
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_index_exp_properties_t deviceIndexProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+    properties.pNext = &deviceIndexProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pSysmanDeviceImp->getRootDeviceIndex(), deviceIndexProperties.deviceIndex);
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesWithDeviceIndexChainedWithOtherExtensionsThenAllExtensionsArePopulated) {
+
+    pLinuxSysmanImp->setDriverName("i915");
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_index_exp_properties_t deviceIndexProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+    zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
+    properties.pNext = &deviceIndexProperties;
+    deviceIndexProperties.pNext = &drvName;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pSysmanDeviceImp->getRootDeviceIndex(), deviceIndexProperties.deviceIndex);
+    EXPECT_STREQ("i915", drvName.driverName);
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
        GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForCheckingDevicePropertiesWhenVendorIsUnKnownThenVerifyzesDeviceGetPropertiesCallSucceeds) {
     pSysfsAccess->mockReadVal[static_cast<int>(MockGlobalOperationsSysfsAccess::Index::mockSubsystemVendor)] = "0xa086";
     pSysfsAccess->mockReadVal[static_cast<int>(MockGlobalOperationsSysfsAccess::Index::mockVendor)] = "0x1806"; // Unknown Vendor id
@@ -1565,6 +1593,25 @@ HWTEST2_F(SysmanDevicePropertiesExtensionTestMultiDevice,
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(extProperties.flags & ZES_DEVICE_PROPERTY_FLAG_INTEGRATED);
+}
+
+TEST_F(SysmanDevicePropertiesExtensionTestMultiDevice,
+       GivenMultipleDevicesWhenCallingZesDeviceGetPropertiesForDeviceIndexThenSequentialDeviceIndicesAreReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getDevice(&count, nullptr));
+    EXPECT_EQ(numRootDevices, count);
+
+    std::vector<zes_device_handle_t> devices(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getDevice(&count, devices.data()));
+
+    for (uint32_t i = 0; i < count; i++) {
+        zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        zes_intel_device_index_exp_properties_t deviceIndexProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+        properties.pNext = &deviceIndexProperties;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetProperties(devices[i], &properties));
+        EXPECT_EQ(i, deviceIndexProperties.deviceIndex);
+    }
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingDeviceGetStateThenSuccessResultIsReturned) {

@@ -67,6 +67,10 @@ SysmanDeviceImp *WddmSysmanImp::getSysmanDeviceImp() {
     return pParentSysmanDeviceImp;
 }
 
+uint32_t WddmSysmanImp::getRootDeviceIndex() const {
+    return pParentSysmanDeviceImp->getRootDeviceIndex();
+}
+
 const NEO::HardwareInfo &WddmSysmanImp::getHardwareInfo() const {
     return pParentSysmanDeviceImp->getHardwareInfo();
 }
