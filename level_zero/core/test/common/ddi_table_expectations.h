@@ -103,6 +103,33 @@ inline void givenDdiTableManifestWhenComparingAgainstDdiTableLayoutThenEachSlotI
     }
 }
 
+inline ze_api_version_t getHighestExposedApiVersion(const DdiTableExpectation *tables, size_t tablesCount, std::string &highestEntryName) {
+    auto highest = ZE_API_VERSION_1_0;
+    highestEntryName = "<no entry>";
+    for (size_t t = 0; t < tablesCount; t++) {
+        const auto &table = tables[t];
+        for (size_t i = 0; i < table.entriesCount; i++) {
+            const auto &entry = table.entries[i];
+            if (entry.exposedSinceVersion > highest) {
+                highest = entry.exposedSinceVersion;
+                highestEntryName = std::string(table.name) + " / " + entry.name;
+            }
+        }
+    }
+    return highest;
+}
+
+inline void givenDdiTableManifestWhenComparingAgainstComponentVersionThenItMatchesHighestExposedApiVersionFunction(const DdiTableExpectation *tables, size_t tablesCount, ze_api_version_t componentVersion) {
+    std::string highestEntryName;
+    const auto highestExposed = getHighestExposedApiVersion(tables, tablesCount, highestEntryName);
+
+    // As per DDI handles extension L0 loader reads a component's dispatch table only up to the version that table declares,
+    // so an entry above the declared version is filled by the driver but never reached.
+    EXPECT_EQ(highestExposed, componentVersion)
+        << highestEntryName << " is exposed since " << apiVersionToString(highestExposed)
+        << ", the dispatch table declares " << apiVersionToString(componentVersion);
+}
+
 inline void givenApiVersionWhenGettingProcAddrTableThenOnlyEntriesExposedSinceThatVersionArePopulatedFunction(const DdiTableExpectation *tables, size_t tablesCount) {
     for (const auto version : getAllApiVersions()) {
         for (size_t t = 0; t < tablesCount; t++) {

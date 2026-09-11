@@ -509,6 +509,10 @@ TEST(ZeDdiTableManifestTest, givenDdiTableManifestWhenComparingAgainstDdiTableLa
     givenDdiTableManifestWhenComparingAgainstDdiTableLayoutThenEachSlotIsDescribedAtMostOnceFunction(ddiTables, ddiTablesCount);
 }
 
+TEST(ZeDdiTableManifestTest, givenDdiTableManifestWhenComparingAgainstComponentVersionThenItMatchesHighestExposedApiVersion) {
+    givenDdiTableManifestWhenComparingAgainstComponentVersionThenItMatchesHighestExposedApiVersionFunction(ddiTables, ddiTablesCount, globalDriverDispatch.core.version);
+}
+
 TEST(ZeGetProcAddrTableTest, givenApiVersionWhenGettingProcAddrTableThenOnlyEntriesExposedSinceThatVersionArePopulated) {
     givenApiVersionWhenGettingProcAddrTableThenOnlyEntriesExposedSinceThatVersionArePopulatedFunction(ddiTables, ddiTablesCount);
 }
