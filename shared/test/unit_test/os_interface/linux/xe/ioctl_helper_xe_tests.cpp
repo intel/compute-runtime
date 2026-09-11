@@ -839,6 +839,106 @@ TEST_F(IoctlHelperXeTest, whenCheckNoVmOvercommitFlagAndIoctlPassThenSetNoVmOver
     EXPECT_EQ(true, xeIoctlHelper->getNoVmOvercommitFlagAllowed());
 }
 
+struct DrmMockXeVmCreateDestroy : public DrmMockXe {
+    static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto drm = std::unique_ptr<DrmMockXeVmCreateDestroy>(new DrmMockXeVmCreateDestroy{rootDeviceEnvironment});
+        drm->initInstance();
+        return drm;
+    }
+
+    int ioctl(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::gemVmCreate) {
+            vmCreateCalled++;
+            if (failVmCreate) {
+                return -EINVAL;
+            }
+            auto ret = DrmMockXe::ioctl(request, arg);
+            createdVmId = static_cast<struct drm_xe_vm_create *>(arg)->vm_id;
+            return ret;
+        }
+        if (request == DrmIoctl::gemVmDestroy) {
+            vmDestroyCalled++;
+            destroyedVmId = static_cast<struct drm_xe_vm_destroy *>(arg)->vm_id;
+        }
+        return DrmMockXe::ioctl(request, arg);
+    }
+
+    uint32_t vmCreateCalled = 0;
+    uint32_t vmDestroyCalled = 0;
+    uint32_t createdVmId = 0;
+    uint32_t destroyedVmId = 0;
+    bool failVmCreate = false;
+
+  protected:
+    // Don't call directly, use the create() function
+    DrmMockXeVmCreateDestroy(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {}
+};
+
+TEST_F(IoctlHelperXeTest, whenCheckNoVmOvercommitFlagAndIoctlPassThenProbeVmIsDestroyed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableNoVmOvercommitFlag.set(false);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto drm = DrmMockXeVmCreateDestroy::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    drm->vmCreateCalled = 0;
+    drm->vmDestroyCalled = 0;
+
+    xeIoctlHelper->checkNoVmOvercommitFlag();
+
+    EXPECT_EQ(true, xeIoctlHelper->getNoVmOvercommitFlagAllowed());
+    EXPECT_EQ(1u, drm->vmCreateCalled);
+    EXPECT_EQ(1u, drm->vmDestroyCalled);
+    EXPECT_EQ(static_cast<uint32_t>(testValueVmId), drm->createdVmId);
+    EXPECT_EQ(drm->createdVmId, drm->destroyedVmId);
+}
+
+TEST_F(IoctlHelperXeTest, whenCheckNoVmOvercommitFlagAndIoctlFailThenNoVmIsDestroyed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableNoVmOvercommitFlag.set(false);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto drm = DrmMockXeVmCreateDestroy::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    drm->failVmCreate = true;
+    drm->vmCreateCalled = 0;
+    drm->vmDestroyCalled = 0;
+
+    xeIoctlHelper->checkNoVmOvercommitFlag();
+
+    EXPECT_EQ(false, xeIoctlHelper->getNoVmOvercommitFlagAllowed());
+    EXPECT_EQ(1u, drm->vmCreateCalled);
+    EXPECT_EQ(0u, drm->vmDestroyCalled);
+}
+
+TEST_F(IoctlHelperXeTest, whenCheckNoVmOvercommitFlagIsSkippedThenNoVmIsCreatedOrDestroyed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableNoVmOvercommitFlag.set(true);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto drm = DrmMockXeVmCreateDestroy::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    drm->vmCreateCalled = 0;
+    drm->vmDestroyCalled = 0;
+
+    xeIoctlHelper->checkNoVmOvercommitFlag();
+
+    EXPECT_EQ(0u, drm->vmCreateCalled);
+    EXPECT_EQ(0u, drm->vmDestroyCalled);
+}
+
 TEST_F(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);

@@ -1331,7 +1331,12 @@ void IoctlHelperXe::checkNoVmOvercommitFlag() {
         ctl.flags = getFlagsForVmCreate(true, true, true);
         if (ioctl(DrmIoctl::gemVmCreate, &ctl) != 0) {
             setNoVmOvercommitFlagAllowed(false);
+            return;
         }
+        GemVmControl destroyCtl{};
+        destroyCtl.vmId = ctl.vmId;
+        [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemVmDestroy, &destroyCtl);
+        DEBUG_BREAK_IF(ret != 0);
     }
 }
 
