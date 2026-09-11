@@ -427,31 +427,19 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPtrWithOffsetAndFailAppendUnal
     delete[] ptr;
 }
 
-HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeThenSuccessIsReturned) {
-    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-
-    size_t nonMultipleSize = allocSize + 1;
-    uint8_t *nonMultipleDstPtr = new uint8_t[nonMultipleSize];
-    CmdListMemoryCopyParams copyParams = {};
-    auto result = commandList->appendMemoryFill(nonMultipleDstPtr, pattern, 4, nonMultipleSize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    delete[] nonMultipleDstPtr;
-}
-
-HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeAndAppendLaunchKernelFailureOnRemainderThenSuccessIsNotReturned) {
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithDataSizeNotAlignedToSizeOfFillDataAndAppendLaunchKernelFailureOnRemainderThenSuccessIsNotReturned) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     commandList->thresholdOfCallsToAppendLaunchKernelWithParamsToFail = 1;
 
-    size_t nonMultipleSize = allocSize + 1;
-    uint8_t *nonMultipleDstPtr = new uint8_t[nonMultipleSize];
-    CmdListMemoryCopyParams copyParams = {};
-    auto result = commandList->appendMemoryFill(nonMultipleDstPtr, pattern, 4, nonMultipleSize, nullptr, 0, nullptr, copyParams);
-    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+    // allocSize is a multiple of the pattern size, but not of the fill data size, so a remainder kernel is dispatched after the main one
+    constexpr size_t twoBytePatternSize = 2;
+    static_assert(allocSize % twoBytePatternSize == 0);
+    static_assert(allocSize % sizeof(uint32_t) != 0);
 
-    delete[] nonMultipleDstPtr;
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryFill(dstPtr, pattern, twoBytePatternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 
 HWTEST2_F(AppendFillTest,
