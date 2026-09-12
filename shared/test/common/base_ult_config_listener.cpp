@@ -69,8 +69,10 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
     aub_stream::injectMMIOListLegacy(aub_stream::MMIOList{});
 
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
-    EXPECT_EQ(debugVarSnapshot.variableName.getRef(), debugManager.flags.variableName.getRef());
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                    \
+    if (debugVarSnapshot.variableName.getRef() != debugManager.flags.variableName.getRef()) {        \
+        EXPECT_EQ(debugVarSnapshot.variableName.getRef(), debugManager.flags.variableName.getRef()); \
+    }
 #define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
     DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)

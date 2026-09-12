@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include <algorithm>
 #include <functional>
 #include <map>
 #include <optional>
@@ -323,7 +324,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     uint32_t getPreferredTagPoolSize() const override {
-        return BaseClass::getPreferredTagPoolSize() + 1;
+        return std::min(BaseClass::getPreferredTagPoolSize(), 128u);
     }
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
 

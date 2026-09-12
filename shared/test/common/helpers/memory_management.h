@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <type_traits>
 
 namespace MemoryManagement {
 #if defined(__clang__)
@@ -48,8 +49,10 @@ struct AllocationEvent { // NOLINT(clang-analyzer-optin.performance.Padding)
     size_t size;
     int frames;
     void *callstack[CallStackSize];
-    bool fastLeakDetectionEnabled = false;
+    bool fastLeakDetectionEnabled;
 };
+static_assert(std::is_trivially_default_constructible_v<AllocationEvent>,
+              "a non-trivial default constructor makes the event arrays dynamically initialized");
 
 inline constexpr auto maxEvents = 1024 * 1024;
 
