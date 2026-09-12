@@ -69,11 +69,8 @@ struct SecondaryContexts : NEO::NonCopyableAndNonMovableClass {
         this->engines = std::move(in.engines);
         this->regularCounter = in.regularCounter.load();
         this->highPriorityCounter = in.highPriorityCounter.load();
-        this->assignedContextsCounter = in.assignedContextsCounter.load();
         this->regularEnginesTotal = in.regularEnginesTotal;
         this->highPriorityEnginesTotal = in.highPriorityEnginesTotal;
-        this->npIndices = std::move(in.npIndices);
-        this->hpIndices = std::move(in.hpIndices);
     }
     SecondaryContexts &operator=(SecondaryContexts &&other) noexcept = delete;
 
@@ -83,8 +80,8 @@ struct SecondaryContexts : NEO::NonCopyableAndNonMovableClass {
     std::atomic<uint8_t> regularCounter = 0;          // Counter used to assign next regular EngineControl
     std::atomic<uint8_t> highPriorityCounter = 0;     // Counter used to assign next highPriority EngineControl
     std::atomic<uint8_t> assignedContextsCounter = 0; // Counter of assigned contexts in group
-    uint32_t regularEnginesTotal = 0;
-    uint32_t highPriorityEnginesTotal = 0;
+    uint32_t regularEnginesTotal;
+    uint32_t highPriorityEnginesTotal;
 
     std::vector<int32_t> npIndices;
     std::vector<int32_t> hpIndices;

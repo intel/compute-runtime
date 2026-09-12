@@ -171,17 +171,8 @@ CommandQueue::~CommandQueue() {
         if (NEO::Debugger::isDebugEnabled(isInternalUsage) && device->getDevice().getL0Debugger()) {
             device->getDevice().getL0Debugger()->notifyCommandQueueDestroyed(&device->getDevice());
         }
-        releaseGpgpuQueueOwnership();
-
         if (gpgpuEngine) {
             gpgpuEngine->commandStreamReceiver->releasePreallocationRequest();
-        }
-
-        for (size_t bcsIndex = 0; bcsIndex < bcsEngines.size(); bcsIndex++) {
-            if (bcsQueueOwnershipTaken[bcsIndex] && bcsEngines[bcsIndex] != nullptr) {
-                bcsQueueOwnershipTaken[bcsIndex] = false;
-                bcsEngines[bcsIndex]->commandStreamReceiver->releaseQueueOwnership();
-            }
         }
     }
 
@@ -193,18 +184,10 @@ CommandQueue::~CommandQueue() {
     }
 }
 
-void CommandQueue::releaseGpgpuQueueOwnership() {
-    if (gpgpuQueueOwnershipTaken) {
-        gpgpuQueueOwnershipTaken = false;
-        gpgpuEngine->commandStreamReceiver->releaseQueueOwnership();
-    }
-}
-
-void tryAssignSecondaryEngine(Device &device, EngineControl *&engineControl, EngineTypeUsage engineTypeUsage, bool &queueOwnershipTaken) {
+void tryAssignSecondaryEngine(Device &device, EngineControl *&engineControl, EngineTypeUsage engineTypeUsage) {
     auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage, std::nullopt);
     if (newEngine) {
         engineControl = newEngine;
-        queueOwnershipTaken = true;
     }
 }
 
@@ -219,7 +202,7 @@ void CommandQueue::initializeGpgpu() const {
             bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
 
             if (secondaryContextsEnabled && EngineHelpers::isCcs(defaultEngineType)) {
-                tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {defaultEngineType, EngineUsage::regular}, gpgpuQueueOwnershipTaken);
+                tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {defaultEngineType, EngineUsage::regular});
             }
 
             if (gpgpuEngine == nullptr) {
@@ -404,7 +387,7 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
                 bcsQueueEngineType = bcsEngineType;
 
                 if (gfxCoreHelper.areSecondaryContextsSupported() && !internalUsage) {
-                    tryAssignSecondaryEngine(device->getDevice(), bcsEngines[bcsIndex], {bcsEngineType, engineUsage}, bcsQueueOwnershipTaken[bcsIndex]);
+                    tryAssignSecondaryEngine(device->getDevice(), bcsEngines[bcsIndex], {bcsEngineType, engineUsage});
                 }
 
                 bcsEngines[bcsIndex]->osContext->ensureContextInitialized();
@@ -1311,7 +1294,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
             bcsQueueEngineType = engineType;
 
             if (secondaryContextsEnabled) {
-                tryAssignSecondaryEngine(device->getDevice(), bcsEngines[engineIndex], {engineType, engineUsage}, bcsQueueOwnershipTaken[engineIndex]);
+                tryAssignSecondaryEngine(device->getDevice(), bcsEngines[engineIndex], {engineType, engineUsage});
             }
         }
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
@@ -1320,7 +1303,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
         bcsInitialized = true;
     } else {
         if (secondaryContextsEnabled && EngineHelpers::isCcs(engineType)) {
-            tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {engineType, engineUsage}, gpgpuQueueOwnershipTaken);
+            tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {engineType, engineUsage});
         }
 
         if (!gpgpuEngine) {

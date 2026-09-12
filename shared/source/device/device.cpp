@@ -698,10 +698,6 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, st
 
     auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, hwPriority);
 
-    if (engineControl == nullptr) {
-        return nullptr;
-    }
-
     bool isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
 
     if (!isPrimaryContextInGroup) {
@@ -717,9 +713,11 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, st
 
             EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
 
-            if (!commandStreamReceiver->initializeResources(this->getPreemptionMode()) ||
-                !commandStreamReceiver->initializeTagAllocation()) {
-                commandStreamReceiver->releaseQueueOwnership();
+            if (!commandStreamReceiver->initializeResources(this->getPreemptionMode())) {
+                return nullptr;
+            }
+
+            if (!commandStreamReceiver->initializeTagAllocation()) {
                 return nullptr;
             }
         }
@@ -1327,33 +1325,10 @@ const EngineGroupT *Device::tryGetRegularEngineGroup(EngineGroupType engineGroup
     return nullptr;
 }
 
-static bool isPriorityLevelUsable(const OsContext &osContext, std::optional<uint32_t> hwPriority) {
-    if (!osContext.hasPriorityLevel() || osContext.isPriorityChangeSupported()) {
-        return true;
-    }
-    const auto requestedPriority = hwPriority.has_value() ? hwPriority : osContext.getDefaultPriorityLevel();
-    return requestedPriority.has_value() && osContext.getPriorityLevel() == requestedPriority.value();
-}
-
 EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uint32_t> hwPriority) {
     auto secondaryEngineIndex = 0;
 
     std::lock_guard<std::mutex> guard(mutex);
-
-    std::optional<int32_t> reusableIndex;
-    if (usage == EngineUsage::regular || usage == EngineUsage::highPriority) {
-        const auto &assignedIndices = usage == EngineUsage::highPriority ? hpIndices : npIndices;
-        for (auto index : assignedIndices) {
-            auto &engine = engines[index];
-            if (engine.commandStreamReceiver->getOwningQueueCount() > 0 || !engine.commandStreamReceiver->isInitialized()) {
-                continue;
-            }
-            if (isPriorityLevelUsable(*engine.osContext, hwPriority)) {
-                reusableIndex = index;
-                break;
-            }
-        }
-    }
 
     auto findMatchingPriority = [&](const std::vector<int32_t> &indices, uint32_t requested, int fallback) -> uint32_t {
         for (uint32_t i = 0; i < indices.size(); i++) {
@@ -1366,9 +1341,7 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
         return fallback;
     };
 
-    if (reusableIndex.has_value()) {
-        secondaryEngineIndex = reusableIndex.value();
-    } else if (usage == EngineUsage::highPriority) {
+    if (usage == EngineUsage::highPriority) {
         if (highPriorityEnginesTotal == 0) {
             return nullptr;
         }
@@ -1432,14 +1405,9 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
         DEBUG_BREAK_IF(true);
     }
 
-    auto &selectedEngine = engines[secondaryEngineIndex];
     if (hwPriority.has_value()) {
-        selectedEngine.osContext->overridePriority(hwPriority.value());
-    } else if (reusableIndex.has_value() && selectedEngine.osContext->getDefaultPriorityLevel().has_value()) {
-        selectedEngine.osContext->overridePriority(selectedEngine.osContext->getDefaultPriorityLevel().value());
+        engines[secondaryEngineIndex].osContext->overridePriority(hwPriority.value());
     }
-    selectedEngine.commandStreamReceiver->retainQueueOwnership();
-
     if (debugManager.flags.PrintSecondaryContextEngineInfo.get()) {
         std::stringstream contextEngineInfo;
         contextEngineInfo << "SecondaryContexts::getEngine-> engineType: " << EngineHelpers::engineTypeToString(engines[secondaryEngineIndex].getEngineType()).c_str() << " engineUsage: " << EngineHelpers::engineUsageToString(usage).c_str() << " index: " << secondaryEngineIndex << " osContextId: " << engines[secondaryEngineIndex].osContext->getContextId() << " osContext->priorityLevel: " << (engines[secondaryEngineIndex].osContext->hasPriorityLevel() ? std::to_string(engines[secondaryEngineIndex].osContext->getPriorityLevel()) : "std::nullopt") << " \n";

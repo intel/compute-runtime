@@ -49,7 +49,6 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::bcsEngines;
     using CommandQueue::bcsInitialized;
     using CommandQueue::bcsQueueEngineType;
-    using CommandQueue::bcsQueueOwnershipTaken;
     using CommandQueue::bcsStates;
     using CommandQueue::bcsTimestampPacketContainers;
     using CommandQueue::blitEnqueueAllowed;
@@ -59,7 +58,6 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::deferredTimestampPackets;
     using CommandQueue::device;
     using CommandQueue::gpgpuEngine;
-    using CommandQueue::gpgpuQueueOwnershipTaken;
     using CommandQueue::h2dEngines;
     using CommandQueue::heaplessModeEnabled;
     using CommandQueue::isCopyOnly;

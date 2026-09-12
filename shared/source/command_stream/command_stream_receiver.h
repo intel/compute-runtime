@@ -545,17 +545,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     void registerClient(void *client);
     void unregisterClient(void *client);
 
-    void retainQueueOwnership() {
-        owningQueueCount.fetch_add(1);
-    }
-    void releaseQueueOwnership() {
-        DEBUG_BREAK_IF(owningQueueCount.load() == 0u);
-        owningQueueCount.fetch_sub(1);
-    }
-    uint32_t getOwningQueueCount() const {
-        return owningQueueCount.load();
-    }
-
     bool getDcFlushSupport() const {
         return dcFlushSupport;
     }
@@ -759,7 +748,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::atomic<TaskCountType> taskCount{0};
 
     std::atomic<uint32_t> numClients = 0u;
-    std::atomic<uint32_t> owningQueueCount = 0u;
     DispatchMode dispatchMode = DispatchMode::immediateDispatch;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
