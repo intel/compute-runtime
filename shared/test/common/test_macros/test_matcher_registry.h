@@ -8,6 +8,8 @@
 #pragma once
 #include "neo_igfxfmid.h"
 
+#include <string>
+
 namespace testing {
 class TestInfo;
 }
@@ -18,7 +20,7 @@ namespace TestMatcherRegistry {
 using MatchFunc = bool (*)(PRODUCT_FAMILY);
 
 void registerMatcher(const char *testName, MatchFunc matchFunc);
-bool willRunForCurrentProduct(const char *testName, const PRODUCT_FAMILY productFamily);
+bool willRunForCurrentProduct(const std::string &testName, const PRODUCT_FAMILY productFamily);
 
 // Strips gtest's runtime instantiation/index decorations, then checks both the registered matcher and NEO::TestExcludes.
 bool willRunForCurrentProduct(const ::testing::TestInfo &testInfo, const PRODUCT_FAMILY productFamily);

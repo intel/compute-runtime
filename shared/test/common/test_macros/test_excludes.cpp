@@ -10,9 +10,9 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 using namespace NEO;
@@ -20,27 +20,27 @@ using namespace NEO;
 PRODUCT_FAMILY productFamily = {};
 GFXCORE_FAMILY renderCoreFamily = {};
 
-static std::unique_ptr<std::map<std::string, std::unordered_set<uint32_t>>> pProductExcludesPerTest;
-static std::unique_ptr<std::map<std::string, std::unordered_set<uint32_t>>> pGfxExcludesPerTest;
+using ExcludesPerTest = std::unordered_map<std::string, std::unordered_set<uint32_t>>;
 
-bool isExcluded(const char *testName, const uint32_t family, std::unique_ptr<std::map<std::string, std::unordered_set<uint32_t>>> &pExcludesPerTest) {
-    if ((pExcludesPerTest == nullptr) || pExcludesPerTest->count(testName) == 0) {
+static std::unique_ptr<ExcludesPerTest> pProductExcludesPerTest;
+static std::unique_ptr<ExcludesPerTest> pGfxExcludesPerTest;
+
+bool isExcluded(const std::string &testName, const uint32_t family, std::unique_ptr<ExcludesPerTest> &pExcludesPerTest) {
+    if (pExcludesPerTest == nullptr) {
         return false;
     }
-    return pExcludesPerTest->at(testName).contains(family);
+    auto it = pExcludesPerTest->find(testName);
+    return (it != pExcludesPerTest->end()) && it->second.contains(family);
 }
 
-void addExclude(const char *testName, const uint32_t family, std::unique_ptr<std::map<std::string, std::unordered_set<uint32_t>>> &pExcludesPerTest) {
+void addExclude(const char *testName, const uint32_t family, std::unique_ptr<ExcludesPerTest> &pExcludesPerTest) {
     if (pExcludesPerTest == nullptr) {
-        pExcludesPerTest = std::make_unique<std::map<std::string, std::unordered_set<uint32_t>>>();
+        pExcludesPerTest = std::make_unique<ExcludesPerTest>();
     }
-    if (pExcludesPerTest->count(testName) == 0) {
-        pExcludesPerTest->insert(std::make_pair(testName, std::unordered_set<uint32_t>{}));
-    }
-    pExcludesPerTest->at(testName).insert(family);
+    (*pExcludesPerTest)[testName].insert(family);
 }
 
-bool TestExcludes::isTestExcluded(const char *testName, const PRODUCT_FAMILY productFamily, const GFXCORE_FAMILY gfxFamily) {
+bool TestExcludes::isTestExcluded(const std::string &testName, const PRODUCT_FAMILY productFamily, const GFXCORE_FAMILY gfxFamily) {
     return (isExcluded(testName, productFamily, pProductExcludesPerTest) || isExcluded(testName, gfxFamily, pGfxExcludesPerTest));
 }
 

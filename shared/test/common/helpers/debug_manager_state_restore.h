@@ -12,10 +12,7 @@ using namespace NEO;
 
 class DebugManagerStateRestore {
   public:
-    DebugManagerStateRestore() {
-        debugVarSnapshot = debugManager.flags;
-        injectFcnSnapshot = debugManager.injectFcn;
-    }
+    DebugManagerStateRestore() : debugVarSnapshot(debugManager.flags), injectFcnSnapshot(debugManager.injectFcn) {}
     ~DebugManagerStateRestore() {
         debugManager.flags = debugVarSnapshot;
         debugManager.injectFcn = injectFcnSnapshot;
