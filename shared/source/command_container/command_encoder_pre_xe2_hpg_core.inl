@@ -29,6 +29,15 @@ uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountPerSubslice(cons
 }
 
 template <typename Family>
+uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountSharingSubsliceSlm(const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs) {
+    UNRECOVERABLE_IF(slmArgs.threadsPerThreadGroup == 0u);
+
+    const uint32_t maxConcurrentThreadCountPerSubslice = EncodeDispatchKernel<Family>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, slmArgs.grfCount);
+
+    return static_cast<uint32_t>(Math::divideAndRoundUp(maxConcurrentThreadCountPerSubslice, slmArgs.threadsPerThreadGroup));
+}
+
+template <typename Family>
 void EncodeSurfaceState<Family>::disableCompressionFlags(R_SURFACE_STATE *surfaceState) {
     surfaceState->setAuxiliarySurfaceMode(Family::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     surfaceState->setMemoryCompressionEnable(false);

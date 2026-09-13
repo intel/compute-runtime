@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/encoders/test_encode_slm_xe2_and_later.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
@@ -675,4 +676,12 @@ XE2_HPG_CORETEST_F(Xe2HpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsPr
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
+}
+
+const std::vector<uint32_t> slmSizesPerThreadGroupXe2 = slmSizesInBytes({0, 1, 2, 4, 8, 16, 24, 32, 48, 64, 96, 128});
+
+using CommandEncodeStatesSlmTestXe2HpgCore = CommandEncodeStatesSlmTestXe2AndLater;
+
+XE2_HPG_CORETEST_F(CommandEncodeStatesSlmTestXe2HpgCore, GivenSlmTotalSizePerThreadGroupEdgeValuesWhenCallingAlignSlmSizePerThreadGroupThenSizeIsAlignedUpToTheNextProgrammableSize) {
+    verifySlmSizePerThreadGroupAlignment<FamilyType>(slmSizesPerThreadGroupXe2);
 }

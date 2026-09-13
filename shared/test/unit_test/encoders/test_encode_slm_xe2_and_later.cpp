@@ -11,74 +11,95 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include <algorithm>
 #include <limits>
 
 using namespace NEO;
 
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmTotalSizeAboveActualHwLimitWhenCallingEncodeSlmSizePerSubSliceThenPreferredSlmIsClampedToActualHwSlmSizeKb, IsAtLeastXe2HpgCore) {
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmSizePerSubsliceAboveAvailableSlmSizePerSubsliceWhenCallingEncodeSlmSizePerSubSliceThenPreferredSlmOfTheAvailableSizeIsProgrammed, IsAtLeastXe2HpgCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
 
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &rootDeviceEnvironment = getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
 
-    hwInfo.gtSystemInfo.SLMSizeInKb = 32;
+    auto encodePreferredSlm = [&](uint32_t slmTotalSizePerThreadGroup, uint32_t workloadThreadGroupCount, NEO::SlmPolicy slmPolicy) {
+        auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = 1,
+            .workloadThreadGroupCount = workloadThreadGroupCount,
+            .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+            .grfCount = GrfConfig::defaultGrfNumber,
+            .slmPolicy = slmPolicy};
 
-    const uint32_t actualHwSlmSizeKb = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment);
-    const uint32_t slmAtLimit = actualHwSlmSizeKb * MemoryConstants::kiloByte;
-    const uint32_t slmAboveLimit = slmAtLimit + 1;
+        NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
+        return static_cast<uint32_t>(idd.getPreferredSlmAllocationSize());
+    };
 
-    auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
-
-    NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
-        .threadsPerThreadGroup = 1,
-        .workloadThreadGroupCount = 128,
-        .slmTotalSizePerThreadGroup = slmAtLimit,
-        .grfCount = GrfConfig::defaultGrfNumber,
-        .slmPolicy = NEO::SlmPolicy::slmPolicyLargeData};
-
-    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
-    const auto valueAtLimit = idd.getPreferredSlmAllocationSize();
-
-    slmArgs.slmTotalSizePerThreadGroup = slmAboveLimit;
-
-    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
-
-    EXPECT_EQ(valueAtLimit, idd.getPreferredSlmAllocationSize());
-}
-
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenLargestDispatchableThreadGroupWhenGettingMaxConcurrentThreadCountPerSubsliceThenWholeThreadGroupIsResident, IsAtLeastXe2HpgCore) {
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    const auto grfCounts = rootDeviceEnvironment.getProductHelper().getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
-
-    for (auto grfCount : grfCounts) {
-        auto maxConcurrentThreadCountPerSubslice = this->getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount);
-        ASSERT_NE(0u, maxConcurrentThreadCountPerSubslice) << ", grfCount: " << grfCount;
-
-        for (auto simd : {16u, 32u}) {
-            auto maxThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, CommonConstants::maxWorkgroupSize, grfCount, rootDeviceEnvironment);
-
-            EXPECT_LE(maxThreadsPerThreadGroup, maxConcurrentThreadCountPerSubslice)
-                << ", grfCount: " << grfCount
-                << ", simd: " << simd
-                << ", maxThreadsPerThreadGroup: " << maxThreadsPerThreadGroup
-                << ", maxConcurrentThreadCountPerSubslice: " << maxConcurrentThreadCountPerSubslice;
+    auto preferredSlmValueFor = [&](uint32_t slmSizePerSubslice) {
+        for (const auto &range : releaseHelper.getSizeToPreferredSlmValue()) {
+            if (slmSizePerSubslice <= range.upperLimit) {
+                return range.valueToProgram;
+            }
         }
+        return std::numeric_limits<uint32_t>::max();
+    };
+
+    const uint32_t saturatingWorkloadThreadGroupCount = hwInfo.gtSystemInfo.ThreadCount;
+    uint32_t previousProgrammedValue = 0;
+
+    for (uint32_t availableSlmSizeKb : {16u, 32u, 64u, 96u}) {
+        hwInfo.gtSystemInfo.SLMSizeInKb = availableSlmSizeKb;
+
+        const uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment) * MemoryConstants::kiloByte;
+        ASSERT_EQ(static_cast<uint32_t>(availableSlmSizeKb * MemoryConstants::kiloByte), availableSlmSizePerSubslice);
+
+        const uint32_t expectedValue = preferredSlmValueFor(availableSlmSizePerSubslice);
+
+        const uint32_t justAboveAvailable = availableSlmSizePerSubslice + 1;
+        ASSERT_GT(NEO::EncodeDispatchKernel<FamilyType>::alignSlmSizePerThreadGroup(justAboveAvailable, releaseHelper), availableSlmSizePerSubslice);
+
+        EXPECT_EQ(expectedValue, encodePreferredSlm(justAboveAvailable, 1, NEO::SlmPolicy::slmPolicyLargeData))
+            << ", availableSlmSizeKb: " << availableSlmSizeKb;
+
+        ASSERT_EQ(availableSlmSizePerSubslice, NEO::EncodeDispatchKernel<FamilyType>::alignSlmSizePerThreadGroup(availableSlmSizePerSubslice, releaseHelper));
+
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = 1,
+            .workloadThreadGroupCount = saturatingWorkloadThreadGroupCount,
+            .slmTotalSizePerThreadGroup = availableSlmSizePerSubslice,
+            .grfCount = GrfConfig::defaultGrfNumber,
+            .slmPolicy = NEO::SlmPolicy::slmPolicyLargeSlm};
+        const auto threadGroupCountSharingSubsliceSlm = NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
+        ASSERT_LE(2u, threadGroupCountSharingSubsliceSlm) << "a single thread group per subslice cannot exceed the available slm by sharing it";
+
+        EXPECT_EQ(expectedValue, encodePreferredSlm(availableSlmSizePerSubslice, saturatingWorkloadThreadGroupCount, NEO::SlmPolicy::slmPolicyLargeSlm))
+            << ", availableSlmSizeKb: " << availableSlmSizeKb
+            << ", threadGroupCountSharingSubsliceSlm: " << threadGroupCountSharingSubsliceSlm;
+        EXPECT_EQ(expectedValue, encodePreferredSlm(availableSlmSizePerSubslice, saturatingWorkloadThreadGroupCount, NEO::SlmPolicy::slmPolicyNone))
+            << ", availableSlmSizeKb: " << availableSlmSizeKb
+            << ", threadGroupCountSharingSubsliceSlm: " << threadGroupCountSharingSubsliceSlm;
+
+        EXPECT_LT(previousProgrammedValue, expectedValue) << ", availableSlmSizeKb: " << availableSlmSizeKb;
+        previousProgrammedValue = expectedValue;
     }
 }
 
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenIncreasingGrfCountWhenCallingEncodeSlmSizePerSubSliceThenFewerThreadGroupsShareSubsliceSlm, IsAtLeastXe2HpgCore) {
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenGrfCountLimitedSubsliceResidencyWhenCallingEncodeSlmSizePerSubSliceThenSameSlmIsEncodedAsForAnEquallyLimitedWorkload, IsAtLeastXe2HpgCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
 
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &rootDeviceEnvironment = getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const auto grfCounts = rootDeviceEnvironment.getProductHelper().getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
 
+    ASSERT_TRUE(std::is_sorted(grfCounts.begin(), grfCounts.end()));
+    const uint32_t smallestGrfCount = *grfCounts.begin();
+
     constexpr uint32_t threadsPerThreadGroup = 1;
     constexpr uint32_t slmTotalSizePerThreadGroup = MemoryConstants::kiloByte;
-    const uint32_t unlimitedWorkloadThreadGroupCount = hwInfo.gtSystemInfo.ThreadCount;
+    const uint32_t saturatingWorkloadThreadGroupCount = hwInfo.gtSystemInfo.ThreadCount;
 
     auto encodePreferredSlm = [&](uint32_t grfCount, uint32_t workloadThreadGroupCount) {
         auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
@@ -93,233 +114,21 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenIncreasingGrfCountWhenCall
         return static_cast<uint32_t>(idd.getPreferredSlmAllocationSize());
     };
 
-    const uint32_t smallestGrfCount = *grfCounts.begin();
-    const uint32_t largestGrfCount = *(grfCounts.end() - 1);
-
-    uint32_t previousPreferredSlm = std::numeric_limits<uint32_t>::max();
     for (auto grfCount : grfCounts) {
-        auto preferredSlm = encodePreferredSlm(grfCount, unlimitedWorkloadThreadGroupCount);
+        const auto maxConcurrentThreadCountPerSubslice = NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount);
+        const auto workloadThreadGroupCountFittingInSubslices = maxConcurrentThreadCountPerSubslice * hwInfo.gtSystemInfo.SubSliceCount;
 
-        EXPECT_GE(previousPreferredSlm, preferredSlm) << ", grfCount: " << grfCount;
-
-        auto maxConcurrentThreadCountPerSubslice = this->getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount);
-        auto workloadThreadGroupCountFittingInSubslices = maxConcurrentThreadCountPerSubslice * hwInfo.gtSystemInfo.SubSliceCount;
-        EXPECT_EQ(encodePreferredSlm(smallestGrfCount, workloadThreadGroupCountFittingInSubslices), preferredSlm)
+        EXPECT_EQ(encodePreferredSlm(smallestGrfCount, workloadThreadGroupCountFittingInSubslices),
+                  encodePreferredSlm(grfCount, saturatingWorkloadThreadGroupCount))
             << ", grfCount: " << grfCount
             << ", maxConcurrentThreadCountPerSubslice: " << maxConcurrentThreadCountPerSubslice;
-
-        previousPreferredSlm = preferredSlm;
     }
-
-    EXPECT_LT(this->getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, largestGrfCount),
-              this->getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, smallestGrfCount));
-    EXPECT_LT(encodePreferredSlm(largestGrfCount, unlimitedWorkloadThreadGroupCount),
-              encodePreferredSlm(smallestGrfCount, unlimitedWorkloadThreadGroupCount));
 }
 
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsBMG) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
-
-    // clang-format off
-    const SlmTestHelper<FamilyType> slmHelperBmg{
-        .programmableSlmSizesPerThreadGroup = {
-            {0 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K},
-            {1 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K},
-            {2 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_2K},
-            {4 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_4K},
-            {8 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_8K},
-            {16 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_16K},
-            {24 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_24K},
-            {32 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_32K},
-            {48 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_48K},
-            {64 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_128K}},
-        .programmablePreferredSlmSizesPerSubslice = {
-            {0 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
-            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
-            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
-            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K},
-            {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_160K}}
-    };
-    // clang-format on
-
-    verifyPreferredSlmValues<FamilyType>(slmHelperBmg, pDevice->getRootDeviceEnvironment());
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmPoliciesWhenCallingEncodeSlmSizePerSubSliceThenOnlyLargeDataIgnoresThreadGroupCountSharingSubsliceSlm, IsAtLeastXe2HpgCore) {
+    verifySlmPolicies<FamilyType>();
 }
 
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsLNL) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
-
-    // clang-format off
-    const SlmTestHelper<FamilyType> slmHelperLnl{
-        .programmableSlmSizesPerThreadGroup = {
-            {0 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K},
-            {1 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K},
-            {2 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_2K},
-            {4 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_4K},
-            {8 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_8K},
-            {16 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_16K},
-            {24 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_24K},
-            {32 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_32K},
-            {48 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_48K},
-            {64 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_128K}},
-        .programmablePreferredSlmSizesPerSubslice = {
-            {0 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
-            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
-            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
-            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
-            {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K}}
-    };
-    // clang-format on
-
-    verifyPreferredSlmValues<FamilyType>(slmHelperLnl, pDevice->getRootDeviceEnvironment());
-}
-
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsXe3Core) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
-
-    // clang-format off
-    const SlmTestHelper<FamilyType> slmHelperXe3Core{
-        .programmableSlmSizesPerThreadGroup = {
-            {0 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K},
-            {1 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K},
-            {2 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_2K},
-            {4 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_4K},
-            {8 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_8K},
-            {16 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_16K},
-            {24 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_24K},
-            {32 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_32K},
-            {48 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_48K},
-            {64 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_128K}},
-        .programmablePreferredSlmSizesPerSubslice = {
-            {0 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
-            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
-            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
-            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K},
-            {160 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_160K},
-            {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_192K}}
-    };
-    // clang-format on
-
-    verifyPreferredSlmValues<FamilyType>(slmHelperXe3Core, pDevice->getRootDeviceEnvironment());
-}
-
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsXe3pLpg) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
-
-    // clang-format off
-    const SlmTestHelper<FamilyType> slmHelperXe3pCore{
-        .programmableSlmSizesPerThreadGroup = {
-            {0 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K},
-            {1 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K},
-            {2 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_2K},
-            {3 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_3K},
-            {4 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_4K},
-            {5 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_5K},
-            {6 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_6K},
-            {7 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_7K},
-            {8 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_8K},
-            {9 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_9K},
-            {10 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_10K},
-            {11 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_11K},
-            {12 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_12K},
-            {13 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_13K},
-            {14 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_14K},
-            {15 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_15K},
-            {16 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_16K},
-            {24 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_24K},
-            {32 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_32K},
-            {48 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_48K},
-            {64 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_128K},
-            {192 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_192K}},
-        .programmablePreferredSlmSizesPerSubslice = {
-            {0 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
-            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
-            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
-            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K},
-            {160 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_160K},
-            {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_192K}}
-    };
-    // clang-format on
-
-    verifyPreferredSlmValues<FamilyType>(slmHelperXe3pCore, pDevice->getRootDeviceEnvironment());
-}
-
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmEdgeValuesWhenCallingEncodeSlmSizePerSubSliceThenProgramsExpectedPreferredSlm, IsCRI) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
-
-    // clang-format off
-    const SlmTestHelper<FamilyType> slmHelperCri{
-        .programmableSlmSizesPerThreadGroup = {
-            {0 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K},
-            {1 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K},
-            {2 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_2K},
-            {3 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_3K},
-            {4 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_4K},
-            {5 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_5K},
-            {6 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_6K},
-            {7 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_7K},
-            {8 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_8K},
-            {9 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_9K},
-            {10 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_10K},
-            {11 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_11K},
-            {12 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_12K},
-            {13 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_13K},
-            {14 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_14K},
-            {15 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_15K},
-            {16 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_16K},
-            {24 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_24K},
-            {32 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_32K},
-            {48 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_48K},
-            {64 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_128K},
-            {192 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_192K},
-            {256 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_256K},
-            {320 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_320K},
-            {384 * MemoryConstants::kiloByte, SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_384K}},
-        .programmablePreferredSlmSizesPerSubslice = {
-            {0 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
-            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
-            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
-            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
-            {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
-            {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K},
-            {160 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_160K},
-            {192 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_192K},
-            {256 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_256K},
-            {320 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_320K},
-            {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_384K}},
-    };
-    // clang-format on
-
-    verifyPreferredSlmValues<FamilyType>(slmHelperCri, pDevice->getRootDeviceEnvironment());
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmSizePerSubsliceAtPreferredSlmRangeLimitsWhenCallingEncodeSlmSizePerSubSliceThenProgramsValueOfTheMatchingRange, IsAtLeastXe2HpgCore) {
+    verifyPreferredSlmValueRanges<FamilyType>();
 }
