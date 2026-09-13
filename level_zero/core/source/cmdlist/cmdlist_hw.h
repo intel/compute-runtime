@@ -420,6 +420,7 @@ struct CommandListCoreFamily : public CommandList {
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint32_t bufferRowPitch, uint64_t bufferSlicePitch, const ze_image_region_t *region, size_t pixelSize);
     MOCKABLE_VIRTUAL AlignedAllocationData resolveAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, const MemAllocInfo *bufferAllocInfo, const ResolveAlignedAllocationFlags &flags);
     AlignedAllocationData alignSvmAllocationData(Device *device, NEO::SvmAllocationData *svmAlloc, const void *buffer, uintptr_t sourcePtr, size_t sshAlignmentOffset);
+    size_t bytesToPeerReservationBlockEnd(const void *ptr, size_t remaining);
     AlignedAllocationData alignImportedHostAllocationData(NEO::GraphicsAllocation *importedHostAlloc, void *ptr);
     AlignedAllocationData alignExplicitAllocationData(NEO::GraphicsAllocation *alloc, void *ptr);
     AlignedAllocationData alignCachedHostAllocationData(NEO::GraphicsAllocation *cachedHostAlloc, uintptr_t sourcePtr, size_t sshAlignmentOffset);
