@@ -14,16 +14,6 @@
 
 using KernelType = MclTests::KernelType;
 
-std::string testNameMutateKernelsWaitSignalEvents(MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate kernels and wait & signal events" << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-    testStream << " Test";
-
-    return testStream.str();
-}
-
 bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_handle_t module, bool aubMode, MclTests::EventOptions eventOptions) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 64;
@@ -426,16 +416,6 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
     return valid;
 }
 
-std::string testNameMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalEventArguments(MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate signal event/arguments into Add kernel back Mul kernel into signal event/arguments" << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-    testStream << " Test";
-
-    return testStream.str();
-}
-
 bool testMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalEventArguments(MclTests::ExecEnv *execEnv, ze_module_handle_t module, bool aubMode, MclTests::EventOptions eventOptions) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 64;
@@ -694,17 +674,6 @@ bool testMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalE
     return valid;
 }
 
-std::string testNameMutateMulKernelIntoAddKernelBackMulKernel(bool useSameArguments, MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Mul kernel Into Add kernel and back into Mul kernel";
-    testStream << (useSameArguments ? " use same arguments" : " use different arguments") << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-    testStream << " Test";
-
-    return testStream.str();
-}
-
 bool testMutateMulKernelIntoAddKernelBackMulKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module, bool useSameArguments, bool aubMode, MclTests::EventOptions eventOptions) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 64;
@@ -927,19 +896,6 @@ bool testMutateMulKernelIntoAddKernelBackMulKernel(MclTests::ExecEnv *execEnv, z
     execEnv->destroyKernelHandle(addKernel);
 
     return valid;
-}
-
-std::string testNameMutateKernelsScratch(bool scratchKernelFirst) {
-    std::ostringstream testStream;
-    testStream << "Mutate Kernels with Scratch:" << std::endl;
-    if (scratchKernelFirst) {
-        testStream << "scratch kernel first, mutate into copy kernel";
-    } else {
-        testStream << "copy kernel first, mutate into scratch";
-    }
-    testStream << " Test";
-
-    return testStream.str();
 }
 
 bool testMutateKernelsScratch(MclTests::ExecEnv *execEnv, ze_module_handle_t module, ze_kernel_handle_t scratchKernel, bool scratchKernelFirst, bool aubMode) {
@@ -1169,19 +1125,6 @@ bool testMutateKernelsScratch(MclTests::ExecEnv *execEnv, ze_module_handle_t mod
     return valid;
 }
 
-std::string testNameMutateKernelsSlm(bool slmKernelFirst) {
-    std::ostringstream testStream;
-    testStream << "Mutate Kernels with SLM:" << std::endl;
-    if (slmKernelFirst) {
-        testStream << "SLM kernel first, mutate into copy kernel";
-    } else {
-        testStream << "copy kernel first, mutate into SLM";
-    }
-    testStream << " Test";
-
-    return testStream.str();
-}
-
 bool testMutateKernelsSlm(MclTests::ExecEnv *execEnv, ze_module_handle_t module, bool slmKernelFirst, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 64;
@@ -1397,19 +1340,6 @@ bool testMutateKernelsSlm(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     execEnv->destroyKernelHandle(addSlmKernel);
 
     return valid;
-}
-
-std::string testNameMutateKernelsPrivateMemory(bool privateMemoryKernelFirst) {
-    std::ostringstream testStream;
-    testStream << "Mutate Kernels with Private Memory:" << std::endl;
-    if (privateMemoryKernelFirst) {
-        testStream << "private memory kernel first, mutate into copy kernel";
-    } else {
-        testStream << "copy kernel first, mutate into private memory";
-    }
-    testStream << " Test";
-
-    return testStream.str();
 }
 
 bool testMutateKernelsPrivateMemory(MclTests::ExecEnv *execEnv, ze_module_handle_t module, ze_kernel_handle_t privateMemoryKernel, bool privateMemoryKernelFirst, bool aubMode) {
@@ -1634,31 +1564,6 @@ bool testMutateKernelsPrivateMemory(MclTests::ExecEnv *execEnv, ze_module_handle
     return valid;
 }
 
-std::string testNameMutateKernelsLocalWorkSize(bool localWorkSizeKernelFirst, uint32_t *localWorkSizeKernelGroupSize, uint32_t *addScalarLinearKernelGroupSize) {
-    std::ostringstream testStream;
-    testStream << "Mutate Kernels with Local Work Size check:" << std::endl;
-    if (localWorkSizeKernelFirst) {
-        testStream << "local work size kernel " << localWorkSizeKernelGroupSize[0]
-                   << " " << localWorkSizeKernelGroupSize[1]
-                   << " " << localWorkSizeKernelGroupSize[2]
-                   << " mutate into linear add scalar kernel "
-                   << addScalarLinearKernelGroupSize[0]
-                   << " " << addScalarLinearKernelGroupSize[1]
-                   << " " << addScalarLinearKernelGroupSize[2];
-    } else {
-        testStream << "linear add scalar kernel " << addScalarLinearKernelGroupSize[0]
-                   << " " << addScalarLinearKernelGroupSize[1]
-                   << " " << addScalarLinearKernelGroupSize[2]
-                   << " mutate into local work size "
-                   << localWorkSizeKernelGroupSize[0]
-                   << " " << localWorkSizeKernelGroupSize[1]
-                   << " " << localWorkSizeKernelGroupSize[2];
-    }
-    testStream << " Test";
-
-    return testStream.str();
-}
-
 bool testMutateKernelsLocalWorkSize(MclTests::ExecEnv *execEnv, ze_module_handle_t module, uint32_t *localWorkSizeKernelGroupSize, uint32_t *addScalarLinearKernelGroupSize, bool localWorkSizeKernelFirst, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 1024;
@@ -1840,31 +1745,6 @@ bool testMutateKernelsLocalWorkSize(MclTests::ExecEnv *execEnv, ze_module_handle
     return valid;
 }
 
-std::string testNameMutateKernelsGlobalWorkSize(bool globalWorkSizeKernelFirst, uint32_t *globalWorkSizeKernelGroupCount, uint32_t *addScalarLinearKernelGroupCount) {
-    std::ostringstream testStream;
-    testStream << "Mutate Kernels with Global Work Size check:" << std::endl;
-    if (globalWorkSizeKernelFirst) {
-        testStream << "global work size kernel " << globalWorkSizeKernelGroupCount[0]
-                   << " " << globalWorkSizeKernelGroupCount[1]
-                   << " " << globalWorkSizeKernelGroupCount[2]
-                   << " mutate into linear add scalar kernel "
-                   << addScalarLinearKernelGroupCount[0]
-                   << " " << addScalarLinearKernelGroupCount[1]
-                   << " " << addScalarLinearKernelGroupCount[2];
-    } else {
-        testStream << "linear add scalar kernel " << addScalarLinearKernelGroupCount[0]
-                   << " " << addScalarLinearKernelGroupCount[1]
-                   << " " << addScalarLinearKernelGroupCount[2]
-                   << " mutate into global work size "
-                   << globalWorkSizeKernelGroupCount[0]
-                   << " " << globalWorkSizeKernelGroupCount[1]
-                   << " " << globalWorkSizeKernelGroupCount[2];
-    }
-    testStream << " Test";
-
-    return testStream.str();
-}
-
 bool testMutateKernelsGlobalWorkSize(MclTests::ExecEnv *execEnv, ze_module_handle_t module, uint32_t *globalWorkSizeKernelGroupCount, uint32_t *addScalarLinearKernelGroupCount, bool globalWorkSizeKernelFirst, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 1024;
@@ -2042,26 +1922,6 @@ bool testMutateKernelsGlobalWorkSize(MclTests::ExecEnv *execEnv, ze_module_handl
     execEnv->destroyKernelHandle(addLinearKernel);
 
     return valid;
-}
-
-std::string testNameMutateKernelsGlobalOffset(bool globalOffsetKernelFirst, uint32_t *globalOffsets) {
-    std::ostringstream testStream;
-    testStream << "Mutate Kernels with Global Offset check:" << std::endl;
-    if (globalOffsetKernelFirst) {
-        testStream << "global offset kernel " << globalOffsets[0]
-                   << " " << globalOffsets[1]
-                   << " " << globalOffsets[2]
-                   << " mutate into copy kernel";
-    } else {
-        testStream << "copy kernel"
-                   << " mutate into global offset kernel "
-                   << globalOffsets[0]
-                   << " " << globalOffsets[1]
-                   << " " << globalOffsets[2];
-    }
-    testStream << " Test";
-
-    return testStream.str();
 }
 
 bool testMutateKernelsGlobalOffset(MclTests::ExecEnv *execEnv, ze_module_handle_t module, uint32_t *globalOffsets, bool globalOffsetKernelFirst, bool aubMode) {
@@ -2248,21 +2108,6 @@ bool testMutateKernelsGlobalOffset(MclTests::ExecEnv *execEnv, ze_module_handle_
     return valid;
 }
 
-std::string testNameSameKernelsMutateArgumentsShapesEvents(uint32_t *initGroupSize, uint32_t *mutateGroupSize, MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-    testStream << "- same kernels, mutate kernel arguments, shapes, events" << std::endl;
-    testStream << "initial group size " << initGroupSize[0]
-               << " " << initGroupSize[1]
-               << " " << initGroupSize[2] << std::endl;
-    testStream << "mutate group size " << mutateGroupSize[0]
-               << " " << mutateGroupSize[1]
-               << " " << mutateGroupSize[2] << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-    testStream << " Test";
-
-    return testStream.str();
-}
-
 bool testSameKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv, ze_module_handle_t module, uint32_t *initGroupSize, uint32_t *mutateGroupSize, MclTests::EventOptions eventOptions, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 1024;
@@ -2431,43 +2276,6 @@ bool testSameKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv, ze_m
     execEnv->destroyKernelHandle(copyKernel);
 
     return valid;
-}
-
-std::string testNameDifferentKernelsMutateArgumentsShapesEvents(bool globalOffsetFirst, uint32_t *groupCount, uint32_t *globalOffset, MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-
-    auto globalOffsetLambda = [&testStream, &globalOffset]() {
-        testStream << "Global offset with offsets "
-                   << globalOffset[0]
-                   << " " << globalOffset[1]
-                   << " " << globalOffset[2] << std::endl;
-    };
-
-    auto groupCountLambda = [&testStream, &groupCount]() {
-        testStream << "Group count with shape "
-                   << groupCount[0]
-                   << " " << groupCount[1]
-                   << " " << groupCount[2] << std::endl;
-    };
-
-    testStream << "- mutate kernels, kernel arguments, shapes, events" << std::endl;
-    testStream << "First ";
-    if (globalOffsetFirst) {
-        globalOffsetLambda();
-    } else {
-        groupCountLambda();
-    }
-    testStream << "Mutate ";
-    if (globalOffsetFirst) {
-        groupCountLambda();
-    } else {
-        globalOffsetLambda();
-    }
-
-    MclTests::setEventTestStream(eventOptions, testStream);
-    testStream << " Test";
-
-    return testStream.str();
 }
 
 bool testDifferentKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv, ze_module_handle_t module, bool globalOffsetFirst, uint32_t *groupCount, uint32_t *globalOffset, MclTests::EventOptions eventOptions, bool aubMode) {
@@ -2739,18 +2547,6 @@ bool testDifferentKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv,
     return valid;
 }
 
-std::string testNameMutateSingleTaskKernelArgumentsAndKeepGroupCount(bool passGroupCountDesc) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate SingleTask arguments:";
-    if (!passGroupCountDesc) {
-        testStream << " do not";
-    }
-    testStream << " pass unchanged group count/size desc";
-
-    return testStream.str();
-}
-
 bool testMutateSingleTaskKernelArgumentsAndKeepGroupCount(MclTests::ExecEnv *execEnv, ze_module_handle_t module, bool passGroupCountDesc, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 1024;
@@ -2857,29 +2653,6 @@ bool testMutateSingleTaskKernelArgumentsAndKeepGroupCount(MclTests::ExecEnv *exe
     execEnv->destroyKernelHandle(taskKernel);
 
     return valid;
-}
-
-std::string testNameMixingGlobalBarrierKernels(const std::string &baseName, KernelType firstKernelType, KernelType mutateKernelType, KernelType mutateBackKernelType) {
-    std::ostringstream testStream;
-    auto kernelTypeToString = [](KernelType type) -> std::string {
-        switch (type) {
-        case KernelType::copy:
-            return "copy";
-        case KernelType::globalBarrier:
-            return "globalBarrier";
-        case KernelType::globalBarrierMultiplicationGroupCount:
-            return "globalBarrierMultiplicationGroupCount";
-        default:
-            return "Unknown";
-        }
-    };
-
-    testStream << "Test is based on: " << baseName << "." << std::endl;
-    testStream << "First Kernel is: " << kernelTypeToString(firstKernelType) << std::endl;
-    testStream << "Mutate Kernel is: " << kernelTypeToString(mutateKernelType) << std::endl;
-    testStream << "Mutate Back Kernel is: " << kernelTypeToString(mutateBackKernelType) << ".";
-
-    return testStream.str();
 }
 
 bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle_t module, ze_module_handle_t barrierModule, KernelType firstKernelType, KernelType mutateKernelType, KernelType mutateBackKernelType, bool aubMode) {
@@ -3366,29 +3139,6 @@ bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle
     return valid;
 }
 
-std::string testNameMixingSlmKernels(KernelType firstKernel, KernelType mutateKernel, KernelType mutateBackKernel) {
-    std::ostringstream testStream;
-    auto kernelTypeToString = [](KernelType type) -> std::string {
-        switch (type) {
-        case KernelType::copy:
-            return "copy";
-        case KernelType::slmKernelOneArgs:
-            return "slmKernelOneArgs";
-        case KernelType::slmKernelTwoArgs:
-            return "slmKernelTwoArgs";
-        default:
-            return "Unknown";
-        }
-    };
-
-    testStream << "Mutation of SLM Argument kernels." << std::endl;
-    testStream << "First Kernel is: " << kernelTypeToString(firstKernel) << std::endl;
-    testStream << "Mutate Kernel is: " << kernelTypeToString(mutateKernel) << std::endl;
-    testStream << "Mutate Back Kernel is: " << kernelTypeToString(mutateBackKernel) << ".";
-
-    return testStream.str();
-}
-
 bool testMutateSlmKernels(MclTests::ExecEnv *execEnv, ze_module_handle_t module, ze_module_handle_t slmModule, KernelType firstKernel, KernelType mutateKernel, KernelType mutateBackKernel, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 512;
@@ -3818,21 +3568,6 @@ bool testMutateSlmKernels(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     return valid;
 }
 
-std::string testNameMutateBackKernel(bool firstMultiple) {
-    std::ostringstream testStream;
-
-    std::string firstKernel = firstMultiple ? "multiple scalar" : "add scalar";
-    std::string mutateKernel = firstMultiple ? "add scalar" : "multiple scalar";
-
-    testStream << "Append kernel " << firstKernel;
-    testStream << " mutate it into " << mutateKernel << "." << std::endl;
-    testStream << "Mutate back into " << firstKernel;
-    testStream << " mutate back again into " << mutateKernel;
-    testStream << " Test.";
-
-    return testStream.str();
-}
-
 bool testMutateBackKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module, bool firstMultiple, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 256;
@@ -4126,12 +3861,18 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventTimestamp,
                                                                  MclTests::EventOptions::cbEventSignal,
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
+        auto testNameMutateMulKernelIntoAddKernelBackMulKernel = [](bool useSameArguments, MclTests::EventOptions eventOptions) -> std::string {
+            std::ostringstream testStream;
+            testStream << "Mutate Mul kernel Into Add kernel and back into Mul kernel";
+            testStream << (useSameArguments ? " use same arguments" : " use different arguments") << std::endl;
+            MclTests::setEventTestStream(eventOptions, testStream);
+            testStream << " Test";
+            return testStream.str();
+        };
         for (auto eventOption : eventOptionValues) {
             for (auto useSameArguments : useSameArgumentsValues) {
                 caseName = testNameMutateMulKernelIntoAddKernelBackMulKernel(useSameArguments, eventOption);
-                std::cout << std::endl
-                          << "Starting test case: " << caseName
-                          << std::endl;
+                LevelZeroBlackBoxTests::printTestHeader(caseName);
                 caseResult = testMutateMulKernelIntoAddKernelBackMulKernel(env.get(), module, useSameArguments, aubMode, eventOption);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -4149,11 +3890,16 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventTimestamp,
                                                                  MclTests::EventOptions::cbEventSignal,
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
+        auto testNameMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalEventArguments = [](MclTests::EventOptions eventOptions) -> std::string {
+            std::ostringstream testStream;
+            testStream << "Mutate signal event/arguments into Add kernel back Mul kernel into signal event/arguments" << std::endl;
+            MclTests::setEventTestStream(eventOptions, testStream);
+            testStream << " Test";
+            return testStream.str();
+        };
         for (auto eventOption : eventOptionValues) {
             caseName = testNameMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalEventArguments(eventOption);
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalEventArguments(env.get(), module, aubMode, eventOption);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -4170,11 +3916,16 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventTimestamp,
                                                                  MclTests::EventOptions::cbEventSignal,
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
+        auto testNameMutateKernelsWaitSignalEvents = [](MclTests::EventOptions eventOptions) -> std::string {
+            std::ostringstream testStream;
+            testStream << "Mutate kernels and wait & signal events" << std::endl;
+            MclTests::setEventTestStream(eventOptions, testStream);
+            testStream << " Test";
+            return testStream.str();
+        };
         for (auto eventOption : eventOptionValues) {
             caseName = testNameMutateKernelsWaitSignalEvents(eventOption);
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateKernelsWaitSignalEvents(env.get(), module, aubMode, eventOption);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -4189,12 +3940,20 @@ int main(int argc, char *argv[]) {
             ze_kernel_handle_t scratchKernel = nullptr;
 
             LevelZeroBlackBoxTests::createScratchModuleKernel(env->context, env->device, scratchModule, scratchKernel, &MclTests::mclBuildOption);
-
+            auto testNameMutateKernelsScratch = [](bool scratchKernelFirst) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Kernels with Scratch:" << std::endl;
+                if (scratchKernelFirst) {
+                    testStream << "scratch kernel first, mutate into copy kernel";
+                } else {
+                    testStream << "copy kernel first, mutate into scratch";
+                }
+                testStream << " Test";
+                return testStream.str();
+            };
             for (auto scratchKernelFirst : scratchKernelFirstValues) {
                 caseName = testNameMutateKernelsScratch(scratchKernelFirst);
-                std::cout << std::endl
-                          << "Starting test case: " << caseName
-                          << std::endl;
+                LevelZeroBlackBoxTests::printTestHeader(caseName);
                 caseResult = testMutateKernelsScratch(env.get(), module, scratchKernel, scratchKernelFirst, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -4206,12 +3965,21 @@ int main(int argc, char *argv[]) {
         }
 
         if (testSubMask.test(1)) {
+            auto testNameMutateKernelsSlm = [](bool slmKernelFirst) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Kernels with SLM:" << std::endl;
+                if (slmKernelFirst) {
+                    testStream << "SLM kernel first, mutate into copy kernel";
+                } else {
+                    testStream << "copy kernel first, mutate into SLM";
+                }
+                testStream << " Test";
+                return testStream.str();
+            };
             std::vector<bool> slmKernelFirstValues = {true, false};
             for (auto slmKernelFirst : slmKernelFirstValues) {
                 caseName = testNameMutateKernelsSlm(slmKernelFirst);
-                std::cout << std::endl
-                          << "Starting test case: " << caseName
-                          << std::endl;
+                LevelZeroBlackBoxTests::printTestHeader(caseName);
                 caseResult = testMutateKernelsSlm(env.get(), module, slmKernelFirst, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -4225,12 +3993,20 @@ int main(int argc, char *argv[]) {
             std::vector<bool> privateMemoryKernelFirstValues = {false, true};
 
             MclTests::buildPrivateMemoryKernel(env->context, env->device, privateModule, privateKernel, true);
-
+            auto testNameMutateKernelsPrivateMemory = [](bool privateMemoryKernelFirst) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Kernels with Private Memory:" << std::endl;
+                if (privateMemoryKernelFirst) {
+                    testStream << "private memory kernel first, mutate into copy kernel";
+                } else {
+                    testStream << "copy kernel first, mutate into private memory";
+                }
+                testStream << " Test";
+                return testStream.str();
+            };
             for (auto privateMemoryKernelFirst : privateMemoryKernelFirstValues) {
                 caseName = testNameMutateKernelsPrivateMemory(privateMemoryKernelFirst);
-                std::cout << std::endl
-                          << "Starting test case: " << caseName
-                          << std::endl;
+                LevelZeroBlackBoxTests::printTestHeader(caseName);
                 caseResult = testMutateKernelsPrivateMemory(env.get(), module, privateKernel, privateMemoryKernelFirst, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -4250,14 +4026,34 @@ int main(int argc, char *argv[]) {
 
             std::vector<std::array<uint32_t, 3>> addScalarLinearKernelGroupSizeValues = {{32, 1, 1},
                                                                                          {5, 7, 3}};
-
+            auto testNameMutateKernelsLocalWorkSize = [](bool localWorkSizeKernelFirst, uint32_t *localWorkSizeKernelGroupSize, uint32_t *addScalarLinearKernelGroupSize) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Kernels with Local Work Size check:" << std::endl;
+                if (localWorkSizeKernelFirst) {
+                    testStream << "local work size kernel " << localWorkSizeKernelGroupSize[0]
+                               << " " << localWorkSizeKernelGroupSize[1]
+                               << " " << localWorkSizeKernelGroupSize[2]
+                               << " mutate into linear add scalar kernel "
+                               << addScalarLinearKernelGroupSize[0]
+                               << " " << addScalarLinearKernelGroupSize[1]
+                               << " " << addScalarLinearKernelGroupSize[2];
+                } else {
+                    testStream << "linear add scalar kernel " << addScalarLinearKernelGroupSize[0]
+                               << " " << addScalarLinearKernelGroupSize[1]
+                               << " " << addScalarLinearKernelGroupSize[2]
+                               << " mutate into local work size "
+                               << localWorkSizeKernelGroupSize[0]
+                               << " " << localWorkSizeKernelGroupSize[1]
+                               << " " << localWorkSizeKernelGroupSize[2];
+                }
+                testStream << " Test";
+                return testStream.str();
+            };
             for (auto &localWorkSizeKernelGroupSize : localWorkSizeKernelGroupSizeValues) {
                 for (auto &addScalarLinearKernelGroupSize : addScalarLinearKernelGroupSizeValues) {
                     for (auto localWorkSizeKernelFirst : localWorkSizeKernelFirstValues) {
                         caseName = testNameMutateKernelsLocalWorkSize(localWorkSizeKernelFirst, localWorkSizeKernelGroupSize.data(), addScalarLinearKernelGroupSize.data());
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testMutateKernelsLocalWorkSize(env.get(), module, localWorkSizeKernelGroupSize.data(), addScalarLinearKernelGroupSize.data(), localWorkSizeKernelFirst, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -4275,13 +4071,35 @@ int main(int argc, char *argv[]) {
             std::vector<std::array<uint32_t, 3>> addScalarLinearKernelGroupCountValues = {{32, 1, 1},
                                                                                           {8, 1, 4}};
 
+            auto testNameMutateKernelsGlobalWorkSize = [](bool globalWorkSizeKernelFirst, uint32_t *globalWorkSizeKernelGroupCount, uint32_t *addScalarLinearKernelGroupCount) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Kernels with Global Work Size check:" << std::endl;
+                if (globalWorkSizeKernelFirst) {
+                    testStream << "global work size kernel " << globalWorkSizeKernelGroupCount[0]
+                               << " " << globalWorkSizeKernelGroupCount[1]
+                               << " " << globalWorkSizeKernelGroupCount[2]
+                               << " mutate into linear add scalar kernel "
+                               << addScalarLinearKernelGroupCount[0]
+                               << " " << addScalarLinearKernelGroupCount[1]
+                               << " " << addScalarLinearKernelGroupCount[2];
+                } else {
+                    testStream << "linear add scalar kernel " << addScalarLinearKernelGroupCount[0]
+                               << " " << addScalarLinearKernelGroupCount[1]
+                               << " " << addScalarLinearKernelGroupCount[2]
+                               << " mutate into global work size "
+                               << globalWorkSizeKernelGroupCount[0]
+                               << " " << globalWorkSizeKernelGroupCount[1]
+                               << " " << globalWorkSizeKernelGroupCount[2];
+                }
+                testStream << " Test";
+                return testStream.str();
+            };
+
             for (auto &globalWorkSizeKernelGroupCount : globalWorkSizeKernelGroupCountValues) {
                 for (auto &addScalarLinearKernelGroupCount : addScalarLinearKernelGroupCountValues) {
                     for (auto globalWorkSizeKernelFirst : globalWorkSizeKernelFirstValues) {
                         caseName = testNameMutateKernelsGlobalWorkSize(globalWorkSizeKernelFirst, globalWorkSizeKernelGroupCount.data(), addScalarLinearKernelGroupCount.data());
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testMutateKernelsGlobalWorkSize(env.get(), module, globalWorkSizeKernelGroupCount.data(), addScalarLinearKernelGroupCount.data(), globalWorkSizeKernelFirst, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -4297,12 +4115,28 @@ int main(int argc, char *argv[]) {
                                                                        {0, 3, 1},
                                                                        {1, 0, 2},
                                                                        {0, 0, 0}};
+            auto testNameMutateKernelsGlobalOffset = [](bool globalOffsetKernelFirst, uint32_t *globalOffsets) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Kernels with Global Offset check:" << std::endl;
+                if (globalOffsetKernelFirst) {
+                    testStream << "global offset kernel " << globalOffsets[0]
+                               << " " << globalOffsets[1]
+                               << " " << globalOffsets[2]
+                               << " mutate into copy kernel";
+                } else {
+                    testStream << "copy kernel"
+                               << " mutate into global offset kernel "
+                               << globalOffsets[0]
+                               << " " << globalOffsets[1]
+                               << " " << globalOffsets[2];
+                }
+                testStream << " Test";
+                return testStream.str();
+            };
             for (auto &globalOffsets : globalOffsetValues) {
                 for (auto globalOffsetKernelFirst : globalOffsetKernelFirstValues) {
                     caseName = testNameMutateKernelsGlobalOffset(globalOffsetKernelFirst, globalOffsets.data());
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testMutateKernelsGlobalOffset(env.get(), module, globalOffsets.data(), globalOffsetKernelFirst, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -4326,13 +4160,24 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventTimestamp,
                                                                  MclTests::EventOptions::cbEventSignal,
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
+        auto testNameSameKernelsMutateArgumentsShapesEvents = [](uint32_t *initGroupSize, uint32_t *mutateGroupSize, MclTests::EventOptions eventOptions) -> std::string {
+            std::ostringstream testStream;
+            testStream << "- same kernels, mutate kernel arguments, shapes, events" << std::endl;
+            testStream << "initial group size " << initGroupSize[0]
+                       << " " << initGroupSize[1]
+                       << " " << initGroupSize[2] << std::endl;
+            testStream << "mutate group size " << mutateGroupSize[0]
+                       << " " << mutateGroupSize[1]
+                       << " " << mutateGroupSize[2] << std::endl;
+            MclTests::setEventTestStream(eventOptions, testStream);
+            testStream << " Test";
+            return testStream.str();
+        };
         for (auto &localWorkSizeKernelInitGroupSize : localWorkSizeKernelInitGroupSizeValues) {
             for (auto &localWorkSizeKernelMutateGroupSize : localWorkSizeKernelMutateGroupSizeValues) {
                 for (auto eventOption : eventOptionValues) {
                     caseName = testNameSameKernelsMutateArgumentsShapesEvents(localWorkSizeKernelInitGroupSize.data(), localWorkSizeKernelMutateGroupSize.data(), eventOption);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testSameKernelsMutateArgumentsShapesEvents(env.get(), module, localWorkSizeKernelInitGroupSize.data(), localWorkSizeKernelMutateGroupSize.data(), eventOption, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -4357,14 +4202,46 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventTimestamp,
                                                                  MclTests::EventOptions::cbEventSignal,
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
+        auto testNameDifferentKernelsMutateArgumentsShapesEvents = [](bool globalOffsetFirst, uint32_t *groupCount, uint32_t *globalOffset, MclTests::EventOptions eventOptions) -> std::string {
+            std::ostringstream testStream;
+            auto globalOffsetLambda = [&testStream, &globalOffset]() {
+                testStream << "Global offset with offsets "
+                           << globalOffset[0]
+                           << " " << globalOffset[1]
+                           << " " << globalOffset[2] << std::endl;
+            };
+
+            auto groupCountLambda = [&testStream, &groupCount]() {
+                testStream << "Group count with shape "
+                           << groupCount[0]
+                           << " " << groupCount[1]
+                           << " " << groupCount[2] << std::endl;
+            };
+
+            testStream << "- mutate kernels, kernel arguments, shapes, events" << std::endl;
+            testStream << "First ";
+            if (globalOffsetFirst) {
+                globalOffsetLambda();
+            } else {
+                groupCountLambda();
+            }
+            testStream << "Mutate ";
+            if (globalOffsetFirst) {
+                groupCountLambda();
+            } else {
+                globalOffsetLambda();
+            }
+
+            MclTests::setEventTestStream(eventOptions, testStream);
+            testStream << " Test";
+            return testStream.str();
+        };
         for (auto globalOffsetKernelFirst : globalOffsetKernelFirstValues) {
             for (auto &globalOffsets : globalOffsetValues) {
                 for (auto &gwsGroupCount : gwsGroupCountValues) {
                     for (auto eventOption : eventOptionValues) {
                         caseName = testNameDifferentKernelsMutateArgumentsShapesEvents(globalOffsetKernelFirst, gwsGroupCount.data(), globalOffsets.data(), eventOption);
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testDifferentKernelsMutateArgumentsShapesEvents(env.get(), module, globalOffsetKernelFirst, gwsGroupCount.data(), globalOffsets.data(), eventOption, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -4377,11 +4254,18 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestSingleTask)) {
         std::vector<bool> passGroupCountDescValues = {false, true};
+        auto testNameMutateSingleTaskKernelArgumentsAndKeepGroupCount = [](bool passGroupCountDesc) -> std::string {
+            std::ostringstream testStream;
+            testStream << "Mutate SingleTask arguments:";
+            if (!passGroupCountDesc) {
+                testStream << " do not";
+            }
+            testStream << " pass unchanged group count/size desc";
+            return testStream.str();
+        };
         for (auto passGroupCountDesc : passGroupCountDescValues) {
             caseName = testNameMutateSingleTaskKernelArgumentsAndKeepGroupCount(passGroupCountDesc);
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateSingleTaskKernelArgumentsAndKeepGroupCount(env.get(), module, passGroupCountDesc, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -4403,7 +4287,27 @@ int main(int argc, char *argv[]) {
                 KernelType::globalBarrier,
                 KernelType::globalBarrierMultiplicationGroupCount,
                 KernelType::copy};
+            auto testNameMixingGlobalBarrierKernels = [](const std::string &baseName, KernelType firstKernelType, KernelType mutateKernelType, KernelType mutateBackKernelType) -> std::string {
+                std::ostringstream testStream;
+                auto kernelTypeToString = [](KernelType type) -> std::string {
+                    switch (type) {
+                    case KernelType::copy:
+                        return "copy";
+                    case KernelType::globalBarrier:
+                        return "globalBarrier";
+                    case KernelType::globalBarrierMultiplicationGroupCount:
+                        return "globalBarrierMultiplicationGroupCount";
+                    default:
+                        return "Unknown";
+                    }
+                };
 
+                testStream << "Test is based on: " << baseName << "." << std::endl;
+                testStream << "First Kernel is: " << kernelTypeToString(firstKernelType) << std::endl;
+                testStream << "Mutate Kernel is: " << kernelTypeToString(mutateKernelType) << std::endl;
+                testStream << "Mutate Back Kernel is: " << kernelTypeToString(mutateBackKernelType) << ".";
+                return testStream.str();
+            };
             for (auto firstKernel : firstKernelValues) {
                 for (auto mutateKernel : mutateKernelValues) {
                     for (auto mutateBackKernel : mutateBackKernelValues) {
@@ -4412,9 +4316,7 @@ int main(int argc, char *argv[]) {
                         }
                         const std::string baseName = "Global Barrier";
                         caseName = testNameMixingGlobalBarrierKernels(baseName, firstKernel, mutateKernel, mutateBackKernel);
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testMutateGlobalBarrierKernels(env.get(), module, env->getGlobalBarrierModule(), firstKernel, mutateKernel, mutateBackKernel, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -4440,6 +4342,27 @@ int main(int argc, char *argv[]) {
             KernelType::slmKernelOneArgs,
             KernelType::slmKernelTwoArgs,
             KernelType::copy};
+        auto testNameMixingSlmKernels = [](KernelType firstKernel, KernelType mutateKernel, KernelType mutateBackKernel) -> std::string {
+            std::ostringstream testStream;
+            auto kernelTypeToString = [](KernelType type) -> std::string {
+                switch (type) {
+                case KernelType::copy:
+                    return "copy";
+                case KernelType::slmKernelOneArgs:
+                    return "slmKernelOneArgs";
+                case KernelType::slmKernelTwoArgs:
+                    return "slmKernelTwoArgs";
+                default:
+                    return "Unknown";
+                }
+            };
+
+            testStream << "Mutation of SLM Argument kernels." << std::endl;
+            testStream << "First Kernel is: " << kernelTypeToString(firstKernel) << std::endl;
+            testStream << "Mutate Kernel is: " << kernelTypeToString(mutateKernel) << std::endl;
+            testStream << "Mutate Back Kernel is: " << kernelTypeToString(mutateBackKernel) << ".";
+            return testStream.str();
+        };
         for (auto firstKernel : firstKernelValues) {
             for (auto mutateKernel : mutateKernelValues) {
                 for (auto mutateBackKernel : mutateBackKernelValues) {
@@ -4447,9 +4370,7 @@ int main(int argc, char *argv[]) {
                         continue;
                     }
                     caseName = testNameMixingSlmKernels(firstKernel, mutateKernel, mutateBackKernel);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testMutateSlmKernels(env.get(), module, env->getSlmModule(), firstKernel, mutateKernel, mutateBackKernel, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -4462,10 +4383,21 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberMutateBack)) {
         bool firstMultiple = false;
 
+        auto testNameMutateBackKernel = [](bool firstMultiple) -> std::string {
+            std::ostringstream testStream;
+            std::string firstKernel = firstMultiple ? "multiple scalar" : "add scalar";
+            std::string mutateKernel = firstMultiple ? "add scalar" : "multiple scalar";
+
+            testStream << "Append kernel " << firstKernel;
+            testStream << " mutate it into " << mutateKernel << "." << std::endl;
+            testStream << "Mutate back into " << firstKernel;
+            testStream << " mutate back again into " << mutateKernel;
+            testStream << " Test.";
+            return testStream.str();
+        };
+
         caseName = testNameMutateBackKernel(firstMultiple);
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(caseName);
         caseResult = testMutateBackKernel(env.get(), module, firstMultiple, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
         valid &= caseResult;
@@ -4474,9 +4406,7 @@ int main(int argc, char *argv[]) {
         firstMultiple = true;
 
         caseName = testNameMutateBackKernel(firstMultiple);
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(caseName);
         caseResult = testMutateBackKernel(env.get(), module, firstMultiple, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
         valid &= caseResult;

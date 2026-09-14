@@ -382,7 +382,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestVisitReappendDefaultOp)) {
         currentTest = "Visit Reappend Default Op (MemoryCopy + LaunchKernel)";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         bool casePass = testVisitReappend(visitApi, context, device, module, false, false, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -390,7 +390,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestVisitReappendConcreteVisitors)) {
         currentTest = "Visit Reappend Concrete Visitors (MemoryCopy + LaunchKernel)";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         bool casePass = testVisitReappend(visitApi, context, device, module, true, false, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -398,7 +398,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestVisitReappendDefaultOpProfiling)) {
         currentTest = "Visit Reappend Default Op Profiling (before/after callbacks)";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         bool casePass = testVisitReappend(visitApi, context, device, module, false, true, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -406,7 +406,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestReappendConcreteVisitorsWithProfiling)) {
         currentTest = "Visit Reappend Concrete Visitors with Profiling (MemoryCopy + LaunchKernel)";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         bool casePass = testVisitReappend(visitApi, context, device, module, true, true, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;

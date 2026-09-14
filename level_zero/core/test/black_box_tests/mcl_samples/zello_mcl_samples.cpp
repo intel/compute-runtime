@@ -621,9 +621,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestMemoryVariableKernelArgument)) {
         caseName = "Variable Kernel Argument Test";
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(caseName);
         testCase = variableKernelArgumentTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
@@ -631,9 +629,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestVariableDispatch)) {
         caseName = "Variable Dispatch Test";
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(caseName);
         testCase = variableDispatchTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
@@ -641,9 +637,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestTemporaryVariable)) {
         caseName = "Temporary Variable Test";
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(caseName);
         testCase = temporaryVariableTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
@@ -651,9 +645,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestControlFlowIfStatement)) {
         caseName = "Control Flow If Statement Test";
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(caseName);
         testCase = controlFlowIfStatementTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
@@ -661,9 +653,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestControlFlowWhileLoop)) {
         caseName = "Control Flow While Loop Test";
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(caseName);
         testCase = controlFlowWhileLoopTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
@@ -671,9 +661,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestMemoryVariableMultipleKernelArguments)) {
         caseName = "Variable Multiple Kernel Arguments Test";
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(caseName);
         testCase = variableKernelMultipleArgumentsTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;

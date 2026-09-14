@@ -2293,7 +2293,7 @@ int main(int argc, char *argv[]) {
     std::string currentTest;
     if (testMask.test(bitNumberTestStandardMemoryCopy)) {
         currentTest = "Standard Memory Copy";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testAppendMemoryCopy(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -2301,13 +2301,13 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestStandardMemoryCopyMultigraph)) {
         currentTest = "Standard Memory Copy - multigraph";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testMultiGraph(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
 
         currentTest = "Standard Memory Copy - multigraph post-join trailing synchronization";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testMultiGraphPostJoinTrailingSync(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -2315,7 +2315,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestAppendLaunchKernel)) {
         currentTest = "AppendLaunchKernel";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testAppendLaunchKernel(context, device0, kernelsMap, false, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -2323,7 +2323,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestAppendLaunchKernelIndirect)) {
         currentTest = "AppendLaunchKernelIndirect";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testAppendLaunchKernel(context, device0, kernelsMap, true, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -2331,7 +2331,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestAppendLaunchMultipleKernelsIndirect)) {
         currentTest = "AppendLaunchMultipleKernelsIndirect";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testAppendLaunchMultipleKernelsIndirect(context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -2339,7 +2339,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestMultipleExecution)) {
         currentTest = "Multiple Graph Execution";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testMultipleGraphExecution(context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -2349,7 +2349,7 @@ int main(int argc, char *argv[]) {
         uint32_t executionCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-e", "--execution_count", 3u);
         if (testSubMask.test(0)) {
             currentTest = "External Graph CB Events";
-            std::cout << "Starting test: " << currentTest << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
             casePass = testExternalGraphCbEvents(context, device0, kernelsMap, aubMode, graphDumpSettings);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
@@ -2365,7 +2365,7 @@ int main(int argc, char *argv[]) {
 
             currentTest = getCaseName(executionCount);
 
-            std::cout << "Starting test: " << currentTest << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
             casePass = testExternalGraphCbEventsMultiExecution(context, device0, kernelsMap, executionCount, aubMode, graphDumpSettings);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
@@ -2382,8 +2382,7 @@ int main(int argc, char *argv[]) {
             std::string testTitle = "External Wait CB Events using immediate for input/output";
             currentTest = getCaseNameExternalWaitEvents(testTitle, useCopyEngineForMemoryTransfers);
 
-            std::cout << "Starting test: " << std::endl
-                      << currentTest << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
             casePass = testExternalWaitCbEventsImmediate(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
@@ -2392,8 +2391,7 @@ int main(int argc, char *argv[]) {
             std::string testTitle = "External Wait CB Events using graphs for input/output";
             currentTest = getCaseNameExternalWaitEvents(testTitle, useCopyEngineForMemoryTransfers);
 
-            std::cout << "Starting test:" << std::endl
-                      << currentTest << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
             casePass = testExternalWaitCbEventsGraphs(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
@@ -2409,8 +2407,7 @@ int main(int argc, char *argv[]) {
             };
             currentTest = getCaseNameEmptyExternalWaitEvents(useCopyEngineForMemoryTransfers, executionCount);
 
-            std::cout << "Starting test:" << std::endl
-                      << currentTest << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
             casePass = testEmptyExternalWaitCbEvents(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, executionCount);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
@@ -2428,7 +2425,7 @@ int main(int argc, char *argv[]) {
         };
         bool immediate = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-i", "--immediate");
         currentTest = getCaseName(immediate);
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testMultipleLevelGraph(nullptr, context, device0, kernelsMap, aubMode, graphDumpSettings, immediate, false);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -2457,7 +2454,7 @@ int main(int argc, char *argv[]) {
         for (size_t i = 0; i < reuseValuesSize; i++) {
             bool reuse = reuseValues[i];
             currentTest = getCaseName(reuse);
-            std::cout << "Starting test: " << currentTest << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
             casePass = testMultipleForkJoinsGraph(context, device0, kernelsMap, aubMode, graphDumpSettings, reuse);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
@@ -2476,7 +2473,7 @@ int main(int argc, char *argv[]) {
         };
 
         currentTest = getCaseName(executionCount);
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testForkedGraphMultipleExecutionEventSync(context, device0, kernelsMap, aubMode, graphDumpSettings, executionCount);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -2510,7 +2507,7 @@ int main(int argc, char *argv[]) {
             for (size_t i = 0; i < forkPolicyValuesSize; i++) {
                 auto currentForkPolicy = forkPolicyValues[i];
                 currentTest = getCaseName(engineCount, pairCount, currentForkPolicy);
-                std::cout << "Starting test: " << currentTest << std::endl;
+                LevelZeroBlackBoxTests::printTestHeader(currentTest);
                 casePass = testWrappedMultipleEngines(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount, pairCount, currentForkPolicy);
                 LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
                 boxPass &= casePass;
@@ -2526,7 +2523,7 @@ int main(int argc, char *argv[]) {
             };
 
             currentTest = getCaseName(engineCount);
-            std::cout << "Starting test: " << currentTest << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
             casePass = testSingleWrappedEngineDeepFork(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
@@ -2535,7 +2532,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestCopyEngineSimpleGraph)) {
         currentTest = "Copy Engine Simple Graph";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testCopyEngineSimpleGraph(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
@@ -2543,7 +2540,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestVisitGraph)) {
         currentTest = "Visit Graph";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         auto &visitApi = LevelZeroBlackBoxTests::VisitExtension::loadVisitApi(driverHandle);
         if (!visitApi.valid()) {
             std::cout << "Visit extension API is not available, skipping test" << std::endl;
@@ -2556,7 +2553,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestPauseResume)) {
         currentTest = "Pause Resume Graph Capture";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testPauseResumeCapture(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;

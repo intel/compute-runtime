@@ -155,16 +155,6 @@ struct TestValues {
 constexpr uint32_t maxEvents = 3;
 using WaitEventMask = std::bitset<maxEvents>;
 
-std::string testNameMultiExecutionMutatedCbEvents(MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Signal and Wait CB Event and execute command list multiple times";
-    testStream << "." << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-
-    return testStream.str();
-}
-
 bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_handle_t module, MclTests::EventOptions eventOptions, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 64;
@@ -890,20 +880,6 @@ bool testMixedOffsetMemoryArgumentGlobalSize3DNonPow2(MclTests::ExecEnv *execEnv
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     execEnv->destroyKernelHandle(addKernelLinear);
     return valid;
-}
-
-std::string testNameMutateSignalAndWaitEventsAndRemoveOldEvent(MclTests::EventOptions eventOptions, bool anotherPool) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Signal Event and Wait Event from ";
-    if (anotherPool) {
-        testStream << "another ";
-    } else {
-        testStream << "the same ";
-    }
-    testStream << "pool and remove old event case." << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-    return testStream.str();
 }
 
 bool testMutateSignalAndWaitEventsAndRemoveOldEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module, MclTests::EventOptions eventOptions, bool anotherPool, bool aubMode) {
@@ -1930,23 +1906,6 @@ bool testExternalMemoryCbWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_
     return valid;
 }
 
-std::string testNameMixedWaitEvent(MclTests::EventOptions eventOptions, uint32_t sourceIndex, bool srcCmdListInOrder) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Mixed Wait Event case on In Order Command List";
-    testStream << "." << std::endl;
-    testStream << "Source command list is";
-    if (!srcCmdListInOrder) {
-        testStream << " not";
-    }
-    testStream << " in order type." << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-    testStream << "." << std::endl;
-    testStream << "Source index " << sourceIndex;
-
-    return testStream.str();
-}
-
 bool testMixedWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
                         MclTests::EventOptions eventOptions,
                         uint32_t sourceIndex, bool srcCmdListInOrder,
@@ -2125,18 +2084,6 @@ bool testMixedWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     MclTests::destroyEventPool(eventPool, eventOptions);
 
     return valid;
-}
-
-std::string testNameCbWaitEventMutateNoopMutateBack(MclTests::EventOptions eventOptions, uint32_t baseIndex, uint32_t mutateIndex) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Noop Mutate Back CB Wait Event case";
-    testStream << "." << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-    testStream << "." << std::endl;
-    testStream << "Base index " << baseIndex << " mutable index " << mutateIndex;
-
-    return testStream.str();
 }
 
 bool testCbWaitEventMutateNoopMutateBack(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
@@ -2428,17 +2375,6 @@ bool testCbWaitEventMutateNoopMutateBack(MclTests::ExecEnv *execEnv, ze_module_h
     return valid;
 }
 
-std::string testNameMutateNoopWaitEvent(MclTests::EventOptions eventOptions, WaitEventMask &bitMask) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Noop Wait Event case. ";
-    MclTests::setEventTestStream(eventOptions, testStream);
-    testStream << "." << std::endl;
-    testStream << "Mutated events count " << bitMask.count() << " event to noop mutate " << bitMask;
-
-    return testStream.str();
-}
-
 bool testMutateNoopWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
                              MclTests::EventOptions eventOptions, WaitEventMask &bitMask,
                              bool aubMode) {
@@ -2609,39 +2545,6 @@ bool testMutateNoopWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t modu
     MclTests::destroyEventPool(eventPool2, eventOptions);
 
     return validate;
-}
-
-std::string testNameMutateWaitEvent(bool mutateFirst, bool mutateSecond, bool useDifferentEventPoolFirst, bool useDifferentEventPoolSecond, MclTests::EventOptions eventOptions, WaitEventMask &eventMask) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Wait Event case";
-
-    testStream << std::endl;
-    testStream << (mutateFirst ? "mutate first" : "immutable first");
-    if (mutateFirst) {
-        if (useDifferentEventPoolFirst) {
-            testStream << " from different pool";
-        } else {
-            testStream << " from same pool";
-        }
-    }
-
-    testStream << std::endl;
-    testStream << (mutateSecond ? "mutate second" : "immutable second");
-    if (mutateSecond) {
-        if (useDifferentEventPoolSecond) {
-            testStream << " from different pool";
-        } else {
-            testStream << " from same pool";
-        }
-    }
-    testStream << "." << std::endl;
-
-    MclTests::setEventTestStream(eventOptions, testStream);
-    testStream << "." << std::endl;
-    testStream << "Mutated events count " << eventMask.count() << " event to mutate " << eventMask;
-
-    return testStream.str();
 }
 
 bool testMutateWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
@@ -2842,14 +2745,6 @@ bool testMutateWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     return validate;
 }
 
-std::string testNameMutateSignalEventMutateOriginalBack(MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-    testStream << "Mutate Original Signal Event back case ";
-
-    MclTests::setEventTestStream(eventOptions, testStream);
-    return testStream.str();
-}
-
 bool testMutateSignalEventMutateOriginalBack(MclTests::ExecEnv *execEnv, ze_module_handle_t module, MclTests::EventOptions eventOptions, bool aubMode) {
     constexpr size_t allocSize = 128;
 
@@ -2969,36 +2864,6 @@ bool testMutateSignalEventMutateOriginalBack(MclTests::ExecEnv *execEnv, ze_modu
     MclTests::destroyEventPool(eventPool, eventOptions);
 
     return validate;
-}
-
-std::string testNameMutateSignalEvent(bool mutateFirst, bool mutateSecond, bool useDifferentEventPoolFirst, bool useDifferentEventPoolSecond, MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Signal Event case";
-
-    testStream << std::endl;
-    testStream << (mutateFirst ? "mutate first" : "immutable first");
-    if (mutateFirst) {
-        if (useDifferentEventPoolFirst) {
-            testStream << " from different pool";
-        } else {
-            testStream << " from same pool";
-        }
-    }
-
-    testStream << std::endl;
-    testStream << (mutateSecond ? "mutate second" : "immutable second");
-    if (mutateSecond) {
-        if (useDifferentEventPoolSecond) {
-            testStream << " from different pool";
-        } else {
-            testStream << " from same pool";
-        }
-    }
-    testStream << "." << std::endl;
-
-    MclTests::setEventTestStream(eventOptions, testStream);
-    return testStream.str();
 }
 
 bool testMutateSignalEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
@@ -3153,13 +3018,6 @@ bool testMutateSignalEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module
     }
 
     return validate;
-}
-
-std::string testNameMutateSignalEventOnInOrderCommandList(MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-    testStream << "Mutate Signal Event case on In Order Command List" << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-    return testStream.str();
 }
 
 bool testMutateSignalEventOnInOrderCommandList(MclTests::ExecEnv *execEnv, ze_module_handle_t module, MclTests::EventOptions eventOptions, bool aubMode) {
@@ -3519,32 +3377,6 @@ bool testResetCmdlistAndMutateScalarArgument(MclTests::ExecEnv *execEnv, ze_modu
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(sharedCmdList));
     execEnv->destroyKernelHandle(mulKernel);
     return valid;
-}
-
-std::string testNameMutateComplexStructurePassedAsImmediate(bool conditionalAdd, bool conditionalMul, uint32_t variant, bool includeAdd) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Complex Structure Passed As Immediate. Struct variant: " << variant << ", include add: " << std::boolalpha << includeAdd;
-    testStream << std::endl;
-
-    auto streamCaseString = [&testStream](bool conditional, bool mul) {
-        const std::string opStr = mul ? "mul" : "add";
-        if (conditional) {
-            testStream << "Execute ";
-        } else {
-            testStream << "Noop ";
-        }
-        testStream << opStr;
-        testStream << " before mutation. Opposite after mutation.";
-    };
-
-    streamCaseString(conditionalMul, true);
-    if (includeAdd) {
-        testStream << std::endl;
-        streamCaseString(conditionalAdd, false);
-    }
-
-    return testStream.str();
 }
 
 using ComplexStructureType = uint64_t;
@@ -4090,15 +3922,6 @@ bool testMutateMultipleMemoryArguments(MclTests::ExecEnv *execEnv, ze_module_han
     return valid;
 }
 
-std::string testNameMutateMemoryAndImmediateArgumentsSignalAndWaitEvents(MclTests::EventOptions eventOptions) {
-    std::ostringstream testStream;
-
-    testStream << "Mutate Kernel Arguments (memory and immediate), Signal Event and Wait Event case";
-    testStream << "." << std::endl;
-    MclTests::setEventTestStream(eventOptions, testStream);
-    return testStream.str();
-}
-
 bool testMutateMemoryAndImmediateArgumentsSignalAndWaitEvents(MclTests::ExecEnv *execEnv, ze_module_handle_t module, MclTests::EventOptions eventOptions, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 64;
@@ -4288,18 +4111,6 @@ bool testMutateMemoryAndImmediateArgumentsSignalAndWaitEvents(MclTests::ExecEnv 
     }
     MclTests::destroyEventPool(eventPool, eventOptions);
     return valid;
-}
-
-std::string testNameMutateMixedSignalEventOnCommandList(bool useTimestamp, bool useFirstSignal, bool inOrder) {
-    std::ostringstream testStream;
-    testStream << "Append and mutate mixed signal scope Signal Events on ";
-    testStream << (inOrder ? "In Order" : "Out of Order");
-    testStream << " Command List " << std::endl;
-
-    testStream << (useTimestamp ? "" : "No ");
-    testStream << "Timestamp Event is used. ";
-    testStream << "Signal scope event is " << (useFirstSignal ? "first" : "second") << " in sequence.";
-    return testStream.str();
 }
 
 bool testMutateMixedSignalEventOnCommandList(MclTests::ExecEnv *execEnv, ze_module_handle_t module, bool useTimestamp, bool useFirstSignal, bool inOrder, bool aubMode) {
@@ -5100,19 +4911,6 @@ bool testProfileAppendOperationsUsingTsEvents(MclTests::ExecEnv *execEnv, ze_mod
     return valid;
 }
 
-std::string testNameMutateSlmArgumentKernel(uint32_t firstGroupSize, uint32_t mutateGroupSize, uint32_t groupCount, bool kernelOneArg) {
-    std::ostringstream testStream;
-
-    std::string kernelName = kernelOneArg ? "slmKernelOneArg" : "slmKernelTwoArgs";
-
-    testStream << "Mutate Slm Argument Kernel using kernel: " << kernelName << std::endl;
-
-    testStream << "First Group Size: " << firstGroupSize << std::endl;
-    testStream << "Mutate Group Size: " << mutateGroupSize << std::endl;
-    testStream << "Group Count: " << groupCount;
-    return testStream.str();
-}
-
 bool testMutateSlmArgumentKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t slmModule, uint32_t firstGroupSize, uint32_t mutateGroupSize, uint32_t groupCount, bool kernelOneArg, bool aubMode) {
     using ElemType = uint32_t;
     constexpr size_t elemSize = 128;
@@ -5721,18 +5519,14 @@ int main(int argc, char *argv[]) {
             ze_command_list_handle_t sharedCmdList;
 
             caseName = "Mutate Memory Kernel Argument Test";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateMemoryArgument(env.get(), module, sharedCmdList, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
             MclTests::addFailedCase(caseResult, caseName, bitNumberTestKernelArgument);
 
             caseName = "Reset Command List and Mutate Scalar Kernel Argument Test";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testResetCmdlistAndMutateScalarArgument(env.get(), module, sharedCmdList, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5741,18 +5535,14 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(1)) {
             caseName = "Mutate Multiple Memory Kernel Arguments - First Append Immutable Test";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateMultipleMemoryArguments(env.get(), module, true, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
             MclTests::addFailedCase(caseResult, caseName, bitNumberTestKernelArgument);
 
             caseName = "Mutate Multiple Memory Kernel Arguments - First Append Mutable Test";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateMultipleMemoryArguments(env.get(), module, false, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5761,9 +5551,7 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(2)) {
             caseName = "Mutate Offset Memory Kernel Argument";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testOffsetMemoryArgument(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5772,9 +5560,7 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(3)) {
             caseName = "Mutate Freed Memory Kernel Argument";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateAfterFreedMemoryArgument(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5794,6 +5580,34 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEvent,
                                                                  MclTests::EventOptions::cbEventTimestamp};
         if (testSubMask.test(0)) {
+            auto testNameMutateSignalEvent = [](bool mutateFirst, bool mutateSecond, bool useDifferentEventPoolFirst, bool useDifferentEventPoolSecond, MclTests::EventOptions eventOptions) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Signal Event case";
+
+                testStream << std::endl;
+                testStream << (mutateFirst ? "mutate first" : "immutable first");
+                if (mutateFirst) {
+                    if (useDifferentEventPoolFirst) {
+                        testStream << " from different pool";
+                    } else {
+                        testStream << " from same pool";
+                    }
+                }
+
+                testStream << std::endl;
+                testStream << (mutateSecond ? "mutate second" : "immutable second");
+                if (mutateSecond) {
+                    if (useDifferentEventPoolSecond) {
+                        testStream << " from different pool";
+                    } else {
+                        testStream << " from same pool";
+                    }
+                }
+                testStream << "." << std::endl;
+
+                MclTests::setEventTestStream(eventOptions, testStream);
+                return testStream.str();
+            };
             for (auto mutateFirst : mutateFirstValues) {
                 for (auto mutateSecond : mutateSecondValues) {
                     if (!mutateFirst && !mutateSecond) {
@@ -5811,9 +5625,7 @@ int main(int argc, char *argv[]) {
                                 caseName = testNameMutateSignalEvent(mutateFirst, mutateSecond,
                                                                      useDifferentPoolFirstKernel, useDifferentPoolSecondKernel,
                                                                      eventOption);
-                                std::cout << std::endl
-                                          << "Starting test case: " << caseName
-                                          << std::endl;
+                                LevelZeroBlackBoxTests::printTestHeader(caseName);
                                 caseResult = testMutateSignalEvent(env.get(), module,
                                                                    mutateFirst, mutateSecond,
                                                                    useDifferentPoolFirstKernel, useDifferentPoolSecondKernel,
@@ -5830,11 +5642,16 @@ int main(int argc, char *argv[]) {
         }
 
         if (testSubMask.test(1)) {
+            auto testNameMutateSignalEventMutateOriginalBack = [](MclTests::EventOptions eventOptions) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Original Signal Event back case ";
+
+                MclTests::setEventTestStream(eventOptions, testStream);
+                return testStream.str();
+            };
             for (auto eventOption : eventOptionValues) {
                 caseName = testNameMutateSignalEventMutateOriginalBack(eventOption);
-                std::cout << std::endl
-                          << "Starting test case: " << caseName
-                          << std::endl;
+                LevelZeroBlackBoxTests::printTestHeader(caseName);
                 caseResult = testMutateSignalEventMutateOriginalBack(env.get(), module,
                                                                      eventOption,
                                                                      aubMode);
@@ -5848,13 +5665,22 @@ int main(int argc, char *argv[]) {
             std::vector<bool> useTimestampValues = {false, true};
             std::vector<bool> useFirstSignalValues = {false, true};
             std::vector<bool> useInOrderValues = {false, true};
+            auto testNameMutateMixedSignalEventOnCommandList = [](bool useTimestamp, bool useFirstSignal, bool inOrder) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Append and mutate mixed signal scope Signal Events on ";
+                testStream << (inOrder ? "In Order" : "Out of Order");
+                testStream << " Command List " << std::endl;
+
+                testStream << (useTimestamp ? "" : "No ");
+                testStream << "Timestamp Event is used. ";
+                testStream << "Signal scope event is " << (useFirstSignal ? "first" : "second") << " in sequence.";
+                return testStream.str();
+            };
             for (auto useInOrder : useInOrderValues) {
                 for (auto useTimestamp : useTimestampValues) {
                     for (auto useFirstSignal : useFirstSignalValues) {
                         caseName = testNameMutateMixedSignalEventOnCommandList(useTimestamp, useFirstSignal, useInOrder);
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testMutateMixedSignalEventOnCommandList(env.get(), module, useTimestamp, useFirstSignal, useInOrder, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -5876,6 +5702,36 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::signalEventTimestamp};
         std::vector<uint32_t> &eventMaskValues = valuesForTests.getWaitEventMask();
         if (testSubMask.test(0)) {
+            auto testNameMutateWaitEvent = [](bool mutateFirst, bool mutateSecond, bool useDifferentEventPoolFirst, bool useDifferentEventPoolSecond, MclTests::EventOptions eventOptions, WaitEventMask &eventMask) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Wait Event case";
+
+                testStream << std::endl;
+                testStream << (mutateFirst ? "mutate first" : "immutable first");
+                if (mutateFirst) {
+                    if (useDifferentEventPoolFirst) {
+                        testStream << " from different pool";
+                    } else {
+                        testStream << " from same pool";
+                    }
+                }
+
+                testStream << std::endl;
+                testStream << (mutateSecond ? "mutate second" : "immutable second");
+                if (mutateSecond) {
+                    if (useDifferentEventPoolSecond) {
+                        testStream << " from different pool";
+                    } else {
+                        testStream << " from same pool";
+                    }
+                }
+                testStream << "." << std::endl;
+
+                MclTests::setEventTestStream(eventOptions, testStream);
+                testStream << "." << std::endl;
+                testStream << "Mutated events count " << eventMask.count() << " event to mutate " << eventMask;
+                return testStream.str();
+            };
             for (auto mutateFirst : mutateFirstValues) {
                 for (auto mutateSecond : mutateSecondValues) {
                     if (!mutateFirst && !mutateSecond) {
@@ -5895,9 +5751,7 @@ int main(int argc, char *argv[]) {
                                     caseName = testNameMutateWaitEvent(mutateFirst, mutateSecond,
                                                                        useDifferentPoolFirstKernel, useDifferentPoolSecondKernel,
                                                                        eventOption, bitMask);
-                                    std::cout << std::endl
-                                              << "Starting test case: " << caseName
-                                              << std::endl;
+                                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                                     caseResult = testMutateWaitEvent(env.get(), module, mutateFirst, mutateSecond,
                                                                      useDifferentPoolFirstKernel, useDifferentPoolSecondKernel,
                                                                      eventOption, bitMask,
@@ -5914,13 +5768,19 @@ int main(int argc, char *argv[]) {
         }
 
         if (testSubMask.test(1)) {
+            auto testNameMutateNoopWaitEvent = [](MclTests::EventOptions eventOptions, WaitEventMask &bitMask) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Noop Wait Event case. ";
+                MclTests::setEventTestStream(eventOptions, testStream);
+                testStream << "." << std::endl;
+                testStream << "Mutated events count " << bitMask.count() << " event to noop mutate " << bitMask;
+                return testStream.str();
+            };
             for (auto eventOption : eventOptionValues) {
                 for (auto eventMask : eventMaskValues) {
                     WaitEventMask bitMask(eventMask);
                     caseName = testNameMutateNoopWaitEvent(eventOption, bitMask);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testMutateNoopWaitEvent(env.get(), module,
                                                          eventOption, bitMask,
                                                          aubMode);
@@ -5938,11 +5798,16 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::signalEvent,
                                                                  MclTests::EventOptions::signalEventTimestamp};
         if (testSubMask.test(0)) {
+            auto testNameMutateMemoryAndImmediateArgumentsSignalAndWaitEvents = [](MclTests::EventOptions eventOptions) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Kernel Arguments (memory and immediate), Signal Event and Wait Event case";
+                testStream << "." << std::endl;
+                MclTests::setEventTestStream(eventOptions, testStream);
+                return testStream.str();
+            };
             for (auto eventOption : eventOptionValues) {
                 caseName = testNameMutateMemoryAndImmediateArgumentsSignalAndWaitEvents(eventOption);
-                std::cout << std::endl
-                          << "Starting test case: " << caseName
-                          << std::endl;
+                LevelZeroBlackBoxTests::printTestHeader(caseName);
                 caseResult = testMutateMemoryAndImmediateArgumentsSignalAndWaitEvents(env.get(), module, eventOption, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 MclTests::addFailedCase(caseResult, caseName, bitNumberTestMutateKernelArgumentsAndEvents);
@@ -5958,12 +5823,22 @@ int main(int argc, char *argv[]) {
         eventOptionValues.insert(eventOptionValues.end(), eventOptionCbEvents.begin(), eventOptionCbEvents.end());
 
         if (testSubMask.test(1)) {
+            auto testNameMutateSignalAndWaitEventsAndRemoveOldEvent = [](MclTests::EventOptions eventOptions, bool anotherPool) -> std::string {
+                std::ostringstream testStream;
+                testStream << "Mutate Signal Event and Wait Event from ";
+                if (anotherPool) {
+                    testStream << "another ";
+                } else {
+                    testStream << "the same ";
+                }
+                testStream << "pool and remove old event case." << std::endl;
+                MclTests::setEventTestStream(eventOptions, testStream);
+                return testStream.str();
+            };
             for (auto eventOption : eventOptionValues) {
                 for (auto useAnotherPool : useAnotherPoolValues) {
                     caseName = testNameMutateSignalAndWaitEventsAndRemoveOldEvent(eventOption, useAnotherPool);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testMutateSignalAndWaitEventsAndRemoveOldEvent(env.get(), module, eventOption, useAnotherPool, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -5982,11 +5857,15 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventTimestamp,
                                                                  MclTests::EventOptions::cbEventSignal,
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
+        auto testNameMutateSignalEventOnInOrderCommandList = [](MclTests::EventOptions eventOptions) -> std::string {
+            std::ostringstream testStream;
+            testStream << "Mutate Signal Event case on In Order Command List" << std::endl;
+            MclTests::setEventTestStream(eventOptions, testStream);
+            return testStream.str();
+        };
         for (auto eventOption : eventOptionValues) {
             caseName = testNameMutateSignalEventOnInOrderCommandList(eventOption);
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateSignalEventOnInOrderCommandList(env.get(), module, eventOption, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5999,6 +5878,15 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventTimestamp};
         std::vector<uint32_t> &baseIndexValues = valuesForTests.getBaseIndexValues();
         std::vector<uint32_t> &mutableIndexValues = valuesForTests.getMutableIndexValues();
+        auto testNameCbWaitEventMutateNoopMutateBack = [](MclTests::EventOptions eventOptions, uint32_t baseIndex, uint32_t mutateIndex) -> std::string {
+            std::ostringstream testStream;
+            testStream << "Mutate Noop Mutate Back CB Wait Event case";
+            testStream << "." << std::endl;
+            MclTests::setEventTestStream(eventOptions, testStream);
+            testStream << "." << std::endl;
+            testStream << "Base index " << baseIndex << " mutable index " << mutateIndex;
+            return testStream.str();
+        };
         for (auto baseIndex : baseIndexValues) {
             for (auto mutableIndex : mutableIndexValues) {
                 if (baseIndex == mutableIndex) {
@@ -6006,9 +5894,7 @@ int main(int argc, char *argv[]) {
                 }
                 for (auto eventOption : eventOptionValues) {
                     caseName = testNameCbWaitEventMutateNoopMutateBack(eventOption, baseIndex, mutableIndex);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testCbWaitEventMutateNoopMutateBack(env.get(), module, eventOption, baseIndex, mutableIndex, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6030,6 +5916,21 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventSignal,
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
 
+        auto testNameMixedWaitEvent = [](MclTests::EventOptions eventOptions, uint32_t sourceIndex, bool srcCmdListInOrder) -> std::string {
+            std::ostringstream testStream;
+            testStream << "Mutate Mixed Wait Event case on In Order Command List";
+            testStream << "." << std::endl;
+            testStream << "Source command list is";
+            if (!srcCmdListInOrder) {
+                testStream << " not";
+            }
+            testStream << " in order type." << std::endl;
+            MclTests::setEventTestStream(eventOptions, testStream);
+            testStream << "." << std::endl;
+            testStream << "Source index " << sourceIndex;
+            return testStream.str();
+        };
+
         for (auto srcCmdListInOrder : srcCmdListInOrderValues) {
             for (auto eventOption : eventOptionValues) {
                 // cb events are allowed only on in-order command lists
@@ -6038,9 +5939,7 @@ int main(int argc, char *argv[]) {
                 }
                 for (auto sourceIndex : sourceIndexValues) {
                     caseName = testNameMixedWaitEvent(eventOption, sourceIndex, srcCmdListInOrder);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testMixedWaitEvent(env.get(), module, eventOption, sourceIndex, srcCmdListInOrder, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6053,9 +5952,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestCbWaitEventExternalMemory)) {
         if (env->getCbEventExtensionPresent()) {
             caseName = "External Memory CB wait events mutation";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testExternalMemoryCbWaitEvent(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6067,9 +5964,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestGroupCount)) {
         caseName = "Group count mutation - copy kernel";
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(caseName);
         caseResult = testGroupCountCopy(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
         valid &= caseResult;
@@ -6091,9 +5986,7 @@ int main(int argc, char *argv[]) {
                     testStream << "Group count mutation - bif kernel - group count: " << groupCountData[0] << " " << groupCountData[1] << " " << groupCountData[2];
 
                     caseName = testStream.str();
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testGroupCountBif(env.get(), module, groupCountData.data(), aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6126,9 +6019,7 @@ int main(int argc, char *argv[]) {
                             std::cerr << "Skipping case: " << caseName << std::endl;
                             continue;
                         }
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testGroupSizeBif(env.get(), module, groupSizeData.data(), aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6162,9 +6053,7 @@ int main(int argc, char *argv[]) {
                             std::cerr << "Skipping case: " << caseName << std::endl;
                             continue;
                         }
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testGroupSizeBif(env.get(), module, groupSizeData.data(), aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6176,38 +6065,38 @@ int main(int argc, char *argv[]) {
     }
 
     if (testMask.test(bitNumberTestGlobalOffset)) {
-        caseName = "Global offset mutation - copy kernel";
-        std::cout << std::endl
-                  << "Starting test case: " << caseName
-                  << std::endl;
-        caseResult = testGlobalOffsetCopy(env.get(), module, aubMode);
-        LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
-        valid &= caseResult;
+        if (testSubMask.test(0)) {
+            caseName = "Global offset mutation - copy kernel";
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
+            caseResult = testGlobalOffsetCopy(env.get(), module, aubMode);
+            LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
+            valid &= caseResult;
+        }
 
-        std::vector<uint32_t> offsetData(3);
+        if (testSubMask.test(1)) {
+            std::vector<uint32_t> offsetData(3);
 
-        std::vector<uint32_t> offsetXValues = {1, 2};
-        std::vector<uint32_t> offsetYValues = {1, 2, 3};
-        std::vector<uint32_t> offsetZValues = {2, 3};
+            std::vector<uint32_t> offsetXValues = {1, 2};
+            std::vector<uint32_t> offsetYValues = {1, 2, 3};
+            std::vector<uint32_t> offsetZValues = {2, 3};
 
-        for (auto offsetX : offsetXValues) {
-            for (auto offsetY : offsetYValues) {
-                for (auto offsetZ : offsetZValues) {
-                    offsetData[0] = offsetX;
-                    offsetData[1] = offsetY;
-                    offsetData[2] = offsetZ;
+            for (auto offsetX : offsetXValues) {
+                for (auto offsetY : offsetYValues) {
+                    for (auto offsetZ : offsetZValues) {
+                        offsetData[0] = offsetX;
+                        offsetData[1] = offsetY;
+                        offsetData[2] = offsetZ;
 
-                    std::ostringstream testStream;
-                    testStream << "Global offset mutation - bif kernel - offset size: " << offsetData[0] << " " << offsetData[1] << " " << offsetData[2];
+                        std::ostringstream testStream;
+                        testStream << "Global offset mutation - bif kernel - offset size: " << offsetData[0] << " " << offsetData[1] << " " << offsetData[2];
 
-                    caseName = testStream.str();
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
-                    caseResult = testGlobalOffsetBif(env.get(), module, offsetData.data(), aubMode);
-                    LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
-                    valid &= caseResult;
-                    MclTests::addFailedCase(caseResult, caseName, bitNumberTestGlobalOffset);
+                        caseName = testStream.str();
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
+                        caseResult = testGlobalOffsetBif(env.get(), module, offsetData.data(), aubMode);
+                        LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
+                        valid &= caseResult;
+                        MclTests::addFailedCase(caseResult, caseName, bitNumberTestGlobalOffset);
+                    }
                 }
             }
         }
@@ -6216,9 +6105,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestMixedTests)) {
         if (testSubMask.test(0)) {
             caseName = "Mixed Offset Arguments and Global Size 3D non-power of 2 mutation";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMixedOffsetMemoryArgumentGlobalSize3DNonPow2(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6227,9 +6114,7 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(1)) {
             caseName = "Set buffer argument to null and then make argument mutation";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testSetNullPtrThenMutateToBuffer(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6238,9 +6123,7 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(2)) {
             caseName = "Mutate group size dimensions, remain total group size constant";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testGroupSizeDimensionsTotalConstant(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6249,18 +6132,14 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(3)) {
             caseName = "Mutate kernel argument from buffer to null and back to buffer";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateBufferToNullAndBack(env.get(), module, aubMode, false);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
             MclTests::addFailedCase(caseResult, caseName, bitNumberTestMixedTests);
 
             caseName = "Mutate kernel argument from null to buffer and back to null";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateBufferToNullAndBack(env.get(), module, aubMode, true);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6273,11 +6152,16 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventTimestamp,
                                                                  MclTests::EventOptions::cbEventSignal,
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
+        auto testNameMultiExecutionMutatedCbEvents = [](MclTests::EventOptions eventOptions) -> std::string {
+            std::ostringstream testStream;
+            testStream << "Mutate Signal and Wait CB Event and execute command list multiple times";
+            testStream << "." << std::endl;
+            MclTests::setEventTestStream(eventOptions, testStream);
+            return testStream.str();
+        };
         for (auto eventOption : eventOptionValues) {
             caseName = testNameMultiExecutionMutatedCbEvents(eventOption);
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMultiExecutionMutatedCbEvents(env.get(), module, eventOption, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6288,14 +6172,35 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestComplexStructurePassedAsImmediate)) {
         std::vector<bool> conditionalMulValues = {true, false};
         std::vector<bool> conditionalAddValues = {true, false};
+        auto testNameMutateComplexStructurePassedAsImmediate = [](bool conditionalAdd, bool conditionalMul, uint32_t variant, bool includeAdd) -> std::string {
+            std::ostringstream testStream;
+            testStream << "Mutate Complex Structure Passed As Immediate. Struct variant: " << variant << ", include add: " << std::boolalpha << includeAdd;
+            testStream << std::endl;
+
+            auto streamCaseString = [&testStream](bool conditional, bool mul) {
+                const std::string opStr = mul ? "mul" : "add";
+                if (conditional) {
+                    testStream << "Execute ";
+                } else {
+                    testStream << "Noop ";
+                }
+                testStream << opStr;
+                testStream << " before mutation. Opposite after mutation.";
+            };
+
+            streamCaseString(conditionalMul, true);
+            if (includeAdd) {
+                testStream << std::endl;
+                streamCaseString(conditionalAdd, false);
+            }
+            return testStream.str();
+        };
         for (auto conditionalMul : conditionalMulValues) {
             for (auto conditionalAdd : conditionalAddValues) {
 
                 if (testSubMask.test(0)) {
                     caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 1, true);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalCalculations1, 1, true>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6304,9 +6209,7 @@ int main(int argc, char *argv[]) {
 
                 if (testSubMask.test(1)) {
                     caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 2, true);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalCalculations2, 2, true>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6315,9 +6218,7 @@ int main(int argc, char *argv[]) {
 
                 if (testSubMask.test(2)) {
                     caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 3, true);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalCalculations3, 3, true>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6326,9 +6227,7 @@ int main(int argc, char *argv[]) {
 
                 if (testSubMask.test(3)) {
                     caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 4, true);
-                    std::cout << std::endl
-                              << "Starting test case: " << caseName
-                              << std::endl;
+                    LevelZeroBlackBoxTests::printTestHeader(caseName);
                     caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalCalculations4, 4, true>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6338,9 +6237,7 @@ int main(int argc, char *argv[]) {
                 if (!conditionalAdd) {
                     if (testSubMask.test(4)) {
                         caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 1, false);
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalMulCalculations1, 1, false>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6349,9 +6246,7 @@ int main(int argc, char *argv[]) {
 
                     if (testSubMask.test(5)) {
                         caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 2, false);
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalMulCalculations2, 2, false>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6366,6 +6261,18 @@ int main(int argc, char *argv[]) {
         std::vector<uint32_t> groupSizeValues = {1, 16, 32, 64};
         std::vector<uint32_t> groupCountValues = {1, 2};
 
+        auto testNameMutateSlmArgumentKernel = [](uint32_t firstGroupSize, uint32_t mutateGroupSize, uint32_t groupCount, bool kernelOneArg) -> std::string {
+            std::ostringstream testStream;
+            std::string kernelName = kernelOneArg ? "slmKernelOneArg" : "slmKernelTwoArgs";
+
+            testStream << "Mutate Slm Argument Kernel using kernel: " << kernelName << std::endl;
+
+            testStream << "First Group Size: " << firstGroupSize << std::endl;
+            testStream << "Mutate Group Size: " << mutateGroupSize << std::endl;
+            testStream << "Group Count: " << groupCount;
+            return testStream.str();
+        };
+
         if (testSubMask.test(0)) {
             constexpr bool kernelOneArg = true;
             for (auto firstGroupSize : groupSizeValues) {
@@ -6375,9 +6282,7 @@ int main(int argc, char *argv[]) {
                     }
                     for (auto groupCount : groupCountValues) {
                         caseName = testNameMutateSlmArgumentKernel(firstGroupSize, mutateGroupSize, groupCount, kernelOneArg);
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testMutateSlmArgumentKernel(env.get(), env->getSlmModule(), firstGroupSize, mutateGroupSize, groupCount, kernelOneArg, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6395,9 +6300,7 @@ int main(int argc, char *argv[]) {
                     }
                     for (auto groupCount : groupCountValues) {
                         caseName = testNameMutateSlmArgumentKernel(firstGroupSize, mutateGroupSize, groupCount, kernelOneArg);
-                        std::cout << std::endl
-                                  << "Starting test case: " << caseName
-                                  << std::endl;
+                        LevelZeroBlackBoxTests::printTestHeader(caseName);
                         caseResult = testMutateSlmArgumentKernel(env.get(), env->getSlmModule(), firstGroupSize, mutateGroupSize, groupCount, kernelOneArg, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6411,9 +6314,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestCbSignalIncrementEvent)) {
         if (env->getCbEventExtensionPresent()) {
             caseName = "Signal external increment CB Event";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testSignalExternalIncrementCbEvent(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6426,9 +6327,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestExperimental)) {
         if (testSubMask.test(0)) {
             caseName = "Simple SLM kernel";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testSimpleSlm(env.get(), aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6437,9 +6336,7 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(1)) {
             caseName = "Sync via Event and Mutate Shared Memory Kernel Arg";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testMutateKernelArgSharedMemoryAndEventSync(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6450,9 +6347,7 @@ int main(int argc, char *argv[]) {
             constexpr uint32_t defaultAppendCount = 4335;
             uint32_t appendCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-ac", "-appendCount", defaultAppendCount);
             caseName = "Immediate Command List Execution of MCL";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testImmediateCmdListExecuteMcl(env.get(), aubMode, appendCount);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6461,9 +6356,7 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(3)) {
             caseName = "Profile append operations using timestamp events";
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testProfileAppendOperationsUsingTsEvents(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6490,9 +6383,7 @@ int main(int argc, char *argv[]) {
             bool copyOffload = !!LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--copy_offload", defaultCopyOffload);
 
             caseName = getCaseName(immediateSubmit, copyOffload, iterations);
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testSubmitGraphOnImmediate(env.get(), module, immediateSubmit, copyOffload, iterations, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6521,9 +6412,7 @@ int main(int argc, char *argv[]) {
                 bool immediateSubmit = !!LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--use_immediate", defaultImmediateSubmit);
 
                 caseName = getCaseName(immediateSubmit, iterations);
-                std::cout << std::endl
-                          << "Starting test case: " << caseName
-                          << std::endl;
+                LevelZeroBlackBoxTests::printTestHeader(caseName);
                 caseResult = testSubmitCopyCmdListOnCopyImmediateCmdList(env.get(), copyOrdinal, immediateSubmit, iterations, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -6548,9 +6437,7 @@ int main(int argc, char *argv[]) {
             bool useEvents = static_cast<bool>(LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--use_event", static_cast<int>(defaultUseEvents)));
 
             caseName = getCaseName(iterations, useEvents);
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testAppendRegularOnOutOfOrderImmediate(env.get(), module, iterations, useEvents, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6579,9 +6466,7 @@ int main(int argc, char *argv[]) {
             uint32_t regularCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--count", defaultRegularCount);
 
             caseName = getCaseName(regularCount, iterations, inOrder);
-            std::cout << std::endl
-                      << "Starting test case: " << caseName
-                      << std::endl;
+            LevelZeroBlackBoxTests::printTestHeader(caseName);
             caseResult = testAppendMultipleRegularOnInOrderImmediate(env.get(), module, regularCount, iterations, inOrder, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;

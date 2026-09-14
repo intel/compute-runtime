@@ -88,6 +88,8 @@ uint32_t getBufferLength(int argc, char *argv[], uint32_t defaultLength);
 
 void getErrorMax(int argc, char *argv[]);
 
+void printTestHeader(const std::string_view currentTest);
+
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string_view blackBoxName, const std::string_view currentTest);
 
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string_view blackBoxName);

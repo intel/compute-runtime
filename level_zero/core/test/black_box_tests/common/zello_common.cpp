@@ -258,6 +258,13 @@ void getErrorMax(int argc, char *argv[]) {
     overrideErrorMax = getParamValue(argc, argv, "-em", "--errorMax", 0);
 }
 
+void printTestHeader(const std::string_view currentTest) {
+    std::cout << std::endl
+              << "Starting test case: ***" << std::endl
+              << currentTest << std::endl
+              << "                    *** " << std::endl;
+}
+
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string_view blackBoxName, const std::string_view currentTest) {
     std::cout << std::endl
               << blackBoxName;
