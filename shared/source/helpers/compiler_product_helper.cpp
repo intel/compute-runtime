@@ -67,8 +67,7 @@ std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInf
                              "cl_khr_spirv_queries "
                              "cl_intel_unified_shared_memory "
                              "cl_ext_float_atomics "
-                             "cl_intel_kernel_allocations_info "
-                             "cl_intel_concurrent_dispatch ";
+                             "cl_intel_kernel_allocations_info ";
 
     auto supportsFp64 = hwInfo.capabilityTable.ftrSupportsFP64;
     if (debugManager.flags.OverrideDefaultFP64Settings.get() != -1) {

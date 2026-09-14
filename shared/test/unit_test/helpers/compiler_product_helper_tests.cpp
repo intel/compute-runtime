@@ -233,13 +233,6 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClExtFloatAtomicsExte
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }
 
-TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClIntelConcurrentDispatchExtension) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto hwInfo = *defaultHwInfo;
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
-    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_concurrent_dispatch")));
-}
-
 TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClKhrExternalMemoryExtension) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto hwInfo = *defaultHwInfo;
