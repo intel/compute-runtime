@@ -19,7 +19,7 @@
 #include <mutex>
 #include <vector>
 
-struct _ze_kernel_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_KERNEL> {};
+struct _ze_kernel_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_kernel_handle_t>);
 
 namespace NEO {

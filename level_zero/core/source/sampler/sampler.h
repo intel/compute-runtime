@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
-struct _ze_sampler_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_SAMPLER> {};
+struct _ze_sampler_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_sampler_handle_t>);
 
 namespace L0 {

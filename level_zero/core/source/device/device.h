@@ -28,7 +28,7 @@
 
 static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
 
-struct _ze_device_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_DEVICE> {};
+struct _ze_device_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_device_handle_t>);
 
 namespace aub_stream {

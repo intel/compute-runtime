@@ -27,10 +27,10 @@
 #include <utility>
 #include <vector>
 
-struct _ze_event_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_EVENT> {};
+struct _ze_event_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_event_handle_t>);
 
-struct _ze_event_pool_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_EVENT_POOL> {};
+struct _ze_event_pool_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_event_pool_handle_t>);
 
 namespace NEO {

@@ -44,7 +44,7 @@
 #include <utility>
 #include <vector>
 
-struct _ze_command_list_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_COMMAND_LIST> {};
+struct _ze_command_list_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_command_list_handle_t>);
 
 namespace NEO {

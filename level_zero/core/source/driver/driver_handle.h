@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <vector>
 
-struct _ze_driver_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_DRIVER> {};
+struct _ze_driver_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_driver_handle_t>);
 
 namespace NEO {

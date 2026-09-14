@@ -9,7 +9,7 @@
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
-struct _ze_image_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_IMAGE> {};
+struct _ze_image_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_image_handle_t>);
 
 namespace NEO {

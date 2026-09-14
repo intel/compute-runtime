@@ -11,7 +11,7 @@
 
 namespace L0 {
 ze_result_t ZE_APICALL zexMemFreeRegisterCallbackExt(ze_context_handle_t hContext, zex_memory_free_callback_ext_desc_t *hFreeCallbackDesc, void *ptr) {
-    auto context = Context::fromHandle(toInternalType(hContext));
+    auto context = Context::fromHandle(hContext);
 
     if (!context || !hFreeCallbackDesc || !ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

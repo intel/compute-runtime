@@ -24,7 +24,6 @@ zexCommandListAppendWaitOnMemory(
     zex_event_handle_t hSignalEvent) {
     try {
         {
-            hCommandList = toInternalType(hCommandList);
             if (nullptr == hCommandList) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -47,7 +46,6 @@ zexCommandListAppendWaitOnMemory64(
     uint64_t data,
     zex_event_handle_t hSignalEvent) {
 
-    hCommandList = toInternalType(hCommandList);
     if (!hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -63,7 +61,6 @@ zexCommandListAppendWriteToMemory(
     uint64_t data) {
     try {
         {
-            hCommandList = toInternalType(hCommandList);
             if (nullptr == hCommandList) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }

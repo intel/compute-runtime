@@ -302,7 +302,7 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
                                                ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP | ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP |
                                                ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
 
-    auto device = Device::fromHandle(toInternalType(hDevice));
+    auto device = Device::fromHandle(hDevice);
     auto counterBasedEventDesc = desc ? desc : &defaultIntelCounterBasedEventDesc;
 
     if (!hDevice || !phEvent) {
@@ -363,7 +363,7 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
 }
 
 ze_result_t Event::counterBasedGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address) {
-    auto eventObj = Event::fromHandle(toInternalType(event));
+    auto eventObj = Event::fromHandle(event);
 
     if (!eventObj || !completionValue || !address) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

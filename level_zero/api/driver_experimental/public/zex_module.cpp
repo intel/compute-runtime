@@ -20,7 +20,7 @@ ze_result_t ZE_APICALL
 zexKernelGetBaseAddress(
     ze_kernel_handle_t hKernel,
     uint64_t *baseAddress) {
-    return L0::Kernel::fromHandle(toInternalType(hKernel))->getBaseAddress(baseAddress);
+    return L0::Kernel::fromHandle(hKernel)->getBaseAddress(baseAddress);
 }
 
 ze_result_t ZE_APICALL
@@ -28,7 +28,7 @@ zexKernelGetArgumentSize(
     ze_kernel_handle_t hKernel,
     uint32_t argIndex,
     uint32_t *pArgSize) {
-    return L0::Kernel::fromHandle(toInternalType(hKernel))->getArgumentSize(argIndex, pArgSize);
+    return L0::Kernel::fromHandle(hKernel)->getArgumentSize(argIndex, pArgSize);
 }
 
 ze_result_t ZE_APICALL
@@ -37,29 +37,27 @@ zexKernelGetArgumentType(
     uint32_t argIndex,
     uint32_t *pSize,
     char *pString) {
-    return L0::Kernel::fromHandle(toInternalType(hKernel))->getArgumentType(argIndex, pSize, pString);
+    return L0::Kernel::fromHandle(hKernel)->getArgumentType(argIndex, pSize, pString);
 }
 
 ze_result_t ZE_APICALL
 zeIntelKernelGetBinaryExp(
     ze_kernel_handle_t hKernel, size_t *pSize, char *pKernelBinary) {
-    return L0::Kernel::fromHandle(toInternalType(hKernel))->getKernelProgramBinary(pSize, pKernelBinary);
+    return L0::Kernel::fromHandle(hKernel)->getKernelProgramBinary(pSize, pKernelBinary);
 }
 
 ze_result_t ZE_APICALL
 zeKernelGetModuleHandleExt(
     ze_kernel_handle_t hKernel,
     ze_module_handle_t *phModule) {
-    auto internalKernel = toInternalType(hKernel);
-    return L0::zeKernelGetModuleHandle(internalKernel, phModule);
+    return L0::zeKernelGetModuleHandle(hKernel, phModule);
 }
 
 ze_result_t ZE_APICALL
 zeModuleGetDeviceHandleExt(
     ze_module_handle_t hModule,
     ze_device_handle_t *phDevice) {
-    auto internalModule = toInternalType(hModule);
-    return L0::zeModuleGetDeviceHandle(internalModule, phDevice);
+    return L0::zeModuleGetDeviceHandle(hModule, phDevice);
 }
 
 } // namespace L0

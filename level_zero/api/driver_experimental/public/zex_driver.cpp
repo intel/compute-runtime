@@ -24,14 +24,14 @@ zexDriverImportExternalPointer(
     ze_driver_handle_t hDriver,
     void *ptr,
     size_t size) {
-    return L0::DriverHandle::fromHandle(toInternalType(hDriver))->importExternalPointer(ptr, size);
+    return L0::DriverHandle::fromHandle(hDriver)->importExternalPointer(ptr, size);
 }
 
 ze_result_t ZE_APICALL
 zexDriverReleaseImportedPointer(
     ze_driver_handle_t hDriver,
     void *ptr) {
-    return L0::DriverHandle::fromHandle(toInternalType(hDriver))->releaseImportedPointer(ptr);
+    return L0::DriverHandle::fromHandle(hDriver)->releaseImportedPointer(ptr);
 }
 
 ze_result_t ZE_APICALL
@@ -39,7 +39,7 @@ zexDriverGetHostPointerBaseAddress(
     ze_driver_handle_t hDriver,
     void *ptr,
     void **baseAddress) {
-    return L0::DriverHandle::fromHandle(toInternalType(hDriver))->getHostPointerBaseAddress(ptr, baseAddress);
+    return L0::DriverHandle::fromHandle(hDriver)->getHostPointerBaseAddress(ptr, baseAddress);
 }
 
 ze_result_t ZE_APICALL
@@ -48,7 +48,7 @@ zeIntelGetDriverVersionString(
     char *pDriverVersion,
     size_t *pVersionSize) {
     ze_api_version_t apiVersion;
-    L0::DriverHandle::fromHandle(toInternalType(hDriver))->getApiVersion(&apiVersion);
+    L0::DriverHandle::fromHandle(hDriver)->getApiVersion(&apiVersion);
     uint32_t versionBuild = static_cast<uint32_t>(NEO_VERSION_BUILD);
     if (NEO::debugManager.flags.OverrideVersionBuild.get() > -1) {
         versionBuild = static_cast<uint32_t>(NEO::debugManager.flags.OverrideVersionBuild.get());

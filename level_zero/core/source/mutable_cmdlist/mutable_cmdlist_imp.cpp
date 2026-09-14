@@ -544,7 +544,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandWaitEventsExp(uint64_t co
     for (uint32_t eventNum = 0; eventNum < numWaitEvents; eventNum++) {
         WaitEventVariableDescriptor &mutableWaitEventDesc = selectedAppend.waitEvents[eventNum];
         UNRECOVERABLE_IF(mutableWaitEventDesc.waitEventIndex != eventNum);
-        auto waitEventHandle = toInternalType(phWaitEvents[eventNum]);
+        auto waitEventHandle = phWaitEvents[eventNum];
         auto inputEvent = Event::fromHandle(waitEventHandle);
         if (mutableWaitEventDesc.event == inputEvent && !mutableWaitEventDesc.eventVariable->getDesc().eventValue.counterBasedEvent) {
             continue;
@@ -570,7 +570,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandKernelsExp cmdlist: %p numKernels: %u\n", this, numKernels);
     for (uint32_t id = 0; id < numKernels; id++) {
         auto commandId = pCommandId[id];
-        auto kernelHandle = toInternalType(phKernels[id]);
+        auto kernelHandle = phKernels[id];
         auto kernel = Kernel::fromHandle(kernelHandle);
         auto kernelGroup = this->kernelMutations[(commandId - 1)].kernelGroup;
         if (kernelGroup == nullptr) {

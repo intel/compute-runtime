@@ -10,7 +10,6 @@
 #include <level_zero/ze_api.h>
 
 namespace L0 {
-extern decltype(&zelLoaderTranslateHandle) loaderTranslateHandleFunc;
 extern decltype(&zelSetDriverTeardown) setDriverTeardownFunc;
 
 void globalDriverTeardown();

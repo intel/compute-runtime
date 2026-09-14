@@ -325,7 +325,7 @@ zetDeviceGetConcurrentMetricGroupsExp(
     uint32_t *pMetricGroupsCountPerConcurrentGroup,
     uint32_t *pConcurrentGroupCount) {
 
-    auto device = Device::fromHandle(toInternalType(hDevice));
+    auto device = Device::fromHandle(hDevice);
     return static_cast<MetricDeviceContext &>(device->getMetricDeviceContext()).getConcurrentMetricGroups(metricGroupCount, phMetricGroups, pConcurrentGroupCount, pMetricGroupsCountPerConcurrentGroup);
 }
 
@@ -339,7 +339,6 @@ zetDeviceCreateMetricGroupsFromMetricsExp(
     uint32_t *pMetricGroupCount,
     zet_metric_group_handle_t *phMetricGroups) {
 
-    hDevice = toInternalType(hDevice);
     auto device = Device::fromHandle(hDevice);
     return device->getMetricDeviceContext().createMetricGroupsFromMetricsExp(metricCount, phMetrics, pMetricGroupNamePrefix, pDescription, pMetricGroupCount, phMetricGroups);
 }

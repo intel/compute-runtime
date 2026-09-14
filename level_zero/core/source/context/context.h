@@ -31,10 +31,10 @@
 #include <utility>
 #include <vector>
 
-struct _ze_context_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_CONTEXT> {};
+struct _ze_context_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_context_handle_t>);
 
-struct _ze_physical_mem_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_PHYSICAL_MEM> {};
+struct _ze_physical_mem_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_physical_mem_handle_t>);
 
 namespace NEO {
