@@ -6,6 +6,26 @@ SPDX-License-Identifier: MIT
 
 -->
 
+# Release Notes v1.18
+
+Level Zero Core API.
+
+September 2026
+
+Changes in this release:
+
+The update involves changes introduced in Level Zero spec v1.18. Some of the important changes are as follows:
+
+| Feature	| Spec link	|
+| ------------------ | -------------------|
+| Support for zeCommandListAppendSignalEventWithParameters API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api/apis/command_list-2.html#zecommandlistappendsignaleventwithparameters |
+| Support for zeCommandListAppendWaitOnEventsWithParameters API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api/apis/command_list-2.html#zecommandlistappendwaitoneventswithparameters |
+| Support for zeModuleGetDeviceHandle API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api/apis/module.html#zemodulegetdevicehandle |
+| Support for zeKernelGetModuleHandle API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api/apis/kernel.html#zekernelgetmodulehandle |
+| Support for zeGraphPauseCaptureExt graph extension API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api/extensions/graph.html#zegraphpausecaptureext |
+| Support for zeGraphResumeCaptureExt graph extension API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api/extensions/graph.html#zegraphresumecaptureext |
+| Support for zeGraphGetIdExt graph extension API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api/extensions/graph.html#zegraphgetidext |
+
 # Release Notes v1.17
 
 Level Zero Core API.
