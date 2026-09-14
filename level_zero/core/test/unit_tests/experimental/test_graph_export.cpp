@@ -1907,7 +1907,7 @@ TEST_F(GraphDumpApiTest, GivenValidParametersWithNullpNextWhenZeGraphDumpContent
     EXPECT_NE(writtenContent.find("node [shape=box, style=filled]"), std::string::npos);
 }
 
-TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesSimpleStyle) {
+TEST_F(GraphDumpApiTest, GivenSimpleStyleExpExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesSimpleStyle) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
@@ -1923,9 +1923,151 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCa
     setupSuccessfulWrite(testGraph, GraphExportStyle::simple, GraphExportEventNodes::hideInternal);
 
     ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
-    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
     dumpDesc.pNext = nullptr;
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE;
+
+    ze_graph_handle_t graphHandle = testGraph.toHandle();
+    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(mockFopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(mockFwriteCalledBefore + 1, NEO::IoFunctions::mockFwriteCalled);
+    EXPECT_EQ(mockFcloseCalledBefore + 1, NEO::IoFunctions::mockFcloseCalled);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_NE(writtenContent.find("node [style=filled]"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenDetailedStyleExpExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesDetailedStyle) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    auto eventHandle = event.toHandle();
+    Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
+
+    testGraph.startCapturingFrom(cmdlist, false);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    setupSuccessfulWrite(testGraph);
+
+    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED;
+
+    ze_graph_handle_t graphHandle = testGraph.toHandle();
+    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_NE(writtenContent.find("node [shape=box, style=filled]"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenDetailedStyleWithEventNodesExpExtensionWhenZeGraphDumpContentsExpIsCalledThenDumpsInternalEventOperations) {
+    ForkJoinEventNodesScenario scenario{&ctx, this->device};
+    scenario.capture();
+    ASSERT_NE(scenario.subGraph, nullptr);
+
+    setupSuccessfulWrite(scenario.testGraph, GraphExportStyle::detailed, GraphExportEventNodes::show);
+
+    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED_WITH_EVENT_NODES;
+
+    auto result = L0::zeGraphDumpContentsExp(scenario.testGraph.toHandle(), testFilePath.c_str(), &dumpDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_NE(writtenContent.find("node [shape=box, style=filled]"), std::string::npos);
+    EXPECT_NE(writtenContent.find("zeCommandListAppendSignalEvent"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenSimpleStyleWithEventNodesExpExtensionWhenZeGraphDumpContentsExpIsCalledThenDumpsInternalEventOperations) {
+    ForkJoinEventNodesScenario scenario{&ctx, this->device};
+    scenario.capture();
+    ASSERT_NE(scenario.subGraph, nullptr);
+
+    setupSuccessfulWrite(scenario.testGraph, GraphExportStyle::simple, GraphExportEventNodes::show);
+
+    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE_WITH_EVENT_NODES;
+
+    auto result = L0::zeGraphDumpContentsExp(scenario.testGraph.toHandle(), testFilePath.c_str(), &dumpDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_NE(writtenContent.find("node [style=filled]"), std::string::npos);
+    EXPECT_NE(writtenContent.find("zeCommandListAppendSignalEvent"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenDefaultModeWhenZeGraphDumpContentsExpIsCalledThenInternalEventOperationsAreNotDumped) {
+    ForkJoinEventNodesScenario scenario{&ctx, this->device};
+    scenario.capture();
+    ASSERT_NE(scenario.subGraph, nullptr);
+
+    setupSuccessfulWrite(scenario.testGraph);
+
+    auto result = L0::zeGraphDumpContentsExp(scenario.testGraph.toHandle(), testFilePath.c_str(), nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_EQ(writtenContent.find("zeCommandListAppendSignalEvent"), std::string::npos);
+    EXPECT_EQ(writtenContent.find("zeCommandListAppendWaitOnEvents"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenInvalidStyleExpExtensionWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    auto eventHandle = event.toHandle();
+    Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
+
+    testGraph.startCapturingFrom(cmdlist, false);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    setupSuccessfulWrite(testGraph);
+
+    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_FORCE_UINT32;
+
+    ze_graph_handle_t graphHandle = testGraph.toHandle();
+    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesSimpleStyle) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    auto eventHandle = event.toHandle();
+    Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
+
+    testGraph.startCapturingFrom(cmdlist, false);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    setupSuccessfulWrite(testGraph, GraphExportStyle::simple, GraphExportEventNodes::hideInternal);
+
+    ze_record_replay_graph_ext_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_SIMPLE;
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
     auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
@@ -1954,10 +2096,10 @@ TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIs
 
     setupSuccessfulWrite(testGraph);
 
-    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    ze_record_replay_graph_ext_dump_desc_t dumpDesc = {};
     dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
     dumpDesc.pNext = nullptr;
-    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_DETAILED;
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
     auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
@@ -1966,61 +2108,6 @@ TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIs
 
     std::string writtenContent(buffer.get());
     EXPECT_NE(writtenContent.find("node [shape=box, style=filled]"), std::string::npos);
-}
-
-TEST_F(GraphDumpApiTest, GivenDetailedStyleWithEventNodesExtensionWhenZeGraphDumpContentsExpIsCalledThenDumpsInternalEventOperations) {
-    ForkJoinEventNodesScenario scenario{&ctx, this->device};
-    scenario.capture();
-    ASSERT_NE(scenario.subGraph, nullptr);
-
-    setupSuccessfulWrite(scenario.testGraph, GraphExportStyle::detailed, GraphExportEventNodes::show);
-
-    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
-    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
-    dumpDesc.pNext = nullptr;
-    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED_WITH_EVENT_NODES;
-
-    auto result = L0::zeGraphDumpContentsExp(scenario.testGraph.toHandle(), testFilePath.c_str(), &dumpDesc);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    std::string writtenContent(buffer.get());
-    EXPECT_NE(writtenContent.find("node [shape=box, style=filled]"), std::string::npos);
-    EXPECT_NE(writtenContent.find("zeCommandListAppendSignalEvent"), std::string::npos);
-}
-
-TEST_F(GraphDumpApiTest, GivenSimpleStyleWithEventNodesExtensionWhenZeGraphDumpContentsExpIsCalledThenDumpsInternalEventOperations) {
-    ForkJoinEventNodesScenario scenario{&ctx, this->device};
-    scenario.capture();
-    ASSERT_NE(scenario.subGraph, nullptr);
-
-    setupSuccessfulWrite(scenario.testGraph, GraphExportStyle::simple, GraphExportEventNodes::show);
-
-    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
-    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
-    dumpDesc.pNext = nullptr;
-    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE_WITH_EVENT_NODES;
-
-    auto result = L0::zeGraphDumpContentsExp(scenario.testGraph.toHandle(), testFilePath.c_str(), &dumpDesc);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    std::string writtenContent(buffer.get());
-    EXPECT_NE(writtenContent.find("node [style=filled]"), std::string::npos);
-    EXPECT_NE(writtenContent.find("zeCommandListAppendSignalEvent"), std::string::npos);
-}
-
-TEST_F(GraphDumpApiTest, GivenDefaultModeWhenZeGraphDumpContentsExpIsCalledThenInternalEventOperationsAreNotDumped) {
-    ForkJoinEventNodesScenario scenario{&ctx, this->device};
-    scenario.capture();
-    ASSERT_NE(scenario.subGraph, nullptr);
-
-    setupSuccessfulWrite(scenario.testGraph);
-
-    auto result = L0::zeGraphDumpContentsExp(scenario.testGraph.toHandle(), testFilePath.c_str(), nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    std::string writtenContent(buffer.get());
-    EXPECT_EQ(writtenContent.find("zeCommandListAppendSignalEvent"), std::string::npos);
-    EXPECT_EQ(writtenContent.find("zeCommandListAppendWaitOnEvents"), std::string::npos);
 }
 
 TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
@@ -2038,10 +2125,10 @@ TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExpIsC
 
     setupSuccessfulWrite(testGraph);
 
-    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    ze_record_replay_graph_ext_dump_desc_t dumpDesc = {};
     dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
     dumpDesc.pNext = nullptr;
-    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_FORCE_UINT32;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_FORCE_UINT32;
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
     auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);

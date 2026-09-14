@@ -235,7 +235,7 @@ ze_result_t ZE_APICALL zeGraphDumpContentsExt(ze_graph_handle_t hGraph, const ch
     const ze_base_desc_t *desc = reinterpret_cast<const ze_base_desc_t *>(pNext);
 
     if (desc != nullptr) {
-        if ((desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC) || (desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC)) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC) {
             const auto *dumpDesc = reinterpret_cast<const ze_record_replay_graph_exp_dump_desc_t *>(desc);
             switch (dumpDesc->mode) {
             case ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED:
@@ -249,6 +249,19 @@ ze_result_t ZE_APICALL zeGraphDumpContentsExt(ze_graph_handle_t hGraph, const ch
             case ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE_WITH_EVENT_NODES:
                 exportStyle = L0::GraphExportStyle::simple;
                 exportEventNodes = L0::GraphExportEventNodes::show;
+                break;
+            default:
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided graph EXP dump mode, mode: 0x%x.\n",
+                             dumpDesc->mode);
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC) {
+            const auto *dumpDesc = reinterpret_cast<const ze_record_replay_graph_ext_dump_desc_t *>(desc);
+            switch (dumpDesc->mode) {
+            case ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_DETAILED:
+                break;
+            case ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_SIMPLE:
+                exportStyle = L0::GraphExportStyle::simple;
                 break;
             default:
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided graph dump mode, mode: 0x%x.\n",

@@ -6360,14 +6360,21 @@ TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceMclPropertiesWhenReturnM
 }
 
 TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceRecordReplayGraphWhenReturnReplayGraphPropertiesThenProvidePerDeviceCapability) {
-    ze_record_replay_graph_exp_properties_t recordReplayGraphProperties{ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES};
+    uint32_t deviceRecordReplayGraphCapability = device->getL0GfxCoreHelper().getRecordReplayGraphCapabilities(device->getNEODevice()->getRootDeviceEnvironment());
+
+    ze_record_replay_graph_exp_properties_t recordReplayGraphPropertiesExp{ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES};
 
     ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProperties.pNext = &recordReplayGraphPropertiesExp;
+
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ(deviceRecordReplayGraphCapability, recordReplayGraphPropertiesExp.graphFlags);
+
+    ze_record_replay_graph_ext_properties_t recordReplayGraphProperties{ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_PROPERTIES};
+
     deviceProperties.pNext = &recordReplayGraphProperties;
 
     device->getProperties(&deviceProperties);
-
-    uint32_t deviceRecordReplayGraphCapability = device->getL0GfxCoreHelper().getRecordReplayGraphCapabilities(device->getNEODevice()->getRootDeviceEnvironment());
     EXPECT_EQ(deviceRecordReplayGraphCapability, recordReplayGraphProperties.graphFlags);
 }
 
