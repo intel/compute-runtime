@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,13 +117,11 @@ struct Gen12LpFamily : public Gen12Lp {
     static const MI_STORE_DATA_IMM cmdInitStoreDataImm;
     static const MI_STORE_REGISTER_MEM cmdInitStoreRegisterMem;
     static const MI_NOOP cmdInitNoop;
-    static const MI_REPORT_PERF_COUNT cmdInitReportPerfCount;
     static const MI_ATOMIC cmdInitAtomic;
     static const PIPELINE_SELECT cmdInitPipelineSelect;
     static const MI_ARB_CHECK cmdInitArbCheck;
     static const MEDIA_VFE_STATE cmdInitMediaVfeState;
     static const STATE_BASE_ADDRESS cmdInitStateBaseAddress;
-    static const MEDIA_SURFACE_STATE cmdInitMediaSurfaceState;
     static const SAMPLER_STATE cmdInitSamplerState;
     static const GPGPU_CSR_BASE_ADDRESS cmdInitGpgpuCsrBaseAddress;
     static const STATE_SIP cmdInitStateSip;

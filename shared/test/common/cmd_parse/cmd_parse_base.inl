@@ -21,7 +21,6 @@ using MI_NOOP                         = GenStruct::MI_NOOP;
 using PIPE_CONTROL                    = GenStruct::PIPE_CONTROL;
 using PIPELINE_SELECT                 = GenStruct::PIPELINE_SELECT;
 using STATE_BASE_ADDRESS              = typename StateBaseAddressTypeHelper<GenStruct>::type;
-using MI_REPORT_PERF_COUNT            = GenStruct::MI_REPORT_PERF_COUNT;
 using MI_MATH                         = GenStruct::MI_MATH;
 using MI_LOAD_REGISTER_REG            = GenStruct::MI_LOAD_REGISTER_REG;
 using MI_SEMAPHORE_WAIT               = GenGfxFamily::MI_SEMAPHORE_WAIT;
@@ -138,14 +137,6 @@ MI_STORE_REGISTER_MEM *genCmdCast<MI_STORE_REGISTER_MEM *>(void *buffer) {
     return matchCommandHeader<MI_STORE_REGISTER_MEM>(buffer, [](const MI_STORE_REGISTER_MEM &header) {
         return MI_STORE_REGISTER_MEM::COMMAND_TYPE_MI_COMMAND == header.TheStructure.Common.CommandType &&
                MI_STORE_REGISTER_MEM::MI_COMMAND_OPCODE_MI_STORE_REGISTER_MEM == header.TheStructure.Common.MiCommandOpcode;
-    });
-}
-
-template <>
-MI_REPORT_PERF_COUNT *genCmdCast<MI_REPORT_PERF_COUNT *>(void *buffer) {
-    return matchCommandHeader<MI_REPORT_PERF_COUNT>(buffer, [](const MI_REPORT_PERF_COUNT &header) {
-        return MI_REPORT_PERF_COUNT::COMMAND_TYPE_MI_COMMAND == header.TheStructure.Common.CommandType &&
-               MI_REPORT_PERF_COUNT::MI_COMMAND_OPCODE_MI_REPORT_PERF_COUNT == header.TheStructure.Common.MiCommandOpcode;
     });
 }
 
@@ -282,12 +273,6 @@ size_t CmdParse<T>::getCommandLength(void *cmd) {
         }
     }
     {
-        auto pCmd = genCmdCast<MI_REPORT_PERF_COUNT *>(cmd);
-        if (pCmd) {
-            return pCmd->TheStructure.Common.DwordLength + 2;
-        }
-    }
-    {
         auto pCmd = genCmdCast<MI_MATH *>(cmd);
         if (pCmd) {
             return pCmd->DW0.BitField.DwordLength + 2;
@@ -361,7 +346,6 @@ const char *CmdParse<T>::getCommandName(void *cmd) {
     RETURN_NAME_IF(MI_STORE_REGISTER_MEM);
     RETURN_NAME_IF(MI_NOOP);
     RETURN_NAME_IF(PIPELINE_SELECT);
-    RETURN_NAME_IF(MI_REPORT_PERF_COUNT);
     RETURN_NAME_IF(MI_MATH);
     RETURN_NAME_IF(MI_LOAD_REGISTER_REG);
     RETURN_NAME_IF(MI_SEMAPHORE_WAIT);

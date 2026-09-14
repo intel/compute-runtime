@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,14 +19,6 @@ XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenComputeWalkerThenPostSyncTypeIsPostSy
     auto postSyncType = FamilyType::template getPostSyncType<typename FamilyType::DefaultWalkerType>();
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     EXPECT_TRUE((std::is_same<POSTSYNC_DATA, decltype(postSyncType)>::value));
-}
-
-XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenMediaSurfaceStateWhenProgrammingMocsThenMocsIndexIsSetProperly) {
-    auto mediaSurfaceState = FamilyType::cmdInitMediaSurfaceState;
-    uint32_t mocs = 4u;
-    uint32_t expectedMocsIndex = (mocs >> 1);
-    mediaSurfaceState.setSurfaceMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, mediaSurfaceState.TheStructure.Common.SurfaceMemoryObjectControlState_IndexToMocsTables);
 }
 
 XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenRenderSurfaceStateWhenProgrammingMocsThenMocsIndexIsSetProperly) {

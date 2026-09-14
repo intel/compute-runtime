@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,25 +12,6 @@
 using namespace NEO;
 
 using Xe3CoreHwCmdTest = ::testing::Test;
-
-XE3_CORETEST_F(Xe3CoreHwCmdTest, givenMediaSurfaceStateWhenProgrammingMocsThenMocsIndexIsSetProperly) {
-    auto mediaSurfaceState = FamilyType::cmdInitMediaSurfaceState;
-    uint32_t mocs = 4u;
-    uint32_t expectedMocsIndex = (mocs >> 1);
-    mediaSurfaceState.setSurfaceMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, mediaSurfaceState.TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables);
-}
-
-XE3_CORETEST_F(Xe3CoreHwCmdTest, givenMediaSurfaceStateWhenSettingSurfaceBaseAddressThenCorrectvalueIsSet) {
-    auto mediaSurfaceState = FamilyType::cmdInitMediaSurfaceState;
-    uint64_t address = 0x12345678ABCD;
-    uint32_t expectedAddressLow = 0x5678ABCD;
-    uint32_t expectedAddressHigh = 0x1234;
-    mediaSurfaceState.setSurfaceBaseAddress(address);
-    EXPECT_EQ(address, mediaSurfaceState.getSurfaceBaseAddress());
-    EXPECT_EQ(expectedAddressLow, mediaSurfaceState.TheStructure.Common.SurfaceBaseAddress);
-    EXPECT_EQ(expectedAddressHigh, mediaSurfaceState.TheStructure.Common.SurfaceBaseAddressHigh);
-}
 
 XE3_CORETEST_F(Xe3CoreHwCmdTest, givenRenderSurfaceStateThenDefaultHorizontalAlignmentIs128) {
     auto defaultHorizontalAlignmentValue = FamilyType::RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT;

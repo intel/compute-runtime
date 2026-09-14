@@ -146,12 +146,10 @@ struct Xe3pCoreFamily : public Xe3pCore {
     static const MI_STORE_DATA_IMM cmdInitStoreDataImm;
     static const MI_STORE_REGISTER_MEM cmdInitStoreRegisterMem;
     static const MI_NOOP cmdInitNoop;
-    static const MI_REPORT_PERF_COUNT cmdInitReportPerfCount;
     static const MI_ATOMIC cmdInitAtomic;
     static const PIPELINE_SELECT cmdInitPipelineSelect;
     static const MI_ARB_CHECK cmdInitArbCheck;
     static const STATE_BASE_ADDRESS cmdInitStateBaseAddress;
-    static const MEDIA_SURFACE_STATE cmdInitMediaSurfaceState;
     static const SAMPLER_STATE cmdInitSamplerState;
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
     static const MI_CONDITIONAL_BATCH_BUFFER_END cmdInitConditionalBatchBufferEnd;

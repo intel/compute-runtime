@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,12 +128,10 @@ struct Xe2HpgCoreFamily : public Xe2HpgCore {
     static const MI_STORE_DATA_IMM cmdInitStoreDataImm;
     static const MI_STORE_REGISTER_MEM cmdInitStoreRegisterMem;
     static const MI_NOOP cmdInitNoop;
-    static const MI_REPORT_PERF_COUNT cmdInitReportPerfCount;
     static const MI_ATOMIC cmdInitAtomic;
     static const PIPELINE_SELECT cmdInitPipelineSelect;
     static const MI_ARB_CHECK cmdInitArbCheck;
     static const STATE_BASE_ADDRESS cmdInitStateBaseAddress;
-    static const MEDIA_SURFACE_STATE cmdInitMediaSurfaceState;
     static const SAMPLER_STATE cmdInitSamplerState;
     static const BINDING_TABLE_STATE cmdInitBindingTableState;
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
