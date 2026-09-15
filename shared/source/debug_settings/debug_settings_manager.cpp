@@ -24,6 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include <type_traits>
+#include <utility>
 
 namespace NEO {
 
@@ -94,7 +95,7 @@ static void injectDebugSetting(SettingsReader &reader, DVarsScopeMask scope, con
     DataType tempData = reader.getSetting(keyName, variable.get(), type);
     if (0 != (scope & variable.getScopeMask())) {
         variable.setPrefixType(type);
-        variable.set(tempData);
+        variable.set(std::move(tempData));
     }
 }
 
@@ -109,7 +110,7 @@ static void injectReleaseSetting(SettingsReader &reader, SettingsReader &envOnly
     }
     if (0 != (scope & variable.getScopeMask())) {
         variable.setPrefixType(type);
-        variable.set(tempData);
+        variable.set(std::move(tempData));
     }
 }
 
