@@ -60,6 +60,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::arePostBlitWACmdsRequired;
     using BaseClass::bcsSplitMode;
+    using BaseClass::bytesToPeerReservationBlockEnd;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;

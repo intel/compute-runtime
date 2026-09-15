@@ -2193,6 +2193,36 @@ void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const 
     }
 }
 
+// Blocks of a virtual reservation are imported on a peer device one at a time, each
+// at a virtual address the peer heap picks, so they are not contiguous there. Return
+// how many of the remaining bytes stay inside the block that holds ptr, so a peer copy
+// can be split on that boundary. Returns remaining when ptr needs no peer access.
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandListCoreFamily<gfxCoreFamily>::bytesToPeerReservationBlockEnd(const void *ptr, size_t remaining) {
+    NEO::SvmAllocationData *allocData = nullptr;
+    auto *driverHandle = this->device->getDriverHandle();
+    if (!driverHandle->findAllocationDataForRange(const_cast<void *>(ptr), 1u, allocData) || allocData == nullptr) {
+        return remaining;
+    }
+    if (allocData->virtualReservationData == nullptr) {
+        return remaining;
+    }
+    auto *ownerAlloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    if (ownerAlloc == nullptr) {
+        return remaining;
+    }
+    auto *deviceAlloc = allocData->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex());
+    if (!driverHandle->isRemoteResourceNeeded(deviceAlloc, allocData, this->device)) {
+        return remaining;
+    }
+    const uint64_t blockEnd = ownerAlloc->getGpuAddress() + allocData->size;
+    const uint64_t current = castToUint64(const_cast<void *>(ptr));
+    if (current >= blockEnd) {
+        return remaining;
+    }
+    return std::min(remaining, static_cast<size_t>(blockEnd - current));
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendRecordedBcsSplit(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                                                          ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
@@ -2240,6 +2270,32 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     if (this->bcsSplitMode == BcsSplitParams::BcsSplitMode::recorded && this->isAppendSplitNeeded(dstptr, srcptr, size, direction)) {
         return appendRecordedBcsSplit(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    }
+
+    if (!memoryCopyParams.bscSplitEnabled && size > 0u) {
+        const size_t firstChunk = std::min(bytesToPeerReservationBlockEnd(dstptr, size),
+                                           bytesToPeerReservationBlockEnd(srcptr, size));
+        if (firstChunk > 0u && firstChunk < size) {
+            size_t done = 0u;
+            while (done < size) {
+                const size_t left = size - done;
+                void *subDst = ptrOffset(dstptr, done);
+                const void *subSrc = ptrOffset(srcptr, done);
+                const size_t chunk = std::min(bytesToPeerReservationBlockEnd(subDst, left),
+                                              bytesToPeerReservationBlockEnd(subSrc, left));
+                const bool isLast = (done + chunk >= size);
+                auto ret = appendMemoryCopy(subDst, subSrc, chunk,
+                                            isLast ? hSignalEvent : nullptr,
+                                            done == 0u ? numWaitEvents : 0u,
+                                            done == 0u ? phWaitEvents : nullptr,
+                                            memoryCopyParams, nullptr, nullptr);
+                if (ret != ZE_RESULT_SUCCESS) {
+                    return ret;
+                }
+                done += chunk;
+            }
+            return ZE_RESULT_SUCCESS;
+        }
     }
 
     auto allocSize = NEO::getIfValid(memoryCopyParams.bcsSplitTotalDstSize, size);
@@ -3332,6 +3388,28 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::resolveAligne
     }
 
     if (svmAllocFound) {
+        // Blocks of a virtual reservation are imported on a peer device one at a time,
+        // each at an address of its own, so the reservation is not contiguous there. A
+        // range that crosses a block end would address memory the peer never mapped, so
+        // reject it instead of letting the copy engine walk into it and hang.
+        auto *ownerAlloc = svmAlloc->gpuAllocations.getDefaultGraphicsAllocation();
+        auto *deviceAlloc = svmAlloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        if (ownerAlloc != nullptr && bufferSize > 0u && svmAlloc->virtualReservationData != nullptr &&
+            device->getDriverHandle()->isRemoteResourceNeeded(deviceAlloc, svmAlloc, device)) {
+            const uint64_t blockEnd = ownerAlloc->getGpuAddress() + svmAlloc->size;
+            const uint64_t rangeEnd = castToUint64(ptr) + bufferSize;
+            if (rangeEnd > blockEnd) {
+                CREATE_DEBUG_STRING(str, "Peer access at 0x%llx runs %llu bytes past the end of its virtual reservation block\n",
+                                    static_cast<unsigned long long>(castToUint64(ptr)),
+                                    static_cast<unsigned long long>(rangeEnd - blockEnd));
+                device->getDriverHandle()->setErrorDescription(std::string(str.get()));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "Peer access at 0x%llx runs %llu bytes past the end of its virtual reservation block\n",
+                             static_cast<unsigned long long>(castToUint64(ptr)),
+                             static_cast<unsigned long long>(rangeEnd - blockEnd));
+                return AlignedAllocationData::invalid();
+            }
+        }
         return alignSvmAllocationData(device, svmAlloc, buffer, sourcePtr, sshAlignmentOffset);
     }
 
