@@ -94,6 +94,9 @@ struct DebugVarBase {
     T &getRef() {
         return value;
     }
+    const T &getRef() const {
+        return value;
+    }
     void setIfDefault(T data) {
         if (value == defaultValue) {
             this->set(data);
@@ -236,10 +239,19 @@ struct DebugVariablesT {                                // NOLINT(clang-analyzer
 };
 
 #if defined(NEO_USE_CONSTEXPR_DEBUG_VARIABLES)
-struct DebugVariables : DebugVariablesT<true> {};
+struct DebugVariables : DebugVariablesT<true> {
 #else
-struct DebugVariables : DebugVariablesT<false> {};
+struct DebugVariables : DebugVariablesT<false> {
 #endif
+    DebugVariables();
+    DebugVariables(const DebugVariables &other);
+    DebugVariables(DebugVariables &&other);
+    DebugVariables &operator=(const DebugVariables &other);
+    DebugVariables &operator=(DebugVariables &&other);
+    ~DebugVariables();
+
+    bool operator==(const DebugVariables &other) const;
+};
 
 template <DebugFunctionalityLevel debugLevel>
 class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
@@ -300,8 +312,6 @@ class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
         auto loopingEnabled = flags.LoopAtDriverInit.get();
         return loopingEnabled;
     }
-    template <typename DataType>
-    static void dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValuep, std::ostringstream &ostring, bool isEnvOnly);
 
     void dumpFlags() const;
     static const char *settingsDumpFileName;
