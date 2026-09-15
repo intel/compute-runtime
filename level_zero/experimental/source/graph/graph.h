@@ -610,6 +610,14 @@ struct ExecGraphBuilder final {
         return {std::move(this->trailingEvents)};
     }
 
+    GraphInternalEvents &getInternalEvents() {
+        return internalEvents;
+    }
+
+    GraphInternalEvents releaseInternalEvents() {
+        return {std::move(this->internalEvents)};
+    }
+
   protected:
     void createEventPoolForTrailingEvents(size_t numEvents);
     L0::Event *createTrailingEvent();
@@ -620,6 +628,7 @@ struct ExecGraphBuilder final {
     std::unordered_map<const Graph *, ExecSubGraphBuilder> subgraphs;
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;
+    GraphInternalEvents internalEvents;
 };
 
 struct ExecutableGraph : _ze_executable_graph_handle_t {
@@ -667,6 +676,10 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
         return externalCbEventStorage;
     }
 
+    const GraphInternalEvents &getInternalEvents() const {
+        return internalEvents;
+    }
+
     bool segmentRequiresSeperateSubmission(GraphCommandId segmentStart) const {
         return this->myOrderedSegments.contains(segmentStart);
     }
@@ -696,6 +709,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;
+
+    GraphInternalEvents internalEvents;
 
     bool usePatchingPreamble = true;
     bool mutableExecGraph = false;

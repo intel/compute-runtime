@@ -257,9 +257,56 @@ struct ExternalCbEventInfoContainer {
     PatchPreambleDataContainer executorStorage;
 };
 
+class GraphInternalEvents {
+  public:
+    GraphInternalEvents() = default;
+    GraphInternalEvents(const GraphInternalEvents &) = delete;
+    GraphInternalEvents &operator=(const GraphInternalEvents &) = delete;
+    GraphInternalEvents(GraphInternalEvents &&) = default;
+    GraphInternalEvents &operator=(GraphInternalEvents &&) = default;
+
+    ~GraphInternalEvents() {
+        for (const auto &entry : originalToInternal) {
+            entry.second->destroy();
+        }
+    }
+
+    static bool isInternalEventDependency(const L0::Event *event) {
+        return event->isCounterBasedExplicitlyEnabled() && (false == event->isIpcImported()) &&
+               (0 == (event->getCounterBasedFlags() & ZE_EVENT_COUNTER_BASED_FLAG_IPC)) &&
+               (false == event->isExternalEvent()) && (false == L0::Event::isAggregatedEvent(event));
+    }
+
+    ze_result_t addInternalEvent(L0::Event *originalEvent, ze_context_handle_t hContext);
+
+    L0::Event *getInternal(L0::Event *originalEvent) const {
+        auto it = originalToInternal.find(originalEvent);
+        if (it == originalToInternal.end()) {
+            return nullptr;
+        }
+
+        return it->second;
+    }
+
+    ze_event_handle_t getInternal(ze_event_handle_t hOriginalEvent) const {
+        if (nullptr == hOriginalEvent) {
+            return nullptr;
+        }
+
+        auto *internalEvent = getInternal(L0::Event::fromHandle(hOriginalEvent));
+        return (nullptr == internalEvent) ? hOriginalEvent : internalEvent->toHandle();
+    }
+
+  protected:
+    std::unordered_map<L0::Event *, L0::Event *> originalToInternal;
+};
+
+using SubstitutedWaitEvents = StackVec<ze_event_handle_t, 8>;
+
 struct CbExternalEventInstantiateContext {
     ExternalCbEventInfoContainer *cbEventInfoContainer = nullptr;
     L0::CommandList *executorCommandList = nullptr;
+    const GraphInternalEvents *internalEvents = nullptr;
 };
 
 struct ClosureExternalStorage {
